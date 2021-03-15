@@ -59,7 +59,7 @@ async function main () {
   console.log('ProxyAdmin owner:', await proxyAdmin.owner())
 
   // Deploy Proxy
-  const Proxy = await l2ethers.getContractFactory('Proxy', {
+  const Proxy = await l2ethers.getContractFactory('OZProxy', {
     signer: (await ethers.getSigners())[0]
   })
   const proxy = await Proxy.deploy(dHedgeFactory.address, proxyAdmin.address, "0x")
