@@ -1,0 +1,30 @@
+{
+  "name": "dhedge-ovm",
+  "version": "1.0.0",
+  "description": "dHEDGE ovm smart contracts",
+  "main": "hardhat-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
+    "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "dHedge Team",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.3.0",
+    "ethers": "^5.0.32",
+    "hardhat": "^2.1.1"
+  },
+  "dependencies": {
+    "@eth-optimism/plugins": "0.0.20",
+    "@openzeppelin/contracts-ethereum-package": "^3.0.0",
+    "@openzeppelin/hardhat-upgrades": "^1.6.0",
+    "dotenv": "^8.2.0"
+  }
+}
