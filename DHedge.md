@@ -1,4 +1,4 @@
-Variables (14):
+**Variables (14):**
 - bytes32 private _EXCHANGE_RATES_KEY
 - bytes32 private _SYNTHETIX_KEY
 - bytes32 private _EXCHANGER_KEY
@@ -14,7 +14,7 @@ Variables (14):
 - uint256 public tokenPriceAtLastFeeMint
 - mapping(address => uint256) public lastDeposit
 
-Events (8):
+**Events (8):**
 - Deposit
 - Withdrawal
 - Exchange
@@ -24,7 +24,7 @@ Events (8):
 - ManagerFeeMinted
 - ManagerFeeSet
 
-Interfaces (10):
+**Interfaces (10):**
 - "./ISynthetix.sol";
 - "./IExchanger.sol";
 - "./ISynth.sol";
@@ -36,10 +36,10 @@ Interfaces (10):
 - "./IHasFeeInfo.sol";
 - "./IHasAssetInfo.sol";
 
-Modifiers:
+**Modifiers:**
 - onlyPrivate
 
-functions (31):
+**functions (31):**
 - initialize
 - _beforeTokenTransfer - pool
 - getAssetProxy - pool
