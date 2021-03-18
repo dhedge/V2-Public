@@ -227,8 +227,8 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
 
         require(!persistentAsset[key], "persistent assets can't be removed");
 
-        ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
-        sx.settle(key);
+        // ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
+        // sx.settle(key);
 
         require(
             IERC20(getAssetProxy(key)).balanceOf(address(this)) == 0,
@@ -330,15 +330,15 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         lastDeposit[msg.sender] = block.timestamp;
 
         //we need to settle all the assets before determining the total fund value
-        _settleAll();
+        // _settleAll();
 
         _mintManagerFee(false);
 
         uint256 fundValue = totalFundValue();
         uint256 totalSupplyBefore = totalSupply();
 
-        IExchanger sx = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
-        sx.settle(msg.sender, _SUSD_KEY);
+        // IExchanger sx = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
+        // sx.settle(msg.sender, _SUSD_KEY);
 
         require(
             IERC20(getAssetProxy(_SUSD_KEY)).transferFrom(
@@ -374,42 +374,42 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         return liquidityMinted;
     }
 
-    function _settleAll() internal {
-        ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
+    // function _settleAll() internal {
+    //     ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
 
-        uint256 assetCount = supportedAssets.length;
+    //     uint256 assetCount = supportedAssets.length;
 
-        for (uint256 i = 0; i < assetCount; i++) {
+    //     for (uint256 i = 0; i < assetCount; i++) {
 
-            address proxy = getAssetProxy(supportedAssets[i]);
-            uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
+    //         address proxy = getAssetProxy(supportedAssets[i]);
+    //         uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
 
-            if (totalAssetBalance > 0)
-                sx.settle(supportedAssets[i]);
+    //         if (totalAssetBalance > 0)
+    //             sx.settle(supportedAssets[i]);
 
-        }
-    }
+    //     }
+    // }
 
-    function _settleNotSuspended() internal {
-        ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
-        ISystemStatus status = ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
+    // function _settleNotSuspended() internal {
+    //     ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
+    //     ISystemStatus status = ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
 
-        uint256 assetCount = supportedAssets.length;
+    //     uint256 assetCount = supportedAssets.length;
 
-        for (uint256 i = 0; i < assetCount; i++) {
-            try status.requireSynthActive(supportedAssets[i]) {
+    //     for (uint256 i = 0; i < assetCount; i++) {
+    //         try status.requireSynthActive(supportedAssets[i]) {
 
-                address proxy = getAssetProxy(supportedAssets[i]);
-                uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
+    //             address proxy = getAssetProxy(supportedAssets[i]);
+    //             uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
 
-                if (totalAssetBalance > 0)
-                    sx.settle(supportedAssets[i]);
+    //             if (totalAssetBalance > 0)
+    //                 sx.settle(supportedAssets[i]);
 
-            } catch {
-                continue;
-            }
-        }
-    }
+    //         } catch {
+    //             continue;
+    //         }
+    //     }
+    // }
 
     function withdraw(uint256 _fundTokenAmount) public virtual {
         _withdraw(_fundTokenAmount, false);
@@ -448,11 +448,11 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         }
 
         //we need to settle all the assets before determining the total fund value
-        if(_forfeitSuspendedSynths){
-            _settleNotSuspended();
-        } else {
-            _settleAll();
-        }
+        // if(_forfeitSuspendedSynths){
+        //     _settleNotSuspended();
+        // } else {
+        //     _settleAll();
+        // }
 
         _mintManagerFee(false);
 
@@ -584,32 +584,32 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         return (assets, balances, rates);
     }
 
-    function getWaitingPeriods()
-        public
-        view
-        returns (
-            bytes32[] memory,
-            uint256[] memory
-        )
-    {
-        uint256 assetCount = supportedAssets.length;
+    // function getWaitingPeriods()
+    //     public
+    //     view
+    //     returns (
+    //         bytes32[] memory,
+    //         uint256[] memory
+    //     )
+    // {
+    //     uint256 assetCount = supportedAssets.length;
 
-        bytes32[] memory assets = new bytes32[](assetCount);
-        uint256[] memory periods = new uint256[](assetCount);
+    //     bytes32[] memory assets = new bytes32[](assetCount);
+    //     uint256[] memory periods = new uint256[](assetCount);
 
-        IExchanger exchanger = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
+    //     IExchanger exchanger = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
 
-        for (uint256 i = 0; i < assetCount; i++) {
-            bytes32 asset = supportedAssets[i];
-            assets[i] = asset;
-            periods[i] = exchanger.maxSecsLeftInWaitingPeriod(address(this), asset);
-        }
+    //     for (uint256 i = 0; i < assetCount; i++) {
+    //         bytes32 asset = supportedAssets[i];
+    //         assets[i] = asset;
+    //         periods[i] = exchanger.maxSecsLeftInWaitingPeriod(address(this), asset);
+    //     }
 
-        return (assets, periods);
-    }
+    //     return (assets, periods);
+    // }
 
     function getSuspendedAssets() public view returns (bytes32[] memory, bool[] memory) {
-        
+
         uint256 assetCount = supportedAssets.length;
 
         bytes32[] memory assets = new bytes32[](assetCount);
@@ -699,8 +699,8 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
 
     function _mintManagerFee(bool settle) internal {
         //we need to settle all the assets before minting the manager fee
-        if (settle)
-            _settleAll();
+        // if (settle)
+        //     _settleAll();
 
         uint256 fundValue = totalFundValue();
         uint256 tokenSupply = totalSupply();
@@ -771,9 +771,9 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
 
     // Exit fees
 
-    function getExitFee() external view returns (uint256, uint256) {
-        return IHasFeeInfo(factory).getExitFee();
-    }
+    // function getExitFee() external view returns (uint256, uint256) {
+    //     return IHasFeeInfo(factory).getExitFee();
+    // }
 
     function getExitFeeCooldown() external view returns (uint256) {
         return IHasFeeInfo(factory).getExitFeeCooldown();
