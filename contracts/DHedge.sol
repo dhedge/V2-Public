@@ -36,16 +36,15 @@
 
 pragma solidity ^0.6.2;
 
-import "./ISynthetix.sol";
-import "./IExchanger.sol";
-import "./ISynth.sol";
-import "./IExchangeRates.sol";
+// Deprecated
+// import "./IExchanger.sol";
 import "./IAddressResolver.sol";
 import "./ISystemStatus.sol";
-import "./Managed.sol";
 import "./IHasDaoInfo.sol";
 import "./IHasFeeInfo.sol";
-import "./IHasAssetInfo.sol";
+import "./IDHedgeManagerLogic.sol";
+import "./Managed.sol";
+
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
@@ -55,10 +54,10 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol
 contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
     using SafeMath for uint256;
 
-    bytes32 constant private _EXCHANGE_RATES_KEY = "ExchangeRates";
-    bytes32 constant private _SYNTHETIX_KEY = "Synthetix";
-    bytes32 constant private _EXCHANGER_KEY = "Exchanger";
+    // Deprecated
+    // bytes32 constant private _EXCHANGER_KEY = "Exchanger";
     bytes32 constant private _SYSTEM_STATUS_KEY = "SystemStatus";
+
     bytes32 constant private _SUSD_KEY = "sUSD";
 
     event Deposit(
@@ -71,6 +70,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         uint256 totalSupply,
         uint256 time
     );
+
     event Withdrawal(
         address fundAddress,
         address investor,
@@ -81,17 +81,6 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         uint256 totalSupply,
         uint256 time
     );
-    event Exchange(
-        address fundAddress,
-        address manager,
-        bytes32 sourceKey,
-        uint256 sourceAmount,
-        bytes32 destinationKey,
-        uint256 destinationAmount,
-        uint256 time
-    );
-    event AssetAdded(address fundAddress, address manager, bytes32 assetKey);
-    event AssetRemoved(address fundAddress, address manager, bytes32 assetKey);
 
     event PoolPrivacyUpdated(bool isPoolPrivate);
 
@@ -104,31 +93,34 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         uint256 tokenPriceAtLastFeeMint
     );
 
-    event ManagerFeeSet(
-        address fundAddress,
-        address manager,
-        uint256 numerator,
-        uint256 denominator
+    event ManagerLogicSet(
+        address managerLogic,
+        address from
     );
 
     bool public privatePool;
+
     address public creator;
 
     uint256 public creationTime;
 
-    IAddressResolver public addressResolver;
+    // Deprecated
+    // IAddressResolver public addressResolver;
 
     address public factory;
 
-    bytes32[] public supportedAssets;
-    mapping(bytes32 => uint256) public assetPosition; // maps the asset to its 1-based position
+    // Deprecated
+    // bytes32[] public supportedAssets;
 
-    mapping(bytes32 => bool) public persistentAsset;
+    // Deprecated
+    // mapping(bytes32 => uint256) public assetPosition; // maps the asset to its 1-based position (Deprecated)
 
     // Manager fees
     uint256 public tokenPriceAtLastFeeMint;
 
     mapping(address => uint256) public lastDeposit;
+
+    address public managerLogic;
 
     modifier onlyPrivate() {
         require(
@@ -146,8 +138,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         address _manager,
         string memory _managerName,
         string memory _fundName,
-        IAddressResolver _addressResolver,
-        bytes32[] memory _supportedAssets
+        address _managerLogic
     ) public initializer {
         ERC20UpgradeSafe.__ERC20_init(_fundName, "DHPT");
         Managed.initialize(_manager, _managerName);
@@ -156,26 +147,10 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         _setPoolPrivacy(_privatePool);
         creator = msg.sender;
         creationTime = block.timestamp;
-        addressResolver = _addressResolver;
-
-        _addToSupportedAssets(_SUSD_KEY);
-
-        for(uint8 i = 0; i < _supportedAssets.length; i++) {
-            _addToSupportedAssets(_supportedAssets[i]);
-        }
-
-        // Set persistent assets
-        persistentAsset[_SUSD_KEY] = true;
 
         tokenPriceAtLastFeeMint = 10**18;
-    }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal virtual override
-    {
-        super._beforeTokenTransfer(from, to, amount);
-
-        require(getExitFeeRemainingCooldown(from) == 0, "cooldown active");
+        managerLogic = _managerLogic;
     }
 
     function setPoolPrivate(bool _privatePool) public onlyManager {
@@ -190,158 +165,48 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         emit PoolPrivacyUpdated(_privacy);
     }
 
-    function getAssetProxy(bytes32 key) public view returns (address) {
-        address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY))
-            .synths(key);
-        require(synth != address(0), "invalid key");
-        address proxy = ISynth(synth).proxy();
-        require(proxy != address(0), "invalid proxy");
-        return proxy;
-    }
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal virtual override
+    {
+        super._beforeTokenTransfer(from, to, amount);
 
-    function isAssetSupported(bytes32 key) public view returns (bool) {
-        return assetPosition[key] != 0;
-    }
-
-    function validateAsset(bytes32 key) public view returns (bool) {
-        address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY))
-            .synths(key);
-
-        if (synth == address(0))
-            return false;
-
-        address proxy = ISynth(synth).proxy();
-
-        if (proxy == address(0))
-            return false;
-
-        return true;
-    }
-
-    function addToSupportedAssets(bytes32 key) public onlyManager {
-        _addToSupportedAssets(key);
-    }
-
-    function removeFromSupportedAssets(bytes32 key) public onlyManager {
-        require(isAssetSupported(key), "asset not supported");
-
-        require(!persistentAsset[key], "persistent assets can't be removed");
-
-        // ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
-        // sx.settle(key);
-
-        require(
-            IERC20(getAssetProxy(key)).balanceOf(address(this)) == 0,
-            "non-empty asset cannot be removed"
-        );
-
-        require(key != _SUSD_KEY, "sUSD can't be removed");
-
-        _removeFromSupportedAssets(key);
-    }
-
-    function numberOfSupportedAssets() public view returns (uint256) {
-        return supportedAssets.length;
-    }
-
-    // Unsafe internal method that assumes we are not adding a duplicate
-    function _addToSupportedAssets(bytes32 key) internal {
-        require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
-        require(!isAssetSupported(key), "asset already supported");
-        require(validateAsset(key) == true, "not an asset");
-
-        supportedAssets.push(key);
-        assetPosition[key] = supportedAssets.length;
-
-        emit AssetAdded(address(this), manager(), key);
-    }
-
-    // Unsafe internal method that assumes we are removing an element that exists
-    function _removeFromSupportedAssets(bytes32 key) internal {
-        uint256 length = supportedAssets.length;
-        uint256 index = assetPosition[key].sub(1); // adjusting the index because the map stores 1-based
-
-        bytes32 lastAsset = supportedAssets[length.sub(1)];
-
-        // overwrite the asset to be removed with the last supported asset
-        supportedAssets[index] = lastAsset;
-        assetPosition[lastAsset] = index.add(1); // adjusting the index to be 1-based
-        assetPosition[key] = 0; // update the map
-
-        // delete the last supported asset and resize the array
-        supportedAssets.pop();
-
-        emit AssetRemoved(address(this), manager(), key);
-    }
-
-    function exchange(
-        bytes32 sourceKey,
-        uint256 sourceAmount,
-        bytes32 destinationKey
-    ) public onlyManager {
-        require(isAssetSupported(sourceKey), "unsupported source currency");
-        require(
-            isAssetSupported(destinationKey),
-            "unsupported destination currency"
-        );
-
-        ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
-
-        uint256 destinationAmount = sx.exchangeWithTracking(
-            sourceKey,
-            sourceAmount,
-            destinationKey,
-            IHasDaoInfo(factory).getDaoAddress(),
-            IHasFeeInfo(factory).getTrackingCode()
-        );
-
-        emit Exchange(
-            address(this),
-            manager(),
-            sourceKey,
-            sourceAmount,
-            destinationKey,
-            destinationAmount,
-            block.timestamp
-        );
+        require(getExitFeeRemainingCooldown(from) == 0, "cooldown active");
     }
 
     function totalFundValue() public virtual view returns (uint256) {
         uint256 total = 0;
-        uint256 assetCount = supportedAssets.length;
+        IDHedgeManagerLogic dm = IDHedgeManagerLogic(managerLogic);
+        bytes32[] memory _supportedAssets = dm.getSupportedAssets();
+        uint256 assetCount = _supportedAssets.length;
 
         for (uint256 i = 0; i < assetCount; i++) {
-            total = total.add(assetValue(supportedAssets[i]));
+            total = total.add(dm.assetValue(_supportedAssets[i]));
         }
         return total;
-    }
-
-    function assetValue(bytes32 key) public view returns (uint256) {
-        return
-            IExchangeRates(addressResolver.getAddress(_EXCHANGE_RATES_KEY))
-                .effectiveValue(
-                key,
-                IERC20(getAssetProxy(key)).balanceOf(address(this)),
-                _SUSD_KEY
-            );
     }
 
     function deposit(uint256 _susdAmount) public onlyPrivate returns (uint256) {
         lastDeposit[msg.sender] = block.timestamp;
 
+        // Deprecated
         //we need to settle all the assets before determining the total fund value
         // _settleAll();
 
-        _mintManagerFee(false);
+        // Deprecated
+        // _mintManagerFee(false);
+        _mintManagerFee();
 
         uint256 fundValue = totalFundValue();
         uint256 totalSupplyBefore = totalSupply();
 
+        // Deprecated
         // IExchanger sx = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
         // sx.settle(msg.sender, _SUSD_KEY);
 
+        IDHedgeManagerLogic dm = IDHedgeManagerLogic(managerLogic);
+
         require(
-            IERC20(getAssetProxy(_SUSD_KEY)).transferFrom(
+            IERC20(dm.getAssetProxy(_SUSD_KEY)).transferFrom(
                 msg.sender,
                 address(this),
                 _susdAmount
@@ -374,6 +239,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         return liquidityMinted;
     }
 
+    // Deprecated
     // function _settleAll() internal {
     //     ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
 
@@ -390,6 +256,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
     //     }
     // }
 
+    // Deprecated
     // function _settleNotSuspended() internal {
     //     ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
     //     ISystemStatus status = ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
@@ -415,9 +282,10 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         _withdraw(_fundTokenAmount, false);
     }
 
-    function forfeitSuspendedSynthsAndWithdraw(uint256 _fundTokenAmount) public virtual {
-        _withdraw(_fundTokenAmount, true);
-    }
+    // Deprecated
+    // function forfeitSuspendedSynthsAndWithdraw(uint256 _fundTokenAmount) public virtual {
+    //     _withdraw(_fundTokenAmount, true);
+    // }
 
     function _withdraw(uint256 _fundTokenAmount, bool _forfeitSuspendedSynths) internal {
         require(
@@ -447,14 +315,17 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
             _transfer(msg.sender, daoAddress, daoExitFee);
         }
 
-        //we need to settle all the assets before determining the total fund value
+        // Deprecated
+        // we need to settle all the assets before determining the total fund value
         // if(_forfeitSuspendedSynths){
         //     _settleNotSuspended();
         // } else {
         //     _settleAll();
         // }
 
-        _mintManagerFee(false);
+        // Deprecated
+        // _mintManagerFee(false);
+        _mintManagerFee();
 
         uint256 fundValue = totalFundValue();
 
@@ -465,14 +336,16 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         //first return funded tokens
         _burn(msg.sender, _fundTokenAmount);
 
-        uint256 assetCount = supportedAssets.length;
+        IDHedgeManagerLogic dm = IDHedgeManagerLogic(managerLogic);
+        bytes32[] memory _supportedAssets = dm.getSupportedAssets();
+        uint256 assetCount = _supportedAssets.length;
 
         if(_forfeitSuspendedSynths){
-            ISystemStatus status = ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
+            ISystemStatus status = ISystemStatus(dm.addressResolver().getAddress(_SYSTEM_STATUS_KEY));
             for (uint256 i = 0; i < assetCount; i++) {
-                try status.requireSynthActive(supportedAssets[i]) {
+                try status.requireSynthActive(_supportedAssets[i]) {
 
-                    address proxy = getAssetProxy(supportedAssets[i]);
+                    address proxy = dm.getAssetProxy(_supportedAssets[i]);
                     uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
                     uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
 
@@ -486,7 +359,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
             }
         } else {
             for (uint256 i = 0; i < assetCount; i++) {
-                address proxy = getAssetProxy(supportedAssets[i]);
+                address proxy = dm.getAssetProxy(_supportedAssets[i]);
                 uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
                 uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
 
@@ -553,37 +426,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         );
     }
 
-    function getSupportedAssets() public view returns (bytes32[] memory) {
-        return supportedAssets;
-    }
-
-    function getFundComposition()
-        public
-        view
-        returns (
-            bytes32[] memory,
-            uint256[] memory,
-            uint256[] memory
-        )
-    {
-        uint256 assetCount = supportedAssets.length;
-
-        bytes32[] memory assets = new bytes32[](assetCount);
-        uint256[] memory balances = new uint256[](assetCount);
-        uint256[] memory rates = new uint256[](assetCount);
-
-        IExchangeRates exchangeRates = IExchangeRates(
-            addressResolver.getAddress(_EXCHANGE_RATES_KEY)
-        );
-        for (uint256 i = 0; i < assetCount; i++) {
-            bytes32 asset = supportedAssets[i];
-            balances[i] = IERC20(getAssetProxy(asset)).balanceOf(address(this));
-            assets[i] = asset;
-            rates[i] = exchangeRates.rateForCurrency(asset);
-        }
-        return (assets, balances, rates);
-    }
-
+    // Deprecated
     // function getWaitingPeriods()
     //     public
     //     view
@@ -607,31 +450,6 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
 
     //     return (assets, periods);
     // }
-
-    function getSuspendedAssets() public view returns (bytes32[] memory, bool[] memory) {
-
-        uint256 assetCount = supportedAssets.length;
-
-        bytes32[] memory assets = new bytes32[](assetCount);
-        bool[] memory suspended = new bool[](assetCount);
-
-        ISystemStatus status = ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
-
-        for (uint256 i = 0; i < assetCount; i++) {
-            bytes32 asset = supportedAssets[i];
-
-            assets[i] = asset;
-
-            try status.requireSynthActive(asset) {
-                suspended[i] = false;
-            } catch {
-                suspended[i] = true;
-            }
-        }
-
-        return (assets, suspended);
-
-    }
 
     // MANAGER FEES
 
@@ -694,10 +512,15 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
     }
 
     function mintManagerFee() public {
-        _mintManagerFee(true);
+        // Deprecated
+        // _mintManagerFee(true);
+        _mintManagerFee();
     }
 
-    function _mintManagerFee(bool settle) internal {
+    // Deprecated
+    // function _mintManagerFee(bool settle) internal
+    function _mintManagerFee() internal {
+        // Deprecated
         //we need to settle all the assets before minting the manager fee
         // if (settle)
         //     _settleAll();
@@ -746,31 +569,9 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         );
     }
 
-    function getManagerFee() external view returns (uint256, uint256) {
-        return IHasFeeInfo(factory).getPoolManagerFee(address(this));
-    }
-
-    function setManagerFeeNumerator(uint256 numerator) public onlyManager {
-        _setManagerFeeNumerator(numerator);
-    }
-
-    function _setManagerFeeNumerator(uint256 numerator) internal {
-        IHasFeeInfo(factory).setPoolManagerFeeNumerator(address(this), numerator);
-
-        uint256 managerFeeNumerator;
-        uint256 managerFeeDenominator;
-        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
-
-        emit ManagerFeeSet(
-            address(this),
-            manager(),
-            managerFeeNumerator,
-            managerFeeDenominator
-        );
-    }
-
     // Exit fees
 
+    // Deprecated
     // function getExitFee() external view returns (uint256, uint256) {
     //     return IHasFeeInfo(factory).getExitFee();
     // }
@@ -787,6 +588,16 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
             return 0;
 
         return cooldownFinished.sub(block.timestamp);
+    }
+
+    function setManagerLogic(address _managerLogic) external onlyManager returns (bool){
+      managerLogic = _managerLogic;
+      emit ManagerLogicSet(_managerLogic, msg.sender);
+      return true;
+    }
+
+    function getManagerLogic() external view returns (address){
+      return managerLogic;
     }
 
     uint256[50] private __gap;

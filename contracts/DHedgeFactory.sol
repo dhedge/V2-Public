@@ -167,7 +167,7 @@ contract DHedgeFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo 
 
         emit DaoAddressSet(daoAddress);
     }
-    
+
     function setDaoFee(uint256 numerator, uint256 denominator) public onlyOwner {
         _setDaoFee(numerator, denominator);
     }

@@ -13,18 +13,21 @@ async function main () {
   const signer = (await ethers.getSigners())[0]
   console.log('signer address: ', await signer.getAddress())
 
-  // Deploy DHedgeFactory
-  const DHedgeFactory = await l2ethers.getContractFactory("DHedgeFactory", {
+  // Deploy DHedge
+  const DHedge = await l2ethers.getContractFactory('DHedge', {
     signer: (await ethers.getSigners())[0]
-  });
-  const dHedgeFactory = await DHedgeFactory.deploy();
-  let tx = await dHedgeFactory.deployed();
+  })
+
+  const dHedge = await DHedge.deploy()
+  let tx = await dHedge.deployed()
+
   console.log("tx: ", tx.deployTransaction.hash)
-  console.log("DHedgeFactory deployed to:", dHedgeFactory.address);
+  console.log('DHedge deployed to:', dHedge.address)
   console.log(
     'deployed bytecode:',
-    await ethers.provider.getCode(dHedgeFactory.address)
+    await ethers.provider.getCode(dHedge.address)
   )
+  console.log('numberOfSupportedAssets:', await dHedge.numberOfSupportedAssets())
 
   // Deploy ProxyAdmin
   const ProxyAdmin = await l2ethers.getContractFactory('ProxyAdmin', {
@@ -46,7 +49,7 @@ async function main () {
   const Proxy = await l2ethers.getContractFactory('OZProxy', {
     signer: (await ethers.getSigners())[0]
   })
-  const proxy = await Proxy.deploy(dHedgeFactory.address, proxyAdmin.address, "0x")
+  const proxy = await Proxy.deploy(dHedge.address, proxyAdmin.address, "0x")
   tx = await proxy.deployed()
 
   console.log('Proxy deployed to:', proxy.address)
@@ -56,8 +59,7 @@ async function main () {
     await ethers.provider.getCode(proxy.address)
   )
 
-  const dHedgeFactoryUpgrade = await DHedgeFactory.attach(proxy.address)
-  await dHedgeFactoryUpgrade.initialize(KOVAN_ADDRESS_RESOLVER, KOVAN_ADDRESS_RESOLVER, TESTNET_DAO)
+  const dHedgeUpgrade = await DHedge.attach(proxy.address)
   let daoFee = await dHedgeFactoryUpgrade.getDaoFee()
   daoFee.map(each => { console.log("daoFee: ", each.toString()) })
 }
