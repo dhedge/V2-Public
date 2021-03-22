@@ -13,13 +13,29 @@ async function main () {
   const signer = (await ethers.getSigners())[0]
   console.log('signer address: ', await signer.getAddress())
 
+  // Deploy DHedgeManagerLogic
+  const DHedgeManagerLogic = await l2ethers.getContractFactory('DHedgeManagerLogic', {
+    signer: (await ethers.getSigners())[0]
+  })
+
+  const dHedgeManagerLogic = await DHedgeManagerLogic.deploy()
+  let tx = await dHedgeManagerLogic.deployed()
+
+  console.log("tx: ", tx.deployTransaction.hash)
+  console.log('DHedgeManagerLogic deployed to:', dHedgeManagerLogic.address)
+  console.log(
+    'deployed bytecode:',
+    await ethers.provider.getCode(dHedgeManagerLogic.address)
+  )
+  console.log('numberOfSupportedAssets:', await dHedgeManagerLogic.numberOfSupportedAssets())
+
   // Deploy DHedge
   const DHedge = await l2ethers.getContractFactory('DHedge', {
     signer: (await ethers.getSigners())[0]
   })
 
   const dHedge = await DHedge.deploy()
-  let tx = await dHedge.deployed()
+  tx = await dHedge.deployed()
 
   console.log("tx: ", tx.deployTransaction.hash)
   console.log('DHedge deployed to:', dHedge.address)
@@ -27,7 +43,7 @@ async function main () {
     'deployed bytecode:',
     await ethers.provider.getCode(dHedge.address)
   )
-  console.log('numberOfSupportedAssets:', await dHedge.numberOfSupportedAssets())
+  console.log('tokenPriceAtLastFeeMint:', await dHedge.tokenPriceAtLastFeeMint())
 
   // Deploy ProxyAdmin
   const ProxyAdmin = await l2ethers.getContractFactory('ProxyAdmin', {
@@ -45,23 +61,38 @@ async function main () {
 
   console.log('ProxyAdmin owner:', await proxyAdmin.owner())
 
-  // Deploy Proxy
-  const Proxy = await l2ethers.getContractFactory('OZProxy', {
+  // Deploy DHedgeManagerLogic Proxy
+  const DHedgeManagerLogicProxy = await l2ethers.getContractFactory('OZProxy', {
     signer: (await ethers.getSigners())[0]
   })
-  const proxy = await Proxy.deploy(dHedge.address, proxyAdmin.address, "0x")
-  tx = await proxy.deployed()
+  const dHedgeManagerLogicProxy = await DHedgeManagerLogicProxy.deploy(dHedgeManagerLogic.address, proxyAdmin.address, "0x")
+  tx = await dHedgeManagerLogicProxy.deployed()
 
-  console.log('Proxy deployed to:', proxy.address)
+  console.log('dHedgeManagerLogicProxy deployed to:', dHedgeManagerLogicProxy.address)
   console.log("tx: ", tx.deployTransaction.hash)
   console.log(
     'deployed bytecode:',
-    await ethers.provider.getCode(proxy.address)
+    await ethers.provider.getCode(dHedgeManagerLogicProxy.address)
   )
 
-  const dHedgeUpgrade = await DHedge.attach(proxy.address)
-  let daoFee = await dHedgeFactoryUpgrade.getDaoFee()
-  daoFee.map(each => { console.log("daoFee: ", each.toString()) })
+  // Deploy DHedgeProxy
+  const DHedgeProxy = await l2ethers.getContractFactory('OZProxy', {
+    signer: (await ethers.getSigners())[0]
+  })
+  const dHedgeProxy = await DHedgeProxy.deploy(dHedge.address, proxyAdmin.address, "0x")
+  tx = await dHedgeProxy.deployed()
+
+  console.log('dHedgeProxy deployed to:', dHedgeProxy.address)
+  console.log("tx: ", tx.deployTransaction.hash)
+  console.log(
+    'deployed bytecode:',
+    await ethers.provider.getCode(dHedgeProxy.address)
+  )
+
+  // const dHedgeManagerLogicUpgrade = await DHedgeManagerLogic.attach(dHedgeManagerLogicProxy.address)
+  // dHedgeManagerLogicUpgrade.initialize()
+  // let daoFee = await dHedgeFactoryUpgrade.getDaoFee()
+  // daoFee.map(each => { console.log("daoFee: ", each.toString()) })
 }
 
 main()
