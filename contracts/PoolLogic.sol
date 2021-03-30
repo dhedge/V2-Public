@@ -36,13 +36,15 @@
 
 pragma solidity ^0.6.2;
 
+import "hardhat/console.sol";
+
 // Deprecated
 // import "./IExchanger.sol";
-import "./IAddressResolver.sol";
-import "./ISystemStatus.sol";
-import "./IHasDaoInfo.sol";
-import "./IHasFeeInfo.sol";
-import "./IDHedgeManagerLogic.sol";
+import "./interfaces/IAddressResolver.sol";
+import "./interfaces/ISystemStatus.sol";
+import "./interfaces/IHasDaoInfo.sol";
+import "./interfaces/IHasFeeInfo.sol";
+import "./interfaces/IPoolManagerLogic.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
@@ -51,7 +53,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
+contract PoolLogic is ERC20UpgradeSafe, Managed {
     using SafeMath for uint256;
 
     // Deprecated
@@ -93,8 +95,8 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         uint256 tokenPriceAtLastFeeMint
     );
 
-    event ManagerLogicSet(
-        address managerLogic,
+    event PoolManagerLogicSet(
+        address poolManagerLogic,
         address from
     );
 
@@ -120,7 +122,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
 
     mapping(address => uint256) public lastDeposit;
 
-    address public managerLogic;
+    address public poolManagerLogic;
 
     modifier onlyPrivate() {
         require(
@@ -138,10 +140,12 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         address _manager,
         string memory _managerName,
         string memory _fundName,
-        address _managerLogic
+        address _poolManagerLogic
     ) public initializer {
-        ERC20UpgradeSafe.__ERC20_init(_fundName, "DHPT");
-        Managed.initialize(_manager, _managerName);
+        console.log("Here?");
+        __ERC20_init(_fundName, "DHPT");
+        console.log("THere?");
+        initialize(_manager, _managerName);
 
         factory = _factory;
         _setPoolPrivacy(_privatePool);
@@ -150,7 +154,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
 
         tokenPriceAtLastFeeMint = 10**18;
 
-        managerLogic = _managerLogic;
+        poolManagerLogic = _poolManagerLogic;
     }
 
     function setPoolPrivate(bool _privatePool) public onlyManager {
@@ -175,7 +179,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
 
     function totalFundValue() public virtual view returns (uint256) {
         uint256 total = 0;
-        IDHedgeManagerLogic dm = IDHedgeManagerLogic(managerLogic);
+        IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
         bytes32[] memory _supportedAssets = dm.getSupportedAssets();
         uint256 assetCount = _supportedAssets.length;
 
@@ -203,7 +207,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         // IExchanger sx = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
         // sx.settle(msg.sender, _SUSD_KEY);
 
-        IDHedgeManagerLogic dm = IDHedgeManagerLogic(managerLogic);
+        IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
 
         require(
             IERC20(dm.getAssetProxy(_SUSD_KEY)).transferFrom(
@@ -336,7 +340,7 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         //first return funded tokens
         _burn(msg.sender, _fundTokenAmount);
 
-        IDHedgeManagerLogic dm = IDHedgeManagerLogic(managerLogic);
+        IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
         bytes32[] memory _supportedAssets = dm.getSupportedAssets();
         uint256 assetCount = _supportedAssets.length;
 
@@ -590,14 +594,14 @@ contract DHedge is Initializable, ERC20UpgradeSafe, Managed {
         return cooldownFinished.sub(block.timestamp);
     }
 
-    function setManagerLogic(address _managerLogic) external onlyManager returns (bool){
-      managerLogic = _managerLogic;
-      emit ManagerLogicSet(_managerLogic, msg.sender);
+    function setPoolManagerLogic(address _poolManagerLogic) external onlyManager returns (bool){
+      poolManagerLogic = _poolManagerLogic;
+      emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
       return true;
     }
 
-    function getManagerLogic() external view returns (address){
-      return managerLogic;
+    function getPoolManagerLogic() external view returns (address){
+      return poolManagerLogic;
     }
 
     uint256[50] private __gap;

@@ -1,7 +1,6 @@
 const hre = require('hardhat')
-const { ethers } = require("hardhat");
 // Place holder addresses
-const KOVAN_ADDRESS_RESOLVER = '0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2';
+const KOVAN_ADDRESS_RESOLVER = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
 const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 
 async function main () {
@@ -13,42 +12,49 @@ async function main () {
   const signer = (await ethers.getSigners())[0]
   console.log('signer address: ', await signer.getAddress())
 
-  // Deploy DHedgeManagerLogic
-  const DHedgeManagerLogic = await l2ethers.getContractFactory('DHedgeManagerLogic', {
-    signer: (await ethers.getSigners())[0]
-  })
+  // Deploy PoolFactoryLogic
+  const PoolFactoryLogic = await l2ethers.getContractFactory('PoolFactory')
 
-  const dHedgeManagerLogic = await DHedgeManagerLogic.deploy()
-  let tx = await dHedgeManagerLogic.deployed()
+  const poolFactoryLogic = await PoolFactoryLogic.deploy()
+  let tx = await poolFactoryLogic.deployed()
 
   console.log("tx: ", tx.deployTransaction.hash)
-  console.log('DHedgeManagerLogic deployed to:', dHedgeManagerLogic.address)
+  console.log('poolFactoryLogic deployed to:', poolFactoryLogic.address)
   console.log(
     'deployed bytecode:',
-    await ethers.provider.getCode(dHedgeManagerLogic.address)
+    await ethers.provider.getCode(poolFactoryLogic.address)
   )
-  console.log('numberOfSupportedAssets:', await dHedgeManagerLogic.numberOfSupportedAssets())
 
-  // Deploy DHedge
-  const DHedge = await l2ethers.getContractFactory('DHedge', {
-    signer: (await ethers.getSigners())[0]
-  })
+  // Deploy PoolManagerLogic
+  const PoolManagerLogic = await l2ethers.getContractFactory('PoolManagerLogic')
 
-  const dHedge = await DHedge.deploy()
-  tx = await dHedge.deployed()
+  const poolManagerLogic = await PoolManagerLogic.deploy()
+  tx = await poolManagerLogic.deployed()
 
   console.log("tx: ", tx.deployTransaction.hash)
-  console.log('DHedge deployed to:', dHedge.address)
+  console.log('PoolManagerLogic deployed to:', poolManagerLogic.address)
   console.log(
     'deployed bytecode:',
-    await ethers.provider.getCode(dHedge.address)
+    await ethers.provider.getCode(poolManagerLogic.address)
   )
-  console.log('tokenPriceAtLastFeeMint:', await dHedge.tokenPriceAtLastFeeMint())
+  console.log('numberOfSupportedAssets:', await poolManagerLogic.numberOfSupportedAssets())
+
+  // Deploy PoolLogic
+  const PoolLogic = await l2ethers.getContractFactory('PoolLogic')
+
+  const poolLogic = await PoolLogic.deploy()
+  tx = await poolLogic.deployed()
+
+  console.log("tx: ", tx.deployTransaction.hash)
+  console.log('poolLogic deployed to:', poolLogic.address)
+  console.log(
+    'deployed bytecode:',
+    await ethers.provider.getCode(poolLogic.address)
+  )
+  console.log('tokenPriceAtLastFeeMint:', await poolLogic.tokenPriceAtLastFeeMint())
 
   // Deploy ProxyAdmin
-  const ProxyAdmin = await l2ethers.getContractFactory('ProxyAdmin', {
-    signer: (await ethers.getSigners())[0]
-  })
+  const ProxyAdmin = await l2ethers.getContractFactory('ProxyAdmin')
   const proxyAdmin = await ProxyAdmin.deploy()
   tx = await proxyAdmin.deployed()
 
@@ -61,38 +67,30 @@ async function main () {
 
   console.log('ProxyAdmin owner:', await proxyAdmin.owner())
 
-  // Deploy DHedgeManagerLogic Proxy
-  const DHedgeManagerLogicProxy = await l2ethers.getContractFactory('OZProxy', {
-    signer: (await ethers.getSigners())[0]
-  })
-  const dHedgeManagerLogicProxy = await DHedgeManagerLogicProxy.deploy(dHedgeManagerLogic.address, proxyAdmin.address, "0x")
-  tx = await dHedgeManagerLogicProxy.deployed()
+  // Deploy poolFactory Proxy
+  const PoolFactoryProxy = await l2ethers.getContractFactory('OZProxy')
+  const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x")
+  tx = await poolFactoryProxy.deployed()
 
-  console.log('dHedgeManagerLogicProxy deployed to:', dHedgeManagerLogicProxy.address)
+  console.log('poolFactoryProxy deployed to:', poolFactoryProxy.address)
   console.log("tx: ", tx.deployTransaction.hash)
   console.log(
     'deployed bytecode:',
-    await ethers.provider.getCode(dHedgeManagerLogicProxy.address)
+    await ethers.provider.getCode(poolFactoryProxy.address)
   )
 
-  // Deploy DHedgeProxy
-  const DHedgeProxy = await l2ethers.getContractFactory('OZProxy', {
-    signer: (await ethers.getSigners())[0]
-  })
-  const dHedgeProxy = await DHedgeProxy.deploy(dHedge.address, proxyAdmin.address, "0x")
-  tx = await dHedgeProxy.deployed()
+  const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
+  tx = await poolFactory.initialize(KOVAN_ADDRESS_RESOLVER, poolLogic.address, poolManagerLogic.address, TESTNET_DAO)
+  console.log("tx: ", tx.hash)
+  let daoFee = await poolFactory.getDaoFee()
+  daoFee.map(each => { console.log("daoFee: ", each.toString()) })
 
-  console.log('dHedgeProxy deployed to:', dHedgeProxy.address)
-  console.log("tx: ", tx.deployTransaction.hash)
-  console.log(
-    'deployed bytecode:',
-    await ethers.provider.getCode(dHedgeProxy.address)
-  )
+  tx = await poolFactory.createFund(
+    false, signer.address, 'Barren Wuffet', 'Test Fund', new ethers.BigNumber.from('5000'), []
+  );
+  // TX got Reverted
+  console.log("tx: ", tx)
 
-  // const dHedgeManagerLogicUpgrade = await DHedgeManagerLogic.attach(dHedgeManagerLogicProxy.address)
-  // dHedgeManagerLogicUpgrade.initialize()
-  // let daoFee = await dHedgeFactoryUpgrade.getDaoFee()
-  // daoFee.map(each => { console.log("daoFee: ", each.toString()) })
 }
 
 main()

@@ -38,7 +38,7 @@ pragma solidity ^0.6.2;
 
 import "./IAddressResolver.sol";
 
-interface IDHedgeManagerLogic {
+interface IPoolManagerLogic {
 
     function getSupportedAssets() external view returns (bytes32[] memory);
 

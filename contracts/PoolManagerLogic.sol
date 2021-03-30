@@ -34,15 +34,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-import "./ISynth.sol";
-import "./IDHedgeManagerLogic.sol";
-import "./IHasAssetInfo.sol";
-import "./ISynthetix.sol";
-import "./ISystemStatus.sol";
-import "./IExchangeRates.sol";
-import "./IAddressResolver.sol";
-import "./IHasFeeInfo.sol";
-import "./IHasDaoInfo.sol";
+import "hardhat/console.sol";
+
+import "./interfaces/ISynth.sol";
+import "./interfaces/IPoolManagerLogic.sol";
+import "./interfaces/IHasAssetInfo.sol";
+import "./interfaces/ISynthetix.sol";
+import "./interfaces/ISystemStatus.sol";
+import "./interfaces/IExchangeRates.sol";
+import "./interfaces/IAddressResolver.sol";
+import "./interfaces/IHasFeeInfo.sol";
+import "./interfaces/IHasDaoInfo.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
@@ -51,7 +53,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 pragma solidity ^0.6.2;
 
-contract DHedgeManagerLogic is IDHedgeManagerLogic, Initializable, Managed {
+contract PoolManagerLogic is IPoolManagerLogic, Managed {
     using SafeMath for uint256;
 
     bytes32 constant private _SYNTHETIX_KEY = "Synthetix";
@@ -63,6 +65,8 @@ contract DHedgeManagerLogic is IDHedgeManagerLogic, Initializable, Managed {
     bytes32 constant private _SUSD_KEY = "sUSD";
 
     IAddressResolver public override addressResolver;
+
+    address public addressResolverAddress;
 
     bytes32[] public supportedAssets;
 
@@ -95,16 +99,20 @@ contract DHedgeManagerLogic is IDHedgeManagerLogic, Initializable, Managed {
 
     function initialize(
         address _factory,
-        IAddressResolver _addressResolver,
-        bytes32[] memory _supportedAssets,
         address _manager,
-        string memory _managerName
+        string memory _managerName,
+        // IAddressResolver _addressResolver,
+        address _addressResolver,
+        bytes32[] memory _supportedAssets
     ) public initializer {
-        Managed.initialize(_manager, _managerName);
+        console.log("here?");
+        initialize(_manager, _managerName);
 
         factory = _factory;
         // _setPoolPrivacy(_privatePool);
-        addressResolver = _addressResolver;
+        addressResolver = IAddressResolver(_addressResolver);
+
+        addressResolverAddress = _addressResolver;
 
         _addToSupportedAssets(_SUSD_KEY);
 
@@ -117,6 +125,9 @@ contract DHedgeManagerLogic is IDHedgeManagerLogic, Initializable, Managed {
     }
 
     function validateAsset(bytes32 key) public view returns (bool) {
+        console.log("addressResolverAddress %s", addressResolverAddress);
+        console.log("addressResolver.getAddress %s", addressResolver.getAddress(_SYNTHETIX_KEY));
+        console.log("ISynthetix %s", ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key));
         address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY))
             .synths(key);
 
