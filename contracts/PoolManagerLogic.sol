@@ -34,8 +34,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-import "hardhat/console.sol";
-
 import "./interfaces/ISynth.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasAssetInfo.sol";
@@ -105,7 +103,6 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         address _addressResolver,
         bytes32[] memory _supportedAssets
     ) public initializer {
-        console.log("here?");
         initialize(_manager, _managerName);
 
         factory = _factory;
@@ -125,9 +122,6 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     }
 
     function validateAsset(bytes32 key) public view returns (bool) {
-        console.log("addressResolverAddress %s", addressResolverAddress);
-        console.log("addressResolver.getAddress %s", addressResolver.getAddress(_SYNTHETIX_KEY));
-        console.log("ISynthetix %s", ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key));
         address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY))
             .synths(key);
 

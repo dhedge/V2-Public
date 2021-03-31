@@ -52,23 +52,24 @@ describe("PoolFactory", function() {
     console.log("poolManagerLogic deployed at: ", poolManagerLogic.address)
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    // poolFactoryLogic = await PoolFactoryLogic.deploy();
-    // console.log("PoolFactoryLogic deployed at: ", poolFactoryLogic.address)
+    poolFactoryLogic = await PoolFactoryLogic.deploy();
+    console.log("PoolFactoryLogic deployed at: ", poolFactoryLogic.address)
 
     // Deploy ProxyAdmin
-    // const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin')
-    // const proxyAdmin = await ProxyAdmin.deploy()
-    // await proxyAdmin.deployed()
+    const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin')
+    const proxyAdmin = await ProxyAdmin.deploy()
+    await proxyAdmin.deployed()
 
-    // const PoolFactoryProxy = await ethers.getContractFactory('OZProxy')
-    // const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, logicAdmin.address, "0x")
-    // await poolFactoryProxy.deployed()
+    // Deploy PoolFactoryProxy
+    const PoolFactoryProxy = await ethers.getContractFactory('OZProxy')
+    const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, logicAdmin.address, "0x")
+    await poolFactoryProxy.deployed()
 
-    // poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
-    // await poolFactory.initialize(
-    //   mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO
-    // );
-    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO])
+    poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
+    await poolFactory.initialize(
+      mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO
+    );
+    // poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO])
     await poolFactory.deployed();
     console.log("poolFactory deployed to:", poolFactory.address);
   });

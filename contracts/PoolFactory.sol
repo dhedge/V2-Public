@@ -34,8 +34,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-import "hardhat/console.sol";
-
 pragma solidity ^0.6.2;
 
 import "./interfaces/ISynthetix.sol";
@@ -122,10 +120,6 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
         uint256 _managerFeeNumerator,
         bytes32[] memory _supportedAssets
     ) public returns (address) {
-        console.log("factory %s", address(this));
-        console.log("_manager %s", _manager);
-        console.log("_managerName %s", _managerName);
-        console.log("addressResolverAddress %s", addressResolverAddress);
         bytes memory managerLogicData = abi.encodeWithSignature(
             "initialize(address,address,string,address,bytes32[])",
             address(this),
@@ -139,8 +133,6 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
         );
 
         address managerLogic = deploy(managerLogicData, 1);
-
-        console.log("deployed managerLogic");
 
         bytes memory poolLogicData = abi.encodeWithSignature(
             "initialize(address,bool,address,string,string,address)",

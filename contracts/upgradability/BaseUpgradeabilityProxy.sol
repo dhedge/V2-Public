@@ -28,7 +28,7 @@ contract BaseUpgradeabilityProxy is Proxy {
     /**
      * @dev Storing type of the proxy, 1 for managerLogic, 2 for pool.
      */
-    uint8 internal proxyType;
+    bytes32 internal constant PROXY_TYPE = 0x1000000000000000000000000000000000000000000000000000000000000000;
 
     /**
      * @dev Returns the current implementation.
@@ -44,7 +44,16 @@ contract BaseUpgradeabilityProxy is Proxy {
         // Begin custom modification
         if (factory == address(0x0)) return address(0x0); // If factory not initialized return empty
 
-        return HasLogic(factory).getLogic(proxyType);
+        return HasLogic(factory).getLogic(_proxyType());
+    }
+
+    function _proxyType() internal view returns (uint8) {
+        uint8 proxyType;
+        bytes32 slot = PROXY_TYPE;
+        assembly {
+            proxyType := sload(slot)
+        }
+        return proxyType;
     }
 
     /**
@@ -70,6 +79,18 @@ contract BaseUpgradeabilityProxy is Proxy {
 
         assembly {
             sstore(slot, newImplementation)
+        }
+    }
+
+    /**
+     * @dev Sets type of the proxy.
+     * @param _proxyType type of the proxy.
+     */
+    function _setProxyType(uint8 _proxyType) internal {
+        bytes32 slot = PROXY_TYPE;
+
+        assembly {
+            sstore(slot, _proxyType)
         }
     }
 }

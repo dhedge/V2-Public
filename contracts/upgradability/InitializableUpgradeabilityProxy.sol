@@ -23,7 +23,7 @@ contract InitializableUpgradeabilityProxy is BaseUpgradeabilityProxy {
                 bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
         );
         _setImplementation(_factory);
-        proxyType = _proxyType;
+        _setProxyType(_proxyType);
         if (_data.length > 0) {
             (bool success, ) = _implementation().delegatecall(_data);
             require(success, "Implementation init failed");
