@@ -141,11 +141,12 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         string memory _managerName,
         string memory _fundName,
         address _poolManagerLogic
-    ) public initializer {
-        console.log("Here?");
+    ) public {
+        console.log("here0?");
         __ERC20_init(_fundName, "DHPT");
-        console.log("THere?");
+        console.log("here1?");
         initialize(_manager, _managerName);
+        console.log("here2?");
 
         factory = _factory;
         _setPoolPrivacy(_privatePool);

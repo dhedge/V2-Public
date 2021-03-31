@@ -53,7 +53,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 pragma solidity ^0.6.2;
 
-contract PoolManagerLogic is IPoolManagerLogic, Managed {
+contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     using SafeMath for uint256;
 
     bytes32 constant private _SYNTHETIX_KEY = "Synthetix";
