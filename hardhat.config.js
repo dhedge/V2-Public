@@ -2,7 +2,7 @@ require('dotenv').config()
 require('@eth-optimism/plugins/hardhat/compiler')
 require('@eth-optimism/plugins/hardhat/ethers')
 require("hardhat-gas-reporter");
-require('@openzeppelin/hardhat-upgrades');
+require("@nomiclabs/hardhat-waffle");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

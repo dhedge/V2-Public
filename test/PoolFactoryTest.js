@@ -1,14 +1,9 @@
-const hre = require('hardhat')
-const { ethers, upgrades } = require("hardhat");
-
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = '0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2';
 const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 
 const { expect } = require("chai");
 
-// const ethers = hre.ethers
-// const l2ethers = hre.l2ethers
 let logicOwner, poolFactory, poolLogic, poolManagerLogic, mock;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -69,7 +64,6 @@ describe("PoolFactory", function() {
     await poolFactory.initialize(
       mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO
     );
-    // poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO])
     await poolFactory.deployed();
     console.log("poolFactory deployed to:", poolFactory.address);
   });
@@ -77,7 +71,6 @@ describe("PoolFactory", function() {
   it("Should be able to createFund", async function() {
     console.log("Creating Fund...")
 
-    //TODO: Refactor to use Waffle Event Expect
     let fundCreatedEvent = new Promise((resolve, reject) => {
         poolFactory.on('FundCreated', (fundAddress, isPoolPrivate, fundName, managerName, manager, time, managerFeeNumerator, managerFeeDenominator, event) => {
             event.removeListener();
