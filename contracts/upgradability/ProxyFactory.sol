@@ -43,30 +43,40 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 contract ProxyFactory is OwnableUpgradeSafe, HasLogic {
     event ProxyCreated(address proxy);
 
-    address private _logic;
+    address private poolLogic;
 
-    function __ProxyFactory_init(address poolLogic) public initializer {
-        OwnableUpgradeSafe.__Ownable_init();
+    address private poolManagerLogic;
 
-        _logic = poolLogic;
+    function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic) internal {
+        __Ownable_init();
+
+        poolLogic = _poolLogic;
+
+        poolManagerLogic = _poolManagerLogic;
     }
 
-    function setLogic(address logic) public onlyOwner {
-        _logic = logic;
+    function setLogic(address _poolLogic, address _poolManagerLogic) public onlyOwner {
+        poolLogic = _poolLogic;
+
+        poolManagerLogic = _poolManagerLogic;
     }
 
-    function getLogic() public override view returns (address) {
-        return _logic;
+    function getLogic(uint8 _proxyType) public override view returns (address) {
+        if(_proxyType == 1){
+          return poolManagerLogic;
+        }else{
+          return poolLogic;
+        }
     }
 
-    function deploy(bytes memory _data) public returns (address) {
-        return _deployProxy(_data);
+    function deploy(bytes memory _data, uint8 _proxyType) public returns (address) {
+        return _deployProxy(_data, _proxyType);
     }
 
-    function _deployProxy(bytes memory _data) internal returns (address) {
+    function _deployProxy(bytes memory _data, uint8 _proxyType) internal returns (address) {
         InitializableUpgradeabilityProxy proxy = _createProxy();
         emit ProxyCreated(address(proxy));
-        proxy.initialize(address(this), _data);
+        proxy.initialize(address(this), _data, _proxyType);
         return address(proxy);
     }
 
@@ -86,6 +96,6 @@ contract ProxyFactory is OwnableUpgradeSafe, HasLogic {
 
         return InitializableUpgradeabilityProxy(addr);
     }
-    
+
     uint256[50] private __gap;
 }

@@ -42,31 +42,32 @@
 **functions (31):**
 - initialize
 - _beforeTokenTransfer - pool
-- getAssetProxy - pool
-- isAssetSupported - pool
-- validateAsset - pool
-- numberOfSupportedAssets - pool
 - totalFundValue - pool
-- assetValue - pool
 - deposit - pool
 - withdraw - pool
-- forfeitSuspendedSynthsAndWithdraw - pool
 - _withdraw - pool
 - getFundSummary - pool
-- getFundComposition - pool
-- getSuspendedAssets - pool
 - tokenPrice - pool
 - _tokenPrice - pool
-- availableManagerFee - pool
-- _availableManagerFee - pool
 - mintManagerFee - pool
 - _mintManagerFee - pool
-- getManagerFee - pool
-- getExitFeeCooldown - pool
+- getFundComposition - pool
 - getExitFeeRemainingCooldown - pool
+- getExitFeeCooldown - pool
+- availableManagerFee - pool
+- _availableManagerFee - pool
+- setPoolPrivate - pool
+- assetValue - pool
 
-- setPoolPrivate - manager
+**Remove:**
+- validateAsset - manager
+- isAssetSupported - manager
+- getSuspendedAssets - pool
+- numberOfSupportedAssets - pool
+- getAssetProxy - pool
 - addToSupportedAssets - manager
 - _addToSupportedAssets - manager
 - removeFromSupportedAssets - manager
 - exchange - manager
+- getManagerFee - manager
+- setManagerFeeNumerator - manager

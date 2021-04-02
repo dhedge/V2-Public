@@ -40,7 +40,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 
-contract Managed is Initializable {
+contract Managed {
     using SafeMath for uint256;
 
     event ManagerUpdated(address newManager, string newManagerName);
@@ -53,7 +53,6 @@ contract Managed is Initializable {
 
     function initialize(address manager, string memory managerName)
         internal
-        initializer
     {
         _manager = manager;
         _managerName = managerName;

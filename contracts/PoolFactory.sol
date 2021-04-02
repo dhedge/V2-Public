@@ -36,16 +36,16 @@
 
 pragma solidity ^0.6.2;
 
-import "./ISynthetix.sol";
-import "./IExchangeRates.sol";
-import "./IAddressResolver.sol";
-import "./DHedge.sol";
+import "./interfaces/ISynthetix.sol";
+import "./interfaces/IExchangeRates.sol";
+import "./interfaces/IAddressResolver.sol";
+import "./PoolLogic.sol";
 import "./upgradability/ProxyFactory.sol";
-import "./IHasDaoInfo.sol";
-import "./IHasFeeInfo.sol";
-import "./IHasAssetInfo.sol";
+import "./interfaces/IHasDaoInfo.sol";
+import "./interfaces/IHasFeeInfo.sol";
+import "./interfaces/IHasAssetInfo.sol";
 
-contract DHedgeFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
+contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
     event FundCreated(
         address fundAddress,
         bool isPoolPrivate,
@@ -66,6 +66,8 @@ contract DHedgeFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo 
     event MaximumSupportedAssetCountSet(uint256 count);
 
     IAddressResolver public addressResolver;
+
+    address public addressResolverAddress;
 
     address[] public deployedFunds;
 
@@ -88,10 +90,12 @@ contract DHedgeFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo 
 
     bytes32 internal _trackingCode;
 
-    function initialize(IAddressResolver _addressResolver, address _poolLogic, address daoAddress) public initializer {
-        ProxyFactory.__ProxyFactory_init(_poolLogic);
+    function initialize(address _addressResolver, address _poolLogic, address _managerLogic, address daoAddress) public initializer {
+        __ProxyFactory_init(_poolLogic, _managerLogic);
 
-        addressResolver = _addressResolver;
+        addressResolver = IAddressResolver(_addressResolver);
+
+        addressResolverAddress = _addressResolver;
 
         _setDaoAddress(daoAddress);
 
@@ -116,18 +120,33 @@ contract DHedgeFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo 
         uint256 _managerFeeNumerator,
         bytes32[] memory _supportedAssets
     ) public returns (address) {
-        bytes memory data = abi.encodeWithSignature(
-            "initialize(address,bool,address,string,string,address,bytes32[])",
+        bytes memory managerLogicData = abi.encodeWithSignature(
+            "initialize(address,address,string,address,bytes32[])",
+            address(this),
+            // _privatePool,
+            _manager,
+            _managerName,
+            // _fundName,
+            // addressResolver,
+            addressResolverAddress,
+            _supportedAssets
+        );
+
+        address managerLogic = deploy(managerLogicData, 1);
+
+        bytes memory poolLogicData = abi.encodeWithSignature(
+            "initialize(address,bool,address,string,string,address)",
             address(this),
             _privatePool,
             _manager,
             _managerName,
             _fundName,
-            addressResolver,
-            _supportedAssets
+            managerLogic
+            // addressResolver,
+            // _supportedAssets
         );
 
-        address fund = deploy(data);
+        address fund = deploy(poolLogicData, 2);
 
         deployedFunds.push(fund);
         isPool[fund] = true;
@@ -167,7 +186,7 @@ contract DHedgeFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo 
 
         emit DaoAddressSet(daoAddress);
     }
-    
+
     function setDaoFee(uint256 numerator, uint256 denominator) public onlyOwner {
         _setDaoFee(numerator, denominator);
     }
