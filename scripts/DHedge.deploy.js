@@ -82,14 +82,29 @@ async function main () {
   const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
   tx = await poolFactory.initialize(KOVAN_ADDRESS_RESOLVER, poolLogic.address, poolManagerLogic.address, TESTNET_DAO)
   console.log("tx: ", tx.hash)
+
   let daoFee = await poolFactory.getDaoFee()
   daoFee.map(each => { console.log("daoFee: ", each.toString()) })
 
-  tx = await poolFactory.createFund(
-    false, signer.address, 'Barren Wuffet', 'Test Fund', new ethers.BigNumber.from('5000'), []
-  );
-  // TX got Reverted
-  console.log("tx: ", tx)
+  let versions = `{
+    "v1.0.0-alpha": {
+      "tag": "v1.0.0-alpha",
+      "fulltag": "v1.0.0-alpha",
+      "network": "kovan",
+      "date": "${new Date()}",
+      "contracts": {
+        "poolFactoryLogic": "${poolFactoryLogic.address}",
+        "poolManagerLogic": "${poolManagerLogic.address}",
+        "poolLogic": "${poolLogic.address}",
+        "poolFactoryProxy": "${poolFactoryProxy.address}"
+    }
+  }`
+
+  console.log(versions)
+  fs = require('fs');
+  fs.writeFile('versions.json', versions, function (err) {
+    if (err) return console.log(err);
+  });
 
 }
 
