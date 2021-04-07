@@ -3,7 +3,13 @@ node_modules
 
 #Hardhat files
 cache
-artifacts
+artifacts/@gnosis.pm
+artifacts/@openzeppelin
+artifacts/build-info
+artifacts/hardhat
 
 #VIM
 *.swp
+
+#Mac Files
+*.DS_Store
