@@ -340,6 +340,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         bytes32[] memory _supportedAssets = dm.getSupportedAssets();
         uint256 assetCount = _supportedAssets.length;
 
+        // _forfeitSuspendedSynths deprecated
         if(_forfeitSuspendedSynths){
             ISystemStatus status = ISystemStatus(dm.addressResolver().getAddress(_SYSTEM_STATUS_KEY));
             for (uint256 i = 0; i < assetCount; i++) {
@@ -369,7 +370,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             }
         }
 
-        uint256 valueWithdrawn = portion.mul(fundValue);
+        uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
 
         lastDeposit[msg.sender] = lastDepositTemp;
 
