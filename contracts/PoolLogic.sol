@@ -43,6 +43,7 @@ import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IPoolManagerLogic.sol";
+import "./interfaces/IHasDhptSwapInfo.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
@@ -138,9 +139,10 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         address _manager,
         string memory _managerName,
         string memory _fundName,
+        string memory _fundSymbol,
         address _poolManagerLogic
     ) public initializer{
-        __ERC20_init(_fundName, "DHPT");
+        __ERC20_init(_fundName, _fundSymbol);
         initialize(_manager, _managerName);
 
         factory = _factory;
@@ -153,6 +155,13 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         poolManagerLogic = _poolManagerLogic;
     }
 
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal virtual override
+    {
+        super._beforeTokenTransfer(from, to, amount);
+
+        require(getExitFeeRemainingCooldown(from) == 0, "cooldown active");
+    }
     function setPoolPrivate(bool _privatePool) public onlyManager {
         require(privatePool != _privatePool, "flag must be different");
 
@@ -165,13 +174,6 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         emit PoolPrivacyUpdated(_privacy);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal virtual override
-    {
-        super._beforeTokenTransfer(from, to, amount);
-
-        require(getExitFeeRemainingCooldown(from) == 0, "cooldown active");
-    }
 
     function totalFundValue() public virtual view returns (uint256) {
         uint256 total = 0;
@@ -278,42 +280,44 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     //     }
     // }
 
-    function withdraw(uint256 _fundTokenAmount) public virtual {
-        _withdraw(_fundTokenAmount, false);
-    }
-
     // Deprecated
     // function forfeitSuspendedSynthsAndWithdraw(uint256 _fundTokenAmount) public virtual {
     //     _withdraw(_fundTokenAmount, true);
     // }
 
-    function _withdraw(uint256 _fundTokenAmount, bool _forfeitSuspendedSynths) internal {
+    function withdraw(uint256 _fundTokenAmount) public virtual {
         require(
             balanceOf(msg.sender) >= _fundTokenAmount,
             "insufficient balance of fund tokens"
         );
 
+        require(
+            getExitFeeRemainingCooldown(msg.sender) == 0,
+            "cooldown active"
+        );
+
+        // Deprecated
         //calculate the exit fee and transfer to the DAO in pool tokens
-        uint256 exitFeeNumerator;
-        uint256 exitFeeDenominator;
+        // uint256 exitFeeNumerator;
+        // uint256 exitFeeDenominator;
 
-        if (getExitFeeRemainingCooldown(msg.sender) > 0) {
-            (exitFeeNumerator, exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-        } else {
-            exitFeeNumerator = 0;
-            exitFeeDenominator = 1;
-        }
+        // if (getExitFeeRemainingCooldown(msg.sender) > 0) {
+        //     (exitFeeNumerator, exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+        // } else {
+        //     exitFeeNumerator = 0;
+        //     exitFeeDenominator = 1;
+        // }
 
-        uint256 daoExitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+        // uint256 daoExitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
 
-        uint256 lastDepositTemp = lastDeposit[msg.sender];
-        lastDeposit[msg.sender] = 0;
+        // uint256 lastDepositTemp = lastDeposit[msg.sender];
+        // lastDeposit[msg.sender] = 0;
 
-        if (daoExitFee > 0) {
-            address daoAddress = IHasDaoInfo(factory).getDaoAddress();
+        // if (daoExitFee > 0) {
+        //     address daoAddress = IHasDaoInfo(factory).getDaoAddress();
 
-            _transfer(msg.sender, daoAddress, daoExitFee);
-        }
+        //     _transfer(msg.sender, daoAddress, daoExitFee);
+        // }
 
         // Deprecated
         // we need to settle all the assets before determining the total fund value
@@ -327,10 +331,10 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         // _mintManagerFee(false);
         _mintManagerFee();
 
-        uint256 fundValue = totalFundValue();
+        uint256 fundValueBefore = totalFundValue();
 
         //calculate the proportion
-        _fundTokenAmount = _fundTokenAmount.sub(daoExitFee);
+        // _fundTokenAmount = _fundTokenAmount.sub(daoExitFee);
         uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
 
         //first return funded tokens
@@ -341,38 +345,19 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         uint256 assetCount = _supportedAssets.length;
 
         // _forfeitSuspendedSynths deprecated
-        if(_forfeitSuspendedSynths){
-            ISystemStatus status = ISystemStatus(dm.addressResolver().getAddress(_SYSTEM_STATUS_KEY));
-            for (uint256 i = 0; i < assetCount; i++) {
-                try status.requireSynthActive(_supportedAssets[i]) {
+        for (uint256 i = 0; i < assetCount; i++) {
+            address proxy = dm.getAssetProxy(_supportedAssets[i]);
+            uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
+            uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
 
-                    address proxy = dm.getAssetProxy(_supportedAssets[i]);
-                    uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
-                    uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
-
-                    if (portionOfAssetBalance > 0) {
-                        IERC20(proxy).transfer(msg.sender, portionOfAssetBalance);
-                    }
-
-                } catch {
-                    continue;
-                }
-            }
-        } else {
-            for (uint256 i = 0; i < assetCount; i++) {
-                address proxy = dm.getAssetProxy(_supportedAssets[i]);
-                uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
-                uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
-
-                if (portionOfAssetBalance > 0) {
-                    IERC20(proxy).transfer(msg.sender, portionOfAssetBalance);
-                }
+            if (portionOfAssetBalance > 0) {
+                IERC20(proxy).transfer(msg.sender, portionOfAssetBalance);
             }
         }
 
-        uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
-
-        lastDeposit[msg.sender] = lastDepositTemp;
+        uint256 fundValueAfter = totalFundValue();
+        // uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
+        uint256 valueWithdrawn = fundValueBefore - fundValueAfter;
 
         emit Withdrawal(
             address(this),
@@ -380,7 +365,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             valueWithdrawn,
             _fundTokenAmount,
             balanceOf(msg.sender),
-            totalFundValue(),
+            fundValueAfter,
             totalSupply(),
             block.timestamp
         );
@@ -507,7 +492,9 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             .mul(_tokenSupply)
             .mul(_feeNumerator)
             .div(_feeDenominator)
-            .div(10**18);
+            // Deprecated
+            // .div(10**18);
+            .div(currentTokenPrice);
 
         return available;
     }
@@ -589,6 +576,19 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             return 0;
 
         return cooldownFinished.sub(block.timestamp);
+    }
+
+    // Swap contract
+
+    function setLastDeposit(address investor) public onlyDhptSwap {
+        lastDeposit[investor] = block.timestamp;
+    }
+
+    modifier onlyDhptSwap() {
+        address dhptSwapAddress = IHasDhptSwapInfo(factory)
+            .getDhptSwapAddress();
+        require(msg.sender == dhptSwapAddress, "only swap contract");
+        _;
     }
 
     function setPoolManagerLogic(address _poolManagerLogic) external onlyManager returns (bool){

@@ -45,7 +45,17 @@ import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 
-contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+
+contract DHedgeFactory is
+    ProxyFactory,
+    IHasDaoInfo,
+    IHasFeeInfo,
+    IHasAssetInfo,
+    IHasDhptSwapInfo
+{
+    using SafeMath for uint256;
+
     event FundCreated(
         address fundAddress,
         bool isPoolPrivate,
@@ -65,9 +75,11 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
 
     event MaximumSupportedAssetCountSet(uint256 count);
 
-    IAddressResolver public addressResolver;
+    event DhptSwapAddressSet(address dhptSwap);
 
-    address public addressResolverAddress;
+    event LogUpgrade(address indexed manager, address indexed pool);
+
+    IAddressResolver public addressResolver;
 
     address[] public deployedFunds;
 
@@ -90,12 +102,23 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
 
     bytes32 internal _trackingCode;
 
-    function initialize(address _addressResolver, address _poolLogic, address _managerLogic, address daoAddress) public initializer {
+    mapping (address => uint256) public poolVersion;
+    uint256 public poolStorageVersion;
+
+    address internal _dhptSwapAddress;
+
+    uint256 public maximumManagerFeeNumeratorChange;
+    uint256 public managerFeeNumeratorChangeDelay;
+
+    function initialize(
+        IAddressResolver _addressResolver,
+        address _poolLogic,
+        address _managerLogic,
+        address daoAddress
+    ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
 
-        addressResolver = IAddressResolver(_addressResolver);
-
-        addressResolverAddress = _addressResolver;
+        addressResolver = _addressResolver;
 
         _setDaoAddress(daoAddress);
 
@@ -117,6 +140,7 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
         address _manager,
         string memory _managerName,
         string memory _fundName,
+        string memory _fundSymbol,
         uint256 _managerFeeNumerator,
         bytes32[] memory _supportedAssets
     ) public returns (address) {
@@ -127,8 +151,7 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
             _manager,
             _managerName,
             // _fundName,
-            // addressResolver,
-            addressResolverAddress,
+            addressResolver,
             _supportedAssets
         );
 
@@ -141,6 +164,7 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
             _manager,
             _managerName,
             _fundName,
+            _fundSymbol,
             managerLogic
             // addressResolver,
             // _supportedAssets
@@ -150,6 +174,8 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
 
         deployedFunds.push(fund);
         isPool[fund] = true;
+
+        poolVersion[fund] = poolStorageVersion;
 
         _setPoolManagerFee(fund, _managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
 
@@ -169,6 +195,14 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
 
     function deployedFundsLength() external view returns (uint256) {
         return deployedFunds.length;
+    }
+
+    function setAddressResolver(address _addressResolver) public onlyOwner {
+        addressResolver = IAddressResolver(_addressResolver);
+    }
+
+    function getAddressResolver() public override view returns (IAddressResolver) {
+        return addressResolver;
     }
 
     // DAO info
@@ -223,7 +257,7 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
     function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override {
         require(pool == msg.sender && isPool[msg.sender] == true, "only a pool can change own fee");
         require(isPool[pool] == true, "supplied address is not a pool");
-        require(numerator < poolManagerFeeNumerator[pool], "manager fee too high");
+        require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
 
         _setPoolManagerFee(msg.sender, numerator, _MANAGER_FEE_DENOMINATOR);
     }
@@ -244,6 +278,22 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
 
         _MAXIMUM_MANAGER_FEE_NUMERATOR = numerator;
         _MANAGER_FEE_DENOMINATOR = denominator;
+    }
+
+    function setMaximumManagerFeeNumeratorChange(uint256 amount) public onlyOwner {
+        maximumManagerFeeNumeratorChange = amount;
+    }
+
+    function getMaximumManagerFeeNumeratorChange() public override view returns (uint256) {
+        return maximumManagerFeeNumeratorChange;
+    }
+
+    function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
+        managerFeeNumeratorChangeDelay = delay;
+    }
+
+    function getManagerFeeNumeratorChangeDelay() public override view returns (uint256) {
+        return managerFeeNumeratorChangeDelay;
     }
 
     // Exit fees
@@ -312,6 +362,64 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
         return _trackingCode;
     }
 
-    uint256[50] private __gap;
+    // DHPT Swap
+
+    function getDhptSwapAddress() public override view returns (address) {
+        return _dhptSwapAddress;
+    }
+
+    function setDhptSwapAddress(address dhptSwapAddress) public onlyOwner {
+        _setDhptSwapAddress(dhptSwapAddress);
+    }
+
+    function _setDhptSwapAddress(address dhptSwapAddress) internal {
+        _dhptSwapAddress = dhptSwapAddress;
+
+        emit DhptSwapAddressSet(dhptSwapAddress);
+    }
+
+    // Upgrade
+
+    /**
+     * @dev Backdoor function
+     * @param pool Address of the target.
+     * @param data Calldata for the target address.
+     * @param targetVersion set target version after call
+     */
+    function _upgradePool(address pool, bytes calldata data, uint256 targetVersion) internal {
+      require(pool != address(0), "target-invalid");
+      require(data.length > 0, "data-invalid");
+      bytes memory _data = data;
+      assembly {
+        let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
+        switch iszero(succeeded)
+        case 1 {
+          // throw if delegatecall failed
+          let size := returndatasize()
+          returndatacopy(0x00, 0x00, size)
+          revert(0x00, size)
+        }
+      }
+      emit LogUpgrade(msg.sender, pool);
+
+      poolVersion[pool] = targetVersion;
+    }
+
+    function upgradePoolBatch(uint256 startIndex, uint256 endIndex, uint256 sourceVersion, uint256 targetVersion, bytes calldata data) external onlyOwner {
+        require(startIndex <= endIndex && startIndex < deployedFunds.length && endIndex < deployedFunds.length, "invalid bounds");
+
+        for (uint256 i = startIndex; i <= endIndex; i++) {
+
+            address pool = deployedFunds[i];
+
+            if (poolVersion[pool] != sourceVersion)
+                continue;
+
+            _upgradePool(pool, data, targetVersion);
+
+        }
+    }
+
+    uint256[48] private __gap;
 }
 

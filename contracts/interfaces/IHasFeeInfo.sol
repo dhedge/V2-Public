@@ -41,6 +41,9 @@ interface IHasFeeInfo {
     function getPoolManagerFee(address pool) external view returns (uint256, uint256);
     function setPoolManagerFeeNumerator(address pool, uint256 numerator) external;
 
+    function getMaximumManagerFeeNumeratorChange() external view returns (uint256);
+    function getManagerFeeNumeratorChangeDelay() external view returns (uint256);
+
     // Exit fee
     function getExitFee() external view returns (uint256, uint256);
     function getExitFeeCooldown() external view returns (uint256);

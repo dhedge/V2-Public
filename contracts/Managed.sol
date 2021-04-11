@@ -51,6 +51,8 @@ contract Managed {
     address[] private _memberList;
     mapping(address => uint256) private _memberPosition;
 
+    address private _trader;
+
     function initialize(address manager, string memory managerName)
         internal
     {
@@ -60,6 +62,11 @@ contract Managed {
 
     modifier onlyManager() {
         require(msg.sender == _manager, "only manager");
+        _;
+    }
+
+    modifier onlyManagerOrTrader() {
+        require(msg.sender == _manager || msg.sender == _trader, "only manager or trader");
         _;
     }
 
@@ -120,6 +127,18 @@ contract Managed {
         _removeMember(member);
     }
 
+    function trader() public view returns (address) {
+        return _trader;
+    }
+
+    function setTrader(address newTrader) public onlyManager {
+        _trader = newTrader;
+    }
+
+    function removeTrader() public onlyManager {
+        _trader = address(0);
+    }
+
     function numberOfMembers() public view returns (uint256) {
         return _memberList.length;
     }
@@ -141,6 +160,4 @@ contract Managed {
 
         _memberList.pop();
     }
-
-    uint256[50] private __gap;
 }
