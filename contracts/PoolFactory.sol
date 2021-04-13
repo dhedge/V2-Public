@@ -47,12 +47,11 @@ import "./interfaces/IHasAssetInfo.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-contract DHedgeFactory is
+contract PoolFactory is
     ProxyFactory,
     IHasDaoInfo,
     IHasFeeInfo,
-    IHasAssetInfo,
-    IHasDhptSwapInfo
+    IHasAssetInfo
 {
     using SafeMath for uint256;
 
@@ -71,11 +70,11 @@ contract DHedgeFactory is
     event DaoFeeSet(uint256 numerator, uint256 denominator);
 
     event ExitFeeSet(uint256 numerator, uint256 denominator);
-    event ExitFeeCooldownSet(uint256 cooldown);
+    event ExitCooldownSet(uint256 cooldown);
 
     event MaximumSupportedAssetCountSet(uint256 count);
 
-    event DhptSwapAddressSet(address dhptSwap);
+    // event DhptSwapAddressSet(address dhptSwap);
 
     event LogUpgrade(address indexed manager, address indexed pool);
 
@@ -94,9 +93,9 @@ contract DHedgeFactory is
     mapping (address => uint256) public poolManagerFeeNumerator;
     mapping (address => uint256) public poolManagerFeeDenominator;
 
-    uint256 internal _exitFeeNumerator;
-    uint256 internal _exitFeeDenominator;
-    uint256 internal _exitFeeCooldown;
+    // uint256 internal _exitFeeNumerator;
+    // uint256 internal _exitFeeDenominator;
+    uint256 internal _exitCooldown;
 
     uint256 internal _maximumSupportedAssetCount;
 
@@ -105,7 +104,7 @@ contract DHedgeFactory is
     mapping (address => uint256) public poolVersion;
     uint256 public poolStorageVersion;
 
-    address internal _dhptSwapAddress;
+    // address internal _dhptSwapAddress;
 
     uint256 public maximumManagerFeeNumeratorChange;
     uint256 public managerFeeNumeratorChangeDelay;
@@ -125,8 +124,8 @@ contract DHedgeFactory is
         _setMaximumManagerFee(5000, 10000);
 
         _setDaoFee(10, 100); // 10%
-        _setExitFee(5, 1000); // 0.5%
-        _setExitFeeCooldown(1 days);
+        // _setExitFee(5, 1000); // 0.5%
+        _setExitCooldown(1 days);
 
         _setMaximumSupportedAssetCount(10);
 
@@ -158,7 +157,7 @@ contract DHedgeFactory is
         address managerLogic = deploy(managerLogicData, 1);
 
         bytes memory poolLogicData = abi.encodeWithSignature(
-            "initialize(address,bool,address,string,string,address)",
+            "initialize(address,bool,address,string,string,string,address)",
             address(this),
             _privatePool,
             _manager,
@@ -296,40 +295,40 @@ contract DHedgeFactory is
         return managerFeeNumeratorChangeDelay;
     }
 
+    // Deprecated
     // Exit fees
+    // function setExitFee(uint256 numerator, uint256 denominator) public onlyOwner {
+    //     _setExitFee(numerator, denominator);
+    // }
 
-    function setExitFee(uint256 numerator, uint256 denominator) public onlyOwner {
-        _setExitFee(numerator, denominator);
-    }
+    // function _setExitFee(uint256 numerator, uint256 denominator) internal {
+    //     require(numerator <= denominator, "invalid fraction");
 
-    function _setExitFee(uint256 numerator, uint256 denominator) internal {
-        require(numerator <= denominator, "invalid fraction");
+    //     _exitFeeNumerator = numerator;
+    //     _exitFeeDenominator = denominator;
 
-        _exitFeeNumerator = numerator;
-        _exitFeeDenominator = denominator;
+    //     emit ExitFeeSet(numerator, denominator);
+    // }
 
-        emit ExitFeeSet(numerator, denominator);
-    }
+    // function getExitFee() external override view returns (uint256, uint256) {
+    //     return (_exitFeeNumerator, _exitFeeDenominator);
+    // }
 
-    function getExitFee() external override view returns (uint256, uint256) {
-        return (_exitFeeNumerator, _exitFeeDenominator);
-    }
-
-    function setExitFeeCooldown(uint256 cooldown)
+    function setExitCooldown(uint256 cooldown)
         external
         onlyOwner
     {
-        _setExitFeeCooldown(cooldown);
+        _setExitCooldown(cooldown);
     }
 
-    function _setExitFeeCooldown(uint256 cooldown) internal {
-        _exitFeeCooldown = cooldown;
+    function _setExitCooldown(uint256 cooldown) internal {
+        _exitCooldown = cooldown;
 
-        emit ExitFeeCooldownSet(cooldown);
+        emit ExitCooldownSet(cooldown);
     }
 
-    function getExitFeeCooldown() public override view returns (uint256) {
-        return _exitFeeCooldown;
+    function getExitCooldown() external override view returns (uint256) {
+        return _exitCooldown;
     }
 
     // Asset Info
@@ -364,19 +363,19 @@ contract DHedgeFactory is
 
     // DHPT Swap
 
-    function getDhptSwapAddress() public override view returns (address) {
-        return _dhptSwapAddress;
-    }
+    // function getDhptSwapAddress() public override view returns (address) {
+    //     return _dhptSwapAddress;
+    // }
 
-    function setDhptSwapAddress(address dhptSwapAddress) public onlyOwner {
-        _setDhptSwapAddress(dhptSwapAddress);
-    }
+    // function setDhptSwapAddress(address dhptSwapAddress) public onlyOwner {
+    //     _setDhptSwapAddress(dhptSwapAddress);
+    // }
 
-    function _setDhptSwapAddress(address dhptSwapAddress) internal {
-        _dhptSwapAddress = dhptSwapAddress;
+    // function _setDhptSwapAddress(address dhptSwapAddress) internal {
+    //     _dhptSwapAddress = dhptSwapAddress;
 
-        emit DhptSwapAddressSet(dhptSwapAddress);
-    }
+    //     emit DhptSwapAddressSet(dhptSwapAddress);
+    // }
 
     // Upgrade
 

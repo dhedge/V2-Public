@@ -43,7 +43,6 @@ import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IPoolManagerLogic.sol";
-import "./interfaces/IHasDhptSwapInfo.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
@@ -160,7 +159,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     {
         super._beforeTokenTransfer(from, to, amount);
 
-        require(getExitFeeRemainingCooldown(from) == 0, "cooldown active");
+        require(getExitRemainingCooldown(from) == 0, "cooldown active");
     }
     function setPoolPrivate(bool _privatePool) public onlyManager {
         require(privatePool != _privatePool, "flag must be different");
@@ -292,7 +291,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         );
 
         require(
-            getExitFeeRemainingCooldown(msg.sender) == 0,
+            getExitRemainingCooldown(msg.sender) == 0,
             "cooldown active"
         );
 
@@ -331,7 +330,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         // _mintManagerFee(false);
         _mintManagerFee();
 
-        uint256 fundValueBefore = totalFundValue();
+        uint256 fundValue = totalFundValue();
 
         //calculate the proportion
         // _fundTokenAmount = _fundTokenAmount.sub(daoExitFee);
@@ -355,9 +354,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             }
         }
 
-        uint256 fundValueAfter = totalFundValue();
-        // uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
-        uint256 valueWithdrawn = fundValueBefore - fundValueAfter;
+        uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
 
         emit Withdrawal(
             address(this),
@@ -365,7 +362,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             valueWithdrawn,
             _fundTokenAmount,
             balanceOf(msg.sender),
-            fundValueAfter,
+            totalFundValue(),
             totalSupply(),
             block.timestamp
         );
@@ -383,9 +380,9 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             uint256,
             bool,
             uint256,
-            uint256,
-            uint256,
             uint256
+            // uint256,
+            // uint256
         )
     {
 
@@ -393,9 +390,9 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         uint256 managerFeeDenominator;
         (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
 
-        uint256 exitFeeNumerator;
-        uint256 exitFeeDenominator;
-        (exitFeeNumerator, exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+        // uint256 exitNumerator;
+        // uint256 exitDenominator;
+        // (exitNumerator, exitDenominator) = IHasFeeInfo(factory).getExitFee();
 
         return (
             name(),
@@ -406,9 +403,9 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             creationTime,
             privatePool,
             managerFeeNumerator,
-            managerFeeDenominator,
-            exitFeeNumerator,
-            exitFeeDenominator
+            managerFeeDenominator
+            // exitNumerator,
+            // exitDenominator
         );
     }
 
@@ -564,12 +561,12 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     //     return IHasFeeInfo(factory).getExitFee();
     // }
 
-    function getExitFeeCooldown() external view returns (uint256) {
-        return IHasFeeInfo(factory).getExitFeeCooldown();
+    function getExitCooldown() public view returns (uint256) {
+        return IHasFeeInfo(factory).getExitCooldown();
     }
 
-    function getExitFeeRemainingCooldown(address sender) public view returns (uint256) {
-        uint256 cooldown = IHasFeeInfo(factory).getExitFeeCooldown();
+    function getExitRemainingCooldown(address sender) public view returns (uint256) {
+        uint256 cooldown = getExitCooldown();
         uint256 cooldownFinished = lastDeposit[sender].add(cooldown);
 
         if (cooldownFinished < block.timestamp)
@@ -580,18 +577,13 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
 
     // Swap contract
 
-    function setLastDeposit(address investor) public onlyDhptSwap {
-        lastDeposit[investor] = block.timestamp;
-    }
+    // function setLastDeposit(address investor) public onlyDhptSwap {
+    //     lastDeposit[investor] = block.timestamp;
+    // }
 
-    modifier onlyDhptSwap() {
-        address dhptSwapAddress = IHasDhptSwapInfo(factory)
-            .getDhptSwapAddress();
-        require(msg.sender == dhptSwapAddress, "only swap contract");
-        _;
-    }
-
-    function setPoolManagerLogic(address _poolManagerLogic) external onlyManager returns (bool){
+    function setPoolManagerLogic(address _poolManagerLogic) external returns (bool){
+      address daoAddress = IHasDaoInfo(factory).getDaoAddress();
+      require( msg.sender == daoAddress, "only DAO address allowed");
       poolManagerLogic = _poolManagerLogic;
       emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
       return true;

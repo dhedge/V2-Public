@@ -45,8 +45,8 @@ interface IHasFeeInfo {
     function getManagerFeeNumeratorChangeDelay() external view returns (uint256);
 
     // Exit fee
-    function getExitFee() external view returns (uint256, uint256);
-    function getExitFeeCooldown() external view returns (uint256);
+    // function getExitFee() external view returns (uint256, uint256);
+    function getExitCooldown() external view returns (uint256);
 
     // Synthetix tracking
     function getTrackingCode() external view returns (bytes32);

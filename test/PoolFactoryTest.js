@@ -86,6 +86,7 @@ describe("PoolFactory", function() {
                 fundAddress: fundAddress,
                 isPoolPrivate: isPoolPrivate,
                 fundName: fundName,
+                // fundSymbol: fundSymbol,
                 managerName: managerName,
                 manager: manager,
                 time: time,
@@ -103,12 +104,12 @@ describe("PoolFactory", function() {
 
     // console.log("Passed poolManagerLogic Init!")
 
-    // await poolLogic.initialize(poolFactory.address, false, logicAdmin.address, "Barren Wuffet", "Test Fund", mock.address)
+    // await poolLogic.initialize(poolFactory.address, false, logicAdmin.address, "Barren Wuffet", "Test Fund", "DHTF", mock.address)
 
     // console.log("Passed poolLogic Init!")
 
     let tx = await poolFactory.createFund(
-      false, logicAdmin.address, 'Barren Wuffet', 'Test Fund', new ethers.BigNumber.from('5000'), [sethKey]
+      false, logicAdmin.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [sethKey]
     );
 
     let event = await fundCreatedEvent;
@@ -116,6 +117,7 @@ describe("PoolFactory", function() {
     let fundAddress = event.fundAddress
     expect(event.isPoolPrivate).to.be.false;
     expect(event.fundName).to.equal("Test Fund");
+    // expect(event.fundSymbol).to.equal("DHTF");
     expect(event.managerName).to.equal("Barren Wuffet");
     expect(event.manager).to.equal(logicAdmin.address);
     expect(event.managerFeeNumerator.toString()).to.equal('5000');
@@ -241,14 +243,19 @@ describe("PoolFactory", function() {
     let totalSupply = await poolLogicProxy.totalSupply()
     let totalFundValue = await poolLogicProxy.totalFundValue()
 
+    await expect(poolLogicProxy.withdraw(withdrawAmount.toString()))
+      .to.be.revertedWith('cooldown active');
+
+    await poolFactory.setExitCooldown(0);
+
     await poolLogicProxy.withdraw(withdrawAmount.toString())
 
-    let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
-    let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
+    // let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
+    // let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
 
     let event = await withdrawalEvent;
 
-    let fundTokensWithdrawn = withdrawAmount - daoExitFee
+    let fundTokensWithdrawn = withdrawAmount
     let valueWithdrawn = fundTokensWithdrawn / totalSupply * totalFundValue
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
