@@ -5,13 +5,8 @@
   "abi": [
     {
       "inputs": [],
-      "name": "getExitFee",
+      "name": "getExitCooldown",
       "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
         {
           "internalType": "uint256",
           "name": "",
@@ -23,7 +18,20 @@
     },
     {
       "inputs": [],
-      "name": "getExitFeeCooldown",
+      "name": "getManagerFeeNumeratorChangeDelay",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getMaximumManagerFeeNumeratorChange",
       "outputs": [
         {
           "internalType": "uint256",

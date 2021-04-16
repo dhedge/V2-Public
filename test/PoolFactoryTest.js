@@ -87,6 +87,7 @@ describe("PoolFactory", function() {
                 fundAddress: fundAddress,
                 isPoolPrivate: isPoolPrivate,
                 fundName: fundName,
+                // fundSymbol: fundSymbol,
                 managerName: managerName,
                 manager: manager,
                 time: time,
@@ -117,6 +118,7 @@ describe("PoolFactory", function() {
     let fundAddress = event.fundAddress
     expect(event.isPoolPrivate).to.be.false;
     expect(event.fundName).to.equal("Test Fund");
+    // expect(event.fundSymbol).to.equal("DHTF");
     expect(event.managerName).to.equal("Barren Wuffet");
     expect(event.manager).to.equal(manager.address);
     expect(event.managerFeeNumerator.toString()).to.equal('5000');
@@ -250,12 +252,12 @@ describe("PoolFactory", function() {
 
     await poolLogicProxy.withdraw(withdrawAmount.toString())
 
-    let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
-    let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
+    // let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
+    // let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
 
     let event = await withdrawalEvent;
 
-    let fundTokensWithdrawn = withdrawAmount - daoExitFee
+    let fundTokensWithdrawn = withdrawAmount
     let valueWithdrawn = fundTokensWithdrawn / totalSupply * totalFundValue
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);

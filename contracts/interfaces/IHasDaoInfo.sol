@@ -34,10 +34,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
+import "./IAddressResolver.sol";
+
 pragma solidity ^0.6.2;
 
 interface IHasDaoInfo {
     function getDaoFee() external view returns (uint256, uint256);
 
     function getDaoAddress() external view returns (address);
+
+    function getAddressResolver() external view returns (IAddressResolver);
 }
+
