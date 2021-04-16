@@ -83,26 +83,35 @@ async function main () {
   tx = await poolFactory.initialize(KOVAN_ADDRESS_RESOLVER, poolLogic.address, poolManagerLogic.address, TESTNET_DAO)
   console.log("tx: ", tx.hash)
 
+  // Transfer owership to DAO
+  await poolFactory.transferOwnership(TESTNET_DAO);
+
+  await proxyAdmin.transferOwnership(TESTNET_DAO);
+
   let daoFee = await poolFactory.getDaoFee()
   daoFee.map(each => { console.log("daoFee: ", each.toString()) })
 
-  let versions = `{
+  let versions = {
     "v1.0.0-alpha": {
       "tag": "v1.0.0-alpha",
       "fulltag": "v1.0.0-alpha",
       "network": "kovan",
       "date": "${new Date()}",
       "contracts": {
-        "poolFactoryLogic": "${poolFactoryLogic.address}",
-        "poolManagerLogic": "${poolManagerLogic.address}",
-        "poolLogic": "${poolLogic.address}",
-        "poolFactoryProxy": "${poolFactoryProxy.address}"
+        "poolFactoryLogic": poolFactoryLogic.address,
+        "poolManagerLogic": poolManagerLogic.address,
+        "poolLogic": poolLogic.address,
+        "poolFactoryProxy": poolFactoryProxy.address
+      }
     }
-  }`
+  }
 
-  console.log(versions)
+  // convert JSON object to string
+  const data = JSON.stringify(versions);
+
+  console.log(data)
   fs = require('fs');
-  fs.writeFile('versions.json', versions, function (err) {
+  fs.writeFile('versions.json', data, function (err) {
     if (err) return console.log(err);
   });
 

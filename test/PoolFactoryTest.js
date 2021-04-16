@@ -21,7 +21,7 @@ const slinkKey =
 
 describe("PoolFactory", function() {
   before(async function(){
-    [logicOwner, logicAdmin] = await ethers.getSigners();
+    [logicOwner, manager, user1] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract")
     mock = await MockContract.deploy()
@@ -64,7 +64,7 @@ describe("PoolFactory", function() {
 
     // Deploy PoolFactoryProxy
     const PoolFactoryProxy = await ethers.getContractFactory('OZProxy')
-    const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, logicAdmin.address, "0x")
+    const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, manager.address, "0x")
     await poolFactoryProxy.deployed()
 
     poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
@@ -73,6 +73,7 @@ describe("PoolFactory", function() {
     );
     await poolFactory.deployed();
     console.log("poolFactory deployed to:", poolFactory.address);
+
   });
 
   it("Should be able to createFund", async function() {
@@ -99,16 +100,16 @@ describe("PoolFactory", function() {
         }, 60000)
     });
 
-    // await poolManagerLogic.initialize(poolFactory.address, logicAdmin.address, "Barren Wuffet", mock.address, [sethKey])
+    // await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", mock.address, [sethKey])
 
     // console.log("Passed poolManagerLogic Init!")
 
-    // await poolLogic.initialize(poolFactory.address, false, logicAdmin.address, "Barren Wuffet", "Test Fund", mock.address)
+    // await poolLogic.initialize(poolFactory.address, false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", mock.address)
 
     // console.log("Passed poolLogic Init!")
 
     let tx = await poolFactory.createFund(
-      false, logicAdmin.address, 'Barren Wuffet', 'Test Fund', new ethers.BigNumber.from('5000'), [sethKey]
+      false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [sethKey]
     );
 
     let event = await fundCreatedEvent;
@@ -117,7 +118,7 @@ describe("PoolFactory", function() {
     expect(event.isPoolPrivate).to.be.false;
     expect(event.fundName).to.equal("Test Fund");
     expect(event.managerName).to.equal("Barren Wuffet");
-    expect(event.manager).to.equal(logicAdmin.address);
+    expect(event.manager).to.equal(manager.address);
     expect(event.managerFeeNumerator.toString()).to.equal('5000');
     expect(event.managerFeeDenominator.toString()).to.equal('10000');
 
@@ -241,6 +242,12 @@ describe("PoolFactory", function() {
     let totalSupply = await poolLogicProxy.totalSupply()
     let totalFundValue = await poolLogicProxy.totalFundValue()
 
+    await expect(poolLogicProxy.withdraw(withdrawAmount.toString()))
+      .to.be.revertedWith('cooldown active');
+
+    // await poolFactory.setExitCooldown(0);
+    ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 60 seconds
+
     await poolLogicProxy.withdraw(withdrawAmount.toString())
 
     let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
@@ -257,6 +264,54 @@ describe("PoolFactory", function() {
     expect(event.totalInvestorFundTokens).to.equal(50e18.toString());
     expect(event.fundValue).to.equal(2e18.toString());
     expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
+  });
+
+  it('should be able to manage pool',async function() {
+    await poolFactory.createFund(
+      true, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [sethKey]
+    );
+
+    let deployedFundsLength = await poolFactory.deployedFundsLength()
+    let fundAddress = await poolFactory.deployedFunds(deployedFundsLength - 1)
+    let poolLogicPrivateProxy = await PoolLogic.attach(fundAddress)
+    // Can't deposit when not being a member
+    await expect(poolLogicPrivateProxy.deposit(100e18.toString()))
+      .to.be.revertedWith('only members allowed');
+
+    await expect(poolLogicPrivateProxy.addMember(logicOwner.address))
+      .to.be.revertedWith('only manager');
+
+    let poolLogicPrivateManagerProxy = poolLogicPrivateProxy.connect(manager);
+
+    // Can deposit after being a member
+    await poolLogicPrivateManagerProxy.addMember(logicOwner.address)
+
+    await poolLogicPrivateProxy.deposit(100e18.toString())
+
+    // Can't deposit after being removed from a member
+    await poolLogicPrivateManagerProxy.removeMember(logicOwner.address)
+
+    await expect(poolLogicPrivateProxy.deposit(100e18.toString()))
+      .to.be.revertedWith('only members allowed');
+
+    // Can set trader
+    await expect(poolLogicPrivateProxy.setTrader(user1.address))
+      .to.be.revertedWith('only manager');
+
+    await poolLogicPrivateManagerProxy.setTrader(user1.address)
+
+    // Can remove trader
+    await expect(poolLogicPrivateProxy.removeTrader())
+      .to.be.revertedWith('only manager');
+
+    await poolLogicPrivateManagerProxy.removeTrader()
+
+    // Can change manager
+    await poolLogicPrivateManagerProxy.changeManager(user1.address, "User1")
+
+    await expect(poolLogicPrivateManagerProxy.changeManager(logicOwner.address, "Logic Owner"))
+      .to.be.revertedWith('only manager');
+
   });
 
   it('should be able to upgrade/set implementation logic', async function() {
