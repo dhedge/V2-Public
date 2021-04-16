@@ -5,6 +5,19 @@
   "abi": [
     {
       "inputs": [],
+      "name": "getAddressResolver",
+      "outputs": [
+        {
+          "internalType": "contract IAddressResolver",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getDaoAddress",
       "outputs": [
         {
