@@ -4,7 +4,7 @@ const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 
 const { expect } = require("chai");
 
-let logicOwner, poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, mock, poolLogicProxy, poolManagerLogicProxy;
+let logicOwner, poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, mock, poolLogicProxy, poolManagerLogicProxy, synthsABI;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -25,7 +25,6 @@ describe("PoolFactory", function() {
 
     const MockContract = await ethers.getContractFactory("MockContract")
     mock = await MockContract.deploy()
-    console.log("Mock deployed at: ", mock.address)
 
     // mock IAddressResolver
     const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
@@ -36,7 +35,7 @@ describe("PoolFactory", function() {
     // mock ISynthetix
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
     let iSynthetix = new ethers.utils.Interface(ISynthetix.abi)
-    let synthsABI = iSynthetix.encodeFunctionData("synths", [susdKey])
+    synthsABI = iSynthetix.encodeFunctionData("synths", [susdKey])
     await mock.givenMethodReturnAddress(synthsABI, mock.address)
 
     // mock ISynth
@@ -47,15 +46,12 @@ describe("PoolFactory", function() {
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
-    console.log("poolLogic deployed at: ", poolLogic.address)
 
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
-    console.log("poolManagerLogic deployed at: ", poolManagerLogic.address)
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
     poolFactoryLogic = await PoolFactoryLogic.deploy();
-    console.log("PoolFactoryLogic deployed at: ", poolFactoryLogic.address)
 
     // Deploy ProxyAdmin
     const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin')
@@ -72,7 +68,6 @@ describe("PoolFactory", function() {
       mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO
     );
     await poolFactory.deployed();
-    console.log("poolFactory deployed to:", poolFactory.address);
 
   });
 
@@ -209,6 +204,48 @@ describe("PoolFactory", function() {
     expect(event.totalSupply).to.equal(100e18.toString());
   });
 
+  it('should be able to exchange', async function() {
+    expect(poolManagerLogicProxy.exchange(susdKey, 100e18.toString(), sethKey))
+      .to.be.revertedWith('only manager or trader');
+
+    let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+
+    let exchangeEvent = new Promise((resolve, reject) => {
+      poolManagerLogicManagerProxy.on('Exchange', (
+        managerLogicAddress,
+        manager,
+        sourceKey,
+        sourceAmount,
+        destinationKey,
+        destinationAmount,
+        time, event) => {
+        event.removeListener();
+
+        resolve({
+          managerLogicAddress: managerLogicAddress,
+          manager: manager,
+          sourceKey: sourceKey,
+          sourceAmount: sourceAmount,
+          destinationKey: destinationKey,
+          destinationAmount: destinationAmount,
+          time: time
+        });
+      });
+
+      setTimeout(() => {
+        reject(new Error('timeout'));
+      }, 60000)
+    });
+
+    //now if we exchange all susd into seth
+    await poolManagerLogicManagerProxy.exchange(susdKey, 100e18.toString(), sethKey);
+
+    let event = await exchangeEvent;
+    expect(event.sourceKey).to.equal(susdKey);
+    expect(event.sourceAmount).to.equal(100e18.toString());
+    expect(event.destinationKey).to.equal(sethKey);
+  });
+
   it('should be able to withdraw', async function() {
     let withdrawalEvent = new Promise((resolve, reject) => {
         poolLogicProxy.on('Withdrawal', (
@@ -313,6 +350,52 @@ describe("PoolFactory", function() {
 
     await expect(poolLogicPrivateManagerProxy.changeManager(logicOwner.address, "Logic Owner"))
       .to.be.revertedWith('only manager');
+
+  });
+
+  it('should be able to manage assets', async function() {
+    expect(poolManagerLogicProxy.addToSupportedAssets(slinkKey))
+      .to.be.revertedWith('only manager or trader');
+
+    let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+    let poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
+
+    // Can add asset
+    await poolManagerLogicManagerProxy.addToSupportedAssets(slinkKey)
+
+    let numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
+    expect(numberOfSupportedAssets).to.eq("3");
+
+    // Can not remove persist asset
+    expect(poolManagerLogicUser1Proxy.removeFromSupportedAssets(slinkKey))
+      .to.be.revertedWith('only manager, trader or Protocol DAO');
+
+    expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(susdKey))
+      .to.be.revertedWith("persistent assets can't be removed");
+
+    // Can't add non-synth asset
+    await mock.givenMethodReturnAddress(synthsABI, ZERO_ADDRESS)
+    let ASDFKey = '0x4153444600000000000000000000000000000000000000000000000000000000';
+    expect(poolManagerLogicManagerProxy.addToSupportedAssets(ASDFKey))
+      .to.be.revertedWith('non-synth asset');
+    await mock.givenMethodReturnAddress(synthsABI, mock.address)
+
+    // Can't remove asset with non zero balance
+    // mock IERC20 balanceOf to return non zero
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
+    let iERC20 = new ethers.utils.Interface(IERC20.abi)
+    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolManagerLogicManagerProxy.address])
+    await mock.givenMethodReturnUint(balanceOfABI, 1)
+
+    expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(slinkKey))
+      .to.be.revertedWith('non-empty asset cannot be removed');
+
+    // Can remove asset
+    await mock.givenMethodReturnUint(balanceOfABI, 0)
+    await poolManagerLogicManagerProxy.removeFromSupportedAssets(slinkKey)
+
+    numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
+    expect(numberOfSupportedAssets).to.eq("2");
 
   });
 

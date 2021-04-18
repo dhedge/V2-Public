@@ -57,7 +57,6 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     // Deprecated
     // bytes32 constant private _EXCHANGER_KEY = "Exchanger";
     bytes32 constant private _SYSTEM_STATUS_KEY = "SystemStatus";
-
     bytes32 constant private _SUSD_KEY = "sUSD";
 
     event Deposit(
@@ -70,7 +69,6 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         uint256 totalSupply,
         uint256 time
     );
-
     event Withdrawal(
         address fundAddress,
         address investor,
@@ -99,7 +97,6 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     );
 
     bool public privatePool;
-
     address public creator;
 
     uint256 public creationTime;
@@ -553,8 +550,6 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             tokenPriceAtLastFeeMint
         );
     }
-
-    // Exit fees
 
     // Deprecated
     // function getExitFee() external view returns (uint256, uint256) {
