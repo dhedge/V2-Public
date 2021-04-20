@@ -1,13 +1,14 @@
 {
-    "v1.0.0-alpha": {
-      "tag": "v1.0.0-alpha",
-      "fulltag": "v1.0.0-alpha",
-      "network": "kovan",
-      "date": "Tue Apr 06 2021 15:35:25 GMT+1000 (Australian Eastern Standard Time)",
-      "contracts": {
-        "poolFactoryLogic": "0x5dAb31f23f282ea55527032023d5FEE269E12cDc",
-        "poolManagerLogic": "0x08b745cBA704743C7154c2fDb3bD098B008e46ee",
-        "poolLogic": "0x4be6EF820FcF5334147212C301B4E9e6C4826b02",
-        "poolFactoryProxy": "0xD5430042BE275b585E6F04fd2DBF4CDba14Ee8E7"
+  "v1.0.0-alpha": {
+    "tag": "v1.0.0-alpha",
+    "fulltag": "v1.0.0-alpha",
+    "network": "kovan",
+    "date": "${new Date()}",
+    "contracts": {
+      "poolFactoryLogic": "0x6DEcb753237C92b45c9E19CeA46dED9517E0478A",
+      "poolManagerLogic": "0x2A1B37b5c39f01A665b3d93F7d4DC603700d2Fe9",
+      "poolLogic": "0xcf7BAA3943dCD7A016817c14D1C567F3543cA1CA",
+      "poolFactoryProxy": "0x4083be0CFBD6c4784d2235b23362912fB9a301d6"
     }
+  }
 }
