@@ -55,12 +55,10 @@ pragma solidity ^0.6.2;
 contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     using SafeMath for uint256;
 
+    bytes32 constant private _EXCHANGE_RATES_KEY = "ExchangeRates";
     bytes32 constant private _SYNTHETIX_KEY = "Synthetix";
 
-    bytes32 constant private _EXCHANGE_RATES_KEY = "ExchangeRates";
-
     bytes32 constant private _SYSTEM_STATUS_KEY = "SystemStatus";
-
     bytes32 constant private _SUSD_KEY = "sUSD";
 
     event Exchange(
@@ -191,7 +189,7 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     function _addToSupportedAssets(bytes32 key) internal {
         require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
         require(!isAssetSupported(key), "asset already supported");
-        require(validateAsset(key) == true, "not an asset");
+        require(validateAsset(key) == true, "non-synth asset");
 
         supportedAssets.push(key);
         assetPosition[key] = supportedAssets.length;
