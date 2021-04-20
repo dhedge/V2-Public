@@ -247,8 +247,6 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         );
     }
 
-
-
     function assetValue(bytes32 key) public override view returns (uint256) {
         return
             IExchangeRates(addressResolver.getAddress(_EXCHANGE_RATES_KEY))
@@ -315,20 +313,21 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         return (assets, balances, rates);
     }
 
-    function getManagerFee() public view returns (uint256, uint256) {
-        return IHasFeeInfo(factory).getPoolManagerFee(address(this));
+    function getManagerFee(address pool) public view returns (uint256, uint256) {
+        return IHasFeeInfo(factory).getPoolManagerFee(pool);
     }
 
-    function setManagerFeeNumerator(uint256 numerator) public onlyManager {
-        _setManagerFeeNumerator(numerator);
-    }
+    // Deprecated
+    // function setManagerFeeNumerator(address pool, uint256 numerator) public onlyManager {
+    //     _setManagerFeeNumerator(pool, numerator);
+    // }
 
-    function _setManagerFeeNumerator(uint256 numerator) internal {
-        IHasFeeInfo(factory).setPoolManagerFeeNumerator(address(this), numerator);
+    function _setManagerFeeNumerator(address pool, uint256 numerator) internal {
+        IHasFeeInfo(factory).setPoolManagerFeeNumerator(pool, numerator);
 
         uint256 managerFeeNumerator;
         uint256 managerFeeDenominator;
-        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
+        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(pool);
 
         emit ManagerFeeSet(
             address(this),
@@ -338,12 +337,14 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         );
     }
 
-    function announceManagerFeeIncrease(uint256 numerator) public onlyManager {
+    function announceManagerFeeIncrease(address pool, uint256 numerator) public onlyManager {
         uint256 maximumAllowedChange = IHasFeeInfo(factory).getMaximumManagerFeeNumeratorChange();
 
         uint256 currentFeeNumerator;
-        (currentFeeNumerator, ) = getManagerFee();
+        uint256 currentFeeDenominator;
+        (currentFeeNumerator, currentFeeDenominator) = getManagerFee(pool);
 
+        require(numerator <= currentFeeDenominator, "invalid fraction");
         require (numerator <= currentFeeNumerator.add(maximumAllowedChange), "exceeded allowed increase");
 
         uint256 feeChangeDelay = IHasFeeInfo(factory).getManagerFeeNumeratorChangeDelay();
@@ -359,10 +360,10 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         emit ManagerFeeIncreaseRenounced();
     }
 
-    function commitManagerFeeIncrease() public onlyManager {
+    function commitManagerFeeIncrease(address pool) public onlyManager {
         require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
 
-        _setManagerFeeNumerator(announcedFeeIncreaseNumerator);
+        _setManagerFeeNumerator(pool, announcedFeeIncreaseNumerator);
 
         announcedFeeIncreaseNumerator = 0;
         announcedFeeIncreaseTimestamp = 0;

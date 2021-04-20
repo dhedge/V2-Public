@@ -584,9 +584,5 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
       return true;
     }
 
-    function getPoolManagerLogic() external view returns (address){
-      return poolManagerLogic;
-    }
-
     uint256[50] private __gap;
 }
