@@ -1,13 +1,13 @@
 //
-//        __  __    __  ________  _______    ______   ________ 
+//        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
-//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/ 
-//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__    
-// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |   
-// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/    
-// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____ 
+//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
+//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
+// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
+// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
+// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
 // $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
-//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/ 
+//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
 //
 // dHEDGE DAO - https://dhedge.org
 //
@@ -47,7 +47,9 @@ contract ProxyFactory is OwnableUpgradeSafe, HasLogic {
 
     address private poolManagerLogic;
 
-    function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic) internal {
+    function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic)
+        internal
+    {
         __Ownable_init();
 
         poolLogic = _poolLogic;
@@ -55,25 +57,34 @@ contract ProxyFactory is OwnableUpgradeSafe, HasLogic {
         poolManagerLogic = _poolManagerLogic;
     }
 
-    function setLogic(address _poolLogic, address _poolManagerLogic) public onlyOwner {
+    function setLogic(address _poolLogic, address _poolManagerLogic)
+        public
+        onlyOwner
+    {
         poolLogic = _poolLogic;
 
         poolManagerLogic = _poolManagerLogic;
     }
 
-    function getLogic(uint8 _proxyType) public override view returns (address) {
-        if(_proxyType == 1){
-          return poolManagerLogic;
-        }else{
-          return poolLogic;
+    function getLogic(uint8 _proxyType) public view override returns (address) {
+        if (_proxyType == 1) {
+            return poolManagerLogic;
+        } else {
+            return poolLogic;
         }
     }
 
-    function deploy(bytes memory _data, uint8 _proxyType) public returns (address) {
+    function deploy(bytes memory _data, uint8 _proxyType)
+        public
+        returns (address)
+    {
         return _deployProxy(_data, _proxyType);
     }
 
-    function _deployProxy(bytes memory _data, uint8 _proxyType) internal returns (address) {
+    function _deployProxy(bytes memory _data, uint8 _proxyType)
+        internal
+        returns (address)
+    {
         InitializableUpgradeabilityProxy proxy = _createProxy();
         emit ProxyCreated(address(proxy));
         proxy.initialize(address(this), _data, _proxyType);

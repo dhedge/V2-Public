@@ -28,4 +28,3 @@ interface ISynthetix {
             uint256 numEntriesSettled
         );
 }
-

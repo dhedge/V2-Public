@@ -1,13 +1,13 @@
 //
-//        __  __    __  ________  _______    ______   ________ 
+//        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
-//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/ 
-//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__    
-// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |   
-// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/    
-// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____ 
+//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
+//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
+// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
+// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
+// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
 // $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
-//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/ 
+//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
 //
 // dHEDGE DAO - https://dhedge.org
 //
@@ -48,12 +48,7 @@ import "./interfaces/IPoolLogic.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-contract PoolFactory is
-    ProxyFactory,
-    IHasDaoInfo,
-    IHasFeeInfo,
-    IHasAssetInfo
-{
+contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
     using SafeMath for uint256;
 
     event FundCreated(
@@ -87,13 +82,13 @@ contract PoolFactory is
     uint256 internal _daoFeeNumerator;
     uint256 internal _daoFeeDenominator;
 
-    mapping (address => bool) public isPool;
-    mapping (address => bool) public isPoolManager;
+    mapping(address => bool) public isPool;
+    mapping(address => bool) public isPoolManager;
 
     uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
     uint256 private _MANAGER_FEE_DENOMINATOR;
-    mapping (address => uint256) public poolManagerFeeNumerator;
-    mapping (address => uint256) public poolManagerFeeDenominator;
+    mapping(address => uint256) public poolManagerFeeNumerator;
+    mapping(address => uint256) public poolManagerFeeDenominator;
 
     // uint256 internal _exitFeeNumerator;
     // uint256 internal _exitFeeDenominator;
@@ -103,7 +98,7 @@ contract PoolFactory is
 
     bytes32 internal _trackingCode;
 
-    mapping (address => uint256) public poolVersion;
+    mapping(address => uint256) public poolVersion;
     uint256 public poolStorageVersion;
 
     // address internal _dhptSwapAddress;
@@ -146,31 +141,33 @@ contract PoolFactory is
         uint256 _managerFeeNumerator,
         bytes32[] memory _supportedAssets
     ) public returns (address) {
-        bytes memory managerLogicData = abi.encodeWithSignature(
-            "initialize(address,address,string,address,bytes32[])",
-            address(this),
-            // _privatePool,
-            _manager,
-            _managerName,
-            // _fundName,
-            addressResolver,
-            _supportedAssets
-        );
+        bytes memory managerLogicData =
+            abi.encodeWithSignature(
+                "initialize(address,address,string,address,bytes32[])",
+                address(this),
+                // _privatePool,
+                _manager,
+                _managerName,
+                // _fundName,
+                addressResolver,
+                _supportedAssets
+            );
 
         address managerLogic = deploy(managerLogicData, 1);
 
-        bytes memory poolLogicData = abi.encodeWithSignature(
-            "initialize(address,bool,address,string,string,string,address)",
-            address(this),
-            _privatePool,
-            _manager,
-            _managerName,
-            _fundName,
-            _fundSymbol,
-            managerLogic
-            // addressResolver,
-            // _supportedAssets
-        );
+        bytes memory poolLogicData =
+            abi.encodeWithSignature(
+                "initialize(address,bool,address,string,string,string,address)",
+                address(this),
+                _privatePool,
+                _manager,
+                _managerName,
+                _fundName,
+                _fundSymbol,
+                managerLogic
+                // addressResolver,
+                // _supportedAssets
+            );
 
         address fund = deploy(poolLogicData, 2);
 
@@ -180,7 +177,11 @@ contract PoolFactory is
 
         poolVersion[fund] = poolStorageVersion;
 
-        _setPoolManagerFee(fund, _managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+        _setPoolManagerFee(
+            fund,
+            _managerFeeNumerator,
+            _MANAGER_FEE_DENOMINATOR
+        );
 
         emit FundCreated(
             fund,
@@ -204,13 +205,18 @@ contract PoolFactory is
         addressResolver = IAddressResolver(_addressResolver);
     }
 
-    function getAddressResolver() public override view returns (IAddressResolver) {
+    function getAddressResolver()
+        public
+        view
+        override
+        returns (IAddressResolver)
+    {
         return addressResolver;
     }
 
     // DAO info
 
-    function getDaoAddress() public override view returns (address) {
+    function getDaoAddress() public view override returns (address) {
         return _daoAddress;
     }
 
@@ -224,7 +230,10 @@ contract PoolFactory is
         emit DaoAddressSet(daoAddress);
     }
 
-    function setDaoFee(uint256 numerator, uint256 denominator) public onlyOwner {
+    function setDaoFee(uint256 numerator, uint256 denominator)
+        public
+        onlyOwner
+    {
         _setDaoFee(numerator, denominator);
     }
 
@@ -237,14 +246,14 @@ contract PoolFactory is
         emit DaoFeeSet(numerator, denominator);
     }
 
-    function getDaoFee() public override view returns (uint256, uint256) {
+    function getDaoFee() public view override returns (uint256, uint256) {
         return (_daoFeeNumerator, _daoFeeDenominator);
     }
 
     modifier onlyPool() {
         require(
             isPool[msg.sender] == true,
-            "Only a pool contract can perform this action"
+            "Not a pool"
         );
         _;
     }
@@ -252,29 +261,52 @@ contract PoolFactory is
     modifier onlyPoolManager() {
         require(
             isPoolManager[msg.sender] == true,
-            "Only a pool manager contract can perform this action"
+            "Not a pool manager"
         );
         _;
     }
 
     // Manager fees
 
-    function getPoolManagerFee(address pool) external override view returns (uint256, uint256) {
+    function getPoolManagerFee(address pool)
+        external
+        view
+        override
+        returns (uint256, uint256)
+    {
         require(isPool[pool] == true, "supplied address is not a pool");
 
         return (poolManagerFeeNumerator[pool], poolManagerFeeDenominator[pool]);
     }
 
-    function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override onlyPoolManager {
+    function setPoolManagerFeeNumerator(address pool, uint256 numerator)
+        external
+        override
+        onlyPoolManager
+    {
         // require(pool == msg.sender, "only a pool can change own fee");
         require(isPool[pool] == true, "supplied address is not a pool");
-        require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
+        require(
+            numerator <=
+                poolManagerFeeNumerator[pool].add(
+                    maximumManagerFeeNumeratorChange
+                ),
+            "manager fee too high"
+        );
 
         _setPoolManagerFee(pool, numerator, _MANAGER_FEE_DENOMINATOR);
     }
 
-    function _setPoolManagerFee(address pool, uint256 numerator, uint256 denominator) internal {
-        require(numerator <= denominator && numerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid fraction");
+    function _setPoolManagerFee(
+        address pool,
+        uint256 numerator,
+        uint256 denominator
+    ) internal {
+        require(
+            numerator <= denominator &&
+                numerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR,
+            "invalid fraction"
+        );
 
         poolManagerFeeNumerator[pool] = numerator;
         poolManagerFeeDenominator[pool] = denominator;
@@ -284,18 +316,28 @@ contract PoolFactory is
         return (_MAXIMUM_MANAGER_FEE_NUMERATOR, _MANAGER_FEE_DENOMINATOR);
     }
 
-    function _setMaximumManagerFee(uint256 numerator, uint256 denominator) internal {
+    function _setMaximumManagerFee(uint256 numerator, uint256 denominator)
+        internal
+    {
         require(numerator <= denominator, "invalid fraction");
 
         _MAXIMUM_MANAGER_FEE_NUMERATOR = numerator;
         _MANAGER_FEE_DENOMINATOR = denominator;
     }
 
-    function setMaximumManagerFeeNumeratorChange(uint256 amount) public onlyOwner {
+    function setMaximumManagerFeeNumeratorChange(uint256 amount)
+        public
+        onlyOwner
+    {
         maximumManagerFeeNumeratorChange = amount;
     }
 
-    function getMaximumManagerFeeNumeratorChange() public override view returns (uint256) {
+    function getMaximumManagerFeeNumeratorChange()
+        public
+        view
+        override
+        returns (uint256)
+    {
         return maximumManagerFeeNumeratorChange;
     }
 
@@ -303,7 +345,12 @@ contract PoolFactory is
         managerFeeNumeratorChangeDelay = delay;
     }
 
-    function getManagerFeeNumeratorChangeDelay() public override view returns (uint256) {
+    function getManagerFeeNumeratorChangeDelay()
+        public
+        view
+        override
+        returns (uint256)
+    {
         return managerFeeNumeratorChangeDelay;
     }
 
@@ -326,10 +373,7 @@ contract PoolFactory is
     //     return (_exitFeeNumerator, _exitFeeDenominator);
     // }
 
-    function setExitCooldown(uint256 cooldown)
-        external
-        onlyOwner
-    {
+    function setExitCooldown(uint256 cooldown) external onlyOwner {
         _setExitCooldown(cooldown);
     }
 
@@ -339,7 +383,7 @@ contract PoolFactory is
         emit ExitCooldownSet(cooldown);
     }
 
-    function getExitCooldown() external override view returns (uint256) {
+    function getExitCooldown() external view override returns (uint256) {
         return _exitCooldown;
     }
 
@@ -355,7 +399,13 @@ contract PoolFactory is
         emit MaximumSupportedAssetCountSet(count);
     }
 
-    function getMaximumSupportedAssetCount() external virtual view override returns (uint256) {
+    function getMaximumSupportedAssetCount()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _maximumSupportedAssetCount;
     }
 
@@ -369,7 +419,7 @@ contract PoolFactory is
         _trackingCode = code;
     }
 
-    function getTrackingCode() public override view returns (bytes32) {
+    function getTrackingCode() public view override returns (bytes32) {
         return _trackingCode;
     }
 
@@ -397,40 +447,58 @@ contract PoolFactory is
      * @param data Calldata for the target address.
      * @param targetVersion set target version after call
      */
-    function _upgradePool(address pool, bytes calldata data, uint256 targetVersion) internal {
-      require(pool != address(0), "target-invalid");
-      require(data.length > 0, "data-invalid");
-      bytes memory _data = data;
-      assembly {
-        let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
-        switch iszero(succeeded)
-        case 1 {
-          // throw if delegatecall failed
-          let size := returndatasize()
-          returndatacopy(0x00, 0x00, size)
-          revert(0x00, size)
+    function _upgradePool(
+        address pool,
+        bytes calldata data,
+        uint256 targetVersion
+    ) internal {
+        require(pool != address(0), "target-invalid");
+        require(data.length > 0, "data-invalid");
+        bytes memory _data = data;
+        assembly {
+            let succeeded := delegatecall(
+                gas(),
+                pool,
+                add(_data, 0x20),
+                mload(_data),
+                0,
+                0
+            )
+            switch iszero(succeeded)
+                case 1 {
+                    // throw if delegatecall failed
+                    let size := returndatasize()
+                    returndatacopy(0x00, 0x00, size)
+                    revert(0x00, size)
+                }
         }
-      }
-      emit LogUpgrade(msg.sender, pool);
+        emit LogUpgrade(msg.sender, pool);
 
-      poolVersion[pool] = targetVersion;
+        poolVersion[pool] = targetVersion;
     }
 
-    function upgradePoolBatch(uint256 startIndex, uint256 endIndex, uint256 sourceVersion, uint256 targetVersion, bytes calldata data) external onlyOwner {
-        require(startIndex <= endIndex && startIndex < deployedFunds.length && endIndex < deployedFunds.length, "invalid bounds");
+    function upgradePoolBatch(
+        uint256 startIndex,
+        uint256 endIndex,
+        uint256 sourceVersion,
+        uint256 targetVersion,
+        bytes calldata data
+    ) external onlyOwner {
+        require(
+            startIndex <= endIndex &&
+                startIndex < deployedFunds.length &&
+                endIndex < deployedFunds.length,
+            "invalid bounds"
+        );
 
         for (uint256 i = startIndex; i <= endIndex; i++) {
-
             address pool = deployedFunds[i];
 
-            if (poolVersion[pool] != sourceVersion)
-                continue;
+            if (poolVersion[pool] != sourceVersion) continue;
 
             _upgradePool(pool, data, targetVersion);
-
         }
     }
 
     uint256[48] private __gap;
 }
-

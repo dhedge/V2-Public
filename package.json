@@ -7,11 +7,13 @@
     "test": "test"
   },
   "scripts": {
-    "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
+    "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test --network hardhat",
+    "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
+    "deploy": "node scripts/DHedge.deploy.js"
   },
-  "author": "dHedge Team",
+  "author": "dHEDGE Team",
   "license": "ISC",
   "devDependencies": {
     "@gnosis.pm/mock-contract": "^4.0.0",
@@ -20,7 +22,11 @@
     "chai": "^4.3.4",
     "ethereum-waffle": "^3.3.0",
     "hardhat": "^2.1.1",
-    "hardhat-gas-reporter": "^1.0.4"
+    "hardhat-gas-reporter": "^1.0.4",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.9",
+    "solhint": "^3.3.4",
+    "solidity-coverage": "^0.7.16"
   },
   "dependencies": {
     "@eth-optimism/plugins": "0.0.20",
