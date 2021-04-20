@@ -4,7 +4,7 @@ const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 
 const { expect } = require("chai");
 
-let logicOwner, poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, mock, poolLogicProxy, poolManagerLogicProxy, synthsABI;
+let logicOwner, poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, mock, poolLogicProxy, poolManagerLogicProxy, synthsABI, fundAddress;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -104,13 +104,18 @@ describe("PoolFactory", function() {
 
     // console.log("Passed poolLogic Init!")
 
+    await expect(poolFactory.createFund(
+      false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [sethKey]
+    ))
+      .to.be.revertedWith('invalid fraction');
+
     let tx = await poolFactory.createFund(
       false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [sethKey]
     );
 
     let event = await fundCreatedEvent;
 
-    let fundAddress = event.fundAddress
+    fundAddress = event.fundAddress
     expect(event.isPoolPrivate).to.be.false;
     expect(event.fundName).to.equal("Test Fund");
     // expect(event.fundSymbol).to.equal("DHTF");
@@ -205,7 +210,7 @@ describe("PoolFactory", function() {
   });
 
   it('should be able to exchange', async function() {
-    expect(poolManagerLogicProxy.exchange(susdKey, 100e18.toString(), sethKey))
+    await expect(poolManagerLogicProxy.exchange(susdKey, 100e18.toString(), sethKey))
       .to.be.revertedWith('only manager or trader');
 
     let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
@@ -285,7 +290,7 @@ describe("PoolFactory", function() {
       .to.be.revertedWith('cooldown active');
 
     // await poolFactory.setExitCooldown(0);
-    ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 60 seconds
+    ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 1 day
 
     await poolLogicProxy.withdraw(withdrawAmount.toString())
 
@@ -354,7 +359,7 @@ describe("PoolFactory", function() {
   });
 
   it('should be able to manage assets', async function() {
-    expect(poolManagerLogicProxy.addToSupportedAssets(slinkKey))
+    await expect(poolManagerLogicProxy.addToSupportedAssets(slinkKey))
       .to.be.revertedWith('only manager or trader');
 
     let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
@@ -367,16 +372,16 @@ describe("PoolFactory", function() {
     expect(numberOfSupportedAssets).to.eq("3");
 
     // Can not remove persist asset
-    expect(poolManagerLogicUser1Proxy.removeFromSupportedAssets(slinkKey))
+    await expect(poolManagerLogicUser1Proxy.removeFromSupportedAssets(slinkKey))
       .to.be.revertedWith('only manager, trader or Protocol DAO');
 
-    expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(susdKey))
+    await expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(susdKey))
       .to.be.revertedWith("persistent assets can't be removed");
 
     // Can't add non-synth asset
     await mock.givenMethodReturnAddress(synthsABI, ZERO_ADDRESS)
     let ASDFKey = '0x4153444600000000000000000000000000000000000000000000000000000000';
-    expect(poolManagerLogicManagerProxy.addToSupportedAssets(ASDFKey))
+    await expect(poolManagerLogicManagerProxy.addToSupportedAssets(ASDFKey))
       .to.be.revertedWith('non-synth asset');
     await mock.givenMethodReturnAddress(synthsABI, mock.address)
 
@@ -387,7 +392,7 @@ describe("PoolFactory", function() {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolManagerLogicManagerProxy.address])
     await mock.givenMethodReturnUint(balanceOfABI, 1)
 
-    expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(slinkKey))
+    await expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(slinkKey))
       .to.be.revertedWith('non-empty asset cannot be removed');
 
     // Can remove asset
@@ -397,6 +402,31 @@ describe("PoolFactory", function() {
     numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
     expect(numberOfSupportedAssets).to.eq("2");
 
+  });
+
+  it('should be able to manage fees', async function() {
+    //Can't set manager fee if not manager or if fee too high
+    await expect(poolManagerLogicProxy.announceManagerFeeIncrease(fundAddress, 4000))
+      .to.be.revertedWith('only manager');
+
+    let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+
+    await expect(poolManagerLogicManagerProxy.announceManagerFeeIncrease(fundAddress, 6000))
+      .to.be.revertedWith('exceeded allowed increase');
+
+    //Can set manager fee
+    await poolManagerLogicManagerProxy.announceManagerFeeIncrease(fundAddress, 4000)
+
+    await expect(poolManagerLogicManagerProxy.commitManagerFeeIncrease(fundAddress))
+      .to.be.revertedWith('fee increase delay active');
+
+    ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 1 day
+
+    await poolManagerLogicManagerProxy.commitManagerFeeIncrease(fundAddress)
+
+    let [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee(fundAddress)
+    expect(managerFeeNumerator.toString()).to.equal('4000');
+    expect(managerFeeDenominator.toString()).to.equal('10000');
   });
 
   it('should be able to upgrade/set implementation logic', async function() {

@@ -44,6 +44,7 @@ import "./upgradability/ProxyFactory.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
+import "./interfaces/IPoolLogic.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
@@ -87,6 +88,7 @@ contract PoolFactory is
     uint256 internal _daoFeeDenominator;
 
     mapping (address => bool) public isPool;
+    mapping (address => bool) public isPoolManager;
 
     uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
     uint256 private _MANAGER_FEE_DENOMINATOR;
@@ -126,6 +128,7 @@ contract PoolFactory is
         _setDaoFee(10, 100); // 10%
         // _setExitFee(5, 1000); // 0.5%
         _setExitCooldown(1 days);
+        setManagerFeeNumeratorChangeDelay(1 days);
 
         _setMaximumSupportedAssetCount(10);
 
@@ -173,6 +176,7 @@ contract PoolFactory is
 
         deployedFunds.push(fund);
         isPool[fund] = true;
+        isPoolManager[managerLogic] = true;
 
         poolVersion[fund] = poolStorageVersion;
 
@@ -245,6 +249,14 @@ contract PoolFactory is
         _;
     }
 
+    modifier onlyPoolManager() {
+        require(
+            isPoolManager[msg.sender] == true,
+            "Only a pool manager contract can perform this action"
+        );
+        _;
+    }
+
     // Manager fees
 
     function getPoolManagerFee(address pool) external override view returns (uint256, uint256) {
@@ -253,12 +265,12 @@ contract PoolFactory is
         return (poolManagerFeeNumerator[pool], poolManagerFeeDenominator[pool]);
     }
 
-    function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override {
-        require(pool == msg.sender && isPool[msg.sender] == true, "only a pool can change own fee");
+    function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override onlyPoolManager {
+        // require(pool == msg.sender, "only a pool can change own fee");
         require(isPool[pool] == true, "supplied address is not a pool");
         require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
 
-        _setPoolManagerFee(msg.sender, numerator, _MANAGER_FEE_DENOMINATOR);
+        _setPoolManagerFee(pool, numerator, _MANAGER_FEE_DENOMINATOR);
     }
 
     function _setPoolManagerFee(address pool, uint256 numerator, uint256 denominator) internal {
@@ -273,7 +285,7 @@ contract PoolFactory is
     }
 
     function _setMaximumManagerFee(uint256 numerator, uint256 denominator) internal {
-        require(denominator > 0, "denominator must be positive");
+        require(numerator <= denominator, "invalid fraction");
 
         _MAXIMUM_MANAGER_FEE_NUMERATOR = numerator;
         _MANAGER_FEE_DENOMINATOR = denominator;

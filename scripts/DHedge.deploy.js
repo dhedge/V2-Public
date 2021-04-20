@@ -107,7 +107,7 @@ async function main () {
   }
 
   // convert JSON object to string
-  const data = JSON.stringify(versions);
+  const data = JSON.stringify(versions, null, 2);
 
   console.log(data)
   fs = require('fs');
