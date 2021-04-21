@@ -163,7 +163,7 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
 
         require(isAssetSupported(key), "asset not supported");
 
-        require(!persistentAsset[key], "can't remove persistent assets");
+        require(!persistentAsset[key], "cannot remove persistent assets");
 
         // ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
         // sx.settle(key);
@@ -171,7 +171,7 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
             // allow removal of depreciated synths
             require(
                 IERC20(getAssetProxy(key)).balanceOf(address(this)) == 0,
-                "can't remove non-empty asset"
+                "cannot remove non-empty asset"
             );
         }
 

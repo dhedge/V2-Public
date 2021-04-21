@@ -123,7 +123,8 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
         _setDaoFee(10, 100); // 10%
         // _setExitFee(5, 1000); // 0.5%
         _setExitCooldown(1 days);
-        setManagerFeeNumeratorChangeDelay(1 days);
+        setManagerFeeNumeratorChangeDelay(4 weeks);
+        setMaximumManagerFeeNumeratorChange(1000);
 
         _setMaximumSupportedAssetCount(10);
 
