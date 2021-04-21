@@ -16,7 +16,11 @@ contract InitializableUpgradeabilityProxy is BaseUpgradeabilityProxy {
      * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.
      * This parameter is optional, if no data is given the initialization call to proxied contract will be skipped.
      */
-    function initialize(address _factory, bytes memory _data, uint8 _proxyType) public payable {
+    function initialize(
+        address _factory,
+        bytes memory _data,
+        uint8 _proxyType
+    ) public payable {
         require(_implementation() == address(0), "Impl not zero");
         assert(
             IMPLEMENTATION_SLOT ==

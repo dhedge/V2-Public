@@ -22,19 +22,20 @@ contract BaseUpgradeabilityProxy is Proxy {
      * This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1, and is
      * validated in the constructor.
      */
-    bytes32
-        internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    bytes32 internal constant IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /**
      * @dev Storing type of the proxy, 1 for managerLogic, 2 for pool.
      */
-    bytes32 internal constant PROXY_TYPE = 0x1000000000000000000000000000000000000000000000000000000000000000;
+    bytes32 internal constant PROXY_TYPE =
+        0x1000000000000000000000000000000000000000000000000000000000000000;
 
     /**
      * @dev Returns the current implementation.
      * @return impl Address of the current implementation
      */
-    function _implementation() internal override view returns (address) {
+    function _implementation() internal view override returns (address) {
         address factory;
         bytes32 slot = IMPLEMENTATION_SLOT;
         assembly {
@@ -72,7 +73,7 @@ contract BaseUpgradeabilityProxy is Proxy {
     function _setImplementation(address newImplementation) internal {
         require(
             OpenZeppelinUpgradesAddress.isContract(newImplementation),
-            "Cannot set a proxy implementation to a non-contract address"
+            "Cannot set implementation to EOA"
         );
 
         bytes32 slot = IMPLEMENTATION_SLOT;

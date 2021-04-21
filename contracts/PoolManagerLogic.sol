@@ -1,13 +1,13 @@
 //
-//        __  __    __  ________  _______    ______   ________ 
+//        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
-//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/ 
-//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__    
-// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |   
-// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/    
-// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____ 
+//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
+//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
+// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
+// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
+// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
 // $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
-//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/ 
+//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
 //
 // dHEDGE DAO - https://dhedge.org
 //
@@ -55,11 +55,11 @@ pragma solidity ^0.6.2;
 contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     using SafeMath for uint256;
 
-    bytes32 constant private _EXCHANGE_RATES_KEY = "ExchangeRates";
-    bytes32 constant private _SYNTHETIX_KEY = "Synthetix";
+    bytes32 private constant _EXCHANGE_RATES_KEY = "ExchangeRates";
+    bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
 
-    bytes32 constant private _SYSTEM_STATUS_KEY = "SystemStatus";
-    bytes32 constant private _SUSD_KEY = "sUSD";
+    bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
+    bytes32 private constant _SUSD_KEY = "sUSD";
 
     event Exchange(
         address fundAddress,
@@ -73,7 +73,6 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     event AssetAdded(address fundAddress, address manager, bytes32 assetKey);
     event AssetRemoved(address fundAddress, address manager, bytes32 assetKey);
 
-
     event ManagerFeeSet(
         address fundAddress,
         address manager,
@@ -83,7 +82,8 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
 
     event ManagerFeeIncreaseAnnounced(
         uint256 newNumerator,
-        uint256 announcedFeeActivationTime);
+        uint256 announcedFeeActivationTime
+    );
 
     event ManagerFeeIncreaseRenounced();
 
@@ -100,7 +100,6 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     uint256 public announcedFeeIncreaseNumerator;
     uint256 public announcedFeeIncreaseTimestamp;
 
-
     function initialize(
         address _factory,
         address _manager,
@@ -116,7 +115,7 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
 
         _addToSupportedAssets(_SUSD_KEY);
 
-        for(uint8 i = 0; i < _supportedAssets.length; i++) {
+        for (uint8 i = 0; i < _supportedAssets.length; i++) {
             _addToSupportedAssets(_supportedAssets[i]);
         }
 
@@ -124,10 +123,9 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         persistentAsset[_SUSD_KEY] = true;
     }
 
-
-    function getAssetProxy(bytes32 key) public override view returns (address) {
-        address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY))
-            .synths(key);
+    function getAssetProxy(bytes32 key) public view override returns (address) {
+        address synth =
+            ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
         require(synth != address(0), "invalid key");
         address proxy = ISynth(synth).proxy();
         require(proxy != address(0), "invalid proxy");
@@ -139,16 +137,14 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     }
 
     function validateAsset(bytes32 key) public view returns (bool) {
-        address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY))
-            .synths(key);
+        address synth =
+            ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
 
-        if (synth == address(0))
-            return false;
+        if (synth == address(0)) return false;
 
         address proxy = ISynth(synth).proxy();
 
-        if (proxy == address(0))
-            return false;
+        if (proxy == address(0)) return false;
 
         return true;
     }
@@ -158,20 +154,24 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     }
 
     function removeFromSupportedAssets(bytes32 key) public {
-        require(msg.sender == IHasProtocolDaoInfo(factory).owner() ||
-            msg.sender == manager() ||
-            msg.sender == trader(), "only manager, trader or Protocol DAO");
+        require(
+            msg.sender == IHasProtocolDaoInfo(factory).owner() ||
+                msg.sender == manager() ||
+                msg.sender == trader(),
+            "only manager, trader or DAO"
+        );
 
         require(isAssetSupported(key), "asset not supported");
 
-        require(!persistentAsset[key], "persistent assets can't be removed");
+        require(!persistentAsset[key], "can't remove persistent assets");
 
         // ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
         // sx.settle(key);
-        if (validateAsset(key) == true) { // allow removal of depreciated synths
+        if (validateAsset(key) == true) {
+            // allow removal of depreciated synths
             require(
                 IERC20(getAssetProxy(key)).balanceOf(address(this)) == 0,
-                "non-empty asset cannot be removed"
+                "can't remove non-empty asset"
             );
         }
 
@@ -187,7 +187,11 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
 
     // Unsafe internal method that assumes we are not adding a duplicate
     function _addToSupportedAssets(bytes32 key) internal {
-        require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
+        require(
+            supportedAssets.length <
+                IHasAssetInfo(factory).getMaximumSupportedAssetCount(),
+            "maximum assets reached"
+        );
         require(!isAssetSupported(key), "asset already supported");
         require(validateAsset(key) == true, "non-synth asset");
 
@@ -228,13 +232,14 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
 
         ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
 
-        uint256 destinationAmount = sx.exchangeWithTracking(
-            sourceKey,
-            sourceAmount,
-            destinationKey,
-            IHasDaoInfo(factory).getDaoAddress(),
-            IHasFeeInfo(factory).getTrackingCode()
-        );
+        uint256 destinationAmount =
+            sx.exchangeWithTracking(
+                sourceKey,
+                sourceAmount,
+                destinationKey,
+                IHasDaoInfo(factory).getDaoAddress(),
+                IHasFeeInfo(factory).getTrackingCode()
+            );
 
         emit Exchange(
             address(this),
@@ -247,7 +252,7 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         );
     }
 
-    function assetValue(bytes32 key) public override view returns (uint256) {
+    function assetValue(bytes32 key) public view override returns (uint256) {
         return
             IExchangeRates(addressResolver.getAddress(_EXCHANGE_RATES_KEY))
                 .effectiveValue(
@@ -257,14 +262,18 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
             );
     }
 
-    function getSuspendedAssets() public view returns (bytes32[] memory, bool[] memory) {
-
+    function getSuspendedAssets()
+        public
+        view
+        returns (bytes32[] memory, bool[] memory)
+    {
         uint256 assetCount = supportedAssets.length;
 
         bytes32[] memory assets = new bytes32[](assetCount);
         bool[] memory suspended = new bool[](assetCount);
 
-        ISystemStatus status = ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
+        ISystemStatus status =
+            ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
 
         for (uint256 i = 0; i < assetCount; i++) {
             bytes32 asset = supportedAssets[i];
@@ -279,10 +288,14 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         }
 
         return (assets, suspended);
-
     }
 
-    function getSupportedAssets() public override view returns (bytes32[] memory) {
+    function getSupportedAssets()
+        public
+        view
+        override
+        returns (bytes32[] memory)
+    {
         return supportedAssets;
     }
 
@@ -301,9 +314,8 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         uint256[] memory balances = new uint256[](assetCount);
         uint256[] memory rates = new uint256[](assetCount);
 
-        IExchangeRates exchangeRates = IExchangeRates(
-            addressResolver.getAddress(_EXCHANGE_RATES_KEY)
-        );
+        IExchangeRates exchangeRates =
+            IExchangeRates(addressResolver.getAddress(_EXCHANGE_RATES_KEY));
         for (uint256 i = 0; i < assetCount; i++) {
             bytes32 asset = supportedAssets[i];
             balances[i] = IERC20(getAssetProxy(asset)).balanceOf(address(this));
@@ -313,7 +325,11 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         return (assets, balances, rates);
     }
 
-    function getManagerFee(address pool) public view returns (uint256, uint256) {
+    function getManagerFee(address pool)
+        public
+        view
+        returns (uint256, uint256)
+    {
         return IHasFeeInfo(factory).getPoolManagerFee(pool);
     }
 
@@ -327,7 +343,8 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
 
         uint256 managerFeeNumerator;
         uint256 managerFeeDenominator;
-        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(pool);
+        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory)
+            .getPoolManagerFee(pool);
 
         emit ManagerFeeSet(
             address(this),
@@ -337,21 +354,32 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         );
     }
 
-    function announceManagerFeeIncrease(address pool, uint256 numerator) public onlyManager {
-        uint256 maximumAllowedChange = IHasFeeInfo(factory).getMaximumManagerFeeNumeratorChange();
+    function announceManagerFeeIncrease(address pool, uint256 numerator)
+        public
+        onlyManager
+    {
+        uint256 maximumAllowedChange =
+            IHasFeeInfo(factory).getMaximumManagerFeeNumeratorChange();
 
         uint256 currentFeeNumerator;
         uint256 currentFeeDenominator;
         (currentFeeNumerator, currentFeeDenominator) = getManagerFee(pool);
 
         require(numerator <= currentFeeDenominator, "invalid fraction");
-        require (numerator <= currentFeeNumerator.add(maximumAllowedChange), "exceeded allowed increase");
+        require(
+            numerator <= currentFeeNumerator.add(maximumAllowedChange),
+            "exceeded allowed increase"
+        );
 
-        uint256 feeChangeDelay = IHasFeeInfo(factory).getManagerFeeNumeratorChangeDelay();
+        uint256 feeChangeDelay =
+            IHasFeeInfo(factory).getManagerFeeNumeratorChangeDelay();
 
         announcedFeeIncreaseNumerator = numerator;
         announcedFeeIncreaseTimestamp = block.timestamp + feeChangeDelay;
-        emit ManagerFeeIncreaseAnnounced(numerator, announcedFeeIncreaseTimestamp);
+        emit ManagerFeeIncreaseAnnounced(
+            numerator,
+            announcedFeeIncreaseTimestamp
+        );
     }
 
     function renounceManagerFeeIncrease() public onlyManager {
@@ -361,7 +389,10 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
     }
 
     function commitManagerFeeIncrease(address pool) public onlyManager {
-        require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
+        require(
+            block.timestamp >= announcedFeeIncreaseTimestamp,
+            "fee increase delay active"
+        );
 
         _setManagerFeeNumerator(pool, announcedFeeIncreaseNumerator);
 
@@ -369,7 +400,11 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         announcedFeeIncreaseTimestamp = 0;
     }
 
-    function getManagerFeeIncreaseInfo() public view returns (uint256, uint256) {
+    function getManagerFeeIncreaseInfo()
+        public
+        view
+        returns (uint256, uint256)
+    {
         return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
     }
 

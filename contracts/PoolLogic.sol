@@ -1,13 +1,13 @@
 //
-//        __  __    __  ________  _______    ______   ________ 
+//        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
-//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/ 
-//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__    
-// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |   
-// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/    
-// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____ 
+//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
+//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
+// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
+// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
+// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
 // $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
-//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/ 
+//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
 //
 // dHEDGE DAO - https://dhedge.org
 //
@@ -56,8 +56,8 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
 
     // Deprecated
     // bytes32 constant private _EXCHANGER_KEY = "Exchanger";
-    bytes32 constant private _SYSTEM_STATUS_KEY = "SystemStatus";
-    bytes32 constant private _SUSD_KEY = "sUSD";
+    bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
+    bytes32 private constant _SUSD_KEY = "sUSD";
 
     event Deposit(
         address fundAddress,
@@ -91,10 +91,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         uint256 tokenPriceAtLastFeeMint
     );
 
-    event PoolManagerLogicSet(
-        address poolManagerLogic,
-        address from
-    );
+    event PoolManagerLogicSet(address poolManagerLogic, address from);
 
     bool public privatePool;
     address public creator;
@@ -137,7 +134,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         string memory _fundName,
         string memory _fundSymbol,
         address _poolManagerLogic
-    ) public initializer{
+    ) public initializer {
         __ERC20_init(_fundName, _fundSymbol);
         initialize(_manager, _managerName);
 
@@ -151,13 +148,16 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         poolManagerLogic = _poolManagerLogic;
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal virtual override
-    {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
 
         require(getExitRemainingCooldown(from) == 0, "cooldown active");
     }
+
     function setPoolPrivate(bool _privatePool) public onlyManager {
         require(privatePool != _privatePool, "flag must be different");
 
@@ -170,8 +170,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         emit PoolPrivacyUpdated(_privacy);
     }
 
-
-    function totalFundValue() public virtual view returns (uint256) {
+    function totalFundValue() public view virtual returns (uint256) {
         uint256 total = 0;
         IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
         bytes32[] memory _supportedAssets = dm.getSupportedAssets();
@@ -284,13 +283,10 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     function withdraw(uint256 _fundTokenAmount) public virtual {
         require(
             balanceOf(msg.sender) >= _fundTokenAmount,
-            "insufficient balance of fund tokens"
+            "insufficient balance"
         );
 
-        require(
-            getExitRemainingCooldown(msg.sender) == 0,
-            "cooldown active"
-        );
+        require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
         // Deprecated
         //calculate the exit fee and transfer to the DAO in pool tokens
@@ -344,7 +340,8 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         for (uint256 i = 0; i < assetCount; i++) {
             address proxy = dm.getAssetProxy(_supportedAssets[i]);
             uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
-            uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
+            uint256 portionOfAssetBalance =
+                totalAssetBalance.mul(portion).div(10**18);
 
             if (portionOfAssetBalance > 0) {
                 IERC20(proxy).transfer(msg.sender, portionOfAssetBalance);
@@ -378,14 +375,14 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
             bool,
             uint256,
             uint256
-            // uint256,
-            // uint256
         )
+    // uint256,
+    // uint256
     {
-
         uint256 managerFeeNumerator;
         uint256 managerFeeDenominator;
-        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
+        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory)
+            .getPoolManagerFee(address(this));
 
         // uint256 exitNumerator;
         // uint256 exitDenominator;
@@ -456,7 +453,8 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
 
         uint256 managerFeeNumerator;
         uint256 managerFeeDenominator;
-        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
+        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory)
+            .getPoolManagerFee(address(this));
 
         return
             _availableManagerFee(
@@ -481,14 +479,15 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
 
         if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
-        uint256 available = currentTokenPrice
-            .sub(_lastFeeMintPrice)
-            .mul(_tokenSupply)
-            .mul(_feeNumerator)
-            .div(_feeDenominator)
+        uint256 available =
+            currentTokenPrice
+                .sub(_lastFeeMintPrice)
+                .mul(_tokenSupply)
+                .mul(_feeNumerator)
+                .div(_feeDenominator)
             // Deprecated
             // .div(10**18);
-            .div(currentTokenPrice);
+                .div(currentTokenPrice);
 
         return available;
     }
@@ -512,19 +511,20 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
 
         uint256 managerFeeNumerator;
         uint256 managerFeeDenominator;
-        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
+        (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory)
+            .getPoolManagerFee(address(this));
 
-        uint256 available = _availableManagerFee(
-            fundValue,
-            tokenSupply,
-            tokenPriceAtLastFeeMint,
-            managerFeeNumerator,
-            managerFeeDenominator
-        );
+        uint256 available =
+            _availableManagerFee(
+                fundValue,
+                tokenSupply,
+                tokenPriceAtLastFeeMint,
+                managerFeeNumerator,
+                managerFeeDenominator
+            );
 
         // Ignore dust when minting performance fees
-        if (available < 100)
-            return;
+        if (available < 100) return;
 
         address daoAddress = IHasDaoInfo(factory).getDaoAddress();
         uint256 daoFeeNumerator;
@@ -560,12 +560,15 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         return IHasFeeInfo(factory).getExitCooldown();
     }
 
-    function getExitRemainingCooldown(address sender) public view returns (uint256) {
+    function getExitRemainingCooldown(address sender)
+        public
+        view
+        returns (uint256)
+    {
         uint256 cooldown = getExitCooldown();
         uint256 cooldownFinished = lastDeposit[sender].add(cooldown);
 
-        if (cooldownFinished < block.timestamp)
-            return 0;
+        if (cooldownFinished < block.timestamp) return 0;
 
         return cooldownFinished.sub(block.timestamp);
     }
@@ -576,12 +579,15 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     //     lastDeposit[investor] = block.timestamp;
     // }
 
-    function setPoolManagerLogic(address _poolManagerLogic) external returns (bool){
-      address daoAddress = IHasDaoInfo(factory).getDaoAddress();
-      require( msg.sender == daoAddress, "only DAO address allowed");
-      poolManagerLogic = _poolManagerLogic;
-      emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
-      return true;
+    function setPoolManagerLogic(address _poolManagerLogic)
+        external
+        returns (bool)
+    {
+        address daoAddress = IHasDaoInfo(factory).getDaoAddress();
+        require(msg.sender == daoAddress, "only DAO address allowed");
+        poolManagerLogic = _poolManagerLogic;
+        emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
+        return true;
     }
 
     uint256[50] private __gap;

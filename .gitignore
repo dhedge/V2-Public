@@ -15,3 +15,6 @@ artifacts/contracts/*/*/*.dbg.json
 
 #Mac Files
 *.DS_Store
+
+#Coverage
+coverage/

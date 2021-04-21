@@ -1,13 +1,13 @@
 //
-//        __  __    __  ________  _______    ______   ________ 
+//        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
-//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/ 
-//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__    
-// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |   
-// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/    
-// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____ 
+//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
+//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
+// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
+// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
+// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
 // $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
-//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/ 
+//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
 //
 // dHEDGE DAO - https://dhedge.org
 //
@@ -34,11 +34,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.6.2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-
 
 contract Managed {
     using SafeMath for uint256;
@@ -53,9 +52,7 @@ contract Managed {
 
     address private _trader;
 
-    function initialize(address manager, string memory managerName)
-        internal
-    {
+    function initialize(address manager, string memory managerName) internal {
         _manager = manager;
         _managerName = managerName;
     }
@@ -66,7 +63,10 @@ contract Managed {
     }
 
     modifier onlyManagerOrTrader() {
-        require(msg.sender == _manager || msg.sender == _trader, "only manager or trader");
+        require(
+            msg.sender == _manager || msg.sender == _trader,
+            "only manager or trader"
+        );
         _;
     }
 
@@ -97,8 +97,7 @@ contract Managed {
 
     function addMembers(address[] memory members) public onlyManager {
         for (uint256 i = 0; i < members.length; i++) {
-            if (isMemberAllowed(members[i]))
-                continue;
+            if (isMemberAllowed(members[i])) continue;
 
             _addMember(members[i]);
         }
@@ -106,23 +105,20 @@ contract Managed {
 
     function removeMembers(address[] memory members) public onlyManager {
         for (uint256 i = 0; i < members.length; i++) {
-            if (!isMemberAllowed(members[i]))
-                continue;
+            if (!isMemberAllowed(members[i])) continue;
 
             _removeMember(members[i]);
         }
     }
 
     function addMember(address member) public onlyManager {
-        if (isMemberAllowed(member))
-            return;
+        if (isMemberAllowed(member)) return;
 
         _addMember(member);
     }
 
     function removeMember(address member) public onlyManager {
-        if (!isMemberAllowed(member))
-            return;
+        if (!isMemberAllowed(member)) return;
 
         _removeMember(member);
     }
