@@ -96,7 +96,7 @@ async function main () {
       "tag": "v1.0.0-alpha",
       "fulltag": "v1.0.0-alpha",
       "network": "kovan",
-      "date": "${new Date()}",
+      "date": new Date(),
       "contracts": {
         "poolFactoryLogic": poolFactoryLogic.address,
         "poolManagerLogic": poolManagerLogic.address,

@@ -3,12 +3,12 @@
     "tag": "v1.0.0-alpha",
     "fulltag": "v1.0.0-alpha",
     "network": "kovan",
-    "date": "${new Date()}",
+    "date": "2021-04-22T07:16:13.454Z",
     "contracts": {
-      "poolFactoryLogic": "0x6DEcb753237C92b45c9E19CeA46dED9517E0478A",
-      "poolManagerLogic": "0x2A1B37b5c39f01A665b3d93F7d4DC603700d2Fe9",
-      "poolLogic": "0xcf7BAA3943dCD7A016817c14D1C567F3543cA1CA",
-      "poolFactoryProxy": "0x4083be0CFBD6c4784d2235b23362912fB9a301d6"
+      "poolFactoryLogic": "0x00bFA1520839C3097deF910279B778B06Dd52A05",
+      "poolManagerLogic": "0x52152181d4688BC984188bD5c21EDF499FBa1371",
+      "poolLogic": "0xd6373312CCC00A48319A96FA23D918F708918D8e",
+      "poolFactoryProxy": "0x825Ef83C6b27e2244D4b6A43aC96A0cFCC73B514"
     }
   }
 }
