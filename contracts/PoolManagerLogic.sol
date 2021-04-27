@@ -264,6 +264,8 @@ contract PoolManagerLogic is
         onlyManagerOrTrader
         returns (bool)
     {
+        require(to != address(0), "non-zero address is required");
+
         address guard = IHasGuardInfo(factory).getGuard(to);
 
         require(guard != address(0), "invalid destination");
