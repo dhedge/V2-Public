@@ -114,7 +114,7 @@ contract PoolFactory is
     uint256 public managerFeeNumeratorChangeDelay;
 
     // Transaction Guards
-    mapping(address => address) internal _guard;
+    mapping(address => address) internal guard;
 
     function initialize(
         IAddressResolver _addressResolver,
@@ -518,7 +518,7 @@ contract PoolFactory is
         override
         returns (address)
     {
-        return _guard[extContract];
+        return guard[extContract];
     }
 
     function setGuard(address extContract, address guardAddress)
@@ -529,7 +529,7 @@ contract PoolFactory is
     }
 
     function _setGuard(address extContract, address guardAddress) internal {
-        _guard[extContract] = guardAddress;
+        guard[extContract] = guardAddress;
     }
 
     uint256[48] private __gap;
