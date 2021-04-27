@@ -3,7 +3,12 @@ node_modules
 
 #Hardhat files
 cache
-artifacts
+artifacts/@gnosis.pm
+artifacts/@openzeppelin
+artifacts/build-info
+artifacts/hardhat
+artifacts/contracts/*/*.dbg.json
+artifacts/contracts/*/*/*.dbg.json
 
 #VIM
 *.swp
