@@ -4,7 +4,7 @@ const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 
 const { expect } = require("chai");
 
-let logicOwner, poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, mock, poolLogicProxy, poolManagerLogicProxy, synthsABI, fundAddress;
+let logicOwner, poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, mock, poolLogicProxy, poolManagerLogicProxy, synthsABI, fundAddress, synthetixGuard;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -69,6 +69,12 @@ describe("PoolFactory", function() {
         );
         await poolFactory.deployed();
 
+        const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
+        synthetixGuard = await SynthetixGuard.deploy();
+        synthetixGuard.deployed();
+
+        const synthetixGuardPointer = mock.address;
+        await poolFactory.setGuard(synthetixGuardPointer, synthetixGuard.address);
     });
 
     it("Should be able to createFund", async function() {
@@ -427,6 +433,71 @@ describe("PoolFactory", function() {
         let [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee(fundAddress)
         expect(managerFeeNumerator.toString()).to.equal('4000');
         expect(managerFeeDenominator.toString()).to.equal('10000');
+    });
+
+    // Synthetix transaction guard
+    it("Only manager or trader can execute transaction", async () => {
+        await expect(poolManagerLogicProxy.connect(logicOwner).execTransaction(mock.address, "0x00"))
+            .to.be.revertedWith('only manager or trader');
+    });
+
+    it("Should fail with invalid destination", async () => {
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00"))
+            .to.be.revertedWith("invalid destination");
+    });
+
+    it("Should exec transaction", async () => {
+        let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+
+        let exchangeEvent = new Promise((resolve, reject) => {
+            poolManagerLogicManagerProxy.on('Exchange', (
+                managerLogicAddress,
+                manager,
+                sourceKey,
+                sourceAmount,
+                destinationKey,
+                destinationAmount,
+                time, event) => {
+                    event.removeListener();
+
+                    resolve({
+                        managerLogicAddress: managerLogicAddress,
+                        manager: manager,
+                        sourceKey: sourceKey,
+                        sourceAmount: sourceAmount,
+                        destinationKey: destinationKey,
+                        destinationAmount: destinationAmount,
+                        time: time
+                    });
+                });
+
+            setTimeout(() => {
+                reject(new Error('timeout'));
+            }, 60000)
+        });
+
+        const sourceKey = susdKey;
+        const sourceAmount = 100e18.toString();
+        const destinationKey = sethKey;
+        const daoAddress = await poolFactory.getDaoAddress();
+        const trackingCode = await poolFactory.getTrackingCode();
+        const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
+        const iSynthetix = new ethers.utils.Interface(ISynthetix.abi)
+        const exchangeWithTrackingABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [sourceKey, sourceAmount, destinationKey, daoAddress, trackingCode]);
+
+        await mock.givenMethodRevert(exchangeWithTrackingABI);
+        
+        await expect(poolManagerLogicManagerProxy.execTransaction(mock.address, exchangeWithTrackingABI))
+            .to.be.revertedWith("failed to execute exchange");
+
+        await mock.givenMethodReturnUint(exchangeWithTrackingABI, 1e18.toString())
+        await poolManagerLogicManagerProxy.execTransaction(mock.address, exchangeWithTrackingABI);
+
+        let event = await exchangeEvent;
+        expect(event.sourceKey).to.equal(susdKey);
+        expect(event.sourceAmount).to.equal(100e18.toString());
+        expect(event.destinationKey).to.equal(sethKey);
+        expect(event.destinationAmount).to.equal(1e18.toString());
     });
 
     it('should be able to upgrade/set implementation logic', async function() {

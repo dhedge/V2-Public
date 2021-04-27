@@ -33,7 +33,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-
 import "./interfaces/ISynth.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasAssetInfo.sol";
@@ -44,6 +43,9 @@ import "./interfaces/IAddressResolver.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
+import "./interfaces/IHasGuardInfo.sol";
+import "./guards/TxDataUtils.sol";
+import "./guards/IGuard.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
@@ -52,7 +54,12 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 pragma solidity ^0.6.2;
 
-contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
+contract PoolManagerLogic is 
+    Initializable,
+    IPoolManagerLogic,
+    Managed,
+    TxDataUtils
+{
     using SafeMath for uint256;
 
     bytes32 private constant _EXCHANGE_RATES_KEY = "ExchangeRates";
@@ -89,7 +96,7 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
 
     IAddressResolver public override addressResolver;
 
-    address public factory;
+    address override public factory;
 
     bytes32[] public supportedAssets;
     mapping(bytes32 => uint256) public assetPosition; // maps the asset to its 1-based position
@@ -132,11 +139,11 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
         return proxy;
     }
 
-    function isAssetSupported(bytes32 key) public view returns (bool) {
+    function isAssetSupported(bytes32 key) public view override returns (bool) {
         return assetPosition[key] != 0;
     }
 
-    function validateAsset(bytes32 key) public view returns (bool) {
+    function validateAsset(bytes32 key) public view override returns (bool) {
         address synth =
             ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
 
@@ -248,6 +255,71 @@ contract PoolManagerLogic is IPoolManagerLogic, Managed, Initializable {
             sourceAmount,
             destinationKey,
             destinationAmount,
+            block.timestamp
+        );
+    }
+
+    function execTransaction(address to, bytes memory data)
+        public
+        onlyManagerOrTrader
+        returns (bool)
+    {
+        address guard = IHasGuardInfo(factory).getGuard(to);
+
+        require(guard != address(0), "invalid destination");
+
+        // the Guards return the following data format
+        uint8 txType;
+        bytes32 rtn1;
+        bytes32 rtn2;
+        bytes32 rtn3;
+
+        (txType, rtn1, rtn2, rtn3) = IGuard(guard).txGuard(address(this), data);
+
+        if (txType == 2) {
+            // transaction is an asset exchange
+
+            _execExchange(
+                to,
+                rtn1,
+                uint256(rtn2),
+                rtn3,
+                data
+            );
+
+            return true;
+        }
+
+        (bool success, ) = to.call(data);
+        require(success == true, "failed to execute the call");
+
+        return true;
+    }
+
+    /// Executes a token swap
+    function _execExchange(
+        address to,
+        bytes32 sourceKey,
+        uint256 srcAmount,
+        bytes32 destinationKey,
+        bytes memory data
+    ) internal {
+        require(isAssetSupported(sourceKey), "unsupported source currency");
+        require(
+            isAssetSupported(destinationKey),
+            "unsupported destination currency"
+        );
+
+        (bool success, bytes memory dstAmount) = to.call(data);
+        require(success == true, "failed to execute exchange");
+
+        emit Exchange(
+            address(this),
+            manager(),
+            sourceKey,
+            srcAmount,
+            destinationKey,
+            sliceUint(dstAmount, 0),
             block.timestamp
         );
     }
