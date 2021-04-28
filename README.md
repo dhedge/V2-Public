@@ -21,3 +21,7 @@ Run `npm install`
 ## Prettier
 
 `npm run prettier:sol`
+
+## Synthetix Kovan OVM deployment
+
+https://github.com/Synthetixio/synthetix/blob/develop/publish/deployed/kovan-ovm/versions.json
