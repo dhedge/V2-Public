@@ -173,7 +173,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     function totalFundValue() public view virtual returns (uint256) {
         uint256 total = 0;
         IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
-        bytes32[] memory _supportedAssets = dm.getSupportedAssets();
+        address[] memory _supportedAssets = dm.getSupportedAssets();
         uint256 assetCount = _supportedAssets.length;
 
         for (uint256 i = 0; i < assetCount; i++) {
@@ -333,18 +333,18 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         _burn(msg.sender, _fundTokenAmount);
 
         IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
-        bytes32[] memory _supportedAssets = dm.getSupportedAssets();
+        address[] memory _supportedAssets = dm.getSupportedAssets();
         uint256 assetCount = _supportedAssets.length;
 
         // _forfeitSuspendedSynths deprecated
         for (uint256 i = 0; i < assetCount; i++) {
-            address proxy = dm.getAssetProxy(_supportedAssets[i]);
-            uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
+            address asset = _supportedAssets[i];
+            uint256 totalAssetBalance = IERC20(asset).balanceOf(address(this));
             uint256 portionOfAssetBalance =
                 totalAssetBalance.mul(portion).div(10**18);
 
             if (portionOfAssetBalance > 0) {
-                IERC20(proxy).transfer(msg.sender, portionOfAssetBalance);
+                IERC20(asset).transfer(msg.sender, portionOfAssetBalance);
             }
         }
 

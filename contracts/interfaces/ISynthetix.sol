@@ -19,6 +19,11 @@ interface ISynthetix {
         external
         view
         returns (address synthTokenAddress);
+    
+    function synthsByAddress(address asset)
+        external
+        view
+        returns (bytes32 key);
 
     function settle(bytes32 currencyKey)
         external

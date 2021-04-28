@@ -232,9 +232,9 @@
           "type": "uint256"
         },
         {
-          "internalType": "bytes32[]",
+          "internalType": "address[]",
           "name": "_supportedAssets",
-          "type": "bytes32[]"
+          "type": "address[]"
         }
       ],
       "name": "createFund",

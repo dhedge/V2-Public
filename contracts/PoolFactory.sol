@@ -150,11 +150,11 @@ contract PoolFactory is
         string memory _fundName,
         string memory _fundSymbol,
         uint256 _managerFeeNumerator,
-        bytes32[] memory _supportedAssets
+        address[] memory _supportedAssets
     ) public returns (address) {
         bytes memory managerLogicData =
             abi.encodeWithSignature(
-                "initialize(address,address,string,address,bytes32[])",
+                "initialize(address,address,string,address,address[])",
                 address(this),
                 // _privatePool,
                 _manager,

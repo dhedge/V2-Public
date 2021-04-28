@@ -19,9 +19,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "address",
           "name": "key",
-          "type": "bytes32"
+          "type": "address"
         }
       ],
       "name": "assetValue",
@@ -72,9 +72,9 @@
       "name": "getSupportedAssets",
       "outputs": [
         {
-          "internalType": "bytes32[]",
+          "internalType": "address[]",
           "name": "",
-          "type": "bytes32[]"
+          "type": "address[]"
         }
       ],
       "stateMutability": "view",
@@ -83,9 +83,28 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "asset",
+          "type": "address"
+        }
+      ],
+      "name": "getSynthKey",
+      "outputs": [
+        {
           "internalType": "bytes32",
-          "name": "key",
+          "name": "",
           "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "key",
+          "type": "address"
         }
       ],
       "name": "isAssetSupported",
@@ -102,9 +121,28 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "address",
           "name": "asset",
-          "type": "bytes32"
+          "type": "address"
+        }
+      ],
+      "name": "isSynthAsset",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "asset",
+          "type": "address"
         }
       ],
       "name": "validateAsset",
