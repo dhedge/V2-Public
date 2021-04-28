@@ -32,4 +32,5 @@ Network ID: 69
 RPC: https://kovan.optimism.io
 Blockchain explorer: https://kovan-l2-explorer.surge.sh/
 
+No need ETH as gasPrice is 0
 
