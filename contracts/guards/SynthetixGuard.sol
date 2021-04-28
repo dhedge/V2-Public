@@ -1,4 +1,3 @@
-//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -36,20 +35,43 @@
 
 pragma solidity ^0.6.2;
 
-import "./IAddressResolver.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-interface IPoolManagerLogic {
-    function getSupportedAssets() external view returns (bytes32[] memory);
+import "./TxDataUtils.sol";
+import "./IGuard.sol";
+import "../interfaces/IPoolManagerLogic.sol";
+import "../interfaces/IHasGuardInfo.sol";
 
-    function isAssetSupported(bytes32 key) external view returns (bool);
+contract SynthetixGuard is TxDataUtils, IGuard {
+    using SafeMath for uint256;
 
-    function validateAsset(bytes32 asset) external view returns (bool);
+    function txGuard(address pool, bytes calldata data)
+        external
+        view
+        override
+        returns (
+            uint8 txType,
+            bytes32 srcAsset,
+            bytes32 srcAmount,
+            bytes32 dstAsset
+        )
+    {
+        bytes4 method = getMethod(data);
 
-    function getAssetProxy(bytes32 key) external view returns (address);
+        if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
+            txType = 2; // transaction type 2 = synthetix exchange
+            srcAsset = getInput(data, 0);
+            srcAmount = getInput(data, 1);
+            dstAsset = getInput(data, 2);
 
-    function assetValue(bytes32 key) external view returns (uint256);
+            require(
+                IPoolManagerLogic(pool).isAssetSupported(dstAsset),
+                "unsupported destination currency"
+            );
 
-    function addressResolver() external view returns (IAddressResolver);
+            return (txType, srcAsset, srcAmount, dstAsset);
+        }
 
-    function factory() external view returns (address);
+        revert("invalid synthetix method");
+    }
 }

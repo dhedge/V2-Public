@@ -36,20 +36,7 @@
 
 pragma solidity ^0.6.2;
 
-import "./IAddressResolver.sol";
-
-interface IPoolManagerLogic {
-    function getSupportedAssets() external view returns (bytes32[] memory);
-
-    function isAssetSupported(bytes32 key) external view returns (bool);
-
-    function validateAsset(bytes32 asset) external view returns (bool);
-
-    function getAssetProxy(bytes32 key) external view returns (address);
-
-    function assetValue(bytes32 key) external view returns (uint256);
-
-    function addressResolver() external view returns (IAddressResolver);
-
-    function factory() external view returns (address);
+interface IHasGuardInfo {
+    // Get guard
+    function getGuard(address extContract) external view returns (address);
 }

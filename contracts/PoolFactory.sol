@@ -45,10 +45,17 @@ import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
+import "./interfaces/IHasGuardInfo.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
+contract PoolFactory is
+    ProxyFactory,
+    IHasDaoInfo,
+    IHasFeeInfo,
+    IHasAssetInfo,
+    IHasGuardInfo
+{
     using SafeMath for uint256;
 
     event FundCreated(
@@ -105,6 +112,9 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
 
     uint256 public maximumManagerFeeNumeratorChange;
     uint256 public managerFeeNumeratorChangeDelay;
+
+    // Transaction Guards
+    mapping(address => address) internal guards;
 
     function initialize(
         IAddressResolver _addressResolver,
@@ -499,6 +509,27 @@ contract PoolFactory is ProxyFactory, IHasDaoInfo, IHasFeeInfo, IHasAssetInfo {
 
             _upgradePool(pool, data, targetVersion);
         }
+    }
+
+    // Transaction Guards
+    function getGuard(address extContract)
+        public
+        view
+        override
+        returns (address)
+    {
+        return guards[extContract];
+    }
+
+    function setGuard(address extContract, address guardAddress)
+        public
+        onlyOwner
+    {
+        _setGuard(extContract, guardAddress);
+    }
+
+    function _setGuard(address extContract, address guardAddress) internal {
+        guards[extContract] = guardAddress;
     }
 
     uint256[48] private __gap;
