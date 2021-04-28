@@ -4,7 +4,7 @@ Run `npm install`
 
 ## Deployment
 
-`npm run deploy`
+`npm run deploy` and it will output addresses in versions.json. And the JSON ABI are in the artifects folder. 
 
 ## Test
 
