@@ -25,3 +25,11 @@ Run `npm install`
 ## Synthetix Kovan OVM deployment
 
 https://github.com/Synthetixio/synthetix/blob/develop/publish/deployed/kovan-ovm/versions.json
+
+## Metamask settings for Kovan OVM
+
+Network ID: 69
+RPC: https://kovan.optimism.io
+Blockchain explorer: https://kovan-l2-explorer.surge.sh/
+
+
