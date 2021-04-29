@@ -37,6 +37,7 @@ import "./interfaces/ISynth.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/ISynthetix.sol";
+import "./interfaces/ISynthAddressProxy.sol";
 import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IExchangeRates.sol";
 import "./interfaces/IAddressResolver.sol";
@@ -44,6 +45,7 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./upgradability/Address.sol";
 import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
@@ -99,6 +101,7 @@ contract PoolManagerLogic is
 
     address[] public supportedAssets;
     mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
+    mapping(address => bool) public override isSynthAsset;
     mapping(address => bool) public persistentAsset;
 
     // Fee increase announcement
@@ -139,11 +142,13 @@ contract PoolManagerLogic is
     }
 
     function getSynthKey(address asset) public view override returns (bytes32) {
-        return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(asset);
-    }
+        require(OpenZeppelinUpgradesAddress.isContract(asset), "non-synth asset");
 
-    function isSynthAsset(address asset) public view override returns (bool) {
-        return getSynthKey(asset) != bytes32(0);
+        try ISynthAddressProxy(asset).target() returns (address target) {
+            return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(target);
+        } catch (bytes memory) {
+            revert("non-synth asset");
+        }
     }
 
     function isAssetSupported(address asset) public view override returns (bool) {
@@ -151,17 +156,14 @@ contract PoolManagerLogic is
     }
 
     function validateAsset(address asset) public view override returns (bool) {
-        bytes32 key = getSynthKey(asset);
-        address synth =
-            ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
+        // TODO: currently supports only synth assets and check synth asset validation -> need asset validation from PoolFactory
+        bytes32 synthKey = getSynthKey(asset);
 
-        if (synth == address(0)) return false;
+        if (synthKey != bytes32(0)) {
+            return true;
+        }
 
-        address proxy = ISynth(synth).proxy();
-
-        if (proxy == address(0)) return false;
-
-        return true;
+        return false;
     }
 
     function addToSupportedAssets(address asset) public onlyManagerOrTrader {
@@ -203,10 +205,12 @@ contract PoolManagerLogic is
             "maximum assets reached"
         );
         require(!isAssetSupported(asset), "asset already supported");
-        require(validateAsset(asset) == true, "non-synth asset");
+        require(validateAsset(asset) == true, "invalid asset");
 
         supportedAssets.push(asset);
         assetPosition[asset] = supportedAssets.length;
+        // TODO: currently supports only synth assets
+        isSynthAsset[asset] = true;
 
         emit AssetAdded(address(this), manager(), asset);
     }
@@ -230,7 +234,7 @@ contract PoolManagerLogic is
     }
 
     // synthetix asset exchange
-    function exchange(
+    function exchangeSynth(
         address sourceAsset,
         uint256 sourceAmount,
         address destinationAsset
