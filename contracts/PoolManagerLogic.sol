@@ -45,7 +45,6 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
-import "./upgradability/Address.sol";
 import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
@@ -53,6 +52,7 @@ import "./Managed.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 
 pragma solidity ^0.6.2;
 
@@ -63,6 +63,7 @@ contract PoolManagerLogic is
     TxDataUtils
 {
     using SafeMath for uint256;
+    using Address for address;
 
     bytes32 private constant _EXCHANGE_RATES_KEY = "ExchangeRates";
     bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
@@ -142,7 +143,7 @@ contract PoolManagerLogic is
     }
 
     function getSynthKey(address asset) public view override returns (bytes32) {
-        require(OpenZeppelinUpgradesAddress.isContract(asset), "non-synth asset");
+        require(asset.isContract(), "non-synth asset");
 
         try ISynthAddressProxy(asset).target() returns (address target) {
             return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(target);
