@@ -26,6 +26,10 @@ Run `npm install`
 
 https://github.com/Synthetixio/synthetix/blob/develop/publish/deployed/kovan-ovm/versions.json
 
+## Synthetix Kovan OVM contract ABI
+
+https://github.com/Synthetixio/synthetix/tree/develop/contracts/interfaces
+
 ## Metamask settings for Kovan OVM
 
 Network ID: 69
