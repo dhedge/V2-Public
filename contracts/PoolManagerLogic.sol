@@ -69,13 +69,9 @@ contract PoolManagerLogic is
     bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
     bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
 
-    event Exchange(
+    event TransactionExecuted(
         address fundAddress,
         address manager,
-        address sourceAsset,
-        uint256 sourceAmount,
-        address destinationAddress,
-        uint256 destinationAmount,
         uint256 time
     );
     event AssetAdded(address fundAddress, address manager, address asset);
@@ -134,20 +130,14 @@ contract PoolManagerLogic is
         return proxy;
     }
 
-    function isSynthAsset(address asset) public view override returns (bool) {
+    function getSynthKey(address asset) public view override returns (bytes32) {
         require(asset.isContract(), "invalid asset");
 
         try ISynthAddressProxy(asset).target() returns (address target) {
-            return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(target) != bytes32(0);
+            return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(target);
         } catch (bytes memory) {
-            return false;
+            revert("non-synth asset");
         }
-    }
-
-    function getSynthKey(address asset) public view override returns (bytes32) {
-        require(isSynthAsset(asset), "non-synth asset");
-
-        return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(ISynthAddressProxy(asset).target());
     }
 
     function isAssetSupported(address asset) public view override returns (bool) {
@@ -174,13 +164,10 @@ contract PoolManagerLogic is
 
         require(!persistentAsset[asset], "cannot remove persistent assets");
 
-        if (validateAsset(asset) == true) {
-            // allow removal of depreciated synths
-            require(
-                IERC20(asset).balanceOf(address(this)) == 0,
-                "cannot remove non-empty asset"
-            );
-        }
+        require(
+            IERC20(asset).balanceOf(address(this)) == 0,
+            "cannot remove non-empty asset"
+        );
 
         _removeFromSupportedAssets(asset);
     }
@@ -234,62 +221,20 @@ contract PoolManagerLogic is
 
         require(guard != address(0), "invalid destination");
 
-        // the Guards return the following data format
-        uint8 txType;
-        bytes32 rtn1;
-        bytes32 rtn2;
-        bytes32 rtn3;
-
-        (txType, rtn1, rtn2, rtn3) = IGuard(guard).txGuard(address(this), data);
-
-        if (txType == 2) {
-            // transaction is an asset exchange
-
-            _execExchange(
-                to,
-                convert32toAddress(rtn1),
-                uint256(rtn2),
-                convert32toAddress(rtn3),
-                data
-            );
-
-            return true;
-        }
+        require(IGuard(guard).txGuard(address(this), data), "invalid transaction");
 
         (bool success, ) = to.call(data);
         require(success == true, "failed to execute the call");
 
-        return true;
-    }
-
-    /// Executes a token swap
-    function _execExchange(
-        address to,
-        address sourceAsset,
-        uint256 srcAmount,
-        address destinationAsset,
-        bytes memory data
-    ) internal {
-        require(isAssetSupported(sourceAsset), "unsupported source asset");
-        require(
-            isAssetSupported(destinationAsset),
-            "unsupported destination asset"
-        );
-
-        (bool success, bytes memory dstAmount) = to.call(data);
-        require(success == true, "failed to execute exchange");
-
-        emit Exchange(
+        emit TransactionExecuted(
             address(this),
             manager(),
-            sourceAsset,
-            srcAmount,
-            destinationAsset,
-            sliceUint(dstAmount, 0),
             block.timestamp
         );
 
+        return true;
     }
+
     function assetValue(address asset, uint256 amount)
         public
         view

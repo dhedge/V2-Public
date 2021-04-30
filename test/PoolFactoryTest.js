@@ -476,13 +476,12 @@ describe("PoolFactory", function() {
         let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
         let exchangeEvent = new Promise((resolve, reject) => {
-            poolManagerLogicManagerProxy.on('Exchange', (
+            synthetixGuard.on('Exchange', (
                 managerLogicAddress,
                 manager,
                 sourceAsset,
                 sourceAmount,
                 destinationAsset,
-                destinationAmount,
                 time, event) => {
                     event.removeListener();
 
@@ -492,7 +491,6 @@ describe("PoolFactory", function() {
                         sourceAsset: sourceAsset,
                         sourceAmount: sourceAmount,
                         destinationAsset: destinationAsset,
-                        destinationAmount: destinationAmount,
                         time: time
                     });
                 });
@@ -515,7 +513,7 @@ describe("PoolFactory", function() {
         await synthetix.givenCalldataRevert(exchangeWithTrackingABI);
         
         await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI))
-            .to.be.revertedWith("failed to execute exchange");
+            .to.be.revertedWith("failed to execute the call");
 
         await synthetix.givenCalldataReturnUint(exchangeWithTrackingABI, 1e18.toString())
         await poolManagerLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI);
@@ -524,7 +522,6 @@ describe("PoolFactory", function() {
         expect(event.sourceAsset).to.equal(susd);
         expect(event.sourceAmount).to.equal(100e18.toString());
         expect(event.destinationAsset).to.equal(seth);
-        expect(event.destinationAmount).to.equal(1e18.toString());
     });
 
     it('should be able to upgrade/set implementation logic', async function() {

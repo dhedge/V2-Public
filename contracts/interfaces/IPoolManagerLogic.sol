@@ -49,8 +49,6 @@ interface IPoolManagerLogic {
 
     function getSynthKey(address asset) external view returns (bytes32);
 
-    function isSynthAsset(address asset) external view returns (bool);
-
     function assetValue(address key) external view returns (uint256);
 
     function assetValue(address key, uint256 amount) external view returns (uint256);

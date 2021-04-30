@@ -41,25 +41,19 @@ import "./TxDataUtils.sol";
 import "./IGuard.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
+import "../interfaces/IManaged.sol";
 
 contract SynthetixGuard is TxDataUtils, IGuard {
     using SafeMath for uint256;
 
     function txGuard(address pool, bytes calldata data)
         external
-        view
         override
-        returns (
-            uint8,
-            bytes32,
-            bytes32,
-            bytes32
-        )
+        returns (bool)
     {
         bytes4 method = getMethod(data);
 
         if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-            uint8 txType = 2; // transaction type 2 = synthetix exchange
             bytes32 srcKey = getInput(data, 0);
             bytes32 srcAmount = getInput(data, 1);
             bytes32 dstKey = getInput(data, 2);
@@ -68,13 +62,26 @@ contract SynthetixGuard is TxDataUtils, IGuard {
             address srcAsset = poolManagerLogic.getAssetProxy(srcKey);
             address dstAsset = poolManagerLogic.getAssetProxy(dstKey);
             require(
+                poolManagerLogic.isAssetSupported(srcAsset),
+                "unsupported destination asset"
+            );
+            require(
                 poolManagerLogic.isAssetSupported(dstAsset),
                 "unsupported destination asset"
             );
 
-            return (txType, bytes32(uint256(srcAsset)), srcAmount, bytes32(uint256(dstAsset)));
+            emit Exchange(
+                address(poolManagerLogic),
+                IManaged(pool).manager(),
+                srcAsset,
+                uint256(srcAmount),
+                dstAsset,
+                block.timestamp
+            );
+
+            return true;
         }
 
-        revert("invalid synthetix method");
+        return false;
     }
 }
