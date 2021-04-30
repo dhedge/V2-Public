@@ -5,8 +5,8 @@ const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 const { expect } = require("chai");
 
 let logicOwner, manager, dao, user1;
-let poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress, synthetixGuard;
-let addressResolver, synthetix; // contracts
+let poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress, synthetixGuard, approveGuard, uniswapV2Guard;
+let addressResolver, synthetix, uniswapV2Router; // contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
 let usd_price_feed, eth_price_feed, link_price_feed;
@@ -14,6 +14,7 @@ let usd_price_feed, eth_price_feed, link_price_feed;
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000" // Synthetix
 const _EXCHANGE_RATES_KEY = "0x45786368616e6765526174657300000000000000000000000000000000000000"; // ExchangeRates
+const approveGuardPointer = "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
 
 const susdKey =
     '0x7355534400000000000000000000000000000000000000000000000000000000'
@@ -37,6 +38,7 @@ describe("PoolFactory", function() {
         const MockContract = await ethers.getContractFactory("MockContract");
         addressResolver = await MockContract.deploy();
         synthetix = await MockContract.deploy();
+        uniswapV2Router = await MockContract.deploy();
         susdAsset = await MockContract.deploy();
         susdProxy = await MockContract.deploy();
         sethAsset = await MockContract.deploy();
@@ -143,8 +145,17 @@ describe("PoolFactory", function() {
         synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
         synthetixGuard.deployed();
 
-        const synthetixGuardPointer = synthetix.address;
-        await poolFactory.connect(dao).setGuard(synthetixGuardPointer, synthetixGuard.address);
+        const ApproveGuard = await ethers.getContractFactory("ApproveGuard");
+        approveGuard = await ApproveGuard.deploy();
+        approveGuard.deployed();
+
+        const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
+        uniswapV2Guard = await UniswapV2Guard.deploy();
+        uniswapV2Guard.deployed();
+
+        await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
+        await poolFactory.connect(dao).setGuard(approveGuardPointer, approveGuard.address);
+        await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
     });
 
     it("Should be able to createFund", async function() {
@@ -474,12 +485,12 @@ describe("PoolFactory", function() {
 
     // Synthetix transaction guard
     it("Only manager or trader can execute transaction", async () => {
-        await expect(poolManagerLogicProxy.connect(logicOwner).execTransaction(synthetix.address, "0x00"))
+        await expect(poolManagerLogicProxy.connect(logicOwner).execTransaction(synthetix.address, "0x00000000"))
             .to.be.revertedWith('only manager or trader');
     });
 
     it("Should fail with invalid destination", async () => {
-        await expect(poolManagerLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00"))
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00000000"))
             .to.be.revertedWith("invalid destination");
     });
 
@@ -532,6 +543,14 @@ describe("PoolFactory", function() {
         expect(event.sourceAmount).to.equal(100e18.toString());
         expect(event.destinationAsset).to.equal(seth);
     });
+
+    it('Should be able to approve', async () => {
+        const badApproveCallData =
+            "0x095ea7b300000000000000000000000022222222542d85b3ef69ae05771c2dccff4faa26ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
+        // approve link token with unknown contract
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, badApproveCallData)).to.be.revertedWith("unsupported spender approval");
+    })
 
     it('should be able to upgrade/set implementation logic', async function() {
         await poolFactory.setLogic(ZERO_ADDRESS, ZERO_ADDRESS)
