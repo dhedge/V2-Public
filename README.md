@@ -28,7 +28,7 @@ https://github.com/Synthetixio/synthetix/blob/develop/publish/deployed/kovan-ovm
 
 ## Synthetix Kovan OVM contract ABI
 
-https://github.com/Synthetixio/synthetix/tree/develop/contracts/interfaces
+https://github.com/Synthetixio/synthetix/tree/master#as-a-cli-tool
 
 ## Metamask settings for Kovan OVM
 
