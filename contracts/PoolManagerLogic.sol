@@ -48,6 +48,7 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
+import "./PriceConsumerV3.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
@@ -65,10 +66,8 @@ contract PoolManagerLogic is
     using SafeMath for uint256;
     using Address for address;
 
-    bytes32 private constant _EXCHANGE_RATES_KEY = "ExchangeRates";
     bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
     bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
-    bytes32 private constant _SUSD_KEY = "sUSD";
 
     event Exchange(
         address fundAddress,
@@ -102,7 +101,6 @@ contract PoolManagerLogic is
 
     address[] public supportedAssets;
     mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
-    mapping(address => bool) public override isSynthAsset;
     mapping(address => bool) public persistentAsset;
 
     // Fee increase announcement
@@ -125,12 +123,6 @@ contract PoolManagerLogic is
         for (uint8 i = 0; i < _supportedAssets.length; i++) {
             _addToSupportedAssets(_supportedAssets[i]);
         }
-
-        address susd = getAssetProxy(_SUSD_KEY);
-        if (susd != address(0)) {
-            _addToSupportedAssets(susd);
-            persistentAsset[susd] = true;
-        }
     }
 
     function getAssetProxy(bytes32 key) public view override returns (address) {
@@ -142,14 +134,20 @@ contract PoolManagerLogic is
         return proxy;
     }
 
-    function getSynthKey(address asset) public view override returns (bytes32) {
-        require(asset.isContract(), "non-synth asset");
+    function isSynthAsset(address asset) public view override returns (bool) {
+        require(asset.isContract(), "invalid asset");
 
         try ISynthAddressProxy(asset).target() returns (address target) {
-            return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(target);
+            return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(target) != bytes32(0);
         } catch (bytes memory) {
-            revert("non-synth asset");
+            return false;
         }
+    }
+
+    function getSynthKey(address asset) public view override returns (bytes32) {
+        require(isSynthAsset(asset), "non-synth asset");
+
+        return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(ISynthAddressProxy(asset).target());
     }
 
     function isAssetSupported(address asset) public view override returns (bool) {
@@ -157,14 +155,7 @@ contract PoolManagerLogic is
     }
 
     function validateAsset(address asset) public view override returns (bool) {
-        // TODO: currently supports only synth assets and check synth asset validation -> need asset validation from PoolFactory
-        bytes32 synthKey = getSynthKey(asset);
-
-        if (synthKey != bytes32(0)) {
-            return true;
-        }
-
-        return false;
+        return IHasAssetInfo(factory).isValidAsset(asset);
     }
 
     function addToSupportedAssets(address asset) public onlyManagerOrTrader {
@@ -210,8 +201,6 @@ contract PoolManagerLogic is
 
         supportedAssets.push(asset);
         assetPosition[asset] = supportedAssets.length;
-        // TODO: currently supports only synth assets
-        isSynthAsset[asset] = true;
 
         emit AssetAdded(address(this), manager(), asset);
     }
@@ -232,43 +221,6 @@ contract PoolManagerLogic is
         supportedAssets.pop();
 
         emit AssetRemoved(address(this), manager(), asset);
-    }
-
-    // synthetix asset exchange
-    function exchangeSynth(
-        address sourceAsset,
-        uint256 sourceAmount,
-        address destinationAsset
-    ) public onlyManagerOrTrader {
-        require(isAssetSupported(sourceAsset), "unsupported source asset");
-        require(
-            isAssetSupported(destinationAsset),
-            "unsupported destination asset"
-        );
-
-        bytes32 sourceKey = getSynthKey(sourceAsset);
-        bytes32 destinationKey = getSynthKey(destinationAsset);
-
-        ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
-
-        uint256 destinationAmount =
-            sx.exchangeWithTracking(
-                sourceKey,
-                sourceAmount,
-                destinationKey,
-                IHasDaoInfo(factory).getDaoAddress(),
-                IHasFeeInfo(factory).getTrackingCode()
-            );
-
-        emit Exchange(
-            address(this),
-            msg.sender,
-            sourceAsset,
-            sourceAmount,
-            destinationAsset,
-            destinationAmount,
-            block.timestamp
-        );
     }
 
     function execTransaction(address to, bytes memory data)
@@ -336,16 +288,29 @@ contract PoolManagerLogic is
             sliceUint(dstAmount, 0),
             block.timestamp
         );
+
+    }
+    function assetValue(address asset, uint256 amount)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        // decimal: 36 - decimal
+
+        uint256 usdPrice = PriceConsumerV3(factory).getUSDPrice(asset);
+
+        // -> decimal: 18
+
+        return usdPrice.mul(amount).div(10**18);
+    }
+
+    function assetBalance(address asset) public view returns (uint256) {
+        return IERC20(asset).balanceOf(address(this));
     }
 
     function assetValue(address asset) public view override returns (uint256) {
-        return
-            IExchangeRates(addressResolver.getAddress(_EXCHANGE_RATES_KEY))
-                .effectiveValue(
-                getSynthKey(asset),
-                IERC20(asset).balanceOf(address(this)),
-                _SUSD_KEY
-            );
+        return assetValue(asset, assetBalance(asset));
     }
 
     function getSuspendedAssets()
@@ -400,14 +365,13 @@ contract PoolManagerLogic is
         uint256[] memory balances = new uint256[](assetCount);
         uint256[] memory rates = new uint256[](assetCount);
 
-        IExchangeRates exchangeRates =
-            IExchangeRates(addressResolver.getAddress(_EXCHANGE_RATES_KEY));
         for (uint256 i = 0; i < assetCount; i++) {
             address asset = supportedAssets[i];
-            balances[i] = IERC20(asset).balanceOf(address(this));
+            balances[i] = assetBalance(asset);
             assets[i] = asset;
-            rates[i] = exchangeRates.rateForCurrency(getSynthKey(asset));
+            rates[i] = PriceConsumerV3(factory).getUSDPrice(asset);
         }
+
         return (assets, balances, rates);
     }
 

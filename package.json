@@ -29,6 +29,7 @@
     "solidity-coverage": "^0.7.16"
   },
   "dependencies": {
+    "@chainlink/contracts": "0.1.6",
     "@eth-optimism/plugins": "0.0.20",
     "@openzeppelin/contracts-ethereum-package": "^3.0.0",
     "dotenv": "^8.2.0"

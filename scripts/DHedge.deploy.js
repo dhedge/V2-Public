@@ -80,7 +80,10 @@ async function main () {
   )
 
   const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
-  tx = await poolFactory.initialize(KOVAN_ADDRESS_RESOLVER, poolLogic.address, poolManagerLogic.address, TESTNET_DAO)
+
+  const validAssets = []
+  const aggregators = []
+  tx = await poolFactory.initialize(KOVAN_ADDRESS_RESOLVER, poolLogic.address, poolManagerLogic.address, TESTNET_DAO, validAssets, aggregators)
   console.log("tx: ", tx.hash)
 
   // Transfer owership to DAO

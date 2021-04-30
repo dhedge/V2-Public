@@ -40,6 +40,7 @@ import "./interfaces/ISynthetix.sol";
 import "./interfaces/IExchangeRates.sol";
 import "./interfaces/IAddressResolver.sol";
 import "./PoolLogic.sol";
+import "./PriceConsumerV3.sol";
 import "./upgradability/ProxyFactory.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
@@ -54,7 +55,8 @@ contract PoolFactory is
     IHasDaoInfo,
     IHasFeeInfo,
     IHasAssetInfo,
-    IHasGuardInfo
+    IHasGuardInfo,
+    PriceConsumerV3
 {
     using SafeMath for uint256;
 
@@ -75,6 +77,8 @@ contract PoolFactory is
     event ExitFeeSet(uint256 numerator, uint256 denominator);
     event ExitCooldownSet(uint256 cooldown);
 
+    event AddedValidAsset(address indexed asset);
+    event RemovedValidAsset(address indexed asset);
     event MaximumSupportedAssetCountSet(uint256 count);
 
     // event DhptSwapAddressSet(address dhptSwap);
@@ -101,6 +105,7 @@ contract PoolFactory is
     // uint256 internal _exitFeeDenominator;
     uint256 internal _exitCooldown;
 
+    mapping(address => bool) internal validAssets;
     uint256 internal _maximumSupportedAssetCount;
 
     bytes32 internal _trackingCode;
@@ -116,11 +121,18 @@ contract PoolFactory is
     // Transaction Guards
     mapping(address => address) internal guards;
 
+    modifier onlyDao() {
+        require(msg.sender == _daoAddress, "only dao");
+        _;
+    }
+
     function initialize(
         IAddressResolver _addressResolver,
         address _poolLogic,
         address _managerLogic,
-        address daoAddress
+        address daoAddress,
+        address[] memory _validAssets,
+        address[] memory _aggregators
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
 
@@ -141,6 +153,11 @@ contract PoolFactory is
         _setTrackingCode(
             0x4448454447450000000000000000000000000000000000000000000000000000
         );
+
+        for (uint8 i = 0; i < _validAssets.length; i++) {
+            validAssets[_validAssets[i]] = true;
+            _addAggregator(_validAssets[i], _aggregators[i]);
+        }
     }
 
     function createFund(
@@ -420,6 +437,28 @@ contract PoolFactory is
         return _maximumSupportedAssetCount;
     }
 
+    function isValidAsset(address asset) public view override returns (bool) {
+        return validAssets[asset];
+    }
+
+    function addValidAsset(address asset, address aggregator) public onlyDao {
+        require(!isValidAsset(asset), "asset already exists");
+
+        validAssets[asset] = true;
+        _addAggregator(asset, aggregator);
+
+        emit AddedValidAsset(asset);
+    }
+
+    function removeValidAsset(address asset) public onlyDao {
+        require(isValidAsset(asset), "asset doesn't exist");
+
+        validAssets[asset] = false;
+        _removeAggregator(asset);
+
+        emit RemovedValidAsset(asset);
+    }
+
     // Synthetix tracking
 
     function setTrackingCode(bytes32 code) external onlyOwner {
@@ -523,13 +562,29 @@ contract PoolFactory is
 
     function setGuard(address extContract, address guardAddress)
         public
-        onlyOwner
+        onlyDao
     {
         _setGuard(extContract, guardAddress);
     }
 
     function _setGuard(address extContract, address guardAddress) internal {
         guards[extContract] = guardAddress;
+    }
+
+    /**
+     * enable chainlink
+     */
+    function enableChainlink() public onlyDao {
+        require(isDisabledChainlink == true, "PriceConsumerV3: chainlink already enabled");
+        _enableChainlink();
+    }
+
+    /**
+     * disable chainlink
+     */
+    function disableChainlink() public onlyDao {
+        require(isDisabledChainlink == false, "PriceConsumerV3: chainlink not enabled");
+        _disableChainlink();
     }
 
     uint256[48] private __gap;

@@ -53,6 +53,8 @@ interface IPoolManagerLogic {
 
     function assetValue(address key) external view returns (uint256);
 
+    function assetValue(address key, uint256 amount) external view returns (uint256);
+
     function addressResolver() external view returns (IAddressResolver);
 
     function factory() external view returns (address);
