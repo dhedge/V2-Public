@@ -269,11 +269,11 @@ describe("PoolFactory", function() {
 
         expect(event.fundAddress).to.equal(poolLogicProxy.address);
         expect(event.investor).to.equal(logicOwner.address);
-        expect(event.valueDeposited).to.equal(100e18.toString());
-        expect(event.fundTokensReceived).to.equal(100e18.toString());
-        expect(event.totalInvestorFundTokens).to.equal(100e18.toString());
-        expect(event.fundValue).to.equal(100e18.toString());
-        expect(event.totalSupply).to.equal(100e18.toString());
+        expect(event.valueDeposited).to.equal(100e8.toString());
+        expect(event.fundTokensReceived).to.equal(100e8.toString());
+        expect(event.totalInvestorFundTokens).to.equal(100e8.toString());
+        expect(event.fundValue).to.equal(100e8.toString());
+        expect(event.totalSupply).to.equal(100e8.toString());
     });
 
     it('should be able to withdraw', async function() {
@@ -313,7 +313,7 @@ describe("PoolFactory", function() {
         await susdProxy.givenCalldataReturnUint(balanceOfABI, 100e18.toString());
 
         // Withdraw 50%
-        let withdrawAmount = 50e18
+        let withdrawAmount = 50e8
         let totalSupply = await poolLogicProxy.totalSupply()
         let totalFundValue = await poolLogicProxy.totalFundValue()
 
@@ -336,9 +336,9 @@ describe("PoolFactory", function() {
         expect(event.investor).to.equal(logicOwner.address);
         expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
         expect(event.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
-        expect(event.totalInvestorFundTokens).to.equal(50e18.toString());
-        expect(event.fundValue).to.equal(100e18.toString());
-        expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
+        expect(event.totalInvestorFundTokens).to.equal(50e8.toString());
+        expect(event.fundValue).to.equal(100e8.toString());
+        expect(event.totalSupply).to.equal((100e8 - fundTokensWithdrawn).toString());
     });
 
     it('should be able to manage pool',async function() {
@@ -476,7 +476,7 @@ describe("PoolFactory", function() {
         let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
         let exchangeEvent = new Promise((resolve, reject) => {
-            synthetixGuard.on('Exchange', (
+            synthetixGuard.on('ExchangeWithTracking', (
                 managerLogicAddress,
                 manager,
                 sourceAsset,

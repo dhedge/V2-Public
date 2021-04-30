@@ -51,22 +51,20 @@ contract PriceConsumerV3 {
         uint256 price;
 
         if (!isDisabledChainlink) {
-            (, int256 _price, , uint256 updatedAt, ) =
-                AggregatorV3Interface(aggregator).latestRoundData();
+            try AggregatorV3Interface(aggregator).latestRoundData() returns (uint80, int256 _price, uint256, uint256 updatedAt, uint80) {
+                // check chainlink price updated within 25 hours
+                require(updatedAt.add(90000) >= block.timestamp, "PriceConsumerV3: chainlink price expired");
 
-            // check chainlink price updated within 25 hours
-            require(updatedAt.add(90000) >= block.timestamp, "PriceConsumerV3: chainlink price expired");
-
-            if (_price > 0) {
-                price = uint256(_price);
+                if (_price > 0) {
+                    price = uint256(_price);
+                }
+            } catch {
+                revert("PriceConsumerV3: price not available");
             }
         }
 
         require(price > 0, "PriceConsumerV3: price not available");
 
-        // decimals -> 36 - decimal
-        uint256 decimals = uint256(ERC20UpgradeSafe(_asset).decimals());
-
-        return price.mul(10**28).div(10**decimals);
+        return price;
     }
 }

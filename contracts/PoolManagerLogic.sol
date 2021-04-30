@@ -241,13 +241,10 @@ contract PoolManagerLogic is
         override
         returns (uint256)
     {
-        // decimal: 36 - decimal
-
-        uint256 usdPrice = PriceConsumerV3(factory).getUSDPrice(asset);
-
-        // -> decimal: 18
-
-        return usdPrice.mul(amount).div(10**18);
+        uint256 price = PriceConsumerV3(factory).getUSDPrice(asset);
+        uint256 decimals = uint256(ERC20UpgradeSafe(asset).decimals());
+        
+        return price.mul(amount).div(10**decimals);
     }
 
     function assetBalance(address asset) public view returns (uint256) {
