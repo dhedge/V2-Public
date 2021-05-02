@@ -15,49 +15,6 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "manager",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "sourceAsset",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "sourceAmount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "destinationAddress",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "time",
-          "type": "uint256"
-        }
-      ],
-      "name": "Exchange",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "fundAddress",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
           "name": "sourceAsset",
           "type": "address"
         },
