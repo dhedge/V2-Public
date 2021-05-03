@@ -476,9 +476,8 @@ describe("PoolFactory", function() {
         let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
         let exchangeEvent = new Promise((resolve, reject) => {
-            synthetixGuard.on('ExchangeWithTracking', (
+            synthetixGuard.on('Exchange', (
                 managerLogicAddress,
-                manager,
                 sourceAsset,
                 sourceAmount,
                 destinationAsset,
@@ -487,7 +486,6 @@ describe("PoolFactory", function() {
 
                     resolve({
                         managerLogicAddress: managerLogicAddress,
-                        manager: manager,
                         sourceAsset: sourceAsset,
                         sourceAmount: sourceAmount,
                         destinationAsset: destinationAsset,

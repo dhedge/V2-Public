@@ -46,15 +46,6 @@ import "../interfaces/IManaged.sol";
 contract SynthetixGuard is TxDataUtils, IGuard {
     using SafeMath for uint256;
 
-    event ExchangeWithTracking(
-        address fundAddress,
-        address manager,
-        address sourceAsset,
-        uint256 sourceAmount,
-        address destinationAddress,
-        uint256 time
-    );
-
     function txGuard(address pool, bytes calldata data)
         external
         override
@@ -79,9 +70,8 @@ contract SynthetixGuard is TxDataUtils, IGuard {
                 "unsupported destination asset"
             );
 
-            emit ExchangeWithTracking(
+            emit Exchange(
                 address(poolManagerLogic),
-                IManaged(pool).manager(),
                 srcAsset,
                 uint256(srcAmount),
                 dstAsset,
