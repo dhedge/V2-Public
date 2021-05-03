@@ -556,8 +556,30 @@ describe("PoolFactory", function() {
     })
 
     it("should be able to swap tokens on uniswap.", async () => {
-        const sourceAmount = 100e18.toString();
+        let exchangeEvent = new Promise((resolve, reject) => {
+            uniswapV2Guard.on('Exchange', (
+                managerLogicAddress,
+                sourceAsset,
+                sourceAmount,
+                destinationAsset,
+                time, event) => {
+                    event.removeListener();
 
+                    resolve({
+                        managerLogicAddress: managerLogicAddress,
+                        sourceAsset: sourceAsset,
+                        sourceAmount: sourceAmount,
+                        destinationAsset: destinationAsset,
+                        time: time
+                    });
+                });
+
+            setTimeout(() => {
+                reject(new Error('timeout'));
+            }, 60000)
+        });
+
+        const sourceAmount = 100e18.toString();
         const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
         const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
         let swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], poolManagerLogicProxy.address, 0]);
@@ -580,8 +602,16 @@ describe("PoolFactory", function() {
         await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("recipient is not pool");
 
         swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], poolManagerLogicProxy.address, 0]);
+        await uniswapV2Router.givenCalldataRevert(swapABI);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("failed to execute the call");
+
         await uniswapV2Router.givenCalldataReturn(swapABI, []);
         await poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
+
+        let event = await exchangeEvent;
+        expect(event.sourceAsset).to.equal(susd);
+        expect(event.sourceAmount).to.equal(100e18.toString());
+        expect(event.destinationAsset).to.equal(seth);
     })
 
     it('should be able to upgrade/set implementation logic', async function() {

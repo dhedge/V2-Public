@@ -46,14 +46,6 @@ import "../interfaces/IManaged.sol";
 contract UniswapV2Guard is TxDataUtils, IGuard {
     using SafeMath for uint256;
 
-    event SwapExactTokensForTokens(
-        address fundAddress,
-        address sourceAsset,
-        uint256 sourceAmount,
-        address destinationAddress,
-        uint256 time
-    );
-
     // transaction guard for 1inch V3 aggregator
     function txGuard(address pool, bytes calldata data)
         external
@@ -92,7 +84,7 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
 
             require(pool == toAddress, "recipient is not pool");
 
-            emit SwapExactTokensForTokens(
+            emit Exchange(
                 address(poolManagerLogic),
                 srcAsset,
                 uint256(srcAmount),
