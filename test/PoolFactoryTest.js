@@ -545,11 +545,43 @@ describe("PoolFactory", function() {
     });
 
     it('Should be able to approve', async () => {
-        const badApproveCallData =
-            "0x095ea7b300000000000000000000000022222222542d85b3ef69ae05771c2dccff4faa26ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        const IERC20 = await hre.artifacts.readArtifact("IERC20");
+        const iERC20 = new ethers.utils.Interface(IERC20.abi);
+        let approveABI = iERC20.encodeFunctionData("approve", [susd, 100e18.toString()]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith("unsupported spender approval");
 
-        // approve link token with unknown contract
-        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, badApproveCallData)).to.be.revertedWith("unsupported spender approval");
+        approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, 100e18.toString()]);
+        await susdAsset.givenCalldataReturnBool(approveABI, true);
+        await poolManagerLogicProxy.connect(manager).execTransaction(susd, approveABI);
+    })
+
+    it("should be able to swap tokens on uniswap.", async () => {
+        const sourceAmount = 100e18.toString();
+
+        const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+        const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
+        let swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], poolManagerLogicProxy.address, 0]);
+
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI)).to.be.revertedWith("non-zero address is required");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [slink, seth], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, swapABI)).to.be.revertedWith("invalid destination");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [slink, seth], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("unsupported source asset");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, user1.address, seth], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("invalid routing asset");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth, slink], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("unsupported destination asset");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], user1.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("recipient is not pool");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], poolManagerLogicProxy.address, 0]);
+        await uniswapV2Router.givenCalldataReturn(swapABI, []);
+        await poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
     })
 
     it('should be able to upgrade/set implementation logic', async function() {
