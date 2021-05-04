@@ -38,4 +38,8 @@ pragma solidity ^0.6.2;
 
 interface IManaged {
     function manager() external view returns (address);
+
+    function managerName() external view returns (string memory);
+
+    function isMemberAllowed(address member) external view returns (bool);
 }

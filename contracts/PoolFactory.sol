@@ -185,11 +185,9 @@ contract PoolFactory is
 
         bytes memory poolLogicData =
             abi.encodeWithSignature(
-                "initialize(address,bool,address,string,string,string,address)",
+                "initialize(address,bool,string,string,address)",
                 address(this),
                 _privatePool,
-                _manager,
-                _managerName,
                 _fundName,
                 _fundSymbol,
                 managerLogic
