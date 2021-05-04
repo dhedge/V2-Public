@@ -39,12 +39,23 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "./TxDataUtils.sol";
 import "./IGuard.sol";
+import "../interfaces/ISynth.sol";
+import "../interfaces/ISynthetix.sol";
+import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 
 contract SynthetixGuard is TxDataUtils, IGuard {
     using SafeMath for uint256;
+
+    bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
+
+    IAddressResolver public addressResolver;
+
+    constructor(IAddressResolver _addressResolver) public {
+        addressResolver = _addressResolver;
+    }
 
     function txGuard(address pool, bytes calldata data)
         external
@@ -58,9 +69,10 @@ contract SynthetixGuard is TxDataUtils, IGuard {
             bytes32 srcAmount = getInput(data, 1);
             bytes32 dstKey = getInput(data, 2);
 
+            address srcAsset = getAssetProxy(srcKey);
+            address dstAsset = getAssetProxy(dstKey);
+            
             IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
-            address srcAsset = poolManagerLogic.getAssetProxy(srcKey);
-            address dstAsset = poolManagerLogic.getAssetProxy(dstKey);
             require(
                 poolManagerLogic.isAssetSupported(srcAsset),
                 "unsupported destination asset"
@@ -82,5 +94,14 @@ contract SynthetixGuard is TxDataUtils, IGuard {
         }
 
         return false;
+    }
+
+    function getAssetProxy(bytes32 key) public view returns (address) {
+        address synth =
+            ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
+        require(synth != address(0), "invalid key");
+        address proxy = ISynth(synth).proxy();
+        require(proxy != address(0), "invalid proxy");
+        return proxy;
     }
 }

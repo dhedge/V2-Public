@@ -33,14 +33,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-import "./interfaces/ISynth.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasAssetInfo.sol";
-import "./interfaces/ISynthetix.sol";
-import "./interfaces/ISynthAddressProxy.sol";
-import "./interfaces/ISystemStatus.sol";
-import "./interfaces/IExchangeRates.sol";
-import "./interfaces/IAddressResolver.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
@@ -66,9 +60,6 @@ contract PoolManagerLogic is
     using SafeMath for uint256;
     using Address for address;
 
-    bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
-    bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
-
     event TransactionExecuted(
         address fundAddress,
         address manager,
@@ -91,8 +82,6 @@ contract PoolManagerLogic is
 
     event ManagerFeeIncreaseRenounced();
 
-    IAddressResolver public override addressResolver;
-
     address override public factory;
 
     address[] public supportedAssets;
@@ -107,36 +96,15 @@ contract PoolManagerLogic is
         address _factory,
         address _manager,
         string memory _managerName,
-        IAddressResolver _addressResolver,
         address[] memory _supportedAssets
     ) public initializer {
         initialize(_manager, _managerName);
 
         factory = _factory;
         // _setPoolPrivacy(_privatePool);
-        addressResolver = _addressResolver;
 
         for (uint8 i = 0; i < _supportedAssets.length; i++) {
             _addToSupportedAssets(_supportedAssets[i]);
-        }
-    }
-
-    function getAssetProxy(bytes32 key) public view override returns (address) {
-        address synth =
-            ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
-        require(synth != address(0), "invalid key");
-        address proxy = ISynth(synth).proxy();
-        require(proxy != address(0), "invalid proxy");
-        return proxy;
-    }
-
-    function getSynthKey(address asset) public view override returns (bytes32) {
-        require(asset.isContract(), "invalid asset");
-
-        try ISynthAddressProxy(asset).target() returns (address target) {
-            return ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synthsByAddress(target);
-        } catch (bytes memory) {
-            revert("non-synth asset");
         }
     }
 
@@ -255,34 +223,6 @@ contract PoolManagerLogic is
         return assetValue(asset, assetBalance(asset));
     }
 
-    function getSuspendedAssets()
-        public
-        view
-        returns (address[] memory, bool[] memory)
-    {
-        uint256 assetCount = supportedAssets.length;
-
-        address[] memory assets = new address[](assetCount);
-        bool[] memory suspended = new bool[](assetCount);
-
-        ISystemStatus status =
-            ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
-
-        for (uint256 i = 0; i < assetCount; i++) {
-            address asset = supportedAssets[i];
-
-            assets[i] = asset;
-
-            try status.requireSynthActive(getSynthKey(asset)) {
-                suspended[i] = false;
-            } catch {
-                suspended[i] = true;
-            }
-        }
-
-        return (assets, suspended);
-    }
-
     function getSupportedAssets()
         public
         view
@@ -393,11 +333,6 @@ contract PoolManagerLogic is
         returns (uint256, uint256)
     {
         return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
-    }
-
-    function setAddressResolver(address _addressResolver) external {
-        require(msg.sender == factory, "no permission");
-        addressResolver = IAddressResolver(_addressResolver);
     }
 
     uint256[51] private __gap;

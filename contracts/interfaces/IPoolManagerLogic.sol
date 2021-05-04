@@ -45,15 +45,9 @@ interface IPoolManagerLogic {
 
     function validateAsset(address asset) external view returns (bool);
 
-    function getAssetProxy(bytes32 key) external view returns (address);
-
-    function getSynthKey(address asset) external view returns (bytes32);
-
     function assetValue(address key) external view returns (uint256);
 
     function assetValue(address key, uint256 amount) external view returns (uint256);
-
-    function addressResolver() external view returns (IAddressResolver);
 
     function factory() external view returns (address);
 }

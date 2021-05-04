@@ -231,19 +231,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "addressResolver",
-      "outputs": [
-        {
-          "internalType": "contract IAddressResolver",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "bool",
@@ -360,19 +347,6 @@
       "name": "enableChainlink",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getAddressResolver",
-      "outputs": [
-        {
-          "internalType": "contract IAddressResolver",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -572,11 +546,6 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "contract IAddressResolver",
-          "name": "_addressResolver",
-          "type": "address"
-        },
         {
           "internalType": "address",
           "name": "_poolLogic",
@@ -790,19 +759,6 @@
     {
       "inputs": [],
       "name": "renounceOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_addressResolver",
-          "type": "address"
-        }
-      ],
-      "name": "setAddressResolver",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
