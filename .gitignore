@@ -3,6 +3,7 @@ node_modules
 
 #Hardhat files
 cache
+artifacts/@chainlink
 artifacts/@gnosis.pm
 artifacts/@openzeppelin
 artifacts/build-info

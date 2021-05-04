@@ -41,37 +41,46 @@ import "./TxDataUtils.sol";
 import "./IGuard.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
+import "../interfaces/IManaged.sol";
 
 contract SynthetixGuard is TxDataUtils, IGuard {
     using SafeMath for uint256;
 
     function txGuard(address pool, bytes calldata data)
         external
-        view
         override
-        returns (
-            uint8 txType,
-            bytes32 srcAsset,
-            bytes32 srcAmount,
-            bytes32 dstAsset
-        )
+        returns (bool)
     {
         bytes4 method = getMethod(data);
 
         if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-            txType = 2; // transaction type 2 = synthetix exchange
-            srcAsset = getInput(data, 0);
-            srcAmount = getInput(data, 1);
-            dstAsset = getInput(data, 2);
+            bytes32 srcKey = getInput(data, 0);
+            bytes32 srcAmount = getInput(data, 1);
+            bytes32 dstKey = getInput(data, 2);
 
+            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
+            address srcAsset = poolManagerLogic.getAssetProxy(srcKey);
+            address dstAsset = poolManagerLogic.getAssetProxy(dstKey);
             require(
-                IPoolManagerLogic(pool).isAssetSupported(dstAsset),
-                "unsupported destination currency"
+                poolManagerLogic.isAssetSupported(srcAsset),
+                "unsupported destination asset"
+            );
+            require(
+                poolManagerLogic.isAssetSupported(dstAsset),
+                "unsupported destination asset"
             );
 
-            return (txType, srcAsset, srcAmount, dstAsset);
+            emit Exchange(
+                address(poolManagerLogic),
+                srcAsset,
+                uint256(srcAmount),
+                dstAsset,
+                block.timestamp
+            );
+
+            return true;
         }
 
-        revert("invalid synthetix method");
+        return false;
     }
 }

@@ -4,12 +4,15 @@ const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 
 const { expect } = require("chai");
 
-let logicOwner, poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, mock, poolLogicProxy, poolManagerLogicProxy, synthsABI, fundAddress, synthetixGuard;
+let logicOwner, manager, dao, user1;
+let poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress, synthetixGuard;
+let addressResolver, synthetix; // contracts
+let susd, seth, slink;
+let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
+let usd_price_feed, eth_price_feed, link_price_feed;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000" // Synthetix
-
 const _EXCHANGE_RATES_KEY = "0x45786368616e6765526174657300000000000000000000000000000000000000"; // ExchangeRates
 
 const susdKey =
@@ -19,30 +22,97 @@ const sethKey =
 const slinkKey =
     '0x734c494e4b000000000000000000000000000000000000000000000000000000'
 
+// from mainnet
+// const susd =
+//     '0x57ab1ec28d129707052df4df418d58a2d46d5f51'
+// const seth =
+//     '0x5e74c9036fb86bd7ecdcb084a0673efc32ea31cb'
+// const slink =
+//     '0xbbc455cb4f1b9e4bfc4b73970d360c8f032efee6'
+
 describe("PoolFactory", function() {
     before(async function(){
-        [logicOwner, manager, user1] = await ethers.getSigners();
+        [logicOwner, manager, dao, user1] = await ethers.getSigners();
 
-        const MockContract = await ethers.getContractFactory("MockContract")
-        mock = await MockContract.deploy()
+        const MockContract = await ethers.getContractFactory("MockContract");
+        addressResolver = await MockContract.deploy();
+        synthetix = await MockContract.deploy();
+        susdAsset = await MockContract.deploy();
+        susdProxy = await MockContract.deploy();
+        sethAsset = await MockContract.deploy();
+        sethProxy = await MockContract.deploy();
+        slinkAsset = await MockContract.deploy();
+        slinkProxy = await MockContract.deploy();
+        usd_price_feed = await MockContract.deploy();
+        eth_price_feed = await MockContract.deploy();
+        link_price_feed = await MockContract.deploy();
+        susd = susdProxy.address;
+        seth = sethProxy.address;
+        slink = slinkProxy.address;
 
         // mock IAddressResolver
         const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
-        let iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi)
-        let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY])
-        await mock.givenMethodReturnAddress(getAddressABI, mock.address)
+        const iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi);
+        let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
+        await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
         // mock ISynthetix
         const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
-        let iSynthetix = new ethers.utils.Interface(ISynthetix.abi)
-        synthsABI = iSynthetix.encodeFunctionData("synths", [susdKey])
-        await mock.givenMethodReturnAddress(synthsABI, mock.address)
+        const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
+        let synthsABI = iSynthetix.encodeFunctionData("synths", [susdKey]);
+        await synthetix.givenCalldataReturnAddress(synthsABI, susdAsset.address);
+        synthsABI = iSynthetix.encodeFunctionData("synths", [sethKey]);
+        await synthetix.givenCalldataReturnAddress(synthsABI, sethAsset.address);
+        synthsABI = iSynthetix.encodeFunctionData("synths", [slinkKey]);
+        await synthetix.givenCalldataReturnAddress(synthsABI, slinkAsset.address);
+
+        let synthsByAddressABI = iSynthetix.encodeFunctionData("synthsByAddress", [susdAsset.address]);
+        await synthetix.givenCalldataReturn(synthsByAddressABI, susdKey);
+        synthsByAddressABI = iSynthetix.encodeFunctionData("synthsByAddress", [sethAsset.address]);
+        await synthetix.givenCalldataReturn(synthsByAddressABI, sethKey);
+        synthsByAddressABI = iSynthetix.encodeFunctionData("synthsByAddress", [slinkAsset.address]);
+        await synthetix.givenCalldataReturn(synthsByAddressABI, slinkKey);
 
         // mock ISynth
         const ISynth = await hre.artifacts.readArtifact("ISynth");
-        let iSynth = new ethers.utils.Interface(ISynth.abi)
-        let proxyABI = iSynth.encodeFunctionData("proxy", [])
-        await mock.givenMethodReturnAddress(proxyABI, mock.address)
+        const iSynth = new ethers.utils.Interface(ISynth.abi);
+        const proxyABI = iSynth.encodeFunctionData("proxy", []);
+        await susdAsset.givenCalldataReturnAddress(proxyABI, susdProxy.address);
+        await sethAsset.givenCalldataReturnAddress(proxyABI, sethProxy.address);
+        await slinkAsset.givenCalldataReturnAddress(proxyABI, slinkProxy.address);
+
+        // mock ISynthAddressProxy
+        const ISynthAddressProxy = await hre.artifacts.readArtifact("ISynthAddressProxy");
+        const iSynthAddressProxy = new ethers.utils.Interface(ISynthAddressProxy.abi);
+        const targetABI = iSynthAddressProxy.encodeFunctionData("target", []);
+        await susdProxy.givenCalldataReturnAddress(targetABI, susdAsset.address);
+        await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
+        await slinkProxy.givenCalldataReturnAddress(targetABI, slinkAsset.address);
+
+        const IERC20 = await hre.artifacts.readArtifact("ERC20UpgradeSafe");
+        const iERC20 = new ethers.utils.Interface(IERC20.abi);
+        let decimalsABI = iERC20.encodeFunctionData("decimals", []);
+        await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
+        await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
+        await slinkProxy.givenCalldataReturnUint(decimalsABI, "18");
+
+        // Aggregators
+        const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
+        const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+        const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
+        const current = (await ethers.provider.getBlock()).timestamp;
+        await usd_price_feed.givenCalldataReturn(
+            latestRoundDataABI,
+            ethers.utils.solidityPack(['uint256', 'int256', 'uint256', 'uint256', 'uint256'], [0, 100000000, 0, current, 0])
+        ); // $1
+        await eth_price_feed.givenCalldataReturn(
+            latestRoundDataABI,
+            ethers.utils.solidityPack(['uint256', 'int256', 'uint256', 'uint256', 'uint256'], [0, 200000000000, 0, current, 0])
+        ); // $2000
+        await link_price_feed.givenCalldataReturn(
+            latestRoundDataABI,
+            ethers.utils.solidityPack(['uint256', 'int256', 'uint256', 'uint256', 'uint256'], [0, 3500000000, 0, current, 0])
+        ); // $35
 
         PoolLogic = await ethers.getContractFactory("PoolLogic");
         poolLogic = await PoolLogic.deploy();
@@ -54,18 +124,18 @@ describe("PoolFactory", function() {
         poolFactoryLogic = await PoolFactoryLogic.deploy();
 
         // Deploy ProxyAdmin
-        const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin')
-        const proxyAdmin = await ProxyAdmin.deploy()
-        await proxyAdmin.deployed()
+        const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');
+        const proxyAdmin = await ProxyAdmin.deploy();
+        await proxyAdmin.deployed();
 
         // Deploy PoolFactoryProxy
-        const PoolFactoryProxy = await ethers.getContractFactory('OZProxy')
-        const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, manager.address, "0x")
-        await poolFactoryProxy.deployed()
+        const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
+        const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, manager.address, "0x");
+        await poolFactoryProxy.deployed();
 
-        poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
+        poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
         await poolFactory.initialize(
-            mock.address, poolLogic.address, poolManagerLogic.address, TESTNET_DAO
+            addressResolver.address, poolLogic.address, poolManagerLogic.address, dao.address, [susd, seth, slink], [usd_price_feed.address, eth_price_feed.address, link_price_feed.address]
         );
         await poolFactory.deployed();
 
@@ -73,12 +143,12 @@ describe("PoolFactory", function() {
         synthetixGuard = await SynthetixGuard.deploy();
         synthetixGuard.deployed();
 
-        const synthetixGuardPointer = mock.address;
-        await poolFactory.setGuard(synthetixGuardPointer, synthetixGuard.address);
+        const synthetixGuardPointer = synthetix.address;
+        await poolFactory.connect(dao).setGuard(synthetixGuardPointer, synthetixGuard.address);
     });
 
     it("Should be able to createFund", async function() {
-        console.log("Creating Fund...")
+        console.log("Creating Fund...");
 
         let fundCreatedEvent = new Promise((resolve, reject) => {
             poolFactory.on('FundCreated', (fundAddress, isPoolPrivate, fundName, managerName, manager, time, managerFeeNumerator, managerFeeDenominator, event) => {
@@ -99,7 +169,7 @@ describe("PoolFactory", function() {
 
             setTimeout(() => {
                 reject(new Error('timeout'));
-            }, 60000)
+            }, 60000);
         });
 
         // await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", mock.address, [sethKey])
@@ -111,12 +181,12 @@ describe("PoolFactory", function() {
         // console.log("Passed poolLogic Init!")
 
         await expect(poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [sethKey]
+            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [susd, seth]
         ))
             .to.be.revertedWith('invalid fraction');
 
         let tx = await poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [sethKey]
+            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [susd, seth]
         );
 
         let event = await fundCreatedEvent;
@@ -133,31 +203,30 @@ describe("PoolFactory", function() {
         let deployedFundsLength = await poolFactory.deployedFundsLength();
         expect(deployedFundsLength.toString()).to.equal('1');
 
-        let isPool = await poolFactory.isPool(fundAddress)
+        let isPool = await poolFactory.isPool(fundAddress);
         expect(isPool).to.be.true;
 
-        let poolManagerLogicAddress = await poolFactory.getLogic(1)
+        let poolManagerLogicAddress = await poolFactory.getLogic(1);
         expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
 
-        let poolLogicAddress = await poolFactory.getLogic(2)
+        let poolLogicAddress = await poolFactory.getLogic(2);
         expect(poolLogicAddress).to.equal(poolLogic.address);
 
-        poolLogicProxy = await PoolLogic.attach(fundAddress)
-        let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic()
-        poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress)
+        poolLogicProxy = await PoolLogic.attach(fundAddress);
+        let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
+        poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
         //default assets are supported
-        expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal("2")
-        expect(await poolManagerLogicProxy.isAssetSupported(susdKey)).to.be.true
-        expect(await poolManagerLogicProxy.isAssetSupported(sethKey)).to.be.true
+        expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal("2");
+        expect(await poolManagerLogicProxy.isAssetSupported(susd)).to.be.true
+        expect(await poolManagerLogicProxy.isAssetSupported(seth)).to.be.true
 
         //Other assets are not supported
-        expect(await poolManagerLogicProxy.isAssetSupported(slinkKey)).to.be.false
+        expect(await poolManagerLogicProxy.isAssetSupported(slink)).to.be.false
 
     });
 
     it('should be able to deposit', async function() {
-
         let depositEvent = new Promise((resolve, reject) => {
             poolLogicProxy.on('Deposit', (fundAddress,
                 investor,
@@ -183,78 +252,28 @@ describe("PoolFactory", function() {
 
             setTimeout(() => {
                 reject(new Error('timeout'));
-            }, 60000)
+            }, 60000);
         });
-
-        // mock IExchangeRates to return value of 1 token
-        const IExchangeRates = await hre.artifacts.readArtifact("IExchangeRates");
-        let iExchangeRates = new ethers.utils.Interface(IExchangeRates.abi)
-        let effectiveValueABI = iExchangeRates.encodeFunctionData("effectiveValue", [susdKey, 0, susdKey])
-        await mock.givenMethodReturnUint(effectiveValueABI, 1e18.toString())
-
         // mock IERC20 transferFrom to return true
         const IERC20 = await hre.artifacts.readArtifact("IERC20");
-        let iERC20 = new ethers.utils.Interface(IERC20.abi)
-        let transferFromABI = iERC20.encodeFunctionData("transferFrom", [logicOwner.address, poolLogicProxy.address, 1e18.toString()])
-        await mock.givenMethodReturnBool(transferFromABI, true)
+        const iERC20 = new ethers.utils.Interface(IERC20.abi);
+        let transferFromABI = iERC20.encodeFunctionData("transferFrom", [logicOwner.address, poolLogicProxy.address, 100e18.toString()]);
+        await susdProxy.givenCalldataReturnBool(transferFromABI, true);
 
-        let totalFundValue = await poolLogicProxy.totalFundValue()
+        let totalFundValue = await poolLogicProxy.totalFundValue();
         // As default there's susd and seth and each return 1 by IExchangeRates
-        expect(totalFundValue.toString()).to.equal(2e18.toString());
+        expect(totalFundValue.toString()).to.equal('0');
 
-        await poolLogicProxy.deposit(100e18.toString())
-
+        await poolLogicProxy.deposit(susd, 100e18.toString());
         let event = await depositEvent;
 
         expect(event.fundAddress).to.equal(poolLogicProxy.address);
         expect(event.investor).to.equal(logicOwner.address);
-        expect(event.valueDeposited).to.equal(100e18.toString());
-        expect(event.fundTokensReceived).to.equal(100e18.toString());
-        expect(event.totalInvestorFundTokens).to.equal(100e18.toString());
-        expect(event.fundValue).to.equal(102e18.toString());
-        expect(event.totalSupply).to.equal(100e18.toString());
-    });
-
-    it('should be able to exchange', async function() {
-        await expect(poolManagerLogicProxy.exchange(susdKey, 100e18.toString(), sethKey))
-            .to.be.revertedWith('only manager or trader');
-
-        let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
-
-        let exchangeEvent = new Promise((resolve, reject) => {
-            poolManagerLogicManagerProxy.on('Exchange', (
-                managerLogicAddress,
-                manager,
-                sourceKey,
-                sourceAmount,
-                destinationKey,
-                destinationAmount,
-                time, event) => {
-                    event.removeListener();
-
-                    resolve({
-                        managerLogicAddress: managerLogicAddress,
-                        manager: manager,
-                        sourceKey: sourceKey,
-                        sourceAmount: sourceAmount,
-                        destinationKey: destinationKey,
-                        destinationAmount: destinationAmount,
-                        time: time
-                    });
-                });
-
-            setTimeout(() => {
-                reject(new Error('timeout'));
-            }, 60000)
-        });
-
-        //now if we exchange all susd into seth
-        await poolManagerLogicManagerProxy.exchange(susdKey, 100e18.toString(), sethKey);
-
-        let event = await exchangeEvent;
-        expect(event.sourceKey).to.equal(susdKey);
-        expect(event.sourceAmount).to.equal(100e18.toString());
-        expect(event.destinationKey).to.equal(sethKey);
+        expect(event.valueDeposited).to.equal(100e8.toString());
+        expect(event.fundTokensReceived).to.equal(100e8.toString());
+        expect(event.totalInvestorFundTokens).to.equal(100e8.toString());
+        expect(event.fundValue).to.equal(100e8.toString());
+        expect(event.totalSupply).to.equal(100e8.toString());
     });
 
     it('should be able to withdraw', async function() {
@@ -287,8 +306,14 @@ describe("PoolFactory", function() {
             }, 60000)
         });
 
+        // mock IERC20 balance
+        const IERC20 = await hre.artifacts.readArtifact("IERC20");
+        const iERC20 = new ethers.utils.Interface(IERC20.abi);
+        let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolManagerLogicProxy.address]);
+        await susdProxy.givenCalldataReturnUint(balanceOfABI, 100e18.toString());
+
         // Withdraw 50%
-        let withdrawAmount = 50e18
+        let withdrawAmount = 50e8
         let totalSupply = await poolLogicProxy.totalSupply()
         let totalFundValue = await poolLogicProxy.totalFundValue()
 
@@ -311,21 +336,27 @@ describe("PoolFactory", function() {
         expect(event.investor).to.equal(logicOwner.address);
         expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
         expect(event.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
-        expect(event.totalInvestorFundTokens).to.equal(50e18.toString());
-        expect(event.fundValue).to.equal(2e18.toString());
-        expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
+        expect(event.totalInvestorFundTokens).to.equal(50e8.toString());
+        expect(event.fundValue).to.equal(100e8.toString());
+        expect(event.totalSupply).to.equal((100e8 - fundTokensWithdrawn).toString());
     });
 
     it('should be able to manage pool',async function() {
         await poolFactory.createFund(
-            true, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [sethKey]
+            true, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [susd, seth]
         );
 
         let deployedFundsLength = await poolFactory.deployedFundsLength()
         let fundAddress = await poolFactory.deployedFunds(deployedFundsLength - 1)
         let poolLogicPrivateProxy = await PoolLogic.attach(fundAddress)
+
+        const IERC20 = await hre.artifacts.readArtifact("IERC20");
+        const iERC20 = new ethers.utils.Interface(IERC20.abi);
+        let transferFromABI = iERC20.encodeFunctionData("transferFrom", [logicOwner.address, poolLogicPrivateProxy.address, 100e18.toString()]);
+        await susdProxy.givenMethodReturnBool(transferFromABI, true);
+
         // Can't deposit when not being a member
-        await expect(poolLogicPrivateProxy.deposit(100e18.toString()))
+        await expect(poolLogicPrivateProxy.deposit(susd, 100e18.toString()))
             .to.be.revertedWith('only members allowed');
 
         await expect(poolLogicPrivateProxy.addMember(logicOwner.address))
@@ -336,12 +367,12 @@ describe("PoolFactory", function() {
         // Can deposit after being a member
         await poolLogicPrivateManagerProxy.addMember(logicOwner.address)
 
-        await poolLogicPrivateProxy.deposit(100e18.toString())
+        await poolLogicPrivateProxy.deposit(susd, 100e18.toString())
 
         // Can't deposit after being removed from a member
         await poolLogicPrivateManagerProxy.removeMember(logicOwner.address)
 
-        await expect(poolLogicPrivateProxy.deposit(100e18.toString()))
+        await expect(poolLogicPrivateProxy.deposit(susd, 100e18.toString()))
             .to.be.revertedWith('only members allowed');
 
         // Can set trader
@@ -365,45 +396,40 @@ describe("PoolFactory", function() {
     });
 
     it('should be able to manage assets', async function() {
-        await expect(poolManagerLogicProxy.addToSupportedAssets(slinkKey))
+        await expect(poolManagerLogicProxy.addToSupportedAssets(slink))
             .to.be.revertedWith('only manager or trader');
 
         let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
         let poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
 
         // Can add asset
-        await poolManagerLogicManagerProxy.addToSupportedAssets(slinkKey)
+        await poolManagerLogicManagerProxy.addToSupportedAssets(slink)
 
         let numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
         expect(numberOfSupportedAssets).to.eq("3");
 
         // Can not remove persist asset
-        await expect(poolManagerLogicUser1Proxy.removeFromSupportedAssets(slinkKey))
+        await expect(poolManagerLogicUser1Proxy.removeFromSupportedAssets(slink))
             .to.be.revertedWith('only manager, trader or DAO');
 
-        await expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(susdKey))
-            .to.be.revertedWith("cannot remove persistent assets");
-
-        // Can't add non-synth asset
-        await mock.givenMethodReturnAddress(synthsABI, ZERO_ADDRESS)
-        let ASDFKey = '0x4153444600000000000000000000000000000000000000000000000000000000';
-        await expect(poolManagerLogicManagerProxy.addToSupportedAssets(ASDFKey))
-            .to.be.revertedWith('non-synth asset');
-        await mock.givenMethodReturnAddress(synthsABI, mock.address)
+        // Can't add invalid asset
+        let invalid_synth_asset = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
+        await expect(poolManagerLogicManagerProxy.addToSupportedAssets(invalid_synth_asset))
+            .to.be.revertedWith('invalid asset');
 
         // Can't remove asset with non zero balance
         // mock IERC20 balanceOf to return non zero
         const IERC20 = await hre.artifacts.readArtifact("IERC20");
         let iERC20 = new ethers.utils.Interface(IERC20.abi)
         let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolManagerLogicManagerProxy.address])
-        await mock.givenMethodReturnUint(balanceOfABI, 1)
+        await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1)
 
-        await expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(slinkKey))
+        await expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(slink))
             .to.be.revertedWith("revert cannot remove non-empty asset");
 
         // Can remove asset
-        await mock.givenMethodReturnUint(balanceOfABI, 0)
-        await poolManagerLogicManagerProxy.removeFromSupportedAssets(slinkKey)
+        await slinkProxy.givenCalldataReturnUint(balanceOfABI, 0)
+        await poolManagerLogicManagerProxy.removeFromSupportedAssets(slink)
 
         numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
         expect(numberOfSupportedAssets).to.eq("2");
@@ -437,7 +463,7 @@ describe("PoolFactory", function() {
 
     // Synthetix transaction guard
     it("Only manager or trader can execute transaction", async () => {
-        await expect(poolManagerLogicProxy.connect(logicOwner).execTransaction(mock.address, "0x00"))
+        await expect(poolManagerLogicProxy.connect(logicOwner).execTransaction(synthetix.address, "0x00"))
             .to.be.revertedWith('only manager or trader');
     });
 
@@ -450,23 +476,19 @@ describe("PoolFactory", function() {
         let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
         let exchangeEvent = new Promise((resolve, reject) => {
-            poolManagerLogicManagerProxy.on('Exchange', (
+            synthetixGuard.on('Exchange', (
                 managerLogicAddress,
-                manager,
-                sourceKey,
+                sourceAsset,
                 sourceAmount,
-                destinationKey,
-                destinationAmount,
+                destinationAsset,
                 time, event) => {
                     event.removeListener();
 
                     resolve({
                         managerLogicAddress: managerLogicAddress,
-                        manager: manager,
-                        sourceKey: sourceKey,
+                        sourceAsset: sourceAsset,
                         sourceAmount: sourceAmount,
-                        destinationKey: destinationKey,
-                        destinationAmount: destinationAmount,
+                        destinationAsset: destinationAsset,
                         time: time
                     });
                 });
@@ -481,23 +503,23 @@ describe("PoolFactory", function() {
         const destinationKey = sethKey;
         const daoAddress = await poolFactory.getDaoAddress();
         const trackingCode = await poolFactory.getTrackingCode();
+
         const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
         const iSynthetix = new ethers.utils.Interface(ISynthetix.abi)
         const exchangeWithTrackingABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [sourceKey, sourceAmount, destinationKey, daoAddress, trackingCode]);
 
-        await mock.givenMethodRevert(exchangeWithTrackingABI);
+        await synthetix.givenCalldataRevert(exchangeWithTrackingABI);
         
-        await expect(poolManagerLogicManagerProxy.execTransaction(mock.address, exchangeWithTrackingABI))
-            .to.be.revertedWith("failed to execute exchange");
+        await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI))
+            .to.be.revertedWith("failed to execute the call");
 
-        await mock.givenMethodReturnUint(exchangeWithTrackingABI, 1e18.toString())
-        await poolManagerLogicManagerProxy.execTransaction(mock.address, exchangeWithTrackingABI);
+        await synthetix.givenCalldataReturnUint(exchangeWithTrackingABI, 1e18.toString())
+        await poolManagerLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI);
 
         let event = await exchangeEvent;
-        expect(event.sourceKey).to.equal(susdKey);
+        expect(event.sourceAsset).to.equal(susd);
         expect(event.sourceAmount).to.equal(100e18.toString());
-        expect(event.destinationKey).to.equal(sethKey);
-        expect(event.destinationAmount).to.equal(1e18.toString());
+        expect(event.destinationAsset).to.equal(seth);
     });
 
     it('should be able to upgrade/set implementation logic', async function() {

@@ -37,5 +37,7 @@
 pragma solidity ^0.6.2;
 
 interface IHasAssetInfo {
+    function isValidAsset(address asset) external view returns (bool);
+
     function getMaximumSupportedAssetCount() external view returns (uint256);
 }

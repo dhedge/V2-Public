@@ -39,15 +39,19 @@ pragma solidity ^0.6.2;
 import "./IAddressResolver.sol";
 
 interface IPoolManagerLogic {
-    function getSupportedAssets() external view returns (bytes32[] memory);
+    function getSupportedAssets() external view returns (address[] memory);
 
-    function isAssetSupported(bytes32 key) external view returns (bool);
+    function isAssetSupported(address key) external view returns (bool);
 
-    function validateAsset(bytes32 asset) external view returns (bool);
+    function validateAsset(address asset) external view returns (bool);
 
     function getAssetProxy(bytes32 key) external view returns (address);
 
-    function assetValue(bytes32 key) external view returns (uint256);
+    function getSynthKey(address asset) external view returns (bytes32);
+
+    function assetValue(address key) external view returns (uint256);
+
+    function assetValue(address key, uint256 amount) external view returns (uint256);
 
     function addressResolver() external view returns (IAddressResolver);
 

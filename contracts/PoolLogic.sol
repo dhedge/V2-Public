@@ -56,7 +56,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
 
     // Deprecated
     // bytes32 constant private _EXCHANGER_KEY = "Exchanger";
-    bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
+    // bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
     bytes32 private constant _SUSD_KEY = "sUSD";
 
     event Deposit(
@@ -173,7 +173,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
     function totalFundValue() public view virtual returns (uint256) {
         uint256 total = 0;
         IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
-        bytes32[] memory _supportedAssets = dm.getSupportedAssets();
+        address[] memory _supportedAssets = dm.getSupportedAssets();
         uint256 assetCount = _supportedAssets.length;
 
         for (uint256 i = 0; i < assetCount; i++) {
@@ -182,42 +182,28 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         return total;
     }
 
-    function deposit(uint256 _susdAmount) public onlyPrivate returns (uint256) {
+    function deposit(address _asset, uint256 _amount) public onlyPrivate returns (uint256) {
         lastDeposit[msg.sender] = block.timestamp;
 
-        // Deprecated
-        //we need to settle all the assets before determining the total fund value
-        // _settleAll();
-
-        // Deprecated
-        // _mintManagerFee(false);
         _mintManagerFee();
 
         uint256 fundValue = totalFundValue();
         uint256 totalSupplyBefore = totalSupply();
 
-        // Deprecated
-        // IExchanger sx = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
-        // sx.settle(msg.sender, _SUSD_KEY);
-
-        IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
-
         require(
-            IERC20(dm.getAssetProxy(_SUSD_KEY)).transferFrom(
-                msg.sender,
-                address(this),
-                _susdAmount
-            ),
+            IERC20(_asset).transferFrom(msg.sender, address(this), _amount),
             "token transfer failed"
         );
+
+        uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
         uint256 liquidityMinted;
         if (totalSupplyBefore > 0) {
             //total balance converted to susd that this contract holds
             //need to calculate total value of synths in this contract
-            liquidityMinted = _susdAmount.mul(totalSupplyBefore).div(fundValue);
+            liquidityMinted = usdAmount.mul(totalSupplyBefore).div(fundValue);
         } else {
-            liquidityMinted = _susdAmount;
+            liquidityMinted = usdAmount;
         }
 
         _mint(msg.sender, liquidityMinted);
@@ -225,10 +211,10 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         emit Deposit(
             address(this),
             msg.sender,
-            _susdAmount,
+            usdAmount,
             liquidityMinted,
             balanceOf(msg.sender),
-            fundValue.add(_susdAmount),
+            fundValue.add(usdAmount),
             totalSupplyBefore.add(liquidityMinted),
             block.timestamp
         );
@@ -333,18 +319,18 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         _burn(msg.sender, _fundTokenAmount);
 
         IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
-        bytes32[] memory _supportedAssets = dm.getSupportedAssets();
+        address[] memory _supportedAssets = dm.getSupportedAssets();
         uint256 assetCount = _supportedAssets.length;
 
         // _forfeitSuspendedSynths deprecated
         for (uint256 i = 0; i < assetCount; i++) {
-            address proxy = dm.getAssetProxy(_supportedAssets[i]);
-            uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
+            address asset = _supportedAssets[i];
+            uint256 totalAssetBalance = IERC20(asset).balanceOf(address(this));
             uint256 portionOfAssetBalance =
                 totalAssetBalance.mul(portion).div(10**18);
 
             if (portionOfAssetBalance > 0) {
-                IERC20(proxy).transfer(msg.sender, portionOfAssetBalance);
+                IERC20(asset).transfer(msg.sender, portionOfAssetBalance);
             }
         }
 
@@ -577,7 +563,7 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
 
     // function setLastDeposit(address investor) public onlyDhptSwap {
     //     lastDeposit[investor] = block.timestamp;
-    // }
+    // }`
 
     function setPoolManagerLogic(address _poolManagerLogic)
         external
