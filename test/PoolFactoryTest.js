@@ -135,12 +135,12 @@ describe("PoolFactory", function() {
 
         poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
         await poolFactory.initialize(
-            addressResolver.address, poolLogic.address, poolManagerLogic.address, dao.address, [susd, seth, slink], [usd_price_feed.address, eth_price_feed.address, link_price_feed.address]
+            poolLogic.address, poolManagerLogic.address, dao.address, [susd, seth, slink], [usd_price_feed.address, eth_price_feed.address, link_price_feed.address]
         );
         await poolFactory.deployed();
 
         const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
-        synthetixGuard = await SynthetixGuard.deploy();
+        synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
         synthetixGuard.deployed();
 
         const synthetixGuardPointer = synthetix.address;

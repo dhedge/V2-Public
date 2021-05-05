@@ -36,9 +36,6 @@
 
 pragma solidity ^0.6.2;
 
-import "./interfaces/ISynthetix.sol";
-import "./interfaces/IExchangeRates.sol";
-import "./interfaces/IAddressResolver.sol";
 import "./PoolLogic.sol";
 import "./PriceConsumerV3.sol";
 import "./upgradability/ProxyFactory.sol";
@@ -85,8 +82,6 @@ contract PoolFactory is
 
     event LogUpgrade(address indexed manager, address indexed pool);
 
-    IAddressResolver public addressResolver;
-
     address[] public deployedFunds;
 
     address internal _daoAddress;
@@ -127,7 +122,6 @@ contract PoolFactory is
     }
 
     function initialize(
-        IAddressResolver _addressResolver,
         address _poolLogic,
         address _managerLogic,
         address daoAddress,
@@ -135,8 +129,6 @@ contract PoolFactory is
         address[] memory _aggregators
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
-
-        addressResolver = _addressResolver;
 
         _setDaoAddress(daoAddress);
 
@@ -171,13 +163,12 @@ contract PoolFactory is
     ) public returns (address) {
         bytes memory managerLogicData =
             abi.encodeWithSignature(
-                "initialize(address,address,string,address,address[])",
+                "initialize(address,address,string,address[])",
                 address(this),
                 // _privatePool,
                 _manager,
                 _managerName,
                 // _fundName,
-                addressResolver,
                 _supportedAssets
             );
 
@@ -225,19 +216,6 @@ contract PoolFactory is
 
     function deployedFundsLength() external view returns (uint256) {
         return deployedFunds.length;
-    }
-
-    function setAddressResolver(address _addressResolver) public onlyOwner {
-        addressResolver = IAddressResolver(_addressResolver);
-    }
-
-    function getAddressResolver()
-        public
-        view
-        override
-        returns (IAddressResolver)
-    {
-        return addressResolver;
     }
 
     // DAO info
