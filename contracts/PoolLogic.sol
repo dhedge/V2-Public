@@ -43,7 +43,7 @@ import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IPoolManagerLogic.sol";
-import "./Managed.sol";
+import "./interfaces/IManaged.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -51,7 +51,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract PoolLogic is ERC20UpgradeSafe, Managed {
+contract PoolLogic is ERC20UpgradeSafe {
     using SafeMath for uint256;
 
     // Deprecated
@@ -126,17 +126,19 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         _;
     }
 
+    modifier onlyManager() {
+        require(msg.sender == manager(), "only manager");
+        _;
+    }
+
     function initialize(
         address _factory,
         bool _privatePool,
-        address _manager,
-        string memory _managerName,
         string memory _fundName,
         string memory _fundSymbol,
         address _poolManagerLogic
     ) public initializer {
         __ERC20_init(_fundName, _fundSymbol);
-        initialize(_manager, _managerName);
 
         factory = _factory;
         _setPoolPrivacy(_privatePool);
@@ -574,6 +576,18 @@ contract PoolLogic is ERC20UpgradeSafe, Managed {
         poolManagerLogic = _poolManagerLogic;
         emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
         return true;
+    }
+
+    function manager() internal view returns (address) {
+        return IManaged(poolManagerLogic).manager();
+    }
+
+    function managerName() public view returns (string memory) {
+        return IManaged(poolManagerLogic).managerName();
+    }
+
+    function isMemberAllowed(address member) public view returns (bool) {
+        return IManaged(poolManagerLogic).isMemberAllowed(member);
     }
 
     uint256[50] private __gap;

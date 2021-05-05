@@ -349,6 +349,7 @@ describe("PoolFactory", function() {
         let deployedFundsLength = await poolFactory.deployedFundsLength()
         let fundAddress = await poolFactory.deployedFunds(deployedFundsLength - 1)
         let poolLogicPrivateProxy = await PoolLogic.attach(fundAddress)
+        let poolManagerLogicPrivateProxy = await PoolManagerLogic.attach(await poolLogicPrivateProxy.poolManagerLogic())
 
         const IERC20 = await hre.artifacts.readArtifact("IERC20");
         const iERC20 = new ethers.utils.Interface(IERC20.abi);
@@ -359,38 +360,39 @@ describe("PoolFactory", function() {
         await expect(poolLogicPrivateProxy.deposit(susd, 100e18.toString()))
             .to.be.revertedWith('only members allowed');
 
-        await expect(poolLogicPrivateProxy.addMember(logicOwner.address))
+        await expect(poolManagerLogicPrivateProxy.addMember(logicOwner.address))
             .to.be.revertedWith('only manager');
 
         let poolLogicPrivateManagerProxy = poolLogicPrivateProxy.connect(manager);
+        let poolManagerLogicPrivateManagerProxy = poolManagerLogicPrivateProxy.connect(manager);
 
         // Can deposit after being a member
-        await poolLogicPrivateManagerProxy.addMember(logicOwner.address)
+        await poolManagerLogicPrivateManagerProxy.addMember(logicOwner.address)
 
         await poolLogicPrivateProxy.deposit(susd, 100e18.toString())
 
         // Can't deposit after being removed from a member
-        await poolLogicPrivateManagerProxy.removeMember(logicOwner.address)
+        await poolManagerLogicPrivateManagerProxy.removeMember(logicOwner.address)
 
         await expect(poolLogicPrivateProxy.deposit(susd, 100e18.toString()))
             .to.be.revertedWith('only members allowed');
 
         // Can set trader
-        await expect(poolLogicPrivateProxy.setTrader(user1.address))
+        await expect(poolManagerLogicPrivateProxy.setTrader(user1.address))
             .to.be.revertedWith('only manager');
 
-        await poolLogicPrivateManagerProxy.setTrader(user1.address)
+        await poolManagerLogicPrivateManagerProxy.setTrader(user1.address)
 
         // Can remove trader
-        await expect(poolLogicPrivateProxy.removeTrader())
+        await expect(poolManagerLogicPrivateProxy.removeTrader())
             .to.be.revertedWith('only manager');
 
-        await poolLogicPrivateManagerProxy.removeTrader()
+        await poolManagerLogicPrivateManagerProxy.removeTrader()
 
         // Can change manager
-        await poolLogicPrivateManagerProxy.changeManager(user1.address, "User1")
+        await poolManagerLogicPrivateManagerProxy.changeManager(user1.address, "User1")
 
-        await expect(poolLogicPrivateManagerProxy.changeManager(logicOwner.address, "Logic Owner"))
+        await expect(poolManagerLogicPrivateProxy.changeManager(logicOwner.address, "Logic Owner"))
             .to.be.revertedWith('only manager');
 
     });
