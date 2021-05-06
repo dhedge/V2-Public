@@ -192,6 +192,8 @@ contract PoolFactory is
         isPool[fund] = true;
         isPoolManager[managerLogic] = true;
 
+        IPoolManagerLogic(managerLogic).setPoolLogic(fund);
+
         poolVersion[fund] = poolStorageVersion;
 
         _setPoolManagerFee(
