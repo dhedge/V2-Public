@@ -47,11 +47,11 @@ import "./interfaces/IManaged.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract PoolLogic is ERC20UpgradeSafe {
+contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     using SafeMath for uint256;
 
     // Deprecated
@@ -139,6 +139,7 @@ contract PoolLogic is ERC20UpgradeSafe {
         address _poolManagerLogic
     ) public initializer {
         __ERC20_init(_fundName, _fundSymbol);
+        __ReentrancyGuard_init();
 
         factory = _factory;
         _setPoolPrivacy(_privatePool);
@@ -268,7 +269,7 @@ contract PoolLogic is ERC20UpgradeSafe {
     //     _withdraw(_fundTokenAmount, true);
     // }
 
-    function withdraw(uint256 _fundTokenAmount) public virtual {
+    function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant {
         require(
             balanceOf(msg.sender) >= _fundTokenAmount,
             "insufficient balance"
