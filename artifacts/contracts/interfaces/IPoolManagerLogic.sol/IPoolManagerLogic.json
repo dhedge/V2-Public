@@ -92,10 +92,23 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "poolLogic",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
-          "name": "poolLogic",
+          "name": "fundAddress",
           "type": "address"
         }
       ],

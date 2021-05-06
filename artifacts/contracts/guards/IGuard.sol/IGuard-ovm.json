@@ -44,7 +44,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "pool",
+          "name": "poolManagerLogic",
           "type": "address"
         },
         {

@@ -85,7 +85,7 @@ contract PoolManagerLogic is
     event PoolLogicSet(address poolLogic, address from);
 
     address override public factory;
-    address public poolLogic;
+    address override public poolLogic;
 
     address[] public supportedAssets;
     mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
@@ -160,7 +160,7 @@ contract PoolManagerLogic is
         supportedAssets.push(asset);
         assetPosition[asset] = supportedAssets.length;
 
-        emit AssetAdded(address(this), manager(), asset);
+        emit AssetAdded(poolLogic, manager(), asset);
     }
 
     // Unsafe internal method that assumes we are removing an element that exists
@@ -178,7 +178,7 @@ contract PoolManagerLogic is
         // delete the last supported asset and resize the array
         supportedAssets.pop();
 
-        emit AssetRemoved(address(this), manager(), asset);
+        emit AssetRemoved(poolLogic, manager(), asset);
     }
 
     function execTransaction(address to, bytes memory data)
@@ -198,7 +198,7 @@ contract PoolManagerLogic is
         require(success == true, "failed to execute the call");
 
         emit TransactionExecuted(
-            address(this),
+            poolLogic,
             manager(),
             block.timestamp
         );
@@ -277,7 +277,7 @@ contract PoolManagerLogic is
             .getPoolManagerFee(poolLogic);
 
         emit ManagerFeeSet(
-            address(this),
+            poolLogic,
             manager(),
             managerFeeNumerator,
             managerFeeDenominator

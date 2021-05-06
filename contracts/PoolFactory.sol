@@ -187,12 +187,11 @@ contract PoolFactory is
             );
 
         address fund = deploy(poolLogicData, 2);
+        IPoolManagerLogic(managerLogic).setPoolLogic(fund);
 
         deployedFunds.push(fund);
         isPool[fund] = true;
         isPoolManager[managerLogic] = true;
-
-        IPoolManagerLogic(managerLogic).setPoolLogic(fund);
 
         poolVersion[fund] = poolStorageVersion;
 
