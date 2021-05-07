@@ -37,8 +37,8 @@
 pragma solidity ^0.6.2;
 
 import "./PoolLogic.sol";
-import "./PriceConsumerV3.sol";
 import "./upgradability/ProxyFactory.sol";
+import "./interfaces/IPriceConsumer.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
@@ -52,8 +52,7 @@ contract PoolFactory is
     IHasDaoInfo,
     IHasFeeInfo,
     IHasAssetInfo,
-    IHasGuardInfo,
-    PriceConsumerV3
+    IHasGuardInfo
 {
     using SafeMath for uint256;
 
@@ -85,6 +84,7 @@ contract PoolFactory is
     address[] public deployedFunds;
 
     address internal _daoAddress;
+    address internal _priceConsumer;
     uint256 internal _daoFeeNumerator;
     uint256 internal _daoFeeDenominator;
 
@@ -124,8 +124,10 @@ contract PoolFactory is
     function initialize(
         address _poolLogic,
         address _managerLogic,
+        address _priceConsumer,
         address daoAddress,
         address[] memory _validAssets,
+        uint8[] memory _assetTypes,
         address[] memory _aggregators
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
@@ -148,7 +150,7 @@ contract PoolFactory is
 
         for (uint8 i = 0; i < _validAssets.length; i++) {
             validAssets[_validAssets[i]] = true;
-            _addAggregator(_validAssets[i], _aggregators[i]);
+            IPriceConsumer(_priceConsumer).addAggregator(_validAssets[i], _assetTypes[i], _aggregators[i]);
         }
     }
 
@@ -417,11 +419,11 @@ contract PoolFactory is
         return validAssets[asset];
     }
 
-    function addValidAsset(address asset, address aggregator) public onlyDao {
+    function addValidAsset(address asset, uint8 assetType, address aggregator) public onlyDao {
         require(!isValidAsset(asset), "asset already exists");
 
         validAssets[asset] = true;
-        _addAggregator(asset, aggregator);
+        IPriceConsumer(_priceConsumer).addAggregator(asset, assetType, aggregator);
 
         emit AddedValidAsset(asset);
     }
@@ -430,9 +432,16 @@ contract PoolFactory is
         require(isValidAsset(asset), "asset doesn't exist");
 
         validAssets[asset] = false;
-        _removeAggregator(asset);
+        IPriceConsumer(_priceConsumer).removeAggregator(asset);
 
         emit RemovedValidAsset(asset);
+    }
+
+    /**
+     * Returns the latest price of a given asset
+     */
+    function getAssetPrice(address asset) external view override returns (uint256) {
+        return IPriceConsumer(_priceConsumer).getUSDPrice(asset);
     }
 
     // Synthetix tracking
@@ -547,21 +556,5 @@ contract PoolFactory is
         guards[extContract] = guardAddress;
     }
 
-    /**
-     * enable chainlink
-     */
-    function enableChainlink() public onlyDao {
-        require(isDisabledChainlink == true, "PriceConsumerV3: chainlink already enabled");
-        _enableChainlink();
-    }
-
-    /**
-     * disable chainlink
-     */
-    function disableChainlink() public onlyDao {
-        require(isDisabledChainlink == false, "PriceConsumerV3: chainlink not enabled");
-        _disableChainlink();
-    }
-
-    uint256[48] private __gap;
+    uint256[50] private __gap;
 }
