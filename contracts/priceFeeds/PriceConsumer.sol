@@ -15,63 +15,24 @@ import "../interfaces/IHasDaoInfo.sol";
 contract PriceConsumer is Initializable, OwnableUpgradeSafe {
     using SafeMath for uint256;
     
-    bool internal isDisabledChainlink;
+    bool public isDisabledChainlink;
     address public poolFactory;
 
     // Asset Price feeds
     mapping(address => uint8) internal assetTypes; // asset types (refer to header comment)
     mapping(address => address) internal aggregators; // price feeds (usd)
 
-
     function initialize(address _poolFactory) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
         poolFactory = _poolFactory;
     }
 
-    // POOL FACTORY FUNCTIONS
+
+    /* ========== VIEWS ========== */
 
     /**
-     * Add aggregator for an asset
-     */
-    function addAggregator(address _asset, uint8 _assetType, address _aggregator) external onlyPoolFactory {
-        aggregators[_asset] = _aggregator;
-        assetTypes[_asset] = _assetType;
-    }
-
-    /**
-     * Remove aggregator for an asset
-     */
-    function removeAggregator(address _asset) external onlyPoolFactory {
-        aggregators[_asset] = address(0);
-        assetTypes[_asset] = 0;
-    }
-
-    // DAO FUNCTIONS
-
-    /**
-     * enable chainlink
-     */
-    function enableChainlink() external onlyDao {
-        isDisabledChainlink = false;
-    }
-
-    /**
-     * disable chainlink
-     */
-    function disableChainlink() external onlyDao {
-        isDisabledChainlink = true;
-    }
-
-    // OWNER FUNCTIONS
-
-    function setPoolFactory(address _poolFactory) external onlyOwner {
-        poolFactory = _poolFactory;
-    }
-
-    // VIEWS
-
-    /**
-     * Returns the latest price of a give asset (decimal: 18)
+     * Returns the latest price of a given asset (decimal: 18)
+     * Takes into account the asset type.
      */
     function getUSDPrice(address _asset) public view returns (uint256) {
         address aggregator = aggregators[_asset];
@@ -99,7 +60,45 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe {
         return price;
     }
 
-    // MODIFIERS
+
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
+    /* ---------- From Owner ---------- */
+
+    function setPoolFactory(address _poolFactory) external onlyOwner {
+        poolFactory = _poolFactory;
+    }
+
+    /* ---------- From Pool Factory ---------- */
+
+    /**
+     * Add price aggregator for an asset
+     */
+    function addAggregator(address _asset, uint8 _assetType, address _aggregator) external onlyPoolFactory {
+        aggregators[_asset] = _aggregator;
+        assetTypes[_asset] = _assetType;
+    }
+
+    /**
+     * Remove price aggregator for an asset
+     */
+    function removeAggregator(address _asset) external onlyPoolFactory {
+        aggregators[_asset] = address(0);
+        assetTypes[_asset] = 0;
+    }
+
+    /* ---------- From DAO ---------- */
+
+    function enableChainlink() external onlyDao {
+        isDisabledChainlink = false;
+    }
+
+    function disableChainlink() external onlyDao {
+        isDisabledChainlink = true;
+    }
+
+
+    /* ========== MODIFIERS ========== */
 
     modifier onlyPoolFactory() {
         require(msg.sender == poolFactory, "only pool factory");
