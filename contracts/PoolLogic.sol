@@ -44,10 +44,9 @@ import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
+import "./interfaces/IERC20DH.sol";
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
@@ -193,7 +192,7 @@ contract PoolLogic is ERC20UpgradeSafe {
         uint256 totalSupplyBefore = totalSupply();
 
         require(
-            IERC20(_asset).transferFrom(msg.sender, address(this), _amount),
+            IERC20DH(_asset).transferFrom(msg.sender, address(this), _amount),
             "token transfer failed"
         );
 
@@ -332,7 +331,7 @@ contract PoolLogic is ERC20UpgradeSafe {
                 totalAssetBalance.mul(portion).div(10**18);
 
             if (portionOfAssetBalance > 0) {
-                IERC20(asset).transfer(msg.sender, portionOfAssetBalance);
+                IERC20DH(asset).transfer(msg.sender, portionOfAssetBalance);
             }
         }
 

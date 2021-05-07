@@ -6,6 +6,9 @@ const { expect } = require("chai");
 
 let logicOwner, manager, dao, user1;
 let poolFactory,
+  priceConsumer,
+  PriceConsumerLogic,
+  priceConsumerLogic,
   PoolLogic,
   PoolManagerLogic,
   poolLogic,
@@ -155,6 +158,9 @@ describe("PoolFactory", function () {
       )
     ); // $35
 
+    PriceConsumerLogic = await ethers.getContractFactory("PriceConsumer");
+    priceConsumerLogic = await PriceConsumerLogic.deploy();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -169,6 +175,17 @@ describe("PoolFactory", function () {
     const proxyAdmin = await ProxyAdmin.deploy();
     await proxyAdmin.deployed();
 
+    // Deploy PriceConsumerProxy
+    const PriceConsumerProxy = await ethers.getContractFactory("OZProxy");
+    const priceConsumerProxy = await PriceConsumerProxy.deploy(
+      priceConsumerLogic.address,
+      manager.address,
+      "0x"
+    );
+    await priceConsumerProxy.deployed();
+
+    priceConsumer = await PriceConsumerLogic.attach(priceConsumerProxy.address);
+
     // Deploy PoolFactoryProxy
     const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
     const poolFactoryProxy = await PoolFactoryProxy.deploy(
@@ -179,9 +196,16 @@ describe("PoolFactory", function () {
     await poolFactoryProxy.deployed();
 
     poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
+
+    // Initialize Price Consumer
+    await priceConsumer.initialize(poolFactoryProxy.address);
+    await priceConsumer.deployed();
+
+    // Initialise pool factory
     await poolFactory.initialize(
       poolLogic.address,
       poolManagerLogic.address,
+      priceConsumerProxy.address,
       dao.address,
       [susd, seth, slink],
       [0, 0, 0],

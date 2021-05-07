@@ -1,6 +1,8 @@
 pragma solidity ^0.6.2;
 
-interface IERC20 {
+// With aditional optional views
+
+interface IERC20DH {
     // ERC20 Optional Views
     function name() external view returns (string memory);
 

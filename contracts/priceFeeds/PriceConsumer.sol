@@ -23,8 +23,9 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe {
     mapping(address => address) internal aggregators; // price feeds (usd)
 
 
-    function initialize() public initializer {
+    function initialize(address _poolFactory) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
+        poolFactory = _poolFactory;
     }
 
     // POOL FACTORY FUNCTIONS

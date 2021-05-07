@@ -124,13 +124,15 @@ contract PoolFactory is
     function initialize(
         address _poolLogic,
         address _managerLogic,
-        address _priceConsumer,
+        address priceConsumer,
         address daoAddress,
         address[] memory _validAssets,
         uint8[] memory _assetTypes,
         address[] memory _aggregators
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
+
+        _setPriceConsumer(priceConsumer);
 
         _setDaoAddress(daoAddress);
 
@@ -442,6 +444,18 @@ contract PoolFactory is
      */
     function getAssetPrice(address asset) external view override returns (uint256) {
         return IPriceConsumer(_priceConsumer).getUSDPrice(asset);
+    }
+
+    function getPriceConsumer() public view returns (address) {
+        return _priceConsumer;
+    }
+
+    function setPriceConsumer(address priceConsumer) public onlyOwner {
+        _setPriceConsumer(priceConsumer);
+    }
+
+    function _setPriceConsumer(address priceConsumer) internal {
+        _priceConsumer = priceConsumer;
     }
 
     // Synthetix tracking

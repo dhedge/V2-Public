@@ -39,7 +39,7 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
-import "./interfaces/IERC20.sol"; // includes decimals()
+import "./interfaces/IERC20DH.sol"; // includes decimals()
 import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
@@ -132,7 +132,7 @@ contract PoolManagerLogic is
         require(!persistentAsset[asset], "cannot remove persistent assets");
 
         require(
-            IERC20(asset).balanceOf(address(this)) == 0,
+            IERC20DH(asset).balanceOf(address(this)) == 0,
             "cannot remove non-empty asset"
         );
 
@@ -209,13 +209,13 @@ contract PoolManagerLogic is
         returns (uint256)
     {
         uint256 price = IHasAssetInfo(factory).getAssetPrice(asset);
-        uint256 decimals = uint256(IERC20(asset).decimals());
+        uint256 decimals = uint256(IERC20DH(asset).decimals());
         
         return price.mul(amount).div(10**decimals);
     }
 
     function assetBalance(address asset) public view returns (uint256) {
-        return IERC20(asset).balanceOf(address(this));
+        return IERC20DH(asset).balanceOf(address(this));
     }
 
     function assetValue(address asset) public view override returns (uint256) {
