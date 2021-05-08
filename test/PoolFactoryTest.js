@@ -181,12 +181,12 @@ describe("PoolFactory", function() {
         // console.log("Passed poolLogic Init!")
 
         await expect(poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [susd, seth]
+            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [[susd, true], [seth, true]]
         ))
             .to.be.revertedWith('invalid fraction');
 
         let tx = await poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [susd, seth]
+            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[susd, true], [seth, true]]
         );
 
         let event = await fundCreatedEvent;
@@ -264,6 +264,7 @@ describe("PoolFactory", function() {
         // As default there's susd and seth and each return 1 by IExchangeRates
         expect(totalFundValue.toString()).to.equal('0');
 
+        await expect(poolLogicProxy.deposit(slink, 100e18.toString())).to.be.revertedWith("invalid deposit asset");
         await poolLogicProxy.deposit(susd, 100e18.toString());
         let event = await depositEvent;
 
@@ -343,7 +344,7 @@ describe("PoolFactory", function() {
 
     it('should be able to manage pool',async function() {
         await poolFactory.createFund(
-            true, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [susd, seth]
+            true, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[susd, true], [seth, true]]
         );
 
         let deployedFundsLength = await poolFactory.deployedFundsLength()
@@ -436,6 +437,14 @@ describe("PoolFactory", function() {
         numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
         expect(numberOfSupportedAssets).to.eq("2");
 
+        expect(await poolManagerLogicProxy.depositAssets(slink)).to.be.false;
+        expect(await poolManagerLogicProxy.depositAssetsCount()).to.be.equal(2);
+        await poolManagerLogicManagerProxy.addToSupportedAndDepositAssets(slink);
+        expect(await poolManagerLogicProxy.depositAssets(slink)).to.be.true;
+        expect(await poolManagerLogicProxy.depositAssetsCount()).to.be.equal(3);
+        await poolManagerLogicManagerProxy.removeFromSupportedAssets(slink);
+        expect(await poolManagerLogicProxy.depositAssets(slink)).to.be.false;
+        expect(await poolManagerLogicProxy.depositAssetsCount()).to.be.equal(2);
     });
 
     it('should be able to manage fees', async function() {

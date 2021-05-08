@@ -51,6 +51,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2;
 
 contract PoolManagerLogic is 
     Initializable,
@@ -89,7 +90,8 @@ contract PoolManagerLogic is
 
     address[] public supportedAssets;
     mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
-    mapping(address => bool) public persistentAsset;
+    mapping(address => bool) override public depositAssets;
+    uint256 public depositAssetsCount;
 
     // Fee increase announcement
     uint256 public announcedFeeIncreaseNumerator;
@@ -99,7 +101,7 @@ contract PoolManagerLogic is
         address _factory,
         address _manager,
         string memory _managerName,
-        address[] memory _supportedAssets
+        Asset[] memory _supportedAssets
     ) public initializer {
         initialize(_manager, _managerName);
 
@@ -107,7 +109,10 @@ contract PoolManagerLogic is
         // _setPoolPrivacy(_privatePool);
 
         for (uint8 i = 0; i < _supportedAssets.length; i++) {
-            _addToSupportedAssets(_supportedAssets[i]);
+            _addToSupportedAssets(_supportedAssets[i].asset);
+            if (_supportedAssets[i].isDeposit) {
+                _addToDepositAssets(_supportedAssets[i].asset);
+            }
         }
     }
 
@@ -117,6 +122,41 @@ contract PoolManagerLogic is
 
     function validateAsset(address asset) public view override returns (bool) {
         return IHasAssetInfo(factory).isValidAsset(asset);
+    }
+
+    function addToDepositAssets(address asset) public onlyManagerOrTrader {
+        _addToDepositAssets(asset);
+    }
+
+    function _addToDepositAssets(address asset) internal {
+        require(isAssetSupported(asset), "asset not supported");
+        require(!depositAssets[asset], "already deposit asset");
+        depositAssets[asset] = true;
+        depositAssetsCount = depositAssetsCount.add(1);
+    }
+
+    function removeFromDepositAssets(address asset) public {
+        require(
+            msg.sender == IHasProtocolDaoInfo(factory).owner() ||
+                msg.sender == manager() ||
+                msg.sender == trader(),
+            "only manager, trader or DAO"
+        );
+
+        _removeFromDepositAssets(asset);
+    }
+
+    function _removeFromDepositAssets(address asset) internal {
+        require(depositAssets[asset], "not deposit asset");
+        require(depositAssetsCount > 1, "require at least one deposit asset");
+
+        depositAssets[asset] = false;
+        depositAssetsCount = depositAssetsCount.sub(1);
+    }
+
+    function addToSupportedAndDepositAssets(address asset) public onlyManagerOrTrader {
+        _addToSupportedAssets(asset);
+        _addToDepositAssets(asset);
     }
 
     function addToSupportedAssets(address asset) public onlyManagerOrTrader {
@@ -133,12 +173,14 @@ contract PoolManagerLogic is
 
         require(isAssetSupported(asset), "asset not supported");
 
-        require(!persistentAsset[asset], "cannot remove persistent assets");
-
         require(
             assetBalance(asset) == 0,
             "cannot remove non-empty asset"
         );
+
+        if (depositAssets[asset]) {
+            _removeFromDepositAssets(asset);
+        }
 
         _removeFromSupportedAssets(asset);
     }
