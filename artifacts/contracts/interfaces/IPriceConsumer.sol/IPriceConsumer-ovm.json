@@ -21,9 +21,28 @@
           "type": "address"
         }
       ],
-      "name": "addAggregator",
+      "name": "addAsset",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        }
+      ],
+      "name": "getAggregator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -53,7 +72,7 @@
           "type": "address"
         }
       ],
-      "name": "removeAggregator",
+      "name": "removeAsset",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

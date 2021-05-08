@@ -30,6 +30,14 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe {
 
     /* ========== VIEWS ========== */
 
+    function getAggregator(address asset) public view returns (address) {
+        return aggregators[asset];
+    }
+
+    function getTypeAndAggregator(address asset) public view returns (uint8, address) {
+        return (assetTypes[asset], aggregators[asset]);
+    }
+
     /**
      * Returns the latest price of a given asset (decimal: 18)
      * Takes into account the asset type.
@@ -69,24 +77,6 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe {
         poolFactory = _poolFactory;
     }
 
-    /* ---------- From Pool Factory ---------- */
-
-    /**
-     * Add price aggregator for an asset
-     */
-    function addAggregator(address _asset, uint8 _assetType, address _aggregator) external onlyPoolFactory {
-        aggregators[_asset] = _aggregator;
-        assetTypes[_asset] = _assetType;
-    }
-
-    /**
-     * Remove price aggregator for an asset
-     */
-    function removeAggregator(address _asset) external onlyPoolFactory {
-        aggregators[_asset] = address(0);
-        assetTypes[_asset] = 0;
-    }
-
     /* ---------- From DAO ---------- */
 
     function enableChainlink() external onlyDao {
@@ -95,6 +85,24 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe {
 
     function disableChainlink() external onlyDao {
         isDisabledChainlink = true;
+    }
+
+    /* ---------- From Pool Factory ---------- */
+
+    /**
+     * Add valid asset with price aggregator
+     */
+    function addAsset(address asset, uint8 assetType, address aggregator) external onlyPoolFactory {
+        aggregators[asset] = aggregator;
+        assetTypes[asset] = assetType;
+    }
+
+    /**
+     * Remove valid asset
+     */
+    function removeAsset(address asset) external onlyPoolFactory {
+        aggregators[asset] = address(0);
+        assetTypes[asset] = 0;
     }
 
 

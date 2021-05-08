@@ -152,7 +152,7 @@ contract PoolFactory is
 
         for (uint8 i = 0; i < _validAssets.length; i++) {
             validAssets[_validAssets[i]] = true;
-            IPriceConsumer(_priceConsumer).addAggregator(_validAssets[i], _assetTypes[i], _aggregators[i]);
+            IPriceConsumer(_priceConsumer).addAsset(_validAssets[i], _assetTypes[i], _aggregators[i]);
         }
     }
 
@@ -425,7 +425,7 @@ contract PoolFactory is
         require(!isValidAsset(asset), "asset already exists");
 
         validAssets[asset] = true;
-        IPriceConsumer(_priceConsumer).addAggregator(asset, assetType, aggregator);
+        IPriceConsumer(_priceConsumer).addAsset(asset, assetType, aggregator);
 
         emit AddedValidAsset(asset);
     }
@@ -434,7 +434,7 @@ contract PoolFactory is
         require(isValidAsset(asset), "asset doesn't exist");
 
         validAssets[asset] = false;
-        IPriceConsumer(_priceConsumer).removeAggregator(asset);
+        IPriceConsumer(_priceConsumer).removeAsset(asset);
 
         emit RemovedValidAsset(asset);
     }
