@@ -38,13 +38,13 @@ pragma solidity ^0.6.2;
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "./Path.sol";
-import "../TxDataUtils.sol";
 import "../IGuard.sol";
+import "../../utils/TxDataUtils.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 
-contract UniswapV3Guard is TxDataUtils, IGuard {
+contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     using Path for bytes;
     using SafeMath for uint256;
     

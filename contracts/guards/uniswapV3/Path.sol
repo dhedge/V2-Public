@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.6.0;
 
-import '../BytesLib.sol';
+import '../../utils/BytesLib.sol';
 
 /// @title Functions for manipulating path data for multihop swaps
 library Path {

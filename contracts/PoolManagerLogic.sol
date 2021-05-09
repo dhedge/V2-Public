@@ -39,7 +39,6 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
-import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
 import "./PriceConsumerV3.sol";
@@ -54,8 +53,7 @@ pragma solidity ^0.6.2;
 contract PoolManagerLogic is 
     Initializable,
     IPoolManagerLogic,
-    Managed,
-    TxDataUtils
+    Managed
 {
     using SafeMath for uint256;
     using Address for address;
