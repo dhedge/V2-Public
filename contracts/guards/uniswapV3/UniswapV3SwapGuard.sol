@@ -47,15 +47,7 @@ import "../../interfaces/IManaged.sol";
 contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     using Path for bytes;
     using SafeMath for uint256;
-    
-    struct ExactInputParams {
-        bytes path;
-        address recipient;
-        uint256 deadline;
-        uint256 amountIn;
-        uint256 amountOutMinimum;
-    }
-    
+        
     // event SomeData(
     //     bytes data,
     //     bool hasMultiplePools
@@ -109,7 +101,38 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             require(pool == toAddress, "recipient is not pool");
 
             emit Exchange(
-                address(poolManagerLogic),
+                address(poolManagerLogic), // TODO: should this be poolLogic address instead?
+                srcAsset,
+                srcAmount,
+                dstAsset,
+                block.timestamp
+            );
+
+            return true;
+        }
+
+        if (method == bytes4(0x414bf389 )) { // exactInputSingle()
+        
+            address srcAsset = convert32toAddress(getInput(data, 0));
+            address dstAsset = convert32toAddress(getInput(data, 1));
+            address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
+            uint256 srcAmount = uint256(getInput(data, 5));
+            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
+
+            require(
+                poolManagerLogic.isAssetSupported(srcAsset),
+                "unsupported source asset"
+            );
+            
+            require(
+                poolManagerLogic.isAssetSupported(dstAsset),
+                "unsupported destination asset"
+            );
+            
+            require(pool == toAddress, "recipient is not pool");
+
+            emit Exchange(
+                address(poolManagerLogic), // TODO: should this be poolLogic address instead?
                 srcAsset,
                 srcAmount,
                 dstAsset,
