@@ -33,6 +33,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
+import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
@@ -81,8 +82,10 @@ contract PoolManagerLogic is
     );
 
     event ManagerFeeIncreaseRenounced();
+    event PoolLogicSet(address poolLogic, address from);
 
     address override public factory;
+    address override public poolLogic;
 
     address[] public supportedAssets;
     mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
@@ -133,7 +136,7 @@ contract PoolManagerLogic is
         require(!persistentAsset[asset], "cannot remove persistent assets");
 
         require(
-            IERC20(asset).balanceOf(address(this)) == 0,
+            assetBalance(asset) == 0,
             "cannot remove non-empty asset"
         );
 
@@ -157,7 +160,7 @@ contract PoolManagerLogic is
         supportedAssets.push(asset);
         assetPosition[asset] = supportedAssets.length;
 
-        emit AssetAdded(address(this), manager(), asset);
+        emit AssetAdded(poolLogic, manager(), asset);
     }
 
     // Unsafe internal method that assumes we are removing an element that exists
@@ -175,7 +178,7 @@ contract PoolManagerLogic is
         // delete the last supported asset and resize the array
         supportedAssets.pop();
 
-        emit AssetRemoved(address(this), manager(), asset);
+        emit AssetRemoved(poolLogic, manager(), asset);
     }
 
     function execTransaction(address to, bytes memory data)
@@ -195,7 +198,7 @@ contract PoolManagerLogic is
         require(success == true, "failed to execute the call");
 
         emit TransactionExecuted(
-            address(this),
+            poolLogic,
             manager(),
             block.timestamp
         );
@@ -216,7 +219,7 @@ contract PoolManagerLogic is
     }
 
     function assetBalance(address asset) public view returns (uint256) {
-        return IERC20(asset).balanceOf(address(this));
+        return IERC20(asset).balanceOf(poolLogic);
     }
 
     function assetValue(address asset) public view override returns (uint256) {
@@ -257,31 +260,31 @@ contract PoolManagerLogic is
         return (assets, balances, rates);
     }
 
-    function getManagerFee(address pool)
+    function getManagerFee()
         public
         view
         returns (uint256, uint256)
     {
-        return IHasFeeInfo(factory).getPoolManagerFee(pool);
+        return IHasFeeInfo(factory).getPoolManagerFee(poolLogic);
     }
 
-    function _setManagerFeeNumerator(address pool, uint256 numerator) internal {
-        IHasFeeInfo(factory).setPoolManagerFeeNumerator(pool, numerator);
+    function _setManagerFeeNumerator(uint256 numerator) internal {
+        IHasFeeInfo(factory).setPoolManagerFeeNumerator(poolLogic, numerator);
 
         uint256 managerFeeNumerator;
         uint256 managerFeeDenominator;
         (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory)
-            .getPoolManagerFee(pool);
+            .getPoolManagerFee(poolLogic);
 
         emit ManagerFeeSet(
-            address(this),
+            poolLogic,
             manager(),
             managerFeeNumerator,
             managerFeeDenominator
         );
     }
 
-    function announceManagerFeeIncrease(address pool, uint256 numerator)
+    function announceManagerFeeIncrease(uint256 numerator)
         public
         onlyManager
     {
@@ -290,7 +293,7 @@ contract PoolManagerLogic is
 
         uint256 currentFeeNumerator;
         uint256 currentFeeDenominator;
-        (currentFeeNumerator, currentFeeDenominator) = getManagerFee(pool);
+        (currentFeeNumerator, currentFeeDenominator) = getManagerFee();
 
         require(numerator <= currentFeeDenominator, "invalid fraction");
         require(
@@ -315,13 +318,13 @@ contract PoolManagerLogic is
         emit ManagerFeeIncreaseRenounced();
     }
 
-    function commitManagerFeeIncrease(address pool) public onlyManager {
+    function commitManagerFeeIncrease() public onlyManager {
         require(
             block.timestamp >= announcedFeeIncreaseTimestamp,
             "fee increase delay active"
         );
 
-        _setManagerFeeNumerator(pool, announcedFeeIncreaseNumerator);
+        _setManagerFeeNumerator(announcedFeeIncreaseNumerator);
 
         announcedFeeIncreaseNumerator = 0;
         announcedFeeIncreaseTimestamp = 0;
@@ -333,6 +336,20 @@ contract PoolManagerLogic is
         returns (uint256, uint256)
     {
         return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
+    }
+
+    function setPoolLogic(address _poolLogic)
+        external
+        override
+        returns (bool)
+    {
+        require(msg.sender == address(factory) || msg.sender == IHasDaoInfo(factory).getDaoAddress(), "only DAO or factory address allowed");
+
+        require(IPoolLogic(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");
+
+        poolLogic = _poolLogic;
+        emit PoolLogicSet(_poolLogic, msg.sender);
+        return true;
     }
 
     uint256[51] private __gap;

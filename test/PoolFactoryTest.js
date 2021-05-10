@@ -309,7 +309,7 @@ describe("PoolFactory", function() {
         // mock IERC20 balance
         const IERC20 = await hre.artifacts.readArtifact("IERC20");
         const iERC20 = new ethers.utils.Interface(IERC20.abi);
-        let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolManagerLogicProxy.address]);
+        let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
         await susdProxy.givenCalldataReturnUint(balanceOfABI, 100e18.toString());
 
         // Withdraw 50%
@@ -423,7 +423,7 @@ describe("PoolFactory", function() {
         // mock IERC20 balanceOf to return non zero
         const IERC20 = await hre.artifacts.readArtifact("IERC20");
         let iERC20 = new ethers.utils.Interface(IERC20.abi)
-        let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolManagerLogicManagerProxy.address])
+        let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address])
         await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1)
 
         await expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(slink))
@@ -440,25 +440,25 @@ describe("PoolFactory", function() {
 
     it('should be able to manage fees', async function() {
         //Can't set manager fee if not manager or if fee too high
-        await expect(poolManagerLogicProxy.announceManagerFeeIncrease(fundAddress, 4000))
+        await expect(poolManagerLogicProxy.announceManagerFeeIncrease(4000))
             .to.be.revertedWith('only manager');
 
         let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
-        await expect(poolManagerLogicManagerProxy.announceManagerFeeIncrease(fundAddress, 6100))
+        await expect(poolManagerLogicManagerProxy.announceManagerFeeIncrease(6100))
             .to.be.revertedWith('exceeded allowed increase');
 
         //Can set manager fee
-        await poolManagerLogicManagerProxy.announceManagerFeeIncrease(fundAddress, 4000)
+        await poolManagerLogicManagerProxy.announceManagerFeeIncrease(4000)
 
-        await expect(poolManagerLogicManagerProxy.commitManagerFeeIncrease(fundAddress))
+        await expect(poolManagerLogicManagerProxy.commitManagerFeeIncrease())
             .to.be.revertedWith('fee increase delay active');
 
         ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4])   // add 1 day
 
-        await poolManagerLogicManagerProxy.commitManagerFeeIncrease(fundAddress)
+        await poolManagerLogicManagerProxy.commitManagerFeeIncrease()
 
-        let [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee(fundAddress)
+        let [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee()
         expect(managerFeeNumerator.toString()).to.equal('4000');
         expect(managerFeeDenominator.toString()).to.equal('10000');
     });

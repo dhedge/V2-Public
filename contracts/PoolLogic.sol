@@ -57,7 +57,7 @@ contract PoolLogic is ERC20UpgradeSafe {
     // Deprecated
     // bytes32 constant private _EXCHANGER_KEY = "Exchanger";
     // bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
-    bytes32 private constant _SUSD_KEY = "sUSD";
+    // bytes32 private constant _SUSD_KEY = "sUSD";
 
     event Deposit(
         address fundAddress,

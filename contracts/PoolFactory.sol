@@ -187,6 +187,7 @@ contract PoolFactory is
             );
 
         address fund = deploy(poolLogicData, 2);
+        IPoolManagerLogic(managerLogic).setPoolLogic(fund);
 
         deployedFunds.push(fund);
         isPool[fund] = true;
