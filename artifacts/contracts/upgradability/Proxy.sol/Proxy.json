@@ -8,6 +8,19 @@
       "type": "fallback"
     },
     {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "c__0x48440863",
+          "type": "bytes32"
+        }
+      ],
+      "name": "c_0x48440863",
+      "outputs": [],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
       "stateMutability": "payable",
       "type": "receive"
     }

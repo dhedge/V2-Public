@@ -48,15 +48,15 @@ interface IPoolManagerLogic {
 
     function getSupportedAssets() external view returns (address[] memory);
 
-    function depositAssets(address asset) external view returns(bool);
+    function isSupportedAsset(address asset) external view returns (bool);
 
-    function isAssetSupported(address key) external view returns (bool);
+    function isDepositAsset(address asset) external view returns(bool);
 
     function validateAsset(address asset) external view returns (bool);
 
-    function assetValue(address key) external view returns (uint256);
+    function assetValue(address asset) external view returns (uint256);
 
-    function assetValue(address key, uint256 amount) external view returns (uint256);
+    function assetValue(address asset, uint256 amount) external view returns (uint256);
 
     function factory() external view returns (address);
 
