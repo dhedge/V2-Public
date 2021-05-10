@@ -10,16 +10,16 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
 import "../interfaces/IHasDaoInfo.sol";
+import "../interfaces/IPriceConsumer.sol";
 
-contract PriceConsumer is Initializable, OwnableUpgradeSafe {
+contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
     using SafeMath for uint256;
     
     bool public isDisabledChainlink;
     address public poolFactory;
 
     // Asset Price feeds
-    mapping(address => uint8) internal assetTypes; // asset types (refer to header comment)
-    mapping(address => address) internal aggregators; // price feeds (usd)
+    mapping(address => AssetPriceFeed) internal assetPriceFeeds; // for asset types refer to header comment
 
     function initialize(address _poolFactory) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
@@ -29,21 +29,21 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe {
 
     /* ========== VIEWS ========== */
 
-    function getAggregator(address asset) public view returns (address) {
-        return aggregators[asset];
+    function getAggregator(address asset) public view override returns (address) {
+        return assetPriceFeeds[asset].aggregator;
     }
 
     function getTypeAndAggregator(address asset) public view returns (uint8, address) {
-        return (assetTypes[asset], aggregators[asset]);
+        return (assetPriceFeeds[asset].assetType, assetPriceFeeds[asset].aggregator);
     }
 
     /**
      * Returns the latest price of a given asset (decimal: 18)
      * Takes into account the asset type.
      */
-    function getUSDPrice(address _asset) public view returns (uint256) {
-        address aggregator = aggregators[_asset];
-        uint8 assetType = assetTypes[_asset];
+    function getUSDPrice(address asset) public view override returns (uint256) {
+        address aggregator = assetPriceFeeds[asset].aggregator;
+        uint8 assetType = assetPriceFeeds[asset].assetType;
 
         require(aggregator != address(0), "PriceConsumer: aggregator not found");
 
@@ -88,20 +88,14 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe {
 
     /* ---------- From Pool Factory ---------- */
 
-    /**
-     * Add valid asset with price aggregator
-     */
-    function addAsset(address asset, uint8 assetType, address aggregator) external onlyPoolFactory {
-        aggregators[asset] = aggregator;
-        assetTypes[asset] = assetType;
+    /// Add valid asset with price aggregator
+    function addAsset(address asset, uint8 assetType, address aggregator) external override onlyPoolFactory {
+        assetPriceFeeds[asset] = AssetPriceFeed(assetType, aggregator);
     }
 
-    /**
-     * Remove valid asset
-     */
-    function removeAsset(address asset) external onlyPoolFactory {
-        aggregators[asset] = address(0);
-        assetTypes[asset] = 0;
+    /// Remove valid asset
+    function removeAsset(address asset) external override onlyPoolFactory {
+        assetPriceFeeds[asset] = AssetPriceFeed(0, address(0));
     }
 
 
