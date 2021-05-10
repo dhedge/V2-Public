@@ -48,11 +48,10 @@ import "./interfaces/IManaged.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, PausableUpgradeSafe {
+contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     using SafeMath for uint256;
 
     // Deprecated
@@ -129,6 +128,11 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, PausableUpgr
 
     modifier onlyManager() {
         require(msg.sender == manager(), "only manager");
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!IPoolManagerLogic(poolManagerLogic).isPaused(), "Pausable: paused");
         _;
     }
 

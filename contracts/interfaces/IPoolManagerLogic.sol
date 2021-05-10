@@ -61,4 +61,6 @@ interface IPoolManagerLogic {
     function factory() external view returns (address);
 
     function setPoolLogic(address fundAddress) external returns (bool);
+
+    function isPaused() external view returns (bool);
 }

@@ -614,6 +614,24 @@ describe("PoolFactory", function() {
         expect(event.sourceAsset).to.equal(susd);
         expect(event.sourceAmount).to.equal(100e18.toString());
         expect(event.destinationAsset).to.equal(seth);
+    });
+    
+    it("should be able to pause deposit, exchange/execute and withdraw", async function() {
+        let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+
+        await poolManagerLogicManagerProxy.pause();
+        expect(await poolManagerLogicManagerProxy.isPaused()).to.be.true;
+
+        await expect(poolLogicProxy.deposit(susd, 100e18.toString())).to.be.revertedWith("Pausable: paused");
+        await expect(poolLogicProxy.withdraw(100e18.toString())).to.be.revertedWith("Pausable: paused");
+        await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.be.revertedWith("Pausable: paused");
+
+        await poolManagerLogicManagerProxy.unpause();
+        expect(await poolManagerLogicManagerProxy.isPaused()).to.be.false;
+
+        await expect(poolLogicProxy.deposit(susd, 100e18.toString())).to.not.be.revertedWith("Pausable: paused");
+        await expect(poolLogicProxy.withdraw(100e18.toString())).to.not.be.revertedWith("Pausable: paused");
+        await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.not.be.revertedWith("Pausable: paused");
     })
 
     it('should be able to upgrade/set implementation logic', async function() {

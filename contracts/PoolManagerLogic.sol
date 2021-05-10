@@ -104,6 +104,7 @@ contract PoolManagerLogic is
         Asset[] memory _supportedAssets
     ) public initializer {
         initialize(_manager, _managerName);
+        __Pausable_init();
 
         factory = _factory;
         // _setPoolPrivacy(_privatePool);
@@ -234,6 +235,18 @@ contract PoolManagerLogic is
         );
 
         return true;
+    }
+
+    function pause() public onlyManager {
+        _pause();
+    }
+
+    function unpause() public onlyManager {
+        _unpause();
+    }
+
+    function isPaused() public view override returns(bool) {
+        return paused();
     }
 
     function assetValue(address asset, uint256 amount)
