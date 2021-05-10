@@ -48,10 +48,11 @@ import "./interfaces/IManaged.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
+contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, PausableUpgradeSafe {
     using SafeMath for uint256;
 
     // Deprecated
@@ -185,7 +186,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
         return total;
     }
 
-    function deposit(address _asset, uint256 _amount) public onlyPrivate returns (uint256) {
+    function deposit(address _asset, uint256 _amount) public onlyPrivate whenNotPaused returns (uint256) {
         require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
 
         lastDeposit[msg.sender] = block.timestamp;
@@ -271,7 +272,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     //     _withdraw(_fundTokenAmount, true);
     // }
 
-    function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant {
+    function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant whenNotPaused {
         require(
             balanceOf(msg.sender) >= _fundTokenAmount,
             "insufficient balance"

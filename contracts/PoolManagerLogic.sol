@@ -49,6 +49,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
 pragma solidity ^0.6.2;
 pragma experimental ABIEncoderV2;
@@ -57,7 +58,8 @@ contract PoolManagerLogic is
     Initializable,
     IPoolManagerLogic,
     Managed,
-    TxDataUtils
+    TxDataUtils,
+    PausableUpgradeSafe
 {
     using SafeMath for uint256;
     using Address for address;
@@ -209,6 +211,7 @@ contract PoolManagerLogic is
     function execTransaction(address to, bytes memory data)
         public
         onlyManagerOrTrader
+        whenNotPaused
         returns (bool)
     {
         require(to != address(0), "non-zero address is required");
