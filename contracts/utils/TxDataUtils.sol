@@ -56,6 +56,8 @@ contract TxDataUtils {
     }
     
     function getBytes(bytes memory data, uint8 inputNum, uint256 offset) public pure returns (bytes memory) {
+        require(offset < 20, "invalid offset"); // offset is in byte32 slots, not bytes
+        offset = offset * 32; // convert offset to bytes
         uint256 bytesLenPos = uint256(read32(data, 32 * inputNum + 4 + offset, 32));
         uint256 bytesLen = uint256(read32(data, bytesLenPos + 4 + offset, 32));
         return data.slice(bytesLenPos + 4 + offset + 32, bytesLen);

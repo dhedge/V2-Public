@@ -47,13 +47,8 @@ import "../../interfaces/IManaged.sol";
 contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     using Path for bytes;
     using SafeMath for uint256;
-        
-    // event SomeData(
-    //     bytes data,
-    //     bool hasMultiplePools
-    // );
 
-    // transaction guard for 1inch V3 aggregator
+    // transaction guard for Uniswap Swap Router
     function txGuard(address pool, bytes calldata data)
         external
         override
@@ -61,10 +56,11 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     {
         bytes4 method = getMethod(data);
 
-        if (method == bytes4(0xc04b8d59)) { // ExactInput()
+        if (method == bytes4(0xc04b8d59)) { // exactInput((bytes,address,uint256,uint256,uint256))
         
             address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
-            bytes memory path = getBytes(data, 0, 32); // requires an offset of 32 bytes due to Struct in calldata (I think)
+            uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
+            bytes memory path = getBytes(data, 0, offset); // requires an offset due to dynamic Struct/tuple in calldata (abiencoder V2)
             address srcAsset = path.getFirstPool().toAddress(0);
             uint256 srcAmount = uint256(getInput(data, 4));
             address dstAsset;
@@ -80,7 +76,6 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             
             
             while(hasMultiplePools) {
-                // emit SomeData(path, hasMultiplePools);
                 path = path.skipToken();
                 address asset = path.getFirstPool().toAddress(0); // gets asset from swap path
                 hasMultiplePools = path.hasMultiplePools();
@@ -94,7 +89,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             (,dstAsset,) = path.decodeFirstPool(); // gets the destination asset
             
             require(
-                poolManagerLogic.isAssetSupported(dstAsset),
+               poolManagerLogic.isAssetSupported(dstAsset),
                 "unsupported destination asset"
             );
             
@@ -111,7 +106,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             return true;
         }
 
-        if (method == bytes4(0x414bf389 )) { // exactInputSingle()
+        if (method == bytes4(0x414bf389 )) { // exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))
         
             address srcAsset = convert32toAddress(getInput(data, 0));
             address dstAsset = convert32toAddress(getInput(data, 1));
