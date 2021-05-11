@@ -93,6 +93,8 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
     function addAsset(address asset, uint8 assetType, address aggregator) public override onlyOwner {
         assetTypes[asset] = assetType;
         aggregators[asset] = aggregator;
+
+        emit AddedAsset(asset, assetType, aggregator);
     }
 
     function addAssets(Asset[] memory assets) public override onlyOwner {
@@ -105,6 +107,8 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
     function removeAsset(address asset) public override onlyOwner {
         assetTypes[asset] = 0;
         aggregators[asset] = address(0);
+
+        emit RemovedAsset(asset);
     }
 
     uint256[50] private __gap;

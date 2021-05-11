@@ -410,14 +410,6 @@ contract PoolFactory is
         return IPriceConsumer(_priceConsumer).getAggregator(asset) != address(0);
     }
 
-    function removeValidAsset(address asset) public onlyDao {
-        require(isValidAsset(asset), "asset doesn't exist");
-
-        IPriceConsumer(_priceConsumer).removeAsset(asset);
-
-        emit RemovedValidAsset(asset);
-    }
-
     /**
      * Returns the latest price of a given asset
      */
