@@ -115,9 +115,8 @@ contract PoolManagerLogic is
 
     function isDepositAsset(address asset) public view override returns(bool) {
         uint256 index = assetPosition[asset];
-        if (index != 0) {
-            return supportedAssets[index.sub(1)].isDeposit;
-        }
+
+        return index != 0 &&  supportedAssets[index.sub(1)].isDeposit;
     }
 
     function validateAsset(address asset) public view override returns (bool) {
