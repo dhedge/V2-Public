@@ -35,7 +35,6 @@
 //
 
 pragma solidity ^0.6.2;
-pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
 
 import "./PoolLogic.sol";
 import "./upgradability/ProxyFactory.sol";
@@ -74,8 +73,6 @@ contract PoolFactory is
     event ExitFeeSet(uint256 numerator, uint256 denominator);
     event ExitCooldownSet(uint256 cooldown);
 
-    event AddedValidAsset(address indexed asset);
-    event RemovedValidAsset(address indexed asset);
     event MaximumSupportedAssetCountSet(uint256 count);
 
     // event DhptSwapAddressSet(address dhptSwap);
@@ -101,7 +98,6 @@ contract PoolFactory is
     // uint256 internal _exitFeeDenominator;
     uint256 internal _exitCooldown;
 
-    mapping(address => bool) internal validAssets;
     uint256 internal _maximumSupportedAssetCount;
 
     bytes32 internal _trackingCode;
@@ -126,8 +122,7 @@ contract PoolFactory is
         address _poolLogic,
         address _managerLogic,
         address priceConsumer,
-        address daoAddress,
-        Asset[] memory assets
+        address daoAddress
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
 
@@ -148,11 +143,6 @@ contract PoolFactory is
         _setTrackingCode(
             0x4448454447450000000000000000000000000000000000000000000000000000
         );
-
-        for (uint8 i = 0; i < assets.length; i++) {
-            validAssets[assets[i].asset] = true;
-            IPriceConsumer(_priceConsumer).addAsset(assets[i].asset, assets[i].assetType, assets[i].aggregator);
-        }
     }
 
     function createFund(
@@ -417,22 +407,12 @@ contract PoolFactory is
     }
 
     function isValidAsset(address asset) public view override returns (bool) {
-        return validAssets[asset];
-    }
-
-    function addValidAsset(address asset, uint8 assetType, address aggregator) public onlyDao {
-        require(!isValidAsset(asset), "asset already exists");
-
-        validAssets[asset] = true;
-        IPriceConsumer(_priceConsumer).addAsset(asset, assetType, aggregator);
-
-        emit AddedValidAsset(asset);
+        return IPriceConsumer(_priceConsumer).getAggregator(asset) != address(0);
     }
 
     function removeValidAsset(address asset) public onlyDao {
         require(isValidAsset(asset), "asset doesn't exist");
 
-        validAssets[asset] = false;
         IPriceConsumer(_priceConsumer).removeAsset(asset);
 
         emit RemovedValidAsset(asset);

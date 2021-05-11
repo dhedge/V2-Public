@@ -3,6 +3,7 @@
 // 0 = Chainlink direct USD price feed with 8 decimals
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
 
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -19,22 +20,26 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
     address public poolFactory;
 
     // Asset Price feeds
-    mapping(address => AssetPriceFeed) internal assetPriceFeeds; // for asset types refer to header comment
+    mapping(address => uint8) internal assetTypes; // for asset types refer to header comment
+    mapping(address => address) internal aggregators;
+    // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
 
-    function initialize(address _poolFactory) public initializer {
+    function initialize(address _poolFactory, Asset[] memory assets) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
+
         poolFactory = _poolFactory;
+        addAssets(assets);
     }
 
 
     /* ========== VIEWS ========== */
 
     function getAggregator(address asset) public view override returns (address) {
-        return assetPriceFeeds[asset].aggregator;
+        return aggregators[asset];
     }
 
-    function getTypeAndAggregator(address asset) public view returns (uint8, address) {
-        return (assetPriceFeeds[asset].assetType, assetPriceFeeds[asset].aggregator);
+    function getTypeAndAggregator(address asset) public view override returns (uint8, address) {
+        return (assetTypes[asset], aggregators[asset]);
     }
 
     /**
@@ -42,8 +47,8 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
      * Takes into account the asset type.
      */
     function getUSDPrice(address asset) public view override returns (uint256) {
-        address aggregator = assetPriceFeeds[asset].aggregator;
-        uint8 assetType = assetPriceFeeds[asset].assetType;
+        address aggregator = aggregators[asset];
+        uint8 assetType = assetTypes[asset];
 
         require(aggregator != address(0), "PriceConsumer: aggregator not found");
 
@@ -76,39 +81,30 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
         poolFactory = _poolFactory;
     }
 
-    /* ---------- From DAO ---------- */
-
-    function enableChainlink() external onlyDao {
+    function enableChainlink() external onlyOwner {
         isDisabledChainlink = false;
     }
 
-    function disableChainlink() external onlyDao {
+    function disableChainlink() external onlyOwner {
         isDisabledChainlink = true;
     }
 
-    /* ---------- From Pool Factory ---------- */
-
     /// Add valid asset with price aggregator
-    function addAsset(address asset, uint8 assetType, address aggregator) external override onlyPoolFactory {
-        assetPriceFeeds[asset] = AssetPriceFeed(assetType, aggregator);
+    function addAsset(address asset, uint8 assetType, address aggregator) public override onlyOwner {
+        assetTypes[asset] = assetType;
+        aggregators[asset] = aggregator;
+    }
+
+    function addAssets(Asset[] memory assets) public override onlyOwner {
+        for (uint8 i = 0; i < assets.length; i++) {
+            addAsset(assets[i].asset, assets[i].assetType, assets[i].aggregator);
+        }
     }
 
     /// Remove valid asset
-    function removeAsset(address asset) external override onlyPoolFactory {
-        assetPriceFeeds[asset] = AssetPriceFeed(0, address(0));
-    }
-
-
-    /* ========== MODIFIERS ========== */
-
-    modifier onlyPoolFactory() {
-        require(msg.sender == poolFactory, "only pool factory");
-        _;
-    }
-
-    modifier onlyDao() {
-        require(msg.sender == IHasDaoInfo(poolFactory).getDaoAddress(), "only dao");
-        _;
+    function removeAsset(address asset) public override onlyOwner {
+        assetTypes[asset] = 0;
+        aggregators[asset] = address(0);
     }
 
     uint256[50] private __gap;

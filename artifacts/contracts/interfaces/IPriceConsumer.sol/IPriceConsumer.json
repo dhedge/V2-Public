@@ -29,6 +29,36 @@
     {
       "inputs": [
         {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint8",
+              "name": "assetType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "aggregator",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IPriceConsumer.Asset[]",
+          "name": "assets",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "addAssets",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "asset",
           "type": "address"
@@ -36,6 +66,30 @@
       ],
       "name": "getAggregator",
       "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "asset",
+          "type": "address"
+        }
+      ],
+      "name": "getTypeAndAggregator",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        },
         {
           "internalType": "address",
           "name": "",

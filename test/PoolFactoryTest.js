@@ -156,23 +156,17 @@ describe('PoolFactory', function () {
 
     poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
 
-    // Initialize Price Consumer
-    await priceConsumer.initialize(poolFactoryProxy.address);
-    await priceConsumer.deployed();
-
+    // Initialize Asset Price Consumer
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
-    const factoryInitAssets = [assetSusd, assetSeth, assetSlink];
+    const priceConsumerInitAssets = [assetSusd, assetSeth, assetSlink];
+
+    await priceConsumer.initialize(poolFactoryProxy.address, priceConsumerInitAssets);
+    await priceConsumer.deployed();
 
     // Initialise pool factory
-    await poolFactory.initialize(
-      poolLogic.address,
-      poolManagerLogic.address,
-      priceConsumerProxy.address,
-      dao.address,
-      factoryInitAssets,
-    );
+    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, priceConsumerProxy.address, dao.address);
     await poolFactory.deployed();
 
     const SynthetixGuard = await ethers.getContractFactory('SynthetixGuard');
