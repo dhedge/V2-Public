@@ -160,15 +160,18 @@ describe('PoolFactory', function () {
     await priceConsumer.initialize(poolFactoryProxy.address);
     await priceConsumer.deployed();
 
+    const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
+    const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
+    const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
+    const factoryInitAssets = [assetSusd, assetSeth, assetSlink];
+
     // Initialise pool factory
     await poolFactory.initialize(
       poolLogic.address,
       poolManagerLogic.address,
       priceConsumerProxy.address,
       dao.address,
-      [susd, seth, slink],
-      [0, 0, 0],
-      [usd_price_feed.address, eth_price_feed.address, link_price_feed.address],
+      factoryInitAssets,
     );
     await poolFactory.deployed();
 

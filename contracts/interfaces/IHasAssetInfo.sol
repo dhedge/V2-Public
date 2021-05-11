@@ -37,6 +37,13 @@
 pragma solidity ^0.6.2;
 
 interface IHasAssetInfo {
+
+    struct Asset {
+        address asset;
+        uint8 assetType;
+        address aggregator;
+    }
+
     function isValidAsset(address asset) external view returns (bool);
 
     function getAssetPrice(address asset) external view returns (uint256);

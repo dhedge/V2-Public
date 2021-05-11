@@ -7,17 +7,17 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_asset",
+          "name": "asset",
           "type": "address"
         },
         {
           "internalType": "uint8",
-          "name": "_assetType",
+          "name": "assetType",
           "type": "uint8"
         },
         {
           "internalType": "address",
-          "name": "_aggregator",
+          "name": "aggregator",
           "type": "address"
         }
       ],
@@ -30,7 +30,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_asset",
+          "name": "asset",
           "type": "address"
         }
       ],
@@ -49,7 +49,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_asset",
+          "name": "asset",
           "type": "address"
         }
       ],
@@ -68,7 +68,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_asset",
+          "name": "asset",
           "type": "address"
         }
       ],

@@ -35,6 +35,7 @@
 //
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
 
 import "./PoolLogic.sol";
 import "./upgradability/ProxyFactory.sol";
@@ -126,9 +127,7 @@ contract PoolFactory is
         address _managerLogic,
         address priceConsumer,
         address daoAddress,
-        address[] memory _validAssets,
-        uint8[] memory _assetTypes,
-        address[] memory _aggregators
+        Asset[] memory assets
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
 
@@ -150,9 +149,9 @@ contract PoolFactory is
             0x4448454447450000000000000000000000000000000000000000000000000000
         );
 
-        for (uint8 i = 0; i < _validAssets.length; i++) {
-            validAssets[_validAssets[i]] = true;
-            IPriceConsumer(_priceConsumer).addAsset(_validAssets[i], _assetTypes[i], _aggregators[i]);
+        for (uint8 i = 0; i < assets.length; i++) {
+            validAssets[assets[i].asset] = true;
+            IPriceConsumer(_priceConsumer).addAsset(assets[i].asset, assets[i].assetType, assets[i].aggregator);
         }
     }
 
