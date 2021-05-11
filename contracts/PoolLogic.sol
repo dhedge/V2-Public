@@ -42,6 +42,7 @@ import "./interfaces/IAddressResolver.sol";
 import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
+import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
 
@@ -132,7 +133,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     }
 
     modifier whenNotPaused() {
-        require(!IPoolManagerLogic(poolManagerLogic).isPaused(), "Pausable: paused");
+        require(!IHasPausable(factory).isPaused(), "Pausable: paused");
         _;
     }
 

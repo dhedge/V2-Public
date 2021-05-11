@@ -40,6 +40,7 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasPausable.sol";
 import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
@@ -49,7 +50,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
 pragma solidity ^0.6.2;
 pragma experimental ABIEncoderV2;
@@ -58,8 +58,7 @@ contract PoolManagerLogic is
     Initializable,
     IPoolManagerLogic,
     Managed,
-    TxDataUtils,
-    PausableUpgradeSafe
+    TxDataUtils
 {
     using SafeMath for uint256;
     using Address for address;
@@ -97,6 +96,11 @@ contract PoolManagerLogic is
     uint256 public announcedFeeIncreaseNumerator;
     uint256 public announcedFeeIncreaseTimestamp;
 
+    modifier whenNotPaused() {
+        require(!IHasPausable(factory).isPaused(), "Pausable: paused");
+        _;
+    }
+
     function initialize(
         address _factory,
         address _manager,
@@ -104,7 +108,6 @@ contract PoolManagerLogic is
         Asset[] memory _supportedAssets
     ) public initializer {
         initialize(_manager, _managerName);
-        __Pausable_init();
 
         factory = _factory;
         // _setPoolPrivacy(_privatePool);
@@ -235,18 +238,6 @@ contract PoolManagerLogic is
         );
 
         return true;
-    }
-
-    function pause() public onlyManager {
-        _pause();
-    }
-
-    function unpause() public onlyManager {
-        _unpause();
-    }
-
-    function isPaused() public view override returns(bool) {
-        return paused();
     }
 
     function assetValue(address asset, uint256 amount)
