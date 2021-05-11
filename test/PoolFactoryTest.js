@@ -5,7 +5,7 @@ const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 const { expect } = require("chai");
 
 let logicOwner, manager, dao, user1;
-let poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress, synthetixGuard, approveGuard, uniswapV2Guard;
+let poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress, synthetixGuard, erc20Guard, uniswapV2Guard;
 let addressResolver, synthetix, uniswapV2Router; // contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
@@ -14,7 +14,6 @@ let usd_price_feed, eth_price_feed, link_price_feed;
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000" // Synthetix
 const _EXCHANGE_RATES_KEY = "0x45786368616e6765526174657300000000000000000000000000000000000000"; // ExchangeRates
-const approveGuardPointer = "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa";
 
 const susdKey =
     '0x7355534400000000000000000000000000000000000000000000000000000000'
@@ -145,16 +144,16 @@ describe("PoolFactory", function() {
         synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
         synthetixGuard.deployed();
 
-        const ApproveGuard = await ethers.getContractFactory("ApproveGuard");
-        approveGuard = await ApproveGuard.deploy();
-        approveGuard.deployed();
+        const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+        erc20Guard = await ERC20Guard.deploy();
+        erc20Guard.deployed();
 
         const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
         uniswapV2Guard = await UniswapV2Guard.deploy();
         uniswapV2Guard.deployed();
 
+        await poolFactory.connect(dao).setERC20Guard(erc20Guard.address);
         await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
-        await poolFactory.connect(dao).setGuard(approveGuardPointer, approveGuard.address);
         await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
     });
 
@@ -587,7 +586,7 @@ describe("PoolFactory", function() {
         await expect(poolManagerLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI)).to.be.revertedWith("non-zero address is required");
 
         swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [slink, seth], poolManagerLogicProxy.address, 0]);
-        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, swapABI)).to.be.revertedWith("invalid destination");
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, swapABI)).to.be.revertedWith("invalid transaction");
 
         swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [slink, seth], poolManagerLogicProxy.address, 0]);
         await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("unsupported source asset");

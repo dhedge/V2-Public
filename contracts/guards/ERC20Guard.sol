@@ -43,7 +43,7 @@ import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 
-contract ApproveGuard is TxDataUtils, IGuard {
+contract ERC20Guard is TxDataUtils, IGuard {
     using SafeMath for uint256;
 
     event Approve(
@@ -70,7 +70,8 @@ contract ApproveGuard is TxDataUtils, IGuard {
             IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
 
             address factory = poolManagerLogic.factory();
-            require(IHasGuardInfo(factory).getGuard(spender) != address(0), "unsupported spender approval"); // checks that the spender is an approved address
+            address spenderGuard = IHasGuardInfo(factory).getGuard(spender);
+            require(spenderGuard != address(0) && spenderGuard != address(this), "unsupported spender approval"); // checks that the spender is an approved address
 
             emit Approve(
                 address(poolManagerLogic),

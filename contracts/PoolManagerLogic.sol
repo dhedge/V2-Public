@@ -62,8 +62,6 @@ contract PoolManagerLogic is
     using SafeMath for uint256;
     using Address for address;
 
-    address private constant _APPROVE_GUARD = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
-
     event TransactionExecuted(
         address fundAddress,
         address manager,
@@ -215,12 +213,9 @@ contract PoolManagerLogic is
     {
         require(to != address(0), "non-zero address is required");
 
-        address guard;
-        if (getMethod(data) == bytes4(keccak256("approve(address,uint256)"))) { // approve transaction
-            guard = IHasGuardInfo(factory).getGuard(_APPROVE_GUARD);
-        } else { // exchange transaction
-            guard = IHasGuardInfo(factory).getGuard(to);
-        }
+        require(!validateAsset(to) || isAssetSupported(to), "asset not supported");
+
+        address guard = IHasGuardInfo(factory).getGuard(to);
 
         require(guard != address(0), "invalid destination");
 
