@@ -35,6 +35,7 @@
 //
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2;
 
 import "./PoolLogic.sol";
 import "./PriceConsumerV3.sol";
@@ -159,11 +160,11 @@ contract PoolFactory is
         string memory _fundName,
         string memory _fundSymbol,
         uint256 _managerFeeNumerator,
-        address[] memory _supportedAssets
+        IPoolManagerLogic.Asset[] memory _supportedAssets
     ) public returns (address) {
         bytes memory managerLogicData =
             abi.encodeWithSignature(
-                "initialize(address,address,string,address[])",
+                "initialize(address,address,string,(address,bool)[])",
                 address(this),
                 // _privatePool,
                 _manager,

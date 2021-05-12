@@ -51,6 +51,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2;
 
 contract PoolManagerLogic is 
     Initializable,
@@ -66,8 +67,8 @@ contract PoolManagerLogic is
         address manager,
         uint256 time
     );
-    event AssetAdded(address fundAddress, address manager, address asset);
-    event AssetRemoved(address fundAddress, address manager, address asset);
+    event AssetAdded(address fundAddress, address manager, address asset, bool isDeposit);
+    event AssetRemoved(address fundAddress, address manager, address asset, bool isDeposit);
 
     event ManagerFeeSet(
         address fundAddress,
@@ -87,9 +88,8 @@ contract PoolManagerLogic is
     address override public factory;
     address override public poolLogic;
 
-    address[] public supportedAssets;
+    Asset[] public supportedAssets;
     mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
-    mapping(address => bool) public persistentAsset;
 
     // Fee increase announcement
     uint256 public announcedFeeIncreaseNumerator;
@@ -99,86 +99,111 @@ contract PoolManagerLogic is
         address _factory,
         address _manager,
         string memory _managerName,
-        address[] memory _supportedAssets
+        Asset[] memory _supportedAssets
     ) public initializer {
         initialize(_manager, _managerName);
 
         factory = _factory;
         // _setPoolPrivacy(_privatePool);
 
-        for (uint8 i = 0; i < _supportedAssets.length; i++) {
-            _addToSupportedAssets(_supportedAssets[i]);
-        }
+        _changeAssets(_supportedAssets, new Asset[](0));
     }
 
-    function isAssetSupported(address asset) public view override returns (bool) {
+    function isSupportedAsset(address asset) public view override returns (bool) {
         return assetPosition[asset] != 0;
+    }
+
+    function isDepositAsset(address asset) public view override returns(bool) {
+        uint256 index = assetPosition[asset];
+
+        return index != 0 &&  supportedAssets[index.sub(1)].isDeposit;
     }
 
     function validateAsset(address asset) public view override returns (bool) {
         return IHasAssetInfo(factory).isValidAsset(asset);
     }
 
-    function addToSupportedAssets(address asset) public onlyManagerOrTrader {
-        _addToSupportedAssets(asset);
+    function changeAssets(Asset[] memory _addAssets, Asset[] memory _removeAssets) public onlyManagerOrTrader {
+        _changeAssets(_addAssets, _removeAssets);
     }
 
-    function removeFromSupportedAssets(address asset) public {
-        require(
-            msg.sender == IHasProtocolDaoInfo(factory).owner() ||
-                msg.sender == manager() ||
-                msg.sender == trader(),
-            "only manager, trader or DAO"
-        );
+    function _changeAssets(Asset[] memory _addAssets, Asset[] memory _removeAssets) internal {
+        for (uint8 i = 0; i < _removeAssets.length; i ++) {
+            _removeAsset(_removeAssets[i]);
+        }
 
-        require(isAssetSupported(asset), "asset not supported");
 
-        require(!persistentAsset[asset], "cannot remove persistent assets");
+        for (uint8 i = 0; i < _addAssets.length; i ++) {
+            _addAsset(_addAssets[i]);
+        }
 
         require(
-            assetBalance(asset) == 0,
-            "cannot remove non-empty asset"
+            supportedAssets.length <
+                IHasAssetInfo(factory).getMaximumSupportedAssetCount(),
+            "maximum assets reached"
         );
 
-        _removeFromSupportedAssets(asset);
+        require(numberOfDepositAssets() >= 1, "require at least one deposit asset");
+    }
+
+    function _addAsset(Asset memory _asset) internal {
+        address asset = _asset.asset;
+        bool isDeposit = _asset.isDeposit;
+        
+        require(validateAsset(asset) == true, "invalid asset");
+
+        if (isSupportedAsset(asset)) {
+            uint256 index = assetPosition[asset].sub(1);
+            supportedAssets[index].isDeposit = isDeposit;
+        } else {
+            supportedAssets.push(Asset(asset, isDeposit));
+            assetPosition[asset] = supportedAssets.length;
+        }
+    }
+
+    function _removeAsset(Asset memory _asset) internal {
+        address asset = _asset.asset;
+        bool isDeposit = _asset.isDeposit;
+
+        require(isSupportedAsset(asset), "asset not supported");
+
+        uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
+
+        if (isDeposit) {
+            supportedAssets[index].isDeposit = false;
+        } else {
+            require(
+                assetBalance(asset) == 0,
+                "cannot remove non-empty asset"
+            );
+
+            uint256 length = supportedAssets.length;
+            Asset memory lastAsset = supportedAssets[length.sub(1)];
+
+            // overwrite the asset to be removed with the last supported asset
+            supportedAssets[index] = lastAsset;
+            assetPosition[lastAsset.asset] = index.add(1); // adjusting the index to be 1-based
+            assetPosition[asset] = 0; // update the map
+
+            // delete the last supported asset and resize the array
+            supportedAssets.pop();
+        }
+
+        emit AssetRemoved(poolLogic, manager(), asset, isDeposit);
     }
 
     function numberOfSupportedAssets() public view returns (uint256) {
         return supportedAssets.length;
     }
 
-    // Unsafe internal method that assumes we are not adding a duplicate
-    function _addToSupportedAssets(address asset) internal {
-        require(
-            supportedAssets.length <
-                IHasAssetInfo(factory).getMaximumSupportedAssetCount(),
-            "maximum assets reached"
-        );
-        require(!isAssetSupported(asset), "asset already supported");
-        require(validateAsset(asset) == true, "invalid asset");
-
-        supportedAssets.push(asset);
-        assetPosition[asset] = supportedAssets.length;
-
-        emit AssetAdded(poolLogic, manager(), asset);
-    }
-
-    // Unsafe internal method that assumes we are removing an element that exists
-    function _removeFromSupportedAssets(address asset) internal {
-        uint256 length = supportedAssets.length;
-        uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
-
-        address lastAsset = supportedAssets[length.sub(1)];
-
-        // overwrite the asset to be removed with the last supported asset
-        supportedAssets[index] = lastAsset;
-        assetPosition[lastAsset] = index.add(1); // adjusting the index to be 1-based
-        assetPosition[asset] = 0; // update the map
-
-        // delete the last supported asset and resize the array
-        supportedAssets.pop();
-
-        emit AssetRemoved(poolLogic, manager(), asset);
+    function numberOfDepositAssets() public view returns (uint256) {
+        uint256 result = 0;
+        for (uint8 i = 0; i < supportedAssets.length; i ++) {
+            if (supportedAssets[i].isDeposit) {
+                result = result.add(1);
+            }
+        }
+        return result;
     }
 
     function execTransaction(address to, bytes memory data)
@@ -232,7 +257,12 @@ contract PoolManagerLogic is
         override
         returns (address[] memory)
     {
-        return supportedAssets;
+        uint256 assetsCount = supportedAssets.length;
+        address[] memory assets = new address[](assetsCount);
+        for (uint8 i = 0; i < assetsCount; i ++) {
+            assets[i] = supportedAssets[i].asset;
+        }
+        return assets;
     }
 
     function getFundComposition()
@@ -251,7 +281,7 @@ contract PoolManagerLogic is
         uint256[] memory rates = new uint256[](assetCount);
 
         for (uint256 i = 0; i < assetCount; i++) {
-            address asset = supportedAssets[i];
+            address asset = supportedAssets[i].asset;
             balances[i] = assetBalance(asset);
             assets[i] = asset;
             rates[i] = PriceConsumerV3(factory).getUSDPrice(asset);

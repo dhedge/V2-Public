@@ -186,6 +186,8 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     }
 
     function deposit(address _asset, uint256 _amount) public onlyPrivate returns (uint256) {
+        require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+
         lastDeposit[msg.sender] = block.timestamp;
 
         _mintManagerFee();

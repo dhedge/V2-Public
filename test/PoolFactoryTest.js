@@ -181,12 +181,12 @@ describe("PoolFactory", function() {
         // console.log("Passed poolLogic Init!")
 
         await expect(poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [susd, seth]
+            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [[susd, true], [seth, true]]
         ))
             .to.be.revertedWith('invalid fraction');
 
         let tx = await poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [susd, seth]
+            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[susd, true], [seth, true]]
         );
 
         let event = await fundCreatedEvent;
@@ -218,11 +218,11 @@ describe("PoolFactory", function() {
 
         //default assets are supported
         expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal("2");
-        expect(await poolManagerLogicProxy.isAssetSupported(susd)).to.be.true
-        expect(await poolManagerLogicProxy.isAssetSupported(seth)).to.be.true
+        expect(await poolManagerLogicProxy.isSupportedAsset(susd)).to.be.true
+        expect(await poolManagerLogicProxy.isSupportedAsset(seth)).to.be.true
 
         //Other assets are not supported
-        expect(await poolManagerLogicProxy.isAssetSupported(slink)).to.be.false
+        expect(await poolManagerLogicProxy.isSupportedAsset(slink)).to.be.false
 
     });
 
@@ -264,6 +264,7 @@ describe("PoolFactory", function() {
         // As default there's susd and seth and each return 1 by IExchangeRates
         expect(totalFundValue.toString()).to.equal('0');
 
+        await expect(poolLogicProxy.deposit(slink, 100e18.toString())).to.be.revertedWith("invalid deposit asset");
         await poolLogicProxy.deposit(susd, 100e18.toString());
         let event = await depositEvent;
 
@@ -343,7 +344,7 @@ describe("PoolFactory", function() {
 
     it('should be able to manage pool',async function() {
         await poolFactory.createFund(
-            true, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [susd, seth]
+            true, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[susd, true], [seth, true]]
         );
 
         let deployedFundsLength = await poolFactory.deployedFundsLength()
@@ -398,25 +399,25 @@ describe("PoolFactory", function() {
     });
 
     it('should be able to manage assets', async function() {
-        await expect(poolManagerLogicProxy.addToSupportedAssets(slink))
+        await expect(poolManagerLogicProxy.changeAssets([[slink, false]], []))
             .to.be.revertedWith('only manager or trader');
 
         let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
         let poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
 
         // Can add asset
-        await poolManagerLogicManagerProxy.addToSupportedAssets(slink)
+        await poolManagerLogicManagerProxy.changeAssets([[slink, false]], [])
 
         let numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
         expect(numberOfSupportedAssets).to.eq("3");
 
         // Can not remove persist asset
-        await expect(poolManagerLogicUser1Proxy.removeFromSupportedAssets(slink))
-            .to.be.revertedWith('only manager, trader or DAO');
+        await expect(poolManagerLogicUser1Proxy.changeAssets([], [[slink, false]]))
+            .to.be.revertedWith('only manager or trader');
 
         // Can't add invalid asset
         let invalid_synth_asset = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
-        await expect(poolManagerLogicManagerProxy.addToSupportedAssets(invalid_synth_asset))
+        await expect(poolManagerLogicManagerProxy.changeAssets([[invalid_synth_asset, false]], []))
             .to.be.revertedWith('invalid asset');
 
         // Can't remove asset with non zero balance
@@ -426,16 +427,24 @@ describe("PoolFactory", function() {
         let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address])
         await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1)
 
-        await expect(poolManagerLogicManagerProxy.removeFromSupportedAssets(slink))
+        await expect(poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]))
             .to.be.revertedWith("revert cannot remove non-empty asset");
 
         // Can remove asset
         await slinkProxy.givenCalldataReturnUint(balanceOfABI, 0)
-        await poolManagerLogicManagerProxy.removeFromSupportedAssets(slink)
+        await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]])
 
         numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets()
         expect(numberOfSupportedAssets).to.eq("2");
 
+        expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
+        expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(2);
+        await poolManagerLogicManagerProxy.changeAssets([[slink, true]], []);
+        expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.true;
+        expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(3);
+        await poolManagerLogicManagerProxy.changeAssets([], [[slink, true]])
+        expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
+        expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(2);
     });
 
     it('should be able to manage fees', async function() {

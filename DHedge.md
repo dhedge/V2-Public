@@ -61,7 +61,7 @@
 
 **Remove:**
 - validateAsset - manager
-- isAssetSupported - manager
+- isSupportedAsset - manager
 - getSuspendedAssets - pool
 - numberOfSupportedAssets - pool
 - getAssetProxy - pool
