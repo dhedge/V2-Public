@@ -45,15 +45,19 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasPausable.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
 contract PoolFactory is
+    PausableUpgradeSafe,
     ProxyFactory,
     IHasDaoInfo,
     IHasFeeInfo,
     IHasAssetInfo,
     IHasGuardInfo,
+    IHasPausable,
     PriceConsumerV3
 {
     using SafeMath for uint256;
@@ -132,6 +136,7 @@ contract PoolFactory is
         address[] memory _aggregators
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
+        __Pausable_init();
 
         _setDaoAddress(daoAddress);
 
@@ -572,6 +577,18 @@ contract PoolFactory is
     function disableChainlink() public onlyDao {
         require(isDisabledChainlink == false, "PriceConsumerV3: chainlink not enabled");
         _disableChainlink();
+    }
+
+    function pause() public onlyDao {
+        _pause();
+    }
+
+    function unpause() public onlyDao {
+        _unpause();
+    }
+
+    function isPaused() public view override returns(bool) {
+        return paused();
     }
 
     uint256[48] private __gap;

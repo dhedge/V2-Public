@@ -40,6 +40,7 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasPausable.sol";
 import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
@@ -94,6 +95,11 @@ contract PoolManagerLogic is
     // Fee increase announcement
     uint256 public announcedFeeIncreaseNumerator;
     uint256 public announcedFeeIncreaseTimestamp;
+
+    modifier whenNotPaused() {
+        require(!IHasPausable(factory).isPaused(), "contracts paused");
+        _;
+    }
 
     function initialize(
         address _factory,
@@ -209,6 +215,7 @@ contract PoolManagerLogic is
     function execTransaction(address to, bytes memory data)
         public
         onlyManagerOrTrader
+        whenNotPaused
         returns (bool)
     {
         require(to != address(0), "non-zero address is required");

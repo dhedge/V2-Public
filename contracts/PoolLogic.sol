@@ -42,6 +42,7 @@ import "./interfaces/IAddressResolver.sol";
 import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
+import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
 
@@ -131,6 +132,11 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
         _;
     }
 
+    modifier whenNotPaused() {
+        require(!IHasPausable(factory).isPaused(), "contracts paused");
+        _;
+    }
+
     function initialize(
         address _factory,
         bool _privatePool,
@@ -185,7 +191,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
         return total;
     }
 
-    function deposit(address _asset, uint256 _amount) public onlyPrivate returns (uint256) {
+    function deposit(address _asset, uint256 _amount) public onlyPrivate whenNotPaused returns (uint256) {
         require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
 
         lastDeposit[msg.sender] = block.timestamp;
@@ -271,7 +277,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     //     _withdraw(_fundTokenAmount, true);
     // }
 
-    function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant {
+    function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant whenNotPaused {
         require(
             balanceOf(msg.sender) >= _fundTokenAmount,
             "insufficient balance"
@@ -483,7 +489,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
         return available;
     }
 
-    function mintManagerFee() public {
+    function mintManagerFee() public whenNotPaused {
         // Deprecated
         // _mintManagerFee(true);
         _mintManagerFee();
