@@ -623,17 +623,17 @@ describe("PoolFactory", function() {
         await poolFactory.connect(dao).pause();
         expect(await poolFactory.isPaused()).to.be.true;
 
-        await expect(poolLogicProxy.deposit(susd, 100e18.toString())).to.be.revertedWith("Pausable: paused");
-        await expect(poolLogicProxy.withdraw(100e18.toString())).to.be.revertedWith("Pausable: paused");
-        await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.be.revertedWith("Pausable: paused");
+        await expect(poolLogicProxy.deposit(susd, 100e18.toString())).to.be.revertedWith("contracts paused");
+        await expect(poolLogicProxy.withdraw(100e18.toString())).to.be.revertedWith("contracts paused");
+        await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.be.revertedWith("contracts paused");
 
         await expect(poolFactory.unpause()).to.be.revertedWith("only dao");
         await poolFactory.connect(dao).unpause();
         expect(await poolFactory.isPaused()).to.be.false;
 
-        await expect(poolLogicProxy.deposit(susd, 100e18.toString())).to.not.be.revertedWith("Pausable: paused");
-        await expect(poolLogicProxy.withdraw(100e18.toString())).to.not.be.revertedWith("Pausable: paused");
-        await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.not.be.revertedWith("Pausable: paused");
+        await expect(poolLogicProxy.deposit(susd, 100e18.toString())).to.not.be.revertedWith("contracts paused");
+        await expect(poolLogicProxy.withdraw(100e18.toString())).to.not.be.revertedWith("contracts paused");
+        await expect(poolManagerLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.not.be.revertedWith("contracts paused");
     })
 
     it('should be able to upgrade/set implementation logic', async function() {

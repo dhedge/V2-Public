@@ -97,7 +97,7 @@ contract PoolManagerLogic is
     uint256 public announcedFeeIncreaseTimestamp;
 
     modifier whenNotPaused() {
-        require(!IHasPausable(factory).isPaused(), "Pausable: paused");
+        require(!IHasPausable(factory).isPaused(), "contracts paused");
         _;
     }
 

@@ -133,7 +133,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     }
 
     modifier whenNotPaused() {
-        require(!IHasPausable(factory).isPaused(), "Pausable: paused");
+        require(!IHasPausable(factory).isPaused(), "contracts paused");
         _;
     }
 
@@ -489,7 +489,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
         return available;
     }
 
-    function mintManagerFee() public {
+    function mintManagerFee() public whenNotPaused {
         // Deprecated
         // _mintManagerFee(true);
         _mintManagerFee();
