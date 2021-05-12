@@ -548,6 +548,8 @@ describe("PoolFactory", function() {
         const IERC20 = await hre.artifacts.readArtifact("IERC20");
         const iERC20 = new ethers.utils.Interface(IERC20.abi);
         let approveABI = iERC20.encodeFunctionData("approve", [susd, 100e18.toString()]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith("invalid destination or asset not supported");
+
         await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith("unsupported spender approval");
 
         approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, 100e18.toString()]);
