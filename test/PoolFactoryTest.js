@@ -5,8 +5,8 @@ const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 const { expect } = require("chai");
 
 let logicOwner, manager, dao, user1;
-let poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress, synthetixGuard;
-let addressResolver, synthetix; // contracts
+let poolFactory, PoolLogic, PoolManagerLogic, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress, synthetixGuard, erc20Guard, uniswapV2Guard;
+let addressResolver, synthetix, uniswapV2Router; // contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
 let usd_price_feed, eth_price_feed, link_price_feed;
@@ -37,6 +37,7 @@ describe("PoolFactory", function() {
         const MockContract = await ethers.getContractFactory("MockContract");
         addressResolver = await MockContract.deploy();
         synthetix = await MockContract.deploy();
+        uniswapV2Router = await MockContract.deploy();
         susdAsset = await MockContract.deploy();
         susdProxy = await MockContract.deploy();
         sethAsset = await MockContract.deploy();
@@ -143,8 +144,17 @@ describe("PoolFactory", function() {
         synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
         synthetixGuard.deployed();
 
-        const synthetixGuardPointer = synthetix.address;
-        await poolFactory.connect(dao).setGuard(synthetixGuardPointer, synthetixGuard.address);
+        const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+        erc20Guard = await ERC20Guard.deploy();
+        erc20Guard.deployed();
+
+        const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
+        uniswapV2Guard = await UniswapV2Guard.deploy();
+        uniswapV2Guard.deployed();
+
+        await poolFactory.connect(dao).setERC20Guard(erc20Guard.address);
+        await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
+        await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
     });
 
     it("Should be able to createFund", async function() {
@@ -445,6 +455,7 @@ describe("PoolFactory", function() {
         await poolManagerLogicManagerProxy.changeAssets([], [[slink, true]])
         expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
         expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(2);
+        await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]])
     });
 
     it('should be able to manage fees', async function() {
@@ -474,12 +485,12 @@ describe("PoolFactory", function() {
 
     // Synthetix transaction guard
     it("Only manager or trader can execute transaction", async () => {
-        await expect(poolManagerLogicProxy.connect(logicOwner).execTransaction(synthetix.address, "0x00"))
+        await expect(poolManagerLogicProxy.connect(logicOwner).execTransaction(synthetix.address, "0x00000000"))
             .to.be.revertedWith('only manager or trader');
     });
 
     it("Should fail with invalid destination", async () => {
-        await expect(poolManagerLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00"))
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00000000"))
             .to.be.revertedWith("invalid destination");
     });
 
@@ -532,6 +543,78 @@ describe("PoolFactory", function() {
         expect(event.sourceAmount).to.equal(100e18.toString());
         expect(event.destinationAsset).to.equal(seth);
     });
+
+    it('Should be able to approve', async () => {
+        const IERC20 = await hre.artifacts.readArtifact("IERC20");
+        const iERC20 = new ethers.utils.Interface(IERC20.abi);
+        let approveABI = iERC20.encodeFunctionData("approve", [susd, 100e18.toString()]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith("invalid destination or asset not supported");
+
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith("unsupported spender approval");
+
+        approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, 100e18.toString()]);
+        await susdAsset.givenCalldataReturnBool(approveABI, true);
+        await poolManagerLogicProxy.connect(manager).execTransaction(susd, approveABI);
+    })
+
+    it("should be able to swap tokens on uniswap.", async () => {
+        let exchangeEvent = new Promise((resolve, reject) => {
+            uniswapV2Guard.on('Exchange', (
+                managerLogicAddress,
+                sourceAsset,
+                sourceAmount,
+                destinationAsset,
+                time, event) => {
+                    event.removeListener();
+
+                    resolve({
+                        managerLogicAddress: managerLogicAddress,
+                        sourceAsset: sourceAsset,
+                        sourceAmount: sourceAmount,
+                        destinationAsset: destinationAsset,
+                        time: time
+                    });
+                });
+
+            setTimeout(() => {
+                reject(new Error('timeout'));
+            }, 60000)
+        });
+
+        const sourceAmount = 100e18.toString();
+        const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+        const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
+        let swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], poolManagerLogicProxy.address, 0]);
+
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI)).to.be.revertedWith("non-zero address is required");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [slink, seth], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(susd, swapABI)).to.be.revertedWith("invalid transaction");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [slink, seth], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("unsupported source asset");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, user1.address, seth], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("invalid routing asset");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth, slink], poolManagerLogicProxy.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("unsupported destination asset");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], user1.address, 0]);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("recipient is not pool");
+
+        swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [susd, seth], poolManagerLogicProxy.address, 0]);
+        await uniswapV2Router.givenCalldataRevert(swapABI);
+        await expect(poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith("failed to execute the call");
+
+        await uniswapV2Router.givenCalldataReturn(swapABI, []);
+        await poolManagerLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
+
+        let event = await exchangeEvent;
+        expect(event.sourceAsset).to.equal(susd);
+        expect(event.sourceAmount).to.equal(100e18.toString());
+        expect(event.destinationAsset).to.equal(seth);
+    })
 
     it('should be able to upgrade/set implementation logic', async function() {
         await poolFactory.setLogic(ZERO_ADDRESS, ZERO_ADDRESS)

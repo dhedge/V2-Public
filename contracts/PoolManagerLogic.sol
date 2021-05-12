@@ -217,6 +217,8 @@ contract PoolManagerLogic is
 
         require(guard != address(0), "invalid destination");
 
+        require(guard != IHasGuardInfo(factory).erc20Guard() || isSupportedAsset(to), "invalid destination or asset not supported");
+
         require(IGuard(guard).txGuard(address(this), data), "invalid transaction");
 
         (bool success, ) = to.call(data);
