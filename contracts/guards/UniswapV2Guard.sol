@@ -63,7 +63,7 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
 
             IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
             require(
-                poolManagerLogic.isAssetSupported(srcAsset),
+                poolManagerLogic.isSupportedAsset(srcAsset),
                 "unsupported source asset"
             );
 
@@ -78,7 +78,7 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
             }
 
             require(
-                poolManagerLogic.isAssetSupported(dstAsset),
+                poolManagerLogic.isSupportedAsset(dstAsset),
                 "unsupported destination asset"
             );
 

@@ -213,7 +213,7 @@ contract PoolManagerLogic is
     {
         require(to != address(0), "non-zero address is required");
 
-        require(!validateAsset(to) || isAssetSupported(to), "asset not supported");
+        require(!validateAsset(to) || isSupportedAsset(to), "asset not supported");
 
         address guard = IHasGuardInfo(factory).getGuard(to);
 
