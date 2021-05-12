@@ -455,6 +455,7 @@ describe("PoolFactory", function() {
         await poolManagerLogicManagerProxy.changeAssets([], [[slink, true]])
         expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
         expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(2);
+        await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]])
     });
 
     it('should be able to manage fees', async function() {
