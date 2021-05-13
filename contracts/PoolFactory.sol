@@ -35,6 +35,7 @@
 //
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2;
 
 import "./PoolLogic.sol";
 import "./PriceConsumerV3.sol";
@@ -44,15 +45,19 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasPausable.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
 contract PoolFactory is
+    PausableUpgradeSafe,
     ProxyFactory,
     IHasDaoInfo,
     IHasFeeInfo,
     IHasAssetInfo,
     IHasGuardInfo,
+    IHasPausable,
     PriceConsumerV3
 {
     using SafeMath for uint256;
@@ -116,6 +121,8 @@ contract PoolFactory is
     // Transaction Guards
     mapping(address => address) internal guards;
 
+    address public override erc20Guard;
+
     modifier onlyDao() {
         require(msg.sender == _daoAddress, "only dao");
         _;
@@ -129,6 +136,7 @@ contract PoolFactory is
         address[] memory _aggregators
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
+        __Pausable_init();
 
         _setDaoAddress(daoAddress);
 
@@ -159,11 +167,11 @@ contract PoolFactory is
         string memory _fundName,
         string memory _fundSymbol,
         uint256 _managerFeeNumerator,
-        address[] memory _supportedAssets
+        IPoolManagerLogic.Asset[] memory _supportedAssets
     ) public returns (address) {
         bytes memory managerLogicData =
             abi.encodeWithSignature(
-                "initialize(address,address,string,address[])",
+                "initialize(address,address,string,(address,bool)[])",
                 address(this),
                 // _privatePool,
                 _manager,
@@ -187,6 +195,7 @@ contract PoolFactory is
             );
 
         address fund = deploy(poolLogicData, 2);
+        IPoolManagerLogic(managerLogic).setPoolLogic(fund);
 
         deployedFunds.push(fund);
         isPool[fund] = true;
@@ -533,6 +542,9 @@ contract PoolFactory is
         override
         returns (address)
     {
+        if (isValidAsset(extContract)) {
+            return erc20Guard;
+        }
         return guards[extContract];
     }
 
@@ -545,6 +557,10 @@ contract PoolFactory is
 
     function _setGuard(address extContract, address guardAddress) internal {
         guards[extContract] = guardAddress;
+    }
+
+    function setERC20Guard(address _guard) public onlyDao {
+        erc20Guard = _guard;
     }
 
     /**
@@ -561,6 +577,18 @@ contract PoolFactory is
     function disableChainlink() public onlyDao {
         require(isDisabledChainlink == false, "PriceConsumerV3: chainlink not enabled");
         _disableChainlink();
+    }
+
+    function pause() public onlyDao {
+        _pause();
+    }
+
+    function unpause() public onlyDao {
+        _unpause();
+    }
+
+    function isPaused() public view override returns(bool) {
+        return paused();
     }
 
     uint256[48] private __gap;

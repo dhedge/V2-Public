@@ -42,22 +42,26 @@ import "./interfaces/IAddressResolver.sol";
 import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
+import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
+import "./guards/TxDataUtils.sol";
+import "./guards/IGuard.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract PoolLogic is ERC20UpgradeSafe {
+contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils {
     using SafeMath for uint256;
 
     // Deprecated
     // bytes32 constant private _EXCHANGER_KEY = "Exchanger";
     // bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
-    bytes32 private constant _SUSD_KEY = "sUSD";
+    // bytes32 private constant _SUSD_KEY = "sUSD";
 
     event Deposit(
         address fundAddress,
@@ -79,7 +83,11 @@ contract PoolLogic is ERC20UpgradeSafe {
         uint256 totalSupply,
         uint256 time
     );
-
+    event TransactionExecuted(
+        address manager,
+        uint256 time
+    );
+    
     event PoolPrivacyUpdated(bool isPoolPrivate);
 
     event ManagerFeeMinted(
@@ -131,6 +139,19 @@ contract PoolLogic is ERC20UpgradeSafe {
         _;
     }
 
+    modifier onlyManagerOrTrader() {
+        require(
+            msg.sender == manager() || msg.sender == trader(),
+            "only manager or trader"
+        );
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!IHasPausable(factory).isPaused(), "contracts paused");
+        _;
+    }
+
     function initialize(
         address _factory,
         bool _privatePool,
@@ -139,6 +160,7 @@ contract PoolLogic is ERC20UpgradeSafe {
         address _poolManagerLogic
     ) public initializer {
         __ERC20_init(_fundName, _fundSymbol);
+        __ReentrancyGuard_init();
 
         factory = _factory;
         _setPoolPrivacy(_privatePool);
@@ -184,7 +206,9 @@ contract PoolLogic is ERC20UpgradeSafe {
         return total;
     }
 
-    function deposit(address _asset, uint256 _amount) public onlyPrivate returns (uint256) {
+    function deposit(address _asset, uint256 _amount) public onlyPrivate whenNotPaused returns (uint256) {
+        require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+
         lastDeposit[msg.sender] = block.timestamp;
 
         _mintManagerFee();
@@ -268,7 +292,7 @@ contract PoolLogic is ERC20UpgradeSafe {
     //     _withdraw(_fundTokenAmount, true);
     // }
 
-    function withdraw(uint256 _fundTokenAmount) public virtual {
+    function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant whenNotPaused {
         require(
             balanceOf(msg.sender) >= _fundTokenAmount,
             "insufficient balance"
@@ -348,6 +372,33 @@ contract PoolLogic is ERC20UpgradeSafe {
             totalSupply(),
             block.timestamp
         );
+    }
+
+    function execTransaction(address to, bytes memory data)
+        public
+        onlyManagerOrTrader
+        whenNotPaused
+        returns (bool)
+    {
+        require(to != address(0), "non-zero address is required");
+
+        address guard = IHasGuardInfo(factory).getGuard(to);
+
+        require(guard != address(0), "invalid destination");
+
+        require(guard != IHasGuardInfo(factory).erc20Guard() || IPoolManagerLogic(poolManagerLogic).isSupportedAsset(to), "invalid destination or asset not supported");
+
+        require(IGuard(guard).txGuard(poolManagerLogic, data), "invalid transaction");
+
+        (bool success, ) = to.call(data);
+        require(success == true, "failed to execute the call");
+
+        emit TransactionExecuted(
+            manager(),
+            block.timestamp
+        );
+
+        return true;
     }
 
     function getFundSummary()
@@ -480,7 +531,7 @@ contract PoolLogic is ERC20UpgradeSafe {
         return available;
     }
 
-    function mintManagerFee() public {
+    function mintManagerFee() public whenNotPaused {
         // Deprecated
         // _mintManagerFee(true);
         _mintManagerFee();
@@ -580,6 +631,10 @@ contract PoolLogic is ERC20UpgradeSafe {
 
     function manager() internal view returns (address) {
         return IManaged(poolManagerLogic).manager();
+    }
+
+    function trader() internal view returns (address) {
+        return IManaged(poolManagerLogic).trader();
     }
 
     function managerName() public view returns (string memory) {
