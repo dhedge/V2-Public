@@ -11,6 +11,7 @@ require('solidity-coverage');
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+
 module.exports = {
   defaultNetwork: 'kovan-optimism',
   gasReporter: {
@@ -22,6 +23,16 @@ module.exports = {
       url: process.env.KOVAN_OVM_URL || 'https://kovan.optimism.io',
       // accounts: [process.env.PRIVATE_KEY],
       gasPrice: 0,
+    },
+    hardhat: process.env.FORKING ? {
+      forking: {
+        url: `https://${process.env.FORKING}.infura.io/v3/${process.env.INFURA_KEY}`,
+      },
+    } : {},
+    localhost: {
+      chainId: 1337,
+      url: "http://127.0.0.1:8545",
+      timeout: 1000000,
     },
   },
   ovm: {

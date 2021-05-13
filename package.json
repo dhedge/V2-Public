@@ -9,7 +9,8 @@
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
-    "test": "hardhat test --network hardhat",
+    "test:unit": "hardhat test test/unit/* --network hardhat",
+    "test:fork": "FORKING=mainnet hardhat test test/fork/* --network hardhat",
     "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
     "deploy": "node scripts/DHedge.deploy.js"
   },
