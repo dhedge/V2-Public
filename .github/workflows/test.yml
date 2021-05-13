@@ -9,6 +9,7 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   # This workflow contains a single job called "test"
   test:
+    name: "Run Test"
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -23,21 +24,24 @@ jobs:
           node-version: 14
       - name: Node module cache
         uses: actions/cache@v2
-        id: cache
+        id: node-cache
         with:
           path: '**/node_modules'
           key: npm-v2-${{ hashFiles('**/package-lock.json') }}
           restore-keys: npm-v2-
-      - run: npm ci
-        if: steps.cache.outputs.cache-hit != 'true'
-      - name: Run test
-        run: npm run test
+      - name: Install dependencies
+        run: npm ci
+        if: steps.node-cache.outputs.cache-hit != 'true'
       - name: Hardhat artifact cache
         uses: actions/cache@v2
+        id: hardhat-cache
         with:
           path: "artifacts"
           key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
           restore-keys: |
             ${{ runner.os }}-artifacts-
-      - name: Install dependencies
-        run: npm install --frozen-lockfile
+      - name: Hardhat compile
+        run: npx hardhat compile
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
+      - name: Run test
+        run: npm run test
