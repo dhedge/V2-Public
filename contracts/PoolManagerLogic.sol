@@ -39,10 +39,6 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
-import "./interfaces/IHasGuardInfo.sol";
-import "./interfaces/IHasPausable.sol";
-import "./guards/TxDataUtils.sol";
-import "./guards/IGuard.sol";
 import "./Managed.sol";
 import "./PriceConsumerV3.sol";
 
@@ -57,17 +53,11 @@ pragma experimental ABIEncoderV2;
 contract PoolManagerLogic is 
     Initializable,
     IPoolManagerLogic,
-    Managed,
-    TxDataUtils
+    Managed
 {
     using SafeMath for uint256;
     using Address for address;
 
-    event TransactionExecuted(
-        address fundAddress,
-        address manager,
-        uint256 time
-    );
     event AssetAdded(address fundAddress, address manager, address asset, bool isDeposit);
     event AssetRemoved(address fundAddress, address manager, address asset, bool isDeposit);
 
@@ -95,11 +85,6 @@ contract PoolManagerLogic is
     // Fee increase announcement
     uint256 public announcedFeeIncreaseNumerator;
     uint256 public announcedFeeIncreaseTimestamp;
-
-    modifier whenNotPaused() {
-        require(!IHasPausable(factory).isPaused(), "contracts paused");
-        _;
-    }
 
     function initialize(
         address _factory,
@@ -210,34 +195,6 @@ contract PoolManagerLogic is
             }
         }
         return result;
-    }
-
-    function execTransaction(address to, bytes memory data)
-        public
-        onlyManagerOrTrader
-        whenNotPaused
-        returns (bool)
-    {
-        require(to != address(0), "non-zero address is required");
-
-        address guard = IHasGuardInfo(factory).getGuard(to);
-
-        require(guard != address(0), "invalid destination");
-
-        require(guard != IHasGuardInfo(factory).erc20Guard() || isSupportedAsset(to), "invalid destination or asset not supported");
-
-        require(IGuard(guard).txGuard(address(this), data), "invalid transaction");
-
-        (bool success, ) = to.call(data);
-        require(success == true, "failed to execute the call");
-
-        emit TransactionExecuted(
-            poolLogic,
-            manager(),
-            block.timestamp
-        );
-
-        return true;
     }
 
     function assetValue(address asset, uint256 amount)

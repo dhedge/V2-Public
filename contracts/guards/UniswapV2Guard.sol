@@ -82,7 +82,7 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
                 "unsupported destination asset"
             );
 
-            require(pool == toAddress, "recipient is not pool");
+            require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
             emit Exchange(
                 address(poolManagerLogic),
