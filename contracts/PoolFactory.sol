@@ -56,7 +56,8 @@ contract PoolFactory is
     IHasDaoInfo,
     IHasFeeInfo,
     IHasAssetInfo,
-    IHasGuardInfo
+    IHasGuardInfo,
+    IHasPausable
 {
     using SafeMath for uint256;
 
@@ -554,5 +555,17 @@ contract PoolFactory is
 
     function setERC20Guard(address _guard) public onlyDao {
         erc20Guard = _guard;
+    }
+
+    function pause() public onlyDao {
+        _pause();
+    }
+
+    function unpause() public onlyDao {
+        _unpause();
+    }
+
+    function isPaused() public view override returns(bool) {
+        return paused();
     }
 }

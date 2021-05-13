@@ -212,7 +212,7 @@ contract PoolManagerLogic is
     }
 
     function assetBalance(address asset) public view returns (uint256) {
-        return IERC20(asset).balanceOf(poolLogic);
+        return IERC20Opt(asset).balanceOf(poolLogic);
     }
 
     function assetValue(address asset) public view override returns (uint256) {
