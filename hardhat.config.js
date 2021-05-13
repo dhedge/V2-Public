@@ -20,7 +20,7 @@ module.exports = {
   networks: {
     "kovan-optimism": {
       url: process.env.KOVAN_OVM_URL || 'https://kovan.optimism.io',
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: [process.env.PRIVATE_KEY || ""],
       gasPrice: 0
     }
   },
