@@ -151,6 +151,8 @@ contract PoolManagerLogic is
             supportedAssets.push(Asset(asset, isDeposit));
             assetPosition[asset] = supportedAssets.length;
         }
+
+        emit AssetAdded(poolLogic, manager(), asset, isDeposit);
     }
 
     function _removeAsset(Asset memory _asset) internal {
