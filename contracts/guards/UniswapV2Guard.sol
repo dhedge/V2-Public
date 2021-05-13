@@ -39,51 +39,53 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "./TxDataUtils.sol";
 import "./IGuard.sol";
-import "../interfaces/ISynth.sol";
-import "../interfaces/ISynthetix.sol";
-import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 
-contract SynthetixGuard is TxDataUtils, IGuard {
+contract UniswapV2Guard is TxDataUtils, IGuard {
     using SafeMath for uint256;
 
-    bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
-
-    IAddressResolver public addressResolver;
-
-    constructor(IAddressResolver _addressResolver) public {
-        addressResolver = _addressResolver;
-    }
-
-    function txGuard(address _poolManagerLogic, bytes calldata data)
+    // transaction guard for 1inch V3 aggregator
+    function txGuard(address pool, bytes calldata data)
         external
         override
         returns (bool)
     {
         bytes4 method = getMethod(data);
 
-        if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-            bytes32 srcKey = getInput(data, 0);
-            bytes32 srcAmount = getInput(data, 1);
-            bytes32 dstKey = getInput(data, 2);
+        if (method == bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)"))) {
+            address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0)); // gets the second input (path) first item (token to swap from)
+            address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
+            uint256 srcAmount = uint256(getInput(data, 0));
+            address toAddress = convert32toAddress(getInput(data, 3));
+            uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
 
-            address srcAsset = getAssetProxy(srcKey);
-            address dstAsset = getAssetProxy(dstKey);
-            
-            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
             require(
                 poolManagerLogic.isSupportedAsset(srcAsset),
-                "unsupported destination asset"
+                "unsupported source asset"
             );
+
+            // validate Uniswap routing addresses
+            for (uint8 i = 1; i < routeLength - 1; i++) {
+                require(
+                    poolManagerLogic.validateAsset(
+                        convert32toAddress(getArrayIndex(data, 2, i))
+                    ),
+                    "invalid routing asset"
+                );
+            }
+
             require(
                 poolManagerLogic.isSupportedAsset(dstAsset),
                 "unsupported destination asset"
             );
 
+            require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
+
             emit Exchange(
-                poolManagerLogic.poolLogic(),
+                address(poolManagerLogic),
                 srcAsset,
                 uint256(srcAmount),
                 dstAsset,
@@ -94,14 +96,5 @@ contract SynthetixGuard is TxDataUtils, IGuard {
         }
 
         return false;
-    }
-
-    function getAssetProxy(bytes32 key) public view returns (address) {
-        address synth =
-            ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
-        require(synth != address(0), "invalid key");
-        address proxy = ISynth(synth).proxy();
-        require(proxy != address(0), "invalid proxy");
-        return proxy;
     }
 }

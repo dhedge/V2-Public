@@ -35,6 +35,7 @@
 //
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2;
 
 import "./PoolLogic.sol";
 import "./upgradability/ProxyFactory.sol";
@@ -44,10 +45,13 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasPausable.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
 contract PoolFactory is
+    PausableUpgradeSafe,
     ProxyFactory,
     IHasDaoInfo,
     IHasFeeInfo,
@@ -113,6 +117,8 @@ contract PoolFactory is
     // Transaction Guards
     mapping(address => address) internal guards;
 
+    address public override erc20Guard;
+
     modifier onlyDao() {
         require(msg.sender == _daoAddress, "only dao");
         _;
@@ -125,6 +131,7 @@ contract PoolFactory is
         address daoAddress
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
+        __Pausable_init();
 
         _setPriceConsumer(priceConsumer);
 
@@ -152,11 +159,11 @@ contract PoolFactory is
         string memory _fundName,
         string memory _fundSymbol,
         uint256 _managerFeeNumerator,
-        address[] memory _supportedAssets
+        IPoolManagerLogic.Asset[] memory _supportedAssets
     ) public returns (address) {
         bytes memory managerLogicData =
             abi.encodeWithSignature(
-                "initialize(address,address,string,address[])",
+                "initialize(address,address,string,(address,bool)[])",
                 address(this),
                 // _privatePool,
                 _manager,
@@ -180,6 +187,7 @@ contract PoolFactory is
             );
 
         address fund = deploy(poolLogicData, 2);
+        IPoolManagerLogic(managerLogic).setPoolLogic(fund);
 
         deployedFunds.push(fund);
         isPool[fund] = true;
@@ -527,6 +535,9 @@ contract PoolFactory is
         override
         returns (address)
     {
+        if (isValidAsset(extContract)) {
+            return erc20Guard;
+        }
         return guards[extContract];
     }
 
@@ -541,5 +552,7 @@ contract PoolFactory is
         guards[extContract] = guardAddress;
     }
 
-    uint256[50] private __gap;
+    function setERC20Guard(address _guard) public onlyDao {
+        erc20Guard = _guard;
+    }
 }
