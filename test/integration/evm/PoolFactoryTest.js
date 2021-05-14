@@ -1,4 +1,12 @@
-const { expect } = require("chai");
+const { expect, use } = require("chai");
+const chaiAlmost = require('chai-almost');
+
+use(chaiAlmost());
+
+const checkAlmostSame = (a, b) => {
+    expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
+    expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
+}
 
 const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -13,12 +21,15 @@ const usdc_price_feed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
 let WETH, USDC, USDT, UniswapRouter;
 
 let logicOwner, manager, dao, user;
-let PoolFactory, PoolLogic, PoolManagerLogic;
-let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+let PoolFactory, PoolLogic, PoolManagerLogic, PriceConsumerLogic;
+let poolFactory, poolLogic, poolManagerLogic, priceConsumerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
 
 describe("PoolFactory", function() {
     before(async function(){
         [logicOwner, manager, dao, user] = await ethers.getSigners();
+
+        PriceConsumerLogic = await ethers.getContractFactory('PriceConsumer');
+        priceConsumerLogic = await PriceConsumerLogic.deploy();
 
         PoolLogic = await ethers.getContractFactory("PoolLogic");
         poolLogic = await PoolLogic.deploy();
@@ -34,15 +45,29 @@ describe("PoolFactory", function() {
         const proxyAdmin = await ProxyAdmin.deploy();
         await proxyAdmin.deployed();
 
+        // Deploy PriceConsumerProxy
+        const PriceConsumerProxy = await ethers.getContractFactory('OZProxy');
+        const priceConsumerProxy = await PriceConsumerProxy.deploy(priceConsumerLogic.address, manager.address, '0x');
+        await priceConsumerProxy.deployed();
+
+        priceConsumer = await PriceConsumerLogic.attach(priceConsumerProxy.address);
+
         // Deploy PoolFactoryProxy
         const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
         poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, manager.address, "0x");
         await poolFactory.deployed();
 
+         // Initialize Asset Price Consumer
+         const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
+         const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
+         const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
+         const priceConsumerInitAssets = [assetWeth, assetUsdt, assetUsdc];
+ 
+         await priceConsumer.initialize(poolFactory.address, priceConsumerInitAssets);
+         await priceConsumer.deployed();
+
         poolFactory = await PoolFactory.attach(poolFactory.address);
-        await poolFactory.initialize(
-            poolLogic.address, poolManagerLogic.address, dao.address, [weth, usdt, usdc], [eth_price_feed, usdt_price_feed, usdc_price_feed]
-        );
+        await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, priceConsumerProxy.address, dao.address);
         await poolFactory.deployed();
 
         const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
@@ -181,11 +206,11 @@ describe("PoolFactory", function() {
 
         expect(event.fundAddress).to.equal(poolLogicProxy.address);
         expect(event.investor).to.equal(logicOwner.address);
-        expect(event.valueDeposited).to.equal(100e8.toString());
-        expect(event.fundTokensReceived).to.equal(100e8.toString());
-        expect(event.totalInvestorFundTokens).to.equal(100e8.toString());
-        expect(event.fundValue).to.equal(100e8.toString());
-        expect(event.totalSupply).to.equal(100e8.toString());
+        checkAlmostSame(event.valueDeposited, 100e18.toString());
+        checkAlmostSame(event.fundTokensReceived, 100e18.toString());
+        checkAlmostSame(event.totalInvestorFundTokens, 100e18.toString());
+        checkAlmostSame(event.fundValue, 100e18.toString());
+        checkAlmostSame(event.totalSupply, 100e18.toString());
     });
 
     it('Should be able to approve', async () => {
@@ -292,7 +317,7 @@ describe("PoolFactory", function() {
         });
 
         // Withdraw 50%
-        let withdrawAmount = 50e8
+        let withdrawAmount = 50e18
         let totalSupply = await poolLogicProxy.totalSupply()
         let totalFundValue = await poolLogicProxy.totalFundValue()
 
@@ -307,11 +332,10 @@ describe("PoolFactory", function() {
         let valueWithdrawn = withdrawAmount / totalSupply * totalFundValue
         expect(event.fundAddress).to.equal(poolLogicProxy.address);
         expect(event.investor).to.equal(logicOwner.address);
-        expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
-        expect(event.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
-        expect(event.totalInvestorFundTokens).to.equal(50e8.toString());
-        expect(parseInt(event.fundValue)).to.lte(50e8);
-        expect(parseInt(event.fundValue)).to.gte(50e8 * 99 / 100);
-        expect(event.totalSupply).to.equal((100e8 - withdrawAmount).toString());
+        checkAlmostSame(event.valueWithdrawn, valueWithdrawn.toString());
+        checkAlmostSame(event.fundTokensWithdrawn, valueWithdrawn.toString());
+        checkAlmostSame(event.totalInvestorFundTokens, valueWithdrawn.toString());
+        checkAlmostSame(event.fundValue, valueWithdrawn.toString());
+        checkAlmostSame(event.totalSupply, (100e18 - withdrawAmount).toString());
     });
 });
