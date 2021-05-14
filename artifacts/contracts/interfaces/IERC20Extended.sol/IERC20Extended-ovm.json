@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "IERC20Opt-ovm",
-  "sourceName": "contracts/interfaces/IERC20Opt.sol",
+  "contractName": "IERC20Extended-ovm",
+  "sourceName": "contracts/interfaces/IERC20Extended.sol",
   "abi": [
     {
       "anonymous": false,

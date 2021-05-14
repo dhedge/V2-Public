@@ -40,7 +40,7 @@ import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
-import "./interfaces/IERC20Opt.sol"; // includes decimals()
+import "./interfaces/IERC20Extended.sol"; // includes decimals()
 import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
@@ -206,13 +206,13 @@ contract PoolManagerLogic is
         returns (uint256)
     {
         uint256 price = IHasAssetInfo(factory).getAssetPrice(asset);
-        uint256 decimals = uint256(IERC20Opt(asset).decimals());
+        uint256 decimals = uint256(IERC20Extended(asset).decimals());
         
         return price.mul(amount).div(10**decimals);
     }
 
     function assetBalance(address asset) public view returns (uint256) {
-        return IERC20Opt(asset).balanceOf(poolLogic);
+        return IERC20Extended(asset).balanceOf(poolLogic);
     }
 
     function assetValue(address asset) public view override returns (uint256) {
