@@ -568,4 +568,6 @@ contract PoolFactory is
     function isPaused() public view override returns(bool) {
         return paused();
     }
+
+    uint256[50] private __gap;
 }
