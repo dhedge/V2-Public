@@ -39,10 +39,12 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
+import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IERC20Extended.sol"; // includes decimals()
+import "./guards/TxDataUtils.sol";
+import "./guards/IGuard.sol";
 import "./Managed.sol";
-import "./PriceConsumerV3.sol";
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
@@ -203,14 +205,14 @@ contract PoolManagerLogic is
         override
         returns (uint256)
     {
-        uint256 price = PriceConsumerV3(factory).getUSDPrice(asset);
-        uint256 decimals = uint256(ERC20UpgradeSafe(asset).decimals());
+        uint256 price = IHasAssetInfo(factory).getAssetPrice(asset);
+        uint256 decimals = uint256(IERC20Extended(asset).decimals());
         
         return price.mul(amount).div(10**decimals);
     }
 
     function assetBalance(address asset) public view returns (uint256) {
-        return IERC20(asset).balanceOf(poolLogic);
+        return IERC20Extended(asset).balanceOf(poolLogic);
     }
 
     function assetValue(address asset) public view override returns (uint256) {
@@ -250,7 +252,7 @@ contract PoolManagerLogic is
             address asset = supportedAssets[i].asset;
             balances[i] = assetBalance(asset);
             assets[i] = asset;
-            rates[i] = PriceConsumerV3(factory).getUSDPrice(asset);
+            rates[i] = IHasAssetInfo(factory).getAssetPrice(asset);
         }
 
         return (assets, balances, rates);
