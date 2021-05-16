@@ -45,7 +45,7 @@ interface IGuard {
         uint256 time
     );
 
-    function txGuard(address pool, bytes calldata data)
+    function txGuard(address poolManagerLogic, bytes calldata data)
         external
         returns (bool);
 }

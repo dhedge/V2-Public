@@ -70,7 +70,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             require(hasMultiplePools, "trade invalid");
             
             require(
-                poolManagerLogic.isAssetSupported(srcAsset),
+                poolManagerLogic.isSupportedAsset(srcAsset),
                 "unsupported source asset"
             );
             
@@ -81,7 +81,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
                 hasMultiplePools = path.hasMultiplePools();
   
                 require(
-                    poolManagerLogic.isAssetSupported(asset),
+                    poolManagerLogic.isSupportedAsset(asset),
                     "unsupported path asset"
                 );
             }
@@ -89,7 +89,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             (,dstAsset,) = path.decodeFirstPool(); // gets the destination asset
             
             require(
-               poolManagerLogic.isAssetSupported(dstAsset),
+               poolManagerLogic.isSupportedAsset(dstAsset),
                 "unsupported destination asset"
             );
             
@@ -115,12 +115,12 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
 
             require(
-                poolManagerLogic.isAssetSupported(srcAsset),
+                poolManagerLogic.isSupportedAsset(srcAsset),
                 "unsupported source asset"
             );
             
             require(
-                poolManagerLogic.isAssetSupported(dstAsset),
+                poolManagerLogic.isSupportedAsset(dstAsset),
                 "unsupported destination asset"
             );
             

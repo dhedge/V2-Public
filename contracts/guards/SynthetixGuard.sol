@@ -57,7 +57,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
         addressResolver = _addressResolver;
     }
 
-    function txGuard(address pool, bytes calldata data)
+    function txGuard(address _poolManagerLogic, bytes calldata data)
         external
         override
         returns (bool)
@@ -72,18 +72,18 @@ contract SynthetixGuard is TxDataUtils, IGuard {
             address srcAsset = getAssetProxy(srcKey);
             address dstAsset = getAssetProxy(dstKey);
             
-            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
+            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
             require(
-                poolManagerLogic.isAssetSupported(srcAsset),
+                poolManagerLogic.isSupportedAsset(srcAsset),
                 "unsupported destination asset"
             );
             require(
-                poolManagerLogic.isAssetSupported(dstAsset),
+                poolManagerLogic.isSupportedAsset(dstAsset),
                 "unsupported destination asset"
             );
 
             emit Exchange(
-                address(poolManagerLogic),
+                poolManagerLogic.poolLogic(),
                 srcAsset,
                 uint256(srcAmount),
                 dstAsset,

@@ -35,25 +35,29 @@
 //
 
 pragma solidity ^0.6.2;
+pragma experimental ABIEncoderV2;
 
 import "./PoolLogic.sol";
-import "./PriceConsumerV3.sol";
 import "./upgradability/ProxyFactory.sol";
+import "./interfaces/IPriceConsumer.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasPausable.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
 contract PoolFactory is
+    PausableUpgradeSafe,
     ProxyFactory,
     IHasDaoInfo,
     IHasFeeInfo,
     IHasAssetInfo,
     IHasGuardInfo,
-    PriceConsumerV3
+    IHasPausable
 {
     using SafeMath for uint256;
 
@@ -74,8 +78,6 @@ contract PoolFactory is
     event ExitFeeSet(uint256 numerator, uint256 denominator);
     event ExitCooldownSet(uint256 cooldown);
 
-    event AddedValidAsset(address indexed asset);
-    event RemovedValidAsset(address indexed asset);
     event MaximumSupportedAssetCountSet(uint256 count);
 
     // event DhptSwapAddressSet(address dhptSwap);
@@ -85,6 +87,7 @@ contract PoolFactory is
     address[] public deployedFunds;
 
     address internal _daoAddress;
+    address internal _priceConsumer;
     uint256 internal _daoFeeNumerator;
     uint256 internal _daoFeeDenominator;
 
@@ -100,7 +103,6 @@ contract PoolFactory is
     // uint256 internal _exitFeeDenominator;
     uint256 internal _exitCooldown;
 
-    mapping(address => bool) internal validAssets;
     uint256 internal _maximumSupportedAssetCount;
 
     bytes32 internal _trackingCode;
@@ -116,6 +118,8 @@ contract PoolFactory is
     // Transaction Guards
     mapping(address => address) internal guards;
 
+    address public override erc20Guard;
+
     modifier onlyDao() {
         require(msg.sender == _daoAddress, "only dao");
         _;
@@ -124,11 +128,13 @@ contract PoolFactory is
     function initialize(
         address _poolLogic,
         address _managerLogic,
-        address daoAddress,
-        address[] memory _validAssets,
-        address[] memory _aggregators
+        address priceConsumer,
+        address daoAddress
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
+        __Pausable_init();
+
+        _setPriceConsumer(priceConsumer);
 
         _setDaoAddress(daoAddress);
 
@@ -145,11 +151,6 @@ contract PoolFactory is
         _setTrackingCode(
             0x4448454447450000000000000000000000000000000000000000000000000000
         );
-
-        for (uint8 i = 0; i < _validAssets.length; i++) {
-            validAssets[_validAssets[i]] = true;
-            _addAggregator(_validAssets[i], _aggregators[i]);
-        }
     }
 
     function createFund(
@@ -159,11 +160,11 @@ contract PoolFactory is
         string memory _fundName,
         string memory _fundSymbol,
         uint256 _managerFeeNumerator,
-        address[] memory _supportedAssets
+        IPoolManagerLogic.Asset[] memory _supportedAssets
     ) public returns (address) {
         bytes memory managerLogicData =
             abi.encodeWithSignature(
-                "initialize(address,address,string,address[])",
+                "initialize(address,address,string,(address,bool)[])",
                 address(this),
                 // _privatePool,
                 _manager,
@@ -187,6 +188,7 @@ contract PoolFactory is
             );
 
         address fund = deploy(poolLogicData, 2);
+        IPoolManagerLogic(managerLogic).setPoolLogic(fund);
 
         deployedFunds.push(fund);
         isPool[fund] = true;
@@ -414,25 +416,26 @@ contract PoolFactory is
     }
 
     function isValidAsset(address asset) public view override returns (bool) {
-        return validAssets[asset];
+        return IPriceConsumer(_priceConsumer).getAggregator(asset) != address(0);
     }
 
-    function addValidAsset(address asset, address aggregator) public onlyDao {
-        require(!isValidAsset(asset), "asset already exists");
-
-        validAssets[asset] = true;
-        _addAggregator(asset, aggregator);
-
-        emit AddedValidAsset(asset);
+    /**
+     * Returns the latest price of a given asset
+     */
+    function getAssetPrice(address asset) external view override returns (uint256) {
+        return IPriceConsumer(_priceConsumer).getUSDPrice(asset);
     }
 
-    function removeValidAsset(address asset) public onlyDao {
-        require(isValidAsset(asset), "asset doesn't exist");
+    function getPriceConsumer() public view returns (address) {
+        return _priceConsumer;
+    }
 
-        validAssets[asset] = false;
-        _removeAggregator(asset);
+    function setPriceConsumer(address priceConsumer) public onlyOwner {
+        _setPriceConsumer(priceConsumer);
+    }
 
-        emit RemovedValidAsset(asset);
+    function _setPriceConsumer(address priceConsumer) internal {
+        _priceConsumer = priceConsumer;
     }
 
     // Synthetix tracking
@@ -533,6 +536,9 @@ contract PoolFactory is
         override
         returns (address)
     {
+        if (isValidAsset(extContract)) {
+            return erc20Guard;
+        }
         return guards[extContract];
     }
 
@@ -547,21 +553,21 @@ contract PoolFactory is
         guards[extContract] = guardAddress;
     }
 
-    /**
-     * enable chainlink
-     */
-    function enableChainlink() public onlyDao {
-        require(isDisabledChainlink == true, "PriceConsumerV3: chainlink already enabled");
-        _enableChainlink();
+    function setERC20Guard(address _guard) public onlyDao {
+        erc20Guard = _guard;
     }
 
-    /**
-     * disable chainlink
-     */
-    function disableChainlink() public onlyDao {
-        require(isDisabledChainlink == false, "PriceConsumerV3: chainlink not enabled");
-        _disableChainlink();
+    function pause() public onlyDao {
+        _pause();
     }
 
-    uint256[48] private __gap;
+    function unpause() public onlyDao {
+        _unpause();
+    }
+
+    function isPaused() public view override returns(bool) {
+        return paused();
+    }
+
+    uint256[50] private __gap;
 }
