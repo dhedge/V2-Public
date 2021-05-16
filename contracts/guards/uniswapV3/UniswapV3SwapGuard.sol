@@ -56,7 +56,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     {
         bytes4 method = getMethod(data);
 
-        if (method == bytes4(0xc04b8d59)) { // exactInput((bytes,address,uint256,uint256,uint256))
+        if (method == bytes4(keccak256("exactInput((bytes,address,uint256,uint256,uint256))"))) {
         
             address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
             uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
@@ -110,7 +110,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             return true;
         }
 
-        if (method == bytes4(0x414bf389 )) { // exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))
+        if (method == bytes4(keccak256("exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"))) {
         
             address srcAsset = convert32toAddress(getInput(data, 0));
             address dstAsset = convert32toAddress(getInput(data, 1));
