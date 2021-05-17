@@ -69,6 +69,12 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             
             require(hasMultiplePools, "trade invalid");
             
+
+            // check that all swap path assets are supported
+            // srcAsset -> while loop(path assets) -> dstAsset
+            // TODO: consider a better way of doing this
+
+            // check that source asset is supported
             require(
                 poolManagerLogic.isSupportedAsset(srcAsset),
                 "unsupported source asset"
@@ -76,6 +82,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             
             address asset;
 
+            // check that path assets are supported
             while(hasMultiplePools) {
                 path = path.skipToken();
                 asset = path.getFirstPool().toAddress(0); // gets asset from swap path
@@ -87,8 +94,9 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
                 );
             }
             
+            // check that destination asset is supported (if it's a valid address)
             (,dstAsset,) = path.decodeFirstPool(); // gets the destination asset
-            if (dstAsset == address(0)) { // if the remaining path is just trailing zeros, use the last asset
+            if (dstAsset == address(0)) { // if the remaining path is just trailing zeros, use the last path asset instead
                 dstAsset = asset;
             } else {
                 require(
