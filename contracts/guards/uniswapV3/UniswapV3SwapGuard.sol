@@ -82,15 +82,15 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
             
             address asset;
 
-            // check that path assets are supported
+            // check that path assets are valid by dhedge protocol
             while(hasMultiplePools) {
                 path = path.skipToken();
                 asset = path.getFirstPool().toAddress(0); // gets asset from swap path
                 hasMultiplePools = path.hasMultiplePools();
   
                 require(
-                    poolManagerLogic.isSupportedAsset(asset),
-                    "unsupported path asset"
+                    poolManagerLogic.validateAsset(asset),
+                    "invalid path asset"
                 );
             }
             

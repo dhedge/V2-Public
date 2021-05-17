@@ -59,6 +59,7 @@ describe('PoolFactory', function () {
     susd = susdProxy.address;
     seth = sethProxy.address;
     slink = slinkProxy.address;
+    badtoken = '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB';
 
     // mock IAddressResolver
     const IAddressResolver = await hre.artifacts.readArtifact('IAddressResolver');
@@ -875,7 +876,7 @@ describe('PoolFactory', function () {
       '0x' +
       susd.substring(2) + // source asset
       '000bb8' + // fee
-      susd.substring(2) + // path asset
+      slink.substring(2) + // path asset
       '000bb8' + // fee
       seth.substring(2) + // destination asset
       '000000000000000000000000000000000000000000000000000000000000';
@@ -909,17 +910,17 @@ describe('PoolFactory', function () {
       'unsupported source asset',
     );
 
-    // fail to swap direct asset to asset because unsupported path asset
+    // fail to swap direct asset to asset because invalid path asset, unsupported by dhedge protocol
     badExactInputParams.path =
       '0x' +
       susd.substring(2) +
       '000bb8' +
-      slink.substring(2) + // unsupported asset
+      badtoken.substring(2) + // invalid asset
       '000bb8' +
       seth.substring(2);
     swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [badExactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-      'unsupported path asset',
+      'invalid path asset',
     );
 
     // fail to swap direct asset to asset because unsupported destination asset
