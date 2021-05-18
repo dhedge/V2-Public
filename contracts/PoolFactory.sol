@@ -116,7 +116,7 @@ contract PoolFactory is
     uint256 public managerFeeNumeratorChangeDelay;
 
     // Transaction Guards
-    mapping(address => address) internal guards;
+    mapping(address => address) internal contractGuards;
     mapping(uint8 => address) internal assetGuards;
 
     modifier onlyDao() {
@@ -539,7 +539,7 @@ contract PoolFactory is
             uint8 assetType = IPriceConsumer(_priceConsumer).getAssetType(extContract);
             return assetGuards[assetType];
         }
-        return guards[extContract];
+        return contractGuards[extContract];
     }
 
     function setGuard(address extContract, address guardAddress)
@@ -550,7 +550,7 @@ contract PoolFactory is
     }
 
     function _setGuard(address extContract, address guardAddress) internal {
-        guards[extContract] = guardAddress;
+        contractGuards[extContract] = guardAddress;
     }
 
     function setAssetGuard(uint8 assetType, address guardAddress) public onlyDao {
