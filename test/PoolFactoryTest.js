@@ -15,8 +15,9 @@ let poolFactory,
   fundAddress,
   synthetixGuard,
   erc20Guard,
-  uniswapV2Guard;
-let addressResolver, synthetix, uniswapV2Router; // contracts
+  uniswapV2Guard,
+  uniswapV3SwapGuard;
+let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
 let usd_price_feed, eth_price_feed, link_price_feed;
@@ -45,6 +46,7 @@ describe('PoolFactory', function () {
     addressResolver = await MockContract.deploy();
     synthetix = await MockContract.deploy();
     uniswapV2Router = await MockContract.deploy();
+    uniswapV3Router = await MockContract.deploy();
     susdAsset = await MockContract.deploy();
     susdProxy = await MockContract.deploy();
     sethAsset = await MockContract.deploy();
@@ -57,6 +59,7 @@ describe('PoolFactory', function () {
     susd = susdProxy.address;
     seth = sethProxy.address;
     slink = slinkProxy.address;
+    badtoken = '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB';
 
     // mock IAddressResolver
     const IAddressResolver = await hre.artifacts.readArtifact('IAddressResolver');
@@ -182,9 +185,14 @@ describe('PoolFactory', function () {
     uniswapV2Guard = await UniswapV2Guard.deploy();
     uniswapV2Guard.deployed();
 
+    const UniswapV3SwapGuard = await ethers.getContractFactory('UniswapV3SwapGuard');
+    uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
+    uniswapV3SwapGuard.deployed();
+
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
     await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
     await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
+    await poolFactory.connect(dao).setGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
   });
 
   it('Should be able to createFund', async function () {
@@ -651,7 +659,7 @@ describe('PoolFactory', function () {
     await poolLogicProxy.connect(manager).execTransaction(susd, approveABI);
   });
 
-  it('should be able to swap tokens on uniswap.', async () => {
+  it('should be able to swap tokens on Uniswap v2', async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2Guard.on('Exchange', (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
@@ -754,6 +762,188 @@ describe('PoolFactory', function () {
 
     await uniswapV2Router.givenCalldataReturn(swapABI, []);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
+
+    let event = await exchangeEvent;
+    expect(event.sourceAsset).to.equal(susd);
+    expect(event.sourceAmount).to.equal((100e18).toString());
+    expect(event.destinationAsset).to.equal(seth);
+  });
+
+  it('should be able to swap tokens on Uniswap v3 - direct swap', async () => {
+    let exchangeEvent = new Promise((resolve, reject) => {
+      uniswapV3SwapGuard.on(
+        'Exchange',
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
+
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error('timeout'));
+      }, 60000);
+    });
+
+    const sourceAmount = (100e18).toString();
+    const IUniswapV3Router = await hre.artifacts.readArtifact('IUniswapV3Router');
+    const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
+    const exactInputSingleParams = {
+      tokenIn: susd,
+      tokenOut: seth,
+      fee: 10000,
+      recipient: poolManagerLogicProxy.address,
+      deadline: 1,
+      amountIn: sourceAmount,
+      amountOutMinimum: 0,
+      sqrtPriceLimitX96: 0,
+    };
+    let badExactInputSingleParams = exactInputSingleParams;
+
+    // fail to swap direct asset to asset because it is interaction is with 0x0 address
+    let swapABI = iUniswapV3Router.encodeFunctionData('exactInputSingle', [exactInputSingleParams]);
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction('0x0000000000000000000000000000000000000000', swapABI),
+    ).to.be.revertedWith('non-zero address is required');
+
+    // fail to swap direct asset to asset because unsupported source asset
+    badExactInputSingleParams.tokenIn = slink;
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInputSingle', [badExactInputSingleParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+      'unsupported source asset',
+    );
+    badExactInputSingleParams.tokenIn = susd;
+
+    // fail to swap direct asset to asset because unsupported destination asset
+    badExactInputSingleParams.tokenOut = slink;
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInputSingle', [badExactInputSingleParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+      'unsupported destination asset',
+    );
+    badExactInputSingleParams.tokenOut = seth;
+
+    // fail to swap direct asset to asset because recipient is not the pool address
+    badExactInputSingleParams.recipient = user1.address;
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInputSingle', [badExactInputSingleParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+      'recipient is not pool',
+    );
+    badExactInputSingleParams.recipient = poolManagerLogicProxy.address;
+
+    // succeed swapping direct asset to asset
+    await uniswapV3Router.givenCalldataReturn(swapABI, []);
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInputSingle', [exactInputSingleParams]);
+    await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI);
+
+    let event = await exchangeEvent;
+    expect(event.sourceAsset).to.equal(susd);
+    expect(event.sourceAmount).to.equal((100e18).toString());
+    expect(event.destinationAsset).to.equal(seth);
+  });
+
+  it('should be able to swap tokens on Uniswap v3 - multi swap', async () => {
+    let exchangeEvent = new Promise((resolve, reject) => {
+      uniswapV3SwapGuard.on(
+        'Exchange',
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
+
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error('timeout'));
+      }, 60000);
+    });
+
+    const sourceAmount = (100e18).toString();
+    const IUniswapV3Router = await hre.artifacts.readArtifact('IUniswapV3Router');
+    const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
+    const path =
+      '0x' +
+      susd.substring(2) + // source asset
+      '000bb8' + // fee
+      slink.substring(2) + // path asset
+      '000bb8' + // fee
+      seth.substring(2) + // destination asset
+      '000000000000000000000000000000000000000000000000000000000000';
+    const exactInputParams = {
+      path: path,
+      recipient: poolManagerLogicProxy.address,
+      deadline: 1,
+      amountIn: sourceAmount,
+      amountOutMinimum: 0,
+    };
+    let badExactInputParams = exactInputParams;
+    let badPath = path;
+
+    // fail to swap direct asset to asset because it is interaction is with 0x0 address
+    let swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [exactInputParams]);
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction('0x0000000000000000000000000000000000000000', swapABI),
+    ).to.be.revertedWith('non-zero address is required');
+
+    // fail to swap direct asset to asset because unsupported source asset
+    badExactInputParams.path =
+      '0x' +
+      slink.substring(2) + // unsupported asset
+      '000bb8' +
+      susd.substring(2) +
+      '000bb8' +
+      seth.substring(2) +
+      '000000000000000000000000000000000000000000000000000000000000';
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [badExactInputParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+      'unsupported source asset',
+    );
+
+    // // TODO: add invalid path asset check if enabled in the Uniswap V3 swap guard
+    // // fail to swap direct asset to asset because invalid path asset, unsupported by dhedge protocol
+    // badExactInputParams.path =
+    //   '0x' +
+    //   susd.substring(2) +
+    //   '000bb8' +
+    //   badtoken.substring(2) + // invalid asset
+    //   '000bb8' +
+    //   seth.substring(2);
+    // swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [badExactInputParams]);
+    // await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+    //   'invalid path asset',
+    // );
+
+    // fail to swap direct asset to asset because unsupported destination asset
+    badExactInputParams.path = '0x' + susd.substring(2) + '000bb8' + seth.substring(2) + '000bb8' + slink.substring(2); // unsupported asset
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [badExactInputParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+      'unsupported destination asset',
+    );
+    badExactInputParams.path = path;
+
+    // fail to swap direct asset to asset because recipient is not the pool address
+    badExactInputParams.recipient = user1.address;
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [exactInputParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+      'recipient is not pool',
+    );
+    badExactInputParams.recipient = poolManagerLogicProxy.address;
+
+    // succeed swapping direct asset to asset
+    await uniswapV3Router.givenCalldataReturn(swapABI, []);
+    swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [exactInputParams]);
+    await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI);
 
     let event = await exchangeEvent;
     expect(event.sourceAsset).to.equal(susd);

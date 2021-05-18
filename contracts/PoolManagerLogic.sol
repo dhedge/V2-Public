@@ -41,7 +41,6 @@ import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IERC20Extended.sol"; // includes decimals()
-import "./guards/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
 
@@ -152,6 +151,8 @@ contract PoolManagerLogic is
             supportedAssets.push(Asset(asset, isDeposit));
             assetPosition[asset] = supportedAssets.length;
         }
+
+        emit AssetAdded(poolLogic, manager(), asset, isDeposit);
     }
 
     function _removeAsset(Asset memory _asset) internal {

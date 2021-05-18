@@ -46,7 +46,7 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
-import "./guards/TxDataUtils.sol";
+import "./utils/TxDataUtils.sol";
 import "./guards/IGuard.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
