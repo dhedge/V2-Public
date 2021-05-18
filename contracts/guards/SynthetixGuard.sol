@@ -75,7 +75,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
             IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
             require(
                 poolManagerLogic.isSupportedAsset(srcAsset),
-                "unsupported destination asset"
+                "unsupported source asset"
             );
             require(
                 poolManagerLogic.isSupportedAsset(dstAsset),
