@@ -20,7 +20,9 @@ interface IPriceConsumer {
 
     function getAggregator(address asset) external view returns (address);
 
-    function getTypeAndAggregator(address asset) external view returns (uint8, address);
+    function getAssetType(address asset) external view returns (uint8);
+
+    function getAssetTypeAndAggregator(address asset) external view returns (uint8, address);
 
     function getUSDPrice(address asset) external view returns (uint256);
 }

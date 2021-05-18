@@ -117,8 +117,7 @@ contract PoolFactory is
 
     // Transaction Guards
     mapping(address => address) internal guards;
-
-    address public override erc20Guard;
+    mapping(uint8 => address) internal assetGuards;
 
     modifier onlyDao() {
         require(msg.sender == _daoAddress, "only dao");
@@ -537,7 +536,8 @@ contract PoolFactory is
         returns (address)
     {
         if (isValidAsset(extContract)) {
-            return erc20Guard;
+            uint8 assetType = IPriceConsumer(_priceConsumer).getAssetType(extContract);
+            return assetGuards[assetType];
         }
         return guards[extContract];
     }
@@ -553,8 +553,12 @@ contract PoolFactory is
         guards[extContract] = guardAddress;
     }
 
-    function setERC20Guard(address _guard) public onlyDao {
-        erc20Guard = _guard;
+    function setAssetGuard(uint8 assetType, address guardAddress) public onlyDao {
+        _setAssetGuard(assetType, guardAddress);
+    }
+
+    function _setAssetGuard(uint8 assetType, address guardAddress) internal {
+        assetGuards[assetType] = guardAddress;
     }
 
     function pause() public onlyDao {

@@ -182,7 +182,7 @@ describe('PoolFactory', function () {
     uniswapV2Guard = await UniswapV2Guard.deploy();
     uniswapV2Guard.deployed();
 
-    await poolFactory.connect(dao).setERC20Guard(erc20Guard.address);
+    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
     await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
     await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
   });
@@ -639,7 +639,7 @@ describe('PoolFactory', function () {
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData('approve', [susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
-      'invalid destination or asset not supported',
+      'unsupported spender approval',
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith(

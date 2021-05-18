@@ -386,8 +386,6 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
 
         require(guard != address(0), "invalid destination");
 
-        require(guard != IHasGuardInfo(factory).erc20Guard() || IPoolManagerLogic(poolManagerLogic).isSupportedAsset(to), "invalid destination or asset not supported");
-
         require(IGuard(guard).txGuard(poolManagerLogic, data), "invalid transaction");
 
         (bool success, ) = to.call(data);

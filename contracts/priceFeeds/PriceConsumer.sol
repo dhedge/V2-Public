@@ -38,7 +38,11 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
         return aggregators[asset];
     }
 
-    function getTypeAndAggregator(address asset) public view override returns (uint8, address) {
+    function getAssetType(address asset) public view override returns (uint8) {
+        return assetTypes[asset];
+    }
+
+    function getAssetTypeAndAggregator(address asset) public view override returns (uint8, address) {
         return (assetTypes[asset], aggregators[asset]);
     }
 
