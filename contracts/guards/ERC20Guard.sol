@@ -37,8 +37,8 @@ pragma solidity ^0.6.2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-import "./TxDataUtils.sol";
 import "./IGuard.sol";
+import "../utils/TxDataUtils.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";

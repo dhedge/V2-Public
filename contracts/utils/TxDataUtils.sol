@@ -37,15 +37,30 @@ pragma solidity ^0.6.2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
+import "./BytesLib.sol";
+
 contract TxDataUtils {
+    using BytesLib for bytes;
     using SafeMath for uint256;
 
     function getMethod(bytes memory data) public pure returns (bytes4) {
-        return read4left(data, 0, 4);
+        return read4left(data, 0);
+    }
+    
+    function getParams(bytes memory data) public pure returns (bytes memory) {
+        return data.slice(4, data.length - 4);
     }
 
     function getInput(bytes memory data, uint8 inputNum) public pure returns (bytes32) {
         return read32(data, 32 * inputNum + 4, 32);
+    }
+    
+    function getBytes(bytes memory data, uint8 inputNum, uint256 offset) public pure returns (bytes memory) {
+        require(offset < 20, "invalid offset"); // offset is in byte32 slots, not bytes
+        offset = offset * 32; // convert offset to bytes
+        uint256 bytesLenPos = uint256(read32(data, 32 * inputNum + 4 + offset, 32));
+        uint256 bytesLen = uint256(read32(data, bytesLenPos + 4 + offset, 32));
+        return data.slice(bytesLenPos + 4 + offset + 32, bytesLen);
     }
 
     function getArrayLast(bytes memory data, uint8 inputNum) public pure returns (bytes32) {
@@ -68,12 +83,10 @@ contract TxDataUtils {
         return read32(data, uint256(arrayPos) + 4 + ((1 + uint256(arrayIndex)) * 32), 32);
     }
 
-    function read4left(bytes memory data, uint256 offset, uint256 length) public pure returns (bytes4 o) {
-        require(data.length >= offset + length, "Reading bytes out of bounds");
+    function read4left(bytes memory data, uint256 offset) public pure returns (bytes4 o) {
+        require(data.length >= offset + 4, "Reading bytes out of bounds");
         assembly {
             o := mload(add(data, add(32, offset)))
-            let lb := sub(4, length)
-            if lb { o := div(o, exp(2, mul(lb, 8))) }
         }
     }
 
