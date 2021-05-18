@@ -10,7 +10,7 @@
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
     "test:unit": "hardhat test test/unit/* --network hardhat",
-    "test:inte:evm": "FORKING=mainnet hardhat test test/integration/evm/* --network hardhat",
+    "test:inte:evm": "FORKING=mainnet hardhat test test/integration/evm/*.js --network hardhat",
     "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
     "deploy": "node scripts/DHedge.deploy.js"
   },
