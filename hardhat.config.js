@@ -30,6 +30,16 @@ module.exports = {
       url: "http://127.0.0.1:8545",
       timeout: 1000000,
     },
+    polygon: {
+      chainId: 137,
+      url: "https://rpc-mainnet.maticvigil.com/",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+    mumbai: {
+      chainId: 80001,
+      url: "https://rpc-mumbai.maticvigil.com/",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   ovm: {
     solcVersion: '0.6.12',
