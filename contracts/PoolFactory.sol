@@ -415,7 +415,7 @@ contract PoolFactory is
     }
 
     function isValidAsset(address asset) public view override returns (bool) {
-        return IAssetHandler(_assetHandler).getAggregator(asset) != address(0);
+        return IAssetHandler(_assetHandler).priceAggregators(asset) != address(0);
     }
 
     /**
@@ -536,7 +536,7 @@ contract PoolFactory is
         returns (address)
     {
         if (isValidAsset(extContract)) {
-            uint8 assetType = IAssetHandler(_assetHandler).getAssetType(extContract);
+            uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
             return assetGuards[assetType];
         }
         return contractGuards[extContract];

@@ -18,9 +18,9 @@ interface IAssetHandler {
 
     function removeAsset(address asset) external;
 
-    function getAggregator(address asset) external view returns (address);
+    function priceAggregators(address asset) external view returns (address);
 
-    function getAssetType(address asset) external view returns (uint8);
+    function assetTypes(address asset) external view returns (uint8);
 
     function getAssetTypeAndAggregator(address asset) external view returns (uint8, address);
 

@@ -20,8 +20,8 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     address public poolFactory;
 
     // Asset Price feeds
-    mapping(address => uint8) internal assetTypes; // for asset types refer to header comment
-    mapping(address => address) internal aggregators;
+    mapping(address => uint8) public override assetTypes; // for asset types refer to header comment
+    mapping(address => address) public override priceAggregators;
     // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
 
     function initialize(address _poolFactory, Asset[] memory assets) public initializer {
@@ -34,16 +34,8 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
 
     /* ========== VIEWS ========== */
 
-    function getAggregator(address asset) public view override returns (address) {
-        return aggregators[asset];
-    }
-
-    function getAssetType(address asset) public view override returns (uint8) {
-        return assetTypes[asset];
-    }
-
     function getAssetTypeAndAggregator(address asset) public view override returns (uint8, address) {
-        return (assetTypes[asset], aggregators[asset]);
+        return (assetTypes[asset], priceAggregators[asset]);
     }
 
     /**
@@ -51,7 +43,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
      * Takes into account the asset type.
      */
     function getUSDPrice(address asset) public view override returns (uint256) {
-        address aggregator = aggregators[asset];
+        address aggregator = priceAggregators[asset];
         uint8 assetType = assetTypes[asset];
 
         require(aggregator != address(0), "Price aggregator not found");
@@ -96,7 +88,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     /// Add valid asset with price aggregator
     function addAsset(address asset, uint8 assetType, address aggregator) public override onlyOwner {
         assetTypes[asset] = assetType;
-        aggregators[asset] = aggregator;
+        priceAggregators[asset] = aggregator;
 
         emit AddedAsset(asset, assetType, aggregator);
     }
@@ -110,7 +102,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     /// Remove valid asset
     function removeAsset(address asset) public override onlyOwner {
         assetTypes[asset] = 0;
-        aggregators[asset] = address(0);
+        priceAggregators[asset] = address(0);
 
         emit RemovedAsset(asset);
     }
