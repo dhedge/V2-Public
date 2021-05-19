@@ -38,11 +38,12 @@ pragma solidity ^0.6.2;
 
 // Deprecated
 // import "./IExchanger.sol";
-import "./interfaces/IAddressResolver.sol";
-import "./interfaces/ISystemStatus.sol";
+// import "./interfaces/IAddressResolver.sol";
+// import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
@@ -386,7 +387,9 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
 
         require(guard != address(0), "invalid destination");
 
-        require(guard != IHasGuardInfo(factory).erc20Guard() || IPoolManagerLogic(poolManagerLogic).isSupportedAsset(to), "invalid destination or asset not supported");
+        if (IHasAssetInfo(factory).isValidAsset(to)) {
+            require(IPoolManagerLogic(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");   
+        }
 
         require(IGuard(guard).txGuard(poolManagerLogic, data), "invalid transaction");
 

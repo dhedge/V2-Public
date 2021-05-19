@@ -327,7 +327,7 @@
   },
   {
     "inputs": [],
-    "name": "erc20Guard",
+    "name": "getAssetHandler",
     "outputs": [
       {
         "internalType": "address",
@@ -522,19 +522,6 @@
   },
   {
     "inputs": [],
-    "name": "getPriceConsumer",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getTrackingCode",
     "outputs": [
       {
@@ -560,7 +547,7 @@
       },
       {
         "internalType": "address",
-        "name": "priceConsumer",
+        "name": "assetHandler",
         "type": "address"
       },
       {
@@ -783,6 +770,55 @@
   {
     "inputs": [
       {
+        "internalType": "uint8",
+        "name": "assetType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "guardAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setAssetGuard",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "assetHandler",
+        "type": "address"
+      }
+    ],
+    "name": "setAssetHandler",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "extContract",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "guardAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setContractGuard",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "daoAddress",
         "type": "address"
@@ -814,43 +850,12 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_guard",
-        "type": "address"
-      }
-    ],
-    "name": "setERC20Guard",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "cooldown",
         "type": "uint256"
       }
     ],
     "name": "setExitCooldown",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "extContract",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setGuard",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -926,19 +931,6 @@
       }
     ],
     "name": "setPoolManagerFeeNumerator",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "priceConsumer",
-        "type": "address"
-      }
-    ],
-    "name": "setPriceConsumer",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

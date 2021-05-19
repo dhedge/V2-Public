@@ -128,8 +128,8 @@ describe('PoolFactory', function () {
       ethers.utils.solidityPack(['uint256', 'int256', 'uint256', 'uint256', 'uint256'], [0, 3500000000, 0, current, 0]),
     ); // $35
 
-    PriceConsumerLogic = await ethers.getContractFactory('PriceConsumer');
-    priceConsumerLogic = await PriceConsumerLogic.deploy();
+    AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
+    assetHandlerLogic = await AssetHandlerLogic.deploy();
 
     PoolLogic = await ethers.getContractFactory('PoolLogic');
     poolLogic = await PoolLogic.deploy();
@@ -145,12 +145,12 @@ describe('PoolFactory', function () {
     const proxyAdmin = await ProxyAdmin.deploy();
     await proxyAdmin.deployed();
 
-    // Deploy PriceConsumerProxy
-    const PriceConsumerProxy = await ethers.getContractFactory('OZProxy');
-    const priceConsumerProxy = await PriceConsumerProxy.deploy(priceConsumerLogic.address, manager.address, '0x');
-    await priceConsumerProxy.deployed();
+    // Deploy AssetHandlerProxy
+    const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
+    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+    await assetHandlerProxy.deployed();
 
-    priceConsumer = await PriceConsumerLogic.attach(priceConsumerProxy.address);
+    assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
     // Deploy PoolFactoryProxy
     const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
@@ -163,13 +163,13 @@ describe('PoolFactory', function () {
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
-    const priceConsumerInitAssets = [assetSusd, assetSeth, assetSlink];
+    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
 
-    await priceConsumer.initialize(poolFactoryProxy.address, priceConsumerInitAssets);
-    await priceConsumer.deployed();
+    await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
+    await assetHandler.deployed();
 
     // Initialise pool factory
-    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, priceConsumerProxy.address, dao.address);
+    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
     await poolFactory.deployed();
 
     // Deploy transaction guards
@@ -189,10 +189,10 @@ describe('PoolFactory', function () {
     uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
     uniswapV3SwapGuard.deployed();
 
-    await poolFactory.connect(dao).setERC20Guard(erc20Guard.address);
-    await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
-    await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
-    await poolFactory.connect(dao).setGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
+    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
+    await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
+    await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2Guard.address);
+    await poolFactory.connect(dao).setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
   });
 
   it('Should be able to createFund', async function () {
@@ -647,7 +647,7 @@ describe('PoolFactory', function () {
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData('approve', [susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
-      'invalid destination or asset not supported',
+      'asset not enabled in pool',
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith(

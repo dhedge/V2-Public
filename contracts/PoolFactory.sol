@@ -39,7 +39,7 @@ pragma experimental ABIEncoderV2;
 
 import "./PoolLogic.sol";
 import "./upgradability/ProxyFactory.sol";
-import "./interfaces/IPriceConsumer.sol";
+import "./interfaces/IAssetHandler.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
@@ -87,7 +87,7 @@ contract PoolFactory is
     address[] public deployedFunds;
 
     address internal _daoAddress;
-    address internal _priceConsumer;
+    address internal _assetHandler;
     uint256 internal _daoFeeNumerator;
     uint256 internal _daoFeeDenominator;
 
@@ -116,9 +116,8 @@ contract PoolFactory is
     uint256 public managerFeeNumeratorChangeDelay;
 
     // Transaction Guards
-    mapping(address => address) internal guards;
-
-    address public override erc20Guard;
+    mapping(address => address) internal contractGuards;
+    mapping(uint8 => address) internal assetGuards;
 
     modifier onlyDao() {
         require(msg.sender == _daoAddress, "only dao");
@@ -128,13 +127,13 @@ contract PoolFactory is
     function initialize(
         address _poolLogic,
         address _managerLogic,
-        address priceConsumer,
+        address assetHandler,
         address daoAddress
     ) public initializer {
         __ProxyFactory_init(_poolLogic, _managerLogic);
         __Pausable_init();
 
-        _setPriceConsumer(priceConsumer);
+        _setAssetHandler(assetHandler);
 
         _setDaoAddress(daoAddress);
 
@@ -416,26 +415,26 @@ contract PoolFactory is
     }
 
     function isValidAsset(address asset) public view override returns (bool) {
-        return IPriceConsumer(_priceConsumer).getAggregator(asset) != address(0);
+        return IAssetHandler(_assetHandler).priceAggregators(asset) != address(0);
     }
 
     /**
      * Returns the latest price of a given asset
      */
     function getAssetPrice(address asset) external view override returns (uint256) {
-        return IPriceConsumer(_priceConsumer).getUSDPrice(asset);
+        return IAssetHandler(_assetHandler).getUSDPrice(asset);
     }
 
-    function getPriceConsumer() public view returns (address) {
-        return _priceConsumer;
+    function getAssetHandler() public view returns (address) {
+        return _assetHandler;
     }
 
-    function setPriceConsumer(address priceConsumer) public onlyOwner {
-        _setPriceConsumer(priceConsumer);
+    function setAssetHandler(address assetHandler) public onlyOwner {
+        _setAssetHandler(assetHandler);
     }
 
-    function _setPriceConsumer(address priceConsumer) internal {
-        _priceConsumer = priceConsumer;
+    function _setAssetHandler(address assetHandler) internal {
+        _assetHandler = assetHandler;
     }
 
     // Synthetix tracking
@@ -537,24 +536,29 @@ contract PoolFactory is
         returns (address)
     {
         if (isValidAsset(extContract)) {
-            return erc20Guard;
+            uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
+            return assetGuards[assetType];
         }
-        return guards[extContract];
+        return contractGuards[extContract];
     }
 
-    function setGuard(address extContract, address guardAddress)
+    function setContractGuard(address extContract, address guardAddress)
         public
         onlyDao
     {
-        _setGuard(extContract, guardAddress);
+        _setContractGuard(extContract, guardAddress);
     }
 
-    function _setGuard(address extContract, address guardAddress) internal {
-        guards[extContract] = guardAddress;
+    function _setContractGuard(address extContract, address guardAddress) internal {
+        contractGuards[extContract] = guardAddress;
     }
 
-    function setERC20Guard(address _guard) public onlyDao {
-        erc20Guard = _guard;
+    function setAssetGuard(uint8 assetType, address guardAddress) public onlyDao {
+        _setAssetGuard(assetType, guardAddress);
+    }
+
+    function _setAssetGuard(uint8 assetType, address guardAddress) internal {
+        assetGuards[assetType] = guardAddress;
     }
 
     function pause() public onlyDao {

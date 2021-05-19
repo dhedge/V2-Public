@@ -39,7 +39,4 @@ pragma solidity ^0.6.2;
 interface IHasGuardInfo {
     // Get guard
     function getGuard(address extContract) external view returns (address);
-
-    // Get erc20 guard
-    function erc20Guard() external view returns(address);
 }
