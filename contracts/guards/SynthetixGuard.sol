@@ -37,8 +37,8 @@ pragma solidity ^0.6.2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-import "./TxDataUtils.sol";
 import "./IGuard.sol";
+import "../utils/TxDataUtils.sol";
 import "../interfaces/ISynth.sol";
 import "../interfaces/ISynthetix.sol";
 import "../interfaces/IAddressResolver.sol";
@@ -75,7 +75,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
             IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
             require(
                 poolManagerLogic.isSupportedAsset(srcAsset),
-                "unsupported destination asset"
+                "unsupported source asset"
             );
             require(
                 poolManagerLogic.isSupportedAsset(dstAsset),
