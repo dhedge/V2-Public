@@ -11,9 +11,9 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
 import "../interfaces/IHasDaoInfo.sol";
-import "../interfaces/IPriceConsumer.sol";
+import "../interfaces/IAssetHandler.sol";
 
-contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
+contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     using SafeMath for uint256;
     
     bool public isDisabledChainlink;
@@ -54,24 +54,24 @@ contract PriceConsumer is Initializable, OwnableUpgradeSafe, IPriceConsumer {
         address aggregator = aggregators[asset];
         uint8 assetType = assetTypes[asset];
 
-        require(aggregator != address(0), "PriceConsumer: aggregator not found");
+        require(aggregator != address(0), "Price aggregator not found");
 
         uint256 price;
 
         if (assetType == 0 && !isDisabledChainlink) { // Chainlink direct feed
             try AggregatorV3Interface(aggregator).latestRoundData() returns (uint80, int256 _price, uint256, uint256 updatedAt, uint80) {
                 // check chainlink price updated within 25 hours
-                require(updatedAt.add(90000) >= block.timestamp, "PriceConsumer: chainlink price expired");
+                require(updatedAt.add(90000) >= block.timestamp, "Chainlink price expired");
 
                 if (_price > 0) {
                     price = uint256(_price).mul(10**10); // convert Chainlink decimals 8 -> 18
                 }
             } catch {
-                revert("PriceConsumer: price get failed");
+                revert("Price get failed");
             }
         }
 
-        require(price > 0, "PriceConsumer: price not available");
+        require(price > 0, "Price not available");
 
         return price;
     }

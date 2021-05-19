@@ -128,8 +128,8 @@ describe('PoolFactory', function () {
       ethers.utils.solidityPack(['uint256', 'int256', 'uint256', 'uint256', 'uint256'], [0, 3500000000, 0, current, 0]),
     ); // $35
 
-    PriceConsumerLogic = await ethers.getContractFactory('PriceConsumer');
-    priceConsumerLogic = await PriceConsumerLogic.deploy();
+    AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
+    assetHandlerLogic = await AssetHandlerLogic.deploy();
 
     PoolLogic = await ethers.getContractFactory('PoolLogic');
     poolLogic = await PoolLogic.deploy();
@@ -145,12 +145,12 @@ describe('PoolFactory', function () {
     const proxyAdmin = await ProxyAdmin.deploy();
     await proxyAdmin.deployed();
 
-    // Deploy PriceConsumerProxy
-    const PriceConsumerProxy = await ethers.getContractFactory('OZProxy');
-    const priceConsumerProxy = await PriceConsumerProxy.deploy(priceConsumerLogic.address, manager.address, '0x');
-    await priceConsumerProxy.deployed();
+    // Deploy AssetHandlerProxy
+    const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
+    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+    await assetHandlerProxy.deployed();
 
-    priceConsumer = await PriceConsumerLogic.attach(priceConsumerProxy.address);
+    assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
     // Deploy PoolFactoryProxy
     const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
@@ -163,13 +163,13 @@ describe('PoolFactory', function () {
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
-    const priceConsumerInitAssets = [assetSusd, assetSeth, assetSlink];
+    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
 
-    await priceConsumer.initialize(poolFactoryProxy.address, priceConsumerInitAssets);
-    await priceConsumer.deployed();
+    await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
+    await assetHandler.deployed();
 
     // Initialise pool factory
-    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, priceConsumerProxy.address, dao.address);
+    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
     await poolFactory.deployed();
 
     // Deploy transaction guards

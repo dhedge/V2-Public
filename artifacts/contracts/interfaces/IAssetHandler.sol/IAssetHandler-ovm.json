@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "IPriceConsumer",
-  "sourceName": "contracts/interfaces/IPriceConsumer.sol",
+  "contractName": "IAssetHandler-ovm",
+  "sourceName": "contracts/interfaces/IAssetHandler.sol",
   "abi": [
     {
       "anonymous": false,
@@ -84,7 +84,7 @@
               "type": "address"
             }
           ],
-          "internalType": "struct IPriceConsumer.Asset[]",
+          "internalType": "struct IAssetHandler.Asset[]",
           "name": "assets",
           "type": "tuple[]"
         }
