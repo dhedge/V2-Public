@@ -2,6 +2,7 @@ require('dotenv').config();
 require('@eth-optimism/plugins/hardhat/compiler');
 require('@eth-optimism/plugins/hardhat/ethers');
 require('hardhat-gas-reporter');
+require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-waffle');
 require('solidity-coverage');
 
@@ -11,6 +12,7 @@ require('solidity-coverage');
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+
 module.exports = {
   defaultNetwork: 'kovan-optimism',
   gasReporter: {
@@ -20,8 +22,13 @@ module.exports = {
   networks: {
     'kovan-optimism': {
       url: process.env.KOVAN_OVM_URL || 'https://kovan.optimism.io',
-      // accounts: [process.env.PRIVATE_KEY],
-      gasPrice: 0,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 0
+    },
+    localhost: {
+      chainId: 31337,
+      url: "http://127.0.0.1:8545",
+      timeout: 1000000,
     },
   },
   ovm: {
@@ -45,4 +52,11 @@ module.exports = {
   mocha: {
     timeout: false,
   },
+  abiExporter: {
+    path: './abi',
+    clear: true,
+    flat: true,
+    only: ['PoolFactory', 'PoolLogic', 'PoolManagerLogic'],
+    spacing: 2
+  }
 };
