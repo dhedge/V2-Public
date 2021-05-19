@@ -44,4 +44,4 @@ jobs:
         run: npx hardhat compile
         if: steps.hardhat-cache.outputs.cache-hit != 'true'
       - name: Run test
-        run: npm run test
+        run: npm run test:unit
