@@ -542,14 +542,14 @@ contract PoolFactory is
         return contractGuards[extContract];
     }
 
-    function setGuard(address extContract, address guardAddress)
+    function setContractGuard(address extContract, address guardAddress)
         public
         onlyDao
     {
-        _setGuard(extContract, guardAddress);
+        _setContractGuard(extContract, guardAddress);
     }
 
-    function _setGuard(address extContract, address guardAddress) internal {
+    function _setContractGuard(address extContract, address guardAddress) internal {
         contractGuards[extContract] = guardAddress;
     }
 

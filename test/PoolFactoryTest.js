@@ -190,9 +190,9 @@ describe('PoolFactory', function () {
     uniswapV3SwapGuard.deployed();
 
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
-    await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
-    await poolFactory.connect(dao).setGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
+    await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
+    await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2Guard.address);
+    await poolFactory.connect(dao).setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
   });
 
   it('Should be able to createFund', async function () {
