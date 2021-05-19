@@ -647,7 +647,7 @@ describe('PoolFactory', function () {
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData('approve', [susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
-      'unsupported spender approval',
+      'asset not enabled in pool',
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith(
