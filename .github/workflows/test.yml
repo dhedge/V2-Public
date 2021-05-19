@@ -39,7 +39,7 @@ jobs:
           path: "artifacts"
           key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
           restore-keys: |
-            ${{ runner.os }}-artifacts-
+            artifacts-
       - name: Hardhat compile
         run: npx hardhat compile
         if: steps.hardhat-cache.outputs.cache-hit != 'true'
