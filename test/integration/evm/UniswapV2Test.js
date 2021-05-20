@@ -85,7 +85,7 @@ describe("Uniswap V2 Test", function() {
     it("Should be able to get WETH", async function() {
         const IWETH = await hre.artifacts.readArtifact("IWETH");
         WETH = await ethers.getContractAt(IWETH.abi, weth);
-        const IERC20 = await hre.artifacts.readArtifact("IERC20");
+        const IERC20 = await hre.artifacts.readArtifact("@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20");
         USDT = await ethers.getContractAt(IERC20.abi, usdt);
         USDC = await ethers.getContractAt(IERC20.abi, usdc);
         const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
@@ -214,7 +214,7 @@ describe("Uniswap V2 Test", function() {
     });
 
     it('Should be able to approve', async () => {
-        const IERC20 = await hre.artifacts.readArtifact("IERC20");
+        const IERC20 = await hre.artifacts.readArtifact("@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20");
         const iERC20 = new ethers.utils.Interface(IERC20.abi);
         let approveABI = iERC20.encodeFunctionData("approve", [usdc, 100e6.toString()]);
         await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith("asset not enabled in pool");
