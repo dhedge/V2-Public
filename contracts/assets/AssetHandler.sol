@@ -53,7 +53,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
         if (assetType == 0 && !isDisabledChainlink) { // Chainlink direct feed
             try AggregatorV3Interface(aggregator).latestRoundData() returns (uint80, int256 _price, uint256, uint256 updatedAt, uint80) {
                 // check chainlink price updated within 25 hours
-                require(updatedAt.add(90000) >= block.timestamp, "Chainlink price expired");
+                require(updatedAt.add(900000) >= block.timestamp, "Chainlink price expired");
 
                 if (_price > 0) {
                     price = uint256(_price).mul(10**10); // convert Chainlink decimals 8 -> 18

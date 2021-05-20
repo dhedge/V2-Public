@@ -25,14 +25,14 @@ const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
 describe("Sushiswap V2 Test", function() {
     let WMatic, WETH, USDC, USDT;
     let logicOwner, manager, dao, user;
-    let PoolFactory, PoolLogic, PoolManagerLogic, PriceConsumerLogic;
-    let poolFactory, poolLogic, poolManagerLogic, priceConsumerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+    let PoolFactory, PoolLogic, PoolManagerLogic;
+    let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
     
     before(async function(){
         [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-        PriceConsumerLogic = await ethers.getContractFactory('PriceConsumer');
-        priceConsumerLogic = await PriceConsumerLogic.deploy();
+        const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
+        const assetHandlerLogic = await AssetHandlerLogic.deploy();
 
         PoolLogic = await ethers.getContractFactory("PoolLogic");
         poolLogic = await PoolLogic.deploy();
@@ -48,29 +48,29 @@ describe("Sushiswap V2 Test", function() {
         const proxyAdmin = await ProxyAdmin.deploy();
         await proxyAdmin.deployed();
 
-        // Deploy PriceConsumerProxy
-        const PriceConsumerProxy = await ethers.getContractFactory('OZProxy');
-        const priceConsumerProxy = await PriceConsumerProxy.deploy(priceConsumerLogic.address, manager.address, '0x');
-        await priceConsumerProxy.deployed();
+        // Deploy AssetHandlerProxy
+        const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
+        const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+        await assetHandlerProxy.deployed();
 
-        priceConsumer = await PriceConsumerLogic.attach(priceConsumerProxy.address);
+        const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
         // Deploy PoolFactoryProxy
         const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
         poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, manager.address, "0x");
         await poolFactory.deployed();
 
-         // Initialize Asset Price Consumer
-         const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-         const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-         const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-         const priceConsumerInitAssets = [assetWeth, assetUsdt, assetUsdc];
- 
-         await priceConsumer.initialize(poolFactory.address, priceConsumerInitAssets);
-         await priceConsumer.deployed();
-
+        // Initialize Asset Price Consumer
+        const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
+        const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
+        const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
+        const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
+    
+        await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+        await assetHandler.deployed();
+    
         poolFactory = await PoolFactory.attach(poolFactory.address);
-        await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, priceConsumerProxy.address, dao.address);
+        await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
         await poolFactory.deployed();
 
         const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
@@ -81,8 +81,9 @@ describe("Sushiswap V2 Test", function() {
         uniswapV2Guard = await UniswapV2Guard.deploy();
         uniswapV2Guard.deployed();
 
-        await poolFactory.connect(dao).setERC20Guard(erc20Guard.address);
-        await poolFactory.connect(dao).setGuard(sushiswapV2Router, uniswapV2Guard.address);
+        await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
+        await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
+
     });
 
     it("Should be able to get USDC", async function() {
@@ -221,7 +222,7 @@ describe("Sushiswap V2 Test", function() {
         const IERC20 = await hre.artifacts.readArtifact("IERC20");
         const iERC20 = new ethers.utils.Interface(IERC20.abi);
         let approveABI = iERC20.encodeFunctionData("approve", [usdc, 10e6.toString()]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith("invalid destination or asset not supported");
+        await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith("asset not enabled in pool");
 
         await expect(poolLogicProxy.connect(manager).execTransaction(usdc, approveABI)).to.be.revertedWith("unsupported spender approval");
 

@@ -41,9 +41,9 @@ async function main () {
   console.log('manager address: ', manager.address)
   console.log('dao address: ', dao.address)
 
-  const PriceConsumerLogic = await ethers.getContractFactory('PriceConsumer');
-  const priceConsumerLogic = await PriceConsumerLogic.deploy();
-  console.log("PriceConsumer deployed at ", priceConsumerLogic.address)
+  const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
+  const assetHandlerLogic = await AssetHandlerLogic.deploy();
+  console.log("AssetHandler deployed at ", assetHandlerLogic.address)
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   const poolLogic = await PoolLogic.deploy();
@@ -63,13 +63,13 @@ async function main () {
   await proxyAdmin.deployed();
   console.log("ProxyAdmin deployed at ", proxyAdmin.address);
 
-  // Deploy PriceConsumerProxy
-  const PriceConsumerProxy = await ethers.getContractFactory('OZProxy');
-  const priceConsumerProxy = await PriceConsumerProxy.deploy(priceConsumerLogic.address, manager.address, '0x');
-  await priceConsumerProxy.deployed();
-  console.log("PriceConsumerProxy deployed at ", priceConsumerProxy.address);
+  // Deploy AssetHandlerProxy
+  const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
+  const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+  await assetHandlerProxy.deployed();
+  console.log("AssetHandlerProxy deployed at ", assetHandlerProxy.address);
 
-  const priceConsumer = await PriceConsumerLogic.attach(priceConsumerProxy.address);
+  const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
   // Deploy PoolFactoryProxy
   const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
@@ -81,14 +81,14 @@ async function main () {
   const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
   const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
   const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-  const priceConsumerInitAssets = [assetWeth, assetUsdt, assetUsdc];
+  const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-  await priceConsumer.initialize(poolFactory.address, priceConsumerInitAssets);
-  await priceConsumer.deployed();
-  console.log("PriceConsumer initialized with weth, usdt, usdc");
+  await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+  await assetHandler.deployed();
+  console.log("AssetHandler initialized with weth, usdt, usdc");
 
   poolFactory = await PoolFactory.attach(poolFactory.address);
-  await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, priceConsumerProxy.address, dao.address);
+  await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
   await poolFactory.deployed();
   console.log("PoolFactoryProxy initialized");
 
@@ -102,8 +102,8 @@ async function main () {
   uniswapV2Guard.deployed();
   console.log("UniswapV2Guard deployed at ", uniswapV2Guard.address);
 
-  await poolFactory.connect(dao).setERC20Guard(erc20Guard.address);
-  await poolFactory.connect(dao).setGuard(sushiswapV2Router, uniswapV2Guard.address);
+  await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
+  await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
   console.log("PoolFactory set dao ", dao.address);
 
   let versions = {
@@ -117,7 +117,7 @@ async function main () {
         "PoolFactoryProxy": poolFactory.address,
         "PoolLogic": poolLogic.address,
         "PoolManagerLogic": poolManagerLogic.address,
-        "PriceConsumerProxy": priceConsumerProxy.address,
+        "AssetHandlerProxy": assetHandlerProxy.address,
         "ERC20Guard": erc20Guard.address,
         "UniswapV2Guard": erc20Guard.address,
       }
