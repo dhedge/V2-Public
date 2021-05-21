@@ -56,7 +56,7 @@ module.exports = {
     path: './abi',
     clear: true,
     flat: true,
-    only: ['PoolFactory', 'PoolLogic', 'PoolManagerLogic'],
+    only: ['PoolFactory', 'PoolLogic', 'PoolManagerLogic', 'AssetHandler'],
     spacing: 2
   }
 };
