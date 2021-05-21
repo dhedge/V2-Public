@@ -33,6 +33,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
+// Transaction Types in execTransaction()
+// 1. Approve: Approving a token for spending by different address/contract
+// 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
 
 pragma solidity ^0.6.2;
 
@@ -85,7 +88,9 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
         uint256 time
     );
     event TransactionExecuted(
+        address pool,
         address manager,
+        uint8 transactionType,
         uint256 time
     );
     
@@ -391,13 +396,17 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
             require(IPoolManagerLogic(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");   
         }
 
-        require(IGuard(guard).txGuard(poolManagerLogic, data), "invalid transaction");
+        // to pass the guard, the data must return a transaction type. refer to header for transaction types
+        uint8 txType = IGuard(guard).txGuard(poolManagerLogic, data);
+        require(txType > 0, "invalid transaction");
 
         (bool success, ) = to.call(data);
         require(success == true, "failed to execute the call");
 
         emit TransactionExecuted(
+            address(this),
             manager(),
+            txType,
             block.timestamp
         );
 

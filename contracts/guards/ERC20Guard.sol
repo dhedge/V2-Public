@@ -58,7 +58,7 @@ contract ERC20Guard is TxDataUtils, IGuard {
     function txGuard(address pool, bytes calldata data)
         external
         override
-        returns (bool)
+        returns (uint8 txType) // transaction type
     {
         bytes4 method = getMethod(data);
 
@@ -81,9 +81,8 @@ contract ERC20Guard is TxDataUtils, IGuard {
                 block.timestamp
             );
 
-            return true;
+            txType = 1; // 'Approve' type
+            return txType; 
         }
-
-        return false;
     }
 }

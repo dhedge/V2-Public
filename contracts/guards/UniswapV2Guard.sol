@@ -50,7 +50,7 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
     function txGuard(address pool, bytes calldata data)
         external
         override
-        returns (bool)
+        returns (uint8 txType) // transaction type
     {
         bytes4 method = getMethod(data);
 
@@ -92,9 +92,8 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
                 block.timestamp
             );
 
-            return true;
+            txType = 2; // 'Exchange' type
+            return txType;
         }
-
-        return false;
     }
 }
