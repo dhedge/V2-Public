@@ -1,0 +1,23 @@
+{
+  "v2.0-alpha": {
+    "tag": "v2.0-alpha",
+    "fulltag": "v2.0-alpha",
+    "network": "mumbai",
+    "date": "Thu, 20 May 2021 16:32:55 GMT",
+    "contracts": {
+      "TestUSDT": "0x5C03614553fF7b57C7dd583377c2e756D0408940",
+      "TestUSDC": "0x624429a012a8A935cc1110A9880B2d698587a744",
+      "TestWETH": "0x8e07dAfa396B1b2B226367D0266e009cA1B3248d",
+      "USDT-Aggregator": "0x92C09849638959196E976289418e5973CC96d645",
+      "USDC-Aggregator": "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0",
+      "ETH-Aggregator": "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
+      "ProxyAdmin": "0xcC0Edd319B485aC6c2C9385E55E34DFA0946Cf66",
+      "PoolFactoryProxy": "0x91956c1098B047721686Bd831185ddB042b08684",
+      "PoolLogic": "0xbdC0063912d0cb9Be536e9cDc9823047F678e4A6",
+      "PoolManagerLogic": "0x34c00C0997765f8077860F898A5B8712Ef508b54",
+      "AssetHandlerProxy": "0x3Dc480C730Fc08feb285dF71eD42C43fE904fFc6",
+      "ERC20Guard": "0xf5974e23C2F0bEA79b95CEe8559B9Fb69EdfF0ca",
+      "UniswapV2Guard": "0xf5974e23C2F0bEA79b95CEe8559B9Fb69EdfF0ca"
+    }
+  }
+}

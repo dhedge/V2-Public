@@ -28,14 +28,14 @@ const uniswapV2RouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 describe("Synthetix Test", function() {
     let WETH, susdProxy, sethProxy, slinkProxy, addressResolver, synthetix, uniswapV2Router;
     let logicOwner, manager, dao, user;
-    let PoolFactory, PoolLogic, PoolManagerLogic, PriceConsumerLogic;
-    let poolFactory, poolLogic, poolManagerLogic, priceConsumerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+    let PoolFactory, PoolLogic, PoolManagerLogic;
+    let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
 
     before(async function(){
         [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-        PriceConsumerLogic = await ethers.getContractFactory('PriceConsumer');
-        priceConsumerLogic = await PriceConsumerLogic.deploy();
+        const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
+        const assetHandlerLogic = await AssetHandlerLogic.deploy();
 
         PoolLogic = await ethers.getContractFactory("PoolLogic");
         poolLogic = await PoolLogic.deploy();
@@ -51,12 +51,12 @@ describe("Synthetix Test", function() {
         const proxyAdmin = await ProxyAdmin.deploy();
         await proxyAdmin.deployed();
 
-        // Deploy PriceConsumerProxy
-        const PriceConsumerProxy = await ethers.getContractFactory('OZProxy');
-        const priceConsumerProxy = await PriceConsumerProxy.deploy(priceConsumerLogic.address, manager.address, '0x');
-        await priceConsumerProxy.deployed();
+        // Deploy AssetHandlerProxy
+        const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
+        const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+        await assetHandlerProxy.deployed();
 
-        priceConsumer = await PriceConsumerLogic.attach(priceConsumerProxy.address);
+        const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
         // Deploy PoolFactoryProxy
         const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
@@ -67,13 +67,13 @@ describe("Synthetix Test", function() {
         const assetSusd = { asset: susd, assetType: 0, aggregator: susd_price_feed };
         const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed };
         const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed };
-        const priceConsumerInitAssets = [assetSusd, assetSeth, assetSlink];
- 
-        await priceConsumer.initialize(poolFactory.address, priceConsumerInitAssets);
-        await priceConsumer.deployed();
-
+        const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
+    
+        await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+        await assetHandler.deployed();
+    
         poolFactory = await PoolFactory.attach(poolFactory.address);
-        await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, priceConsumerProxy.address, dao.address);
+        await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
         await poolFactory.deployed();
 
         const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
@@ -97,9 +97,9 @@ describe("Synthetix Test", function() {
         uniswapV2Guard = await UniswapV2Guard.deploy();
         uniswapV2Guard.deployed();
 
-        await poolFactory.connect(dao).setERC20Guard(erc20Guard.address);
-        await poolFactory.connect(dao).setGuard(uniswapV2Router.address, uniswapV2Guard.address);
-        await poolFactory.connect(dao).setGuard(synthetix.address, synthetixGuard.address);
+        await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
+        await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2Guard.address);
+        await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
     });
 
     it("Should be able to get susd", async function() {
@@ -235,10 +235,10 @@ describe("Synthetix Test", function() {
     });
 
     it('Should be able to approve', async () => {
-        const IERC20 = await hre.artifacts.readArtifact("IERC20");
+        const IERC20 = await hre.artifacts.readArtifact("@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20");
         const iERC20 = new ethers.utils.Interface(IERC20.abi);
         let approveABI = iERC20.encodeFunctionData("approve", [susd, 100e18.toString()]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith("invalid destination or asset not supported");
+        await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith("asset not enabled in pool");
 
         await expect(poolLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith("unsupported spender approval");
 

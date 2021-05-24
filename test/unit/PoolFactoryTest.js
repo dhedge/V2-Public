@@ -340,7 +340,7 @@ describe('PoolFactory', function () {
       }, 60000);
     });
     // mock IERC20 transferFrom to return true
-    const IERC20 = await hre.artifacts.readArtifact('IERC20');
+    const IERC20 = await hre.artifacts.readArtifact('@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20');
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let transferFromABI = iERC20.encodeFunctionData('transferFrom', [
       logicOwner.address,
@@ -402,7 +402,7 @@ describe('PoolFactory', function () {
     });
 
     // mock IERC20 balance
-    const IERC20 = await hre.artifacts.readArtifact('IERC20');
+    const IERC20 = await hre.artifacts.readArtifact('@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20');
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let balanceOfABI = iERC20.encodeFunctionData('balanceOf', [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
@@ -454,7 +454,7 @@ describe('PoolFactory', function () {
     let poolLogicPrivateProxy = await PoolLogic.attach(fundAddress);
     let poolManagerLogicPrivateProxy = await PoolManagerLogic.attach(await poolLogicPrivateProxy.poolManagerLogic());
 
-    const IERC20 = await hre.artifacts.readArtifact('IERC20');
+    const IERC20 = await hre.artifacts.readArtifact('@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20');
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let transferFromABI = iERC20.encodeFunctionData('transferFrom', [
       logicOwner.address,
@@ -524,7 +524,7 @@ describe('PoolFactory', function () {
 
     // Can't remove asset with non zero balance
     // mock IERC20 balanceOf to return non zero
-    const IERC20 = await hre.artifacts.readArtifact('IERC20');
+    const IERC20 = await hre.artifacts.readArtifact('@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20');
     let iERC20 = new ethers.utils.Interface(IERC20.abi);
     let balanceOfABI = iERC20.encodeFunctionData('balanceOf', [poolLogicProxy.address]);
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1);
@@ -643,7 +643,7 @@ describe('PoolFactory', function () {
   });
 
   it('Should be able to approve', async () => {
-    const IERC20 = await hre.artifacts.readArtifact('IERC20');
+    const IERC20 = await hre.artifacts.readArtifact('@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20');
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData('approve', [susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
