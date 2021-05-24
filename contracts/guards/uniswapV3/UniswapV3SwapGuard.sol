@@ -52,7 +52,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     function txGuard(address pool, bytes calldata data)
         external
         override
-        returns (bool)
+        returns (uint8 txType) // transaction type
     {
         bytes4 method = getMethod(data);
 
@@ -116,7 +116,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
                 block.timestamp
             );
 
-            return true;
+            txType = 2; // 'Exchange' type
+            return txType;
         }
 
         if (method == bytes4(keccak256("exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"))) {
@@ -146,10 +147,9 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
                 dstAsset,
                 block.timestamp
             );
-
-            return true;
+            
+            txType = 2;
+            return txType; // 'Exchange' type
         }
-
-        return false;
     }
 }

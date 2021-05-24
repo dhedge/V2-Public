@@ -57,10 +57,11 @@ contract SynthetixGuard is TxDataUtils, IGuard {
         addressResolver = _addressResolver;
     }
 
+    // transaction guard for Synthetix synth exchanger
     function txGuard(address _poolManagerLogic, bytes calldata data)
         external
         override
-        returns (bool)
+        returns (uint8 txType) // transaction type
     {
         bytes4 method = getMethod(data);
 
@@ -89,11 +90,10 @@ contract SynthetixGuard is TxDataUtils, IGuard {
                 dstAsset,
                 block.timestamp
             );
-
-            return true;
+            
+            txType = 2; // 'Exchange' type
+            return txType;
         }
-
-        return false;
     }
 
     function getAssetProxy(bytes32 key) public view returns (address) {

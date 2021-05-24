@@ -160,8 +160,20 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "manager",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "transactionType",
+        "type": "uint8"
       },
       {
         "indexed": false,

@@ -47,5 +47,5 @@ interface IGuard {
 
     function txGuard(address poolManagerLogic, bytes calldata data)
         external
-        returns (bool);
+        returns (uint8 txType);
 }
