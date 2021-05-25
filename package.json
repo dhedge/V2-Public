@@ -14,7 +14,7 @@
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.matic.today/",
     "test:unit": "hardhat test test/unit/PoolFactoryTest.js --network hardhat",
     "test:inte:evm": "hardhat test test/integration/evm/*.js --network localhost",
-    "test:inte:polygon": "hardhat test test/integration/polygon/*.js --network localhost",
+    "test:inte:polygon": "hardhat test test/integration/polygon/SushiswapV2Test.js --network localhost",
     "test:inte:mumbai": "hardhat test test/integration/polygon/SushiswapV2Mumbai.js --network localhost",
     "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
     "deploy": "node scripts/DHedge.deploy.js",
