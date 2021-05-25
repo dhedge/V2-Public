@@ -17,15 +17,13 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     using SafeMath for uint256;
     
     bool public isDisabledChainlink;
+    uint256 public chainlinkTimeout; // Chainlink oracle timeout period
     address public poolFactory;
 
     // Asset Price feeds
     mapping(address => uint8) public override assetTypes; // for asset types refer to header comment
     mapping(address => address) public override priceAggregators;
     // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
-
-    // TODO: move this variable above the asset price feeds before mainnet deployment
-    uint256 public chainlinkTimeout; // Chainlink oracle timeout period
 
     function initialize(address _poolFactory, Asset[] memory assets) public initializer {
         OwnableUpgradeSafe.__Ownable_init();
