@@ -17,6 +17,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     using SafeMath for uint256;
     
     bool public isDisabledChainlink;
+    uint256 public chainlinkTimeout; // Chainlink oracle timeout period
     address public poolFactory;
 
     // Asset Price feeds
@@ -28,6 +29,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
         OwnableUpgradeSafe.__Ownable_init();
 
         poolFactory = _poolFactory;
+        chainlinkTimeout = 90000; // 25 hours
         addAssets(assets);
     }
 
@@ -53,7 +55,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
         if (assetType == 0 && !isDisabledChainlink) { // Chainlink direct feed
             try AggregatorV3Interface(aggregator).latestRoundData() returns (uint80, int256 _price, uint256, uint256 updatedAt, uint80) {
                 // check chainlink price updated within 25 hours
-                require(updatedAt.add(90000) >= block.timestamp, "Chainlink price expired");
+                require(updatedAt.add(chainlinkTimeout) >= block.timestamp, "Chainlink price expired");
 
                 if (_price > 0) {
                     price = uint256(_price).mul(10**10); // convert Chainlink decimals 8 -> 18
@@ -83,6 +85,10 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
 
     function disableChainlink() external onlyOwner {
         isDisabledChainlink = true;
+    }
+
+    function setChainlinkTimeout(uint256 newTimeoutPeriod) external onlyOwner {
+        chainlinkTimeout = newTimeoutPeriod;
     }
 
     /// Add valid asset with price aggregator

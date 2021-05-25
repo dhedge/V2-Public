@@ -130,6 +130,19 @@
   },
   {
     "inputs": [],
+    "name": "chainlinkTimeout",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "disableChainlink",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -294,6 +307,19 @@
   {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newTimeoutPeriod",
+        "type": "uint256"
+      }
+    ],
+    "name": "setChainlinkTimeout",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
