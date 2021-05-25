@@ -35,6 +35,46 @@ module.exports = {
       url: "https://rpc-mainnet.maticvigil.com/",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
+    hardhat: {
+      accounts: [
+        {
+          privateKey: process.env.TEST_PRIVATE_KEY1,
+          balance: "10000000000000000000000"
+        },
+        {
+          privateKey: process.env.TEST_PRIVATE_KEY2,
+          balance: "10000000000000000000000"
+        },
+        {
+          privateKey: process.env.TEST_PRIVATE_KEY3,
+          balance: "10000000000000000000000"
+        },
+        {
+            privateKey: "0000000000000000000000000000000000000000000000000000000000000001",
+            balance: "10000000000000000000000"
+        },
+        {
+            privateKey: "0000000000000000000000000000000000000000000000000000000000000002",
+            balance: "10000000000000000000000"
+        },
+        {
+            privateKey: "0000000000000000000000000000000000000000000000000000000000000003",
+            balance: "10000000000000000000000"
+        },
+        {
+            privateKey: "0000000000000000000000000000000000000000000000000000000000000004",
+            balance: "10000000000000000000000"
+        },
+        {
+            privateKey: "0000000000000000000000000000000000000000000000000000000000000005",
+            balance: "10000000000000000000000"
+        },
+        {
+            privateKey: "0000000000000000000000000000000000000000000000000000000000000006",
+            balance: "10000000000000000000000"
+        }
+      ]
+    },
     mumbai: {
       chainId: 80001,
       url: "https://rpc-mumbai.maticvigil.com/",
