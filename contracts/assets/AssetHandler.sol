@@ -2,7 +2,7 @@
 // Asset types:
 // 0 = Chainlink direct USD price feed with 8 decimals
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
 
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";

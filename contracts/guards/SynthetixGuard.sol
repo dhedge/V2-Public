@@ -33,7 +33,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 

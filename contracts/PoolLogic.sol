@@ -37,7 +37,7 @@
 // 1. Approve: Approving a token for spending by different address/contract
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 // Deprecated
 // import "./IExchanger.sol";
