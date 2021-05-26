@@ -13,9 +13,9 @@ const units = (value) => ethers.utils.parseUnits(value.toString());
 const sushiswapV2Router = '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506';
 
 // For mumbai testnet
-const weth = '0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa';
-const usdc = '0x2058A9D7613eEE744279e3856Ef0eAda5FCbaA7e';
-const usdt = '0x3813e82e6f7098b9583FC0F33a962D02018B6803';
+const weth = '0x8e07dAfa396B1b2B226367D0266e009cA1B3248d';
+const usdc = '0x624429a012a8A935cc1110A9880B2d698587a744';
+const usdt = '0x5C03614553fF7b57C7dd583377c2e756D0408940';
 const eth_price_feed = '0x0715A7794a1dc8e42615F059dD6e406A6594651A';
 const usdc_price_feed = '0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0';
 const usdt_price_feed = '0x92C09849638959196E976289418e5973CC96d645';
