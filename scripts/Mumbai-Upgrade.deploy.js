@@ -1,8 +1,6 @@
 const hre = require('hardhat')
 const fs = require('fs');
-const loadJsonFile = require("load-json-file");
-
-const version = loadJsonFile.sync("publish/mumbai/versions.json")['v2.0-alpha'].contracts;
+const versions = require("../publish/mumbai/versions.json")['v2.0-alpha'].contracts;
 
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
@@ -46,15 +44,15 @@ async function main () {
   console.log('dao address: ', dao.address)
 
   const ITestUSDT = await artifacts.readArtifact("TestUSDT");
-  const tUSDT = await ethers.getContractAt(ITestUSDT.abi, version.TestUSDT)
+  const tUSDT = await ethers.getContractAt(ITestUSDT.abi, versions.TestUSDT)
   console.log("TestUSDT at", tUSDT.address);
 
   const ITestUSDC = await artifacts.readArtifact("TestUSDC");
-  const tUSDC = await ethers.getContractAt(ITestUSDC.abi, version.TestUSDC)
+  const tUSDC = await ethers.getContractAt(ITestUSDC.abi, versions.TestUSDC)
   console.log("TestUSDC at", tUSDC.address);
 
   const ITestWETH = await artifacts.readArtifact("TestWETH");
-  const tWETH = await ethers.getContractAt(ITestWETH.abi, version.TestWETH)
+  const tWETH = await ethers.getContractAt(ITestWETH.abi, versions.TestWETH)
   console.log("TestWETH at", tWETH.address);
 
   const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
@@ -70,7 +68,7 @@ async function main () {
   console.log("PoolManagerLogic deployed at", poolManagerLogic.address)
 
   const IProxyAdmin = await artifacts.readArtifact("ProxyAdmin");
-  const proxyAdmin = await ethers.getContractAt(IProxyAdmin.abi, version.ProxyAdmin);
+  const proxyAdmin = await ethers.getContractAt(IProxyAdmin.abi, versions.ProxyAdmin);
   console.log("ProxyAdmin at", proxyAdmin.address);
 
   // Deploy AssetHandlerProxy
@@ -82,7 +80,7 @@ async function main () {
   console.log("AssetHandlerProxy deployed at", assetHandlerProxy.address);
 
   const IPoolFactory = await artifacts.readArtifact("PoolFactory");
-  const poolFactory = await ethers.getContractAt(IPoolFactory.abi, version.PoolFactoryProxy);
+  const poolFactory = await ethers.getContractAt(IPoolFactory.abi, versions.PoolFactoryProxy);
   console.log("PoolFactoryProxy at", poolFactory.address);
 
   // Initialize Asset Price Consumer
@@ -115,7 +113,7 @@ async function main () {
   await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
   console.log("PoolFactory set dao", dao.address);
 
-  let versions = {
+  let new_versions = {
     "v2.0-alpha": {
       "tag": "v2.0-alpha",
       "fulltag": "v2.0-alpha",
@@ -140,7 +138,7 @@ async function main () {
   }
 
   // convert JSON object to string
-  const data = JSON.stringify(versions, null, 2);
+  const data = JSON.stringify(new_versions, null, 2);
   console.log(data)
 
   fs.writeFileSync('publish/mumbai/versions.json', data);
