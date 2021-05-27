@@ -36,7 +36,7 @@
 
 import "./IAddressResolver.sol";
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 interface IHasProtocolDaoInfo {
     function owner() external view returns (address);

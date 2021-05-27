@@ -48,7 +48,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 contract PoolManagerLogic is 
@@ -192,7 +192,12 @@ contract PoolManagerLogic is
 
     function numberOfDepositAssets() public view returns (uint256) {
         uint256 result = 0;
-        for (uint8 i = 0; i < supportedAssets.length; i ++) {
+        uint256 maxSupportedAssetCount = IHasAssetInfo(factory).getMaximumSupportedAssetCount();
+        for (uint8 i = 0; i < maxSupportedAssetCount; i ++) {
+            if (i >= supportedAssets.length) {
+                break;
+            }
+            
             if (supportedAssets[i].isDeposit) {
                 result = result.add(1);
             }
@@ -228,7 +233,13 @@ contract PoolManagerLogic is
     {
         uint256 assetsCount = supportedAssets.length;
         address[] memory assets = new address[](assetsCount);
-        for (uint8 i = 0; i < assetsCount; i ++) {
+
+        uint256 maxSupportedAssetCount = IHasAssetInfo(factory).getMaximumSupportedAssetCount();
+        for (uint8 i = 0; i < maxSupportedAssetCount; i ++) {
+            if (i >= assetsCount) {
+                break;
+            }
+
             assets[i] = supportedAssets[i].asset;
         }
         return assets;
@@ -249,7 +260,13 @@ contract PoolManagerLogic is
         uint256[] memory balances = new uint256[](assetCount);
         uint256[] memory rates = new uint256[](assetCount);
 
-        for (uint256 i = 0; i < assetCount; i++) {
+
+        uint256 maxSupportedAssetCount = IHasAssetInfo(factory).getMaximumSupportedAssetCount();
+        for (uint8 i = 0; i < maxSupportedAssetCount; i ++) {
+            if (i >= assetCount) {
+                break;
+            }
+
             address asset = supportedAssets[i].asset;
             balances[i] = assetBalance(asset);
             assets[i] = asset;

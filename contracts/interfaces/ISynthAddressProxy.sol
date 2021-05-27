@@ -1,4 +1,4 @@
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 interface ISynthAddressProxy {
     function target() external view returns (address synthAsset);

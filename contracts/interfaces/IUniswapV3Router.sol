@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 // import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
