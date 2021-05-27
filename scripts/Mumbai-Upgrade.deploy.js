@@ -1,5 +1,6 @@
 const hre = require('hardhat')
 const fs = require('fs');
+const versions = require("../publish/mumbai/versions.json")['v2.0-alpha'].contracts;
 
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
@@ -28,6 +29,7 @@ const dai_price_feed = "0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046";
 
 async function main () {
   const ethers = hre.ethers
+  const artifacts = hre.artifacts
 
   console.log('network:', await ethers.provider.getNetwork())
 
@@ -41,53 +43,45 @@ async function main () {
   console.log('manager address: ', manager.address)
   console.log('dao address: ', dao.address)
 
-  const TestUSDT = await ethers.getContractFactory('TestUSDT');
-  const tUSDT = await TestUSDT.deploy("1000000000");
-  console.log("TestUSDT deployed at ", tUSDT.address);
+  const ITestUSDT = await artifacts.readArtifact("TestUSDT");
+  const tUSDT = await ethers.getContractAt(ITestUSDT.abi, versions.TestUSDT)
+  console.log("TestUSDT at", tUSDT.address);
 
-  const TestUSDC = await ethers.getContractFactory('TestUSDC');
-  const tUSDC = await TestUSDC.deploy("1000000000");
-  console.log("TestUSDC deployed at ", tUSDC.address);
+  const ITestUSDC = await artifacts.readArtifact("TestUSDC");
+  const tUSDC = await ethers.getContractAt(ITestUSDC.abi, versions.TestUSDC)
+  console.log("TestUSDC at", tUSDC.address);
 
-  const TestWETH = await ethers.getContractFactory('TestWETH');
-  const tWETH = await TestWETH.deploy("1000000000");
-  console.log("TestWETH deployed at ", tWETH.address);
+  const ITestWETH = await artifacts.readArtifact("TestWETH");
+  const tWETH = await ethers.getContractAt(ITestWETH.abi, versions.TestWETH)
+  console.log("TestWETH at", tWETH.address);
 
   const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
   const assetHandlerLogic = await AssetHandlerLogic.deploy();
-  console.log("AssetHandler deployed at ", assetHandlerLogic.address);
+  console.log("AssetHandler deployed at", assetHandlerLogic.address);
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   const poolLogic = await PoolLogic.deploy();
-  console.log("PoolLogic deployed at ", poolLogic.address);
+  console.log("PoolLogic deployed at", poolLogic.address);
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
   const poolManagerLogic = await PoolManagerLogic.deploy();
-  console.log("PoolManagerLogic deployed at ", poolManagerLogic.address)
+  console.log("PoolManagerLogic deployed at", poolManagerLogic.address)
 
-  const PoolFactory = await ethers.getContractFactory("PoolFactory");
-  let poolFactory = await PoolFactory.deploy();
-  console.log("PoolFactory deployed at ", poolFactory.address);
-
-  // Deploy ProxyAdmin
-  const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');
-  const proxyAdmin = await ProxyAdmin.deploy();
-  await proxyAdmin.deployed();
-  console.log("ProxyAdmin deployed at ", proxyAdmin.address);
+  const IProxyAdmin = await artifacts.readArtifact("ProxyAdmin");
+  const proxyAdmin = await ethers.getContractAt(IProxyAdmin.abi, versions.ProxyAdmin);
+  console.log("ProxyAdmin at", proxyAdmin.address);
 
   // Deploy AssetHandlerProxy
   const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
   const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
   await assetHandlerProxy.deployed();
-  console.log("AssetHandlerProxy deployed at ", assetHandlerProxy.address);
 
   const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
+  console.log("AssetHandlerProxy deployed at", assetHandlerProxy.address);
 
-  // Deploy PoolFactoryProxy
-  const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
-  poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
-  await poolFactory.deployed();
-  console.log("PoolFactoryProxy deployed at ", poolFactory.address);
+  const IPoolFactory = await artifacts.readArtifact("PoolFactory");
+  const poolFactory = await ethers.getContractAt(IPoolFactory.abi, versions.PoolFactoryProxy);
+  console.log("PoolFactoryProxy at", poolFactory.address);
 
   // Initialize Asset Price Consumer
   const assetWeth = { asset: tWETH.address, assetType: 0, aggregator: eth_price_feed };
@@ -99,26 +93,27 @@ async function main () {
   await assetHandler.deployed();
   console.log("AssetHandler initialized with TestUSDT, TestUSDC, TestWETH");
 
-  poolFactory = await PoolFactory.attach(poolFactory.address);
-  await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-  await poolFactory.deployed();
-  console.log("PoolFactoryProxy initialized");
+  await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
+  console.log("PoolFactoryProxy setLogic", poolLogic.address, poolManagerLogic.address);
+
+  await poolFactory.setAssetHandler(assetHandler.address);
+  console.log("PoolFactoryProxy setAssetHandler", assetHandler.address);
 
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
   erc20Guard.deployed();
-  console.log("ERC20Guard deployed at ", erc20Guard.address);
+  console.log("ERC20Guard deployed at", erc20Guard.address);
 
   const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
   const uniswapV2Guard = await UniswapV2Guard.deploy();
   uniswapV2Guard.deployed();
-  console.log("UniswapV2Guard deployed at ", uniswapV2Guard.address);
+  console.log("UniswapV2Guard deployed at", uniswapV2Guard.address);
 
   await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
   await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
-  console.log("PoolFactory set dao ", dao.address);
+  console.log("PoolFactory set dao", dao.address);
 
-  let versions = {
+  let new_versions = {
     "v2.0-alpha": {
       "tag": "v2.0-alpha",
       "fulltag": "v2.0-alpha",
@@ -143,10 +138,52 @@ async function main () {
   }
 
   // convert JSON object to string
-  const data = JSON.stringify(versions, null, 2);
+  const data = JSON.stringify(new_versions, null, 2);
   console.log(data)
 
   fs.writeFileSync('publish/mumbai/versions.json', data);
+
+  // this is for testing to check if upgrade is success
+  /*
+  console.log('testing...')
+  await poolFactory.createFund(
+    false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[tUSDC.address, true], [tUSDT.address, true], [tWETH.address, true]]
+  )
+
+  const length = (await poolFactory.deployedFundsLength()).toNumber()
+  console.log('deployedFundsLength', length)
+  const fundAddress = await poolFactory.deployedFunds(length - 1);
+  const poolLogicProxy = await PoolLogic.attach(fundAddress);
+  const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
+  const poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
+
+  console.log(await poolManagerLogicProxy.manager(), manager.address)
+
+  console.log('approve')
+  await tUSDC.approve(poolLogicProxy.address, 10e6.toString());
+
+  console.log('setChainlinkTimeout')
+  await assetHandler.setChainlinkTimeout(90000000);
+
+  console.log('deposit')
+  await poolLogicProxy.deposit(tUSDC.address, 10e6.toString());
+
+  const IERC20 = await artifacts.readArtifact("@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20");
+  const iERC20 = new ethers.utils.Interface(IERC20.abi);
+  approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, 10e6.toString()]);
+  console.log('approve')
+  await poolLogicProxy.connect(manager).execTransaction(tUSDC.address, approveABI);
+  
+  console.log('swap')
+  const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
+  const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
+  swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [10e6.toString(), 0, [tUSDC.address, tWETH.address], poolLogicProxy.address, Math.floor(Date.now() / 1000 + 100000000)]);
+  await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI);
+
+  console.log('withdraw')
+  ethers.provider.send("evm_increaseTime", [3600 * 24])
+  await poolLogicProxy.withdraw(5e18.toString())
+  */
 }
 
 main()
