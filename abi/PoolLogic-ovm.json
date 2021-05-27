@@ -41,6 +41,12 @@
       },
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "assetDeposited",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "valueDeposited",
         "type": "uint256"
