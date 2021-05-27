@@ -34,8 +34,8 @@ async function main () {
   const signer = (await ethers.getSigners())[0]
 
   // should be changed with real manager and dao address
-  const manager = (await ethers.getSigners())[1]
-  const dao = (await ethers.getSigners())[2]
+  const manager = (await ethers.getSigners())[0]
+  const dao = (await ethers.getSigners())[0]
 
   console.log('signer address: ', signer.address)
   console.log('manager address: ', manager.address)
@@ -77,7 +77,7 @@ async function main () {
 
   // Deploy AssetHandlerProxy
   const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
-  const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+  const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
   await assetHandlerProxy.deployed();
   console.log("AssetHandlerProxy deployed at ", assetHandlerProxy.address);
 
@@ -85,7 +85,7 @@ async function main () {
 
   // Deploy PoolFactoryProxy
   const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
-  poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, manager.address, "0x");
+  poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
   await poolFactory.deployed();
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
