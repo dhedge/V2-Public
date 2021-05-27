@@ -41,72 +41,58 @@ import "./HasLogic.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
 contract ProxyFactory is OwnableUpgradeSafe, HasLogic {
-    event ProxyCreated(address proxy);
+  event ProxyCreated(address proxy);
 
-    address private poolLogic;
+  address private poolLogic;
 
-    address private poolManagerLogic;
+  address private poolManagerLogic;
 
-    function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic)
-        internal
-    {
-        __Ownable_init();
+  function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic) internal {
+    __Ownable_init();
 
-        poolLogic = _poolLogic;
+    poolLogic = _poolLogic;
 
-        poolManagerLogic = _poolManagerLogic;
+    poolManagerLogic = _poolManagerLogic;
+  }
+
+  function setLogic(address _poolLogic, address _poolManagerLogic) public onlyOwner {
+    poolLogic = _poolLogic;
+
+    poolManagerLogic = _poolManagerLogic;
+  }
+
+  function getLogic(uint8 _proxyType) public view override returns (address) {
+    if (_proxyType == 1) {
+      return poolManagerLogic;
+    } else {
+      return poolLogic;
+    }
+  }
+
+  function deploy(bytes memory _data, uint8 _proxyType) public returns (address) {
+    return _deployProxy(_data, _proxyType);
+  }
+
+  function _deployProxy(bytes memory _data, uint8 _proxyType) internal returns (address) {
+    InitializableUpgradeabilityProxy proxy = _createProxy();
+    emit ProxyCreated(address(proxy));
+    proxy.initialize(address(this), _data, _proxyType);
+    return address(proxy);
+  }
+
+  function _createProxy() internal returns (InitializableUpgradeabilityProxy) {
+    address payable addr;
+    bytes memory code = type(InitializableUpgradeabilityProxy).creationCode;
+
+    assembly {
+      addr := create(0, add(code, 0x20), mload(code))
+      if iszero(extcodesize(addr)) {
+        revert(0, 0)
+      }
     }
 
-    function setLogic(address _poolLogic, address _poolManagerLogic)
-        public
-        onlyOwner
-    {
-        poolLogic = _poolLogic;
+    return InitializableUpgradeabilityProxy(addr);
+  }
 
-        poolManagerLogic = _poolManagerLogic;
-    }
-
-    function getLogic(uint8 _proxyType) public view override returns (address) {
-        if (_proxyType == 1) {
-            return poolManagerLogic;
-        } else {
-            return poolLogic;
-        }
-    }
-
-    function deploy(bytes memory _data, uint8 _proxyType)
-        public
-        returns (address)
-    {
-        return _deployProxy(_data, _proxyType);
-    }
-
-    function _deployProxy(bytes memory _data, uint8 _proxyType)
-        internal
-        returns (address)
-    {
-        InitializableUpgradeabilityProxy proxy = _createProxy();
-        emit ProxyCreated(address(proxy));
-        proxy.initialize(address(this), _data, _proxyType);
-        return address(proxy);
-    }
-
-    function _createProxy()
-        internal
-        returns (InitializableUpgradeabilityProxy)
-    {
-        address payable addr;
-        bytes memory code = type(InitializableUpgradeabilityProxy).creationCode;
-
-        assembly {
-            addr := create(0, add(code, 0x20), mload(code))
-            if iszero(extcodesize(addr)) {
-                revert(0, 0)
-            }
-        }
-
-        return InitializableUpgradeabilityProxy(addr);
-    }
-
-    uint256[50] private __gap;
+  uint256[50] private __gap;
 }

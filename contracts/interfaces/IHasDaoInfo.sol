@@ -37,7 +37,7 @@
 pragma solidity 0.6.12;
 
 interface IHasDaoInfo {
-    function getDaoFee() external view returns (uint256, uint256);
+  function getDaoFee() external view returns (uint256, uint256);
 
-    function getDaoAddress() external view returns (address);
+  function getDaoAddress() external view returns (address);
 }

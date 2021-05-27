@@ -17,7 +17,8 @@
     "test:inte:polygon": "hardhat test test/integration/polygon/*.js --network localhost",
     "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
     "deploy": "node scripts/DHedge.deploy.js",
-    "deploy:mumbai": "hardhat run ./scripts/Mumbai.deploy.js --network mumbai"
+    "deploy:mumbai": "hardhat run ./scripts/Mumbai.deploy.js --network mumbai",
+    "prepare": "husky install"
   },
   "author": "dHEDGE Team",
   "license": "ISC",
@@ -36,6 +37,7 @@
     "hardhat": "^2.1.1",
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.4",
+    "husky": "^6.0.0",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.9",
     "semantic-release": "^17.4.2",

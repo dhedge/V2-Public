@@ -39,26 +39,26 @@ pragma solidity 0.6.12;
 import "./IAddressResolver.sol";
 
 interface IPoolManagerLogic {
-    struct Asset {
-        address asset;
-        bool isDeposit;
-    }
-    
-    function poolLogic() external view returns (address);
+  struct Asset {
+    address asset;
+    bool isDeposit;
+  }
 
-    function getSupportedAssets() external view returns (address[] memory);
+  function poolLogic() external view returns (address);
 
-    function isSupportedAsset(address asset) external view returns (bool);
+  function getSupportedAssets() external view returns (address[] memory);
 
-    function isDepositAsset(address asset) external view returns(bool);
+  function isSupportedAsset(address asset) external view returns (bool);
 
-    function validateAsset(address asset) external view returns (bool);
+  function isDepositAsset(address asset) external view returns (bool);
 
-    function assetValue(address asset) external view returns (uint256);
+  function validateAsset(address asset) external view returns (bool);
 
-    function assetValue(address asset, uint256 amount) external view returns (uint256);
+  function assetValue(address asset) external view returns (uint256);
 
-    function factory() external view returns (address);
+  function assetValue(address asset, uint256 amount) external view returns (uint256);
 
-    function setPoolLogic(address fundAddress) external returns (bool);
+  function factory() external view returns (address);
+
+  function setPoolLogic(address fundAddress) external returns (bool);
 }

@@ -37,6 +37,6 @@
 pragma solidity 0.6.12;
 
 interface IHasGuardInfo {
-    // Get guard
-    function getGuard(address extContract) external view returns (address);
+  // Get guard
+  function getGuard(address extContract) external view returns (address);
 }

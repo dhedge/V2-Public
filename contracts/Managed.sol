@@ -40,120 +40,114 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 contract Managed {
-    using SafeMath for uint256;
+  using SafeMath for uint256;
 
-    event ManagerUpdated(address newManager, string newManagerName);
+  event ManagerUpdated(address newManager, string newManagerName);
 
-    address private _manager;
-    string private _managerName;
+  address private _manager;
+  string private _managerName;
 
-    address[] private _memberList;
-    mapping(address => uint256) private _memberPosition;
+  address[] private _memberList;
+  mapping(address => uint256) private _memberPosition;
 
-    address private _trader;
+  address private _trader;
 
-    function initialize(address manager, string memory managerName) internal {
-        _manager = manager;
-        _managerName = managerName;
+  function initialize(address manager, string memory managerName) internal {
+    _manager = manager;
+    _managerName = managerName;
+  }
+
+  modifier onlyManager() {
+    require(msg.sender == _manager, "only manager");
+    _;
+  }
+
+  modifier onlyManagerOrTrader() {
+    require(msg.sender == _manager || msg.sender == _trader, "only manager or trader");
+    _;
+  }
+
+  function managerName() public view returns (string memory) {
+    return _managerName;
+  }
+
+  function manager() public view returns (address) {
+    return _manager;
+  }
+
+  function isMemberAllowed(address member) public view returns (bool) {
+    return _memberPosition[member] != 0;
+  }
+
+  function getMembers() public view returns (address[] memory) {
+    return _memberList;
+  }
+
+  function changeManager(address newManager, string memory newManagerName) public onlyManager {
+    _manager = newManager;
+    _managerName = newManagerName;
+    emit ManagerUpdated(newManager, newManagerName);
+  }
+
+  function addMembers(address[] memory members) public onlyManager {
+    for (uint256 i = 0; i < members.length; i++) {
+      if (isMemberAllowed(members[i])) continue;
+
+      _addMember(members[i]);
     }
+  }
 
-    modifier onlyManager() {
-        require(msg.sender == _manager, "only manager");
-        _;
+  function removeMembers(address[] memory members) public onlyManager {
+    for (uint256 i = 0; i < members.length; i++) {
+      if (!isMemberAllowed(members[i])) continue;
+
+      _removeMember(members[i]);
     }
+  }
 
-    modifier onlyManagerOrTrader() {
-        require(
-            msg.sender == _manager || msg.sender == _trader,
-            "only manager or trader"
-        );
-        _;
-    }
+  function addMember(address member) public onlyManager {
+    if (isMemberAllowed(member)) return;
 
-    function managerName() public view returns (string memory) {
-        return _managerName;
-    }
+    _addMember(member);
+  }
 
-    function manager() public view returns (address) {
-        return _manager;
-    }
+  function removeMember(address member) public onlyManager {
+    if (!isMemberAllowed(member)) return;
 
-    function isMemberAllowed(address member) public view returns (bool) {
-        return _memberPosition[member] != 0;
-    }
+    _removeMember(member);
+  }
 
-    function getMembers() public view returns (address[] memory) {
-        return _memberList;
-    }
+  function trader() public view returns (address) {
+    return _trader;
+  }
 
-    function changeManager(address newManager, string memory newManagerName)
-        public
-        onlyManager
-    {
-        _manager = newManager;
-        _managerName = newManagerName;
-        emit ManagerUpdated(newManager, newManagerName);
-    }
+  function setTrader(address newTrader) public onlyManager {
+    _trader = newTrader;
+  }
 
-    function addMembers(address[] memory members) public onlyManager {
-        for (uint256 i = 0; i < members.length; i++) {
-            if (isMemberAllowed(members[i])) continue;
+  function removeTrader() public onlyManager {
+    _trader = address(0);
+  }
 
-            _addMember(members[i]);
-        }
-    }
+  function numberOfMembers() public view returns (uint256) {
+    return _memberList.length;
+  }
 
-    function removeMembers(address[] memory members) public onlyManager {
-        for (uint256 i = 0; i < members.length; i++) {
-            if (!isMemberAllowed(members[i])) continue;
+  function _addMember(address member) internal {
+    _memberList.push(member);
+    _memberPosition[member] = _memberList.length;
+  }
 
-            _removeMember(members[i]);
-        }
-    }
+  function _removeMember(address member) internal {
+    uint256 length = _memberList.length;
+    uint256 index = _memberPosition[member].sub(1);
 
-    function addMember(address member) public onlyManager {
-        if (isMemberAllowed(member)) return;
+    address lastMember = _memberList[length.sub(1)];
 
-        _addMember(member);
-    }
+    _memberList[index] = lastMember;
+    _memberPosition[lastMember] = index.add(1);
+    _memberPosition[member] = 0;
 
-    function removeMember(address member) public onlyManager {
-        if (!isMemberAllowed(member)) return;
-
-        _removeMember(member);
-    }
-
-    function trader() public view returns (address) {
-        return _trader;
-    }
-
-    function setTrader(address newTrader) public onlyManager {
-        _trader = newTrader;
-    }
-
-    function removeTrader() public onlyManager {
-        _trader = address(0);
-    }
-
-    function numberOfMembers() public view returns (uint256) {
-        return _memberList.length;
-    }
-
-    function _addMember(address member) internal {
-        _memberList.push(member);
-        _memberPosition[member] = _memberList.length;
-    }
-
-    function _removeMember(address member) internal {
-        uint256 length = _memberList.length;
-        uint256 index = _memberPosition[member].sub(1);
-
-        address lastMember = _memberList[length.sub(1)];
-
-        _memberList[index] = lastMember;
-        _memberPosition[lastMember] = index.add(1);
-        _memberPosition[member] = 0;
-
-        _memberList.pop();
-    }
+    _memberList.pop();
+  }
 }

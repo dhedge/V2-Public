@@ -45,111 +45,101 @@ import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 
 contract UniswapV3SwapGuard is TxDataUtils, IGuard {
-    using Path for bytes;
-    using SafeMath for uint256;
+  using Path for bytes;
+  using SafeMath for uint256;
 
-    // transaction guard for Uniswap Swap Router
-    function txGuard(address pool, bytes calldata data)
-        external
-        override
-        returns (uint8 txType) // transaction type
-    {
-        bytes4 method = getMethod(data);
+  // transaction guard for Uniswap Swap Router
+  function txGuard(address pool, bytes calldata data)
+    external
+    override
+    returns (
+      uint8 txType // transaction type
+    )
+  {
+    bytes4 method = getMethod(data);
 
-        if (method == bytes4(keccak256("exactInput((bytes,address,uint256,uint256,uint256))"))) {
-        
-            address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
-            uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
-            bytes memory path = getBytes(data, 0, offset); // requires an offset due to dynamic Struct/tuple in calldata (abiencoder V2)
-            address srcAsset = path.getFirstPool().toAddress(0);
-            uint256 srcAmount = uint256(getInput(data, 4));
-            address dstAsset;
-            bool hasMultiplePools = path.hasMultiplePools();
-            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
-            
-            require(hasMultiplePools, "trade invalid");
-            
+    if (method == bytes4(keccak256("exactInput((bytes,address,uint256,uint256,uint256))"))) {
+      address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
+      uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
+      bytes memory path = getBytes(data, 0, offset); // requires an offset due to dynamic Struct/tuple in calldata (abiencoder V2)
+      address srcAsset = path.getFirstPool().toAddress(0);
+      uint256 srcAmount = uint256(getInput(data, 4));
+      address dstAsset;
+      bool hasMultiplePools = path.hasMultiplePools();
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
 
-            // check that all swap path assets are supported
-            // srcAsset -> while loop(path assets) -> dstAsset
-            // TODO: consider a better way of doing this
+      require(hasMultiplePools, "trade invalid");
 
-            // check that source asset is supported
-            require(
-                poolManagerLogic.isSupportedAsset(srcAsset),
-                "unsupported source asset"
-            );
-            
-            address asset;
+      // check that all swap path assets are supported
+      // srcAsset -> while loop(path assets) -> dstAsset
+      // TODO: consider a better way of doing this
 
-            // loop through path assets
-            while(hasMultiplePools) {
-                path = path.skipToken();
-                asset = path.getFirstPool().toAddress(0); // gets asset from swap path
-                hasMultiplePools = path.hasMultiplePools();
+      // check that source asset is supported
+      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
 
-                // // TODO: consider enabling a validation of path assets once the total dHedge valid asset universe is big enough
-                // require(
-                //     poolManagerLogic.validateAsset(asset),
-                //     "invalid path asset"
-                // );
-            }
-            
-            // check that destination asset is supported (if it's a valid address)
-            (,dstAsset,) = path.decodeFirstPool(); // gets the destination asset
-            if (dstAsset == address(0)) { // if the remaining path is just trailing zeros, use the last path asset instead
-                dstAsset = asset;
-            } else {
-                require(
-                    poolManagerLogic.isSupportedAsset(dstAsset),
-                    "unsupported destination asset"
-                );
-            }
+      address asset;
 
-            require(pool == toAddress, "recipient is not pool");
+      // loop through path assets
+      while (hasMultiplePools) {
+        path = path.skipToken();
+        asset = path.getFirstPool().toAddress(0); // gets asset from swap path
+        hasMultiplePools = path.hasMultiplePools();
 
-            emit Exchange(
-                address(poolManagerLogic), // TODO: should this be poolLogic address instead?
-                srcAsset,
-                srcAmount,
-                dstAsset,
-                block.timestamp
-            );
+        // // TODO: consider enabling a validation of path assets once the total dHedge valid asset universe is big enough
+        // require(
+        //     poolManagerLogic.validateAsset(asset),
+        //     "invalid path asset"
+        // );
+      }
 
-            txType = 2; // 'Exchange' type
-            return txType;
-        }
+      // check that destination asset is supported (if it's a valid address)
+      (, dstAsset, ) = path.decodeFirstPool(); // gets the destination asset
+      if (dstAsset == address(0)) {
+        // if the remaining path is just trailing zeros, use the last path asset instead
+        dstAsset = asset;
+      } else {
+        require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
+      }
 
-        if (method == bytes4(keccak256("exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"))) {
-        
-            address srcAsset = convert32toAddress(getInput(data, 0));
-            address dstAsset = convert32toAddress(getInput(data, 1));
-            address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
-            uint256 srcAmount = uint256(getInput(data, 5));
-            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
+      require(pool == toAddress, "recipient is not pool");
 
-            require(
-                poolManagerLogic.isSupportedAsset(srcAsset),
-                "unsupported source asset"
-            );
-            
-            require(
-                poolManagerLogic.isSupportedAsset(dstAsset),
-                "unsupported destination asset"
-            );
-            
-            require(pool == toAddress, "recipient is not pool");
+      emit Exchange(
+        address(poolManagerLogic), // TODO: should this be poolLogic address instead?
+        srcAsset,
+        srcAmount,
+        dstAsset,
+        block.timestamp
+      );
 
-            emit Exchange(
-                address(poolManagerLogic), // TODO: should this be poolLogic address instead?
-                srcAsset,
-                srcAmount,
-                dstAsset,
-                block.timestamp
-            );
-            
-            txType = 2;
-            return txType; // 'Exchange' type
-        }
+      txType = 2; // 'Exchange' type
+      return txType;
     }
+
+    if (
+      method == bytes4(keccak256("exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"))
+    ) {
+      address srcAsset = convert32toAddress(getInput(data, 0));
+      address dstAsset = convert32toAddress(getInput(data, 1));
+      address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
+      uint256 srcAmount = uint256(getInput(data, 5));
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
+
+      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
+
+      require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      require(pool == toAddress, "recipient is not pool");
+
+      emit Exchange(
+        address(poolManagerLogic), // TODO: should this be poolLogic address instead?
+        srcAsset,
+        srcAmount,
+        dstAsset,
+        block.timestamp
+      );
+
+      txType = 2;
+      return txType; // 'Exchange' type
+    }
+  }
 }

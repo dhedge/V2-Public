@@ -37,5 +37,5 @@
 pragma solidity 0.6.12;
 
 interface HasLogic {
-    function getLogic(uint8 _proxyType) external view returns (address);
+  function getLogic(uint8 _proxyType) external view returns (address);
 }
