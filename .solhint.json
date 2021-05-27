@@ -2,6 +2,7 @@
   "extends": ["solhint:recommended"],
   "plugins": [],
   "rules": {
-    "compiler-version": ["error", "^0.6.2"]
+    "compiler-version": ["error", "0.6.12"],
+    "max-states-count": ["warn", 21]
   }
 }

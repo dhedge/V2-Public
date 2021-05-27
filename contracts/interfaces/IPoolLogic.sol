@@ -37,5 +37,5 @@
 pragma solidity 0.6.12;
 
 interface IPoolLogic {
-    function poolManagerLogic() external view returns (address);
+  function poolManagerLogic() external view returns (address);
 }
