@@ -3,7 +3,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "fundAddress",
         "type": "address"
@@ -482,6 +482,11 @@
         "internalType": "string",
         "name": "_managerName",
         "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_poolLogic",
+        "type": "address"
       },
       {
         "components": [

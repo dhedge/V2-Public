@@ -296,6 +296,9 @@ describe('PoolFactory', function () {
     let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
     poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
+    // check create fund works correctly for AssetAdded event (fundAddress = poolLogic)
+    expect(poolManagerLogicProxy.filters.AssetAdded(poolLogicProxy.address).topics[1]).to.be.equal(ethers.utils.hexZeroPad(poolLogicProxy.address, 32).toLowerCase());
+
     //default assets are supported
     expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal('2');
     expect(await poolManagerLogicProxy.isSupportedAsset(susd)).to.be.true;
