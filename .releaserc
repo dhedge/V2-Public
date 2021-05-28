@@ -8,6 +8,7 @@
   branches: [
     {name: '1.x', range: '1.x', channel: '1.x'},
     {name: '2.x', range: '2.x', channel: '2.x'},
+    {name: 'release'},
     {name: 'next', channel: 'next'},
     {name: 'next-major', channel: 'next-major'},
     {name: 'rc', channel: 'rc', prerelease: 'rc'},
