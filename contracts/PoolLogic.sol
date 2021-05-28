@@ -202,9 +202,8 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
 
     lastDeposit[msg.sender] = block.timestamp;
 
-    _mintManagerFee();
+    uint256 fundValue = _mintManagerFee();
 
-    uint256 fundValue = totalFundValue();
     uint256 totalSupplyBefore = totalSupply();
 
     require(IERC20(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
@@ -319,9 +318,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
 
     // Deprecated
     // _mintManagerFee(false);
-    _mintManagerFee();
-
-    uint256 fundValue = totalFundValue();
+    uint256 fundValue = _mintManagerFee();
 
     //calculate the proportion
     // _fundTokenAmount = _fundTokenAmount.sub(daoExitFee);
@@ -509,7 +506,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
 
   // Deprecated
   // function _mintManagerFee(bool settle) internal
-  function _mintManagerFee() internal {
+  function _mintManagerFee() internal returns (uint256 fundValue) {
     // Deprecated
     //we need to settle all the assets before minting the manager fee
     // if (settle)
@@ -526,7 +523,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
       _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
 
     // Ignore dust when minting performance fees
-    if (available < 100) return;
+    if (available < 10000) return fundValue;
 
     address daoAddress = IHasDaoInfo(factory).getDaoAddress();
     uint256 daoFeeNumerator;
