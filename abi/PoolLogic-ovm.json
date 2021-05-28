@@ -786,11 +786,6 @@
         "internalType": "string",
         "name": "_fundSymbol",
         "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "_poolManagerLogic",
-        "type": "address"
       }
     ],
     "name": "initialize",
