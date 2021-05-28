@@ -1,14 +1,11 @@
 ---
-name: "pre-release"
+name: "semantic-release"
 
-on:
-  push:
-    branches:
-      - "release"
+on: push
 
 jobs:
-  pre-release:
-    name: "Pre Release"
+  semantic-release:
+    name: "Semantic Release"
     runs-on: "ubuntu-latest"
 
     steps:
