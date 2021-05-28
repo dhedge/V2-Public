@@ -39,12 +39,12 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
-import "../interfaces/ISynth.sol";
-import "../interfaces/ISynthetix.sol";
-import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
+import "../interfaces/synthetix/ISynth.sol";
+import "../interfaces/synthetix/ISynthetix.sol";
+import "../interfaces/synthetix/IAddressResolver.sol";
 
 contract SynthetixGuard is TxDataUtils, IGuard {
   using SafeMath for uint256;

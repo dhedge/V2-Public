@@ -36,8 +36,6 @@
 
 pragma solidity 0.6.12;
 
-import "./IAddressResolver.sol";
-
 interface IPoolManagerLogic {
   struct Asset {
     address asset;
