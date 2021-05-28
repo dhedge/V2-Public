@@ -70,6 +70,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
   event Deposit(
     address fundAddress,
     address investor,
+    address assetDeposited,
     uint256 valueDeposited,
     uint256 fundTokensReceived,
     uint256 totalInvestorFundTokens,
@@ -224,6 +225,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     emit Deposit(
       address(this),
       msg.sender,
+      _asset,
       usdAmount,
       liquidityMinted,
       balanceOf(msg.sender),
@@ -339,6 +341,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
       uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
 
       if (portionOfAssetBalance > 0) {
+        // Ignoring return value for transfer as want to transfer no matter what happened
         IERC20(asset).transfer(msg.sender, portionOfAssetBalance);
       }
     }
