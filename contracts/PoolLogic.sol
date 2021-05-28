@@ -354,12 +354,9 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
     uint256 available =
-      currentTokenPrice
-        .sub(_lastFeeMintPrice)
-        .mul(_tokenSupply)
-        .mul(_feeNumerator)
-        .div(_feeDenominator)
-        .div(currentTokenPrice);
+      currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
+        currentTokenPrice
+      );
 
     return available;
   }
