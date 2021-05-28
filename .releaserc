@@ -6,12 +6,12 @@
     "@semantic-release/changelog"
   ],
   branches: [
-    {name: '1.x', range: '1.x', channel: '1.x'}, // Only after the `1.x` is created in the repo
-    {name: '2.x', range: '2.x', channel: '2.x'}, // Only after the `2.x` is created in the repo
-    {name: 'next', channel: 'next'}, // Only after the `next` is created in the repo
-    {name: 'next-major', channel: 'next-major'}, // Only after the `next-major` is created in the repo
-    {name: 'rc', channel: 'rc', prerelease: 'rc'}, // `prerelease` is set to `alpha` as it is the value of `name`
-    {name: 'alpha', channel: 'alpha', prerelease: 'alpha'}, // `prerelease` is set to `alpha` as it is the value of `name`
-    {name: 'beta', channel: 'beta', prerelease: 'beta'}, // `prerelease` is set to `beta` as it is the value of `name`
+    {name: '1.x', range: '1.x', channel: '1.x'},
+    {name: '2.x', range: '2.x', channel: '2.x'},
+    {name: 'next', channel: 'next'},
+    {name: 'next-major', channel: 'next-major'},
+    {name: 'rc', channel: 'rc', prerelease: 'rc'},
+    {name: 'alpha', channel: 'alpha', prerelease: 'alpha'},
+    {name: 'beta', channel: 'beta', prerelease: 'beta'},
   ]
 }
