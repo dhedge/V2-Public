@@ -149,8 +149,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     address _factory,
     bool _privatePool,
     string memory _fundName,
-    string memory _fundSymbol,
-    address _poolManagerLogic
+    string memory _fundSymbol
   ) public initializer {
     __ERC20_init(_fundName, _fundSymbol);
     __ReentrancyGuard_init();
@@ -161,8 +160,6 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     creationTime = block.timestamp;
 
     tokenPriceAtLastFeeMint = 10**18;
-
-    poolManagerLogic = _poolManagerLogic;
   }
 
   function _beforeTokenTransfer(
@@ -571,8 +568,11 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
   // }`
 
   function setPoolManagerLogic(address _poolManagerLogic) external returns (bool) {
-    address daoAddress = IHasDaoInfo(factory).getDaoAddress();
-    require(msg.sender == daoAddress, "only DAO address allowed");
+    require(
+      msg.sender == address(factory) || msg.sender == IHasDaoInfo(factory).getDaoAddress(),
+      "only DAO or factory allowed"
+    );
+
     poolManagerLogic = _poolManagerLogic;
     emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
     return true;

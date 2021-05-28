@@ -55,7 +55,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
   using SafeMath for uint256;
   using Address for address;
 
-  event AssetAdded(address fundAddress, address manager, address asset, bool isDeposit);
+  event AssetAdded(address indexed fundAddress, address manager, address asset, bool isDeposit);
   event AssetRemoved(address fundAddress, address manager, address asset, bool isDeposit);
 
   event ManagerFeeSet(address fundAddress, address manager, uint256 numerator, uint256 denominator);
@@ -79,11 +79,13 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
     address _factory,
     address _manager,
     string memory _managerName,
+    address _poolLogic,
     Asset[] memory _supportedAssets
   ) public initializer {
     initialize(_manager, _managerName);
 
     factory = _factory;
+    poolLogic = _poolLogic;
     // _setPoolPrivacy(_privatePool);
 
     _changeAssets(_supportedAssets, new Asset[](0));
@@ -296,10 +298,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
   }
 
   function setPoolLogic(address _poolLogic) external override returns (bool) {
-    require(
-      msg.sender == address(factory) || msg.sender == IHasDaoInfo(factory).getDaoAddress(),
-      "only DAO or factory allowed"
-    );
+    address daoAddress = IHasDaoInfo(factory).getDaoAddress();
+    require(msg.sender == daoAddress, "only DAO address allowed");
 
     require(IPoolLogic(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");
 

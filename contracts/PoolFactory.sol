@@ -159,33 +159,33 @@ contract PoolFactory is
     uint256 _managerFeeNumerator,
     IPoolManagerLogic.Asset[] memory _supportedAssets
   ) public returns (address) {
-    bytes memory managerLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,address,string,(address,bool)[])",
-        address(this),
-        // _privatePool,
-        _manager,
-        _managerName,
-        // _fundName,
-        _supportedAssets
-      );
-
-    address managerLogic = deploy(managerLogicData, 1);
-
     bytes memory poolLogicData =
       abi.encodeWithSignature(
-        "initialize(address,bool,string,string,address)",
+        "initialize(address,bool,string,string)",
         address(this),
         _privatePool,
         _fundName,
-        _fundSymbol,
-        managerLogic
+        _fundSymbol
         // addressResolver,
         // _supportedAssets
       );
 
     address fund = deploy(poolLogicData, 2);
-    IPoolManagerLogic(managerLogic).setPoolLogic(fund);
+
+    bytes memory managerLogicData =
+      abi.encodeWithSignature(
+        "initialize(address,address,string,address,(address,bool)[])",
+        address(this),
+        // _privatePool,
+        _manager,
+        _managerName,
+        fund,
+        // _fundName,
+        _supportedAssets
+      );
+
+    address managerLogic = deploy(managerLogicData, 1);
+    IPoolLogic(fund).setPoolManagerLogic(managerLogic);
 
     deployedFunds.push(fund);
     isPool[fund] = true;
