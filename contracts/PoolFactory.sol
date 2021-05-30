@@ -253,7 +253,7 @@ contract PoolFactory is
   }
 
   modifier onlyPoolManager() {
-    require(isPoolManager[msg.sender] == true, "Not a pool manager");
+    require(isPoolManager[msg.sender], "Not a pool manager");
     _;
   }
 
