@@ -185,6 +185,7 @@ contract PoolFactory is
       );
 
     address managerLogic = deploy(managerLogicData, 1);
+    // Ignore return value as want it to continue regardless
     IPoolLogic(fund).setPoolManagerLogic(managerLogic);
 
     deployedFunds.push(fund);
@@ -247,7 +248,7 @@ contract PoolFactory is
   }
 
   modifier onlyPool() {
-    require(isPool[msg.sender] == true, "Not a pool");
+    require(isPool[msg.sender], "Not a pool");
     _;
   }
 
@@ -259,14 +260,14 @@ contract PoolFactory is
   // Manager fees
 
   function getPoolManagerFee(address pool) external view override returns (uint256, uint256) {
-    require(isPool[pool] == true, "supplied address is not a pool");
+    require(isPool[pool], "supplied address is not a pool");
 
     return (poolManagerFeeNumerator[pool], poolManagerFeeDenominator[pool]);
   }
 
   function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override onlyPoolManager {
     // require(pool == msg.sender, "only a pool can change own fee");
-    require(isPool[pool] == true, "supplied address is not a pool");
+    require(isPool[pool], "supplied address is not a pool");
     require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
 
     _setPoolManagerFee(pool, numerator, _MANAGER_FEE_DENOMINATOR);
