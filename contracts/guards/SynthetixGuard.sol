@@ -33,75 +33,64 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
-import "../interfaces/ISynth.sol";
-import "../interfaces/ISynthetix.sol";
-import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
+import "../interfaces/synthetix/ISynth.sol";
+import "../interfaces/synthetix/ISynthetix.sol";
+import "../interfaces/synthetix/IAddressResolver.sol";
 
 contract SynthetixGuard is TxDataUtils, IGuard {
-    using SafeMath for uint256;
+  using SafeMath for uint256;
 
-    bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
+  bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
 
-    IAddressResolver public addressResolver;
+  IAddressResolver public addressResolver;
 
-    constructor(IAddressResolver _addressResolver) public {
-        addressResolver = _addressResolver;
+  constructor(IAddressResolver _addressResolver) public {
+    addressResolver = _addressResolver;
+  }
+
+  // transaction guard for Synthetix synth exchanger
+  function txGuard(address _poolManagerLogic, bytes calldata data)
+    external
+    override
+    returns (
+      uint8 txType // transaction type
+    )
+  {
+    bytes4 method = getMethod(data);
+
+    if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
+      bytes32 srcKey = getInput(data, 0);
+      bytes32 srcAmount = getInput(data, 1);
+      bytes32 dstKey = getInput(data, 2);
+
+      address srcAsset = getAssetProxy(srcKey);
+      address dstAsset = getAssetProxy(dstKey);
+
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
+      require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      emit Exchange(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
+
+      txType = 2; // 'Exchange' type
+      return txType;
     }
+  }
 
-    // transaction guard for Synthetix synth exchanger
-    function txGuard(address _poolManagerLogic, bytes calldata data)
-        external
-        override
-        returns (uint8 txType) // transaction type
-    {
-        bytes4 method = getMethod(data);
-
-        if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-            bytes32 srcKey = getInput(data, 0);
-            bytes32 srcAmount = getInput(data, 1);
-            bytes32 dstKey = getInput(data, 2);
-
-            address srcAsset = getAssetProxy(srcKey);
-            address dstAsset = getAssetProxy(dstKey);
-            
-            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-            require(
-                poolManagerLogic.isSupportedAsset(srcAsset),
-                "unsupported source asset"
-            );
-            require(
-                poolManagerLogic.isSupportedAsset(dstAsset),
-                "unsupported destination asset"
-            );
-
-            emit Exchange(
-                poolManagerLogic.poolLogic(),
-                srcAsset,
-                uint256(srcAmount),
-                dstAsset,
-                block.timestamp
-            );
-            
-            txType = 2; // 'Exchange' type
-            return txType;
-        }
-    }
-
-    function getAssetProxy(bytes32 key) public view returns (address) {
-        address synth =
-            ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
-        require(synth != address(0), "invalid key");
-        address proxy = ISynth(synth).proxy();
-        require(proxy != address(0), "invalid proxy");
-        return proxy;
-    }
+  function getAssetProxy(bytes32 key) public view returns (address) {
+    address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
+    require(synth != address(0), "invalid key");
+    address proxy = ISynth(synth).proxy();
+    require(proxy != address(0), "invalid proxy");
+    return proxy;
+  }
 }

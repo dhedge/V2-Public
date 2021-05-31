@@ -34,13 +34,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 interface IHasAssetInfo {
+  function isValidAsset(address asset) external view returns (bool);
 
-    function isValidAsset(address asset) external view returns (bool);
+  function getAssetPrice(address asset) external view returns (uint256);
 
-    function getAssetPrice(address asset) external view returns (uint256);
-
-    function getMaximumSupportedAssetCount() external view returns (uint256);
+  function getMaximumSupportedAssetCount() external view returns (uint256);
 }

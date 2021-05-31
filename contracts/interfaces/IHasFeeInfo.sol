@@ -34,32 +34,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 interface IHasFeeInfo {
-    // Manager fee
-    function getPoolManagerFee(address pool)
-        external
-        view
-        returns (uint256, uint256);
+  // Manager fee
+  function getPoolManagerFee(address pool) external view returns (uint256, uint256);
 
-    function setPoolManagerFeeNumerator(address pool, uint256 numerator)
-        external;
+  function setPoolManagerFeeNumerator(address pool, uint256 numerator) external;
 
-    function getMaximumManagerFeeNumeratorChange()
-        external
-        view
-        returns (uint256);
+  function getMaximumManagerFeeNumeratorChange() external view returns (uint256);
 
-    function getManagerFeeNumeratorChangeDelay()
-        external
-        view
-        returns (uint256);
+  function getManagerFeeNumeratorChangeDelay() external view returns (uint256);
 
-    // Exit fee
-    // function getExitFee() external view returns (uint256, uint256);
-    function getExitCooldown() external view returns (uint256);
+  // Exit fee
+  // function getExitFee() external view returns (uint256, uint256);
+  function getExitCooldown() external view returns (uint256);
 
-    // Synthetix tracking
-    function getTrackingCode() external view returns (bytes32);
+  // Synthetix tracking
+  function getTrackingCode() external view returns (bytes32);
 }

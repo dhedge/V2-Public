@@ -34,8 +34,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 interface IHasPausable {
-    function isPaused() external view returns (bool);
+  function isPaused() external view returns (bool);
 }

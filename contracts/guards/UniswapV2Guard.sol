@@ -33,7 +33,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
@@ -44,56 +44,41 @@ import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 
 contract UniswapV2Guard is TxDataUtils, IGuard {
-    using SafeMath for uint256;
+  using SafeMath for uint256;
 
-    // transaction guard for 1inch V3 aggregator
-    function txGuard(address pool, bytes calldata data)
-        external
-        override
-        returns (uint8 txType) // transaction type
-    {
-        bytes4 method = getMethod(data);
+  // transaction guard for 1inch V3 aggregator
+  function txGuard(address pool, bytes calldata data)
+    external
+    override
+    returns (
+      uint8 txType // transaction type
+    )
+  {
+    bytes4 method = getMethod(data);
 
-        if (method == bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)"))) {
-            address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0)); // gets the second input (path) first item (token to swap from)
-            address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
-            uint256 srcAmount = uint256(getInput(data, 0));
-            address toAddress = convert32toAddress(getInput(data, 3));
-            uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
+    if (method == bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)"))) {
+      address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0)); // gets the second input (path) first item (token to swap from)
+      address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
+      uint256 srcAmount = uint256(getInput(data, 0));
+      address toAddress = convert32toAddress(getInput(data, 3));
+      uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
 
-            IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
-            require(
-                poolManagerLogic.isSupportedAsset(srcAsset),
-                "unsupported source asset"
-            );
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
+      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
 
-            // validate Uniswap routing addresses
-            for (uint8 i = 1; i < routeLength - 1; i++) {
-                require(
-                    poolManagerLogic.validateAsset(
-                        convert32toAddress(getArrayIndex(data, 2, i))
-                    ),
-                    "invalid routing asset"
-                );
-            }
+      // validate Uniswap routing addresses
+      for (uint8 i = 1; i < routeLength - 1; i++) {
+        require(poolManagerLogic.validateAsset(convert32toAddress(getArrayIndex(data, 2, i))), "invalid routing asset");
+      }
 
-            require(
-                poolManagerLogic.isSupportedAsset(dstAsset),
-                "unsupported destination asset"
-            );
+      require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
 
-            require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
+      require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
-            emit Exchange(
-                poolManagerLogic.poolLogic(),
-                srcAsset,
-                uint256(srcAmount),
-                dstAsset,
-                block.timestamp
-            );
+      emit Exchange(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
-            txType = 2; // 'Exchange' type
-            return txType;
-        }
+      txType = 2; // 'Exchange' type
+      return txType;
     }
+  }
 }

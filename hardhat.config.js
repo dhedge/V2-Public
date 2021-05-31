@@ -38,7 +38,7 @@ module.exports = {
     mumbai: {
       chainId: 80001,
       url: "https://rpc-mumbai.maticvigil.com/",
-      accounts: process.env.TEST_PRIVATE_KEY1 && process.env.TEST_PRIVATE_KEY2 && process.env.TEST_PRIVATE_KEY3 ? [process.env.TEST_PRIVATE_KEY1, process.env.TEST_PRIVATE_KEY2, process.env.TEST_PRIVATE_KEY3] : [],
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
   ovm: {
@@ -66,7 +66,7 @@ module.exports = {
     path: './abi',
     clear: true,
     flat: true,
-    only: ['PoolFactory', 'PoolLogic', 'PoolManagerLogic', 'AssetHandler'],
+    only: ['PoolFactory', 'PoolLogic', 'PoolManagerLogic', 'AssetHandler', 'UniswapV3SwapGuard', 'ERC20Guard', 'SynthetixGuard', 'UniswapV2Guard'],
     spacing: 2
   }
 };

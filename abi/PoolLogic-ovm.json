@@ -41,6 +41,12 @@
       },
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "assetDeposited",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "valueDeposited",
         "type": "uint256"
@@ -786,11 +792,6 @@
         "internalType": "string",
         "name": "_fundSymbol",
         "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "_poolManagerLogic",
-        "type": "address"
       }
     ],
     "name": "initialize",

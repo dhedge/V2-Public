@@ -34,14 +34,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 interface IManaged {
-    function manager() external view returns (address);
+  function manager() external view returns (address);
 
-    function trader() external view returns (address);
+  function trader() external view returns (address);
 
-    function managerName() external view returns (string memory);
+  function managerName() external view returns (string memory);
 
-    function isMemberAllowed(address member) external view returns (bool);
+  function isMemberAllowed(address member) external view returns (bool);
 }

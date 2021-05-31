@@ -296,6 +296,9 @@ describe('PoolFactory', function () {
     let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
     poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
+    // check create fund works correctly for AssetAdded event (fundAddress = poolLogic)
+    expect(poolManagerLogicProxy.filters.AssetAdded(poolLogicProxy.address).topics[1]).to.be.equal(ethers.utils.hexZeroPad(poolLogicProxy.address, 32).toLowerCase());
+
     //default assets are supported
     expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal('2');
     expect(await poolManagerLogicProxy.isSupportedAsset(susd)).to.be.true;
@@ -312,6 +315,7 @@ describe('PoolFactory', function () {
         (
           fundAddress,
           investor,
+          assetDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -325,6 +329,7 @@ describe('PoolFactory', function () {
           resolve({
             fundAddress: fundAddress,
             investor: investor,
+            assetDeposited: assetDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -359,6 +364,7 @@ describe('PoolFactory', function () {
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
+    expect(event.assetDeposited).to.equal(susd);
     expect(event.valueDeposited).to.equal((100e18).toString());
     expect(event.fundTokensReceived).to.equal((100e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((100e18).toString());

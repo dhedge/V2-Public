@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 
@@ -9,9 +9,9 @@ import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
  * explanation of why you would want to use this see the documentation for {TransparentUpgradeableProxy}.
  */
 contract OZProxy is TransparentUpgradeableProxy {
-    constructor(
-        address _logic,
-        address admin_,
-        bytes memory _data
-    ) public payable TransparentUpgradeableProxy(_logic, admin_, _data) {}
+  constructor(
+    address _logic,
+    address admin_,
+    bytes memory _data
+  ) public payable TransparentUpgradeableProxy(_logic, admin_, _data) {}
 }

@@ -34,8 +34,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity ^0.6.2;
+pragma solidity 0.6.12;
 
 interface IPoolLogic {
-    function poolManagerLogic() external view returns (address);
+  function poolManagerLogic() external view returns (address);
+
+  function setPoolManagerLogic(address _poolManagerLogic) external returns (bool);
 }
