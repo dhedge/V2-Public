@@ -255,12 +255,8 @@ contract PoolFactory is
   }
 
   function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override onlyPoolManager {
-<<<<<<< HEAD
     // require(pool == msg.sender, "only a pool can change own fee");
     require(isPool[pool], "supplied address is not a pool");
-=======
-    require(isPool[pool] == true, "supplied address is not a pool");
->>>>>>> master
     require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
 
     _setPoolManagerFee(pool, numerator, _MANAGER_FEE_DENOMINATOR);
