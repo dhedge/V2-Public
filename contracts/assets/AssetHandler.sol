@@ -1,6 +1,7 @@
 // For dHEDGE Asset Price Feeds
 // Asset types:
 // 0 = Chainlink direct USD price feed with 8 decimals
+// 1 = Synthetix synth with Chainlink direct USD price feed
 
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
