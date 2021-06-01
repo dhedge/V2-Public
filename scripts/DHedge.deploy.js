@@ -109,12 +109,12 @@ async function main () {
   // Initialize Asset Price Consumer
   // const assetsusd = { asset: ProxyERC20sUSD, assetType: 1, aggregator: eth_price_feed };
   const assetseth = { asset: ProxysETH, assetType: 1, aggregator: eth_price_feed };
-  const assetseth = { asset: ProxysETH, assetType: 1, aggregator: eth_price_feed };
+  const assetslink = { asset: ProxysLINK, assetType: 1, aggregator: link_price_feed };
   const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
   await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
   await assetHandler.deployed();
-  console.log("AssetHandler initialized with TestUSDT, TestUSDC, TestWETH");
+  console.log("AssetHandler initialized");
 
   const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
   tx = await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -145,16 +145,15 @@ async function main () {
       "network": network,
       "date": new Date(),
       "contracts": {
-        "ETH-Aggregator": usdt_price_feed,
-        "USDC-Aggregator": usdc_price_feed,
         "ETH-Aggregator": eth_price_feed,
+        "LINK-Aggregator": link_price_feed,
         "ProxyAdmin": proxyAdmin.address,
         "PoolFactoryProxy": poolFactory.address,
         "PoolLogic": poolLogic.address,
         "PoolManagerLogic": poolManagerLogic.address,
         "AssetHandlerProxy": assetHandlerProxy.address,
         "ERC20Guard": erc20Guard.address,
-        "UniswapV2Guard": uniswapV2Guard.address,
+        "synthetixGuard": synthetixGuard.address,
       }
     }
   }
