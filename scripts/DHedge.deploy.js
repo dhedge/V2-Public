@@ -23,25 +23,24 @@ async function main () {
   const ethers = hre.ethers
   const l2ethers = hre.l2ethers
 
-  let network = await ethers.provider.getNetwork()
+  let network = await l2ethers.provider.getNetwork()
   console.log('network:', network)
 
-  const signer = (await ethers.getSigners())[0]
+  const signer = (await l2ethers.getSigners())[0]
   console.log('signer address: ', await signer.getAddress())
 
   // const ERC20Asset = await ethers.getContractFactory('ERC20Asset');
   // const sUSD = await ERC20Asset.deploy("sUSD", "SUSD");
   // console.log("sUSD deployed at ", sUSD.address);
 
-  const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
+  const AssetHandlerLogic = await l2ethers.getContractFactory('AssetHandler');
   const assetHandlerLogic = await AssetHandlerLogic.deploy();
   console.log("AssetHandler deployed at ", assetHandlerLogic.address);
 
   // Deploy PoolLogic
   const PoolLogic = await l2ethers.getContractFactory('PoolLogic')
   const poolLogic = await PoolLogic.deploy()
-  tx = await poolLogic.deployed()
-  console.log("tx: ", tx.deployTransaction.hash)
+  await poolLogic.deployed()
   console.log('poolLogic deployed to:', poolLogic.address)
   console.log(
     'deployed bytecode:',
@@ -52,8 +51,7 @@ async function main () {
   // Deploy PoolManagerLogic
   const PoolManagerLogic = await l2ethers.getContractFactory('PoolManagerLogic')
   const poolManagerLogic = await PoolManagerLogic.deploy()
-  tx = await poolManagerLogic.deployed()
-  console.log("tx: ", tx.deployTransaction.hash)
+  await poolManagerLogic.deployed()
   console.log('PoolManagerLogic deployed to:', poolManagerLogic.address)
   console.log(
     'deployed bytecode:',
@@ -64,8 +62,7 @@ async function main () {
   // Deploy PoolFactoryLogic
   const PoolFactoryLogic = await l2ethers.getContractFactory('PoolFactory')
   const poolFactoryLogic = await PoolFactoryLogic.deploy()
-  let tx = await poolFactoryLogic.deployed()
-  console.log("tx: ", tx.deployTransaction.hash)
+  await poolFactoryLogic.deployed()
   console.log('poolFactoryLogic deployed to:', poolFactoryLogic.address)
   console.log(
     'deployed bytecode:',
@@ -75,10 +72,9 @@ async function main () {
   // Deploy ProxyAdmin
   const ProxyAdmin = await l2ethers.getContractFactory('ProxyAdmin')
   const proxyAdmin = await ProxyAdmin.deploy()
-  tx = await proxyAdmin.deployed()
+  await proxyAdmin.deployed()
 
   console.log('ProxyAdmin deployed to:', proxyAdmin.address)
-  console.log("tx: ", tx.deployTransaction.hash)
   console.log(
     'deployed bytecode:',
     await ethers.provider.getCode(proxyAdmin.address)
@@ -87,7 +83,7 @@ async function main () {
   console.log('ProxyAdmin owner:', await proxyAdmin.owner())
 
   // Deploy AssetHandlerProxy
-  const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
+  const AssetHandlerProxy = await l2ethers.getContractFactory('OZProxy');
   const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
   await assetHandlerProxy.deployed();
   console.log("AssetHandlerProxy deployed at ", assetHandlerProxy.address);
@@ -97,36 +93,35 @@ async function main () {
   // Deploy poolFactory Proxy
   const PoolFactoryProxy = await l2ethers.getContractFactory('OZProxy')
   const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x")
-  tx = await poolFactoryProxy.deployed()
+  await poolFactoryProxy.deployed()
 
   console.log('poolFactoryProxy deployed to:', poolFactoryProxy.address)
-  console.log("tx: ", tx.deployTransaction.hash)
   console.log(
     'deployed bytecode:',
     await ethers.provider.getCode(poolFactoryProxy.address)
   )
 
+  const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
+  tx = await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, signer.address);
+  console.log("tx: ", tx.hash)
+
   // Initialize Asset Price Consumer
   // const assetsusd = { asset: ProxyERC20sUSD, assetType: 1, aggregator: eth_price_feed };
   const assetseth = { asset: ProxysETH, assetType: 1, aggregator: eth_price_feed };
   const assetslink = { asset: ProxysLINK, assetType: 1, aggregator: link_price_feed };
-  const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
+  const assetHandlerInitAssets = [assetseth, assetslink];
 
   await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
   await assetHandler.deployed();
   console.log("AssetHandler initialized");
 
-  const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
-  tx = await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-  console.log("tx: ", tx.hash)
-
-  const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+  const ERC20Guard = await l2ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
   erc20Guard.deployed();
   console.log("ERC20Guard deployed at ", erc20Guard.address);
 
-  const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
-  const synthetixGuard = await SynthetixGuard.deploy();
+  const SynthetixGuard = await l2ethers.getContractFactory("SynthetixGuard");
+  const synthetixGuard = await SynthetixGuard.deploy(KOVAN_ADDRESS_RESOLVER);
   synthetixGuard.deployed();
   console.log("synthetixGuard deployed at ", synthetixGuard.address);
 
@@ -162,7 +157,7 @@ async function main () {
   const data = JSON.stringify(versions, null, 2);
   console.log(data)
   fs = require('fs');
-  fs.writeFileSync('versions.json', data, function (err) {
+  fs.writeFileSync('publish/ovm/kovan/versions.json', data, function (err) {
     if (err) return console.log(err);
   });
 
