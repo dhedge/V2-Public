@@ -12,6 +12,9 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
 import "../interfaces/IHasDaoInfo.sol";
 import "../interfaces/IAssetHandler.sol";
+import "../interfaces/IUniswapV2Pair.sol";
+import "../interfaces/IERC20Extended.sol"; // includes decimals()
+import "../utils/DhedgeMath.sol";
 
 contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   using SafeMath for uint256;
@@ -43,16 +46,14 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
    * Returns the latest price of a given asset (decimal: 18)
    * Takes into account the asset type.
    */
-  function getUSDPrice(address asset) public view override returns (uint256) {
+  function getUSDPrice(address asset) public view override returns (uint256 price) {
     address aggregator = priceAggregators[asset];
     uint8 assetType = assetTypes[asset];
 
-    require(aggregator != address(0), "Price aggregator not found");
-
-    uint256 price;
-
     if (assetType == 0) {
       // Chainlink direct feed
+      require(aggregator != address(0), "Price aggregator not found");
+
       try AggregatorV3Interface(aggregator).latestRoundData() returns (
         uint80,
         int256 _price,
@@ -69,11 +70,27 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
       } catch {
         revert("Price get failed");
       }
+    } else if (assetType == 2) {
+      // Uniswap LP token pricing
+      uint256 totalSupply = IUniswapV2Pair(asset).totalSupply();
+      address token0 = IUniswapV2Pair(asset).token0();
+      address token1 = IUniswapV2Pair(asset).token1();
+      (uint256 r0, uint256 r1,) = IUniswapV2Pair(asset).getReserves();
+      uint256 decimal0 = IERC20Extended(token0).decimals();
+      uint256 decimal1 = IERC20Extended(token1).decimals();
+
+      r0 = r0.mul(10**18).div(10**decimal0); // decimal = 18
+      r1 = r1.mul(10**18).div(10**decimal1); // decimal = 18
+      uint256 k = DhedgeMath.sqrt(r0.mul(r1)); // decimal = 18
+
+      uint256 p0 = getUSDPrice(token0); // decimal = 18
+      uint256 p1 = getUSDPrice(token1); // decimal = 18
+      uint256 p = DhedgeMath.sqrt(p0.mul(p1)); // decimal = 18
+
+      price = k.mul(p).mul(2).div(totalSupply); // decimal = 18
     }
 
     require(price > 0, "Price not available");
-
-    return price;
   }
 
   /* ========== MUTATIVE FUNCTIONS ========== */

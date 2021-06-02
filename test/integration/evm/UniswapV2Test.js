@@ -22,7 +22,7 @@ const usdc_price_feed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
 describe("Uniswap V2 Test", function() {
     let WETH, USDC, USDT, UniswapRouter;
     let logicOwner, manager, dao, user;
-    let PoolFactory, PoolLogic, PoolManagerLogic;
+    let PoolFactory, PoolLogic, PoolManagerLogic, assetHandler;
     let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
     
     before(async function(){
@@ -50,7 +50,7 @@ describe("Uniswap V2 Test", function() {
         const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
         await assetHandlerProxy.deployed();
 
-        const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
+        assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
         // Deploy PoolFactoryProxy
         const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
@@ -62,9 +62,18 @@ describe("Uniswap V2 Test", function() {
         const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
         const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
         const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
+
+        // for testing weth/link pricing
+        // const assetLink = { asset: '0x514910771AF9Ca656af840dff83E8264EcF986CA', assetType: 0, aggregator: '0x2c1d072e956AFFC0D435Cb7AC38EF18d24d9127c' };
+        // const assetWethLink = { asset: '0xa2107FA5B38d9bbd2C461D6EDf11B11A50F6b974', assetType: 2, aggregator: '0x0000000000000000000000000000000000000000'}
+        // const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetLink, assetWethLink];
     
         await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
         await assetHandler.deployed();
+        await assetHandler.setChainlinkTimeout(9000000);
+    
+        // const price = await assetHandler.getUSDPrice('0xa2107FA5B38d9bbd2C461D6EDf11B11A50F6b974');
+        // console.log(price.toString())
     
         poolFactory = await PoolFactory.attach(poolFactory.address);
         await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -170,6 +179,7 @@ describe("Uniswap V2 Test", function() {
         let depositEvent = new Promise((resolve, reject) => {
             poolLogicProxy.on('Deposit', (fundAddress,
                 investor,
+                assetDeposited,
                 valueDeposited,
                 fundTokensReceived,
                 totalInvestorFundTokens,
@@ -181,6 +191,7 @@ describe("Uniswap V2 Test", function() {
                     resolve({
                         fundAddress: fundAddress,
                         investor: investor,
+                        assetDeposited: assetDeposited,
                         valueDeposited: valueDeposited,
                         fundTokensReceived: fundTokensReceived,
                         totalInvestorFundTokens: totalInvestorFundTokens,
