@@ -116,57 +116,55 @@ describe("PoolFactory", function() {
 
     });
 
-    // it('should be able to deposit', async function() {
+    it('should be able to deposit', async function() {
+        let depositEvent = new Promise((resolve, reject) => {
+            poolLogicProxy.on('Deposit', (fundAddress,
+                investor,
+                valueDeposited,
+                fundTokensReceived,
+                totalInvestorFundTokens,
+                fundValue,
+                totalSupply,
+                time, event) => {
+                    event.removeListener();
 
-    //     let depositEvent = new Promise((resolve, reject) => {
-    //         poolLogicProxy.on('Deposit', (fundAddress,
-    //             investor,
-    //             valueDeposited,
-    //             fundTokensReceived,
-    //             totalInvestorFundTokens,
-    //             fundValue,
-    //             totalSupply,
-    //             time, event) => {
-    //                 event.removeListener();
+                    resolve({
+                        fundAddress: fundAddress,
+                        investor: investor,
+                        valueDeposited: valueDeposited,
+                        fundTokensReceived: fundTokensReceived,
+                        totalInvestorFundTokens: totalInvestorFundTokens,
+                        fundValue: fundValue,
+                        totalSupply: totalSupply,
+                        time: time
+                    });
+                });
 
-    //                 resolve({
-    //                     fundAddress: fundAddress,
-    //                     investor: investor,
-    //                     valueDeposited: valueDeposited,
-    //                     fundTokensReceived: fundTokensReceived,
-    //                     totalInvestorFundTokens: totalInvestorFundTokens,
-    //                     fundValue: fundValue,
-    //                     totalSupply: totalSupply,
-    //                     time: time
-    //                 });
-    //             });
+            setTimeout(() => {
+                reject(new Error('timeout'));
+            }, 60000)
+        });
 
-    //         setTimeout(() => {
-    //             reject(new Error('timeout'));
-    //         }, 60000)
-    //     });
+        let totalFundValue = await poolLogicProxy.totalFundValue()
+        let totalSupply = await poolLogicProxy.totalSupply();
 
-    //     let totalFundValue = await poolLogicProxy.totalFundValue()
-    //     let totalSupply = await poolLogicProxy.totalSupply();
-    //     let sUSD = await poolManagerLogicProxy.getAssetProxy(susdKey)
-    //     console.log("sUSD address: ", sUSD);
-    //     const token = await ethers.getContractAt("IERC20", sUSD);
-    //     let value = 1e18.toString()
-    //     await token.approve(poolLogicProxy.address, value)
+        const sETH = await ethers.getContractAt("IERC20", ProxysETH);
+        let value = 1e15.toString()
+        await token.approve(poolLogicProxy.address, value)
 
-    //     await poolLogicProxy.deposit(value)
+        await poolLogicProxy.deposit(ProxysETH, value)
 
-    //     let event = await depositEvent;
-    //     let balance = await poolLogicProxy.balanceOf(manager.address);
+        let event = await depositEvent;
+        let balance = await poolLogicProxy.balanceOf(manager.address);
 
-    //     expect(event.fundAddress).to.equal(poolLogicProxy.address);
-    //     expect(event.investor).to.equal(manager.address);
-    //     expect(event.valueDeposited).to.equal(value);
-    //     expect(event.fundTokensReceived).to.equal(value);
-    //     expect(event.totalInvestorFundTokens).to.equal(balance.toString());
-    //     expect(event.fundValue).to.equal(totalFundValue.add(value));
-    //     expect(event.totalSupply).to.equal(totalSupply.add(value));
-    // });
+        expect(event.fundAddress).to.equal(poolLogicProxy.address);
+        expect(event.investor).to.equal(manager.address);
+        expect(event.valueDeposited).to.equal(value);
+        expect(event.fundTokensReceived).to.equal(value);
+        expect(event.totalInvestorFundTokens).to.equal(balance.toString());
+        expect(event.fundValue).to.equal(totalFundValue.add(value));
+        expect(event.totalSupply).to.equal(totalSupply.add(value));
+    });
 
     // it('should be able to deposit again', async function() {
 
