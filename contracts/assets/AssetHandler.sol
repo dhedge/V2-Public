@@ -75,7 +75,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
       uint256 totalSupply = IUniswapV2Pair(asset).totalSupply();
       address token0 = IUniswapV2Pair(asset).token0();
       address token1 = IUniswapV2Pair(asset).token1();
-      (uint256 r0, uint256 r1,) = IUniswapV2Pair(asset).getReserves();
+      (uint256 r0, uint256 r1, ) = IUniswapV2Pair(asset).getReserves();
       uint256 decimal0 = IERC20Extended(token0).decimals();
       uint256 decimal1 = IERC20Extended(token1).decimals();
 
