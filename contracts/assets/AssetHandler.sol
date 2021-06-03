@@ -1,6 +1,8 @@
 // For dHEDGE Asset Price Feeds
 // Asset types:
 // 0 = Chainlink direct USD price feed with 8 decimals
+// 1 = Synthetix synth with Chainlink direct USD price feed
+// 2 = Sushi LP tokens
 
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
@@ -20,7 +22,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   uint256 public chainlinkTimeout; // Chainlink oracle timeout period
   address public poolFactory;
 
-  // Asset Price feeds
+  // Asset Mappings
   mapping(address => uint8) public override assetTypes; // for asset types refer to header comment
   mapping(address => address) public override priceAggregators;
 

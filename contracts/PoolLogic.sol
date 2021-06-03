@@ -48,6 +48,7 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
 import "./utils/TxDataUtils.sol";
 import "./guards/IGuard.sol";
+import "./guards/ILPAssetGuard.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -243,6 +244,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
         IERC20(asset).transfer(msg.sender, portionOfAssetBalance);
+        _withdrawProcessing(asset, msg.sender, portion);
       }
     }
 
@@ -258,6 +260,31 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
       totalSupply(),
       block.timestamp
     );
+  }
+
+  /// @notice Perform any additional processing on withdrawal of asset
+  /// @dev Checks for staked tokens and withdraws them to the investor account
+  /// @param asset Asset for withdrawal processing
+  /// @param to Investor account to send withdrawed tokens to
+  /// @param portion Portion of investor withdrawal of the total dHedge pool
+  function _withdrawProcessing(
+    address asset,
+    address to,
+    uint256 portion
+  ) internal {
+    uint8 assetType = IHasAssetInfo(factory).getAssetType(asset);
+
+    if (assetType == 2) {
+      // Sushi LP token - withdraw any staked tokens
+      address guard = IHasGuardInfo(factory).getGuard(to);
+      require(guard != address(0), "invalid guard");
+      (address stakingContract, bytes memory txData) =
+        ILPAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, msg.sender);
+      if (txData.length > 1) {
+        (bool success, ) = stakingContract.call(txData);
+        require(success == true, "failed to withdraw staked tokens");
+      }
+    }
   }
 
   function execTransaction(address to, bytes memory data) public onlyManagerOrTrader whenNotPaused returns (bool) {

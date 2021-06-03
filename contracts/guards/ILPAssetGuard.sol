@@ -36,12 +36,11 @@
 
 pragma solidity 0.6.12;
 
-interface IHasAssetInfo {
-  function isValidAsset(address asset) external view returns (bool);
-
-  function getAssetPrice(address asset) external view returns (uint256);
-
-  function getAssetType(address asset) external view returns (uint8);
-
-  function getMaximumSupportedAssetCount() external view returns (uint256);
+interface ILPAssetGuard {
+  function getWithdrawStakedTx(
+    address pool,
+    address asset,
+    uint256 withdrawPortion,
+    address to
+  ) external returns (address stakingContract, bytes memory txData);
 }
