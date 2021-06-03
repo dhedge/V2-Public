@@ -39,7 +39,7 @@ library DhedgeMath {
   /**
    * Calculate sqrt (x) rounding down, where x is unsigned 256-bit integer
    * number.
-   * 
+   *
    * credit for this implementation goes to https://github.com/abdk-consulting/abdk-libraries-solidity/blob/master/ABDKMath64x64.sol
    *
    * @param x unsigned 256-bit integer number
