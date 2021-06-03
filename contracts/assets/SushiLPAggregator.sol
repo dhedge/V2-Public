@@ -71,7 +71,15 @@ contract SushiLPAggregator is IAggregatorV3Interface {
 
   /* ========== INTERNAL ========== */
 
-  function _getTokenPrices() internal view returns (uint256, uint256, uint256) {
+  function _getTokenPrices()
+    internal
+    view
+    returns (
+      uint256,
+      uint256,
+      uint256
+    )
+  {
     (int256 answer0, uint256 updatedAt0) = _getTokenPrice(aggregator0);
     (int256 answer1, uint256 updatedAt1) = _getTokenPrice(aggregator1);
 
