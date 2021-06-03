@@ -72,6 +72,8 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
       }
     } else if (assetType == 2) {
       // Uniswap LP token pricing
+      // referenced from https://github.com/sushiswap/kashi-lending/blob/master/contracts/oracles/LPChainlinkOracle.sol
+
       uint256 totalSupply = IUniswapV2Pair(asset).totalSupply();
       address token0 = IUniswapV2Pair(asset).token0();
       address token1 = IUniswapV2Pair(asset).token1();
