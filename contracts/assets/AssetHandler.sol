@@ -17,7 +17,6 @@ import "../interfaces/IAssetHandler.sol";
 contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   using SafeMath for uint256;
 
-  bool public isDisabledChainlink;
   uint256 public chainlinkTimeout; // Chainlink oracle timeout period
   address public poolFactory;
 
@@ -53,7 +52,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
 
     uint256 price;
 
-    if (assetType == 0 && !isDisabledChainlink) {
+    if (assetType == 0) {
       // Chainlink direct feed
       try AggregatorV3Interface(aggregator).latestRoundData() returns (
         uint80,
@@ -84,14 +83,6 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
 
   function setPoolFactory(address _poolFactory) external onlyOwner {
     poolFactory = _poolFactory;
-  }
-
-  function enableChainlink() external onlyOwner {
-    isDisabledChainlink = false;
-  }
-
-  function disableChainlink() external onlyOwner {
-    isDisabledChainlink = true;
   }
 
   function setChainlinkTimeout(uint256 newTimeoutPeriod) external onlyOwner {

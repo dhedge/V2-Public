@@ -86,7 +86,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
 
     factory = _factory;
     poolLogic = _poolLogic;
-    // _setPoolPrivacy(_privatePool);
 
     _changeAssets(_supportedAssets, new Asset[](0));
   }
