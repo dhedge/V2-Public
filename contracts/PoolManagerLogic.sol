@@ -168,13 +168,23 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAss
     emit AssetRemoved(poolLogic, manager(), asset, isDeposit);
   }
 
-  function getDepositAssets() public view returns (Asset[] memory depositAssets) {
+  function getSupportedAssets() public override view returns (Asset[] memory) {
+    return supportedAssets;
+  }
+
+  function getDepositAssets() public view returns (address[] memory ) {
     uint256 assetCount = supportedAssets.length;
+    address[] memory depositAssets = new address[](assetCount);
+    uint8 index = 0;
     for (uint8 i = 0; i < assetCount; i++) {
       if (supportedAssets[i].isDeposit) {
-        depositAssets[i] = supportedAssets[i];
+        depositAssets[i] = supportedAssets[i].asset;
+        index++;
       }
     }
+    uint256 reduceLength = assetCount - index;
+    assembly { mstore(depositAssets, sub(mload(depositAssets), reduceLength)) }
+    return depositAssets;
   }
 
   function assetValue(address asset, uint256 amount) public view override returns (uint256) {
@@ -190,10 +200,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAss
 
   function assetValue(address asset) public view override returns (uint256) {
     return assetValue(asset, assetBalance(asset));
-  }
-
-  function getSupportedAssets() public override view returns (Asset[] memory) {
-    return supportedAssets;
   }
 
   function getFundComposition()

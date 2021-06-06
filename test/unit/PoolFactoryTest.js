@@ -196,6 +196,30 @@ describe('PoolFactory', function () {
   });
 
   it('Should be able to createFund', async function () {
+
+    await poolLogic.initialize(poolFactory.address, false,  "Test Fund", "DHTF")
+
+    console.log("Passed poolLogic Init!")
+
+    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [[susd, true], [seth, true]])
+
+    console.log("Passed poolManagerLogic Init!")
+
+    await expect(
+      poolFactory.createFund(
+        false,
+        manager.address,
+        'Barren Wuffet',
+        'Test Fund',
+        'DHTF',
+        new ethers.BigNumber.from('6000'),
+        [
+          [susd, true],
+          [seth, true],
+        ],
+      ),
+    ).to.be.revertedWith('invalid fraction');
+
     console.log('Creating Fund...');
 
     let fundCreatedEvent = new Promise((resolve, reject) => {
@@ -233,30 +257,7 @@ describe('PoolFactory', function () {
       }, 60000);
     });
 
-    // await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", mock.address, [sethKey])
-
-    // console.log("Passed poolManagerLogic Init!")
-
-    // await poolLogic.initialize(poolFactory.address, false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", mock.address)
-
-    // console.log("Passed poolLogic Init!")
-
-    await expect(
-      poolFactory.createFund(
-        false,
-        manager.address,
-        'Barren Wuffet',
-        'Test Fund',
-        'DHTF',
-        new ethers.BigNumber.from('6000'),
-        [
-          [susd, true],
-          [seth, true],
-        ],
-      ),
-    ).to.be.revertedWith('invalid fraction');
-
-    let tx = await poolFactory.createFund(
+    await poolFactory.createFund(
       false,
       manager.address,
       'Barren Wuffet',
@@ -272,6 +273,7 @@ describe('PoolFactory', function () {
     let event = await fundCreatedEvent;
 
     fundAddress = event.fundAddress;
+    console.log('fundAddress: ', fundAddress);
     expect(event.isPoolPrivate).to.be.false;
     expect(event.fundName).to.equal('Test Fund');
     // expect(event.fundSymbol).to.equal("DHTF");
@@ -280,8 +282,9 @@ describe('PoolFactory', function () {
     expect(event.managerFeeNumerator.toString()).to.equal('5000');
     expect(event.managerFeeDenominator.toString()).to.equal('10000');
 
-    let deployedFundsLength = await poolFactory.deployedFundsLength();
-    expect(deployedFundsLength.toString()).to.equal('1');
+    let deployedFunds = await poolFactory.getDeployedFunds();
+    let deployedFundsLength = deployedFunds.length;
+    expect(deployedFundsLength).to.equal(1);
 
     let isPool = await poolFactory.isPool(fundAddress);
     expect(isPool).to.be.true;
@@ -300,7 +303,8 @@ describe('PoolFactory', function () {
     expect(poolManagerLogicProxy.filters.AssetAdded(poolLogicProxy.address).topics[1]).to.be.equal(ethers.utils.hexZeroPad(poolLogicProxy.address, 32).toLowerCase());
 
     //default assets are supported
-    expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal('2');
+    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    expect(supportedAssets.length).to.equal(2);
     expect(await poolManagerLogicProxy.isSupportedAsset(susd)).to.be.true;
     expect(await poolManagerLogicProxy.isSupportedAsset(seth)).to.be.true;
 
@@ -354,7 +358,7 @@ describe('PoolFactory', function () {
     ]);
     await susdProxy.givenCalldataReturnBool(transferFromABI, true);
 
-    let totalFundValue = await poolLogicProxy.totalFundValue();
+    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
     // As default there's susd and seth and each return 1 by IExchangeRates
     expect(totalFundValue.toString()).to.equal('0');
 
@@ -416,7 +420,7 @@ describe('PoolFactory', function () {
     // Withdraw 50%
     let withdrawAmount = 50e18;
     let totalSupply = await poolLogicProxy.totalSupply();
-    let totalFundValue = await poolLogicProxy.totalFundValue();
+    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
     await expect(poolLogicProxy.withdraw(withdrawAmount.toString())).to.be.revertedWith('cooldown active');
 
@@ -437,7 +441,7 @@ describe('PoolFactory', function () {
     expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
     expect(event.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
-    expect(event.fundValue).to.equal((100e18).toString());
+    expect(event.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
     expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
   });
 
@@ -455,8 +459,9 @@ describe('PoolFactory', function () {
       ],
     );
 
-    let deployedFundsLength = await poolFactory.deployedFundsLength();
-    let fundAddress = await poolFactory.deployedFunds(deployedFundsLength - 1);
+    let deployedFunds = await poolFactory.getDeployedFunds();
+    let deployedFundsLength = deployedFunds.length;
+    let fundAddress = deployedFunds[deployedFundsLength - 1];
     let poolLogicPrivateProxy = await PoolLogic.attach(fundAddress);
     let poolManagerLogicPrivateProxy = await PoolManagerLogic.attach(await poolLogicPrivateProxy.poolManagerLogic());
 
@@ -514,8 +519,9 @@ describe('PoolFactory', function () {
     // Can add asset
     await poolManagerLogicManagerProxy.changeAssets([[slink, false]], []);
 
-    let numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets();
-    expect(numberOfSupportedAssets).to.eq('3');
+    let supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
+    let numberOfSupportedAssets = supportedAssets.length;
+    expect(numberOfSupportedAssets).to.eq(3);
 
     // Can not remove persist asset
     await expect(poolManagerLogicUser1Proxy.changeAssets([], [[slink, false]])).to.be.revertedWith(
@@ -543,17 +549,25 @@ describe('PoolFactory', function () {
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 0);
     await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]);
 
-    numberOfSupportedAssets = await poolManagerLogicManagerProxy.numberOfSupportedAssets();
-    expect(numberOfSupportedAssets).to.eq('2');
-
+    supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
+    numberOfSupportedAssets = supportedAssets.length;
+    expect(numberOfSupportedAssets).to.eq(2);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
-    expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(2);
+
     await poolManagerLogicManagerProxy.changeAssets([[slink, true]], []);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.true;
-    expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(3);
+
+    depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
+    numberOfDepositAssets = depositAssets.length;
+
+    expect(numberOfDepositAssets).to.be.equal(3);
     await poolManagerLogicManagerProxy.changeAssets([], [[slink, true]]);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
-    expect(await poolManagerLogicProxy.numberOfDepositAssets()).to.be.equal(2);
+
+    depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
+    numberOfDepositAssets = depositAssets.length;
+
+    expect(numberOfDepositAssets).to.be.equal(2);
     await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]);
   });
 

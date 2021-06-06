@@ -386,21 +386,9 @@
     "name": "getDepositAssets",
     "outputs": [
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "asset",
-            "type": "address"
-          },
-          {
-            "internalType": "bool",
-            "name": "isDeposit",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct IHaveSupportedAssets.Asset[]",
-        "name": "depositAssets",
-        "type": "tuple[]"
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
