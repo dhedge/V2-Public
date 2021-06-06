@@ -35,24 +35,14 @@
 //
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
-interface IPoolManagerLogic {
+interface IHaveSupportedAssets {
+  struct Asset {
+    address asset;
+    bool isDeposit;
+  }
 
-  function poolLogic() external view returns (address);
+  function getSupportedAssets() external view returns (Asset[] memory);
 
-  function isSupportedAsset(address asset) external view returns (bool);
-
-  function isDepositAsset(address asset) external view returns (bool);
-
-  function validateAsset(address asset) external view returns (bool);
-
-  function assetValue(address asset) external view returns (uint256);
-
-  function assetValue(address asset, uint256 amount) external view returns (uint256);
-
-  function factory() external view returns (address);
-
-  function setPoolLogic(address fundAddress) external returns (bool);
-
-  function totalFundValue() external view returns (uint256);
 }

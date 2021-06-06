@@ -46,6 +46,7 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
+import "./interfaces/IHaveSupportedAssets.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
@@ -150,7 +151,7 @@ contract PoolFactory is
     string memory _fundName,
     string memory _fundSymbol,
     uint256 _managerFeeNumerator,
-    IPoolManagerLogic.Asset[] memory _supportedAssets
+    IHaveSupportedAssets.Asset[] memory _supportedAssets
   ) public returns (address) {
     bytes memory poolLogicData =
       abi.encodeWithSignature(
@@ -452,6 +453,12 @@ contract PoolFactory is
 
   function isPaused() public view override returns (bool) {
     return paused();
+  }
+
+  /// @notice Return full array of deployed funds
+  /// @return full array of deployed funds
+  function getDeployedFunds() public view returns (address[] memory){
+    return deployedFunds;
   }
 
   uint256[50] private __gap;

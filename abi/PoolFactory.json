@@ -253,7 +253,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IPoolManagerLogic.Asset[]",
+        "internalType": "struct IHaveSupportedAssets.Asset[]",
         "name": "_supportedAssets",
         "type": "tuple[]"
       }
@@ -383,6 +383,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getDeployedFunds",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
