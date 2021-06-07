@@ -161,7 +161,8 @@ describe("Synthetix Test", function() {
         expect(event.managerFeeNumerator.toString()).to.equal('5000');
         expect(event.managerFeeDenominator.toString()).to.equal('10000');
 
-        let deployedFundsLength = await poolFactory.deployedFundsLength();
+        let deployedFunds = await poolFactory.getDeployedFunds()
+        let deployedFundsLength = deployedFunds.length;
         expect(deployedFundsLength.toString()).to.equal('1');
 
         let isPool = await poolFactory.isPool(fundAddress);

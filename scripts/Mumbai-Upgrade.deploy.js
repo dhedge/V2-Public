@@ -150,9 +150,10 @@ async function main () {
     false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[tUSDC.address, true], [tUSDT.address, true], [tWETH.address, true]]
   )
 
-  const length = (await poolFactory.deployedFundsLength()).toNumber()
+  const deployedFunds = await poolFactory.getDeployedFunds()
+  const length = deployedFunds.length;
   console.log('deployedFundsLength', length)
-  const fundAddress = await poolFactory.deployedFunds(length - 1);
+  const fundAddress = deployedFunds(length - 1)
   const poolLogicProxy = await PoolLogic.attach(fundAddress);
   const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
   const poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);

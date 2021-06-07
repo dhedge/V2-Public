@@ -199,10 +199,6 @@ contract PoolFactory is
     return fund;
   }
 
-  function deployedFundsLength() external view returns (uint256) {
-    return deployedFunds.length;
-  }
-
   // DAO info
 
   function getDaoAddress() public view override returns (address) {

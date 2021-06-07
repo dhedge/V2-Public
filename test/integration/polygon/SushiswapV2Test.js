@@ -50,14 +50,14 @@ describe("Sushiswap V2 Test", function() {
 
         // Deploy AssetHandlerProxy
         const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
-        const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+        const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
         await assetHandlerProxy.deployed();
 
         const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
         // Deploy PoolFactoryProxy
         const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
-        poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, manager.address, "0x");
+        poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
         await poolFactory.deployed();
 
         // Initialize Asset Price Consumer
@@ -68,6 +68,7 @@ describe("Sushiswap V2 Test", function() {
     
         await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
         await assetHandler.deployed();
+        // await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
     
         poolFactory = await PoolFactory.attach(poolFactory.address);
         await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -93,13 +94,23 @@ describe("Sushiswap V2 Test", function() {
         USDT = await ethers.getContractAt(IERC20.abi, usdt);
         USDC = await ethers.getContractAt(IERC20.abi, usdc);
         WETH = await ethers.getContractAt(IERC20.abi, weth);
+        WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
+        let balance = await ethers.provider.getBalance(logicOwner.address);
+        console.log("Matic balance: ", balance.toString());
+        balance = await WMATIC.balanceOf(logicOwner.address);
+        console.log("WMatic balance: ", balance.toString());
         const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
         const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
         // deposit Matic -> WMatic
-        await WMatic.deposit({ value: units(500) });
+        await WMatic.deposit({ value: units(50) });
+        balance = await WMATIC.balanceOf(logicOwner.address);
+        console.log("WMatic balance: ", balance.toString());
+
         // WMatic -> USDC
-        await WMatic.approve(sushiswapV2Router, units(500));
-        await sushiswapRouter.swapExactTokensForTokens(units(500), 0, [wmatic, usdc], logicOwner.address, Math.floor(Date.now() / 1000 + 100000000));
+        await WMatic.approve(sushiswapV2Router, units(50));
+        await sushiswapRouter.swapExactTokensForTokens(units(50), 0, [wmatic, usdc], logicOwner.address, Math.floor(Date.now() / 1000 + 100000000));
+        balance = await USDC.balanceOf(logicOwner.address);
+        console.log("USDC balance: ", balance.toString());
     });
 
     it("Should be able to createFund", async function() {
@@ -130,7 +141,7 @@ describe("Sushiswap V2 Test", function() {
         ))
             .to.be.revertedWith('invalid fraction');
 
-        let tx = await poolFactory.createFund(
+        await poolFactory.createFund(
             false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[usdc, true], [weth, true]]
         );
 
@@ -145,7 +156,8 @@ describe("Sushiswap V2 Test", function() {
         expect(event.managerFeeNumerator.toString()).to.equal('5000');
         expect(event.managerFeeDenominator.toString()).to.equal('10000');
 
-        let deployedFundsLength = await poolFactory.deployedFundsLength();
+        let deployedFunds = await poolFactory.getDeployedFunds()
+        let deployedFundsLength = deployedFunds.length;
         expect(deployedFundsLength.toString()).to.equal('1');
 
         let isPool = await poolFactory.isPool(fundAddress);
@@ -162,7 +174,9 @@ describe("Sushiswap V2 Test", function() {
         poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
         //default assets are supported
-        expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal("2");
+        let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+        let numberOfSupportedAssets = supportedAssets.length;
+        expect(numberOfSupportedAssets).to.eq(2);
         expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true
         expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true
 
@@ -175,6 +189,7 @@ describe("Sushiswap V2 Test", function() {
         let depositEvent = new Promise((resolve, reject) => {
             poolLogicProxy.on('Deposit', (fundAddress,
                 investor,
+                assetDeposited,
                 valueDeposited,
                 fundTokensReceived,
                 totalInvestorFundTokens,
@@ -186,6 +201,7 @@ describe("Sushiswap V2 Test", function() {
                     resolve({
                         fundAddress: fundAddress,
                         investor: investor,
+                        assetDeposited: assetDeposited,
                         valueDeposited: valueDeposited,
                         fundTokensReceived: fundTokensReceived,
                         totalInvestorFundTokens: totalInvestorFundTokens,
@@ -200,7 +216,29 @@ describe("Sushiswap V2 Test", function() {
             }, 60000);
         });
 
-        let totalFundValue = await poolLogicProxy.totalFundValue();
+        let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+        console.log("supportedAsset: ", supportedAssets);
+
+        let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", eth_price_feed);
+        let ethPrice = await chainlinkEth.latestRoundData();
+        console.log("eth price: ", ethPrice[1].toString());
+        console.log("updatedAt: ", ethPrice[3].toString());
+
+        let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", usdc_price_feed);
+        let usdcPrice = await chainlinkUsdc.latestRoundData();
+        console.log("usdc price: ", usdcPrice[1].toString());
+        console.log("updatedAt: ", usdcPrice[3].toString());
+
+        // Revert on second time
+        let assetBalance = await poolManagerLogicProxy.assetBalance(usdc);
+        console.log("assetBalance: ", assetBalance.toString());
+
+        // Revert on second time
+        let assetValue = await poolManagerLogicProxy['assetValue(address)'](usdc);
+        console.log("assetValue: ", assetValue.toString());
+
+        // Revert on second time
+        totalFundValue = await poolManagerLogicProxy.totalFundValue();
         expect(totalFundValue.toString()).to.equal('0');
 
         await expect(poolLogicProxy.deposit(usdt, 10e6.toString())).to.be.revertedWith("invalid deposit asset");
@@ -327,7 +365,8 @@ describe("Sushiswap V2 Test", function() {
         await expect(poolLogicProxy.withdraw(withdrawAmount))
             .to.be.revertedWith('cooldown active');
 
-        ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 1 day
+        // ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 1 day
+        await poolFactory.setExitCooldown(0);
 
         await poolLogicProxy.withdraw(withdrawAmount)
 

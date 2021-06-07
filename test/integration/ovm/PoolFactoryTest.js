@@ -75,7 +75,8 @@ describe("PoolFactory", function() {
             }, 60000)
         });
 
-        let deployedFundsLength = await poolFactory.deployedFundsLength();
+        let deployedFunds = await poolFactory.getDeployedFunds()
+        let deployedFundsLength = deployedFunds.length;
 
         let tx = await poolFactory.createFund( false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[ProxysETH, true], [ProxysLINK, true]]);
 
@@ -90,7 +91,8 @@ describe("PoolFactory", function() {
         expect(event.managerFeeNumerator.toString()).to.equal('5000');
         expect(event.managerFeeDenominator.toString()).to.equal('10000');
 
-        let deployedFundsLengthAfter = await poolFactory.deployedFundsLength();
+        let deployedFunds = await poolFactory.getDeployedFunds()
+        let deployedFundsLengthAfter = deployedFunds.length;
         expect(deployedFundsLengthAfter.toString()).to.equal(( deployedFundsLength.add(1) ).toString());
 
         let isPool = await poolFactory.isPool(fundAddress)
