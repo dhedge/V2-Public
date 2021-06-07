@@ -79,7 +79,7 @@ describe("Sushiswap V2 Test", function() {
         erc20Guard.deployed();
 
         const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-        uniswapV2Guard = await UniswapV2Guard.deploy();
+        uniswapV2Guard = await UniswapV2Guard.deploy(sushiswapV2Factory);
         uniswapV2Guard.deployed();
 
         await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);

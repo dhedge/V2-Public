@@ -8,6 +8,9 @@ const checkAlmostSame = (a, b) => {
     expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(105).div(100))).to.be.true;
 }
 
+const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+
 // For mainnet
 const susd_price_feed = "0xad35Bd71b9aFE6e4bDc266B345c198eaDEf9Ad94";
 const eth_price_feed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
@@ -95,7 +98,7 @@ describe("Synthetix Test", function() {
         erc20Guard.deployed();
 
         const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-        uniswapV2Guard = await UniswapV2Guard.deploy();
+        uniswapV2Guard = await UniswapV2Guard.deploy(uniswapV2Factory);
         uniswapV2Guard.deployed();
 
         await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);

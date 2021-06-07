@@ -36,6 +36,8 @@
 // Transaction Types in execTransaction()
 // 1. Approve: Approving a token for spending by different address/contract
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
+// 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
+// 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
 
 pragma solidity 0.6.12;
 

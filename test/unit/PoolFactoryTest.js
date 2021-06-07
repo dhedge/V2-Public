@@ -17,7 +17,7 @@ let poolFactory,
   erc20Guard,
   uniswapV2Guard,
   uniswapV3SwapGuard;
-let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // contracts
+let addressResolver, synthetix, uniswapV2Factory, uniswapV2Router, uniswapV3Router; // contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
 let usd_price_feed, eth_price_feed, link_price_feed;
@@ -56,6 +56,7 @@ describe('PoolFactory', function () {
     usd_price_feed = await MockContract.deploy();
     eth_price_feed = await MockContract.deploy();
     link_price_feed = await MockContract.deploy();
+    uniswapV2Factory = await MockContract.deploy();
     susd = susdProxy.address;
     seth = sethProxy.address;
     slink = slinkProxy.address;
@@ -182,7 +183,7 @@ describe('PoolFactory', function () {
     erc20Guard.deployed();
 
     const UniswapV2Guard = await ethers.getContractFactory('UniswapV2Guard');
-    uniswapV2Guard = await UniswapV2Guard.deploy();
+    uniswapV2Guard = await UniswapV2Guard.deploy(uniswapV2Factory.address);
     uniswapV2Guard.deployed();
 
     const UniswapV3SwapGuard = await ethers.getContractFactory('UniswapV3SwapGuard');
