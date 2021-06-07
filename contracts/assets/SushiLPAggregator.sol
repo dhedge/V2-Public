@@ -9,6 +9,11 @@ import "../interfaces/IUniswapV2Pair.sol";
 import "../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../utils/DhedgeMath.sol";
 
+/**
+  * @title Sushi LP aggregator.
+  * @notice You can use this contract for lp token pricing oracle.
+  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
+  */
 contract SushiLPAggregator is IAggregatorV3Interface {
   using SafeMath for uint256;
 

@@ -53,6 +53,7 @@ contract Managed {
   address private _trader;
 
   function initialize(address manager, string memory managerName) internal {
+    require(manager != address(0), "Invalid manager");
     _manager = manager;
     _managerName = managerName;
   }
@@ -84,6 +85,7 @@ contract Managed {
   }
 
   function changeManager(address newManager, string memory newManagerName) public onlyManager {
+    require(newManager != address(0), "Invalid manager");
     _manager = newManager;
     _managerName = newManagerName;
     emit ManagerUpdated(newManager, newManagerName);
@@ -122,6 +124,7 @@ contract Managed {
   }
 
   function setTrader(address newTrader) public onlyManager {
+    require(newTrader != address(0), "Invalid trader");
     _trader = newTrader;
   }
 

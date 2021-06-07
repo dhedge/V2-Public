@@ -25,6 +25,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
 
   function initialize(address _poolFactory, Asset[] memory assets) public initializer {
+    require(_poolFactory != address(0), "Invalid poolFactory");
     OwnableUpgradeSafe.__Ownable_init();
 
     poolFactory = _poolFactory;
@@ -48,10 +49,9 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     address aggregator = priceAggregators[asset];
     uint8 assetType = assetTypes[asset];
 
-    if (assetType == 0) {
-      // Chainlink direct feed
-      require(aggregator != address(0), "Price aggregator not found");
+    require(aggregator != address(0), "Price aggregator not found");
 
+    if (assetType == 0) {
       try IAggregatorV3Interface(aggregator).latestRoundData() returns (
         uint80,
         int256 _price,
@@ -78,6 +78,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   /* ---------- From Owner ---------- */
 
   function setPoolFactory(address _poolFactory) external onlyOwner {
+    require(_poolFactory != address(0), "Invalid poolFactory");
     poolFactory = _poolFactory;
   }
 

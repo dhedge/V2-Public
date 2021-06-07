@@ -35,15 +35,16 @@
 
 pragma solidity 0.6.12;
 
+/**
+  * @title A library for mathematical calculations.
+  * @dev For not only `sqrt` functionality is available. More functionalities can be added.
+  */
 library DhedgeMath {
   /**
-   * Calculate sqrt (x) rounding down, where x is unsigned 256-bit integer
-   * number.
-   *
-   * credit for this implementation goes to https://github.com/abdk-consulting/abdk-libraries-solidity/blob/master/ABDKMath64x64.sol
-   *
+   * @notice credit for this implementation goes to https://github.com/abdk-consulting/abdk-libraries-solidity/blob/master/ABDKMath64x64.sol
+   * @dev Calculate sqrt (x) rounding down, where x is unsigned 256-bit integer number.
    * @param x unsigned 256-bit integer number
-   * @return unsigned 128-bit integer number
+   * @return sqrt(`x`) unsigned 128-bit integer number
    */
   function sqrt(uint256 x) internal pure returns (uint128) {
     if (x == 0) return 0;
