@@ -5,12 +5,11 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
 
-import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
-import "../interfaces/IHasDaoInfo.sol";
+import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IAssetHandler.sol";
 
 contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
@@ -41,8 +40,10 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   }
 
   /**
-   * Returns the latest price of a given asset (decimal: 18)
-   * Takes into account the asset type.
+   * @notice Currenly only use chainlink price feed.
+   * @dev Calculate the USD price of a given asset.
+   * @param asset the asset address
+   * @return price Returns the latest price of a given asset (decimal: 18)
    */
   function getUSDPrice(address asset) public view override returns (uint256 price) {
     address aggregator = priceAggregators[asset];
@@ -51,8 +52,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     require(aggregator != address(0), "Price aggregator not found");
 
     if (assetType == 0) {
-      // Chainlink direct feed
-      try AggregatorV3Interface(aggregator).latestRoundData() returns (
+      try IAggregatorV3Interface(aggregator).latestRoundData() returns (
         uint80,
         int256 _price,
         uint256,
