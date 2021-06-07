@@ -36,9 +36,9 @@
 pragma solidity 0.6.12;
 
 /**
-  * @title A library for mathematical calculations.
-  * @dev For not only `sqrt` functionality is available. More functionalities can be added.
-  */
+ * @title A library for mathematical calculations.
+ * @dev For not only `sqrt` functionality is available. More functionalities can be added.
+ */
 library DhedgeMath {
   /**
    * @notice credit for this implementation goes to https://github.com/abdk-consulting/abdk-libraries-solidity/blob/master/ABDKMath64x64.sol
