@@ -39,8 +39,10 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   }
 
   /**
-   * Returns the latest price of a given asset (decimal: 18)
-   * Takes into account the asset type.
+   * @notice Currenly only use chainlink price feed.
+   * @dev Calculate the USD price of a given asset.
+   * @param asset the asset address
+   * @return price Returns the latest price of a given asset (decimal: 18)
    */
   function getUSDPrice(address asset) public view override returns (uint256 price) {
     address aggregator = priceAggregators[asset];

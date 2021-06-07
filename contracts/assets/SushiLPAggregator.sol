@@ -32,6 +32,10 @@ contract SushiLPAggregator is IAggregatorV3Interface {
 
   /* ========== VIEWS ========== */
 
+  /**
+   * @dev Get the latest round data. Should be the same format as chainlink aggregator.
+   * @return Returns the latest round data of a given sushi lp token (price decimal: 8)
+   */
   function latestRoundData()
     external
     view
