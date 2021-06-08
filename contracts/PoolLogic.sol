@@ -393,7 +393,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
   }
 
   function _mintManagerFee() internal returns (uint256 fundValue) {
-    uint256 fundValue = totalFundValue();
+    fundValue = totalFundValue();
     uint256 tokenSupply = totalSupply();
 
     uint256 managerFeeNumerator;

@@ -977,7 +977,7 @@ describe("PoolFactory", function () {
   });
 
   it("can withdraw staked Sushi LP token", async function () {
-    let withdrawalEvent = new Promise((resolve, reject) => {
+    const withdrawalEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
         "Withdrawal",
         (
@@ -1011,9 +1011,32 @@ describe("PoolFactory", function () {
       }, 60000);
     });
 
-    // mock 100 sUSD in pool
+    const withdrawStakedEvent = new Promise((resolve, reject) => {
+      sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, manager, asset, to, withdrawAmount, time, event) => {
+        event.removeListener();
+
+        resolve({
+          fundAddress,
+          manager,
+          asset,
+          to,
+          withdrawAmount,
+          time,
+        });
+      });
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
+    });
+
+    // refresh timestamp of Chainlink price round data
+    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+
+    // mock 20 sUSD in pool
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
-    await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, (20e18).toString());
+
     // mock 100 Sushi LP staked in MiniChefV2
     const iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
     let userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
@@ -1024,31 +1047,30 @@ describe("PoolFactory", function () {
       abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
     );
 
-    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed); // refresh timestamp of Chainlink price round data
+    const totalSupply = await poolLogicProxy.totalSupply();
+    const totalFundValue = await poolLogicProxy.totalFundValue();
 
-    // Withdraw 5 tokens
-    let withdrawAmount = 5e18;
-    let totalSupply = await poolLogicProxy.totalSupply();
-    let totalFundValue = await poolLogicProxy.totalFundValue();
+    // Withdraw 10 tokens
+    const withdrawAmount = 10e18;
     const investorFundBalance = await poolLogicProxy.balanceOf(logicOwner.address);
-    console.log("totalFundValue:", totalFundValue.toString());
-    console.log("totalSupply:", totalSupply.toString());
 
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
-    let event = await withdrawalEvent;
+    const eventWithdrawal = await withdrawalEvent;
+    const eventWithdrawStaked = await withdrawStakedEvent;
+    console.log("eventWithdrawStaked:", eventWithdrawStaked);
 
-    let fundTokensWithdrawn = withdrawAmount;
-    let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
-    console.log("valueWithdrawn:", valueWithdrawn);
-    expect(event.fundAddress).to.equal(poolLogicProxy.address);
-    expect(event.investor).to.equal(logicOwner.address);
-    expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
-    expect(event.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
-    expect(event.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
-    expect(event.fundValue).to.equal(totalFundValue.toString());
-    expect(event.totalSupply).to.equal((totalSupply - fundTokensWithdrawn).toString());
+    const fundTokensWithdrawn = withdrawAmount;
+    const valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
+
+    expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
+    expect(eventWithdrawal.investor).to.equal(logicOwner.address);
+    expect(eventWithdrawal.valueWithdrawn).to.equal(valueWithdrawn.toString());
+    expect(eventWithdrawal.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
+    expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
+    expect(eventWithdrawal.fundValue).to.equal(totalFundValue.toString());
+    expect(eventWithdrawal.totalSupply).to.equal((totalSupply - fundTokensWithdrawn).toString());
   });
 
   it("should be able to upgrade/set implementation logic", async function () {

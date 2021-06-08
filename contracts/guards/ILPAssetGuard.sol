@@ -37,9 +37,9 @@
 pragma solidity 0.6.12;
 
 struct SushiPool {
-    address lpToken;
-    uint256 stakingPoolId;
-  }
+  address lpToken;
+  uint256 stakingPoolId;
+}
 
 interface ILPAssetGuard {
   function getWithdrawStakedTx(
@@ -47,5 +47,5 @@ interface ILPAssetGuard {
     address asset,
     uint256 withdrawPortion,
     address to
-  ) external view returns (address, bytes memory);
+  ) external returns (address, bytes memory);
 }

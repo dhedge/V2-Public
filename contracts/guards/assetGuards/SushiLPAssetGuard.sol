@@ -54,13 +54,18 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
   event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
+  event WithdrawStaked(
+    address fundAddress,
+    address manager,
+    address asset,
+    address to,
+    uint256 withdrawAmount,
+    uint256 time
+  );
 
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
   /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
-  constructor(
-    address _sushiStaking,
-    SushiPool[] memory sushiPools
-  ) public {
+  constructor(address _sushiStaking, SushiPool[] memory sushiPools) public {
     sushiStaking = _sushiStaking;
     for (uint256 i = 0; i < sushiPools.length; i++) {
       sushiPoolIds[sushiPools[i].lpToken] = sushiPools[i].stakingPoolId;
@@ -101,7 +106,7 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
     address asset,
     uint256 withdrawPortion,
     address to
-  ) external view override returns (address stakingContract, bytes memory txData) {
+  ) external override returns (address stakingContract, bytes memory txData) {
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
 
@@ -117,6 +122,8 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
           withdrawAmount,
           to
         );
+
+        emit WithdrawStaked(pool, IManaged(pool).manager(), asset, to, withdrawAmount, block.timestamp);
       }
     }
   }
