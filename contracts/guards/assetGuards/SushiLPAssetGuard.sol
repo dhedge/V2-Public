@@ -50,8 +50,6 @@ import "../../interfaces/sushi/IMiniChefV2.sol";
 contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
   using SafeMath for uint256;
 
-  uint256 private constant _MIN_DUST_VAL = 10000;
-
   address public sushiStaking; // Sushi's staking MiniChefV2 contract
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
@@ -109,15 +107,17 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
 
     // If there is a staked balance in Sushi MiniChefV2 staking contract
     // Then create the withdrawal transaction data to be executed by PoolLogic
-    if (stakedBalance > _MIN_DUST_VAL) {
+    if (stakedBalance > 0) {
       stakingContract = sushiStaking;
       uint256 withdrawAmount = stakedBalance.mul(withdrawPortion).div(10**18);
-      txData = abi.encodeWithSelector(
-        bytes4(keccak256("withdrawAndHarvest(uint256, uint256, address)")),
-        sushiPoolId,
-        withdrawAmount,
-        to
-      );
+      if (withdrawAmount > 0) {
+        txData = abi.encodeWithSelector(
+          bytes4(keccak256("withdrawAndHarvest(uint256, uint256, address)")),
+          sushiPoolId,
+          withdrawAmount,
+          to
+        );
+      }
     }
   }
 }
