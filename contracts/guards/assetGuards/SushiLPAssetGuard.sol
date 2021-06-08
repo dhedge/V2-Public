@@ -34,6 +34,7 @@
 //
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
@@ -46,7 +47,7 @@ import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
 
-contract SushiLPAssetGuard is TxDataUtils, IGuard {
+contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
   using SafeMath for uint256;
 
   uint256 private constant _MIN_DUST_VAL = 10000;
@@ -57,17 +58,14 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard {
   event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
 
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
-  /// @param _sushiLpTokens For mapping Sushi LP tokens to MiniChefV2 pool IDs
-  /// @param _sushiPoolIds For mapping Sushi LP tokens to MiniChefV2 pool IDs
+  /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
   constructor(
     address _sushiStaking,
-    address[] memory _sushiLpTokens,
-    uint256[] memory _sushiPoolIds
+    SushiPool[] memory sushiPools
   ) public {
     sushiStaking = _sushiStaking;
-    require(_sushiLpTokens.length == _sushiPoolIds.length, "mismatch length LPs and IDs");
-    for (uint256 i = 0; i < _sushiLpTokens.length; i++) {
-      sushiPoolIds[_sushiLpTokens[i]] = _sushiPoolIds[i];
+    for (uint256 i = 0; i < sushiPools.length; i++) {
+      sushiPoolIds[sushiPools[i].lpToken] = sushiPools[i].stakingPoolId;
     }
   }
 
@@ -105,7 +103,7 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard {
     address asset,
     uint256 withdrawPortion,
     address to
-  ) external override returns (address stakingContract, bytes memory txData) {
+  ) external view override returns (address stakingContract, bytes memory txData) {
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
 
