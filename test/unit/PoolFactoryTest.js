@@ -315,6 +315,7 @@ describe('PoolFactory', function () {
         (
           fundAddress,
           investor,
+          assetDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -328,6 +329,7 @@ describe('PoolFactory', function () {
           resolve({
             fundAddress: fundAddress,
             investor: investor,
+            assetDeposited: assetDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -362,6 +364,7 @@ describe('PoolFactory', function () {
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
+    expect(event.assetDeposited).to.equal(susd);
     expect(event.valueDeposited).to.equal((100e18).toString());
     expect(event.fundTokensReceived).to.equal((100e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((100e18).toString());
@@ -979,13 +982,13 @@ describe('PoolFactory', function () {
   });
 
   it('should be able to upgrade/set implementation logic', async function () {
-    await poolFactory.setLogic(ZERO_ADDRESS, ZERO_ADDRESS);
+    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO );
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
-    expect(poolManagerLogicAddress).to.equal(ZERO_ADDRESS);
+    expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
 
     let poolLogicAddress = await poolFactory.getLogic(2);
-    expect(poolLogicAddress).to.equal(ZERO_ADDRESS);
+    expect(poolLogicAddress).to.equal(TESTNET_DAO);
   });
 
   describe('AssetHandler', function () {

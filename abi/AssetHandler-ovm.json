@@ -142,20 +142,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "disableChainlink",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "enableChainlink",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -191,7 +177,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "price",
         "type": "uint256"
       }
     ],
@@ -231,19 +217,6 @@
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "isDisabledChainlink",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
