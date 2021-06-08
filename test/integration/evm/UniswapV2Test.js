@@ -47,14 +47,14 @@ describe("Uniswap V2 Test", function() {
 
         // Deploy AssetHandlerProxy
         const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
-        const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
+        const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
         await assetHandlerProxy.deployed();
 
         const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
         // Deploy PoolFactoryProxy
         const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
-        poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, manager.address, "0x");
+        poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
         await poolFactory.deployed();
 
         // Initialize Asset Price Consumer
@@ -65,6 +65,7 @@ describe("Uniswap V2 Test", function() {
     
         await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
         await assetHandler.deployed();
+        await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
     
         poolFactory = await PoolFactory.attach(poolFactory.address);
         await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -125,7 +126,7 @@ describe("Uniswap V2 Test", function() {
         ))
             .to.be.revertedWith('invalid fraction');
 
-        let tx = await poolFactory.createFund(
+        await poolFactory.createFund(
             false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[usdc, true], [weth, true]]
         );
 
@@ -158,7 +159,9 @@ describe("Uniswap V2 Test", function() {
         poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
         //default assets are supported
-        expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal("2");
+        let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+        let numberOfSupportedAssets = supportedAssets.length;
+        expect(numberOfSupportedAssets).to.eq(2);
         expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true
         expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true
 
@@ -171,6 +174,7 @@ describe("Uniswap V2 Test", function() {
         let depositEvent = new Promise((resolve, reject) => {
             poolLogicProxy.on('Deposit', (fundAddress,
                 investor,
+                assetDeposited,
                 valueDeposited,
                 fundTokensReceived,
                 totalInvestorFundTokens,
@@ -182,6 +186,7 @@ describe("Uniswap V2 Test", function() {
                     resolve({
                         fundAddress: fundAddress,
                         investor: investor,
+                        assetDeposited: assetDeposited,
                         valueDeposited: valueDeposited,
                         fundTokensReceived: fundTokensReceived,
                         totalInvestorFundTokens: totalInvestorFundTokens,
@@ -196,7 +201,7 @@ describe("Uniswap V2 Test", function() {
             }, 60000);
         });
 
-        let totalFundValue = await poolLogicProxy.totalFundValue();
+        let totalFundValue = await poolManagerLogicProxy.totalFundValue();
         expect(totalFundValue.toString()).to.equal('0');
 
         await expect(poolLogicProxy.deposit(usdt, 100e6.toString())).to.be.revertedWith("invalid deposit asset");
