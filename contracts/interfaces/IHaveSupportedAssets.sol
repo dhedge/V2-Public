@@ -44,5 +44,4 @@ interface IHaveSupportedAssets {
   }
 
   function getSupportedAssets() external view returns (Asset[] memory);
-
 }

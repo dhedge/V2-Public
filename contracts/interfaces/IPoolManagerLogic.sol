@@ -37,7 +37,6 @@
 pragma solidity 0.6.12;
 
 interface IPoolManagerLogic {
-
   function poolLogic() external view returns (address);
 
   function isSupportedAsset(address asset) external view returns (bool);

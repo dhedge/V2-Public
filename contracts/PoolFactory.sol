@@ -453,7 +453,7 @@ contract PoolFactory is
 
   /// @notice Return full array of deployed funds
   /// @return full array of deployed funds
-  function getDeployedFunds() public view returns (address[] memory){
+  function getDeployedFunds() public view returns (address[] memory) {
     return deployedFunds;
   }
 
