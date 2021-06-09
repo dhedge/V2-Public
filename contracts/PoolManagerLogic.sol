@@ -41,7 +41,7 @@ import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IERC20Extended.sol"; // includes decimals()
-import "./interfaces/IHaveSupportedAsset.sol";
+import "./interfaces/IHasSupportedAsset.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
 
@@ -52,7 +52,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAsset, Managed {
+contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
   using SafeMath for uint256;
   using Address for address;
 

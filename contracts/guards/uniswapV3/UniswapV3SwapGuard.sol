@@ -43,7 +43,7 @@ import "../../utils/TxDataUtils.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
-import "../../interfaces/IHaveSupportedAsset.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;
@@ -60,7 +60,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     bytes4 method = getMethod(data);
 
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-    IHaveSupportedAsset poolManagerLogicAssets = IHaveSupportedAsset(_poolManagerLogic);
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
     address pool = poolManagerLogic.poolLogic();
 
     if (method == bytes4(keccak256("exactInput((bytes,address,uint256,uint256,uint256))"))) {

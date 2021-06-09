@@ -42,7 +42,7 @@ import "../utils/TxDataUtils.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
-import "../interfaces/IHaveSupportedAsset.sol";
+import "../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV2Guard is TxDataUtils, IGuard {
   using SafeMath for uint256;
@@ -65,7 +65,7 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
       uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
 
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-      IHaveSupportedAsset poolManagerLogicAssets = IHaveSupportedAsset(_poolManagerLogic);
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
       require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
 
       // validate Uniswap routing addresses

@@ -48,7 +48,7 @@ import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
 import "./guards/IGuard.sol";
-import "./interfaces/IHaveSupportedAsset.sol";
+import "./interfaces/IHasSupportedAsset.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -220,8 +220,8 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     //first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
-    IHaveSupportedAsset poolManagerLogicAssets = IHaveSupportedAsset(poolManagerLogic);
-    IHaveSupportedAsset.Asset[] memory _supportedAssets = poolManagerLogicAssets.getSupportedAssets();
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogic);
+    IHasSupportedAsset.Asset[] memory _supportedAssets = poolManagerLogicAssets.getSupportedAssets();
     uint256 assetCount = _supportedAssets.length;
 
     for (uint256 i = 0; i < assetCount; i++) {
@@ -268,7 +268,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     require(guard != address(0), "invalid destination");
 
     if (IHasAssetInfo(factory).isValidAsset(to)) {
-      require(IHaveSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
     }
 
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
