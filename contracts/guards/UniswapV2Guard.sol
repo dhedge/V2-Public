@@ -51,13 +51,7 @@ import "../interfaces/IManaged.sol";
 contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   using SafeMath for uint256;
 
-  event AddLiquidity(
-    address fundAddress,
-    address tokenA,
-    address tokenB,
-    address pair,
-    uint256 time
-  );
+  event AddLiquidity(address fundAddress, address tokenA, address tokenB, address pair, uint256 time);
   event RemoveLiquidity(
     address fundAddress,
     address tokenA,
@@ -128,13 +122,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address to = convert32toAddress(getInput(data, 6));
       require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
 
-      emit AddLiquidity(
-        poolManagerLogic.poolLogic(),
-        tokenA,
-        tokenB,
-        pair,
-        block.timestamp
-      );
+      emit AddLiquidity(poolManagerLogic.poolLogic(), tokenA, tokenB, pair, block.timestamp);
 
       txType = 3; // `Add Liquidity` type
     } else if (
