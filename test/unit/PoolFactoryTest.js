@@ -8,7 +8,7 @@ const { link } = require("@ethereum-waffle/compiler");
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators } = require("./TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp } = require("./TestHelpers");
 
 let logicOwner, manager, dao, user1;
 let poolFactory,
@@ -22,11 +22,11 @@ let poolFactory,
 let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
 let synthetixGuard, uniswapV2Guard, uniswapV3SwapGuard; // contract guards
 let erc20Guard, sushiLPAssetGuard; // asset guards
-sushiLPAssetGuard;
-let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // contracts
+let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
-let usd_price_feed, eth_price_feed, link_price_feed;
+let sushiLPAggregator; // local aggregators
+let usd_price_feed, eth_price_feed, link_price_feed; // integrating aggregators
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
@@ -81,6 +81,24 @@ describe("PoolFactory", function () {
     IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
     iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
 
+    // mock Sushi LINK-WETH LP
+    const IUniswapV2Pair = await hre.artifacts.readArtifact("IUniswapV2Pair");
+    const iUniswapV2Pair = new ethers.utils.Interface(IUniswapV2Pair.abi);
+    const token0Abi = iUniswapV2Pair.encodeFunctionData("token0", []);
+    await sushiLPLinkWethAsset.givenCalldataReturnAddress(token0Abi, slink);
+    const token1Abi = iUniswapV2Pair.encodeFunctionData("token1", []);
+    await sushiLPLinkWethAsset.givenCalldataReturnAddress(token1Abi, seth);
+    const totalSupply = iUniswapV2Pair.encodeFunctionData("totalSupply", []);
+    await sushiLPLinkWethAsset.givenCalldataReturnUint(totalSupply, "81244364124268806526393");
+    const getReserves = iUniswapV2Pair.encodeFunctionData("getReserves", []);
+    await sushiLPLinkWethAsset.givenCalldataReturn(
+      getReserves,
+      abiCoder.encode(
+        ["uint112", "uint112", "uint32"],
+        ["1158679007401429485290646", "11024994840258089037095", await currentBlockTimestamp()],
+      ),
+    );
+
     // mock ISynthetix
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
@@ -127,6 +145,14 @@ describe("PoolFactory", function () {
     AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
     assetHandlerLogic = await AssetHandlerLogic.deploy();
 
+    // Deploy Sushi LP Aggregator
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLPAggregator = await SushiLPAggregator.deploy(
+      sushiLPLinkWeth,
+      link_price_feed.address,
+      eth_price_feed.address,
+    );
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -159,7 +185,8 @@ describe("PoolFactory", function () {
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
-    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
+    const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushiLPLinkWeth];
 
     await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     await assetHandler.deployed();
@@ -1012,12 +1039,11 @@ describe("PoolFactory", function () {
     });
 
     const withdrawStakedEvent = new Promise((resolve, reject) => {
-      sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, manager, asset, to, withdrawAmount, time, event) => {
+      sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
         event.removeListener();
 
         resolve({
           fundAddress,
-          manager,
           asset,
           to,
           withdrawAmount,
@@ -1033,6 +1059,9 @@ describe("PoolFactory", function () {
     // refresh timestamp of Chainlink price round data
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
+    // enable Sushi LP token to pool
+    await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
+
     // mock 20 sUSD in pool
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (20e18).toString());
@@ -1042,13 +1071,19 @@ describe("PoolFactory", function () {
     let userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
     const amountLPStaked = (100e18).toString();
     const amountRewarded = (0).toString();
-    await sushiLPLinkWethAsset.givenCalldataReturn(
+    await sushiMiniChefV2.givenCalldataReturn(
       userInfo,
       abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
     );
 
+    console.log("get sushiLPPrice");
+    const sushiLPPrice = await sushiLPAggregator.latestRoundData();
+    console.log("sushiLPPrice:", sushiLPPrice[1].toString());
+
     const totalSupply = await poolLogicProxy.totalSupply();
+    console.log("totalSupply:", totalSupply);
     const totalFundValue = await poolLogicProxy.totalFundValue();
+    console.log("totalFundValue:", totalFundValue);
 
     // Withdraw 10 tokens
     const withdrawAmount = 10e18;
@@ -1074,7 +1109,7 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
-    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO );
+    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
     expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);

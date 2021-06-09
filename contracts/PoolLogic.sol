@@ -245,8 +245,8 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
         IERC20(asset).transfer(msg.sender, portionOfAssetBalance);
-        _withdrawProcessing(asset, msg.sender, portion);
       }
+      _withdrawProcessing(asset, msg.sender, portion);
     }
 
     uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
@@ -277,10 +277,10 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
 
     if (assetType == 2) {
       // Sushi LP token - withdraw any staked tokens
-      address guard = IHasGuardInfo(factory).getGuard(to);
+      address guard = IHasGuardInfo(factory).getGuard(asset);
       require(guard != address(0), "invalid guard");
       (address stakingContract, bytes memory txData) =
-        ILPAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, msg.sender);
+        ILPAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
       if (txData.length > 1) {
         (bool success, ) = stakingContract.call(txData);
         require(success == true, "failed to withdraw staked tokens");

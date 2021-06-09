@@ -54,14 +54,7 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
   event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
-  event WithdrawStaked(
-    address fundAddress,
-    address manager,
-    address asset,
-    address to,
-    uint256 withdrawAmount,
-    uint256 time
-  );
+  event WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time);
 
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
   /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
@@ -122,8 +115,7 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
           withdrawAmount,
           to
         );
-
-        emit WithdrawStaked(pool, IManaged(pool).manager(), asset, to, withdrawAmount, block.timestamp);
+        emit WithdrawStaked(pool, asset, to, withdrawAmount, block.timestamp);
       }
     }
   }
