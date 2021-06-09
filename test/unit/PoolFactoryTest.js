@@ -854,7 +854,7 @@ describe('PoolFactory', function () {
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
       'recipient is not pool',
     );
-    badExactInputSingleParams.recipient = poolManagerLogicProxy.address;
+    exactInputSingleParams.recipient = poolLogicProxy.address;
 
     // succeed swapping direct asset to asset
     await uniswapV3Router.givenCalldataReturn(swapABI, []);
@@ -958,8 +958,8 @@ describe('PoolFactory', function () {
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
       'recipient is not pool',
     );
-    badExactInputParams.recipient = poolManagerLogicProxy.address;
 
+    exactInputParams.recipient = poolLogicProxy.address;
     // succeed swapping direct asset to asset
     await uniswapV3Router.givenCalldataReturn(swapABI, []);
     swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [exactInputParams]);
