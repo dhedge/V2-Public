@@ -46,7 +46,7 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
-import "./interfaces/IHaveSupportedAssets.sol";
+import "./interfaces/IHaveSupportedAsset.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
@@ -151,7 +151,7 @@ contract PoolFactory is
     string memory _fundName,
     string memory _fundSymbol,
     uint256 _managerFeeNumerator,
-    IHaveSupportedAssets.Asset[] memory _supportedAssets
+    IHaveSupportedAsset.Asset[] memory _supportedAssets
   ) public returns (address) {
     bytes memory poolLogicData =
       abi.encodeWithSignature(

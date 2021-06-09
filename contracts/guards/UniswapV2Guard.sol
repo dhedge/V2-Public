@@ -42,12 +42,13 @@ import "../utils/TxDataUtils.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
+import "../interfaces/IHaveSupportedAsset.sol";
 
 contract UniswapV2Guard is TxDataUtils, IGuard {
   using SafeMath for uint256;
 
   // transaction guard for 1inch V3 aggregator
-  function txGuard(address pool, bytes calldata data)
+  function txGuard(address _poolManagerLogic, bytes calldata data)
     external
     override
     returns (
@@ -63,15 +64,16 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
       address toAddress = convert32toAddress(getInput(data, 3));
       uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
 
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
-      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      IHaveSupportedAsset poolManagerLogicAssets = IHaveSupportedAsset(_poolManagerLogic);
+      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
 
       // validate Uniswap routing addresses
       for (uint8 i = 1; i < routeLength - 1; i++) {
         require(poolManagerLogic.validateAsset(convert32toAddress(getArrayIndex(data, 2, i))), "invalid routing asset");
       }
 
-      require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 

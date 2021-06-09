@@ -37,11 +37,14 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-interface IHaveSupportedAssets {
+interface IHaveSupportedAsset {
   struct Asset {
     address asset;
     bool isDeposit;
   }
 
   function getSupportedAssets() external view returns (Asset[] memory);
+
+  function isSupportedAsset(address asset) external view returns (bool);
+
 }

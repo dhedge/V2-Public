@@ -45,6 +45,7 @@ import "../interfaces/IManaged.sol";
 import "../interfaces/synthetix/ISynth.sol";
 import "../interfaces/synthetix/ISynthetix.sol";
 import "../interfaces/synthetix/IAddressResolver.sol";
+import "../interfaces/IHaveSupportedAsset.sol";
 
 contract SynthetixGuard is TxDataUtils, IGuard {
   using SafeMath for uint256;
@@ -76,8 +77,9 @@ contract SynthetixGuard is TxDataUtils, IGuard {
       address dstAsset = getAssetProxy(dstKey);
 
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
-      require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
+      IHaveSupportedAsset poolManagerLogicAssets = IHaveSupportedAsset(_poolManagerLogic);
+      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       emit Exchange(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
