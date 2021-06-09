@@ -370,7 +370,6 @@ describe("Synthetix Test", function() {
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 1 day
 	    await ethers.provider.send('evm_mine', []);
-        // await poolFactory.setExitCooldown(0);
 
         await poolLogicProxy.withdraw(withdrawAmount.toString())
 

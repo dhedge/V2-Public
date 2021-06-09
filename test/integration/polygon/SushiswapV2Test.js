@@ -365,7 +365,6 @@ describe("Sushiswap V2 Test", function() {
         await expect(poolLogicProxy.withdraw(withdrawAmount))
             .to.be.revertedWith('cooldown active');
 
-        // ethers.provider.send("evm_increaseTime", [3600 * 24])   // add 1 day
         await poolFactory.setExitCooldown(0);
 
         await poolLogicProxy.withdraw(withdrawAmount)

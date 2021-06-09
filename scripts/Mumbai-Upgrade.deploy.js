@@ -153,7 +153,7 @@ async function main () {
   const deployedFunds = await poolFactory.getDeployedFunds()
   const length = deployedFunds.length;
   console.log('deployedFundsLength', length)
-  const fundAddress = deployedFunds(length - 1)
+  const fundAddress = deployedFunds[length - 1]
   const poolLogicProxy = await PoolLogic.attach(fundAddress);
   const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
   const poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
