@@ -316,7 +316,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IPoolManagerLogic.Asset[]",
+        "internalType": "struct IHaveSupportedAsset.Asset[]",
         "name": "_addAssets",
         "type": "tuple[]"
       },
@@ -333,7 +333,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IPoolManagerLogic.Asset[]",
+        "internalType": "struct IHaveSupportedAsset.Asset[]",
         "name": "_removeAssets",
         "type": "tuple[]"
       }
@@ -383,21 +383,46 @@
   },
   {
     "inputs": [],
-    "name": "getFundComposition",
+    "name": "getDepositAssets",
     "outputs": [
       {
         "internalType": "address[]",
         "name": "",
         "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getFundComposition",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "asset",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "isDeposit",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct IHaveSupportedAsset.Asset[]",
+        "name": "assets",
+        "type": "tuple[]"
       },
       {
         "internalType": "uint256[]",
-        "name": "",
+        "name": "balances",
         "type": "uint256[]"
       },
       {
         "internalType": "uint256[]",
-        "name": "",
+        "name": "rates",
         "type": "uint256[]"
       }
     ],
@@ -458,9 +483,21 @@
     "name": "getSupportedAssets",
     "outputs": [
       {
-        "internalType": "address[]",
+        "components": [
+          {
+            "internalType": "address",
+            "name": "asset",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "isDeposit",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct IHaveSupportedAsset.Asset[]",
         "name": "",
-        "type": "address[]"
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -501,7 +538,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IPoolManagerLogic.Asset[]",
+        "internalType": "struct IHaveSupportedAsset.Asset[]",
         "name": "_supportedAssets",
         "type": "tuple[]"
       }
@@ -596,33 +633,7 @@
   },
   {
     "inputs": [],
-    "name": "numberOfDepositAssets",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "numberOfMembers",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "numberOfSupportedAssets",
     "outputs": [
       {
         "internalType": "uint256",
@@ -737,6 +748,19 @@
         "internalType": "bool",
         "name": "isDeposit",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalFundValue",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
