@@ -8,21 +8,23 @@
   },
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
-    "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
+    "prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.js\"",
     "fork:evm": "hardhat node --fork https://mainnet.infura.io/v3/$(grep INFURA_KEY .env | cut -d '=' -f2)",
     "fork:polygon": "hardhat node --fork https://rpc-mainnet.maticvigil.com/",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/",
     "test:unit": "hardhat test test/unit/PoolFactoryTest.js --network hardhat",
+    "test:inte:ovm": "hardhat test test/integration/ovm/*.js",
     "test:inte:evm": "hardhat test test/integration/evm/*.js --network localhost",
     "test:inte:polygon": "hardhat test test/integration/polygon/*.js --network localhost",
     "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
-    "deploy": "node scripts/DHedge.deploy.js",
+    "deploy:ovm": "node scripts/DHedge.deploy.js",
     "deploy:mumbai": "hardhat run ./scripts/Mumbai.deploy.js --network mumbai",
     "prepare": "husky install"
   },
   "author": "dHEDGE Team",
   "license": "ISC",
   "devDependencies": {
+    "@eth-optimism/hardhat-ovm": "^0.2.2",
     "@gnosis.pm/mock-contract": "^4.0.0",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
@@ -46,8 +48,8 @@
     "ts-generator": "^0.1.1"
   },
   "dependencies": {
-    "@chainlink/contracts": "0.1.6",
-    "@eth-optimism/plugins": "0.0.20",
+    "@chainlink/contracts": "^0.1.4",
+    "@openzeppelin/contracts": "^3.4.1",
     "@openzeppelin/contracts-ethereum-package": "^3.0.0",
     "dotenv": "^8.2.0"
   }

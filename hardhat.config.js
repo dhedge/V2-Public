@@ -1,6 +1,7 @@
 require('dotenv').config();
-require('@eth-optimism/plugins/hardhat/compiler');
-require('@eth-optimism/plugins/hardhat/ethers');
+// require('@eth-optimism/plugins/hardhat/compiler');
+// require('@eth-optimism/plugins/hardhat/ethers');
+require("@eth-optimism/hardhat-ovm");
 require('hardhat-gas-reporter');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-waffle');
@@ -23,7 +24,8 @@ module.exports = {
     'kovan-optimism': {
       url: process.env.KOVAN_OVM_URL || 'https://kovan.optimism.io',
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 0
+      gasPrice: 0,
+      ovm: true,
     },
     localhost: {
       chainId: 31337,
