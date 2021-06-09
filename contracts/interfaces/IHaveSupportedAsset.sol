@@ -46,5 +46,4 @@ interface IHaveSupportedAsset {
   function getSupportedAssets() external view returns (Asset[] memory);
 
   function isSupportedAsset(address asset) external view returns (bool);
-
 }
