@@ -1,5 +1,5 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-yarn run prettier:sol
-yarn run lint:sol
+npm run prettier:sol
+npm run lint:sol
