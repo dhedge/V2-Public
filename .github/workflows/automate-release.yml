@@ -23,7 +23,7 @@ jobs:
           key: npm-v2-${{ hashFiles('**/package-lock.json') }}
           restore-keys: npm-v2-
       - run: npm ci
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v2
         with:
