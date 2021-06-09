@@ -71,6 +71,7 @@ describe("Synthetix Test", function() {
     
         await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
         await assetHandler.deployed();
+        await assetHandler.setChainlinkTimeout(9000000);
     
         poolFactory = await PoolFactory.attach(poolFactory.address);
         await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -191,6 +192,7 @@ describe("Synthetix Test", function() {
         let depositEvent = new Promise((resolve, reject) => {
             poolLogicProxy.on('Deposit', (fundAddress,
                 investor,
+                assetDeposited,
                 valueDeposited,
                 fundTokensReceived,
                 totalInvestorFundTokens,
@@ -202,6 +204,7 @@ describe("Synthetix Test", function() {
                     resolve({
                         fundAddress: fundAddress,
                         investor: investor,
+                        assetDeposited: assetDeposited,
                         valueDeposited: valueDeposited,
                         fundTokensReceived: fundTokensReceived,
                         totalInvestorFundTokens: totalInvestorFundTokens,

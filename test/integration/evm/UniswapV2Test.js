@@ -10,11 +10,13 @@ const checkAlmostSame = (a, b) => {
 
 const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+const sushiswapV2Router = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F";
 
 // For mainnet
 const weth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 const usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const usdt = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+const sushi_usdc_weth = "0x397FF1542f962076d0BFE58eA045FfA2d347ACa0";
 const eth_price_feed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
 const usdt_price_feed = "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D";
 const usdc_price_feed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
@@ -22,7 +24,7 @@ const usdc_price_feed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
 describe("Uniswap V2 Test", function() {
     let WETH, USDC, USDT, UniswapRouter;
     let logicOwner, manager, dao, user;
-    let PoolFactory, PoolLogic, PoolManagerLogic;
+    let PoolFactory, PoolLogic, PoolManagerLogic, assetHandler;
     let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
     
     before(async function(){
@@ -50,7 +52,7 @@ describe("Uniswap V2 Test", function() {
         const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, '0x');
         await assetHandlerProxy.deployed();
 
-        const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
+        assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
         // Deploy PoolFactoryProxy
         const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
@@ -58,13 +60,20 @@ describe("Uniswap V2 Test", function() {
         await poolFactory.deployed();
 
         // Initialize Asset Price Consumer
+
+        const SushiLPAggregator = await ethers.getContractFactory('SushiLPAggregator');
+        sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_weth, usdc_price_feed, eth_price_feed);
+        sushiLpAggregator.deployed();
+
         const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
         const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
         const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-        const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
+        const assetSushiUsdcWeth = { asset: sushi_usdc_weth, assetType: 0, aggregator: sushiLpAggregator.address };
+        const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetSushiUsdcWeth];
     
         await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
         await assetHandler.deployed();
+        await assetHandler.setChainlinkTimeout(9000000);
     
         poolFactory = await PoolFactory.attach(poolFactory.address);
         await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -95,6 +104,23 @@ describe("Uniswap V2 Test", function() {
         // WETH -> USDT
         await WETH.approve(uniswapV2Router, 5e18.toString());
         await UniswapRouter.swapExactTokensForTokens(5e18.toString(), 0, [weth, usdc], logicOwner.address, Math.floor(Date.now() / 1000 + 100000000));
+    });
+
+    it("Should be able to get lp price", async function() {
+        const priceBefore = await assetHandler.getUSDPrice(sushi_usdc_weth);
+
+        const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+        SushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
+        // deposit ETH -> WETH
+        await WETH.deposit({ value: 5e18.toString() });
+        // WETH -> USDT
+        await WETH.approve(sushiswapV2Router, 5e18.toString());
+        await SushiswapRouter.swapExactTokensForTokens(5e18.toString(), 0, [weth, usdc], logicOwner.address, Math.floor(Date.now() / 1000 + 100000000));
+
+        const priceAfter = await assetHandler.getUSDPrice(sushi_usdc_weth);
+
+        // console.log(priceBefore.toString(), priceAfter.toString())
+        expect(priceBefore).to.be.lt(priceAfter);
     });
 
     it("Should be able to createFund", async function() {
@@ -170,6 +196,7 @@ describe("Uniswap V2 Test", function() {
         let depositEvent = new Promise((resolve, reject) => {
             poolLogicProxy.on('Deposit', (fundAddress,
                 investor,
+                assetDeposited,
                 valueDeposited,
                 fundTokensReceived,
                 totalInvestorFundTokens,
@@ -181,6 +208,7 @@ describe("Uniswap V2 Test", function() {
                     resolve({
                         fundAddress: fundAddress,
                         investor: investor,
+                        assetDeposited: assetDeposited,
                         valueDeposited: valueDeposited,
                         fundTokensReceived: fundTokensReceived,
                         totalInvestorFundTokens: totalInvestorFundTokens,
