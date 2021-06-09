@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
-    "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
+    "prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.js\"",
     "fork:evm": "hardhat node --fork https://mainnet.infura.io/v3/$(grep INFURA_KEY .env | cut -d '=' -f2)",
     "fork:polygon": "hardhat node --fork https://rpc-mainnet.maticvigil.com/",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/",

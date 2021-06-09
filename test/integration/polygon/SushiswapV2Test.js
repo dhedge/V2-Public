@@ -1,12 +1,12 @@
 const { expect, use } = require("chai");
-const chaiAlmost = require('chai-almost');
+const chaiAlmost = require("chai-almost");
 
 use(chaiAlmost());
 
 const checkAlmostSame = (a, b) => {
-    expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-    expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
-}
+  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
+  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
+};
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
@@ -22,359 +22,469 @@ const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
 const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
 
-describe("Sushiswap V2 Test", function() {
-    let WMatic, WETH, USDC, USDT;
-    let logicOwner, manager, dao, user;
-    let PoolFactory, PoolLogic, PoolManagerLogic;
-    let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
-    
-    before(async function(){
-        [logicOwner, manager, dao, user] = await ethers.getSigners();
+describe("Sushiswap V2 Test", function () {
+  let WMatic, WETH, USDC, USDT;
+  let logicOwner, manager, dao, user;
+  let PoolFactory, PoolLogic, PoolManagerLogic;
+  let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
 
-        const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
-        const assetHandlerLogic = await AssetHandlerLogic.deploy();
+  before(async function () {
+    [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-        PoolLogic = await ethers.getContractFactory("PoolLogic");
-        poolLogic = await PoolLogic.deploy();
+    const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
+    const assetHandlerLogic = await AssetHandlerLogic.deploy();
 
-        PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-        poolManagerLogic = await PoolManagerLogic.deploy();
+    PoolLogic = await ethers.getContractFactory("PoolLogic");
+    poolLogic = await PoolLogic.deploy();
 
-        PoolFactory = await ethers.getContractFactory("PoolFactory");
-        poolFactory = await PoolFactory.deploy();
+    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+    poolManagerLogic = await PoolManagerLogic.deploy();
 
-        // Deploy ProxyAdmin
-        const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');
-        const proxyAdmin = await ProxyAdmin.deploy();
-        await proxyAdmin.deployed();
+    PoolFactory = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await PoolFactory.deploy();
 
-        // Deploy AssetHandlerProxy
-        const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
-        const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
-        await assetHandlerProxy.deployed();
+    // Deploy ProxyAdmin
+    const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
+    const proxyAdmin = await ProxyAdmin.deploy();
+    await proxyAdmin.deployed();
 
-        const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
+    // Deploy AssetHandlerProxy
+    const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
+    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
+    await assetHandlerProxy.deployed();
 
-        // Deploy PoolFactoryProxy
-        const PoolFactoryProxy = await ethers.getContractFactory('OZProxy');
-        poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
-        await poolFactory.deployed();
+    const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
-        // Initialize Asset Price Consumer
-        const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-        const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-        const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-        const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
-    
-        await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
-        await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
-    
-        poolFactory = await PoolFactory.attach(poolFactory.address);
-        await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-        await poolFactory.deployed();
+    // Deploy PoolFactoryProxy
+    const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
+    poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
+    await poolFactory.deployed();
 
-        const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-        erc20Guard = await ERC20Guard.deploy();
-        erc20Guard.deployed();
+    // Initialize Asset Price Consumer
+    const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
+    const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
+    const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
+    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-        const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-        uniswapV2Guard = await UniswapV2Guard.deploy();
-        uniswapV2Guard.deployed();
+    await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+    await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
 
-        await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-        await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
+    poolFactory = await PoolFactory.attach(poolFactory.address);
+    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
+    await poolFactory.deployed();
 
+    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+    erc20Guard = await ERC20Guard.deploy();
+    erc20Guard.deployed();
+
+    const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
+    uniswapV2Guard = await UniswapV2Guard.deploy();
+    uniswapV2Guard.deployed();
+
+    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
+    await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
+  });
+
+  it("Should be able to get USDC", async function () {
+    const IWETH = await hre.artifacts.readArtifact("IWETH");
+    WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
+    const IERC20 = await hre.artifacts.readArtifact(
+      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
+    );
+    USDT = await ethers.getContractAt(IERC20.abi, usdt);
+    USDC = await ethers.getContractAt(IERC20.abi, usdc);
+    WETH = await ethers.getContractAt(IERC20.abi, weth);
+    WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
+    let balance = await ethers.provider.getBalance(logicOwner.address);
+    console.log("Matic balance: ", balance.toString());
+    balance = await WMATIC.balanceOf(logicOwner.address);
+    console.log("WMatic balance: ", balance.toString());
+    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
+    // deposit Matic -> WMatic
+    await WMatic.deposit({ value: units(50) });
+    balance = await WMATIC.balanceOf(logicOwner.address);
+    console.log("WMatic balance: ", balance.toString());
+
+    // WMatic -> USDC
+    await WMatic.approve(sushiswapV2Router, units(50));
+    await sushiswapRouter.swapExactTokensForTokens(
+      units(50),
+      0,
+      [wmatic, usdc],
+      logicOwner.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    );
+    balance = await USDC.balanceOf(logicOwner.address);
+    console.log("USDC balance: ", balance.toString());
+  });
+
+  it("Should be able to createFund", async function () {
+    let fundCreatedEvent = new Promise((resolve, reject) => {
+      poolFactory.on(
+        "FundCreated",
+        (
+          fundAddress,
+          isPoolPrivate,
+          fundName,
+          managerName,
+          manager,
+          time,
+          managerFeeNumerator,
+          managerFeeDenominator,
+          event,
+        ) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress: fundAddress,
+            isPoolPrivate: isPoolPrivate,
+            fundName: fundName,
+            // fundSymbol: fundSymbol,
+            managerName: managerName,
+            manager: manager,
+            time: time,
+            managerFeeNumerator: managerFeeNumerator,
+            managerFeeDenominator: managerFeeDenominator,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
     });
 
-    it("Should be able to get USDC", async function() {
-        const IWETH = await hre.artifacts.readArtifact("IWETH");
-        WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
-        const IERC20 = await hre.artifacts.readArtifact("@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20");
-        USDT = await ethers.getContractAt(IERC20.abi, usdt);
-        USDC = await ethers.getContractAt(IERC20.abi, usdc);
-        WETH = await ethers.getContractAt(IERC20.abi, weth);
-        WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
-        let balance = await ethers.provider.getBalance(logicOwner.address);
-        console.log("Matic balance: ", balance.toString());
-        balance = await WMATIC.balanceOf(logicOwner.address);
-        console.log("WMatic balance: ", balance.toString());
-        const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-        const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
-        // deposit Matic -> WMatic
-        await WMatic.deposit({ value: units(50) });
-        balance = await WMATIC.balanceOf(logicOwner.address);
-        console.log("WMatic balance: ", balance.toString());
+    await expect(
+      poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        new ethers.BigNumber.from("6000"),
+        [
+          [usdc, true],
+          [weth, true],
+        ],
+      ),
+    ).to.be.revertedWith("invalid fraction");
 
-        // WMatic -> USDC
-        await WMatic.approve(sushiswapV2Router, units(50));
-        await sushiswapRouter.swapExactTokensForTokens(units(50), 0, [wmatic, usdc], logicOwner.address, Math.floor(Date.now() / 1000 + 100000000));
-        balance = await USDC.balanceOf(logicOwner.address);
-        console.log("USDC balance: ", balance.toString());
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [usdc, true],
+        [weth, true],
+      ],
+    );
+
+    let event = await fundCreatedEvent;
+
+    fundAddress = event.fundAddress;
+    expect(event.isPoolPrivate).to.be.false;
+    expect(event.fundName).to.equal("Test Fund");
+    // expect(event.fundSymbol).to.equal("DHTF");
+    expect(event.managerName).to.equal("Barren Wuffet");
+    expect(event.manager).to.equal(manager.address);
+    expect(event.managerFeeNumerator.toString()).to.equal("5000");
+    expect(event.managerFeeDenominator.toString()).to.equal("10000");
+
+    let deployedFunds = await poolFactory.getDeployedFunds();
+    let deployedFundsLength = deployedFunds.length;
+    expect(deployedFundsLength.toString()).to.equal("1");
+
+    let isPool = await poolFactory.isPool(fundAddress);
+    expect(isPool).to.be.true;
+
+    let poolManagerLogicAddress = await poolFactory.getLogic(1);
+    expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
+
+    let poolLogicAddress = await poolFactory.getLogic(2);
+    expect(poolLogicAddress).to.equal(poolLogic.address);
+
+    poolLogicProxy = await PoolLogic.attach(fundAddress);
+    let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
+    poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
+
+    //default assets are supported
+    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    let numberOfSupportedAssets = supportedAssets.length;
+    expect(numberOfSupportedAssets).to.eq(2);
+    expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
+
+    //Other assets are not supported
+    expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.false;
+  });
+
+  it("should be able to deposit", async function () {
+    let depositEvent = new Promise((resolve, reject) => {
+      poolLogicProxy.on(
+        "Deposit",
+        (
+          fundAddress,
+          investor,
+          assetDeposited,
+          valueDeposited,
+          fundTokensReceived,
+          totalInvestorFundTokens,
+          fundValue,
+          totalSupply,
+          time,
+          event,
+        ) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress: fundAddress,
+            investor: investor,
+            assetDeposited: assetDeposited,
+            valueDeposited: valueDeposited,
+            fundTokensReceived: fundTokensReceived,
+            totalInvestorFundTokens: totalInvestorFundTokens,
+            fundValue: fundValue,
+            totalSupply: totalSupply,
+            time: time,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
     });
 
-    it("Should be able to createFund", async function() {
-        let fundCreatedEvent = new Promise((resolve, reject) => {
-            poolFactory.on('FundCreated', (fundAddress, isPoolPrivate, fundName, managerName, manager, time, managerFeeNumerator, managerFeeDenominator, event) => {
-                event.removeListener();
+    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    console.log("supportedAsset: ", supportedAssets);
 
-                resolve({
-                    fundAddress: fundAddress,
-                    isPoolPrivate: isPoolPrivate,
-                    fundName: fundName,
-                    // fundSymbol: fundSymbol,
-                    managerName: managerName,
-                    manager: manager,
-                    time: time,
-                    managerFeeNumerator: managerFeeNumerator,
-                    managerFeeDenominator: managerFeeDenominator
-                });
-            });
+    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", eth_price_feed);
+    let ethPrice = await chainlinkEth.latestRoundData();
+    console.log("eth price: ", ethPrice[1].toString());
+    console.log("updatedAt: ", ethPrice[3].toString());
 
-            setTimeout(() => {
-                reject(new Error('timeout'));
-            }, 60000);
+    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", usdc_price_feed);
+    let usdcPrice = await chainlinkUsdc.latestRoundData();
+    console.log("usdc price: ", usdcPrice[1].toString());
+    console.log("updatedAt: ", usdcPrice[3].toString());
+
+    // Revert on second time
+    let assetBalance = await poolManagerLogicProxy.assetBalance(usdc);
+    console.log("assetBalance: ", assetBalance.toString());
+
+    // Revert on second time
+    let assetValue = await poolManagerLogicProxy["assetValue(address)"](usdc);
+    console.log("assetValue: ", assetValue.toString());
+
+    // Revert on second time
+    totalFundValue = await poolManagerLogicProxy.totalFundValue();
+    expect(totalFundValue.toString()).to.equal("0");
+
+    await expect(poolLogicProxy.deposit(usdt, (10e6).toString())).to.be.revertedWith("invalid deposit asset");
+
+    await USDC.approve(poolLogicProxy.address, (10e6).toString());
+    await poolLogicProxy.deposit(usdc, (10e6).toString());
+    let event = await depositEvent;
+
+    expect(event.fundAddress).to.equal(poolLogicProxy.address);
+    expect(event.investor).to.equal(logicOwner.address);
+    checkAlmostSame(event.valueDeposited, units(10));
+    checkAlmostSame(event.fundTokensReceived, units(10));
+    checkAlmostSame(event.totalInvestorFundTokens, units(10));
+    checkAlmostSame(event.fundValue, units(10));
+    checkAlmostSame(event.totalSupply, units(10));
+  });
+
+  it("Should be able to approve", async () => {
+    const IERC20 = await hre.artifacts.readArtifact(
+      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
+    );
+    const iERC20 = new ethers.utils.Interface(IERC20.abi);
+    let approveABI = iERC20.encodeFunctionData("approve", [usdc, (10e6).toString()]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith(
+      "asset not enabled in pool",
+    );
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(usdc, approveABI)).to.be.revertedWith(
+      "unsupported spender approval",
+    );
+
+    approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (10e6).toString()]);
+    await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+  });
+
+  it("should be able to swap tokens on sushiswap.", async () => {
+    let exchangeEvent = new Promise((resolve, reject) => {
+      uniswapV2Guard.on("Exchange", (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+        event.removeListener();
+
+        resolve({
+          managerLogicAddress: managerLogicAddress,
+          sourceAsset: sourceAsset,
+          sourceAmount: sourceAmount,
+          destinationAsset: destinationAsset,
+          time: time,
         });
+      });
 
-        await expect(poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('6000'), [[usdc, true], [weth, true]]
-        ))
-            .to.be.revertedWith('invalid fraction');
-
-        await poolFactory.createFund(
-            false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[usdc, true], [weth, true]]
-        );
-
-        let event = await fundCreatedEvent;
-
-        fundAddress = event.fundAddress
-        expect(event.isPoolPrivate).to.be.false;
-        expect(event.fundName).to.equal("Test Fund");
-        // expect(event.fundSymbol).to.equal("DHTF");
-        expect(event.managerName).to.equal("Barren Wuffet");
-        expect(event.manager).to.equal(manager.address);
-        expect(event.managerFeeNumerator.toString()).to.equal('5000');
-        expect(event.managerFeeDenominator.toString()).to.equal('10000');
-
-        let deployedFunds = await poolFactory.getDeployedFunds()
-        let deployedFundsLength = deployedFunds.length;
-        expect(deployedFundsLength.toString()).to.equal('1');
-
-        let isPool = await poolFactory.isPool(fundAddress);
-        expect(isPool).to.be.true;
-
-        let poolManagerLogicAddress = await poolFactory.getLogic(1);
-        expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
-
-        let poolLogicAddress = await poolFactory.getLogic(2);
-        expect(poolLogicAddress).to.equal(poolLogic.address);
-
-        poolLogicProxy = await PoolLogic.attach(fundAddress);
-        let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
-        poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
-
-        //default assets are supported
-        let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-        let numberOfSupportedAssets = supportedAssets.length;
-        expect(numberOfSupportedAssets).to.eq(2);
-        expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true
-        expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true
-
-        //Other assets are not supported
-        expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.false
-
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
     });
 
-    it('should be able to deposit', async function() {
-        let depositEvent = new Promise((resolve, reject) => {
-            poolLogicProxy.on('Deposit', (fundAddress,
-                investor,
-                assetDeposited,
-                valueDeposited,
-                fundTokensReceived,
-                totalInvestorFundTokens,
-                fundValue,
-                totalSupply,
-                time, event) => {
-                    event.removeListener();
+    const sourceAmount = (10e6).toString();
+    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+    const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
+    let swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdc, weth],
+      poolManagerLogicProxy.address,
+      0,
+    ]);
 
-                    resolve({
-                        fundAddress: fundAddress,
-                        investor: investor,
-                        assetDeposited: assetDeposited,
-                        valueDeposited: valueDeposited,
-                        fundTokensReceived: fundTokensReceived,
-                        totalInvestorFundTokens: totalInvestorFundTokens,
-                        fundValue: fundValue,
-                        totalSupply: totalSupply,
-                        time: time
-                    });
-                });
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
+    ).to.be.revertedWith("non-zero address is required");
 
-            setTimeout(() => {
-                reject(new Error('timeout'));
-            }, 60000);
-        });
+    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdt, weth],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(usdc, swapABI)).to.be.revertedWith(
+      "invalid transaction",
+    );
 
-        let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-        console.log("supportedAsset: ", supportedAssets);
+    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdt, weth],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+      "unsupported source asset",
+    );
 
-        let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", eth_price_feed);
-        let ethPrice = await chainlinkEth.latestRoundData();
-        console.log("eth price: ", ethPrice[1].toString());
-        console.log("updatedAt: ", ethPrice[3].toString());
+    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdc, user.address, weth],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+      "invalid routing asset",
+    );
 
-        let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", usdc_price_feed);
-        let usdcPrice = await chainlinkUsdc.latestRoundData();
-        console.log("usdc price: ", usdcPrice[1].toString());
-        console.log("updatedAt: ", usdcPrice[3].toString());
+    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdc, weth, usdt],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+      "unsupported destination asset",
+    );
 
-        // Revert on second time
-        let assetBalance = await poolManagerLogicProxy.assetBalance(usdc);
-        console.log("assetBalance: ", assetBalance.toString());
+    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdc, weth],
+      user.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+      "recipient is not pool",
+    );
 
-        // Revert on second time
-        let assetValue = await poolManagerLogicProxy['assetValue(address)'](usdc);
-        console.log("assetValue: ", assetValue.toString());
+    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdc, weth],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+      "failed to execute the call",
+    );
 
-        // Revert on second time
-        totalFundValue = await poolManagerLogicProxy.totalFundValue();
-        expect(totalFundValue.toString()).to.equal('0');
+    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [usdc, weth],
+      poolLogicProxy.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    ]);
+    await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI);
 
-        await expect(poolLogicProxy.deposit(usdt, 10e6.toString())).to.be.revertedWith("invalid deposit asset");
+    expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal(0);
 
-        await USDC.approve(poolLogicProxy.address, 10e6.toString());
-        await poolLogicProxy.deposit(usdc, 10e6.toString());
-        let event = await depositEvent;
+    let event = await exchangeEvent;
+    expect(event.sourceAsset).to.equal(usdc);
+    expect(event.sourceAmount).to.equal((10e6).toString());
+    expect(event.destinationAsset).to.equal(weth);
+  });
 
-        expect(event.fundAddress).to.equal(poolLogicProxy.address);
-        expect(event.investor).to.equal(logicOwner.address);
-        checkAlmostSame(event.valueDeposited, units(10));
-        checkAlmostSame(event.fundTokensReceived, units(10));
-        checkAlmostSame(event.totalInvestorFundTokens, units(10));
-        checkAlmostSame(event.fundValue, units(10));
-        checkAlmostSame(event.totalSupply, units(10));
+  it("should be able to withdraw", async function () {
+    let withdrawalEvent = new Promise((resolve, reject) => {
+      poolLogicProxy.on(
+        "Withdrawal",
+        (
+          fundAddress,
+          investor,
+          valueWithdrawn,
+          fundTokensWithdrawn,
+          totalInvestorFundTokens,
+          fundValue,
+          totalSupply,
+          time,
+          event,
+        ) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress: fundAddress,
+            investor: investor,
+            valueWithdrawn: valueWithdrawn,
+            fundTokensWithdrawn: fundTokensWithdrawn,
+            totalInvestorFundTokens: totalInvestorFundTokens,
+            fundValue: fundValue,
+            totalSupply: totalSupply,
+            time: time,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
     });
 
-    it('Should be able to approve', async () => {
-        const IERC20 = await hre.artifacts.readArtifact("@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20");
-        const iERC20 = new ethers.utils.Interface(IERC20.abi);
-        let approveABI = iERC20.encodeFunctionData("approve", [usdc, 10e6.toString()]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith("asset not enabled in pool");
+    // Withdraw 50%
+    let withdrawAmount = units(5);
 
-        await expect(poolLogicProxy.connect(manager).execTransaction(usdc, approveABI)).to.be.revertedWith("unsupported spender approval");
+    await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
 
-        approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, 10e6.toString()]);
-        await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
-    });
+    await poolFactory.setExitCooldown(0);
 
+    await poolLogicProxy.withdraw(withdrawAmount);
 
-    it("should be able to swap tokens on sushiswap.", async () => {
-        let exchangeEvent = new Promise((resolve, reject) => {
-            uniswapV2Guard.on('Exchange', (
-                managerLogicAddress,
-                sourceAsset,
-                sourceAmount,
-                destinationAsset,
-                time, event) => {
-                    event.removeListener();
-
-                    resolve({
-                        managerLogicAddress: managerLogicAddress,
-                        sourceAsset: sourceAsset,
-                        sourceAmount: sourceAmount,
-                        destinationAsset: destinationAsset,
-                        time: time
-                    });
-                });
-
-            setTimeout(() => {
-                reject(new Error('timeout'));
-            }, 60000)
-        });
-
-        const sourceAmount = 10e6.toString();
-        const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-        const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
-        let swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdc, weth], poolManagerLogicProxy.address, 0]);
-
-        await expect(poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI)).to.be.revertedWith("non-zero address is required");
-
-        swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdt, weth], poolLogicProxy.address, 0]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(usdc, swapABI)).to.be.revertedWith("invalid transaction");
-
-        swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdt, weth], poolLogicProxy.address, 0]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith("unsupported source asset");
-
-        swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdc, user.address, weth], poolLogicProxy.address, 0]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith("invalid routing asset");
-
-        swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdc, weth, usdt], poolLogicProxy.address, 0]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith("unsupported destination asset");
-
-        swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdc, weth], user.address, 0]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith("recipient is not pool");
-
-        swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdc, weth], poolLogicProxy.address, 0]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith("failed to execute the call");
-
-        swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [sourceAmount, 0, [usdc, weth], poolLogicProxy.address, Math.floor(Date.now() / 1000 + 100000000)]);
-        await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI);
-
-        expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal(0);
-
-        let event = await exchangeEvent;
-        expect(event.sourceAsset).to.equal(usdc);
-        expect(event.sourceAmount).to.equal(10e6.toString());
-        expect(event.destinationAsset).to.equal(weth);
-    });
-
-    it('should be able to withdraw', async function() {
-        let withdrawalEvent = new Promise((resolve, reject) => {
-            poolLogicProxy.on('Withdrawal', (
-                fundAddress,
-                investor,
-                valueWithdrawn,
-                fundTokensWithdrawn,
-                totalInvestorFundTokens,
-                fundValue,
-                totalSupply,
-                time, event) => {
-                    event.removeListener();
-
-                    resolve({
-                        fundAddress: fundAddress,
-                        investor: investor,
-                        valueWithdrawn: valueWithdrawn,
-                        fundTokensWithdrawn: fundTokensWithdrawn,
-                        totalInvestorFundTokens: totalInvestorFundTokens,
-                        fundValue: fundValue,
-                        totalSupply: totalSupply,
-                        time: time
-                    });
-                });
-
-            setTimeout(() => {
-                reject(new Error('timeout'));
-            }, 60000)
-        });
-
-        // Withdraw 50%
-        let withdrawAmount = units(5)
-
-        await expect(poolLogicProxy.withdraw(withdrawAmount))
-            .to.be.revertedWith('cooldown active');
-
-        await poolFactory.setExitCooldown(0);
-
-        await poolLogicProxy.withdraw(withdrawAmount)
-
-        let event = await withdrawalEvent;
-        expect(event.fundAddress).to.equal(poolLogicProxy.address);
-        expect(event.investor).to.equal(logicOwner.address);
-        checkAlmostSame(event.valueWithdrawn, units(5));
-        checkAlmostSame(event.fundTokensWithdrawn, units(5));
-        checkAlmostSame(event.totalInvestorFundTokens, units(5));
-        checkAlmostSame(event.fundValue, units(5));
-        checkAlmostSame(event.totalSupply, units(5));
-    });
+    let event = await withdrawalEvent;
+    expect(event.fundAddress).to.equal(poolLogicProxy.address);
+    expect(event.investor).to.equal(logicOwner.address);
+    checkAlmostSame(event.valueWithdrawn, units(5));
+    checkAlmostSame(event.fundTokensWithdrawn, units(5));
+    checkAlmostSame(event.totalInvestorFundTokens, units(5));
+    checkAlmostSame(event.fundValue, units(5));
+    checkAlmostSame(event.totalSupply, units(5));
+  });
 });
