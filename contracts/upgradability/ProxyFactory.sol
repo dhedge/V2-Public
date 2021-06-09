@@ -56,6 +56,8 @@ contract ProxyFactory is OwnableUpgradeSafe, HasLogic {
   }
 
   function setLogic(address _poolLogic, address _poolManagerLogic) public onlyOwner {
+    require(_poolLogic != address(0), "Invalid poolLogic");
+    require(_poolManagerLogic != address(0), "Invalid poolManagerLogic");
     poolLogic = _poolLogic;
 
     poolManagerLogic = _poolManagerLogic;

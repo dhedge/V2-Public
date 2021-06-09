@@ -134,6 +134,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     string memory _fundName,
     string memory _fundSymbol
   ) public initializer {
+    require(_factory != address(0), "Invalid factory");
     __ERC20_init(_fundName, _fundSymbol);
     __ReentrancyGuard_init();
 
@@ -248,7 +249,13 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     );
   }
 
-  function execTransaction(address to, bytes memory data) public onlyManagerOrTrader whenNotPaused returns (bool) {
+  function execTransaction(address to, bytes memory data)
+    public
+    onlyManagerOrTrader
+    nonReentrant
+    whenNotPaused
+    returns (bool)
+  {
     require(to != address(0), "non-zero address is required");
 
     address guard = IHasGuardInfo(factory).getGuard(to);
@@ -264,7 +271,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     require(txType > 0, "invalid transaction");
 
     (bool success, ) = to.call(data);
-    require(success == true, "failed to execute the call");
+    require(success, "failed to execute the call");
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
 
@@ -399,6 +406,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
   }
 
   function setPoolManagerLogic(address _poolManagerLogic) external returns (bool) {
+    require(_poolManagerLogic != address(0), "Invalid poolManagerLogic address");
     require(
       msg.sender == address(factory) || msg.sender == IHasDaoInfo(factory).getDaoAddress(),
       "only DAO or factory allowed"

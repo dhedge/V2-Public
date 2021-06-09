@@ -996,12 +996,12 @@ describe('PoolFactory', function () {
   });
 
   it('should be able to upgrade/set implementation logic', async function () {
-    await poolFactory.setLogic(ZERO_ADDRESS, ZERO_ADDRESS);
+    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO );
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
-    expect(poolManagerLogicAddress).to.equal(ZERO_ADDRESS);
+    expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
 
     let poolLogicAddress = await poolFactory.getLogic(2);
-    expect(poolLogicAddress).to.equal(ZERO_ADDRESS);
+    expect(poolLogicAddress).to.equal(TESTNET_DAO);
   });
 });

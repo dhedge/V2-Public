@@ -83,6 +83,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAss
     address _poolLogic,
     Asset[] memory _supportedAssets
   ) public initializer {
+    require(_factory != address(0), "Invalid factory");
+    require(_manager != address(0), "Invalid manager");
+    require(_poolLogic != address(0), "Invalid poolLogic");
     initialize(_manager, _managerName);
 
     factory = _factory;
@@ -127,7 +130,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAss
     address asset = _asset.asset;
     bool isDeposit = _asset.isDeposit;
 
-    require(validateAsset(asset) == true, "invalid asset");
+    require(validateAsset(asset), "invalid asset");
 
     if (isSupportedAsset(asset)) {
       uint256 index = assetPosition[asset].sub(1);

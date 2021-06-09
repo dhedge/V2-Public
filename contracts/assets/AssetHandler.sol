@@ -5,12 +5,11 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
 
-import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 
-import "../interfaces/IHasDaoInfo.sol";
+import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IAssetHandler.sol";
 
 contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
@@ -26,6 +25,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
 
   function initialize(address _poolFactory, Asset[] memory assets) public initializer {
+    require(_poolFactory != address(0), "Invalid poolFactory");
     OwnableUpgradeSafe.__Ownable_init();
 
     poolFactory = _poolFactory;
@@ -40,20 +40,19 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   }
 
   /**
-   * Returns the latest price of a given asset (decimal: 18)
-   * Takes into account the asset type.
+   * @notice Currenly only use chainlink price feed.
+   * @dev Calculate the USD price of a given asset.
+   * @param asset the asset address
+   * @return price Returns the latest price of a given asset (decimal: 18)
    */
-  function getUSDPrice(address asset) public view override returns (uint256) {
+  function getUSDPrice(address asset) public view override returns (uint256 price) {
     address aggregator = priceAggregators[asset];
     uint8 assetType = assetTypes[asset];
 
     require(aggregator != address(0), "Price aggregator not found");
 
-    uint256 price;
-
     if (assetType == 0) {
-      // Chainlink direct feed
-      try AggregatorV3Interface(aggregator).latestRoundData() returns (
+      try IAggregatorV3Interface(aggregator).latestRoundData() returns (
         uint80,
         int256 _price,
         uint256,
@@ -72,8 +71,6 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
     }
 
     require(price > 0, "Price not available");
-
-    return price;
   }
 
   /* ========== MUTATIVE FUNCTIONS ========== */
@@ -81,6 +78,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   /* ---------- From Owner ---------- */
 
   function setPoolFactory(address _poolFactory) external onlyOwner {
+    require(_poolFactory != address(0), "Invalid poolFactory");
     poolFactory = _poolFactory;
   }
 

@@ -67,8 +67,7 @@ describe("Sushiswap V2 Test", function() {
         const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
     
         await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
-        await assetHandler.deployed();
-        // await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
+        await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
     
         poolFactory = await PoolFactory.attach(poolFactory.address);
         await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
