@@ -251,7 +251,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
 
   /// @notice Function to let pool talk to other protocol
   /// @dev execute transaction for the pool
-  /// @param to The destination address for pool to talk to 
+  /// @param to The destination address for pool to talk to
   /// @param data The data that going to send in the transaction
   /// @return A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data)
