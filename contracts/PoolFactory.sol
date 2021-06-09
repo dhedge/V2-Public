@@ -51,6 +51,7 @@ import "./interfaces/IHaveSupportedAsset.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
+/// @title A Factory to spawn pools
 contract PoolFactory is
   PausableUpgradeSafe,
   ProxyFactory,

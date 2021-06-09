@@ -171,10 +171,14 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAss
     emit AssetRemoved(poolLogic, manager(), asset, isDeposit);
   }
 
+  /// @notice Get all the supported assets
+  /// @return Return array of supported assets
   function getSupportedAssets() public view override returns (Asset[] memory) {
     return supportedAssets;
   }
 
+  /// @notice Get all the deposit assets
+  /// @return Return array of deposit assets' addresses
   function getDepositAssets() public view returns (address[] memory) {
     uint256 assetCount = supportedAssets.length;
     address[] memory depositAssets = new address[](assetCount);
@@ -207,6 +211,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAss
     return assetValue(asset, assetBalance(asset));
   }
 
+  /// @notice Return the fund composition of the pool
+  /// @dev Return assets, balances of the asset and their prices
+  /// @return assets array of supported assets
+  /// @return balances balances of each asset
+  /// @return rates price of each asset in USD
   function getFundComposition()
     public
     view
@@ -287,6 +296,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHaveSupportedAss
     return true;
   }
 
+  /// @notice Return the total fund value of the pool
+  /// @dev Calculate the total fund value from the supported assets
+  /// @return value in USD
   function totalFundValue() public view override returns (uint256) {
     uint256 total = 0;
     uint256 assetCount = supportedAssets.length;
