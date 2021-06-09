@@ -15,7 +15,7 @@ let poolFactory,
   fundAddress,
   synthetixGuard,
   erc20Guard,
-  uniswapV2Guard,
+  uniswapV2RouterGuard,
   uniswapV3SwapGuard;
 let addressResolver, synthetix, uniswapV2Factory, uniswapV2Router, uniswapV3Router; // contracts
 let susd, seth, slink;
@@ -182,9 +182,9 @@ describe('PoolFactory', function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const UniswapV2Guard = await ethers.getContractFactory('UniswapV2Guard');
-    uniswapV2Guard = await UniswapV2Guard.deploy(uniswapV2Factory.address);
-    uniswapV2Guard.deployed();
+    const UniswapV2RouterGuard = await ethers.getContractFactory('UniswapV2RouterGuard');
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory.address);
+    uniswapV2RouterGuard.deployed();
 
     const UniswapV3SwapGuard = await ethers.getContractFactory('UniswapV3SwapGuard');
     uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
@@ -192,7 +192,7 @@ describe('PoolFactory', function () {
 
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
     await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
-    await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2Guard.address);
+    await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await poolFactory.connect(dao).setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
   });
 
@@ -668,7 +668,7 @@ describe('PoolFactory', function () {
 
   it('should be able to swap tokens on Uniswap v2', async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV2Guard.on('Exchange', (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV2RouterGuard.on('Exchange', (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({

@@ -17,7 +17,7 @@
       "PoolManagerLogic": "0xDBc63272f1756aDE4DC98ED80EFA4A2d420AD28F",
       "AssetHandlerProxy": "0xC6d2591b4E5753B65cdF8752803f348667F2aAC8",
       "ERC20Guard": "0xE9738db376fc4eFD98eb6C3A6dA08Ff79532d8Ce",
-      "UniswapV2Guard": "0xc396Eb2318310553F6cf5Ae6FD644d82e9ff8be8"
+      "UniswapV2RouterGuard": "0xc396Eb2318310553F6cf5Ae6FD644d82e9ff8be8"
     }
   }
 }

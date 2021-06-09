@@ -27,7 +27,7 @@ describe("Sushiswap/Uniswap V2 Test", function() {
     let logicOwner, manager, dao, user;
     let PoolFactory, PoolLogic, PoolManagerLogic, assetHandler;
     let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
-    let uniswapV2Guard, sushiswapGuard;
+    let uniswapV2RouterGuard, sushiswapGuard;
     
     before(async function(){
         [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -85,15 +85,15 @@ describe("Sushiswap/Uniswap V2 Test", function() {
         erc20Guard = await ERC20Guard.deploy();
         erc20Guard.deployed();
 
-        const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-        uniswapV2Guard = await UniswapV2Guard.deploy(uniswapV2Factory);
-        uniswapV2Guard.deployed();
+        const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+        uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory);
+        uniswapV2RouterGuard.deployed();
 
-        sushiswapGuard = await UniswapV2Guard.deploy(sushiswapFactory);
+        sushiswapGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
         sushiswapGuard.deployed();
 
         await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-        await poolFactory.connect(dao).setContractGuard(uniswapV2Router, uniswapV2Guard.address);
+        await poolFactory.connect(dao).setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
         await poolFactory.connect(dao).setContractGuard(sushiswapRouter, sushiswapGuard.address);
     });
 
@@ -262,7 +262,7 @@ describe("Sushiswap/Uniswap V2 Test", function() {
 
     it("should be able to swap tokens on uniswap.", async () => {
         let exchangeEvent = new Promise((resolve, reject) => {
-            uniswapV2Guard.on('Exchange', (
+            uniswapV2RouterGuard.on('Exchange', (
                 managerLogicAddress,
                 sourceAsset,
                 sourceAmount,
@@ -329,8 +329,6 @@ describe("Sushiswap/Uniswap V2 Test", function() {
                 tokenA,
                 tokenB,
                 pair,
-                amountADesired,
-                amountBDesired,
                 time, event) => {
                     event.removeListener();
 
@@ -397,8 +395,6 @@ describe("Sushiswap/Uniswap V2 Test", function() {
         expect(event.tokenA).to.equal(usdc);
         expect(event.tokenB).to.equal(usdt);
         expect(event.pair).to.equal(sushi_usdc_usdt);
-        expect(event.amountADesired).to.equal(25e6.toString());
-        expect(event.amountBDesired).to.equal(25e6.toString());
     });
 
     it("should be able to remove liquidity on sushiswap.", async () => {
@@ -482,7 +478,7 @@ describe("Sushiswap/Uniswap V2 Test", function() {
 
     it("should be able to swap tokens back on uniswap.", async () => {
         let exchangeEvent = new Promise((resolve, reject) => {
-            uniswapV2Guard.on('Exchange', (
+            uniswapV2RouterGuard.on('Exchange', (
                 managerLogicAddress,
                 sourceAsset,
                 sourceAmount,

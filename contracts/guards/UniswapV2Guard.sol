@@ -45,10 +45,10 @@ import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 
 /**
- * @notice Transaction guard for Uniswap V2
+ * @notice Transaction guard for UniswapV2Router
  * @dev This will be used for sushiswap as well since Sushi uses the same interface.
  */
-contract UniswapV2Guard is TxDataUtils, IGuard {
+contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   using SafeMath for uint256;
 
   event AddLiquidity(
@@ -56,8 +56,6 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
     address tokenA,
     address tokenB,
     address pair,
-    uint256 amountADesired,
-    uint256 amountBDesired,
     uint256 time
   );
   event RemoveLiquidity(
@@ -130,16 +128,11 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
       address to = convert32toAddress(getInput(data, 6));
       require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
 
-      uint256 amountADesired = uint256(getInput(data, 2));
-      uint256 amountBDesired = uint256(getInput(data, 3));
-
       emit AddLiquidity(
         poolManagerLogic.poolLogic(),
         tokenA,
         tokenB,
         pair,
-        amountADesired,
-        amountBDesired,
         block.timestamp
       );
 

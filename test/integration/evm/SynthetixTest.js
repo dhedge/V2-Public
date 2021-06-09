@@ -97,12 +97,12 @@ describe("Synthetix Test", function() {
         erc20Guard = await ERC20Guard.deploy();
         erc20Guard.deployed();
 
-        const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-        uniswapV2Guard = await UniswapV2Guard.deploy(uniswapV2Factory);
-        uniswapV2Guard.deployed();
+        const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+        uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory);
+        uniswapV2RouterGuard.deployed();
 
         await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-        await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2Guard.address);
+        await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
         await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
     });
 

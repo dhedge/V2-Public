@@ -78,12 +78,12 @@ describe("Sushiswap V2 Test", function() {
         erc20Guard = await ERC20Guard.deploy();
         erc20Guard.deployed();
 
-        const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-        uniswapV2Guard = await UniswapV2Guard.deploy(sushiswapV2Factory);
-        uniswapV2Guard.deployed();
+        const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+        uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
+        uniswapV2RouterGuard.deployed();
 
         await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-        await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
+        await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
 
     });
 
@@ -236,7 +236,7 @@ describe("Sushiswap V2 Test", function() {
 
     it("should be able to swap tokens on sushiswap.", async () => {
         let exchangeEvent = new Promise((resolve, reject) => {
-            uniswapV2Guard.on('Exchange', (
+            uniswapV2RouterGuard.on('Exchange', (
                 managerLogicAddress,
                 sourceAsset,
                 sourceAmount,
