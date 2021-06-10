@@ -1,7 +1,3 @@
-// import hre from "hardhat";
-// import { ethers } from "hardhat";
-// import { Contract } from "@ethersproject/contracts/lib";
-
 const currentBlockTimestamp = async () => {
   const currentBlockNumber = await ethers.provider.getBlockNumber();
   return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;

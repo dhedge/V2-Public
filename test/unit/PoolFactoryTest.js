@@ -1,10 +1,7 @@
-// import { updateChainlinkAggregators } from "./TestHelpers";
-
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
-const { link } = require("@ethereum-waffle/compiler");
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 

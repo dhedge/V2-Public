@@ -276,7 +276,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     uint8 assetType = IHasAssetInfo(factory).getAssetType(asset);
 
     if (assetType == 2) {
-      // Sushi LP token - withdraw any staked tokens
+      // Stakeable token. Check to withdraw any staked tokens
       address guard = IHasGuardInfo(factory).getGuard(asset);
       require(guard != address(0), "invalid guard");
       (address stakingContract, bytes memory txData) =
