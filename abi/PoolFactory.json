@@ -253,7 +253,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHaveSupportedAsset.Asset[]",
+        "internalType": "struct IHasSupportedAsset.Asset[]",
         "name": "_supportedAssets",
         "type": "tuple[]"
       }

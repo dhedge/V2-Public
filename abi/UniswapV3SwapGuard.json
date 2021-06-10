@@ -23,7 +23,7 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "destinationAddress",
+        "name": "dstAsset",
         "type": "address"
       },
       {

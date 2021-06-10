@@ -41,7 +41,7 @@ interface IGuard {
     address fundAddress,
     address sourceAsset,
     uint256 sourceAmount,
-    address destinationAddress,
+    address dstAsset,
     uint256 time
   );
 
