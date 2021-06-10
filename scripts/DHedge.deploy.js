@@ -1,3 +1,5 @@
+const { getTag } = require("./Helpers");
+
 const hre = require('hardhat')
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = '0xb08b62e1cdfd37eCCd69A9ACe67322CCF801b3A6';
@@ -133,10 +135,11 @@ async function main () {
 
   // await proxyAdmin.transferOwnership(TESTNET_DAO);
 
+  let tag = await getTag();
+
   let versions = {
     "v2.0.0-rc.1": {
-      "tag": "v2.0.0-rc.1",
-      "fulltag": "v2.0.0-rc.1",
+      "tag": tag,
       "network": network,
       "date": new Date(),
       "contracts": {

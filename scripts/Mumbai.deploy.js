@@ -1,5 +1,6 @@
 const hre = require('hardhat')
 const fs = require('fs');
+const { getTag } = require("./Helpers");
 
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
@@ -118,9 +119,11 @@ async function main () {
   await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
   console.log("PoolFactory set dao ", dao.address);
 
+  let tag = await getTag();
+
   let versions = {
     "v2.0-alpha": {
-      "tag": "v2.0-alpha",
+      "tag": tag,
       "fulltag": "v2.0-alpha",
       "network": "mumbai",
       "date": new Date().toUTCString(),
