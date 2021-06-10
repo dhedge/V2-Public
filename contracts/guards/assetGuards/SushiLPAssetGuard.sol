@@ -65,7 +65,11 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
     }
   }
 
-  // transaction guard for approving assets
+  /// @notice Transaction guard for approving assets
+  /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @param pool Pool address
+  /// @param data Transaction call data attempt by manager
+  /// @return txType transaction type described in PoolLogic
   function txGuard(address pool, bytes calldata data)
     external
     override
@@ -94,6 +98,11 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
 
   /// @notice Creates transaction data for withdrawing staked tokens
   /// @dev The same interface can be used for other types of stakeable tokens
+  /// @param pool Pool address
+  /// @param asset Staked asset
+  /// @param withdrawPortion The fraction of total staked asset to withdraw
+  /// @param to The investor address to withdraw to
+  /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
   function getWithdrawStakedTx(
     address pool,
     address asset,

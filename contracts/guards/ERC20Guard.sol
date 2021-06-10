@@ -48,7 +48,11 @@ contract ERC20Guard is TxDataUtils, IGuard {
 
   event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
 
-  // transaction guard for approving assets
+  /// @notice Transaction guard for approving assets
+  /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @param pool Pool address
+  /// @param data Transaction call data attempt by manager
+  /// @return txType transaction type described in PoolLogic
   function txGuard(address pool, bytes calldata data)
     external
     override

@@ -47,5 +47,5 @@ interface ILPAssetGuard {
     address asset,
     uint256 withdrawPortion,
     address to
-  ) external returns (address stakingContract, bytes memory txData);
+  ) external returns (address, bytes memory);
 }
