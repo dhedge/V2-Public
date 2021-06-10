@@ -46,7 +46,7 @@ const slinkKey = "0x734c494e4b00000000000000000000000000000000000000000000000000
 
 describe("PoolFactory", function () {
   before(async function () {
-    [logicOwner, manager, dao, user1] = await ethers.getSigners();
+    [logicOwner, manager, dao, investor, user1] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
     addressResolver = await MockContract.deploy();
@@ -378,7 +378,7 @@ describe("PoolFactory", function () {
       }, 60000);
     });
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
-      logicOwner.address,
+      investor.address,
       poolLogicProxy.address,
       (100e18).toString(),
     ]);
@@ -389,11 +389,11 @@ describe("PoolFactory", function () {
     expect(totalFundValue.toString()).to.equal("0");
 
     await expect(poolLogicProxy.deposit(slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
-    await poolLogicProxy.deposit(susd, (100e18).toString());
+    await poolLogicProxy.connect(investor).deposit(susd, (100e18).toString());
     let event = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
-    expect(event.investor).to.equal(logicOwner.address);
+    expect(event.investor).to.equal(investor.address);
     expect(event.assetDeposited).to.equal(susd);
     expect(event.valueDeposited).to.equal((100e18).toString());
     expect(event.fundTokensReceived).to.equal((100e18).toString());
@@ -446,12 +446,14 @@ describe("PoolFactory", function () {
     let totalSupply = await poolLogicProxy.totalSupply();
     let totalFundValue = await poolLogicProxy.totalFundValue();
 
-    await expect(poolLogicProxy.withdraw(withdrawAmount.toString())).to.be.revertedWith("cooldown active");
+    await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
+      "cooldown active",
+    );
 
     // await poolFactory.setExitCooldown(0);
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
 
-    await poolLogicProxy.withdraw(withdrawAmount.toString());
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
     // let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
     // let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
@@ -461,7 +463,7 @@ describe("PoolFactory", function () {
     let fundTokensWithdrawn = withdrawAmount;
     let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
-    expect(event.investor).to.equal(logicOwner.address);
+    expect(event.investor).to.equal(investor.address);
     expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
     expect(event.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
@@ -489,7 +491,7 @@ describe("PoolFactory", function () {
     let poolManagerLogicPrivateProxy = await PoolManagerLogic.attach(await poolLogicPrivateProxy.poolManagerLogic());
 
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
-      logicOwner.address,
+      investor.address,
       poolLogicPrivateProxy.address,
       (100e18).toString(),
     ]);
@@ -1076,36 +1078,38 @@ describe("PoolFactory", function () {
       abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
     );
 
-    console.log("get sushiLPPrice");
-    const sushiLPPrice = await sushiLPAggregator.latestRoundData();
-    console.log("sushiLPPrice:", sushiLPPrice[1].toString());
-
     const totalSupply = await poolLogicProxy.totalSupply();
-    console.log("totalSupply:", totalSupply);
     const totalFundValue = await poolLogicProxy.totalFundValue();
-    console.log("totalFundValue:", totalFundValue);
 
     // Withdraw 10 tokens
     const withdrawAmount = 10e18;
-    const investorFundBalance = await poolLogicProxy.balanceOf(logicOwner.address);
+    const investorFundBalance = await poolLogicProxy.balanceOf(investor.address);
 
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
-    await poolLogicProxy.withdraw(withdrawAmount.toString());
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
     const eventWithdrawal = await withdrawalEvent;
     const eventWithdrawStaked = await withdrawStakedEvent;
-    console.log("eventWithdrawStaked:", eventWithdrawStaked);
 
     const fundTokensWithdrawn = withdrawAmount;
     const valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
+    const fractionWithdrawn = fundTokensWithdrawn / totalSupply;
 
     expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
-    expect(eventWithdrawal.investor).to.equal(logicOwner.address);
+    expect(eventWithdrawal.investor).to.equal(investor.address);
     expect(eventWithdrawal.valueWithdrawn).to.equal(valueWithdrawn.toString());
     expect(eventWithdrawal.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
     expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
     expect(eventWithdrawal.fundValue).to.equal(totalFundValue.toString());
     expect(eventWithdrawal.totalSupply).to.equal((totalSupply - fundTokensWithdrawn).toString());
+
+    expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
+    expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
+    expect(eventWithdrawStaked.to).to.equal(investor.address);
+    expect(eventWithdrawStaked.withdrawAmount).to.equal((amountLPStaked * fractionWithdrawn).toString());
+    expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
+
+    // TODO: add totalFundValue change checks after we implement balanceOf for staked LP tokens
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
