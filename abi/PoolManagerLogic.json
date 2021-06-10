@@ -316,7 +316,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHaveSupportedAsset.Asset[]",
+        "internalType": "struct IHasSupportedAsset.Asset[]",
         "name": "_addAssets",
         "type": "tuple[]"
       },
@@ -333,7 +333,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHaveSupportedAsset.Asset[]",
+        "internalType": "struct IHasSupportedAsset.Asset[]",
         "name": "_removeAssets",
         "type": "tuple[]"
       }
@@ -411,7 +411,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHaveSupportedAsset.Asset[]",
+        "internalType": "struct IHasSupportedAsset.Asset[]",
         "name": "assets",
         "type": "tuple[]"
       },
@@ -495,7 +495,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHaveSupportedAsset.Asset[]",
+        "internalType": "struct IHasSupportedAsset.Asset[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -538,7 +538,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHaveSupportedAsset.Asset[]",
+        "internalType": "struct IHasSupportedAsset.Asset[]",
         "name": "_supportedAssets",
         "type": "tuple[]"
       }
