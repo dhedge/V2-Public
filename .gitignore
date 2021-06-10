@@ -4,6 +4,7 @@ node_modules
 #Hardhat files
 cache
 artifacts
+artifacts-ovm
 
 #VIM
 *.swp
@@ -14,3 +15,6 @@ artifacts
 #Coverage
 coverage/
 coverage.json
+
+# VScode
+.vscode

@@ -1,0 +1,2533 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/assets/AssetHandler.sol": {
+      "lastModificationDate": 1623173156655,
+      "contentHash": "d65c5be35dd842acb817a3980f67aa73",
+      "sourceName": "contracts/assets/AssetHandler.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
+        "../interfaces/IAggregatorV3Interface.sol",
+        "../interfaces/IAssetHandler.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "AssetHandler"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol": {
+      "lastModificationDate": 1619752052811,
+      "contentHash": "fae58f64850246a4f1ae3b24dfb59efa",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol": {
+      "lastModificationDate": 1619752052741,
+      "contentHash": "402d88f041ed1754339d60ae70077cd9",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.24 <0.7.0"
+      ],
+      "artifacts": [
+        "Initializable"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1619752052760,
+      "contentHash": "3aa0c3038c55f2e2c14205311a71e879",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../GSN/Context.sol",
+        "../Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "OwnableUpgradeSafe"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IAggregatorV3Interface.sol": {
+      "lastModificationDate": 1623173156667,
+      "contentHash": "814069d3331502d6339ec58f36551cf8",
+      "sourceName": "contracts/interfaces/IAggregatorV3Interface.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IAggregatorV3Interface"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IAssetHandler.sol": {
+      "lastModificationDate": 1623156704329,
+      "contentHash": "bcb2a49dae60edf145e8fe7bd56f2a2b",
+      "sourceName": "contracts/interfaces/IAssetHandler.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IAssetHandler"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol": {
+      "lastModificationDate": 1619752052504,
+      "contentHash": "29ba4a35181267b3aab4563990e56909",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "ContextUpgradeSafe"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/PoolFactory.sol": {
+      "lastModificationDate": 1623264302111,
+      "contentHash": "306fe1772bc85ea96a241ff4759ce171",
+      "sourceName": "contracts/PoolFactory.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./PoolLogic.sol",
+        "./upgradability/ProxyFactory.sol",
+        "./interfaces/IAssetHandler.sol",
+        "./interfaces/IHasDaoInfo.sol",
+        "./interfaces/IHasFeeInfo.sol",
+        "./interfaces/IHasAssetInfo.sol",
+        "./interfaces/IPoolLogic.sol",
+        "./interfaces/IHasGuardInfo.sol",
+        "./interfaces/IHasPausable.sol",
+        "./interfaces/IHasSupportedAsset.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "PoolFactory"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/PoolLogic.sol": {
+      "lastModificationDate": 1623264302112,
+      "contentHash": "aac4c14aa4370f416f58b6e4b44cb0be",
+      "sourceName": "contracts/PoolLogic.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./interfaces/IHasDaoInfo.sol",
+        "./interfaces/IHasFeeInfo.sol",
+        "./interfaces/IHasGuardInfo.sol",
+        "./interfaces/IHasAssetInfo.sol",
+        "./interfaces/IHasPausable.sol",
+        "./interfaces/IPoolManagerLogic.sol",
+        "./interfaces/IManaged.sol",
+        "./guards/IGuard.sol",
+        "./interfaces/IHasSupportedAsset.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "PoolLogic"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/upgradability/ProxyFactory.sol": {
+      "lastModificationDate": 1623173156683,
+      "contentHash": "ff83c1db4ecbc702586cb1171d2b62ec",
+      "sourceName": "contracts/upgradability/ProxyFactory.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./InitializableUpgradeabilityProxy.sol",
+        "./HasLogic.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ProxyFactory"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IHasDaoInfo.sol": {
+      "lastModificationDate": 1623156704344,
+      "contentHash": "c75b691d97909a59713f745e07d4e354",
+      "sourceName": "contracts/interfaces/IHasDaoInfo.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IHasDaoInfo"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IHasFeeInfo.sol": {
+      "lastModificationDate": 1623156704349,
+      "contentHash": "8d306393182f0064cf79441116364e57",
+      "sourceName": "contracts/interfaces/IHasFeeInfo.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IHasFeeInfo"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IHasAssetInfo.sol": {
+      "lastModificationDate": 1623156704339,
+      "contentHash": "12be25747a18aac4fb0c88c0037254a8",
+      "sourceName": "contracts/interfaces/IHasAssetInfo.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IHasAssetInfo"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IPoolLogic.sol": {
+      "lastModificationDate": 1623156704370,
+      "contentHash": "8c445f2a1db530bcb071db24f71f5fc1",
+      "sourceName": "contracts/interfaces/IPoolLogic.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IPoolLogic"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IHasGuardInfo.sol": {
+      "lastModificationDate": 1623156704354,
+      "contentHash": "4036c41cd605d310b8aa8ebcf8bacbe1",
+      "sourceName": "contracts/interfaces/IHasGuardInfo.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IHasGuardInfo"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IHasPausable.sol": {
+      "lastModificationDate": 1623156704359,
+      "contentHash": "e18b741a79cde020aab4294a7275bfba",
+      "sourceName": "contracts/interfaces/IHasPausable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IHasPausable"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IHasSupportedAsset.sol": {
+      "lastModificationDate": 1623264302129,
+      "contentHash": "5f78f721eebf75c01332a307ea175e9a",
+      "sourceName": "contracts/interfaces/IHasSupportedAsset.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IHasSupportedAsset"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol": {
+      "lastModificationDate": 1619752052764,
+      "contentHash": "56afb51c3fefe4cd06e7760d3e8642da",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../GSN/Context.sol",
+        "../Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "PausableUpgradeSafe"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IPoolManagerLogic.sol": {
+      "lastModificationDate": 1623264302130,
+      "contentHash": "a642620ff4c7f5c534365b21ace200f3",
+      "sourceName": "contracts/interfaces/IPoolManagerLogic.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IPoolManagerLogic"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IManaged.sol": {
+      "lastModificationDate": 1623156704365,
+      "contentHash": "9bab6efb5ffc89d7347e078a1b83455a",
+      "sourceName": "contracts/interfaces/IManaged.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IManaged"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/IGuard.sol": {
+      "lastModificationDate": 1623156704300,
+      "contentHash": "b15056b5a26d3a6277ed75179c0df9db",
+      "sourceName": "contracts/guards/IGuard.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IGuard"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1619752052706,
+      "contentHash": "dc33f115b06a62f5f6c62af735b8302c",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol": {
+      "lastModificationDate": 1619752052786,
+      "contentHash": "02bbb1cdc56d4ea93ffd0afee5042290",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "ReentrancyGuardUpgradeSafe"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1619752052582,
+      "contentHash": "b51b3e2390708fa4563fa5bce80babf9",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../GSN/Context.sol",
+        "./IERC20.sol",
+        "../../math/SafeMath.sol",
+        "../../utils/Address.sol",
+        "../../Initializable.sol"
+      ],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "ERC20UpgradeSafe"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol": {
+      "lastModificationDate": 1619752052467,
+      "contentHash": "079b4185b8794e6abce0f0c79ffeb8f5",
+      "sourceName": "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.6.2"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/upgradability/InitializableUpgradeabilityProxy.sol": {
+      "lastModificationDate": 1623156704468,
+      "contentHash": "986a9e65dbf61e1854ac324873848eae",
+      "sourceName": "contracts/upgradability/InitializableUpgradeabilityProxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./BaseUpgradeabilityProxy.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "InitializableUpgradeabilityProxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/upgradability/HasLogic.sol": {
+      "lastModificationDate": 1623156704463,
+      "contentHash": "fc450b86029728437f4a4182f0d1df0a",
+      "sourceName": "contracts/upgradability/HasLogic.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "HasLogic"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/upgradability/BaseUpgradeabilityProxy.sol": {
+      "lastModificationDate": 1623156704459,
+      "contentHash": "4a736bb0a0220f1da68feccc14d0b45b",
+      "sourceName": "contracts/upgradability/BaseUpgradeabilityProxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Proxy.sol",
+        "./Address.sol",
+        "./HasLogic.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "BaseUpgradeabilityProxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/upgradability/Proxy.sol": {
+      "lastModificationDate": 1623156704473,
+      "contentHash": "6622ee48bb476722d0ede5281a92126a",
+      "sourceName": "contracts/upgradability/Proxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "Proxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/upgradability/Address.sol": {
+      "lastModificationDate": 1623156704454,
+      "contentHash": "22e5e29e5412cc0ca6c7967b8656fdd0",
+      "sourceName": "contracts/upgradability/Address.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "OpenZeppelinUpgradesAddress"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/PoolManagerLogic.sol": {
+      "lastModificationDate": 1623264302118,
+      "contentHash": "b25f3471b3b32900ec0c16d68eb26149",
+      "sourceName": "contracts/PoolManagerLogic.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./interfaces/IPoolLogic.sol",
+        "./interfaces/IPoolManagerLogic.sol",
+        "./interfaces/IHasAssetInfo.sol",
+        "./interfaces/IHasFeeInfo.sol",
+        "./interfaces/IHasDaoInfo.sol",
+        "./interfaces/IHasProtocolDaoInfo.sol",
+        "./interfaces/IHasGuardInfo.sol",
+        "./interfaces/IERC20Extended.sol",
+        "./interfaces/IHasSupportedAsset.sol",
+        "./guards/IGuard.sol",
+        "./Managed.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "PoolManagerLogic"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IHasProtocolDaoInfo.sol": {
+      "lastModificationDate": 1623173156667,
+      "contentHash": "7d75d2195c7a06be16fadc5ae5d8f8d4",
+      "sourceName": "contracts/interfaces/IHasProtocolDaoInfo.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IHasProtocolDaoInfo"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IERC20Extended.sol": {
+      "lastModificationDate": 1623156704334,
+      "contentHash": "6887c3d0df6618e35029b0cc7628f1ed",
+      "sourceName": "contracts/interfaces/IERC20Extended.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IERC20Extended"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/Managed.sol": {
+      "lastModificationDate": 1623173156632,
+      "contentHash": "1c8f3ce66a609bd790fa89a318b89b7c",
+      "sourceName": "contracts/Managed.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol",
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "Managed"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/uniswapV3/UniswapV3SwapGuard.sol": {
+      "lastModificationDate": 1623264302129,
+      "contentHash": "9db40bc8687ef8638d23ab5e6a7c73f3",
+      "sourceName": "contracts/guards/uniswapV3/UniswapV3SwapGuard.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "./Path.sol",
+        "../IGuard.sol",
+        "../../utils/TxDataUtils.sol",
+        "../../interfaces/IPoolManagerLogic.sol",
+        "../../interfaces/IHasGuardInfo.sol",
+        "../../interfaces/IManaged.sol",
+        "../../interfaces/IHasSupportedAsset.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "UniswapV3SwapGuard"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/uniswapV3/Path.sol": {
+      "lastModificationDate": 1623156704312,
+      "contentHash": "0ecfcf3e60bf3f1a9bea6477529538f1",
+      "sourceName": "contracts/guards/uniswapV3/Path.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../utils/BytesLib.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "Path"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/utils/TxDataUtils.sol": {
+      "lastModificationDate": 1623156704489,
+      "contentHash": "cf5e63d95e4aefc0dcbc5d550f699455",
+      "sourceName": "contracts/utils/TxDataUtils.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "./BytesLib.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "TxDataUtils"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/utils/BytesLib.sol": {
+      "lastModificationDate": 1623156704479,
+      "contentHash": "7f1f3da9c1dd13dfaad0ff4de6c0d6a9",
+      "sourceName": "contracts/utils/BytesLib.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "BytesLib"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/UniswapV2Guard.sol": {
+      "lastModificationDate": 1623264302123,
+      "contentHash": "7c638c330fe357e907dcde688e2dd80f",
+      "sourceName": "contracts/guards/UniswapV2Guard.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "./IGuard.sol",
+        "../utils/TxDataUtils.sol",
+        "../interfaces/IPoolManagerLogic.sol",
+        "../interfaces/IHasGuardInfo.sol",
+        "../interfaces/IManaged.sol",
+        "../interfaces/IHasSupportedAsset.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "UniswapV2Guard"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/SynthetixGuard.sol": {
+      "lastModificationDate": 1623264302123,
+      "contentHash": "e8cc13cdf4a35272c35ce32dbcf7a4fa",
+      "sourceName": "contracts/guards/SynthetixGuard.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "./IGuard.sol",
+        "../utils/TxDataUtils.sol",
+        "../interfaces/IPoolManagerLogic.sol",
+        "../interfaces/IHasGuardInfo.sol",
+        "../interfaces/IManaged.sol",
+        "../interfaces/synthetix/ISynth.sol",
+        "../interfaces/synthetix/ISynthetix.sol",
+        "../interfaces/synthetix/IAddressResolver.sol",
+        "../interfaces/IHasSupportedAsset.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "SynthetixGuard"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/ISynth.sol": {
+      "lastModificationDate": 1623173156750,
+      "contentHash": "0187750b54729663c1d2d7a3d6f1d4f0",
+      "sourceName": "contracts/interfaces/synthetix/ISynth.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ISynth"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/ISynthetix.sol": {
+      "lastModificationDate": 1623173156748,
+      "contentHash": "c5f60066d7f5b1f13ea7b62deffb3dd6",
+      "sourceName": "contracts/interfaces/synthetix/ISynthetix.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ISynthetix"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/IAddressResolver.sol": {
+      "lastModificationDate": 1623173156752,
+      "contentHash": "6a28eb704dc5793f8f199cdf94184112",
+      "sourceName": "contracts/interfaces/synthetix/IAddressResolver.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IAddressResolver"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/IVirtualSynth.sol": {
+      "lastModificationDate": 1623173156746,
+      "contentHash": "279eccc8f929c07448588a921d4cd7d2",
+      "sourceName": "contracts/interfaces/synthetix/IVirtualSynth.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ISynth.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IVirtualSynth"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/ERC20Guard.sol": {
+      "lastModificationDate": 1623156704295,
+      "contentHash": "086c8cf64a5cd63435f1fb3d2322883b",
+      "sourceName": "contracts/guards/ERC20Guard.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "./IGuard.sol",
+        "../utils/TxDataUtils.sol",
+        "../interfaces/IPoolManagerLogic.sol",
+        "../interfaces/IHasGuardInfo.sol",
+        "../interfaces/IManaged.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ERC20Guard"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/assets/SushiLPAggregator.sol": {
+      "lastModificationDate": 1623173156661,
+      "contentHash": "9336d7d9bb70ce03c7e060b8f4d5e38f",
+      "sourceName": "contracts/assets/SushiLPAggregator.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
+        "../interfaces/IAggregatorV3Interface.sol",
+        "../interfaces/IUniswapV2Pair.sol",
+        "../interfaces/IERC20Extended.sol",
+        "../utils/DhedgeMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "SushiLPAggregator"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IUniswapV2Pair.sol": {
+      "lastModificationDate": 1623173156673,
+      "contentHash": "30000ade401c8b9be08d6466e82cab79",
+      "sourceName": "contracts/interfaces/IUniswapV2Pair.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IUniswapV2Pair"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/utils/DhedgeMath.sol": {
+      "lastModificationDate": 1623173156687,
+      "contentHash": "d5c478452ae746eb20835cd7c1b2a10c",
+      "sourceName": "contracts/utils/DhedgeMath.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "DhedgeMath"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IUniswapV2Router.sol": {
+      "lastModificationDate": 1623264234399,
+      "contentHash": "c655db09be88ee87878d3418d221c01b",
+      "sourceName": "contracts/interfaces/IUniswapV2Router.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IUniswapV2Router"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IUniswapV3Router.sol": {
+      "lastModificationDate": 1623156704391,
+      "contentHash": "f6382374deaca2389ad922b0888a31a7",
+      "sourceName": "contracts/interfaces/IUniswapV3Router.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IUniswapV3Router"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/IExchanger.sol": {
+      "lastModificationDate": 1623173156750,
+      "contentHash": "af9d39fb1b9aa3039b5601ce1b4e9bef",
+      "sourceName": "contracts/interfaces/synthetix/IExchanger.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IExchanger"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/IExchangeRates.sol": {
+      "lastModificationDate": 1623173156751,
+      "contentHash": "868f51903abf523aa35502652e6c6732",
+      "sourceName": "contracts/interfaces/synthetix/IExchangeRates.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IExchangeRates"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/ISynthAddressProxy.sol": {
+      "lastModificationDate": 1623173156749,
+      "contentHash": "4b5648607f24de9c5fa94a08016c856b",
+      "sourceName": "contracts/interfaces/synthetix/ISynthAddressProxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ISynthAddressProxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/synthetix/ISystemStatus.sol": {
+      "lastModificationDate": 1623173156747,
+      "contentHash": "904f740ce5c38efcb5ce597315ccb398",
+      "sourceName": "contracts/interfaces/synthetix/ISystemStatus.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ISystemStatus"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/OZProxy.sol": {
+      "lastModificationDate": 1623156704262,
+      "contentHash": "6223aa2118bf757bde87efe42ba7f1b4",
+      "sourceName": "contracts/OZProxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "OZProxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol": {
+      "lastModificationDate": 1619752061690,
+      "contentHash": "572da86d0eb185b41f85df7d2d75378b",
+      "sourceName": "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./UpgradeableProxy.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "TransparentUpgradeableProxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/proxy/UpgradeableProxy.sol": {
+      "lastModificationDate": 1619752061692,
+      "contentHash": "c163cbd51d0173b71c8137b0ddf1e0ba",
+      "sourceName": "@openzeppelin/contracts/proxy/UpgradeableProxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Proxy.sol",
+        "../utils/Address.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "UpgradeableProxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
+      "lastModificationDate": 1619752061649,
+      "contentHash": "52841a5095656ecbf7bc86cd6c114699",
+      "sourceName": "@openzeppelin/contracts/proxy/Proxy.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "Proxy"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+      "lastModificationDate": 1619752061529,
+      "contentHash": "7aa46886ff5abe7515496208a5e2ce5a",
+      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.2 <0.8.0"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/ProxyAdmin.sol": {
+      "lastModificationDate": 1623156704278,
+      "contentHash": "534d524612d989bfaac48c993a671a2f",
+      "sourceName": "contracts/ProxyAdmin.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ProxyAdmin"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1619752061644,
+      "contentHash": "6748815a5b45c4aeeda56819f41190e0",
+      "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "Ownable"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1619752061545,
+      "contentHash": "2adbd82f6d055a4751566d4671512b03",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "Context"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1619752061588,
+      "contentHash": "8065b340476f61365c076897199425f1",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../utils/Context.sol",
+        "./IERC20.sol",
+        "../../math/SafeMath.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "ERC20"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1619752061624,
+      "contentHash": "e0a41531d159d3a32f84b7a3ecf9fabb",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
+      "lastModificationDate": 1619752061658,
+      "contentHash": "e03e12206057e809eb76c5f681170c32",
+      "sourceName": "@openzeppelin/contracts/math/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/test/TestAssets.sol": {
+      "lastModificationDate": 1623264302131,
+      "contentHash": "c747a7eb1d7003a5e8852e98db5398df",
+      "sourceName": "contracts/test/TestAssets.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ERC20Asset",
+        "TestUSDC",
+        "TestUSDT",
+        "TestWETH"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/test/Imports.sol": {
+      "lastModificationDate": 1623264302130,
+      "contentHash": "fb0ea658c7f2b826fadbc4fd82c38097",
+      "sourceName": "contracts/test/Imports.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@gnosis.pm/mock-contract/contracts/MockContract.sol",
+        "@chainlink/contracts/v0.6/interfaces/AggregatorV3Interface.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": []
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@gnosis.pm/mock-contract/contracts/MockContract.sol": {
+      "lastModificationDate": 1619752050330,
+      "contentHash": "ba9f7426045603ac5064e0476844d446",
+      "sourceName": "@gnosis.pm/mock-contract/contracts/MockContract.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "MockContract",
+        "MockInterface"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/node_modules/@chainlink/contracts/v0.6/interfaces/AggregatorV3Interface.sol": {
+      "lastModificationDate": 1623258425019,
+      "contentHash": "b213894d1186ed5f03cceedb9a7811a2",
+      "sourceName": "@chainlink/contracts/v0.6/interfaces/AggregatorV3Interface.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0"
+      ],
+      "artifacts": [
+        "AggregatorV3Interface"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/test/IWETH.sol": {
+      "lastModificationDate": 1623264234404,
+      "contentHash": "fb7a1ab511741a34fa4a00797433f5d9",
+      "sourceName": "contracts/test/IWETH.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IWETH"
+      ]
+    }
+  }
+}
