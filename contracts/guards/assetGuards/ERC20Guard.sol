@@ -37,11 +37,11 @@ pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
-import "./IGuard.sol";
-import "../utils/TxDataUtils.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
+import "../IGuard.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/IManaged.sol";
 
 contract ERC20Guard is TxDataUtils, IGuard {
   using SafeMath for uint256;

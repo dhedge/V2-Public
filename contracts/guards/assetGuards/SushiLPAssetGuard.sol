@@ -39,7 +39,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
-import "../IGuard.sol";
+import "./ERC20Guard.sol";
 import "../ILPAssetGuard.sol";
 import "../../utils/TxDataUtils.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
@@ -47,13 +47,12 @@ import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
 
-contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
+contract SushiLPAssetGuard is TxDataUtils, ERC20Guard, ILPAssetGuard {
   using SafeMath for uint256;
 
   address public sushiStaking; // Sushi's staking MiniChefV2 contract
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
-  event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
   event WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time);
 
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
@@ -62,37 +61,6 @@ contract SushiLPAssetGuard is TxDataUtils, IGuard, ILPAssetGuard {
     sushiStaking = _sushiStaking;
     for (uint256 i = 0; i < sushiPools.length; i++) {
       sushiPoolIds[sushiPools[i].lpToken] = sushiPools[i].stakingPoolId;
-    }
-  }
-
-  /// @notice Transaction guard for approving assets
-  /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param pool Pool address
-  /// @param data Transaction call data attempt by manager
-  /// @return txType transaction type described in PoolLogic
-  function txGuard(address pool, bytes calldata data)
-    external
-    override
-    returns (
-      uint8 txType // transaction type
-    )
-  {
-    bytes4 method = getMethod(data);
-
-    if (method == bytes4(keccak256("approve(address,uint256)"))) {
-      address spender = convert32toAddress(getInput(data, 0));
-      uint256 amount = uint256(getInput(data, 1));
-
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
-
-      address factory = poolManagerLogic.factory();
-      address spenderGuard = IHasGuardInfo(factory).getGuard(spender);
-      require(spenderGuard != address(0) && spenderGuard != address(this), "unsupported spender approval"); // checks that the spender is an approved address
-
-      emit Approve(address(poolManagerLogic), IManaged(pool).manager(), spender, amount, block.timestamp);
-
-      txType = 1; // 'Approve' type
-      return txType;
     }
   }
 
