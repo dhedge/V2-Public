@@ -41,6 +41,7 @@ import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IERC20Extended.sol"; // includes decimals()
+import "./interfaces/IHasSupportedAsset.sol";
 import "./guards/IGuard.sol";
 import "./Managed.sol";
 
@@ -51,7 +52,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
+contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
   using SafeMath for uint256;
   using Address for address;
 
@@ -82,11 +83,13 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
     address _poolLogic,
     Asset[] memory _supportedAssets
   ) public initializer {
+    require(_factory != address(0), "Invalid factory");
+    require(_manager != address(0), "Invalid manager");
+    require(_poolLogic != address(0), "Invalid poolLogic");
     initialize(_manager, _managerName);
 
     factory = _factory;
     poolLogic = _poolLogic;
-    // _setPoolPrivacy(_privatePool);
 
     _changeAssets(_supportedAssets, new Asset[](0));
   }
@@ -120,14 +123,14 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
 
     require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
 
-    require(numberOfDepositAssets() >= 1, "at least one deposit asset");
+    require(getDepositAssets().length >= 1, "at least one deposit asset");
   }
 
   function _addAsset(Asset memory _asset) internal {
     address asset = _asset.asset;
     bool isDeposit = _asset.isDeposit;
 
-    require(validateAsset(asset) == true, "invalid asset");
+    require(validateAsset(asset), "invalid asset");
 
     if (isSupportedAsset(asset)) {
       uint256 index = assetPosition[asset].sub(1);
@@ -168,23 +171,29 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
     emit AssetRemoved(poolLogic, manager(), asset, isDeposit);
   }
 
-  function numberOfSupportedAssets() public view returns (uint256) {
-    return supportedAssets.length;
+  /// @notice Get all the supported assets
+  /// @return Return array of supported assets
+  function getSupportedAssets() public view override returns (Asset[] memory) {
+    return supportedAssets;
   }
 
-  function numberOfDepositAssets() public view returns (uint256) {
-    uint256 result = 0;
-    uint256 maxSupportedAssetCount = IHasAssetInfo(factory).getMaximumSupportedAssetCount();
-    for (uint8 i = 0; i < maxSupportedAssetCount; i++) {
-      if (i >= supportedAssets.length) {
-        break;
-      }
-
+  /// @notice Get all the deposit assets
+  /// @return Return array of deposit assets' addresses
+  function getDepositAssets() public view returns (address[] memory) {
+    uint256 assetCount = supportedAssets.length;
+    address[] memory depositAssets = new address[](assetCount);
+    uint8 index = 0;
+    for (uint8 i = 0; i < assetCount; i++) {
       if (supportedAssets[i].isDeposit) {
-        result = result.add(1);
+        depositAssets[i] = supportedAssets[i].asset;
+        index++;
       }
     }
-    return result;
+    uint256 reduceLength = assetCount - index;
+    assembly {
+      mstore(depositAssets, sub(mload(depositAssets), reduceLength))
+    }
+    return depositAssets;
   }
 
   function assetValue(address asset, uint256 amount) public view override returns (uint256) {
@@ -202,49 +211,28 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
     return assetValue(asset, assetBalance(asset));
   }
 
-  function getSupportedAssets() public view override returns (address[] memory) {
-    uint256 assetsCount = supportedAssets.length;
-    address[] memory assets = new address[](assetsCount);
-
-    uint256 maxSupportedAssetCount = IHasAssetInfo(factory).getMaximumSupportedAssetCount();
-    for (uint8 i = 0; i < maxSupportedAssetCount; i++) {
-      if (i >= assetsCount) {
-        break;
-      }
-
-      assets[i] = supportedAssets[i].asset;
-    }
-    return assets;
-  }
-
+  /// @notice Return the fund composition of the pool
+  /// @dev Return assets, balances of the asset and their prices
+  /// @return assets array of supported assets
+  /// @return balances balances of each asset
+  /// @return rates price of each asset in USD
   function getFundComposition()
     public
     view
     returns (
-      address[] memory,
-      uint256[] memory,
-      uint256[] memory
+      Asset[] memory assets,
+      uint256[] memory balances,
+      uint256[] memory rates
     )
   {
     uint256 assetCount = supportedAssets.length;
 
-    address[] memory assets = new address[](assetCount);
-    uint256[] memory balances = new uint256[](assetCount);
-    uint256[] memory rates = new uint256[](assetCount);
-
-    uint256 maxSupportedAssetCount = IHasAssetInfo(factory).getMaximumSupportedAssetCount();
-    for (uint8 i = 0; i < maxSupportedAssetCount; i++) {
-      if (i >= assetCount) {
-        break;
-      }
-
+    for (uint8 i = 0; i < assetCount; i++) {
       address asset = supportedAssets[i].asset;
       balances[i] = assetBalance(asset);
-      assets[i] = asset;
+      assets[i] = supportedAssets[i];
       rates[i] = IHasAssetInfo(factory).getAssetPrice(asset);
     }
-
-    return (assets, balances, rates);
   }
 
   function getManagerFee() public view returns (uint256, uint256) {
@@ -306,6 +294,19 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, Managed {
     poolLogic = _poolLogic;
     emit PoolLogicSet(_poolLogic, msg.sender);
     return true;
+  }
+
+  /// @notice Return the total fund value of the pool
+  /// @dev Calculate the total fund value from the supported assets
+  /// @return value in USD
+  function totalFundValue() public view override returns (uint256) {
+    uint256 total = 0;
+    uint256 assetCount = supportedAssets.length;
+
+    for (uint256 i = 0; i < assetCount; i++) {
+      total = total.add(assetValue(supportedAssets[i].asset));
+    }
+    return total;
   }
 
   uint256[51] private __gap;

@@ -36,13 +36,12 @@
 // Transaction Types in execTransaction()
 // 1. Approve: Approving a token for spending by different address/contract
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
+// 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
+// 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
-// Deprecated
-// import "./IExchanger.sol";
-// import "./interfaces/IAddressResolver.sol";
-// import "./interfaces/ISystemStatus.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
@@ -50,22 +49,16 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IManaged.sol";
-import "./utils/TxDataUtils.sol";
 import "./guards/IGuard.sol";
+import "./interfaces/IHasSupportedAsset.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
 
-contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils {
+contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
   using SafeMath for uint256;
-
-  // Deprecated
-  // bytes32 constant private _EXCHANGER_KEY = "Exchanger";
-  // bytes32 private constant _SYSTEM_STATUS_KEY = "SystemStatus";
-  // bytes32 private constant _SUSD_KEY = "sUSD";
 
   event Deposit(
     address fundAddress,
@@ -108,16 +101,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
 
   uint256 public creationTime;
 
-  // Deprecated
-  // IAddressResolver public addressResolver;
-
   address public factory;
-
-  // Deprecated
-  // bytes32[] public supportedAssets;
-
-  // Deprecated
-  // mapping(bytes32 => uint256) public assetPosition; // maps the asset to its 1-based position (Deprecated)
 
   // Manager fees
   uint256 public tokenPriceAtLastFeeMint;
@@ -152,6 +136,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     string memory _fundName,
     string memory _fundSymbol
   ) public initializer {
+    require(_factory != address(0), "Invalid factory");
     __ERC20_init(_fundName, _fundSymbol);
     __ReentrancyGuard_init();
 
@@ -183,18 +168,6 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     privatePool = _privacy;
 
     emit PoolPrivacyUpdated(_privacy);
-  }
-
-  function totalFundValue() public view virtual returns (uint256) {
-    uint256 total = 0;
-    IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
-    address[] memory _supportedAssets = dm.getSupportedAssets();
-    uint256 assetCount = _supportedAssets.length;
-
-    for (uint256 i = 0; i < assetCount; i++) {
-      total = total.add(dm.assetValue(_supportedAssets[i]));
-    }
-    return total;
   }
 
   function deposit(address _asset, uint256 _amount) public onlyPrivate whenNotPaused returns (uint256) {
@@ -236,104 +209,25 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     return liquidityMinted;
   }
 
-  // Deprecated
-  // function _settleAll() internal {
-  //     ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
-
-  //     uint256 assetCount = supportedAssets.length;
-
-  //     for (uint256 i = 0; i < assetCount; i++) {
-
-  //         address proxy = getAssetProxy(supportedAssets[i]);
-  //         uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
-
-  //         if (totalAssetBalance > 0)
-  //             sx.settle(supportedAssets[i]);
-
-  //     }
-  // }
-
-  // Deprecated
-  // function _settleNotSuspended() internal {
-  //     ISynthetix sx = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY));
-  //     ISystemStatus status = ISystemStatus(addressResolver.getAddress(_SYSTEM_STATUS_KEY));
-
-  //     uint256 assetCount = supportedAssets.length;
-
-  //     for (uint256 i = 0; i < assetCount; i++) {
-  //         try status.requireSynthActive(supportedAssets[i]) {
-
-  //             address proxy = getAssetProxy(supportedAssets[i]);
-  //             uint256 totalAssetBalance = IERC20(proxy).balanceOf(address(this));
-
-  //             if (totalAssetBalance > 0)
-  //                 sx.settle(supportedAssets[i]);
-
-  //         } catch {
-  //             continue;
-  //         }
-  //     }
-  // }
-
-  // Deprecated
-  // function forfeitSuspendedSynthsAndWithdraw(uint256 _fundTokenAmount) public virtual {
-  //     _withdraw(_fundTokenAmount, true);
-  // }
-
   function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
     require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
-    // Deprecated
-    //calculate the exit fee and transfer to the DAO in pool tokens
-    // uint256 exitFeeNumerator;
-    // uint256 exitFeeDenominator;
-
-    // if (getExitFeeRemainingCooldown(msg.sender) > 0) {
-    //     (exitFeeNumerator, exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-    // } else {
-    //     exitFeeNumerator = 0;
-    //     exitFeeDenominator = 1;
-    // }
-
-    // uint256 daoExitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-
-    // uint256 lastDepositTemp = lastDeposit[msg.sender];
-    // lastDeposit[msg.sender] = 0;
-
-    // if (daoExitFee > 0) {
-    //     address daoAddress = IHasDaoInfo(factory).getDaoAddress();
-
-    //     _transfer(msg.sender, daoAddress, daoExitFee);
-    // }
-
-    // Deprecated
-    // we need to settle all the assets before determining the total fund value
-    // if(_forfeitSuspendedSynths){
-    //     _settleNotSuspended();
-    // } else {
-    //     _settleAll();
-    // }
-
-    // Deprecated
-    // _mintManagerFee(false);
     uint256 fundValue = _mintManagerFee();
 
     //calculate the proportion
-    // _fundTokenAmount = _fundTokenAmount.sub(daoExitFee);
     uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
 
     //first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
-    IPoolManagerLogic dm = IPoolManagerLogic(poolManagerLogic);
-    address[] memory _supportedAssets = dm.getSupportedAssets();
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogic);
+    IHasSupportedAsset.Asset[] memory _supportedAssets = poolManagerLogicAssets.getSupportedAssets();
     uint256 assetCount = _supportedAssets.length;
 
-    // _forfeitSuspendedSynths deprecated
     for (uint256 i = 0; i < assetCount; i++) {
-      address asset = _supportedAssets[i];
+      address asset = _supportedAssets[i].asset;
       uint256 totalAssetBalance = IERC20(asset).balanceOf(address(this));
       uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
 
@@ -351,13 +245,24 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
       valueWithdrawn,
       _fundTokenAmount,
       balanceOf(msg.sender),
-      totalFundValue(),
+      fundValue.sub(valueWithdrawn),
       totalSupply(),
       block.timestamp
     );
   }
 
-  function execTransaction(address to, bytes memory data) public onlyManagerOrTrader whenNotPaused returns (bool) {
+  /// @notice Function to let pool talk to other protocol
+  /// @dev execute transaction for the pool
+  /// @param to The destination address for pool to talk to
+  /// @param data The data that going to send in the transaction
+  /// @return A boolean for success or fail transaction
+  function execTransaction(address to, bytes memory data)
+    public
+    onlyManagerOrTrader
+    nonReentrant
+    whenNotPaused
+    returns (bool)
+  {
     require(to != address(0), "non-zero address is required");
 
     address guard = IHasGuardInfo(factory).getGuard(to);
@@ -365,7 +270,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     require(guard != address(0), "invalid destination");
 
     if (IHasAssetInfo(factory).isValidAsset(to)) {
-      require(IPoolManagerLogic(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
     }
 
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
@@ -373,7 +278,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     require(txType > 0, "invalid transaction");
 
     (bool success, ) = to.call(data);
-    require(success == true, "failed to execute the call");
+    require(success, "failed to execute the call");
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
 
@@ -394,61 +299,26 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
       uint256,
       uint256
     )
-  // uint256,
-  // uint256
   {
     uint256 managerFeeNumerator;
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
 
-    // uint256 exitNumerator;
-    // uint256 exitDenominator;
-    // (exitNumerator, exitDenominator) = IHasFeeInfo(factory).getExitFee();
-
     return (
       name(),
       totalSupply(),
-      totalFundValue(),
+      IPoolManagerLogic(poolManagerLogic).totalFundValue(),
       manager(),
       managerName(),
       creationTime,
       privatePool,
       managerFeeNumerator,
       managerFeeDenominator
-      // exitNumerator,
-      // exitDenominator
     );
   }
 
-  // Deprecated
-  // function getWaitingPeriods()
-  //     public
-  //     view
-  //     returns (
-  //         bytes32[] memory,
-  //         uint256[] memory
-  //     )
-  // {
-  //     uint256 assetCount = supportedAssets.length;
-
-  //     bytes32[] memory assets = new bytes32[](assetCount);
-  //     uint256[] memory periods = new uint256[](assetCount);
-
-  //     IExchanger exchanger = IExchanger(addressResolver.getAddress(_EXCHANGER_KEY));
-
-  //     for (uint256 i = 0; i < assetCount; i++) {
-  //         bytes32 asset = supportedAssets[i];
-  //         assets[i] = asset;
-  //         periods[i] = exchanger.maxSecsLeftInWaitingPeriod(address(this), asset);
-  //     }
-
-  //     return (assets, periods);
-  // }
-
-  // MANAGER FEES
-
   function tokenPrice() public view returns (uint256) {
-    uint256 fundValue = totalFundValue();
+    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
     return _tokenPrice(fundValue, tokenSupply);
@@ -461,7 +331,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
   }
 
   function availableManagerFee() public view returns (uint256) {
-    uint256 fundValue = totalFundValue();
+    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
     uint256 managerFeeNumerator;
@@ -486,33 +356,19 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
     uint256 available =
-      currentTokenPrice
-        .sub(_lastFeeMintPrice)
-        .mul(_tokenSupply)
-        .mul(_feeNumerator)
-        .div(_feeDenominator)
-      // Deprecated
-      // .div(10**18);
-        .div(currentTokenPrice);
+      currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
+        currentTokenPrice
+      );
 
     return available;
   }
 
   function mintManagerFee() public whenNotPaused {
-    // Deprecated
-    // _mintManagerFee(true);
     _mintManagerFee();
   }
 
-  // Deprecated
-  // function _mintManagerFee(bool settle) internal
   function _mintManagerFee() internal returns (uint256 fundValue) {
-    // Deprecated
-    //we need to settle all the assets before minting the manager fee
-    // if (settle)
-    //     _settleAll();
-
-    uint256 fundValue = totalFundValue();
+    fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
     uint256 managerFeeNumerator;
@@ -543,11 +399,6 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     emit ManagerFeeMinted(address(this), manager(), available, daoFee, managerFee, tokenPriceAtLastFeeMint);
   }
 
-  // Deprecated
-  // function getExitFee() external view returns (uint256, uint256) {
-  //     return IHasFeeInfo(factory).getExitFee();
-  // }
-
   function getExitCooldown() public view returns (uint256) {
     return IHasFeeInfo(factory).getExitCooldown();
   }
@@ -561,13 +412,8 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe, TxDataUtils 
     return cooldownFinished.sub(block.timestamp);
   }
 
-  // Swap contract
-
-  // function setLastDeposit(address investor) public onlyDhptSwap {
-  //     lastDeposit[investor] = block.timestamp;
-  // }`
-
   function setPoolManagerLogic(address _poolManagerLogic) external returns (bool) {
+    require(_poolManagerLogic != address(0), "Invalid poolManagerLogic address");
     require(
       msg.sender == address(factory) || msg.sender == IHasDaoInfo(factory).getDaoAddress(),
       "only DAO or factory allowed"

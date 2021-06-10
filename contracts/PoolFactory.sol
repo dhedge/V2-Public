@@ -46,10 +46,12 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
+import "./interfaces/IHasSupportedAsset.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
+/// @title A Factory to spawn pools
 contract PoolFactory is
   PausableUpgradeSafe,
   ProxyFactory,
@@ -80,8 +82,6 @@ contract PoolFactory is
 
   event MaximumSupportedAssetCountSet(uint256 count);
 
-  // event DhptSwapAddressSet(address dhptSwap);
-
   event LogUpgrade(address indexed manager, address indexed pool);
 
   address[] public deployedFunds;
@@ -99,8 +99,6 @@ contract PoolFactory is
   mapping(address => uint256) public poolManagerFeeNumerator;
   mapping(address => uint256) public poolManagerFeeDenominator;
 
-  // uint256 internal _exitFeeNumerator;
-  // uint256 internal _exitFeeDenominator;
   uint256 internal _exitCooldown;
 
   uint256 internal _maximumSupportedAssetCount;
@@ -109,8 +107,6 @@ contract PoolFactory is
 
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
-
-  // address internal _dhptSwapAddress;
 
   uint256 public maximumManagerFeeNumeratorChange;
   uint256 public managerFeeNumeratorChangeDelay;
@@ -140,7 +136,6 @@ contract PoolFactory is
     _setMaximumManagerFee(5000, 10000);
 
     _setDaoFee(10, 100); // 10%
-    // _setExitFee(5, 1000); // 0.5%
     _setExitCooldown(1 days);
     setManagerFeeNumeratorChangeDelay(4 weeks);
     setMaximumManagerFeeNumeratorChange(1000);
@@ -157,7 +152,7 @@ contract PoolFactory is
     string memory _fundName,
     string memory _fundSymbol,
     uint256 _managerFeeNumerator,
-    IPoolManagerLogic.Asset[] memory _supportedAssets
+    IHasSupportedAsset.Asset[] memory _supportedAssets
   ) public returns (address) {
     bytes memory poolLogicData =
       abi.encodeWithSignature(
@@ -166,8 +161,6 @@ contract PoolFactory is
         _privatePool,
         _fundName,
         _fundSymbol
-        // addressResolver,
-        // _supportedAssets
       );
 
     address fund = deploy(poolLogicData, 2);
@@ -176,15 +169,14 @@ contract PoolFactory is
       abi.encodeWithSignature(
         "initialize(address,address,string,address,(address,bool)[])",
         address(this),
-        // _privatePool,
         _manager,
         _managerName,
         fund,
-        // _fundName,
         _supportedAssets
       );
 
     address managerLogic = deploy(managerLogicData, 1);
+    // Ignore return value as want it to continue regardless
     IPoolLogic(fund).setPoolManagerLogic(managerLogic);
 
     deployedFunds.push(fund);
@@ -207,10 +199,6 @@ contract PoolFactory is
     );
 
     return fund;
-  }
-
-  function deployedFundsLength() external view returns (uint256) {
-    return deployedFunds.length;
   }
 
   // DAO info
@@ -247,26 +235,26 @@ contract PoolFactory is
   }
 
   modifier onlyPool() {
-    require(isPool[msg.sender] == true, "Not a pool");
+    require(isPool[msg.sender], "Not a pool");
     _;
   }
 
   modifier onlyPoolManager() {
-    require(isPoolManager[msg.sender] == true, "Not a pool manager");
+    require(isPoolManager[msg.sender], "Not a pool manager");
     _;
   }
 
   // Manager fees
 
   function getPoolManagerFee(address pool) external view override returns (uint256, uint256) {
-    require(isPool[pool] == true, "supplied address is not a pool");
+    require(isPool[pool], "supplied address is not a pool");
 
     return (poolManagerFeeNumerator[pool], poolManagerFeeDenominator[pool]);
   }
 
   function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override onlyPoolManager {
     // require(pool == msg.sender, "only a pool can change own fee");
-    require(isPool[pool] == true, "supplied address is not a pool");
+    require(isPool[pool], "supplied address is not a pool");
     require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
 
     _setPoolManagerFee(pool, numerator, _MANAGER_FEE_DENOMINATOR);
@@ -309,25 +297,6 @@ contract PoolFactory is
   function getManagerFeeNumeratorChangeDelay() public view override returns (uint256) {
     return managerFeeNumeratorChangeDelay;
   }
-
-  // Deprecated
-  // Exit fees
-  // function setExitFee(uint256 numerator, uint256 denominator) public onlyOwner {
-  //     _setExitFee(numerator, denominator);
-  // }
-
-  // function _setExitFee(uint256 numerator, uint256 denominator) internal {
-  //     require(numerator <= denominator, "invalid fraction");
-
-  //     _exitFeeNumerator = numerator;
-  //     _exitFeeDenominator = denominator;
-
-  //     emit ExitFeeSet(numerator, denominator);
-  // }
-
-  // function getExitFee() external override view returns (uint256, uint256) {
-  //     return (_exitFeeNumerator, _exitFeeDenominator);
-  // }
 
   function setExitCooldown(uint256 cooldown) external onlyOwner {
     _setExitCooldown(cooldown);
@@ -395,22 +364,6 @@ contract PoolFactory is
   function getTrackingCode() public view override returns (bytes32) {
     return _trackingCode;
   }
-
-  // DHPT Swap
-
-  // function getDhptSwapAddress() public override view returns (address) {
-  //     return _dhptSwapAddress;
-  // }
-
-  // function setDhptSwapAddress(address dhptSwapAddress) public onlyOwner {
-  //     _setDhptSwapAddress(dhptSwapAddress);
-  // }
-
-  // function _setDhptSwapAddress(address dhptSwapAddress) internal {
-  //     _dhptSwapAddress = dhptSwapAddress;
-
-  //     emit DhptSwapAddressSet(dhptSwapAddress);
-  // }
 
   // Upgrade
 
@@ -499,6 +452,12 @@ contract PoolFactory is
 
   function isPaused() public view override returns (bool) {
     return paused();
+  }
+
+  /// @notice Return full array of deployed funds
+  /// @return full array of deployed funds
+  function getDeployedFunds() public view returns (address[] memory) {
+    return deployedFunds;
   }
 
   uint256[50] private __gap;
