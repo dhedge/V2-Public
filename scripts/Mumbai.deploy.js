@@ -30,6 +30,7 @@ const dai_price_feed = "0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046";
 async function main () {
   const ethers = hre.ethers
 
+  let network = await l2ethers.provider.getNetwork()
   console.log('network:', await ethers.provider.getNetwork())
 
   const signer = (await ethers.getSigners())[0]
@@ -120,28 +121,25 @@ async function main () {
   console.log("PoolFactory set dao ", dao.address);
 
   let tag = await getTag();
-
-  let versions = {
-    "v2.0-alpha": {
-      "tag": tag,
-      "fulltag": "v2.0-alpha",
-      "network": "mumbai",
-      "date": new Date().toUTCString(),
-      "contracts": {
-        "TestUSDT": tUSDT.address,
-        "TestUSDC": tUSDC.address,
-        "TestWETH": tWETH.address,
-        "USDT-Aggregator": usdt_price_feed,
-        "USDC-Aggregator": usdc_price_feed,
-        "ETH-Aggregator": eth_price_feed,
-        "ProxyAdmin": proxyAdmin.address,
-        "PoolFactoryProxy": poolFactory.address,
-        "PoolLogic": poolLogic.address,
-        "PoolManagerLogic": poolManagerLogic.address,
-        "AssetHandlerProxy": assetHandlerProxy.address,
-        "ERC20Guard": erc20Guard.address,
-        "UniswapV2Guard": uniswapV2Guard.address,
-      }
+  let versions = require("../publish/mumbai/versions.json");
+  versions[tag] = {
+    "tag": tag,
+    "network": network,
+    "date": new Date().toUTCString(),
+    "contracts": {
+      "TestUSDT": tUSDT.address,
+      "TestUSDC": tUSDC.address,
+      "TestWETH": tWETH.address,
+      "USDT-Aggregator": usdt_price_feed,
+      "USDC-Aggregator": usdc_price_feed,
+      "ETH-Aggregator": eth_price_feed,
+      "ProxyAdmin": proxyAdmin.address,
+      "PoolFactoryProxy": poolFactory.address,
+      "PoolLogic": poolLogic.address,
+      "PoolManagerLogic": poolManagerLogic.address,
+      "AssetHandlerProxy": assetHandlerProxy.address,
+      "ERC20Guard": erc20Guard.address,
+      "UniswapV2Guard": uniswapV2Guard.address,
     }
   }
 

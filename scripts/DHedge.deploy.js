@@ -137,22 +137,21 @@ async function main () {
 
   let tag = await getTag();
 
-  let versions = {
-    "v2.0.0-rc.1": {
-      "tag": tag,
-      "network": network,
-      "date": new Date(),
-      "contracts": {
-        "ETH-Aggregator": eth_price_feed,
-        "LINK-Aggregator": link_price_feed,
-        "ProxyAdmin": proxyAdmin.address,
-        "PoolFactoryProxy": poolFactory.address,
-        "PoolLogic": poolLogic.address,
-        "PoolManagerLogic": poolManagerLogic.address,
-        "AssetHandlerProxy": assetHandlerProxy.address,
-        "ERC20Guard": erc20Guard.address,
-        "synthetixGuard": synthetixGuard.address,
-      }
+  let versions = require("../publish/mumbai/versions.json");
+  versions[tag] = {
+    "tag": tag,
+    "network": network,
+    "date": new Date(),
+    "contracts": {
+      "ETH-Aggregator": eth_price_feed,
+      "LINK-Aggregator": link_price_feed,
+      "ProxyAdmin": proxyAdmin.address,
+      "PoolFactoryProxy": poolFactory.address,
+      "PoolLogic": poolLogic.address,
+      "PoolManagerLogic": poolManagerLogic.address,
+      "AssetHandlerProxy": assetHandlerProxy.address,
+      "ERC20Guard": erc20Guard.address,
+      "synthetixGuard": synthetixGuard.address,
     }
   }
 
