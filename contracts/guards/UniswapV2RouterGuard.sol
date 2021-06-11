@@ -39,15 +39,43 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
+import "../interfaces/IUniswapV2Factory.sol";
 import "../interfaces/IPoolManagerLogic.sol";
+import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 
-contract UniswapV2Guard is TxDataUtils, IGuard {
+/**
+ * @notice Transaction guard for UniswapV2Router
+ * @dev This will be used for sushiswap as well since Sushi uses the same interface.
+ */
+contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   using SafeMath for uint256;
 
-  // transaction guard for 1inch V3 aggregator
+  event AddLiquidity(address fundAddress, address tokenA, address tokenB, address pair, uint256 time);
+  event RemoveLiquidity(
+    address fundAddress,
+    address tokenA,
+    address tokenB,
+    address pair,
+    uint256 liquidity,
+    uint256 time
+  );
+
+  address public factory; // uniswap v2 factory
+
+  constructor(address _factory) public {
+    factory = _factory;
+  }
+
+  /**
+   * @notice Transaction guard for Uniswap V2
+   * @dev It supports exchange, addLiquidity and removeLiquidity functionalities
+   * @param _poolManagerLogic the pool manager logic
+   * @param data the transaction data
+   * @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
+   */
   function txGuard(address _poolManagerLogic, bytes calldata data)
     external
     override
@@ -80,7 +108,48 @@ contract UniswapV2Guard is TxDataUtils, IGuard {
       emit Exchange(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-      return txType;
+    } else if (
+      method == bytes4(keccak256("addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)"))
+    ) {
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+
+      address tokenA = convert32toAddress(getInput(data, 0));
+      address tokenB = convert32toAddress(getInput(data, 1));
+
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenA), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenB), "unsupported asset: tokenB");
+
+      address pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(pair), "unsupported lp asset");
+
+      address to = convert32toAddress(getInput(data, 6));
+      require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
+
+      emit AddLiquidity(poolManagerLogic.poolLogic(), tokenA, tokenB, pair, block.timestamp);
+
+      txType = 3; // `Add Liquidity` type
+    } else if (
+      method == bytes4(keccak256("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)"))
+    ) {
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+
+      address tokenA = convert32toAddress(getInput(data, 0));
+      address tokenB = convert32toAddress(getInput(data, 1));
+
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenA), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenB), "unsupported asset: tokenB");
+
+      address pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(pair), "unsupported lp asset");
+
+      address to = convert32toAddress(getInput(data, 5));
+      require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
+
+      uint256 liquidity = uint256(getInput(data, 2));
+
+      emit RemoveLiquidity(poolManagerLogic.poolLogic(), tokenA, tokenB, pair, liquidity, block.timestamp);
+
+      txType = 4; // `Remove Liquidity` type
     }
   }
 }
