@@ -65,5 +65,4 @@ library Path {
   function getPoolAddress(bytes memory path) internal pure returns (address) {
     return path.toAddress(0);
   }
-
 }

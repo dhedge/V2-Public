@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 contract TestUSDT is ERC20 {
   using SafeMathUpgradeable for uint256;
+
   constructor(uint256 totalSupply) ERC20("Test USDT", "tUSDT") {
     _setupDecimals(6);
     _mint(msg.sender, totalSupply.mul(10**uint256(decimals())));
@@ -17,6 +18,7 @@ contract TestUSDT is ERC20 {
 
 contract TestUSDC is ERC20 {
   using SafeMathUpgradeable for uint256;
+
   constructor(uint256 totalSupply) ERC20("Test USDC", "tUSDC") {
     _setupDecimals(6);
     _mint(msg.sender, totalSupply.mul(10**uint256(decimals())));
@@ -29,6 +31,7 @@ contract TestUSDC is ERC20 {
 
 contract TestWETH is ERC20 {
   using SafeMathUpgradeable for uint256;
+
   constructor(uint256 totalSupply) ERC20("Test WETH", "tWETH") {
     _mint(msg.sender, totalSupply.mul(10**uint256(decimals())));
   }

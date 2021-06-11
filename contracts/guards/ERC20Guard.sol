@@ -68,7 +68,13 @@ contract ERC20Guard is TxDataUtils, IGuard {
       address spenderGuard = IHasGuardInfo(factory).getGuard(spender);
       require(spenderGuard != address(0) && spenderGuard != address(this), "unsupported spender approval"); // checks that the spender is an approved address
 
-      emit Approve(poolManagerLogic.poolLogic(), IManaged(_poolManagerLogic).manager(), spender, amount, block.timestamp);
+      emit Approve(
+        poolManagerLogic.poolLogic(),
+        IManaged(_poolManagerLogic).manager(),
+        spender,
+        amount,
+        block.timestamp
+      );
 
       txType = 1; // 'Approve' type
       return txType;
