@@ -34,13 +34,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 import "./InitializableUpgradeabilityProxy.sol";
 import "./HasLogic.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract ProxyFactory is OwnableUpgradeSafe, HasLogic {
+contract ProxyFactory is OwnableUpgradeable, HasLogic {
   event ProxyCreated(address proxy);
 
   address private poolLogic;

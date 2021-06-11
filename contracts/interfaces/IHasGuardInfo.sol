@@ -34,7 +34,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 interface IHasGuardInfo {
   // Get guard

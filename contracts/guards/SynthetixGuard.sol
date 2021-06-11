@@ -33,9 +33,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
@@ -48,7 +48,7 @@ import "../interfaces/synthetix/IAddressResolver.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 
 contract SynthetixGuard is TxDataUtils, IGuard {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
 

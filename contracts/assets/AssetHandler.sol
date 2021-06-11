@@ -2,18 +2,17 @@
 // Asset types:
 // 0 = Chainlink direct USD price feed with 8 decimals
 
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
+pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IAssetHandler.sol";
 
-contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
-  using SafeMath for uint256;
+contract AssetHandler is OwnableUpgradeable, IAssetHandler {
+  using SafeMathUpgradeable for uint256;
 
   uint256 public chainlinkTimeout; // Chainlink oracle timeout period
   address public poolFactory;
@@ -26,7 +25,7 @@ contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
 
   function initialize(address _poolFactory, Asset[] memory assets) public initializer {
     require(_poolFactory != address(0), "Invalid poolFactory");
-    OwnableUpgradeSafe.__Ownable_init();
+    __Ownable_init();
 
     poolFactory = _poolFactory;
     chainlinkTimeout = 90000; // 25 hours

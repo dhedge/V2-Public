@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 interface IUniswapV2Pair {
   function token0() external view returns (address);

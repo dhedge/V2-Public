@@ -1,8 +1,8 @@
 // For dHEDGE LP Price Feeds
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IUniswapV2Pair.sol";
@@ -15,7 +15,7 @@ import "../utils/DhedgeMath.sol";
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
 contract SushiLPAggregator is IAggregatorV3Interface {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   address public pair;
   address public token0;
@@ -27,7 +27,7 @@ contract SushiLPAggregator is IAggregatorV3Interface {
     address _pair,
     address _aggregator0,
     address _aggregator1
-  ) public {
+  ) {
     pair = _pair;
     token0 = IUniswapV2Pair(pair).token0();
     token1 = IUniswapV2Pair(pair).token1();

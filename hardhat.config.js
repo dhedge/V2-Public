@@ -44,7 +44,7 @@ module.exports = {
     },
   },
   ovm: {
-    solcVersion: '0.6.12',
+    solcVersion: '0.7.6',
     settings: {
       optimizer: {
         enabled: true,
@@ -53,7 +53,7 @@ module.exports = {
     },
   },
   solidity: {
-    version: '0.6.12',
+    version: '0.7.6',
     settings: {
       optimizer: {
         enabled: true,

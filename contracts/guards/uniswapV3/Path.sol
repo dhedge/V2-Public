@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 import "../../utils/BytesLib.sol";
 
@@ -58,4 +58,12 @@ library Path {
   function skipToken(bytes memory path) internal pure returns (bytes memory) {
     return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
   }
+
+  /// @notice Gets address from the pool
+  /// @param path The bytes of the pool
+  /// @return address of the pool
+  function getPoolAddress(bytes memory path) internal pure returns (address) {
+    return path.toAddress(0);
+  }
+
 }
