@@ -2,8 +2,13 @@
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
-const { expect } = require("chai");
+const { expect, assert } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
+
+const checkAlmostSame = (a, b) => {
+  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
+  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
+};
 
 const { updateChainlinkAggregators, currentBlockTimestamp } = require("./TestHelpers");
 
@@ -43,7 +48,7 @@ const slinkKey = "0x734c494e4b00000000000000000000000000000000000000000000000000
 
 describe("PoolFactory", function () {
   before(async function () {
-    [logicOwner, manager, dao, investor, user1] = await ethers.getSigners();
+    [logicOwner, manager, dao, investor, user1, user2, user3, user4] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
     addressResolver = await MockContract.deploy();
@@ -167,14 +172,14 @@ describe("PoolFactory", function () {
 
     // Deploy AssetHandlerProxy
     const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
-    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, "0x");
+    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
     await assetHandlerProxy.deployed();
 
     assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
     // Deploy PoolFactoryProxy
     const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
-    const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, manager.address, "0x");
+    const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
     await poolFactoryProxy.deployed();
 
     poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
@@ -288,6 +293,29 @@ describe("PoolFactory", function () {
       }, 60000);
     });
 
+    // await poolManagerLogic.initialize(poolFactory.address, manager.address, 'Barren Wuffet', mock.address, [sethKey])
+
+    // console.log('Passed poolManagerLogic Init!')
+
+    // await poolLogic.initialize(poolFactory.address, false, manager.address, 'Barren Wuffet', 'Test Fund', 'DHTF', mock.address)
+
+    // console.log('Passed poolLogic Init!')
+
+    await expect(
+      poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        new ethers.BigNumber.from("6000"),
+        [
+          [susd, true],
+          [seth, true],
+        ],
+      ),
+    ).to.be.revertedWith("invalid fraction");
+
     await poolFactory.createFund(
       false,
       manager.address,
@@ -307,7 +335,7 @@ describe("PoolFactory", function () {
     console.log("fundAddress: ", fundAddress);
     expect(event.isPoolPrivate).to.be.false;
     expect(event.fundName).to.equal("Test Fund");
-    // expect(event.fundSymbol).to.equal("DHTF");
+    // expect(event.fundSymbol).to.equal('DHTF');
     expect(event.managerName).to.equal("Barren Wuffet");
     expect(event.manager).to.equal(manager.address);
     expect(event.managerFeeNumerator.toString()).to.equal("5000");
@@ -1022,6 +1050,196 @@ describe("PoolFactory", function () {
     );
   });
 
+  it("should be able to mint manager fee", async () => {
+    await poolFactory.setDaoFee(10, 100);
+    const daoFees = await poolFactory.getDaoFee();
+    expect(daoFees[0]).to.be.equal(10);
+    expect(daoFees[1]).to.be.equal(100);
+
+    await poolFactory.setDaoAddress(dao.address);
+    expect(await poolFactory.getDaoAddress()).to.be.equal(dao.address);
+
+    await assetHandler.setChainlinkTimeout(9000000);
+
+    let availableFee = await poolLogicProxy.availableManagerFee();
+    let tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    let totalSupplyPreMint = await poolLogicProxy.totalSupply();
+
+    await poolLogicProxy.mintManagerFee();
+
+    let tokenPricePostMint = await poolLogicProxy.tokenPrice();
+    let totalSupplyPostMint = await poolLogicProxy.totalSupply();
+
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFee));
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+
+    checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFee.mul(daoFees[0]).div(daoFees[1]));
+
+    await assetHandler.setChainlinkTimeout(90000);
+  });
+
+  describe("AssetHandler", function () {
+    it("only owner should be able to remove assets", async function () {
+      expect(await assetHandler.assetTypes(susd)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(seth)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(slink)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(ZERO_ADDRESS)).to.be.equal(0);
+      expect(await assetHandler.priceAggregators(susd)).to.be.equal(usd_price_feed.address);
+      expect(await assetHandler.priceAggregators(seth)).to.be.equal(eth_price_feed.address);
+      expect(await assetHandler.priceAggregators(slink)).to.be.equal(link_price_feed.address);
+      expect(await assetHandler.priceAggregators(ZERO_ADDRESS)).to.be.equal(ZERO_ADDRESS);
+      expect(await assetHandler.getAssetTypeAndAggregator(susd)).to.deep.equal([0, usd_price_feed.address]);
+
+      await expect(assetHandler.connect(manager).removeAsset(slink)).to.be.revertedWith(
+        "Ownable: caller is not the owner",
+      );
+
+      await assetHandler.removeAsset(susd);
+      await assetHandler.removeAsset(seth);
+      await assetHandler.removeAsset(slink);
+      expect(await assetHandler.assetTypes(susd)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(seth)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(slink)).to.be.equal(0);
+      expect(await assetHandler.priceAggregators(susd)).to.be.equal(ZERO_ADDRESS);
+      expect(await assetHandler.priceAggregators(seth)).to.be.equal(ZERO_ADDRESS);
+      expect(await assetHandler.priceAggregators(slink)).to.be.equal(ZERO_ADDRESS);
+    });
+
+    it("only owner should be able to add asset/assets", async function () {
+      await expect(assetHandler.connect(manager).addAsset(slink, 0, link_price_feed.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner",
+      );
+      await expect(
+        assetHandler.connect(manager).addAssets([{ asset: slink, assetType: 0, aggregator: link_price_feed.address }]),
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+
+      await assetHandler.addAsset(slink, 0, link_price_feed.address);
+      await assetHandler.addAssets([
+        { asset: susd, assetType: 0, aggregator: usd_price_feed.address },
+        { asset: seth, assetType: 0, aggregator: eth_price_feed.address },
+      ]);
+
+      expect(await assetHandler.assetTypes(susd)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(seth)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(slink)).to.be.equal(0);
+      expect(await assetHandler.assetTypes(ZERO_ADDRESS)).to.be.equal(0);
+      expect(await assetHandler.priceAggregators(susd)).to.be.equal(usd_price_feed.address);
+      expect(await assetHandler.priceAggregators(seth)).to.be.equal(eth_price_feed.address);
+      expect(await assetHandler.priceAggregators(slink)).to.be.equal(link_price_feed.address);
+      expect(await assetHandler.priceAggregators(ZERO_ADDRESS)).to.be.equal(ZERO_ADDRESS);
+    });
+
+    it("only owner should be able to set chainlink timeout", async function () {
+      expect(await assetHandler.chainlinkTimeout()).to.be.equal(90000);
+
+      await expect(assetHandler.connect(manager).setChainlinkTimeout(90)).to.be.revertedWith(
+        "Ownable: caller is not the owner",
+      );
+
+      await assetHandler.setChainlinkTimeout(90);
+
+      expect(await assetHandler.chainlinkTimeout()).to.be.equal(90);
+    });
+
+    it("only owner should be able to set poolFactory", async function () {
+      expect(await assetHandler.poolFactory()).to.be.equal(poolFactory.address);
+
+      await expect(assetHandler.connect(manager).setPoolFactory(ZERO_ADDRESS)).to.be.revertedWith(
+        "Ownable: caller is not the owner",
+      );
+      await expect(assetHandler.setPoolFactory(ZERO_ADDRESS)).to.be.revertedWith("Invalid poolFactory");
+
+      await assetHandler.setPoolFactory(user1.address);
+
+      expect(await assetHandler.poolFactory()).to.be.equal(user1.address);
+
+      await assetHandler.setPoolFactory(poolFactory.address);
+
+      expect(await assetHandler.poolFactory()).to.be.equal(poolFactory.address);
+    });
+
+    it("should be able to get usd price", async function () {
+      // refresh timestamp of Chainlink price round data
+      await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+
+      await expect(assetHandler.getUSDPrice(ZERO_ADDRESS)).to.be.revertedWith("Price aggregator not found");
+
+      // try with bad aggregator
+      await assetHandler.addAsset(badtoken, 1, ZERO_ADDRESS);
+      console.log("1");
+      await expect(assetHandler.getUSDPrice(badtoken)).to.be.revertedWith("Price aggregator not found");
+      await assetHandler.removeAsset(badtoken);
+      console.log("2");
+      // price get failed
+      const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
+      const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+      const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
+      await usd_price_feed.givenCalldataRevert(latestRoundDataABI);
+      await expect(assetHandler.getUSDPrice(susd)).to.be.revertedWith("Price get failed");
+      console.log("3");
+      // chainlink timeout
+      const current = (await ethers.provider.getBlock()).timestamp;
+      await usd_price_feed.givenCalldataReturn(
+        latestRoundDataABI,
+        ethers.utils.solidityPack(
+          ["uint256", "int256", "uint256", "uint256", "uint256"],
+          [0, 100000000, 0, current, 0],
+        ),
+      );
+
+      await assetHandler.setChainlinkTimeout(0);
+      await expect(assetHandler.getUSDPrice(susd)).to.be.revertedWith("Chainlink price expired");
+
+      await assetHandler.setChainlinkTimeout(3600 * 25);
+      expect(await assetHandler.getUSDPrice(susd)).to.be.equal((1e18).toString());
+
+      await usd_price_feed.givenCalldataReturn(
+        latestRoundDataABI,
+        ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 0, 0, current, 0]),
+      );
+      await expect(assetHandler.getUSDPrice(susd)).to.be.revertedWith("Price not available");
+    });
+  });
+
+  describe("Members", () => {
+    it("should be able to manage members", async () => {
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+
+      await poolManagerLogicProxy.connect(manager).addMember(user1.address);
+
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(1);
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.true;
+
+      await poolManagerLogicProxy.connect(manager).removeMember(user1.address);
+
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.false;
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+    });
+
+    it("Adding members works correctly", async () => {
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+
+      await poolManagerLogicProxy.connect(manager).addMember(user1.address);
+
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.true;
+
+      await poolManagerLogicProxy.connect(manager).addMembers([user1.address, user2.address, user3.address]);
+
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(3);
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.true;
+      expect(await poolManagerLogicProxy.isMemberAllowed(user2.address)).to.be.true;
+      expect(await poolManagerLogicProxy.isMemberAllowed(user3.address)).to.be.true;
+    });
+
+    it("Removing members works correctly", async () => {
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(3);
+
+      await poolManagerLogicProxy.connect(manager).removeMembers([user1.address, user2.address, user3.address]);
+
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+    });
+  });
+
   it("can withdraw staked Sushi LP token", async function () {
     const withdrawalEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
@@ -1114,16 +1332,16 @@ describe("PoolFactory", function () {
 
     expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
     expect(eventWithdrawal.investor).to.equal(investor.address);
-    expect(eventWithdrawal.valueWithdrawn).to.equal(valueWithdrawn.toString());
+    checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
     expect(eventWithdrawal.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
     expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
-    expect(eventWithdrawal.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
+    checkAlmostSame(eventWithdrawal.fundValue, (totalFundValue - valueWithdrawn).toString());
     expect(eventWithdrawal.totalSupply).to.equal((totalSupply - fundTokensWithdrawn).toString());
 
     expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
     expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
     expect(eventWithdrawStaked.to).to.equal(investor.address);
-    expect(eventWithdrawStaked.withdrawAmount).to.equal((amountLPStaked * fractionWithdrawn).toString());
+    checkAlmostSame(eventWithdrawStaked.withdrawAmount, (amountLPStaked * fractionWithdrawn).toString());
     expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
 
     // TODO: add totalFundValue change checks after we implement balanceOf for staked LP tokens
@@ -1137,5 +1355,7 @@ describe("PoolFactory", function () {
 
     let poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(TESTNET_DAO);
+
+    await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
   });
 });
