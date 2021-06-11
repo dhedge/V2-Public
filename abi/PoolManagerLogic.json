@@ -700,6 +700,19 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "numerator",
+        "type": "uint256"
+      }
+    ],
+    "name": "setManagerFeeNumerator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_poolLogic",
         "type": "address"
