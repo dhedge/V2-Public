@@ -33,6 +33,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";

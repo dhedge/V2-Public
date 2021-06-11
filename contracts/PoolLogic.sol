@@ -39,6 +39,8 @@
 // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
 
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
