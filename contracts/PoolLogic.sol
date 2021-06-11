@@ -48,10 +48,10 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
+import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IManaged.sol";
 import "./guards/IGuard.sol";
-import "./guards/ILPAssetGuard.sol";
-import "./interfaces/IHasSupportedAsset.sol";
+import "./guards/IStakedAssetGuard.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -270,7 +270,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
       address guard = IHasGuardInfo(factory).getGuard(asset);
       require(guard != address(0), "invalid guard");
       (address stakingContract, bytes memory txData) =
-        ILPAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
+        IStakedAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
       if (txData.length > 1) {
         (bool success, ) = stakingContract.call(txData);
         require(success, "failed to withdraw staked tokens");
