@@ -298,8 +298,8 @@
       ]
     },
     "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/PoolLogic.sol": {
-      "lastModificationDate": 1623264302112,
-      "contentHash": "aac4c14aa4370f416f58b6e4b44cb0be",
+      "lastModificationDate": 1623333139603,
+      "contentHash": "0048ad22e1734f51f1c6a4aef391de45",
       "sourceName": "contracts/PoolLogic.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -1384,10 +1384,10 @@
         "BytesLib"
       ]
     },
-    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/UniswapV2Guard.sol": {
-      "lastModificationDate": 1623264302123,
-      "contentHash": "7c638c330fe357e907dcde688e2dd80f",
-      "sourceName": "contracts/guards/UniswapV2Guard.sol",
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/UniswapV2RouterGuard.sol": {
+      "lastModificationDate": 1623333139693,
+      "contentHash": "b313f6b7b4cc2ed5dcd89b8a0fd8aee7",
+      "sourceName": "contracts/guards/UniswapV2RouterGuard.sol",
       "solcConfig": {
         "version": "0.6.12",
         "settings": {
@@ -1414,7 +1414,9 @@
         "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol",
         "./IGuard.sol",
         "../utils/TxDataUtils.sol",
+        "../interfaces/IUniswapV2Factory.sol",
         "../interfaces/IPoolManagerLogic.sol",
+        "../interfaces/IHasSupportedAsset.sol",
         "../interfaces/IHasGuardInfo.sol",
         "../interfaces/IManaged.sol",
         "../interfaces/IHasSupportedAsset.sol"
@@ -1423,7 +1425,41 @@
         "0.6.12"
       ],
       "artifacts": [
-        "UniswapV2Guard"
+        "UniswapV2RouterGuard"
+      ]
+    },
+    "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IUniswapV2Factory.sol": {
+      "lastModificationDate": 1623333139614,
+      "contentHash": "ca93cf917cc3e4d6ac34cfa70877d432",
+      "sourceName": "contracts/interfaces/IUniswapV2Factory.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IUniswapV2Factory"
       ]
     },
     "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/guards/SynthetixGuard.sol": {
@@ -1759,8 +1795,8 @@
       ]
     },
     "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/interfaces/IUniswapV2Router.sol": {
-      "lastModificationDate": 1623264234399,
-      "contentHash": "c655db09be88ee87878d3418d221c01b",
+      "lastModificationDate": 1623333139620,
+      "contentHash": "df2255e7cbe8f3bbb8180eb4f44f555d",
       "sourceName": "contracts/interfaces/IUniswapV2Router.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -2496,8 +2532,8 @@
       ]
     },
     "/Users/fantasy/Documents/Project/dhedge/dhedge-ovm/contracts/test/IWETH.sol": {
-      "lastModificationDate": 1623264234404,
-      "contentHash": "fb7a1ab511741a34fa4a00797433f5d9",
+      "lastModificationDate": 1623333139626,
+      "contentHash": "9483b0a83faa76fd513a2af2b3be6f1c",
       "sourceName": "contracts/test/IWETH.sol",
       "solcConfig": {
         "version": "0.6.12",

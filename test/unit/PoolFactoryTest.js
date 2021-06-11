@@ -4,6 +4,11 @@ const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
 const { expect } = require("chai");
 
+const checkAlmostSame = (a, b) => {
+  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(95).div(100))).to.be.true;
+  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(105).div(100))).to.be.true;
+};
+
 let logicOwner, manager, dao, user1;
 let poolFactory,
   PoolLogic,
@@ -40,7 +45,7 @@ const slinkKey = "0x734c494e4b00000000000000000000000000000000000000000000000000
 
 describe("PoolFactory", function () {
   before(async function () {
-    [logicOwner, manager, dao, user1] = await ethers.getSigners();
+    [logicOwner, manager, dao, user1, user2, user3, user4] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
     addressResolver = await MockContract.deploy();
@@ -1036,14 +1041,32 @@ describe("PoolFactory", function () {
     );
   });
 
-  it("should be able to upgrade/set implementation logic", async function () {
-    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
+  it("should be able to mint manager fee", async () => {
+    await poolFactory.setDaoFee(10, 100);
+    const daoFees = await poolFactory.getDaoFee();
+    expect(daoFees[0]).to.be.equal(10);
+    expect(daoFees[1]).to.be.equal(100);
 
-    let poolManagerLogicAddress = await poolFactory.getLogic(1);
-    expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
+    await poolFactory.setDaoAddress(dao.address);
+    expect(await poolFactory.getDaoAddress()).to.be.equal(dao.address);
 
-    let poolLogicAddress = await poolFactory.getLogic(2);
-    expect(poolLogicAddress).to.equal(TESTNET_DAO);
+    await assetHandler.setChainlinkTimeout(9000000);
+
+    let availableFee = await poolLogicProxy.availableManagerFee();
+    let tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    let totalSupplyPreMint = await poolLogicProxy.totalSupply();
+
+    await poolLogicProxy.mintManagerFee();
+
+    let tokenPricePostMint = await poolLogicProxy.tokenPrice();
+    let totalSupplyPostMint = await poolLogicProxy.totalSupply();
+
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFee));
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+
+    checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFee.mul(daoFees[0]).div(daoFees[1]));
+
+    await assetHandler.setChainlinkTimeout(90000);
   });
 
   describe("AssetHandler", function () {
@@ -1163,5 +1186,56 @@ describe("PoolFactory", function () {
       );
       await expect(assetHandler.getUSDPrice(susd)).to.be.revertedWith("Price not available");
     });
+  });
+
+  describe("Members", () => {
+    it("should be able to manage members", async () => {
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+
+      await poolManagerLogicProxy.connect(manager).addMember(user1.address);
+
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(1);
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.true;
+
+      await poolManagerLogicProxy.connect(manager).removeMember(user1.address);
+
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.false;
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+    });
+
+    it("Adding members works correctly", async () => {
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+
+      await poolManagerLogicProxy.connect(manager).addMember(user1.address);
+
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.true;
+
+      await poolManagerLogicProxy.connect(manager).addMembers([user1.address, user2.address, user3.address]);
+
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(3);
+      expect(await poolManagerLogicProxy.isMemberAllowed(user1.address)).to.be.true;
+      expect(await poolManagerLogicProxy.isMemberAllowed(user2.address)).to.be.true;
+      expect(await poolManagerLogicProxy.isMemberAllowed(user3.address)).to.be.true;
+    });
+
+    it("Removing members works correctly", async () => {
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(3);
+
+      await poolManagerLogicProxy.connect(manager).removeMembers([user1.address, user2.address, user3.address]);
+
+      expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+    });
+  });
+
+  it("should be able to upgrade/set implementation logic", async function () {
+    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
+
+    let poolManagerLogicAddress = await poolFactory.getLogic(1);
+    expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
+
+    let poolLogicAddress = await poolFactory.getLogic(2);
+    expect(poolLogicAddress).to.equal(TESTNET_DAO);
+
+    await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
   });
 });
