@@ -273,7 +273,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
         ILPAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
       if (txData.length > 1) {
         (bool success, ) = stakingContract.call(txData);
-        require(success == true, "failed to withdraw staked tokens");
+        require(success, "failed to withdraw staked tokens");
       }
     }
   }
