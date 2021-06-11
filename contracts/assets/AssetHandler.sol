@@ -13,7 +13,7 @@ import "../interfaces/IAssetHandler.sol";
 /**
  * @title dHEDGE Asset Price Feeds
  * @dev Returns Chainlink USD price feed with 18 decimals
- * Asset types: 
+ * Asset types:
  * 0 = Chainlink direct USD price feed with 8 decimals
  */
 contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
