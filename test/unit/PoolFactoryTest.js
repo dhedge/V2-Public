@@ -1164,19 +1164,18 @@ describe("PoolFactory", function () {
 
       await expect(assetHandler.getUSDPrice(ZERO_ADDRESS)).to.be.revertedWith("Price aggregator not found");
 
-      // try with bad aggregator
+      // try with again with no aggregator
       await assetHandler.addAsset(badtoken, 1, ZERO_ADDRESS);
-      console.log("1");
       await expect(assetHandler.getUSDPrice(badtoken)).to.be.revertedWith("Price aggregator not found");
       await assetHandler.removeAsset(badtoken);
-      console.log("2");
+
       // price get failed
       const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
       const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
       const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
       await usd_price_feed.givenCalldataRevert(latestRoundDataABI);
       await expect(assetHandler.getUSDPrice(susd)).to.be.revertedWith("Price get failed");
-      console.log("3");
+
       // chainlink timeout
       const current = (await ethers.provider.getBlock()).timestamp;
       await usd_price_feed.givenCalldataReturn(
