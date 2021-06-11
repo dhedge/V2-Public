@@ -18,6 +18,7 @@
     "test:inte:polygon": "hardhat test test/integration/polygon/SushiswapV2Test.js --network localhost",
     "test:inte:mumbai": "hardhat test test/integration/polygon/SushiswapV2MumbaiFactory.js --network localhost",
     "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
+    "coverage:unit": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --testfiles \"test/unit/*.js\" --network hardhat",
     "deploy:ovm": "node scripts/DHedge.deploy.js",
     "deploy:mumbai": "hardhat run ./scripts/Mumbai.deploy.js --network mumbai",
     "prepare": "husky install"

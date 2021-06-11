@@ -14,6 +14,7 @@ artifacts-ovm
 
 #Coverage
 coverage/
+coverage.json
 
 # VScode
 .vscode
