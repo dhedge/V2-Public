@@ -43,6 +43,10 @@ import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 
+/// @title Generic ERC20 asset guard
+/// @dev Asset type = 0
+/// @dev A generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
+/// @dev Asset types > 0 must also inherit from IAssetGuard
 contract ERC20Guard is TxDataUtils, IGuard {
   using SafeMath for uint256;
 
@@ -50,7 +54,6 @@ contract ERC20Guard is TxDataUtils, IGuard {
 
   /// @notice Transaction guard for approving assets
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @dev Generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
   /// @param pool Pool address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic

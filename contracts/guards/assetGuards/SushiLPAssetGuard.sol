@@ -47,6 +47,9 @@ import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
 
+/// @title Sushi LP token asset guard
+/// @dev Asset type = 2
+/// @dev Asset types > 0 must also inherit from IAssetGuard
 contract SushiLPAssetGuard is TxDataUtils, ERC20Guard, IAssetGuard {
   using SafeMath for uint256;
 
