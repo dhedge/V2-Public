@@ -105,4 +105,11 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard, IAssetGuard {
       }
     }
   }
+
+  function getBalance(address pool, address asset) external view override returns (uint256 balance) {
+    uint256 sushiPoolId = sushiPoolIds[asset];
+    (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
+    uint256 poolBalance = IERC20(asset).balanceOf(pool);
+    balance = stakedBalance.add(poolBalance);
+  }
 }
