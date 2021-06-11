@@ -281,6 +281,13 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     announcedFeeIncreaseTimestamp = 0;
   }
 
+  function setManagerFeeNumerator(uint256 numerator) public onlyManager {
+    _setManagerFeeNumerator(numerator);
+
+    announcedFeeIncreaseNumerator = 0;
+    announcedFeeIncreaseTimestamp = 0;
+  }
+
   function getManagerFeeIncreaseInfo() public view returns (uint256, uint256) {
     return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
   }
