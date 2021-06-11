@@ -82,13 +82,13 @@ contract BaseUpgradeabilityProxy is Proxy {
 
   /**
    * @dev Sets type of the proxy.
-   * @param _proxyType type of the proxy.
+   * @param proxyType type of the proxy.
    */
-  function _setProxyType(uint8 _proxyType) internal {
+  function _setProxyType(uint8 proxyType) internal {
     bytes32 slot = PROXY_TYPE;
 
     assembly {
-      sstore(slot, _proxyType)
+      sstore(slot, proxyType)
     }
   }
 }
