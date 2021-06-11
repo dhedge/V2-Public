@@ -38,6 +38,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import "../IGuard.sol";
+import "../IAssetGuard.sol";
 import "../../utils/TxDataUtils.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
@@ -47,7 +48,7 @@ import "../../interfaces/IManaged.sol";
 /// @dev Asset type = 0
 /// @dev A generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
 /// @dev Asset types > 0 must also inherit from IAssetGuard
-contract ERC20Guard is TxDataUtils, IGuard {
+contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   using SafeMath for uint256;
 
   event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
@@ -81,5 +82,26 @@ contract ERC20Guard is TxDataUtils, IGuard {
       txType = 1; // 'Approve' type
       return txType;
     }
+  }
+
+  /// @notice Creates transaction data for withdrawing staked tokens
+  /// @dev The same interface can be used for other types of stakeable tokens
+  /// @param pool Pool address
+  /// @param asset Staked asset
+  /// @param withdrawPortion The fraction of total staked asset to withdraw
+  /// @param to The investor address to withdraw to
+  /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
+  function getWithdrawStakedTx(
+    address pool,
+    address asset,
+    uint256 withdrawPortion,
+    address to
+  ) external virtual override returns (address stakingContract, bytes memory txData) {
+    pool;
+    asset;
+    withdrawPortion;
+    to;
+    stakingContract;
+    txData;
   }
 }
