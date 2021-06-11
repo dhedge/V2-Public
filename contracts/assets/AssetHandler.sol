@@ -1,6 +1,4 @@
-// For dHEDGE Asset Price Feeds
-// Asset types:
-// 0 = Chainlink direct USD price feed with 8 decimals
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
@@ -11,6 +9,12 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IAssetHandler.sol";
 
+/**
+ * @title dHEDGE Asset Price Feeds
+ * @dev Returns Chainlink USD price feed with 18 decimals
+ * Asset types:
+ * 0 = Chainlink direct USD price feed with 8 decimals
+ */
 contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   using SafeMathUpgradeable for uint256;
 

@@ -1,4 +1,4 @@
-// For dHEDGE LP Price Feeds
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 
@@ -10,7 +10,7 @@ import "../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../utils/DhedgeMath.sol";
 
 /**
- * @title Sushi LP aggregator.
+ * @title Sushi LP aggregator. For dHEDGE LP Price Feeds.
  * @notice You can use this contract for lp token pricing oracle.
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */

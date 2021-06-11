@@ -38,6 +38,7 @@
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
 // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;

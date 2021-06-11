@@ -49,6 +49,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
@@ -282,10 +283,15 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   function setManagerFeeNumerator(uint256 numerator) public onlyManager {
-    _setManagerFeeNumerator(numerator);
+    uint256 managerFeeNumerator;
+    uint256 managerFeeDenominator;
+    (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(poolLogic);
 
-    announcedFeeIncreaseNumerator = 0;
-    announcedFeeIncreaseTimestamp = 0;
+    require(numerator < managerFeeNumerator, "manager fee too high");
+
+    IHasFeeInfo(factory).setPoolManagerFeeNumerator(poolLogic, numerator);
+
+    emit ManagerFeeSet(poolLogic, manager(), numerator, managerFeeDenominator);
   }
 
   function getManagerFeeIncreaseInfo() public view returns (uint256, uint256) {
