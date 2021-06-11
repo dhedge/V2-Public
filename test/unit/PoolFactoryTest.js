@@ -649,6 +649,13 @@ describe("PoolFactory", function () {
     let [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee();
     expect(managerFeeNumerator.toString()).to.equal("4000");
     expect(managerFeeDenominator.toString()).to.equal("10000");
+
+    await expect(poolManagerLogicProxy.setManagerFeeNumerator(3000)).to.be.revertedWith("only manager");
+    await expect(poolManagerLogicManagerProxy.setManagerFeeNumerator(5000)).to.be.revertedWith("manager fee too high");
+    await poolManagerLogicManagerProxy.setManagerFeeNumerator(3000);
+    [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee();
+    expect(managerFeeNumerator.toString()).to.equal("3000");
+    expect(managerFeeDenominator.toString()).to.equal("10000");
   });
 
   // Synthetix transaction guard

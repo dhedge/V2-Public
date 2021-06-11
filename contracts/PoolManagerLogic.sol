@@ -281,6 +281,18 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     announcedFeeIncreaseTimestamp = 0;
   }
 
+  function setManagerFeeNumerator(uint256 numerator) public onlyManager {
+    uint256 managerFeeNumerator;
+    uint256 managerFeeDenominator;
+    (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(poolLogic);
+
+    require(numerator < managerFeeNumerator, "manager fee too high");
+
+    IHasFeeInfo(factory).setPoolManagerFeeNumerator(poolLogic, numerator);
+
+    emit ManagerFeeSet(poolLogic, manager(), numerator, managerFeeDenominator);
+  }
+
   function getManagerFeeIncreaseInfo() public view returns (uint256, uint256) {
     return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
   }
