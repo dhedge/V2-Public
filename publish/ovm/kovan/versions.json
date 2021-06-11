@@ -1,0 +1,22 @@
+{
+  "v2.0.0-rc.1": {
+    "tag": "v2.0.0-rc.1",
+    "fulltag": "v2.0.0-rc.1",
+    "network": {
+      "chainId": 69,
+      "name": "unknown"
+    },
+    "date": "2021-06-01T17:16:44.736Z",
+    "contracts": {
+      "ETH-Aggregator": "0xCb7895bDC70A1a1Dce69b689FD7e43A627475A06",
+      "LINK-Aggregator": "0xb37aA79EBc31B93864Bff2d5390b385bE482897b",
+      "ProxyAdmin": "0x9e826B99f736EA29f89168be347197A8DD260806",
+      "PoolFactoryProxy": "0xA18594FbfF698bb8837e46C7D0bf6a10d792fd58",
+      "PoolLogic": "0x1b92CF0778f66463ffbe3dA98b9712F6c86A152D",
+      "PoolManagerLogic": "0x382c33Ee93a5f6D06B88f31eF878327fab7b3394",
+      "AssetHandlerProxy": "0x471Ab803d7e224978cdc69f81aa2D2d0263efE0a",
+      "ERC20Guard": "0x72b8CCE4bE8EfDC50e493cB210f9b9Eb15033453",
+      "synthetixGuard": "0xEe05745451CDc4942271fDc8626CB3aE98145590"
+    }
+  }
+}

@@ -43,13 +43,14 @@ import "../../utils/TxDataUtils.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;
   using SafeMath for uint256;
 
   // transaction guard for Uniswap Swap Router
-  function txGuard(address pool, bytes calldata data)
+  function txGuard(address _poolManagerLogic, bytes calldata data)
     external
     override
     returns (
@@ -57,6 +58,10 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     )
   {
     bytes4 method = getMethod(data);
+
+    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+    address pool = poolManagerLogic.poolLogic();
 
     if (method == bytes4(keccak256("exactInput((bytes,address,uint256,uint256,uint256))"))) {
       address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
@@ -66,8 +71,6 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       uint256 srcAmount = uint256(getInput(data, 4));
       address dstAsset;
       bool hasMultiplePools = path.hasMultiplePools();
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
-
       require(hasMultiplePools, "trade invalid");
 
       // check that all swap path assets are supported
@@ -75,7 +78,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       // TODO: consider a better way of doing this
 
       // check that source asset is supported
-      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
+      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
 
       address asset;
 
@@ -98,18 +101,12 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
         // if the remaining path is just trailing zeros, use the last path asset instead
         dstAsset = asset;
       } else {
-        require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
+        require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
       }
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(
-        address(poolManagerLogic), // TODO: should this be poolLogic address instead?
-        srcAsset,
-        srcAmount,
-        dstAsset,
-        block.timestamp
-      );
+      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
       return txType;
@@ -122,21 +119,14 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       address dstAsset = convert32toAddress(getInput(data, 1));
       address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
       uint256 srcAmount = uint256(getInput(data, 5));
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(pool);
 
-      require(poolManagerLogic.isSupportedAsset(srcAsset), "unsupported source asset");
+      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
 
-      require(poolManagerLogic.isSupportedAsset(dstAsset), "unsupported destination asset");
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(
-        address(poolManagerLogic), // TODO: should this be poolLogic address instead?
-        srcAsset,
-        srcAmount,
-        dstAsset,
-        block.timestamp
-      );
+      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2;
       return txType; // 'Exchange' type

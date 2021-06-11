@@ -104,13 +104,13 @@ async function main () {
   erc20Guard.deployed();
   console.log("ERC20Guard deployed at", erc20Guard.address);
 
-  const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-  const uniswapV2Guard = await UniswapV2Guard.deploy();
-  uniswapV2Guard.deployed();
-  console.log("UniswapV2Guard deployed at", uniswapV2Guard.address);
+  const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+  const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy();
+  uniswapV2RouterGuard.deployed();
+  console.log("UniswapV2RouterGuard deployed at", uniswapV2RouterGuard.address);
 
   await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-  await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
+  await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   console.log("PoolFactory set dao", dao.address);
 
   let new_versions = {
@@ -132,7 +132,7 @@ async function main () {
         "PoolManagerLogic": poolManagerLogic.address,
         "AssetHandlerProxy": assetHandlerProxy.address,
         "ERC20Guard": erc20Guard.address,
-        "UniswapV2Guard": uniswapV2Guard.address,
+        "UniswapV2RouterGuard": uniswapV2RouterGuard.address,
       }
     }
   }
@@ -150,9 +150,10 @@ async function main () {
     false, manager.address, 'Barren Wuffet', 'Test Fund', "DHTF", new ethers.BigNumber.from('5000'), [[tUSDC.address, true], [tUSDT.address, true], [tWETH.address, true]]
   )
 
-  const length = (await poolFactory.deployedFundsLength()).toNumber()
+  const deployedFunds = await poolFactory.getDeployedFunds()
+  const length = deployedFunds.length;
   console.log('deployedFundsLength', length)
-  const fundAddress = await poolFactory.deployedFunds(length - 1);
+  const fundAddress = deployedFunds[length - 1]
   const poolLogicProxy = await PoolLogic.attach(fundAddress);
   const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
   const poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);

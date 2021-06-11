@@ -33,3 +33,9 @@ contract TestWETH is ERC20 {
     _burn(msg.sender, amount);
   }
 }
+
+contract ERC20Asset is ERC20 {
+  constructor(string memory name, string memory symbol) public ERC20(name, symbol) {
+    _mint(msg.sender, 1000e18);
+  }
+}

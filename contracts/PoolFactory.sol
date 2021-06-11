@@ -46,10 +46,12 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
+import "./interfaces/IHasSupportedAsset.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
 
+/// @title A Factory to spawn pools
 contract PoolFactory is
   PausableUpgradeSafe,
   ProxyFactory,
@@ -150,7 +152,7 @@ contract PoolFactory is
     string memory _fundName,
     string memory _fundSymbol,
     uint256 _managerFeeNumerator,
-    IPoolManagerLogic.Asset[] memory _supportedAssets
+    IHasSupportedAsset.Asset[] memory _supportedAssets
   ) public returns (address) {
     bytes memory poolLogicData =
       abi.encodeWithSignature(
@@ -197,10 +199,6 @@ contract PoolFactory is
     );
 
     return fund;
-  }
-
-  function deployedFundsLength() external view returns (uint256) {
-    return deployedFunds.length;
   }
 
   // DAO info
@@ -458,6 +456,12 @@ contract PoolFactory is
 
   function isPaused() public view override returns (bool) {
     return paused();
+  }
+
+  /// @notice Return full array of deployed funds
+  /// @return full array of deployed funds
+  function getDeployedFunds() public view returns (address[] memory) {
+    return deployedFunds;
   }
 
   uint256[50] private __gap;
