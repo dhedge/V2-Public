@@ -2,15 +2,10 @@
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
-const { expect, assert } = require("chai");
+const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
-};
-
-const { updateChainlinkAggregators, currentBlockTimestamp } = require("./TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("./TestHelpers");
 
 let logicOwner, manager, dao, user1;
 let poolFactory,

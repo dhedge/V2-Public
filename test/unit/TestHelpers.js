@@ -1,3 +1,5 @@
+const { expect } = require("chai");
+
 const currentBlockTimestamp = async () => {
   const currentBlockNumber = await ethers.provider.getBlockNumber();
   return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
@@ -24,4 +26,9 @@ const updateChainlinkAggregators = async (usd_price_feed, eth_price_feed, link_p
   ); // $35
 };
 
-module.exports = { updateChainlinkAggregators, currentBlockTimestamp };
+const checkAlmostSame = (a, b) => {
+  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
+  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
+};
+
+module.exports = { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame };
