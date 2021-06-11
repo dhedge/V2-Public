@@ -39,14 +39,6 @@ const TEN_TOKENS = "10000000000000000000";
 const TWENTY_TOKENS = "20000000000000000000";
 const ONE_HUNDRED_TOKENS = "100000000000000000000";
 
-// from mainnet
-// const susd =
-//     '0x57ab1ec28d129707052df4df418d58a2d46d5f51'
-// const seth =
-//     '0x5e74c9036fb86bd7ecdcb084a0673efc32ea31cb'
-// const slink =
-//     '0xbbc455cb4f1b9e4bfc4b73970d360c8f032efee6'
-
 describe("PoolFactory", function () {
   before(async function () {
     [logicOwner, manager, dao, investor, user1, user2, user3, user4] = await ethers.getSigners();
@@ -294,14 +286,6 @@ describe("PoolFactory", function () {
         reject(new Error("timeout"));
       }, 60000);
     });
-
-    // await poolManagerLogic.initialize(poolFactory.address, manager.address, 'Barren Wuffet', mock.address, [sethKey])
-
-    // console.log('Passed poolManagerLogic Init!')
-
-    // await poolLogic.initialize(poolFactory.address, false, manager.address, 'Barren Wuffet', 'Test Fund', 'DHTF', mock.address)
-
-    // console.log('Passed poolLogic Init!')
 
     await expect(
       poolFactory.createFund(
