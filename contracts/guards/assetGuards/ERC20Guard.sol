@@ -50,6 +50,7 @@ contract ERC20Guard is TxDataUtils, IGuard {
 
   /// @notice Transaction guard for approving assets
   /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @dev Generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
   /// @param pool Pool address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic

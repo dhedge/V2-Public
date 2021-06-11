@@ -36,7 +36,7 @@
 
 pragma solidity 0.6.12;
 
-interface IStakedAssetGuard {
+interface IAssetGuard {
   function getWithdrawStakedTx(
     address pool,
     address asset,

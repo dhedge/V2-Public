@@ -40,14 +40,14 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 import "./ERC20Guard.sol";
-import "../IStakedAssetGuard.sol";
+import "../IAssetGuard.sol";
 import "../../utils/TxDataUtils.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
 
-contract SushiLPAssetGuard is TxDataUtils, ERC20Guard, IStakedAssetGuard {
+contract SushiLPAssetGuard is TxDataUtils, ERC20Guard, IAssetGuard {
   using SafeMath for uint256;
 
   struct SushiPool {

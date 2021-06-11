@@ -51,7 +51,7 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IManaged.sol";
 import "./guards/IGuard.sol";
-import "./guards/IStakedAssetGuard.sol";
+import "./guards/IAssetGuard.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -265,12 +265,12 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
   ) internal {
     uint8 assetType = IHasAssetInfo(factory).getAssetType(asset);
 
-    if (assetType == 2) {
-      // Stakeable token. Check to withdraw any staked tokens
+    if (assetType != 0) {
+      // Check to withdraw any staked tokens
       address guard = IHasGuardInfo(factory).getGuard(asset);
       require(guard != address(0), "invalid guard");
       (address stakingContract, bytes memory txData) =
-        IStakedAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
+        IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
       if (txData.length > 1) {
         (bool success, ) = stakingContract.call(txData);
         require(success, "failed to withdraw staked tokens");
