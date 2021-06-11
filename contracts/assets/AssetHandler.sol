@@ -1,6 +1,4 @@
-// For dHEDGE Asset Price Feeds
-// Asset types:
-// 0 = Chainlink direct USD price feed with 8 decimals
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2; // TODO: Can we upgrade the solidity versions to include ABIEncoderV2 by default? (not experimental)
@@ -12,6 +10,12 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Ownable.sol";
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IAssetHandler.sol";
 
+/**
+ * @title dHEDGE Asset Price Feeds
+ * @dev Returns Chainlink USD price feed with 18 decimals
+ * Asset types:
+ * 0 = Chainlink direct USD price feed with 8 decimals
+ */
 contract AssetHandler is Initializable, OwnableUpgradeSafe, IAssetHandler {
   using SafeMath for uint256;
 
