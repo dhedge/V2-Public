@@ -49,7 +49,6 @@ import "../../interfaces/IManaged.sol";
 /// @title Generic ERC20 asset guard
 /// @dev Asset type = 0
 /// @dev A generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
-/// @dev Asset types > 0 must also inherit from IAssetGuard
 contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   using SafeMath for uint256;
 
