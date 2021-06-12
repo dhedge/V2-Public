@@ -109,7 +109,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   }
 
   /// @notice Returns the balance of the managed asset
-  /// @dev May include any extrnal balance in staking contracts
+  /// @dev May include any external balance in staking contracts
   function getBalance(address pool, address asset) external view virtual override returns (uint256 balance) {
     // The base ERC20 guard has no externally staked tokens
     balance = IERC20(asset).balanceOf(pool);

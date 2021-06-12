@@ -98,7 +98,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
   }
 
   /// @notice Returns the balance of the managed asset
-  /// @dev May include any extrnal balance in staking contracts
+  /// @dev May include any external balance in staking contracts
   function getBalance(address pool, address asset) external view override returns (uint256 balance) {
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);

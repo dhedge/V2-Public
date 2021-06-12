@@ -199,6 +199,12 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return depositAssets;
   }
 
+  /// @notice Get asset balance including any staked balance in external contracts
+  function assetBalance(address asset) public view returns (uint256) {
+    address guard = IHasGuardInfo(factory).getGuard(asset);
+    return IAssetGuard(guard).getBalance(poolLogic, asset);
+  }
+
   function assetValue(address asset, uint256 amount) public view override returns (uint256) {
     uint256 price = IHasAssetInfo(factory).getAssetPrice(asset);
     uint256 decimals = uint256(IERC20Extended(asset).decimals());
@@ -208,12 +214,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   function assetValue(address asset) public view override returns (uint256) {
     return assetValue(asset, assetBalance(asset));
-  }
-
-  function assetBalance(address asset) public view returns (uint256) {
-    // Get asset balance including any staked balance in external contracts
-    address guard = IHasGuardInfo(factory).getGuard(asset);
-    return IAssetGuard(guard).getBalance(poolLogic, asset);
   }
 
   /// @notice Return the fund composition of the pool
