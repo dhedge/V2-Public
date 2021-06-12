@@ -163,7 +163,12 @@ describe("PoolFactory", function () {
     // Deploy PoolFactoryProxy
     // const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
     // const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
-    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [poolLogic.address, poolManagerLogic.address, ZERO_ADDRESS, dao.address]);
+    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      ZERO_ADDRESS,
+      dao.address,
+    ]);
     await poolFactory.deployed();
     console.log("poolFactory deployed to:", poolFactory.address);
 
@@ -180,7 +185,7 @@ describe("PoolFactory", function () {
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
-    await poolFactory.setAssetHandler(assetHandler.address)
+    await poolFactory.setAssetHandler(assetHandler.address);
 
     // Initialise pool factory
     // await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -390,7 +395,7 @@ describe("PoolFactory", function () {
       }, 60000);
     });
     // mock IERC20 transferFrom to return true
-    const IERC20 = await hre.artifacts.readArtifact( "IERC20");
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       logicOwner.address,
@@ -760,9 +765,9 @@ describe("PoolFactory", function () {
       0,
     ]);
 
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI),
-    ).to.be.revertedWith("non-zero address is required");
+    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
+      "non-zero address is required",
+    );
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
@@ -879,9 +884,9 @@ describe("PoolFactory", function () {
 
     // fail to swap direct asset to asset because it is interaction is with 0x0 address
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [exactInputSingleParams]);
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI),
-    ).to.be.revertedWith("non-zero address is required");
+    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
+      "non-zero address is required",
+    );
 
     // fail to swap direct asset to asset because unsupported source asset
     badExactInputSingleParams.tokenIn = slink;
@@ -963,9 +968,9 @@ describe("PoolFactory", function () {
 
     // fail to swap direct asset to asset because it is interaction is with 0x0 address
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI),
-    ).to.be.revertedWith("non-zero address is required");
+    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
+      "non-zero address is required",
+    );
 
     // fail to swap direct asset to asset because unsupported source asset
     badExactInputParams.path =
