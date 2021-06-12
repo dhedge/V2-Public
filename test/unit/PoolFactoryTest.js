@@ -33,13 +33,11 @@ const susdKey = "0x7355534400000000000000000000000000000000000000000000000000000
 const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000000";
 const slinkKey = "0x734c494e4b000000000000000000000000000000000000000000000000000000";
 
-// from mainnet
-// const susd =
-//     '0x57ab1ec28d129707052df4df418d58a2d46d5f51'
-// const seth =
-//     '0x5e74c9036fb86bd7ecdcb084a0673efc32ea31cb'
-// const slink =
-//     '0xbbc455cb4f1b9e4bfc4b73970d360c8f032efee6'
+const ONE_TOKEN = "1000000000000000000";
+const FIVE_TOKENS = "5000000000000000000";
+const TEN_TOKENS = "10000000000000000000";
+const TWENTY_TOKENS = "20000000000000000000";
+const ONE_HUNDRED_TOKENS = "100000000000000000000";
 
 describe("PoolFactory", function () {
   before(async function () {
@@ -136,6 +134,7 @@ describe("PoolFactory", function () {
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
     await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
     await slinkProxy.givenCalldataReturnUint(decimalsABI, "18");
+    await sushiLPLinkWethAsset.givenCalldataReturnUint(decimalsABI, "18");
 
     // Aggregators
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
@@ -287,14 +286,6 @@ describe("PoolFactory", function () {
         reject(new Error("timeout"));
       }, 60000);
     });
-
-    // await poolManagerLogic.initialize(poolFactory.address, manager.address, 'Barren Wuffet', mock.address, [sethKey])
-
-    // console.log('Passed poolManagerLogic Init!')
-
-    // await poolLogic.initialize(poolFactory.address, false, manager.address, 'Barren Wuffet', 'Test Fund', 'DHTF', mock.address)
-
-    // console.log('Passed poolLogic Init!')
 
     await expect(
       poolFactory.createFund(
@@ -1300,14 +1291,20 @@ describe("PoolFactory", function () {
     // enable Sushi LP token to pool
     await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
 
+    // remove manager fee so that performance fee minting doesn't get in the way
+    await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
+
     // mock 20 sUSD in pool
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
-    await susdProxy.givenCalldataReturnUint(balanceOfABI, (20e18).toString());
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, TWENTY_TOKENS);
 
-    // mock 100 Sushi LP staked in MiniChefV2
+    // mock 5 Sushi LP tokens in pool
+    await sushiLPLinkWethAsset.givenCalldataReturnUint(balanceOfABI, FIVE_TOKENS);
+
+    // mock 100 Sushi LP tokens staked in MiniChefV2
     const iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
     let userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
-    const amountLPStaked = (100e18).toString();
+    const amountLPStaked = new ethers.BigNumber.from(ONE_HUNDRED_TOKENS);
     const amountRewarded = (0).toString();
     await sushiMiniChefV2.givenCalldataReturn(
       userInfo,
@@ -1316,36 +1313,41 @@ describe("PoolFactory", function () {
 
     const totalSupply = await poolLogicProxy.totalSupply();
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
+    const sushiLPPrice = await assetHandler.getUSDPrice(sushiLPLinkWeth);
+    const fundUsdValue = new ethers.BigNumber.from(TWENTY_TOKENS);
+    const fundSushiLPValue = sushiLPPrice.mul(5);
+    const stakedSushiLPValue = sushiLPPrice.mul(100);
+    const expectedFundValue = fundUsdValue.add(fundSushiLPValue).add(stakedSushiLPValue);
+    expect(totalFundValue).to.equal(expectedFundValue);
 
     // Withdraw 10 tokens
-    const withdrawAmount = 10e18;
+    const withdrawAmount = ethers.BigNumber.from(TEN_TOKENS);
     const investorFundBalance = await poolLogicProxy.balanceOf(investor.address);
 
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
-    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount);
 
     const eventWithdrawal = await withdrawalEvent;
     const eventWithdrawStaked = await withdrawStakedEvent;
 
-    const fundTokensWithdrawn = withdrawAmount;
-    const valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
-    const fractionWithdrawn = fundTokensWithdrawn / totalSupply;
+    const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
+    const fractionWithdrawn = withdrawAmount / totalSupply;
+    const expectedWithdrawAmount = amountLPStaked * fractionWithdrawn;
+    const expectedFundValueAfter = totalFundValue.sub(valueWithdrawn);
 
     expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
     expect(eventWithdrawal.investor).to.equal(investor.address);
     checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
-    expect(eventWithdrawal.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
+    expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
     expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
-    checkAlmostSame(eventWithdrawal.fundValue, (totalFundValue - valueWithdrawn).toString());
-    expect(eventWithdrawal.totalSupply).to.equal((totalSupply - fundTokensWithdrawn).toString());
+    checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
+    expect(eventWithdrawal.totalSupply).to.equal((totalSupply - withdrawAmount).toString());
 
     expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
     expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
     expect(eventWithdrawStaked.to).to.equal(investor.address);
-    checkAlmostSame(eventWithdrawStaked.withdrawAmount, (amountLPStaked * fractionWithdrawn).toString());
+    checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
     expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
-
-    // TODO: add totalFundValue change checks after we implement balanceOf for staked LP tokens
   });
 
   it("should be able to upgrade/set implementation logic", async function () {

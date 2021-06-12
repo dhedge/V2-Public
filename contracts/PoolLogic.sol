@@ -265,7 +265,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     address to,
     uint256 portion
   ) internal {
-    // Check to withdraw any staked tokens
+    // Withdraw any external tokens (eg. staked tokens in other contracts)
     address guard = IHasGuardInfo(factory).getGuard(asset);
     require(guard != address(0), "invalid guard");
     (address stakingContract, bytes memory txData) =

@@ -36,14 +36,7 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-
 import "./ERC20Guard.sol";
-import "../../utils/TxDataUtils.sol";
-import "../../interfaces/IPoolManagerLogic.sol";
-import "../../interfaces/IHasGuardInfo.sol";
-import "../../interfaces/IManaged.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
 
 /// @title Sushi LP token asset guard
@@ -102,5 +95,14 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
         emit WithdrawStaked(pool, asset, to, withdrawAmount, block.timestamp);
       }
     }
+  }
+
+  /// @notice Returns the balance of the managed asset
+  /// @dev May include any external balance in staking contracts
+  function getBalance(address pool, address asset) external view override returns (uint256 balance) {
+    uint256 sushiPoolId = sushiPoolIds[asset];
+    (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
+    uint256 poolBalance = IERC20(asset).balanceOf(pool);
+    balance = stakedBalance.add(poolBalance);
   }
 }

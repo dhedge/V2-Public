@@ -43,6 +43,7 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IERC20Extended.sol"; // includes decimals()
 import "./interfaces/IHasSupportedAsset.sol";
 import "./guards/IGuard.sol";
+import "./guards/IAssetGuard.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
@@ -198,15 +199,17 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return depositAssets;
   }
 
+  /// @notice Get asset balance including any staked balance in external contracts
+  function assetBalance(address asset) public view returns (uint256) {
+    address guard = IHasGuardInfo(factory).getGuard(asset);
+    return IAssetGuard(guard).getBalance(poolLogic, asset);
+  }
+
   function assetValue(address asset, uint256 amount) public view override returns (uint256) {
     uint256 price = IHasAssetInfo(factory).getAssetPrice(asset);
     uint256 decimals = uint256(IERC20Extended(asset).decimals());
 
     return price.mul(amount).div(10**decimals);
-  }
-
-  function assetBalance(address asset) public view returns (uint256) {
-    return IERC20Extended(asset).balanceOf(poolLogic);
   }
 
   function assetValue(address asset) public view override returns (uint256) {
