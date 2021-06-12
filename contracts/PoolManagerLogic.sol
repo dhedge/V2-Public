@@ -211,14 +211,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   function assetBalance(address asset) public view returns (uint256) {
-    uint8 assetType = IHasAssetInfo(factory).getAssetType(asset);
-    if (assetType == 0) {
-      return IERC20Extended(asset).balanceOf(poolLogic);
-    } else {
-      // asset may be staked in external contracts
-      address guard = IHasGuardInfo(factory).getGuard(asset);
-      return IAssetGuard(guard).getBalance(poolLogic, asset);
-    }
+    // Get asset balance including any staked balance in external contracts
+    address guard = IHasGuardInfo(factory).getGuard(asset);
+    return IAssetGuard(guard).getBalance(poolLogic, asset);
   }
 
   /// @notice Return the fund composition of the pool

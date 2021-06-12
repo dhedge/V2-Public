@@ -38,6 +38,7 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 import "../IGuard.sol";
 import "../IAssetGuard.sol";
@@ -98,11 +99,19 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     uint256 withdrawPortion,
     address to
   ) external virtual override returns (address stakingContract, bytes memory txData) {
+    // The base ERC20 guard has no externally staked tokens to withdraw
     pool;
     asset;
     withdrawPortion;
     to;
     stakingContract;
     txData;
+  }
+
+  /// @notice Returns the balance of the managed asset
+  /// @dev May include any extrnal balance in staking contracts
+  function getBalance(address pool, address asset) external view virtual override returns (uint256 balance) {
+    // The base ERC20 guard has no externally staked tokens
+    balance = IERC20(asset).balanceOf(pool);
   }
 }
