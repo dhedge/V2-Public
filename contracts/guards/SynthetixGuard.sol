@@ -61,7 +61,11 @@ contract SynthetixGuard is TxDataUtils, IGuard {
   }
 
   // transaction guard for Synthetix synth exchanger
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  function txGuard(
+    address _poolManagerLogic,
+    address, // to
+    bytes calldata data
+  )
     external
     override
     returns (

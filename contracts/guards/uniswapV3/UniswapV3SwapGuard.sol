@@ -52,7 +52,11 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using SafeMath for uint256;
 
   // transaction guard for Uniswap Swap Router
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  function txGuard(
+    address _poolManagerLogic,
+    address, // to
+    bytes calldata data
+  )
     external
     override
     returns (

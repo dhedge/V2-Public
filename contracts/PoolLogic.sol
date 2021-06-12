@@ -38,6 +38,9 @@
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
 // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
+// 5. Stake: Stake tokens into a third party contract (eg. Sushi staking)
+// 6. Unstake: Unstake tokens from third party contract (eg. Sushi staking)
+// 7. Claim: Claim tokens from a third party contract (eg. Sushi rewards)
 
 // SPDX-License-Identifier: MIT
 
@@ -299,7 +302,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     }
 
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
-    uint8 txType = IGuard(guard).txGuard(poolManagerLogic, data);
+    uint8 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
     (bool success, ) = to.call(data);

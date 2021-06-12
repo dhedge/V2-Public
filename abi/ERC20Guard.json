@@ -288,22 +288,22 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "pool",
+        "name": "",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "withdrawPortion",
+        "name": "",
         "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "to",
+        "name": "",
         "type": "address"
       }
     ],
@@ -381,6 +381,11 @@
       {
         "internalType": "address",
         "name": "pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
         "type": "address"
       },
       {

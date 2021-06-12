@@ -46,12 +46,9 @@ import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
-import "../interfaces/IHasSupportedAsset.sol";
 
-/**
- * @notice Transaction guard for UniswapV2Router
- * @dev This will be used for sushiswap as well since Sushi uses the same interface.
- */
+/// @notice Transaction guard for UniswapV2Router
+/// @dev This will be used for sushiswap as well since Sushi uses the same interface.
 contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   using SafeMath for uint256;
 
@@ -78,7 +75,11 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
    * @param data the transaction data
    * @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
    */
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  function txGuard(
+    address _poolManagerLogic,
+    address, // to
+    bytes calldata data
+  )
     external
     override
     returns (
