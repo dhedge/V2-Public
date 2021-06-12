@@ -50,6 +50,8 @@ import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 

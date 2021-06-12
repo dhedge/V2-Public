@@ -40,7 +40,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 import "./ERC20Guard.sol";
-import "../IAssetGuard.sol";
 import "../../utils/TxDataUtils.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
@@ -49,8 +48,7 @@ import "../../interfaces/sushi/IMiniChefV2.sol";
 
 /// @title Sushi LP token asset guard
 /// @dev Asset type = 2
-/// @dev Asset types > 0 must also inherit from IAssetGuard
-contract SushiLPAssetGuard is TxDataUtils, ERC20Guard, IAssetGuard {
+contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
   using SafeMath for uint256;
 
   struct SushiPool {

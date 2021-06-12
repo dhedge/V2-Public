@@ -39,6 +39,8 @@
 // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
 
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
@@ -263,18 +265,14 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
     address to,
     uint256 portion
   ) internal {
-    uint8 assetType = IHasAssetInfo(factory).getAssetType(asset);
-
-    if (assetType != 0) {
-      // Check to withdraw any staked tokens
-      address guard = IHasGuardInfo(factory).getGuard(asset);
-      require(guard != address(0), "invalid guard");
-      (address stakingContract, bytes memory txData) =
-        IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
-      if (txData.length > 1) {
-        (bool success, ) = stakingContract.call(txData);
-        require(success, "failed to withdraw staked tokens");
-      }
+    // Check to withdraw any staked tokens
+    address guard = IHasGuardInfo(factory).getGuard(asset);
+    require(guard != address(0), "invalid guard");
+    (address stakingContract, bytes memory txData) =
+      IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
+    if (txData.length > 1) {
+      (bool success, ) = stakingContract.call(txData);
+      require(success, "failed to withdraw staked tokens");
     }
   }
 
