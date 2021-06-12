@@ -1,3 +1,5 @@
+const { ethers, upgrades } = require("hardhat");
+
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
@@ -106,7 +108,7 @@ describe("PoolFactory", function () {
     await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
     await slinkProxy.givenCalldataReturnAddress(targetABI, slinkAsset.address);
 
-    const IERC20 = await hre.artifacts.readArtifact("ERC20UpgradeSafe");
+    const IERC20 = await hre.artifacts.readArtifact("IERC20Extended");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
@@ -135,7 +137,7 @@ describe("PoolFactory", function () {
     ); // $35
 
     AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-    assetHandlerLogic = await AssetHandlerLogic.deploy();
+    // assetHandlerLogic = await AssetHandlerLogic.deploy();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
@@ -144,26 +146,28 @@ describe("PoolFactory", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    poolFactoryLogic = await PoolFactoryLogic.deploy();
+    // poolFactoryLogic = await PoolFactoryLogic.deploy();
 
     // Deploy ProxyAdmin
-    const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
-    const proxyAdmin = await ProxyAdmin.deploy();
-    await proxyAdmin.deployed();
+    // const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
+    // const proxyAdmin = await ProxyAdmin.deploy();
+    // await proxyAdmin.deployed();
 
     // Deploy AssetHandlerProxy
-    const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
-    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
-    await assetHandlerProxy.deployed();
+    // const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
+    // const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
+    // await assetHandlerProxy.deployed();
 
-    assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
+    // assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
     // Deploy PoolFactoryProxy
-    const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
-    const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
-    await poolFactoryProxy.deployed();
+    // const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
+    // const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
+    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [poolLogic.address, poolManagerLogic.address, ZERO_ADDRESS, dao.address]);
+    await poolFactory.deployed();
+    console.log("poolFactory deployed to:", poolFactory.address);
 
-    poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
+    // poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
 
     // Initialize Asset Price Consumer
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
@@ -171,12 +175,16 @@ describe("PoolFactory", function () {
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
 
-    await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
+    // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
+    // await assetHandler.deployed();
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
     await assetHandler.deployed();
+    console.log("assetHandler deployed to:", assetHandler.address);
+    await poolFactory.setAssetHandler(assetHandler.address)
 
     // Initialise pool factory
-    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-    await poolFactory.deployed();
+    // await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
+    // await poolFactory.deployed();
 
     // Deploy transaction guards
     const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
@@ -382,9 +390,7 @@ describe("PoolFactory", function () {
       }, 60000);
     });
     // mock IERC20 transferFrom to return true
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact( "IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       logicOwner.address,
@@ -447,9 +453,7 @@ describe("PoolFactory", function () {
     });
 
     // mock IERC20 balance
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
@@ -502,9 +506,7 @@ describe("PoolFactory", function () {
     let poolLogicPrivateProxy = await PoolLogic.attach(fundAddress);
     let poolManagerLogicPrivateProxy = await PoolManagerLogic.attach(await poolLogicPrivateProxy.poolManagerLogic());
 
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       logicOwner.address,
@@ -575,9 +577,7 @@ describe("PoolFactory", function () {
 
     // Can't remove asset with non zero balance
     // mock IERC20 balanceOf to return non zero
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     let iERC20 = new ethers.utils.Interface(IERC20.abi);
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1);
@@ -711,9 +711,7 @@ describe("PoolFactory", function () {
   });
 
   it("Should be able to approve", async () => {
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
@@ -763,7 +761,7 @@ describe("PoolFactory", function () {
     ]);
 
     await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
+      poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI),
     ).to.be.revertedWith("non-zero address is required");
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
@@ -882,7 +880,7 @@ describe("PoolFactory", function () {
     // fail to swap direct asset to asset because it is interaction is with 0x0 address
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [exactInputSingleParams]);
     await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
+      poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI),
     ).to.be.revertedWith("non-zero address is required");
 
     // fail to swap direct asset to asset because unsupported source asset
@@ -966,7 +964,7 @@ describe("PoolFactory", function () {
     // fail to swap direct asset to asset because it is interaction is with 0x0 address
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
     await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
+      poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI),
     ).to.be.revertedWith("non-zero address is required");
 
     // fail to swap direct asset to asset because unsupported source asset

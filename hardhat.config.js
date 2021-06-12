@@ -6,6 +6,7 @@ require('hardhat-gas-reporter');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-waffle');
 require('solidity-coverage');
+require('@openzeppelin/hardhat-upgrades');
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
