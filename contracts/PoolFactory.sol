@@ -341,6 +341,10 @@ contract PoolFactory is
     return IAssetHandler(_assetHandler).getUSDPrice(asset);
   }
 
+  function getAssetType(address asset) external view override returns (uint8) {
+    return IAssetHandler(_assetHandler).assetTypes(asset);
+  }
+
   function getAssetHandler() public view returns (address) {
     return _assetHandler;
   }

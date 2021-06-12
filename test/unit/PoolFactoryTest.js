@@ -3,11 +3,9 @@ const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
 const { expect } = require("chai");
+const abiCoder = ethers.utils.defaultAbiCoder;
 
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(95).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(105).div(100))).to.be.true;
-};
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("./TestHelpers");
 
 let logicOwner, manager, dao, user1;
 let poolFactory,
@@ -17,15 +15,15 @@ let poolFactory,
   poolManagerLogic,
   poolLogicProxy,
   poolManagerLogicProxy,
-  fundAddress,
-  synthetixGuard,
-  erc20Guard,
-  uniswapV2RouterGuard,
-  uniswapV3SwapGuard;
-let addressResolver, synthetix, uniswapV2Factory, uniswapV2Router, uniswapV3Router; // contracts
+  fundAddress;
+let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
+let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard; // contract guards
+let erc20Guard, sushiLPAssetGuard; // asset guards
+let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
-let usd_price_feed, eth_price_feed, link_price_feed;
+let sushiLPAggregator; // local aggregators
+let usd_price_feed, eth_price_feed, link_price_feed; // integrating aggregators
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
@@ -45,19 +43,21 @@ const slinkKey = "0x734c494e4b00000000000000000000000000000000000000000000000000
 
 describe("PoolFactory", function () {
   before(async function () {
-    [logicOwner, manager, dao, user1, user2, user3, user4] = await ethers.getSigners();
+    [logicOwner, manager, dao, investor, user1, user2, user3, user4] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
     addressResolver = await MockContract.deploy();
     synthetix = await MockContract.deploy();
     uniswapV2Router = await MockContract.deploy();
     uniswapV3Router = await MockContract.deploy();
+    sushiMiniChefV2 = await MockContract.deploy();
     susdAsset = await MockContract.deploy();
     susdProxy = await MockContract.deploy();
     sethAsset = await MockContract.deploy();
     sethProxy = await MockContract.deploy();
     slinkAsset = await MockContract.deploy();
     slinkProxy = await MockContract.deploy();
+    sushiLPLinkWethAsset = await MockContract.deploy();
     usd_price_feed = await MockContract.deploy();
     eth_price_feed = await MockContract.deploy();
     link_price_feed = await MockContract.deploy();
@@ -65,6 +65,8 @@ describe("PoolFactory", function () {
     susd = susdProxy.address;
     seth = sethProxy.address;
     slink = slinkProxy.address;
+    sushiLPLinkWeth = sushiLPLinkWethAsset.address;
+    sushiLPLinkWethPoolId = 1; // set Sushi LP staking contract Pool Id
     badtoken = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
     // mock IAddressResolver
@@ -72,6 +74,28 @@ describe("PoolFactory", function () {
     const iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi);
     let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
+
+    // mock ISushiMiniChefV2
+    IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
+    iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
+
+    // mock Sushi LINK-WETH LP
+    const IUniswapV2Pair = await hre.artifacts.readArtifact("IUniswapV2Pair");
+    const iUniswapV2Pair = new ethers.utils.Interface(IUniswapV2Pair.abi);
+    const token0Abi = iUniswapV2Pair.encodeFunctionData("token0", []);
+    await sushiLPLinkWethAsset.givenCalldataReturnAddress(token0Abi, slink);
+    const token1Abi = iUniswapV2Pair.encodeFunctionData("token1", []);
+    await sushiLPLinkWethAsset.givenCalldataReturnAddress(token1Abi, seth);
+    const totalSupply = iUniswapV2Pair.encodeFunctionData("totalSupply", []);
+    await sushiLPLinkWethAsset.givenCalldataReturnUint(totalSupply, "81244364124268806526393");
+    const getReserves = iUniswapV2Pair.encodeFunctionData("getReserves", []);
+    await sushiLPLinkWethAsset.givenCalldataReturn(
+      getReserves,
+      abiCoder.encode(
+        ["uint112", "uint112", "uint32"],
+        ["1158679007401429485290646", "11024994840258089037095", await currentBlockTimestamp()],
+      ),
+    );
 
     // mock ISynthetix
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
@@ -106,36 +130,26 @@ describe("PoolFactory", function () {
     await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
     await slinkProxy.givenCalldataReturnAddress(targetABI, slinkAsset.address);
 
-    const IERC20 = await hre.artifacts.readArtifact("ERC20UpgradeSafe");
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
+    IERC20 = await hre.artifacts.readArtifact("ERC20UpgradeSafe");
+    iERC20 = new ethers.utils.Interface(IERC20.abi);
     let decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
     await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
     await slinkProxy.givenCalldataReturnUint(decimalsABI, "18");
 
     // Aggregators
-    const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
-    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
-    const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
-    const current = (await ethers.provider.getBlock()).timestamp;
-    await usd_price_feed.givenCalldataReturn(
-      latestRoundDataABI,
-      ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 100000000, 0, current, 0]),
-    ); // $1
-    await eth_price_feed.givenCalldataReturn(
-      latestRoundDataABI,
-      ethers.utils.solidityPack(
-        ["uint256", "int256", "uint256", "uint256", "uint256"],
-        [0, 200000000000, 0, current, 0],
-      ),
-    ); // $2000
-    await link_price_feed.givenCalldataReturn(
-      latestRoundDataABI,
-      ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 3500000000, 0, current, 0]),
-    ); // $35
+    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
     AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
     assetHandlerLogic = await AssetHandlerLogic.deploy();
+
+    // Deploy Sushi LP Aggregator
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLPAggregator = await SushiLPAggregator.deploy(
+      sushiLPLinkWeth,
+      link_price_feed.address,
+      eth_price_feed.address,
+    );
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
@@ -169,7 +183,8 @@ describe("PoolFactory", function () {
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
-    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
+    const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushiLPLinkWeth];
 
     await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     await assetHandler.deployed();
@@ -178,14 +193,10 @@ describe("PoolFactory", function () {
     await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
     await poolFactory.deployed();
 
-    // Deploy transaction guards
+    // Deploy contract guards
     const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
-
-    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-    erc20Guard = await ERC20Guard.deploy();
-    erc20Guard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory.address);
@@ -195,7 +206,19 @@ describe("PoolFactory", function () {
     uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
     uniswapV3SwapGuard.deployed();
 
+    // Deploy asset guards
+    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+    erc20Guard = await ERC20Guard.deploy();
+    erc20Guard.deployed();
+
+    const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
+    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address, [
+      [sushiLPLinkWeth, sushiLPLinkWethPoolId],
+    ]); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard.deployed();
+
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
+    await poolFactory.connect(dao).setAssetGuard(2, sushiLPAssetGuard.address);
     await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
     await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await poolFactory.connect(dao).setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
@@ -381,13 +404,8 @@ describe("PoolFactory", function () {
         reject(new Error("timeout"));
       }, 60000);
     });
-    // mock IERC20 transferFrom to return true
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
-      logicOwner.address,
+      investor.address,
       poolLogicProxy.address,
       (100e18).toString(),
     ]);
@@ -398,11 +416,11 @@ describe("PoolFactory", function () {
     expect(totalFundValue.toString()).to.equal("0");
 
     await expect(poolLogicProxy.deposit(slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
-    await poolLogicProxy.deposit(susd, (100e18).toString());
+    await poolLogicProxy.connect(investor).deposit(susd, (100e18).toString());
     let event = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
-    expect(event.investor).to.equal(logicOwner.address);
+    expect(event.investor).to.equal(investor.address);
     expect(event.assetDeposited).to.equal(susd);
     expect(event.valueDeposited).to.equal((100e18).toString());
     expect(event.fundTokensReceived).to.equal((100e18).toString());
@@ -447,10 +465,6 @@ describe("PoolFactory", function () {
     });
 
     // mock IERC20 balance
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
@@ -459,12 +473,14 @@ describe("PoolFactory", function () {
     let totalSupply = await poolLogicProxy.totalSupply();
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
-    await expect(poolLogicProxy.withdraw(withdrawAmount.toString())).to.be.revertedWith("cooldown active");
+    await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
+      "cooldown active",
+    );
 
     // await poolFactory.setExitCooldown(0);
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
 
-    await poolLogicProxy.withdraw(withdrawAmount.toString());
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
     // let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
     // let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
@@ -474,7 +490,7 @@ describe("PoolFactory", function () {
     let fundTokensWithdrawn = withdrawAmount;
     let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
-    expect(event.investor).to.equal(logicOwner.address);
+    expect(event.investor).to.equal(investor.address);
     expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
     expect(event.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
@@ -502,12 +518,8 @@ describe("PoolFactory", function () {
     let poolLogicPrivateProxy = await PoolLogic.attach(fundAddress);
     let poolManagerLogicPrivateProxy = await PoolManagerLogic.attach(await poolLogicPrivateProxy.poolManagerLogic());
 
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
-      logicOwner.address,
+      investor.address,
       poolLogicPrivateProxy.address,
       (100e18).toString(),
     ]);
@@ -575,10 +587,6 @@ describe("PoolFactory", function () {
 
     // Can't remove asset with non zero balance
     // mock IERC20 balanceOf to return non zero
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
-    let iERC20 = new ethers.utils.Interface(IERC20.abi);
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1);
 
@@ -711,10 +719,6 @@ describe("PoolFactory", function () {
   });
 
   it("Should be able to approve", async () => {
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
@@ -1157,12 +1161,15 @@ describe("PoolFactory", function () {
     });
 
     it("should be able to get usd price", async function () {
+      // refresh timestamp of Chainlink price round data
+      await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+
       await expect(assetHandler.getUSDPrice(ZERO_ADDRESS)).to.be.revertedWith("Price aggregator not found");
 
-      // try with assetType = 1
-      await assetHandler.addAsset(ZERO_ADDRESS, 1, link_price_feed.address);
-      await expect(assetHandler.getUSDPrice(ZERO_ADDRESS)).to.be.revertedWith("Price not available");
-      await assetHandler.removeAsset(ZERO_ADDRESS);
+      // try with again with no aggregator
+      await assetHandler.addAsset(badtoken, 1, ZERO_ADDRESS);
+      await expect(assetHandler.getUSDPrice(badtoken)).to.be.revertedWith("Price aggregator not found");
+      await assetHandler.removeAsset(badtoken);
 
       // price get failed
       const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
@@ -1232,6 +1239,113 @@ describe("PoolFactory", function () {
 
       expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
     });
+  });
+
+  it("can withdraw staked Sushi LP token", async function () {
+    const withdrawalEvent = new Promise((resolve, reject) => {
+      poolLogicProxy.on(
+        "Withdrawal",
+        (
+          fundAddress,
+          investor,
+          valueWithdrawn,
+          fundTokensWithdrawn,
+          totalInvestorFundTokens,
+          fundValue,
+          totalSupply,
+          time,
+          event,
+        ) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress: fundAddress,
+            investor: investor,
+            valueWithdrawn: valueWithdrawn,
+            fundTokensWithdrawn: fundTokensWithdrawn,
+            totalInvestorFundTokens: totalInvestorFundTokens,
+            fundValue: fundValue,
+            totalSupply: totalSupply,
+            time: time,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
+    });
+
+    const withdrawStakedEvent = new Promise((resolve, reject) => {
+      sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
+        event.removeListener();
+
+        resolve({
+          fundAddress,
+          asset,
+          to,
+          withdrawAmount,
+          time,
+        });
+      });
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
+    });
+
+    // refresh timestamp of Chainlink price round data
+    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+
+    // enable Sushi LP token to pool
+    await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
+
+    // mock 20 sUSD in pool
+    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, (20e18).toString());
+
+    // mock 100 Sushi LP staked in MiniChefV2
+    const iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
+    let userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
+    const amountLPStaked = (100e18).toString();
+    const amountRewarded = (0).toString();
+    await sushiMiniChefV2.givenCalldataReturn(
+      userInfo,
+      abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
+    );
+
+    const totalSupply = await poolLogicProxy.totalSupply();
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
+
+    // Withdraw 10 tokens
+    const withdrawAmount = 10e18;
+    const investorFundBalance = await poolLogicProxy.balanceOf(investor.address);
+
+    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
+
+    const eventWithdrawal = await withdrawalEvent;
+    const eventWithdrawStaked = await withdrawStakedEvent;
+
+    const fundTokensWithdrawn = withdrawAmount;
+    const valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
+    const fractionWithdrawn = fundTokensWithdrawn / totalSupply;
+
+    expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
+    expect(eventWithdrawal.investor).to.equal(investor.address);
+    checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
+    expect(eventWithdrawal.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
+    expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
+    checkAlmostSame(eventWithdrawal.fundValue, (totalFundValue - valueWithdrawn).toString());
+    expect(eventWithdrawal.totalSupply).to.equal((totalSupply - fundTokensWithdrawn).toString());
+
+    expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
+    expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
+    expect(eventWithdrawStaked.to).to.equal(investor.address);
+    checkAlmostSame(eventWithdrawStaked.withdrawAmount, (amountLPStaked * fractionWithdrawn).toString());
+    expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
+
+    // TODO: add totalFundValue change checks after we implement balanceOf for staked LP tokens
   });
 
   it("should be able to upgrade/set implementation logic", async function () {

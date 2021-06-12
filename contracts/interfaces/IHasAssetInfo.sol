@@ -43,5 +43,7 @@ interface IHasAssetInfo {
 
   function getAssetPrice(address asset) external view returns (uint256);
 
+  function getAssetType(address asset) external view returns (uint8);
+
   function getMaximumSupportedAssetCount() external view returns (uint256);
 }
