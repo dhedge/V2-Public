@@ -38,10 +38,9 @@
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
 // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
-
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "./interfaces/IHasDaoInfo.sol";
@@ -55,13 +54,13 @@ import "./interfaces/IManaged.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
-contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
-  using SafeMath for uint256;
+contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
+  using SafeMathUpgradeable for uint256;
 
   event Deposit(
     address fundAddress,
@@ -182,7 +181,7 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
 
     uint256 totalSupplyBefore = totalSupply();
 
-    require(IERC20(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+    require(IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -231,12 +230,12 @@ contract PoolLogic is ERC20UpgradeSafe, ReentrancyGuardUpgradeSafe {
 
     for (uint256 i = 0; i < assetCount; i++) {
       address asset = _supportedAssets[i].asset;
-      uint256 totalAssetBalance = IERC20(asset).balanceOf(address(this));
+      uint256 totalAssetBalance = IERC20Upgradeable(asset).balanceOf(address(this));
       uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
-        IERC20(asset).transfer(msg.sender, portionOfAssetBalance);
+        IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
       }
       _withdrawProcessing(asset, msg.sender, portion);
     }

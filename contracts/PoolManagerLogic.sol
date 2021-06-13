@@ -46,18 +46,17 @@ import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
 import "./Managed.sol";
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 // SPDX-License-Identifier: MIT
-
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
-  using SafeMath for uint256;
-  using Address for address;
+  using SafeMathUpgradeable for uint256;
+  using AddressUpgradeable for address;
 
   event AssetAdded(address indexed fundAddress, address manager, address asset, bool isDeposit);
   event AssetRemoved(address fundAddress, address manager, address asset, bool isDeposit);

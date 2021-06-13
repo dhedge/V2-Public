@@ -33,16 +33,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "./ERC20Guard.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Sushi LP token asset guard
 /// @dev Asset type = 2
 contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   struct SushiPool {
     address lpToken;

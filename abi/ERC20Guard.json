@@ -380,7 +380,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "pool",
+        "name": "_poolManagerLogic",
         "type": "address"
       },
       {

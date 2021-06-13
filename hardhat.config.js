@@ -6,6 +6,7 @@ require('hardhat-gas-reporter');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-waffle');
 require('solidity-coverage');
+require('@openzeppelin/hardhat-upgrades');
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -44,7 +45,7 @@ module.exports = {
     },
   },
   ovm: {
-    solcVersion: '0.6.12',
+    solcVersion: '0.7.6',
     settings: {
       optimizer: {
         enabled: true,
@@ -53,7 +54,7 @@ module.exports = {
     },
   },
   solidity: {
-    version: '0.6.12',
+    version: '0.7.6',
     settings: {
       optimizer: {
         enabled: true,

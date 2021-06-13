@@ -32,12 +32,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
@@ -53,7 +52,7 @@ import "../interfaces/IHasSupportedAsset.sol";
  * @dev This will be used for sushiswap as well since Sushi uses the same interface.
  */
 contract UniswapV2RouterGuard is TxDataUtils, IGuard {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   event AddLiquidity(address fundAddress, address tokenA, address tokenB, address pair, uint256 time);
   event RemoveLiquidity(
