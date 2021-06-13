@@ -44,8 +44,6 @@ import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
 import "../interfaces/sushi/IMiniChefV2.sol";
 
 /// @title Transaction guard for Sushi's MiniChefV2 staking contract
@@ -56,7 +54,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
   event Unstake(address fundAddress, address asset, address stakingContract, uint256 amount, uint256 time);
   event Claim(address fundAddress, address stakingContract, uint256 time);
 
-  // address public miniChefV2; // Sushi MiniChefV2 deployed contract
+  // The staking contract rewards in dual tokens.
   address public rewardTokenA; // SUSHI token
   address public rewardTokenB; // WMATIC token
 
@@ -66,7 +64,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
   }
 
   /// @notice Transaction guard for Uniswap V2
-  /// @dev It supports TODO functionalities
+  /// @dev It supports deposit, withdraw, harvest, withdrawAndHarvest functionalities
   /// @param _poolManagerLogic the pool manager logic
   /// @param to The contract to send transaction to
   /// @param data The transaction data
@@ -102,7 +100,6 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
     } else if (method == bytes4(keccak256("withdraw(uint256,uint256,address)"))) {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       address poolLogic = poolManagerLogic.poolLogic();
-
       uint256 poolId = uint256(getInput(data, 0)); // The index of the pool in MiniChefV2.
       uint256 amount = uint256(getInput(data, 1)); // Amount LP token amount to unstake.
       address receiver = convert32toAddress(getInput(data, 2)); // The receiver of `amount` staked LP tokens.
@@ -117,7 +114,6 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
     } else if (method == bytes4(keccak256("harvest(uint256,address)"))) {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       address poolLogic = poolManagerLogic.poolLogic();
-
       address receiver = convert32toAddress(getInput(data, 1)); // The receiver of the SUSHI rewards.
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable SUSHI token");
@@ -130,7 +126,6 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
     } else if (method == bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)"))) {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       address poolLogic = poolManagerLogic.poolLogic();
-
       uint256 poolId = uint256(getInput(data, 0)); // The index of the pool in MiniChefV2.
       uint256 amount = uint256(getInput(data, 1)); // Amount LP token amount to unstake.
       address receiver = convert32toAddress(getInput(data, 2)); // The receiver of `amount` staked LP tokens.
