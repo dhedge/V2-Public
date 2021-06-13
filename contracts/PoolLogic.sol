@@ -38,9 +38,10 @@
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
 // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
-// 5. Stake: Stake tokens into a third party contract (eg. Sushi staking)
-// 6. Unstake: Unstake tokens from third party contract (eg. Sushi staking)
-// 7. Claim: Claim tokens from a third party contract (eg. Sushi rewards)
+// 5. Stake: Stake tokens into a third party contract (eg. Sushi yield farming)
+// 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
+// 7. Claim: Claim rewards tokens from a third party contract (eg. SUSHI & MATIC rewards)
+// 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
 
 // SPDX-License-Identifier: MIT
 
