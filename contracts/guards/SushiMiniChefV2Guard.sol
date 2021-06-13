@@ -139,7 +139,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       emit Unstake(poolLogic, lpToken, to, amount, block.timestamp);
       emit Claim(poolLogic, to, block.timestamp);
 
-      txType = 6; // `Unstake` type
+      txType = 8; // `UnstakeAndClaim` type
     }
   }
 }
