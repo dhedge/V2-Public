@@ -37,20 +37,29 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./IGuard.sol";
-import "../utils/TxDataUtils.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
+import "../IGuard.sol";
+import "../IAssetGuard.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/IManaged.sol";
 
-contract ERC20Guard is TxDataUtils, IGuard {
+/// @title Generic ERC20 asset guard
+/// @dev Asset type = 0
+/// @dev A generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
+contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   using SafeMathUpgradeable for uint256;
 
   event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
 
-  // transaction guard for approving assets
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  /// @notice Transaction guard for approving assets
+  /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @param pool Pool address
+  /// @param data Transaction call data attempt by manager
+  /// @return txType transaction type described in PoolLogic
+  function txGuard(address pool, bytes calldata data)
     external
     override
     returns (
@@ -80,5 +89,34 @@ contract ERC20Guard is TxDataUtils, IGuard {
       txType = 1; // 'Approve' type
       return txType;
     }
+  }
+
+  /// @notice Creates transaction data for withdrawing staked tokens
+  /// @dev The same interface can be used for other types of stakeable tokens
+  /// @param pool Pool address
+  /// @param asset Staked asset
+  /// @param withdrawPortion The fraction of total staked asset to withdraw
+  /// @param to The investor address to withdraw to
+  /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
+  function getWithdrawStakedTx(
+    address pool,
+    address asset,
+    uint256 withdrawPortion,
+    address to
+  ) external virtual override returns (address stakingContract, bytes memory txData) {
+    // The base ERC20 guard has no externally staked tokens to withdraw
+    pool;
+    asset;
+    withdrawPortion;
+    to;
+    stakingContract;
+    txData;
+  }
+
+  /// @notice Returns the balance of the managed asset
+  /// @dev May include any external balance in staking contracts
+  function getBalance(address pool, address asset) external view virtual override returns (uint256 balance) {
+    // The base ERC20 guard has no externally staked tokens
+    balance = IERC20(asset).balanceOf(pool);
   }
 }

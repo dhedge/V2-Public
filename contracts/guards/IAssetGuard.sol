@@ -33,12 +33,16 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 
-interface IGuard {
-  event Exchange(address fundAddress, address sourceAsset, uint256 sourceAmount, address dstAsset, uint256 time);
+interface IAssetGuard {
+  function getWithdrawStakedTx(
+    address pool,
+    address asset,
+    uint256 withdrawPortion,
+    address to
+  ) external returns (address, bytes memory);
 
-  function txGuard(address poolManagerLogic, bytes calldata data) external returns (uint8 txType);
+  function getBalance(address pool, address asset) external view returns (uint256 balance);
 }

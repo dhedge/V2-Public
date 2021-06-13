@@ -1,3 +1,8 @@
+// For dHEDGE Asset Price Feeds
+// Asset types:
+// 0 = Chainlink direct USD price feed with 8 decimals
+// 1 = Synthetix synth with Chainlink direct USD price feed
+// 2 = Sushi LP tokens
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
@@ -21,7 +26,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   uint256 public chainlinkTimeout; // Chainlink oracle timeout period
   address public poolFactory;
 
-  // Asset Price feeds
+  // Asset Mappings
   mapping(address => uint8) public override assetTypes; // for asset types refer to header comment
   mapping(address => address) public override priceAggregators;
 
@@ -50,27 +55,24 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
    */
   function getUSDPrice(address asset) public view override returns (uint256 price) {
     address aggregator = priceAggregators[asset];
-    uint8 assetType = assetTypes[asset];
 
     require(aggregator != address(0), "Price aggregator not found");
 
-    if (assetType == 0) {
-      try IAggregatorV3Interface(aggregator).latestRoundData() returns (
-        uint80,
-        int256 _price,
-        uint256,
-        uint256 updatedAt,
-        uint80
-      ) {
-        // check chainlink price updated within 25 hours
-        require(updatedAt.add(chainlinkTimeout) >= block.timestamp, "Chainlink price expired");
+    try IAggregatorV3Interface(aggregator).latestRoundData() returns (
+      uint80,
+      int256 _price,
+      uint256,
+      uint256 updatedAt,
+      uint80
+    ) {
+      // check chainlink price updated within 25 hours
+      require(updatedAt.add(chainlinkTimeout) >= block.timestamp, "Chainlink price expired");
 
-        if (_price > 0) {
-          price = uint256(_price).mul(10**10); // convert Chainlink decimals 8 -> 18
-        }
-      } catch {
-        revert("Price get failed");
+      if (_price > 0) {
+        price = uint256(_price).mul(10**10); // convert Chainlink decimals 8 -> 18
       }
+    } catch {
+      revert("Price get failed");
     }
 
     require(price > 0, "Price not available");
