@@ -1253,7 +1253,7 @@ describe("PoolFactory", function () {
   });
 
   describe("Staking", function () {
-    it("manager can stake Sushi LP token", async function () {
+    it("manager can Stake Sushi LP token", async function () {
       const stakeEvent = new Promise((resolve, reject) => {
         sushiMiniChefV2Guard.on("Stake", (fundAddress, asset, stakingContract, amount, time, event) => {
           event.removeListener();
@@ -1371,7 +1371,63 @@ describe("PoolFactory", function () {
       expect(event.time).to.equal((await currentBlockTimestamp()).toString());
     });
 
-    it("investor can withdraw staked Sushi LP token", async function () {
+    it("manager can Withdraw And Harvest staked Sushi LP token", async function () {
+      const unstakeEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            asset,
+            stakingContract,
+            amount,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      const claimEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            stakingContract,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      const withdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        poolLogicProxy.address,
+      ]);
+
+      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi);
+
+      const eventUnstake = await unstakeEvent;
+      expect(eventUnstake.fundAddress).to.equal(poolLogicProxy.address);
+      expect(eventUnstake.asset).to.equal(sushiLPLinkWeth);
+      expect(eventUnstake.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(eventUnstake.amount).to.equal(FIVE_TOKENS);
+      expect(eventUnstake.time).to.equal((await currentBlockTimestamp()).toString());
+
+      const eventClaim = await claimEvent;
+      expect(eventClaim.fundAddress).to.equal(poolLogicProxy.address);
+      expect(eventClaim.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(eventClaim.time).to.equal((await currentBlockTimestamp()).toString());
+    });
+
+    it("investor can Withdraw staked Sushi LP token", async function () {
       const withdrawalEvent = new Promise((resolve, reject) => {
         poolLogicProxy.on(
           "Withdrawal",
