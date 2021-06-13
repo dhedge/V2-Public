@@ -130,7 +130,7 @@ describe("PoolFactory", function () {
     await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
     await slinkProxy.givenCalldataReturnAddress(targetABI, slinkAsset.address);
 
-    IERC20 = await hre.artifacts.readArtifact("ERC20UpgradeSafe");
+    IERC20 = await hre.artifacts.readArtifact("ERC20Upgradeable");
     iERC20 = new ethers.utils.Interface(IERC20.abi);
     let decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");

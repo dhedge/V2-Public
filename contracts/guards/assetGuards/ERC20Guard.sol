@@ -56,10 +56,10 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
 
   /// @notice Transaction guard for approving assets
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param pool Pool address
+  /// @param _poolManagerLogic Pool address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
-  function txGuard(address pool, bytes calldata data)
+  function txGuard(address _poolManagerLogic, bytes calldata data)
     external
     override
     returns (
