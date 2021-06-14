@@ -103,7 +103,7 @@ async function main () {
   await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   console.log("PoolFactory set dao ", dao.address);
 
-  let tag = "3";
+  let tag = await getTag();
   let versions = require("../publish/mumbai/versions.json");
   versions[tag] = {
     "tag": tag,
