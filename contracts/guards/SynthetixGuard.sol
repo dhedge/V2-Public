@@ -10,10 +10,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// MIT License
-// ===========
-//
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +29,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 
@@ -48,6 +45,7 @@ import "../interfaces/synthetix/ISynthetix.sol";
 import "../interfaces/synthetix/IAddressResolver.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 
+/// @title Transaction guard for Synthetix's Exchanger contract
 contract SynthetixGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
@@ -59,8 +57,16 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     addressResolver = _addressResolver;
   }
 
-  // transaction guard for Synthetix synth exchanger
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  /// @notice Transaction guard for Synthetix Exchanger
+  /// @dev It supports exchangeWithTracking functionality
+  /// @param _poolManagerLogic the pool manager logic
+  /// @param data the transaction data
+  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  function txGuard(
+    address _poolManagerLogic,
+    address, // to
+    bytes calldata data
+  )
     external
     override
     returns (

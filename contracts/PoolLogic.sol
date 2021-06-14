@@ -11,10 +11,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// MIT License
-// ===========
-//
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +35,12 @@
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
 // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
-// SPDX-License-Identifier: MIT
+// 5. Stake: Stake tokens into a third party contract (eg. Sushi yield farming)
+// 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
+// 7. Claim: Claim rewards tokens from a third party contract (eg. SUSHI & MATIC rewards)
+// 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
+
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
@@ -298,7 +300,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
-    uint8 txType = IGuard(guard).txGuard(poolManagerLogic, data);
+    uint8 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
     (bool success, ) = to.call(data);

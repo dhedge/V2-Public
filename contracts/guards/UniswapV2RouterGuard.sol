@@ -10,10 +10,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// MIT License
-// ===========
-//
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +29,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 
@@ -45,12 +42,9 @@ import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
-import "../interfaces/IHasSupportedAsset.sol";
 
-/**
- * @notice Transaction guard for UniswapV2Router
- * @dev This will be used for sushiswap as well since Sushi uses the same interface.
- */
+/// @notice Transaction guard for UniswapV2Router
+/// @dev This will be used for sushiswap as well since Sushi uses the same interface.
 contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
@@ -70,14 +64,16 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     factory = _factory;
   }
 
-  /**
-   * @notice Transaction guard for Uniswap V2
-   * @dev It supports exchange, addLiquidity and removeLiquidity functionalities
-   * @param _poolManagerLogic the pool manager logic
-   * @param data the transaction data
-   * @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
-   */
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  /// @notice Transaction guard for Uniswap V2
+  /// @dev It supports exchange, addLiquidity and removeLiquidity functionalities
+  /// @param _poolManagerLogic the pool manager logic
+  /// @param data the transaction data
+  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
+  function txGuard(
+    address _poolManagerLogic,
+    address, // to
+    bytes calldata data
+  )
     external
     override
     returns (

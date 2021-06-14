@@ -19,7 +19,7 @@ let poolFactory,
   poolManagerLogicProxy,
   fundAddress;
 let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
-let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard; // contract guards
+let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard, sushiMiniChefV2Guard; // contract guards
 let erc20Guard, sushiLPAssetGuard; // asset guards
 let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
 let susd, seth, slink;
@@ -62,6 +62,8 @@ describe("PoolFactory", function () {
     eth_price_feed = await MockContract.deploy();
     link_price_feed = await MockContract.deploy();
     uniswapV2Factory = await MockContract.deploy();
+    sushiToken = await MockContract.deploy();
+    wmaticToken = await MockContract.deploy();
     susd = susdProxy.address;
     seth = sethProxy.address;
     slink = slinkProxy.address;
@@ -74,10 +76,6 @@ describe("PoolFactory", function () {
     const iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi);
     let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
-
-    // mock ISushiMiniChefV2
-    IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
-    iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
 
     // mock Sushi LINK-WETH LP
     const IUniswapV2Pair = await hre.artifacts.readArtifact("IUniswapV2Pair");
@@ -137,6 +135,8 @@ describe("PoolFactory", function () {
     await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
     await slinkProxy.givenCalldataReturnUint(decimalsABI, "18");
     await sushiLPLinkWethAsset.givenCalldataReturnUint(decimalsABI, "18");
+    await sushiToken.givenCalldataReturnUint(decimalsABI, "18");
+    await wmaticToken.givenCalldataReturnUint(decimalsABI, "18");
 
     // Aggregators
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
@@ -191,8 +191,10 @@ describe("PoolFactory", function () {
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
+    const assetSushi = { asset: sushiToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
+    const assetWmatic = { asset: wmaticToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
     const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushiLPLinkWeth];
+    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic, assetSushiLPLinkWeth];
 
     // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     // await assetHandler.deployed();
@@ -218,6 +220,10 @@ describe("PoolFactory", function () {
     uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
     uniswapV3SwapGuard.deployed();
 
+    const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken.address, wmaticToken.address);
+    sushiMiniChefV2Guard.deployed();
+
     // Deploy asset guards
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
@@ -234,6 +240,7 @@ describe("PoolFactory", function () {
     await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
     await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await poolFactory.connect(dao).setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
+    await poolFactory.connect(dao).setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
   });
 
   it("Should be able to createFund", async function () {
@@ -370,6 +377,19 @@ describe("PoolFactory", function () {
 
     //Other assets are not supported
     expect(await poolManagerLogicProxy.isSupportedAsset(slink)).to.be.false;
+
+    // mock IMiniChefV2
+    IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
+    iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
+    const userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
+    const amountLPStaked = "0";
+    const amountRewarded = "0";
+    await sushiMiniChefV2.givenCalldataReturn(
+      userInfo,
+      abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
+    );
+    const lpToken = iMiniChefV2.encodeFunctionData("lpToken", [sushiLPLinkWethPoolId]);
+    await sushiMiniChefV2.givenCalldataReturn(lpToken, abiCoder.encode(["address"], [sushiLPLinkWeth]));
   });
 
   it("should be able to deposit", async function () {
@@ -468,7 +488,7 @@ describe("PoolFactory", function () {
       }, 60000);
     });
 
-    // mock IERC20 balance
+    // mock sUSD balance
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
@@ -1245,122 +1265,384 @@ describe("PoolFactory", function () {
     });
   });
 
-  it("can withdraw staked Sushi LP token", async function () {
-    const withdrawalEvent = new Promise((resolve, reject) => {
-      poolLogicProxy.on(
-        "Withdrawal",
-        (
-          fundAddress,
-          investor,
-          valueWithdrawn,
-          fundTokensWithdrawn,
-          totalInvestorFundTokens,
-          fundValue,
-          totalSupply,
-          time,
-          event,
-        ) => {
+  describe("Staking", function () {
+    it("manager can Stake Sushi LP token", async function () {
+      const stakeEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Stake", (fundAddress, asset, stakingContract, amount, time, event) => {
           event.removeListener();
 
           resolve({
-            fundAddress: fundAddress,
-            investor: investor,
-            valueWithdrawn: valueWithdrawn,
-            fundTokensWithdrawn: fundTokensWithdrawn,
-            totalInvestorFundTokens: totalInvestorFundTokens,
-            fundValue: fundValue,
-            totalSupply: totalSupply,
-            time: time,
+            fundAddress,
+            asset,
+            stakingContract,
+            amount,
+            time,
           });
-        },
-      );
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
-    });
-
-    const withdrawStakedEvent = new Promise((resolve, reject) => {
-      sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
-        event.removeListener();
-
-        resolve({
-          fundAddress,
-          asset,
-          to,
-          withdrawAmount,
-          time,
         });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
       });
 
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
+      // refresh timestamp of Chainlink price round data
+      await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+
+      const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        poolLogicProxy.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
+      ).to.be.revertedWith("unsupported lp asset");
+
+      // enable Sushi LP token to pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
+
+      // mock 5 Sushi LP tokens in pool
+      let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+      await sushiLPLinkWethAsset.givenCalldataReturnUint(balanceOfABI, FIVE_TOKENS);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      const sushiLPPrice = await assetHandler.getUSDPrice(sushiLPLinkWeth);
+      expect(totalFundValueBefore).to.gte(sushiLPPrice.mul(5)); // should at least account for the staked tokens
+
+      // attempt to deposit with manager as recipient
+      const badDepositAbi = iMiniChefV2.encodeFunctionData("deposit", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badDepositAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi);
+
+      const event = await stakeEvent;
+      expect(event.fundAddress).to.equal(poolLogicProxy.address);
+      expect(event.asset).to.equal(sushiLPLinkWeth);
+      expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(event.amount).to.equal(FIVE_TOKENS);
+      expect(event.time).to.equal((await currentBlockTimestamp()).toString());
     });
 
-    // refresh timestamp of Chainlink price round data
-    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+    it("manager can Unstake Sushi LP token", async function () {
+      const unstakeEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
+          event.removeListener();
 
-    // enable Sushi LP token to pool
-    await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
+          resolve({
+            fundAddress,
+            asset,
+            stakingContract,
+            amount,
+            time,
+          });
+        });
 
-    // remove manager fee so that performance fee minting doesn't get in the way
-    await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
 
-    // mock 20 sUSD in pool
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
-    await susdProxy.givenCalldataReturnUint(balanceOfABI, TWENTY_TOKENS);
+      // attempt to withdraw with manager as recipient
+      const badWithdrawAbi = iMiniChefV2.encodeFunctionData("withdraw", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
 
-    // mock 5 Sushi LP tokens in pool
-    await sushiLPLinkWethAsset.givenCalldataReturnUint(balanceOfABI, FIVE_TOKENS);
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badWithdrawAbi),
+      ).to.be.revertedWith("recipient is not pool");
 
-    // mock 100 Sushi LP tokens staked in MiniChefV2
-    const iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
-    let userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
-    const amountLPStaked = new ethers.BigNumber.from(ONE_HUNDRED_TOKENS);
-    const amountRewarded = (0).toString();
-    await sushiMiniChefV2.givenCalldataReturn(
-      userInfo,
-      abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
-    );
+      const withdrawAbi = iMiniChefV2.encodeFunctionData("withdraw", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        poolLogicProxy.address,
+      ]);
 
-    const totalSupply = await poolLogicProxy.totalSupply();
-    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
-    const sushiLPPrice = await assetHandler.getUSDPrice(sushiLPLinkWeth);
-    const fundUsdValue = new ethers.BigNumber.from(TWENTY_TOKENS);
-    const fundSushiLPValue = sushiLPPrice.mul(5);
-    const stakedSushiLPValue = sushiLPPrice.mul(100);
-    const expectedFundValue = fundUsdValue.add(fundSushiLPValue).add(stakedSushiLPValue);
-    expect(totalFundValue).to.equal(expectedFundValue);
+      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAbi);
 
-    // Withdraw 10 tokens
-    const withdrawAmount = ethers.BigNumber.from(TEN_TOKENS);
-    const investorFundBalance = await poolLogicProxy.balanceOf(investor.address);
+      const event = await unstakeEvent;
+      expect(event.fundAddress).to.equal(poolLogicProxy.address);
+      expect(event.asset).to.equal(sushiLPLinkWeth);
+      expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(event.amount).to.equal(FIVE_TOKENS);
+      expect(event.time).to.equal((await currentBlockTimestamp()).toString());
+    });
 
-    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
-    await poolLogicProxy.connect(investor).withdraw(withdrawAmount);
+    it("manager can Harvest staked Sushi LP token", async function () {
+      const claimEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+          event.removeListener();
 
-    const eventWithdrawal = await withdrawalEvent;
-    const eventWithdrawStaked = await withdrawStakedEvent;
+          resolve({
+            fundAddress,
+            stakingContract,
+            time,
+          });
+        });
 
-    const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
-    const fractionWithdrawn = withdrawAmount / totalSupply;
-    const expectedWithdrawAmount = amountLPStaked * fractionWithdrawn;
-    const expectedFundValueAfter = totalFundValue.sub(valueWithdrawn);
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
 
-    expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
-    expect(eventWithdrawal.investor).to.equal(investor.address);
-    checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
-    expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
-    expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
-    checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
-    expect(eventWithdrawal.totalSupply).to.equal((totalSupply - withdrawAmount).toString());
+      const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
 
-    expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
-    expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
-    expect(eventWithdrawStaked.to).to.equal(investor.address);
-    checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
-    expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
+      ).to.be.revertedWith("enable reward token");
+
+      // enable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
+      ).to.be.revertedWith("enable reward token");
+
+      // enable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
+
+      // attempt to harvest with manager as recipient
+      const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badHarvestAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi);
+
+      const event = await claimEvent;
+      expect(event.fundAddress).to.equal(poolLogicProxy.address);
+      expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(event.time).to.equal((await currentBlockTimestamp()).toString());
+    });
+
+    it("manager can Withdraw And Harvest staked Sushi LP token", async function () {
+      const unstakeEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            asset,
+            stakingContract,
+            amount,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      const claimEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            stakingContract,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      // manager attempts to withdraw to themselves
+      let badWithdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badWithdrawAndHarvestAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      // manager attempts to withdraw unknown LP token
+      badWithdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
+        "69",
+        FIVE_TOKENS,
+        poolLogicProxy.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badWithdrawAndHarvestAbi),
+      ).to.be.revertedWith("unsupported lp asset");
+
+      const withdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        poolLogicProxy.address,
+      ]);
+
+      // Disable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [[sushiToken.address, false]]);
+
+      // Disable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [[wmaticToken.address, false]]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
+      ).to.be.revertedWith("enable reward token");
+
+      // enable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
+      ).to.be.revertedWith("enable reward token");
+
+      // enable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
+
+      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi);
+
+      const eventUnstake = await unstakeEvent;
+      expect(eventUnstake.fundAddress).to.equal(poolLogicProxy.address);
+      expect(eventUnstake.asset).to.equal(sushiLPLinkWeth);
+      expect(eventUnstake.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(eventUnstake.amount).to.equal(FIVE_TOKENS);
+      expect(eventUnstake.time).to.equal((await currentBlockTimestamp()).toString());
+
+      const eventClaim = await claimEvent;
+      expect(eventClaim.fundAddress).to.equal(poolLogicProxy.address);
+      expect(eventClaim.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(eventClaim.time).to.equal((await currentBlockTimestamp()).toString());
+    });
+
+    it("investor can Withdraw staked Sushi LP token", async function () {
+      const withdrawalEvent = new Promise((resolve, reject) => {
+        poolLogicProxy.on(
+          "Withdrawal",
+          (
+            fundAddress,
+            investor,
+            valueWithdrawn,
+            fundTokensWithdrawn,
+            totalInvestorFundTokens,
+            fundValue,
+            totalSupply,
+            time,
+            event,
+          ) => {
+            event.removeListener();
+
+            resolve({
+              fundAddress: fundAddress,
+              investor: investor,
+              valueWithdrawn: valueWithdrawn,
+              fundTokensWithdrawn: fundTokensWithdrawn,
+              totalInvestorFundTokens: totalInvestorFundTokens,
+              fundValue: fundValue,
+              totalSupply: totalSupply,
+              time: time,
+            });
+          },
+        );
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      const withdrawStakedEvent = new Promise((resolve, reject) => {
+        sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            asset,
+            to,
+            withdrawAmount,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      // refresh timestamp of Chainlink price round data
+      await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+
+      // enable Sushi LP token to pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
+
+      // remove manager fee so that performance fee minting doesn't get in the way
+      await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
+
+      // mock 20 sUSD in pool
+      let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+      await susdProxy.givenCalldataReturnUint(balanceOfABI, TWENTY_TOKENS);
+
+      // mock 5 Sushi LP tokens in pool
+      await sushiLPLinkWethAsset.givenCalldataReturnUint(balanceOfABI, FIVE_TOKENS);
+
+      // mock 100 Sushi LP tokens staked in MiniChefV2
+      let userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
+      const amountLPStaked = new ethers.BigNumber.from(ONE_HUNDRED_TOKENS);
+      const amountRewarded = (0).toString();
+      await sushiMiniChefV2.givenCalldataReturn(
+        userInfo,
+        abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
+      );
+
+      const totalSupply = await poolLogicProxy.totalSupply();
+      const totalFundValue = await poolManagerLogicProxy.totalFundValue();
+      const sushiLPPrice = await assetHandler.getUSDPrice(sushiLPLinkWeth);
+      const fundUsdValue = new ethers.BigNumber.from(TWENTY_TOKENS);
+      const fundSushiLPValue = sushiLPPrice.mul(5);
+      const stakedSushiLPValue = sushiLPPrice.mul(100);
+      const expectedFundValue = fundUsdValue.add(fundSushiLPValue).add(stakedSushiLPValue);
+      expect(totalFundValue).to.equal(expectedFundValue);
+
+      // Withdraw 10 tokens
+      const withdrawAmount = ethers.BigNumber.from(TEN_TOKENS);
+      const investorFundBalance = await poolLogicProxy.balanceOf(investor.address);
+
+      ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
+      await poolLogicProxy.connect(investor).withdraw(withdrawAmount);
+
+      const eventWithdrawal = await withdrawalEvent;
+      const eventWithdrawStaked = await withdrawStakedEvent;
+
+      const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
+      const fractionWithdrawn = withdrawAmount / totalSupply;
+      const expectedWithdrawAmount = amountLPStaked * fractionWithdrawn;
+      const expectedFundValueAfter = totalFundValue.sub(valueWithdrawn);
+
+      expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
+      expect(eventWithdrawal.investor).to.equal(investor.address);
+      checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
+      expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
+      expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
+      checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
+      expect(eventWithdrawal.totalSupply).to.equal((totalSupply - withdrawAmount).toString());
+
+      expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
+      expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
+      expect(eventWithdrawStaked.to).to.equal(investor.address);
+      checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
+      expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
+    });
   });
 
   it("should be able to upgrade/set implementation logic", async function () {

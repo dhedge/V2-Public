@@ -11,10 +11,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// MIT License
-// ===========
-//
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,5 +37,9 @@ pragma solidity 0.7.6;
 interface IGuard {
   event Exchange(address fundAddress, address sourceAsset, uint256 sourceAmount, address dstAsset, uint256 time);
 
-  function txGuard(address poolManagerLogic, bytes calldata data) external returns (uint8 txType);
+  function txGuard(
+    address poolManagerLogic,
+    address to,
+    bytes calldata data
+  ) external returns (uint8 txType);
 }

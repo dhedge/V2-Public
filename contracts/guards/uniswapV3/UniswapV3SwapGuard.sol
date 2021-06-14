@@ -10,10 +10,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// MIT License
-// ===========
-//
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +29,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 
@@ -51,7 +48,11 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
   // transaction guard for Uniswap Swap Router
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  function txGuard(
+    address _poolManagerLogic,
+    address, // to
+    bytes calldata data
+  )
     external
     override
     returns (

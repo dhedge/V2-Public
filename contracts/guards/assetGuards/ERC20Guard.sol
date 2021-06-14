@@ -10,10 +10,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// MIT License
-// ===========
-//
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +29,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 
@@ -59,7 +56,11 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   /// @param _poolManagerLogic Pool address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
-  function txGuard(address _poolManagerLogic, bytes calldata data)
+  function txGuard(
+    address _poolManagerLogic,
+    address, // to
+    bytes calldata data
+  )
     external
     override
     returns (
@@ -92,25 +93,16 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   }
 
   /// @notice Creates transaction data for withdrawing staked tokens
-  /// @dev The same interface can be used for other types of stakeable tokens
-  /// @param pool Pool address
-  /// @param asset Staked asset
-  /// @param withdrawPortion The fraction of total staked asset to withdraw
-  /// @param to The investor address to withdraw to
+  /// @dev Withdrawal processing is not applicable for this guard
   /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
   function getWithdrawStakedTx(
-    address pool,
-    address asset,
-    uint256 withdrawPortion,
-    address to
+    address, // pool
+    address, // asset
+    uint256, // withdrawPortion
+    address // to
   ) external virtual override returns (address stakingContract, bytes memory txData) {
     // The base ERC20 guard has no externally staked tokens to withdraw
-    pool;
-    asset;
-    withdrawPortion;
-    to;
-    stakingContract;
-    txData;
+    return (stakingContract, txData);
   }
 
   /// @notice Returns the balance of the managed asset
