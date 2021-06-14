@@ -67,13 +67,11 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     factory = _factory;
   }
 
-  /**
-   * @notice Transaction guard for Uniswap V2
-   * @dev It supports exchange, addLiquidity and removeLiquidity functionalities
-   * @param _poolManagerLogic the pool manager logic
-   * @param data the transaction data
-   * @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
-   */
+  /// @notice Transaction guard for Uniswap V2
+  /// @dev It supports exchange, addLiquidity and removeLiquidity functionalities
+  /// @param _poolManagerLogic the pool manager logic
+  /// @param data the transaction data
+  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
   function txGuard(
     address _poolManagerLogic,
     address, // to

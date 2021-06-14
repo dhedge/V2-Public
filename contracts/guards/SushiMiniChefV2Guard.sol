@@ -68,7 +68,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
   /// @param _poolManagerLogic the pool manager logic
   /// @param to The contract to send transaction to
   /// @param data The transaction data
-  /// @return txType the transaction type of a given transaction data. 5 for `Stake` type, 6 for `Unstake`, 7 for `Claim`
+  /// @return txType the transaction type of a given transaction data. 5 for `Stake` type, 6 for `Unstake`, 7 for `Claim`, 8 for `UnstakeAndClaim`
   function txGuard(
     address _poolManagerLogic,
     address to,

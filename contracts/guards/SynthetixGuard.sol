@@ -48,6 +48,7 @@ import "../interfaces/synthetix/ISynthetix.sol";
 import "../interfaces/synthetix/IAddressResolver.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 
+/// @title Transaction guard for Synthetix's Exchanger contract
 contract SynthetixGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
@@ -59,7 +60,11 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     addressResolver = _addressResolver;
   }
 
-  // transaction guard for Synthetix synth exchanger
+  /// @notice Transaction guard for Synthetix Exchanger
+  /// @dev It supports exchangeWithTracking functionality
+  /// @param _poolManagerLogic the pool manager logic
+  /// @param data the transaction data
+  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
   function txGuard(
     address _poolManagerLogic,
     address, // to
