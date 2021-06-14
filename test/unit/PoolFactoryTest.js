@@ -1275,6 +1275,16 @@ describe("PoolFactory", function () {
       // refresh timestamp of Chainlink price round data
       await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
+      const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        poolLogicProxy.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
+      ).to.be.revertedWith("unsupported lp asset");
+
       // enable Sushi LP token to pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
 
@@ -1287,11 +1297,16 @@ describe("PoolFactory", function () {
       const sushiLPPrice = await assetHandler.getUSDPrice(sushiLPLinkWeth);
       expect(totalFundValueBefore).to.gte(sushiLPPrice.mul(5)); // should at least account for the staked tokens
 
-      const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
+      // attempt to deposit with manager as recipient
+      const badDepositAbi = iMiniChefV2.encodeFunctionData("deposit", [
         sushiLPLinkWethPoolId,
         FIVE_TOKENS,
-        poolLogicProxy.address,
+        manager.address,
       ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badDepositAbi),
+      ).to.be.revertedWith("recipient is not pool");
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi);
 
@@ -1321,6 +1336,17 @@ describe("PoolFactory", function () {
           reject(new Error("timeout"));
         }, 60000);
       });
+
+      // attempt to withdraw with manager as recipient
+      const badWithdrawAbi = iMiniChefV2.encodeFunctionData("withdraw", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badWithdrawAbi),
+      ).to.be.revertedWith("recipient is not pool");
 
       const withdrawAbi = iMiniChefV2.encodeFunctionData("withdraw", [
         sushiLPLinkWethPoolId,
@@ -1355,13 +1381,32 @@ describe("PoolFactory", function () {
         }, 60000);
       });
 
+      const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
+      ).to.be.revertedWith("enable reward token");
+
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
+      ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
 
-      const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
+      // attempt to harvest with manager as recipient
+      const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badHarvestAbi),
+      ).to.be.revertedWith("recipient is not pool");
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi);
 
@@ -1406,11 +1451,53 @@ describe("PoolFactory", function () {
         }, 60000);
       });
 
+      // manager attempts to withdraw to themselves
+      let badWithdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badWithdrawAndHarvestAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      // manager attempts to withdraw unknown LP token
+      badWithdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
+        "69",
+        FIVE_TOKENS,
+        poolLogicProxy.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badWithdrawAndHarvestAbi),
+      ).to.be.revertedWith("unsupported lp asset");
+
       const withdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
         sushiLPLinkWethPoolId,
         FIVE_TOKENS,
         poolLogicProxy.address,
       ]);
+
+      // Disable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [[sushiToken.address, false]]);
+
+      // Disable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [[wmaticToken.address, false]]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
+      ).to.be.revertedWith("enable reward token");
+
+      // enable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
+      ).to.be.revertedWith("enable reward token");
+
+      // enable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi);
 

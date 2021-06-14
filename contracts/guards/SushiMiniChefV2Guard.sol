@@ -116,8 +116,8 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       address poolLogic = poolManagerLogic.poolLogic();
       address receiver = convert32toAddress(getInput(data, 1)); // The receiver of the SUSHI rewards.
 
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable SUSHI token");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable WMATIC token");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable reward token");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable reward token");
       require(poolLogic == receiver, "recipient is not pool");
 
       emit Claim(poolLogic, to, block.timestamp);
@@ -133,8 +133,8 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
       require(poolLogic == receiver, "recipient is not pool");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "add SUSHI token to pool");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "add WMATIC token to pool");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable reward token");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable reward token");
 
       emit Unstake(poolLogic, lpToken, to, amount, block.timestamp);
       emit Claim(poolLogic, to, block.timestamp);
