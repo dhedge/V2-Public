@@ -8,6 +8,7 @@ const KOVAN_ADDRESS_RESOLVER = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
 const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
 
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
+const sushiswapFactory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 
 // polygon mainnet
 // const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
@@ -32,8 +33,8 @@ async function main () {
   const ethers = hre.ethers
   const artifacts = hre.artifacts
 
-  let network = await l2ethers.provider.getNetwork()
-  console.log('network:', await ethers.provider.getNetwork())
+  let network = await ethers.provider.getNetwork()
+  console.log('network:', network)
 
   const signer = (await ethers.getSigners())[0]
 
@@ -57,32 +58,21 @@ async function main () {
   const tWETH = await ethers.getContractAt(ITestWETH.abi, versions.TestWETH)
   console.log("TestWETH at", tWETH.address);
 
+  const IPoolLogic = await artifacts.readArtifact("PoolLogic");
+  const poolLogic = await ethers.getContractAt(IPoolLogic.abi, versions.PoolLogic)
+  console.log("PoolLogic at", tWETH.address);
+
+  const IPoolManagerLogic = await artifacts.readArtifact("PoolManagerLogic");
+  const poolManagerLogic = await ethers.getContractAt(IPoolManagerLogic.abi, versions.PoolManagerLogic)
+  console.log("PoolManagerLogic at", tWETH.address);
+
   const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
-  const assetHandlerLogic = await AssetHandlerLogic.deploy();
-  console.log("AssetHandler deployed at", assetHandlerLogic.address);
 
-  const PoolLogic = await ethers.getContractFactory("PoolLogic");
-  const poolLogic = await PoolLogic.deploy();
-  console.log("PoolLogic deployed at", poolLogic.address);
-
-  const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-  const poolManagerLogic = await PoolManagerLogic.deploy();
-  console.log("PoolManagerLogic deployed at", poolManagerLogic.address)
-
-  const IProxyAdmin = await artifacts.readArtifact("ProxyAdmin");
-  const proxyAdmin = await ethers.getContractAt(IProxyAdmin.abi, versions.ProxyAdmin);
-  console.log("ProxyAdmin at", proxyAdmin.address);
-
-  // Deploy AssetHandlerProxy
-  const AssetHandlerProxy = await ethers.getContractFactory('OZProxy');
-  const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
-  await assetHandlerProxy.deployed();
-
-  const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
-  console.log("AssetHandlerProxy deployed at", assetHandlerProxy.address);
-
-  const IPoolFactory = await artifacts.readArtifact("PoolFactory");
-  const poolFactory = await ethers.getContractAt(IPoolFactory.abi, versions.PoolFactoryProxy);
+  const PoolFactory = await ethers.getContractFactory("PoolFactory");
+  const poolFactory = await upgrades.upgradeProxy(
+    versions.PoolFactoryProxy,
+    PoolFactory
+  );
   console.log("PoolFactoryProxy at", poolFactory.address);
 
   // Initialize Asset Price Consumer
@@ -91,15 +81,10 @@ async function main () {
   const assetUsdc = { asset: tUSDC.address, assetType: 0, aggregator: usdc_price_feed };
   const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-  await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+  const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
   await assetHandler.deployed();
-  console.log("AssetHandler initialized with TestUSDT, TestUSDC, TestWETH");
-
-  await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
-  console.log("PoolFactoryProxy setLogic", poolLogic.address, poolManagerLogic.address);
-
   await poolFactory.setAssetHandler(assetHandler.address);
-  console.log("PoolFactoryProxy setAssetHandler", assetHandler.address);
+  console.log("AssetHandler deployed at ", assetHandler.address);
 
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
@@ -107,7 +92,7 @@ async function main () {
   console.log("ERC20Guard deployed at", erc20Guard.address);
 
   const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-  const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy();
+  const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
   uniswapV2RouterGuard.deployed();
   console.log("UniswapV2RouterGuard deployed at", uniswapV2RouterGuard.address);
 
@@ -128,11 +113,10 @@ async function main () {
       "USDT-Aggregator": usdt_price_feed,
       "USDC-Aggregator": usdc_price_feed,
       "ETH-Aggregator": eth_price_feed,
-      "ProxyAdmin": proxyAdmin.address,
       "PoolFactoryProxy": poolFactory.address,
       "PoolLogic": poolLogic.address,
       "PoolManagerLogic": poolManagerLogic.address,
-      "AssetHandlerProxy": assetHandlerProxy.address,
+      "AssetHandlerProxy": assetHandler.address,
       "ERC20Guard": erc20Guard.address,
       "UniswapV2RouterGuard": uniswapV2RouterGuard.address,
     }
@@ -170,7 +154,7 @@ async function main () {
   console.log('deposit')
   await poolLogicProxy.deposit(tUSDC.address, 10e6.toString());
 
-  const IERC20 = await artifacts.readArtifact("@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20");
+  const IERC20 = await artifacts.readArtifact("IERC20");
   const iERC20 = new ethers.utils.Interface(IERC20.abi);
   approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, 10e6.toString()]);
   console.log('approve')

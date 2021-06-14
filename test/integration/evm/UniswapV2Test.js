@@ -1,3 +1,4 @@
+const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 
@@ -21,6 +22,7 @@ const sushi_usdc_usdt = "0xD86A120a06255Df8D4e2248aB04d4267E23aDfaA";
 const eth_price_feed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
 const usdt_price_feed = "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D";
 const usdc_price_feed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 describe("Sushiswap/Uniswap V2 Test", function () {
   let WETH, USDC, USDT, SushiUsdcUsdt, UniswapRouter;
@@ -33,7 +35,6 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-    const assetHandlerLogic = await AssetHandlerLogic.deploy();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
@@ -42,23 +43,12 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await PoolFactory.deploy();
-
-    // Deploy ProxyAdmin
-    const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
-    const proxyAdmin = await ProxyAdmin.deploy();
-    await proxyAdmin.deployed();
-
-    // Deploy AssetHandlerProxy
-    const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
-    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
-    await assetHandlerProxy.deployed();
-
-    assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
-
-    // Deploy PoolFactoryProxy
-    const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
-    poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      ZERO_ADDRESS,
+      dao.address,
+    ]);
     await poolFactory.deployed();
 
     // Initialize Asset Price Consumer
@@ -73,13 +63,10 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 0, aggregator: sushiLpAggregator.address };
     const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetSushiUsdcUsdt];
 
-    await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
     await assetHandler.deployed();
+    await poolFactory.setAssetHandler(assetHandler.address);
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
-
-    poolFactory = await PoolFactory.attach(poolFactory.address);
-    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-    await poolFactory.deployed();
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
@@ -100,9 +87,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   it("Should be able to get WETH", async function () {
     const IWETH = await hre.artifacts.readArtifact("IWETH");
     WETH = await ethers.getContractAt(IWETH.abi, weth);
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDT = await ethers.getContractAt(IERC20.abi, usdt);
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
     SushiUsdcUsdt = await ethers.getContractAt(IERC20.abi, sushi_usdc_usdt);
@@ -145,6 +130,17 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   });
 
   it("Should be able to createFund", async function () {
+    await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
+
+    console.log("Passed poolLogic Init!");
+
+    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
+      [usdc, true],
+      [weth, true],
+    ]);
+
+    console.log("Passed poolManagerLogic Init!");
+
     let fundCreatedEvent = new Promise((resolve, reject) => {
       poolFactory.on(
         "FundCreated",
@@ -303,9 +299,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   });
 
   it("Should be able to approve", async () => {
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [usdc, (100e6).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith(
@@ -560,9 +554,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       "failed to execute the call",
     );
 
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [sushiswapRouter, amountADesired]);
     await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
@@ -693,9 +685,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       poolLogicProxy.connect(manager).execTransaction(sushiswapRouter, removeLiquidityAbi),
     ).to.be.revertedWith("failed to execute the call");
 
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [sushiswapRouter, liquidity]);
     await poolLogicProxy.connect(manager).execTransaction(sushi_usdc_usdt, approveABI);
@@ -748,9 +738,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       }, 60000);
     });
 
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     const approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router, (100e6).toString()]);
     await poolLogicProxy.connect(manager).execTransaction(usdt, approveABI);

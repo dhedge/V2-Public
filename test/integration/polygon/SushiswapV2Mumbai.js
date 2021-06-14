@@ -1,3 +1,4 @@
+const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 
@@ -11,6 +12,7 @@ const checkAlmostSame = (a, b) => {
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
+const sushiswapFactory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 
 // For mumbai testnet
 const weth = "0x8e07dAfa396B1b2B226367D0266e009cA1B3248d";
@@ -19,6 +21,7 @@ const usdt = "0x5C03614553fF7b57C7dd583377c2e756D0408940";
 const eth_price_feed = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
 const usdc_price_feed = "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0";
 const usdt_price_feed = "0x92C09849638959196E976289418e5973CC96d645";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 describe("Sushiswap V2 Test Mumbai", function () {
   let WMatic, WETH, USDC, USDT;
@@ -30,7 +33,6 @@ describe("Sushiswap V2 Test Mumbai", function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-    const assetHandlerLogic = await AssetHandlerLogic.deploy();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
@@ -39,23 +41,12 @@ describe("Sushiswap V2 Test Mumbai", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await PoolFactory.deploy();
-
-    // Deploy ProxyAdmin
-    const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
-    const proxyAdmin = await ProxyAdmin.deploy();
-    await proxyAdmin.deployed();
-
-    // Deploy AssetHandlerProxy
-    const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
-    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, manager.address, "0x");
-    await assetHandlerProxy.deployed();
-
-    const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
-
-    // Deploy PoolFactoryProxy
-    const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
-    poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, manager.address, "0x");
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      ZERO_ADDRESS,
+      dao.address,
+    ]);
     await poolFactory.deployed();
 
     // Initialize Asset Price Consumer
@@ -64,29 +55,37 @@ describe("Sushiswap V2 Test Mumbai", function () {
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-    await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
     await assetHandler.deployed();
+    await poolFactory.setAssetHandler(assetHandler.address);
 
     //set higher timeout value for testnet
     await assetHandler.setChainlinkTimeout(10000000);
-
-    poolFactory = await PoolFactory.attach(poolFactory.address);
-    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-    await poolFactory.deployed();
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-    uniswapV2Guard = await UniswapV2Guard.deploy();
-    uniswapV2Guard.deployed();
+    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
+    uniswapV2RouterGuard.deployed();
 
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2Guard.address);
+    await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   });
 
   it("Should be able to createFund", async function () {
+    await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
+
+    console.log("Passed poolLogic Init!");
+
+    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
+      [usdc, true],
+      [weth, true],
+    ]);
+
+    console.log("Passed poolManagerLogic Init!");
+
     let fundCreatedEvent = new Promise((resolve, reject) => {
       poolFactory.on(
         "FundCreated",
@@ -161,7 +160,8 @@ describe("Sushiswap V2 Test Mumbai", function () {
     expect(event.managerFeeNumerator.toString()).to.equal("5000");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
-    let deployedFundsLength = await poolFactory.deployedFundsLength();
+    let deployedFunds = await poolFactory.getDeployedFunds();
+    let deployedFundsLength = deployedFunds.length;
     expect(deployedFundsLength.toString()).to.equal("1");
 
     let isPool = await poolFactory.isPool(fundAddress);
@@ -178,7 +178,9 @@ describe("Sushiswap V2 Test Mumbai", function () {
     poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
     //default assets are supported
-    expect(await poolManagerLogicProxy.numberOfSupportedAssets()).to.equal("2");
+    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    let numberOfSupportedAssets = supportedAssets.length;
+    expect(numberOfSupportedAssets).to.eq(2);
     expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
     expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
 
@@ -193,6 +195,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
         (
           fundAddress,
           investor,
+          assetDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -206,6 +209,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
           resolve({
             fundAddress: fundAddress,
             investor: investor,
+            assetDeposited: assetDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -221,14 +225,12 @@ describe("Sushiswap V2 Test Mumbai", function () {
       }, 60000);
     });
 
-    let totalFundValue = await poolLogicProxy.totalFundValue();
+    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
     await expect(poolLogicProxy.deposit(usdt, (10e6).toString())).to.be.revertedWith("invalid deposit asset");
 
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
     await USDC.approve(poolLogicProxy.address, (10e6).toString());
     await poolLogicProxy.deposit(usdc, (10e6).toString());
@@ -244,9 +246,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
   });
 
   it("Should be able to approve", async () => {
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [usdc, (10e6).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith(
@@ -263,17 +263,20 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
   it("should be able to swap tokens on sushiswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV2Guard.on("Exchange", (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
+      uniswapV2RouterGuard.on(
+        "Exchange",
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress: managerLogicAddress,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));

@@ -1,3 +1,4 @@
+const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 
@@ -98,8 +99,6 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
     expect(event.managerFeeNumerator.toString()).to.equal("5000");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
-    let deployedFundsLength = await poolFactory.deployedFundsLength();
-
     let isPool = await poolFactory.isPool(fundAddress);
     poolLogicProxy = await PoolLogic.attach(fundAddress);
     expect(isPool).to.be.true;
@@ -112,6 +111,7 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
         (
           fundAddress,
           investor,
+          assetDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -125,6 +125,7 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
           resolve({
             fundAddress: fundAddress,
             investor: investor,
+            assetDeposited: assetDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -140,14 +141,9 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
       }, 60000);
     });
 
-    // let totalFundValue = await poolLogicProxy.totalFundValue();
-    // expect(totalFundValue.toString()).to.equal('0');
-
     await expect(poolLogicProxy.deposit(usdt, (10e6).toString())).to.be.revertedWith("invalid deposit asset");
 
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
 
     await USDC.approve(poolLogicProxy.address, (10e6).toString());
@@ -164,9 +160,7 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
   });
 
   it("Should be able to approve", async () => {
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [usdc, (10e6).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith(
@@ -182,20 +176,23 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
   });
 
   it("should be able to swap tokens on sushiswap.", async () => {
-    const UniswapV2Guard = await ethers.getContractFactory("UniswapV2Guard");
-    uniswapV2Guard = await UniswapV2Guard.attach(uniswapGuardAddress);
+    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.attach(uniswapGuardAddress);
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV2Guard.on("Exchange", (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
+      uniswapV2RouterGuard.on(
+        "Exchange",
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress: managerLogicAddress,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));

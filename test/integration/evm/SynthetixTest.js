@@ -1,3 +1,4 @@
+const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 
@@ -27,6 +28,7 @@ const slinkKey = "0x734c494e4b00000000000000000000000000000000000000000000000000
 const addressResolverAddress = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
 const synthetixAddress = "0x97767D7D04Fd0dB0A1a2478DCd4BA85290556B48";
 const uniswapV2RouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 describe("Synthetix Test", function () {
   let WETH, susdProxy, sethProxy, slinkProxy, addressResolver, synthetix, uniswapV2Router;
@@ -38,7 +40,6 @@ describe("Synthetix Test", function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-    const assetHandlerLogic = await AssetHandlerLogic.deploy();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
@@ -47,23 +48,12 @@ describe("Synthetix Test", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await PoolFactory.deploy();
-
-    // Deploy ProxyAdmin
-    const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
-    const proxyAdmin = await ProxyAdmin.deploy();
-    await proxyAdmin.deployed();
-
-    // Deploy AssetHandlerProxy
-    const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
-    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
-    await assetHandlerProxy.deployed();
-
-    const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
-
-    // Deploy PoolFactoryProxy
-    const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
-    poolFactory = await PoolFactoryProxy.deploy(poolFactory.address, proxyAdmin.address, "0x");
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      ZERO_ADDRESS,
+      dao.address,
+    ]);
     await poolFactory.deployed();
 
     // Initialize Asset Price Consumer
@@ -72,12 +62,10 @@ describe("Synthetix Test", function () {
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed };
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
 
-    await assetHandler.initialize(poolFactory.address, assetHandlerInitAssets);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
+    await assetHandler.deployed();
+    await poolFactory.setAssetHandler(assetHandler.address);
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year
-
-    poolFactory = await PoolFactory.attach(poolFactory.address);
-    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-    await poolFactory.deployed();
 
     const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
     addressResolver = await ethers.getContractAt(IAddressResolver.abi, addressResolverAddress);
@@ -128,6 +116,17 @@ describe("Synthetix Test", function () {
   });
 
   it("Should be able to createFund", async function () {
+    await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
+
+    console.log("Passed poolLogic Init!");
+
+    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
+      [susd, true],
+      [seth, true],
+    ]);
+
+    console.log("Passed poolManagerLogic Init!");
+
     let fundCreatedEvent = new Promise((resolve, reject) => {
       poolFactory.on(
         "FundCreated",
@@ -286,9 +285,7 @@ describe("Synthetix Test", function () {
   });
 
   it("Should be able to approve", async () => {
-    const IERC20 = await hre.artifacts.readArtifact(
-      "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol:IERC20",
-    );
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
