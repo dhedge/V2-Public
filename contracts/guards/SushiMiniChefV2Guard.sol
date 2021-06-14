@@ -63,7 +63,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
     rewardTokenB = _rewardTokenB;
   }
 
-  /// @notice Transaction guard for Uniswap V2
+  /// @notice Transaction guard for Sushi MiniChefV2
   /// @dev It supports deposit, withdraw, harvest, withdrawAndHarvest functionalities
   /// @param _poolManagerLogic the pool manager logic
   /// @param to The contract to send transaction to
@@ -89,7 +89,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       uint256 poolId = uint256(getInput(data, 0)); // The index of the pool in MiniChefV2.
       uint256 amount = uint256(getInput(data, 1)); // Amount LP token amount to stake.
       address receiver = convert32toAddress(getInput(data, 2)); // The receiver of `amount` staked LP tokens.
-      address lpToken = address(IMiniChefV2(to).lpToken(poolId)); // Sushi LP token to stake.
+      address lpToken = IMiniChefV2(to).lpToken(poolId); // Sushi LP token to stake.
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
       require(poolLogic == receiver, "recipient is not pool");
@@ -103,7 +103,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       uint256 poolId = uint256(getInput(data, 0)); // The index of the pool in MiniChefV2.
       uint256 amount = uint256(getInput(data, 1)); // Amount LP token amount to unstake.
       address receiver = convert32toAddress(getInput(data, 2)); // The receiver of `amount` staked LP tokens.
-      address lpToken = address(IMiniChefV2(to).lpToken(poolId)); // Sushi LP token to unstake.
+      address lpToken = IMiniChefV2(to).lpToken(poolId); // Sushi LP token to unstake.
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
       require(poolLogic == receiver, "recipient is not pool");
