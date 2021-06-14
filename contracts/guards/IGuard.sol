@@ -37,5 +37,9 @@ pragma solidity 0.7.6;
 interface IGuard {
   event Exchange(address fundAddress, address sourceAsset, uint256 sourceAmount, address dstAsset, uint256 time);
 
-  function txGuard(address poolManagerLogic, bytes calldata data) external returns (uint8 txType);
+  function txGuard(
+    address poolManagerLogic,
+    address to,
+    bytes calldata data
+  ) external returns (uint8 txType);
 }
