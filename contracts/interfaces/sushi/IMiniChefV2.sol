@@ -2,8 +2,6 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 interface IMiniChefV2 {
   struct UserInfo {
     uint256 amount;
@@ -18,7 +16,7 @@ interface IMiniChefV2 {
 
   function poolLength() external view returns (uint256);
 
-  function lpToken(uint256 pid) external returns (IERC20);
+  function lpToken(uint256 pid) external returns (address);
 
   function updatePool(uint256 pid) external returns (IMiniChefV2.PoolInfo memory);
 
