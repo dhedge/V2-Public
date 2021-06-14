@@ -11,10 +11,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// MIT License
-// ===========
-//
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +40,7 @@
 // 7. Claim: Claim rewards tokens from a third party contract (eg. SUSHI & MATIC rewards)
 // 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
 
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;

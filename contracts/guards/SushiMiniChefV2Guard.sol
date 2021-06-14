@@ -13,7 +13,7 @@
 // MIT License
 // ===========
 //
-// Copyright (c) 2020 dHEDGE DAO
+// Copyright (c) 2021 dHEDGE DAO
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 
