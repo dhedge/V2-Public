@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 contract TestUSDT is ERC20 {
-  constructor(uint256 totalSupply) public ERC20("Test USDT", "tUSDT") {
+  using SafeMathUpgradeable for uint256;
+
+  constructor(uint256 totalSupply) ERC20("Test USDT", "tUSDT") {
     _setupDecimals(6);
     _mint(msg.sender, totalSupply.mul(10**uint256(decimals())));
   }
@@ -16,7 +18,9 @@ contract TestUSDT is ERC20 {
 }
 
 contract TestUSDC is ERC20 {
-  constructor(uint256 totalSupply) public ERC20("Test USDC", "tUSDC") {
+  using SafeMathUpgradeable for uint256;
+
+  constructor(uint256 totalSupply) ERC20("Test USDC", "tUSDC") {
     _setupDecimals(6);
     _mint(msg.sender, totalSupply.mul(10**uint256(decimals())));
   }
@@ -27,7 +31,9 @@ contract TestUSDC is ERC20 {
 }
 
 contract TestWETH is ERC20 {
-  constructor(uint256 totalSupply) public ERC20("Test WETH", "tWETH") {
+  using SafeMathUpgradeable for uint256;
+
+  constructor(uint256 totalSupply) ERC20("Test WETH", "tWETH") {
     _mint(msg.sender, totalSupply.mul(10**uint256(decimals())));
   }
 
@@ -37,7 +43,7 @@ contract TestWETH is ERC20 {
 }
 
 contract ERC20Asset is ERC20 {
-  constructor(string memory name, string memory symbol) public ERC20(name, symbol) {
+  constructor(string memory name, string memory symbol) ERC20(name, symbol) {
     _mint(msg.sender, 1000e18);
   }
 }

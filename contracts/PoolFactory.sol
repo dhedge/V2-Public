@@ -33,10 +33,10 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
+
 pragma experimental ABIEncoderV2;
 
 import "./PoolLogic.sol";
@@ -50,12 +50,12 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 /// @title A Factory to spawn pools
 contract PoolFactory is
-  PausableUpgradeSafe,
+  PausableUpgradeable,
   ProxyFactory,
   IHasDaoInfo,
   IHasFeeInfo,
@@ -63,7 +63,7 @@ contract PoolFactory is
   IHasGuardInfo,
   IHasPausable
 {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   event FundCreated(
     address fundAddress,

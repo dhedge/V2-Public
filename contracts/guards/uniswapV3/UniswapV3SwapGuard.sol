@@ -32,12 +32,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./Path.sol";
 import "../IGuard.sol";
@@ -49,7 +48,7 @@ import "../../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   // transaction guard for Uniswap Swap Router
   function txGuard(
@@ -73,7 +72,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
       uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
       bytes memory path = getBytes(data, 0, offset); // requires an offset due to dynamic Struct/tuple in calldata (abiencoder V2)
-      address srcAsset = path.getFirstPool().toAddress(0);
+      bytes memory firstPool = path.getFirstPool();
+      address srcAsset = firstPool.getPoolAddress();
       uint256 srcAmount = uint256(getInput(data, 4));
       address dstAsset;
       bool hasMultiplePools = path.hasMultiplePools();
@@ -91,7 +91,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       // loop through path assets
       while (hasMultiplePools) {
         path = path.skipToken();
-        asset = path.getFirstPool().toAddress(0); // gets asset from swap path
+        bytes memory firstPool = path.getFirstPool();
+        asset = firstPool.getPoolAddress(); // gets asset from swap path
         hasMultiplePools = path.hasMultiplePools();
 
         // // TODO: consider enabling a validation of path assets once the total dHedge valid asset universe is big enough

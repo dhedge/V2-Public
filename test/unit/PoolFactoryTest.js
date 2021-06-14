@@ -1,3 +1,5 @@
+const { ethers, upgrades } = require("hardhat");
+
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
@@ -126,7 +128,7 @@ describe("PoolFactory", function () {
     await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
     await slinkProxy.givenCalldataReturnAddress(targetABI, slinkAsset.address);
 
-    IERC20 = await hre.artifacts.readArtifact("ERC20UpgradeSafe");
+    IERC20 = await hre.artifacts.readArtifact("ERC20Upgradeable");
     iERC20 = new ethers.utils.Interface(IERC20.abi);
     let decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
@@ -140,7 +142,7 @@ describe("PoolFactory", function () {
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
     AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-    assetHandlerLogic = await AssetHandlerLogic.deploy();
+    // assetHandlerLogic = await AssetHandlerLogic.deploy();
 
     // Deploy Sushi LP Aggregator
     const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
@@ -157,26 +159,33 @@ describe("PoolFactory", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    poolFactoryLogic = await PoolFactoryLogic.deploy();
+    // poolFactoryLogic = await PoolFactoryLogic.deploy();
 
     // Deploy ProxyAdmin
-    const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
-    const proxyAdmin = await ProxyAdmin.deploy();
-    await proxyAdmin.deployed();
+    // const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
+    // const proxyAdmin = await ProxyAdmin.deploy();
+    // await proxyAdmin.deployed();
 
     // Deploy AssetHandlerProxy
-    const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
-    const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
-    await assetHandlerProxy.deployed();
+    // const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
+    // const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
+    // await assetHandlerProxy.deployed();
 
-    assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
+    // assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
     // Deploy PoolFactoryProxy
-    const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
-    const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
-    await poolFactoryProxy.deployed();
+    // const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
+    // const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
+    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      ZERO_ADDRESS,
+      dao.address,
+    ]);
+    await poolFactory.deployed();
+    console.log("poolFactory deployed to:", poolFactory.address);
 
-    poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
+    // poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
 
     // Initialize Asset Price Consumer
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
@@ -187,12 +196,16 @@ describe("PoolFactory", function () {
     const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic, assetSushiLPLinkWeth];
 
-    await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
+    // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
+    // await assetHandler.deployed();
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
     await assetHandler.deployed();
+    console.log("assetHandler deployed to:", assetHandler.address);
+    await poolFactory.setAssetHandler(assetHandler.address);
 
     // Initialise pool factory
-    await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-    await poolFactory.deployed();
+    // await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
+    // await poolFactory.deployed();
 
     // Deploy contract guards
     const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
@@ -777,9 +790,9 @@ describe("PoolFactory", function () {
       0,
     ]);
 
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
-    ).to.be.revertedWith("non-zero address is required");
+    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
+      "non-zero address is required",
+    );
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
@@ -896,9 +909,9 @@ describe("PoolFactory", function () {
 
     // fail to swap direct asset to asset because it is interaction is with 0x0 address
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [exactInputSingleParams]);
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
-    ).to.be.revertedWith("non-zero address is required");
+    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
+      "non-zero address is required",
+    );
 
     // fail to swap direct asset to asset because unsupported source asset
     badExactInputSingleParams.tokenIn = slink;
@@ -980,9 +993,9 @@ describe("PoolFactory", function () {
 
     // fail to swap direct asset to asset because it is interaction is with 0x0 address
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
-    ).to.be.revertedWith("non-zero address is required");
+    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
+      "non-zero address is required",
+    );
 
     // fail to swap direct asset to asset because unsupported source asset
     badExactInputParams.path =
