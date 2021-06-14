@@ -35,10 +35,10 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
@@ -48,7 +48,7 @@ import "../interfaces/sushi/IMiniChefV2.sol";
 
 /// @title Transaction guard for Sushi's MiniChefV2 staking contract
 contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   event Stake(address fundAddress, address asset, address stakingContract, uint256 amount, uint256 time);
   event Unstake(address fundAddress, address asset, address stakingContract, uint256 amount, uint256 time);
