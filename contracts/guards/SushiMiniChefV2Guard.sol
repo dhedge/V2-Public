@@ -58,7 +58,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
   address public rewardTokenA; // SUSHI token
   address public rewardTokenB; // WMATIC token
 
-  constructor(address _rewardTokenA, address _rewardTokenB) public {
+  constructor(address _rewardTokenA, address _rewardTokenB) {
     rewardTokenA = _rewardTokenA;
     rewardTokenB = _rewardTokenB;
   }

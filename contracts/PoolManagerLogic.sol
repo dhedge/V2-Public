@@ -140,7 +140,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       assetPosition[asset] = supportedAssets.length;
     }
 
-    emit AssetAdded(poolLogic, manager(), asset, isDeposit);
+    emit AssetAdded(poolLogic, manager, asset, isDeposit);
   }
 
   function _removeAsset(Asset memory _asset) internal {
@@ -168,7 +168,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       supportedAssets.pop();
     }
 
-    emit AssetRemoved(poolLogic, manager(), asset, isDeposit);
+    emit AssetRemoved(poolLogic, manager, asset, isDeposit);
   }
 
   /// @notice Get all the supported assets
@@ -248,7 +248,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(poolLogic);
 
-    emit ManagerFeeSet(poolLogic, manager(), managerFeeNumerator, managerFeeDenominator);
+    emit ManagerFeeSet(poolLogic, manager, managerFeeNumerator, managerFeeDenominator);
   }
 
   function announceManagerFeeIncrease(uint256 numerator) public onlyManager {
@@ -292,7 +292,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     IHasFeeInfo(factory).setPoolManagerFeeNumerator(poolLogic, numerator);
 
-    emit ManagerFeeSet(poolLogic, manager(), numerator, managerFeeDenominator);
+    emit ManagerFeeSet(poolLogic, manager, numerator, managerFeeDenominator);
   }
 
   function getManagerFeeIncreaseInfo() public view returns (uint256, uint256) {

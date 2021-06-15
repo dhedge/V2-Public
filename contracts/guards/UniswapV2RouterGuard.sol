@@ -60,7 +60,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
 
   address public factory; // uniswap v2 factory
 
-  constructor(address _factory) public {
+  constructor(address _factory) {
     factory = _factory;
   }
 
