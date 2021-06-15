@@ -56,7 +56,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
 
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
   /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
-  constructor(address _sushiStaking, SushiPool[] memory sushiPools) public {
+  constructor(address _sushiStaking, SushiPool[] memory sushiPools) {
     sushiStaking = _sushiStaking;
     for (uint256 i = 0; i < sushiPools.length; i++) {
       sushiPoolIds[sushiPools[i].lpToken] = sushiPools[i].stakingPoolId;

@@ -41,36 +41,28 @@ contract Managed {
 
   event ManagerUpdated(address newManager, string newManagerName);
 
-  address private _manager;
-  string private _managerName;
+  address public manager;
+  string public managerName;
 
   address[] private _memberList;
   mapping(address => uint256) private _memberPosition;
 
   address private _trader;
 
-  function initialize(address manager, string memory managerName) internal {
-    require(manager != address(0), "Invalid manager");
-    _manager = manager;
-    _managerName = managerName;
+  function initialize(address newManager, string memory newManagerName) internal {
+    require(newManager != address(0), "Invalid manager");
+    manager = newManager;
+    managerName = newManagerName;
   }
 
   modifier onlyManager() {
-    require(msg.sender == _manager, "only manager");
+    require(msg.sender == manager, "only manager");
     _;
   }
 
   modifier onlyManagerOrTrader() {
-    require(msg.sender == _manager || msg.sender == _trader, "only manager or trader");
+    require(msg.sender == manager || msg.sender == _trader, "only manager or trader");
     _;
-  }
-
-  function managerName() public view returns (string memory) {
-    return _managerName;
-  }
-
-  function manager() public view returns (address) {
-    return _manager;
   }
 
   function isMemberAllowed(address member) public view returns (bool) {
@@ -83,8 +75,8 @@ contract Managed {
 
   function changeManager(address newManager, string memory newManagerName) public onlyManager {
     require(newManager != address(0), "Invalid manager");
-    _manager = newManager;
-    _managerName = newManagerName;
+    manager = newManager;
+    managerName = newManagerName;
     emit ManagerUpdated(newManager, newManagerName);
   }
 

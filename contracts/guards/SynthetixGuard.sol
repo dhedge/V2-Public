@@ -53,7 +53,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
 
   IAddressResolver public addressResolver;
 
-  constructor(IAddressResolver _addressResolver) public {
+  constructor(IAddressResolver _addressResolver) {
     addressResolver = _addressResolver;
   }
 
