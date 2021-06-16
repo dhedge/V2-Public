@@ -33,7 +33,7 @@ const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
 const sushiLPUsdcWethPoolId = 1;
 
 describe("Sushiswap V2 Test", function () {
-  let WMatic, WETH, USDC, USDT, SushiLPUSDCWETH;
+  let WMatic, WETH, USDC, USDT, SushiLPUSDCWETH, SUSHI;
   let sushiLPAggregator, sushiMiniChefV2Guard;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
@@ -106,6 +106,7 @@ describe("Sushiswap V2 Test", function () {
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
     WETH = await ethers.getContractAt(IERC20.abi, weth);
     WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
+    SUSHI = await ethers.getContractAt(IERC20.abi, sushiToken);
     SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushiLpUsdcWeth);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
@@ -514,6 +515,24 @@ describe("Sushiswap V2 Test", function () {
   describe("Staking", () => {
     let availableLpToken, iMiniChefV2;
 
+    const stakeAvailableLpTokens = async () => {
+      availableLpToken = await SushiLPUSDCWETH.balanceOf(poolLogicProxy.address);
+
+      const IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
+      iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
+      const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
+        sushiLPUsdcWethPoolId,
+        availableLpToken,
+        poolLogicProxy.address,
+      ]);
+
+      const IERC20 = await hre.artifacts.readArtifact("IERC20");
+      const iERC20 = new ethers.utils.Interface(IERC20.abi);
+      let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
+      await poolLogicProxy.connect(manager).execTransaction(sushiLpUsdcWeth, approveABI);
+      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi);
+    };
+
     it("manager can add liquidity", async () => {
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLpUsdcWeth, false]], []);
 
@@ -541,7 +560,19 @@ describe("Sushiswap V2 Test", function () {
       approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, amountBDesired]);
       await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
 
+      const lpBalanceBefore = await SushiLPUSDCWETH.balanceOf(poolLogicProxy.address);
+      const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+      const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      expect(lpBalanceBefore).to.be.equal(0);
+
       await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, addLiquidityAbi);
+
+      expect(await SushiLPUSDCWETH.balanceOf(poolLogicProxy.address)).to.be.gt(lpBalanceBefore);
+      expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.lt(usdcBalanceBefore);
+      expect(await WETH.balanceOf(poolLogicProxy.address)).to.be.lt(wethBalanceBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
 
     it("manager can Stake Sushi LP token", async () => {
@@ -576,11 +607,6 @@ describe("Sushiswap V2 Test", function () {
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
       const sushiLPPrice = await assetHandler.getUSDPrice(sushiLpUsdcWeth);
-      console.log("USDC: ", (await USDC.balanceOf(poolLogicProxy.address)).toString());
-      console.log("WETH: ", (await WETH.balanceOf(poolLogicProxy.address)).toString());
-      console.log("availableLpToken: ", availableLpToken.toString());
-      console.log("totalFundValue: ", totalFundValueBefore.toString());
-      console.log("sushiLPPrice: ", sushiLPPrice.toString());
       expect(totalFundValueBefore).to.gte(
         sushiLPPrice.mul(availableLpToken).div(ethers.BigNumber.from((1e18).toString())),
       ); // should at least account for the staked tokens
@@ -600,7 +626,11 @@ describe("Sushiswap V2 Test", function () {
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
       let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
       await poolLogicProxy.connect(manager).execTransaction(sushiLpUsdcWeth, approveABI);
+
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi);
+
+      expect(await poolManagerLogicProxy.assetBalance(sushiLpUsdcWeth)).to.be.equal(availableLpToken);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
       const event = await stakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
@@ -645,7 +675,12 @@ describe("Sushiswap V2 Test", function () {
         poolLogicProxy.address,
       ]);
 
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, withdrawAbi);
+
+      expect(await poolManagerLogicProxy.assetBalance(sushiLpUsdcWeth)).to.be.equal(availableLpToken);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
       const event = await unstakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
@@ -698,79 +733,20 @@ describe("Sushiswap V2 Test", function () {
         "recipient is not pool",
       );
 
+      expect(await SUSHI.balanceOf(poolLogicProxy.address)).to.be.equal(0);
+
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, harvestAbi);
 
       const event = await claimEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.stakingContract).to.equal(sushiMiniChefV2);
-    });
 
-    it("manager can Stake Sushi LP token", async () => {
-      const stakeEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Stake", (fundAddress, asset, stakingContract, amount, time, event) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress,
-            asset,
-            stakingContract,
-            amount,
-            time,
-          });
-        });
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
-      availableLpToken = await SushiLPUSDCWETH.balanceOf(poolLogicProxy.address);
-
-      const IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
-      iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
-      const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
-        sushiLPUsdcWethPoolId,
-        availableLpToken,
-        poolLogicProxy.address,
-      ]);
-
-      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-
-      const sushiLPPrice = await assetHandler.getUSDPrice(sushiLpUsdcWeth);
-      console.log("USDC: ", (await USDC.balanceOf(poolLogicProxy.address)).toString());
-      console.log("WETH: ", (await WETH.balanceOf(poolLogicProxy.address)).toString());
-      console.log("availableLpToken: ", availableLpToken.toString());
-      console.log("totalFundValue: ", totalFundValueBefore.toString());
-      console.log("sushiLPPrice: ", sushiLPPrice.toString());
-      expect(totalFundValueBefore).to.gte(
-        sushiLPPrice.mul(availableLpToken).div(ethers.BigNumber.from((1e18).toString())),
-      ); // should at least account for the staked tokens
-
-      // attempt to deposit with manager as recipient
-      const badDepositAbi = iMiniChefV2.encodeFunctionData("deposit", [
-        sushiLPUsdcWethPoolId,
-        availableLpToken,
-        manager.address,
-      ]);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, badDepositAbi)).to.be.revertedWith(
-        "recipient is not pool",
-      );
-
-      const IERC20 = await hre.artifacts.readArtifact("IERC20");
-      const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
-      await poolLogicProxy.connect(manager).execTransaction(sushiLpUsdcWeth, approveABI);
-      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi);
-
-      const event = await stakeEvent;
-      expect(event.fundAddress).to.equal(poolLogicProxy.address);
-      expect(event.asset).to.equal(sushiLpUsdcWeth);
-      expect(event.stakingContract).to.equal(sushiMiniChefV2);
-      expect(event.amount).to.equal(availableLpToken);
+      expect(await SUSHI.balanceOf(poolLogicProxy.address)).to.be.gt(0);
     });
 
     it("manager can Withdraw And Harvest staked Sushi LP token", async function () {
+      await stakeAvailableLpTokens();
+
       const unstakeEvent = new Promise((resolve, reject) => {
         sushiMiniChefV2Guard.on("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
           event.removeListener();
@@ -833,7 +809,16 @@ describe("Sushiswap V2 Test", function () {
         poolLogicProxy.address,
       ]);
 
+      const sushiBalanceBefore = await SUSHI.balanceOf(poolLogicProxy.address);
+      const wmaticBalanceBefore = await WMATIC.balanceOf(poolLogicProxy.address);
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      await ethers.provider.send("evm_increaseTime", [3600 * 24]);
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, withdrawAndHarvestAbi);
+
+      expect(await SUSHI.balanceOf(poolLogicProxy.address)).to.be.gt(sushiBalanceBefore);
+      expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
+      expect(await poolManagerLogicProxy.totalFundValue()).to.be.gt(totalFundValueBefore);
 
       const eventUnstake = await unstakeEvent;
       expect(eventUnstake.fundAddress).to.equal(poolLogicProxy.address);
@@ -846,72 +831,9 @@ describe("Sushiswap V2 Test", function () {
       expect(eventClaim.stakingContract).to.equal(sushiMiniChefV2);
     });
 
-    it("manager can Stake Sushi LP token", async () => {
-      const stakeEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Stake", (fundAddress, asset, stakingContract, amount, time, event) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress,
-            asset,
-            stakingContract,
-            amount,
-            time,
-          });
-        });
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
-      availableLpToken = await SushiLPUSDCWETH.balanceOf(poolLogicProxy.address);
-
-      const IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
-      iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
-      const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
-        sushiLPUsdcWethPoolId,
-        availableLpToken,
-        poolLogicProxy.address,
-      ]);
-
-      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-
-      const sushiLPPrice = await assetHandler.getUSDPrice(sushiLpUsdcWeth);
-      console.log("USDC: ", (await USDC.balanceOf(poolLogicProxy.address)).toString());
-      console.log("WETH: ", (await WETH.balanceOf(poolLogicProxy.address)).toString());
-      console.log("availableLpToken: ", availableLpToken.toString());
-      console.log("totalFundValue: ", totalFundValueBefore.toString());
-      console.log("sushiLPPrice: ", sushiLPPrice.toString());
-      expect(totalFundValueBefore).to.gte(
-        sushiLPPrice.mul(availableLpToken).div(ethers.BigNumber.from((1e18).toString())),
-      ); // should at least account for the staked tokens
-
-      // attempt to deposit with manager as recipient
-      const badDepositAbi = iMiniChefV2.encodeFunctionData("deposit", [
-        sushiLPUsdcWethPoolId,
-        availableLpToken,
-        manager.address,
-      ]);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, badDepositAbi)).to.be.revertedWith(
-        "recipient is not pool",
-      );
-
-      const IERC20 = await hre.artifacts.readArtifact("IERC20");
-      const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
-      await poolLogicProxy.connect(manager).execTransaction(sushiLpUsdcWeth, approveABI);
-      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi);
-
-      const event = await stakeEvent;
-      expect(event.fundAddress).to.equal(poolLogicProxy.address);
-      expect(event.asset).to.equal(sushiLpUsdcWeth);
-      expect(event.stakingContract).to.equal(sushiMiniChefV2);
-      expect(event.amount).to.equal(availableLpToken);
-    });
-
     it("investor can Withdraw staked Sushi LP token", async function () {
+      await stakeAvailableLpTokens();
+
       const withdrawalEvent = new Promise((resolve, reject) => {
         poolLogicProxy.on(
           "Withdrawal",
@@ -975,11 +897,6 @@ describe("Sushiswap V2 Test", function () {
       const usdcPrice = await assetHandler.getUSDPrice(usdc);
       const wethPrice = await assetHandler.getUSDPrice(weth);
       const sushiLPPrice = await assetHandler.getUSDPrice(sushiLpUsdcWeth);
-      console.log("USDC: ", usdcBalance);
-      console.log("WETH: ", wethBalance);
-      console.log("availableLpToken: ", availableLpToken.toString());
-      console.log("totalFundValue: ", totalFundValue.toString());
-      console.log("sushiLPPrice: ", sushiLPPrice.toString());
       const expectedFundValue = usdcBalance
         .mul(usdcPrice)
         .div(ethers.BigNumber.from("1000000"))
@@ -991,6 +908,10 @@ describe("Sushiswap V2 Test", function () {
       // Withdraw all
       const withdrawAmount = units(100);
       const investorFundBalance = await poolLogicProxy.balanceOf(logicOwner.address);
+
+      const sushiBalanceBefore = await SUSHI.balanceOf(logicOwner.address);
+      const wmaticBalanceBefore = await WMATIC.balanceOf(logicOwner.address);
+      const lpBalanceBefore = await SushiLPUSDCWETH.balanceOf(logicOwner.address);
 
       ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
       await poolLogicProxy.withdraw(withdrawAmount);
@@ -1004,6 +925,10 @@ describe("Sushiswap V2 Test", function () {
         .div(ethers.BigNumber.from(totalSupply));
       const expectedFundValueAfter = totalFundValue.sub(valueWithdrawn);
 
+      expect(await SUSHI.balanceOf(logicOwner.address)).to.be.gt(sushiBalanceBefore);
+      expect(await WMATIC.balanceOf(logicOwner.address)).to.be.gt(wmaticBalanceBefore);
+      expect(await SushiLPUSDCWETH.balanceOf(logicOwner.address)).to.be.gt(lpBalanceBefore);
+
       expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawal.investor).to.equal(logicOwner.address);
       checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
@@ -1015,8 +940,6 @@ describe("Sushiswap V2 Test", function () {
       expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawStaked.asset).to.equal(sushiLpUsdcWeth);
       expect(eventWithdrawStaked.to).to.equal(logicOwner.address);
-      console.log(eventWithdrawStaked.withdrawAmount.toString());
-      console.log(expectedWithdrawAmount.toString());
       checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
     });
   });
