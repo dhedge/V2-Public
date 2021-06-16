@@ -24,7 +24,6 @@
     "prepare": "husky install"
   },
   "author": "dHEDGE Team",
-  "repository": "https://git@github.com:dhedge/dhedge-v2.git",
   "license": "ISC",
   "devDependencies": {
     "@eth-optimism/hardhat-ovm": "^0.2.2",
