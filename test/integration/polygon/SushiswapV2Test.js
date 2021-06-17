@@ -675,11 +675,13 @@ describe("Sushiswap V2 Test", function () {
         poolLogicProxy.address,
       ]);
 
+      const wmaticBalanceBefore = await WMATIC.balanceOf(poolLogicProxy.address);
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, withdrawAbi);
 
       expect(await poolManagerLogicProxy.assetBalance(sushiLpUsdcWeth)).to.be.equal(availableLpToken);
+      expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
       const event = await unstakeEvent;
