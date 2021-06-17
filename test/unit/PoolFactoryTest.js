@@ -411,6 +411,8 @@ describe("PoolFactory", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
     let depositAssets = await poolManagerLogicProxy.getDepositAssets();
+    let numberOfDepositAssets = depositAssets.length;
+    expect(numberOfSupportedAssets).to.gte(numberOfDepositAssets);
     expect(depositAssets[0]).to.eq(susd);
     let fundComposition = await poolManagerLogicProxy.getFundComposition();
     expect(fundComposition.assets.length).to.eq(numberOfSupportedAssets);
