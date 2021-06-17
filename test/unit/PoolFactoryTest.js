@@ -413,9 +413,9 @@ describe("PoolFactory", function () {
     let depositAssets = await poolManagerLogicProxy.getDepositAssets();
     expect(depositAssets[0]).to.eq(susd);
     let fundComposition = await poolManagerLogicProxy.getFundComposition();
-    expect(fundComposition.assets.length).to.eq(numberOfSupportedAssets)
-    expect(fundComposition.balances.length).to.eq(numberOfSupportedAssets)
-    expect(fundComposition.rates.length).to.eq(numberOfSupportedAssets)
+    expect(fundComposition.assets.length).to.eq(numberOfSupportedAssets);
+    expect(fundComposition.balances.length).to.eq(numberOfSupportedAssets);
+    expect(fundComposition.rates.length).to.eq(numberOfSupportedAssets);
   });
 
   it("should be able to deposit", async function () {
