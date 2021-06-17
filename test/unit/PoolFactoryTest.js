@@ -316,11 +316,26 @@ describe("PoolFactory", function () {
         "DHTF",
         new ethers.BigNumber.from("6000"),
         [
-          [susd, true],
+          [susd, false],
           [seth, true],
         ],
       ),
     ).to.be.revertedWith("invalid fraction");
+
+    await expect(
+      poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        new ethers.BigNumber.from("5000"),
+        [
+          [susd, false],
+          [seth, false],
+        ],
+      ),
+    ).to.be.revertedWith("Implementation init failed"); // at least one deposit asset
 
     await poolFactory.createFund(
       false,
@@ -330,8 +345,8 @@ describe("PoolFactory", function () {
       "DHTF",
       new ethers.BigNumber.from("5000"),
       [
+        [seth, false],
         [susd, true],
-        [seth, true],
       ],
     );
 
@@ -390,6 +405,17 @@ describe("PoolFactory", function () {
     );
     const lpToken = iMiniChefV2.encodeFunctionData("lpToken", [sushiLPLinkWethPoolId]);
     await sushiMiniChefV2.givenCalldataReturn(lpToken, abiCoder.encode(["address"], [sushiLPLinkWeth]));
+  });
+
+  it("should return correct values ", async function () {
+    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    let numberOfSupportedAssets = supportedAssets.length;
+    let depositAssets = await poolManagerLogicProxy.getDepositAssets();
+    expect(depositAssets[0]).to.eq(susd);
+    let fundComposition = await poolManagerLogicProxy.getFundComposition();
+    expect(fundComposition.assets.length).to.eq(numberOfSupportedAssets)
+    expect(fundComposition.balances.length).to.eq(numberOfSupportedAssets)
+    expect(fundComposition.rates.length).to.eq(numberOfSupportedAssets)
   });
 
   it("should be able to deposit", async function () {
@@ -633,15 +659,19 @@ describe("PoolFactory", function () {
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
     numberOfDepositAssets = depositAssets.length;
 
-    expect(numberOfDepositAssets).to.be.equal(3);
+    expect(numberOfDepositAssets).to.be.equal(2);
     await poolManagerLogicManagerProxy.changeAssets([], [[slink, true]]);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
     numberOfDepositAssets = depositAssets.length;
 
-    expect(numberOfDepositAssets).to.be.equal(2);
+    expect(numberOfDepositAssets).to.be.equal(1);
     await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]);
+
+    supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
+    numberOfSupportedAssets = supportedAssets.length;
+    expect(numberOfSupportedAssets).to.eq(2);
   });
 
   it("should be able to manage fees", async function () {
