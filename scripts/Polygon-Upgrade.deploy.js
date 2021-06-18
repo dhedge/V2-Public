@@ -1,19 +1,10 @@
 const hre = require("hardhat");
 const fs = require("fs");
+const { getTag } = require("./Helpers");
 
-let versions = require("../publish/mumbai/versions.json");
+let versions = require("../publish/polygon/versions.json");
 let tag = Object.keys(versions)[Object.keys(versions).length - 1];
 let version = Object.values(versions)[Object.values(versions).length - 1].contracts;
-
-const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
-const sushiswapFactory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
-
-const eth_price_feed = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
-const matic_price_feed = "0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada";
-const usdc_price_feed = "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0";
-const usdt_price_feed = "0x92C09849638959196E976289418e5973CC96d645";
-const dai_price_feed = "0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046";
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 async function main() {
   const ethers = hre.ethers;
@@ -31,18 +22,6 @@ async function main() {
   console.log("signer address: ", signer.address);
   console.log("manager address: ", manager.address);
   console.log("dao address: ", dao.address);
-
-  const ITestUSDT = await artifacts.readArtifact("TestUSDT");
-  const tUSDT = await ethers.getContractAt(ITestUSDT.abi, version.TestUSDT);
-  console.log("TestUSDT at", tUSDT.address);
-
-  const ITestUSDC = await artifacts.readArtifact("TestUSDC");
-  const tUSDC = await ethers.getContractAt(ITestUSDC.abi, version.TestUSDC);
-  console.log("TestUSDC at", tUSDC.address);
-
-  const ITestWETH = await artifacts.readArtifact("TestWETH");
-  const tWETH = await ethers.getContractAt(ITestWETH.abi, version.TestWETH);
-  console.log("TestWETH at", tWETH.address);
 
   const IPoolLogic = await artifacts.readArtifact("PoolLogic");
   let poolLogic = await ethers.getContractAt(IPoolLogic.abi, version.PoolLogic);
@@ -71,40 +50,26 @@ async function main() {
   // redeploy pool logic and pool manager logic
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   poolLogic = await PoolLogic.deploy();
+  await poolLogic.deployed();
   console.log("New PoolLogic deployed at ", poolLogic.address);
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
   poolManagerLogic = await PoolManagerLogic.deploy();
+  await poolManagerLogic.deployed();
   console.log("New PoolManagerLogic deployed at ", poolManagerLogic.address);
 
   // set new logics
   await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
 
-  versions[tag] = {
-    tag: tag,
-    network: network,
-    date: new Date().toUTCString(),
-    contracts: {
-      TestUSDT: tUSDT.address,
-      TestUSDC: tUSDC.address,
-      TestWETH: tWETH.address,
-      "USDT-Aggregator": usdt_price_feed,
-      "USDC-Aggregator": usdc_price_feed,
-      "ETH-Aggregator": eth_price_feed,
-      PoolFactoryProxy: poolFactory.address,
-      PoolLogic: poolLogic.address,
-      PoolManagerLogic: poolManagerLogic.address,
-      AssetHandlerProxy: assetHandler.address,
-      ERC20Guard: erc20Guard.address,
-      UniswapV2RouterGuard: uniswapV2RouterGuard.address,
-    },
-  };
+  versions[tag].date = new Date().toUTCString();
+  versions[tag].contracts.PoolLogic = poolLogic.address;
+  versions[tag].contracts.PoolManagerLogic = poolManagerLogic.address;
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("publish/mumbai/versions.json", data);
+  fs.writeFileSync("publish/polygon/versions.json", data);
 }
 
 main()
