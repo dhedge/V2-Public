@@ -52,8 +52,8 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.1.4",
-    "@openzeppelin/contracts": "^3.4.0",
-    "@openzeppelin/contracts-upgradeable": "^3.4.0",
+    "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
+    "@openzeppelin/contracts-upgradeable": "3.4.1-solc-0.7-2",
     "dotenv": "^8.2.0"
   }
 }
