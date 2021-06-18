@@ -20,8 +20,5 @@ coverage.json
 # VScode
 .vscode
 
-# Openzeppelin
-.openzeppelin
-
 # OVM
 cache-ovm

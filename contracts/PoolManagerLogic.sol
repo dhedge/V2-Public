@@ -185,7 +185,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint8 index = 0;
     for (uint8 i = 0; i < assetCount; i++) {
       if (supportedAssets[i].isDeposit) {
-        depositAssets[i] = supportedAssets[i].asset;
+        depositAssets[index] = supportedAssets[i].asset;
         index++;
       }
     }
@@ -228,6 +228,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     )
   {
     uint256 assetCount = supportedAssets.length;
+    assets = new Asset[](assetCount);
+    balances = new uint256[](assetCount);
+    rates = new uint256[](assetCount);
 
     for (uint8 i = 0; i < assetCount; i++) {
       address asset = supportedAssets[i].asset;

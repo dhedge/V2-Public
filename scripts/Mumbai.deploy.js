@@ -1,10 +1,10 @@
-const hre = require('hardhat')
-const fs = require('fs');
+const hre = require("hardhat");
+const fs = require("fs");
 const { getTag } = require("./Helpers");
 
 // Place holder addresses
-const KOVAN_ADDRESS_RESOLVER = '0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83';
-const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
+const KOVAN_ADDRESS_RESOLVER = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
+const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const sushiswapFactory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
@@ -29,36 +29,36 @@ const usdt_price_feed = "0x92C09849638959196E976289418e5973CC96d645";
 const dai_price_feed = "0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-async function main () {
-  const ethers = hre.ethers
-  const upgrades = hre.upgrades
+async function main() {
+  const ethers = hre.ethers;
+  const upgrades = hre.upgrades;
 
-  let network = await ethers.provider.getNetwork()
-  console.log('network:', network)
+  let network = await ethers.provider.getNetwork();
+  console.log("network:", network);
 
-  const signer = (await ethers.getSigners())[0]
+  const signer = (await ethers.getSigners())[0];
 
   // should be changed with real manager and dao address
-  const manager = (await ethers.getSigners())[0]
-  const dao = (await ethers.getSigners())[0]
+  const manager = (await ethers.getSigners())[0];
+  const dao = (await ethers.getSigners())[0];
 
-  console.log('signer address: ', signer.address)
-  console.log('manager address: ', manager.address)
-  console.log('dao address: ', dao.address)
+  console.log("signer address: ", signer.address);
+  console.log("manager address: ", manager.address);
+  console.log("dao address: ", dao.address);
 
-  const TestUSDT = await ethers.getContractFactory('TestUSDT');
+  const TestUSDT = await ethers.getContractFactory("TestUSDT");
   const tUSDT = await TestUSDT.deploy("1000000000");
   console.log("TestUSDT deployed at ", tUSDT.address);
 
-  const TestUSDC = await ethers.getContractFactory('TestUSDC');
+  const TestUSDC = await ethers.getContractFactory("TestUSDC");
   const tUSDC = await TestUSDC.deploy("1000000000");
   console.log("TestUSDC deployed at ", tUSDC.address);
 
-  const TestWETH = await ethers.getContractFactory('TestWETH');
+  const TestWETH = await ethers.getContractFactory("TestWETH");
   const tWETH = await TestWETH.deploy("1000000000");
   console.log("TestWETH deployed at ", tWETH.address);
 
-  const AssetHandlerLogic = await ethers.getContractFactory('AssetHandler');
+  const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   const poolLogic = await PoolLogic.deploy();
@@ -66,7 +66,7 @@ async function main () {
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
   const poolManagerLogic = await PoolManagerLogic.deploy();
-  console.log("PoolManagerLogic deployed at ", poolManagerLogic.address)
+  console.log("PoolManagerLogic deployed at ", poolManagerLogic.address);
 
   const PoolFactory = await ethers.getContractFactory("PoolFactory");
   poolFactory = await upgrades.deployProxy(PoolFactory, [
@@ -106,36 +106,35 @@ async function main () {
   let tag = await getTag();
   let versions = require("../publish/mumbai/versions.json");
   versions[tag] = {
-    "tag": tag,
-    "network": network,
-    "date": new Date().toUTCString(),
-    "contracts": {
-      "TestUSDT": tUSDT.address,
-      "TestUSDC": tUSDC.address,
-      "TestWETH": tWETH.address,
+    tag: tag,
+    network: network,
+    date: new Date().toUTCString(),
+    contracts: {
+      TestUSDT: tUSDT.address,
+      TestUSDC: tUSDC.address,
+      TestWETH: tWETH.address,
       "USDT-Aggregator": usdt_price_feed,
       "USDC-Aggregator": usdc_price_feed,
       "ETH-Aggregator": eth_price_feed,
-      "PoolFactoryProxy": poolFactory.address,
-      "PoolLogic": poolLogic.address,
-      "PoolManagerLogic": poolManagerLogic.address,
-      "AssetHandlerProxy": assetHandler.address,
-      "ERC20Guard": erc20Guard.address,
-      "UniswapV2RouterGuard": uniswapV2RouterGuard.address,
-    }
-  }
+      PoolFactoryProxy: poolFactory.address,
+      PoolLogic: poolLogic.address,
+      PoolManagerLogic: poolManagerLogic.address,
+      AssetHandlerProxy: assetHandler.address,
+      ERC20Guard: erc20Guard.address,
+      UniswapV2RouterGuard: uniswapV2RouterGuard.address,
+    },
+  };
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
-  console.log(data)
+  console.log(data);
 
-  fs.writeFileSync('publish/mumbai/versions.json', data);
+  fs.writeFileSync("publish/mumbai/versions.json", data);
 }
 
 main()
   .then(() => process.exit(0))
-  .catch(error => {
-    console.error(error)
-    process.exit(1)
-  })
-
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
