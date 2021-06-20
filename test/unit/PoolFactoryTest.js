@@ -428,6 +428,7 @@ describe("PoolFactory", function () {
           fundAddress,
           investor,
           assetDeposited,
+          amountDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -442,6 +443,7 @@ describe("PoolFactory", function () {
             fundAddress: fundAddress,
             investor: investor,
             assetDeposited: assetDeposited,
+            amountDeposited: amountDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -474,6 +476,7 @@ describe("PoolFactory", function () {
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
     expect(event.assetDeposited).to.equal(susd);
+    expect(event.amountDeposited).to.equal((100e18).toString());
     expect(event.valueDeposited).to.equal((100e18).toString());
     expect(event.fundTokensReceived).to.equal((100e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((100e18).toString());

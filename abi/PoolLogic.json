@@ -48,6 +48,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "amountDeposited",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "valueDeposited",
         "type": "uint256"
       },
