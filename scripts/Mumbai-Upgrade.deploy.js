@@ -3,7 +3,7 @@ const fs = require("fs");
 
 let versions = require("../publish/mumbai/versions.json");
 let tag = Object.keys(versions)[Object.keys(versions).length - 1];
-let version = Object.values(versions)[Object.values(versions).length - 1].contracts;
+let version = versions[tag].contracts;
 
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const sushiswapFactory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";

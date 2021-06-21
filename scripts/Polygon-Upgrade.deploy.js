@@ -4,7 +4,7 @@ const { getTag } = require("./Helpers");
 
 let versions = require("../publish/polygon/versions.json");
 let tag = Object.keys(versions)[Object.keys(versions).length - 1];
-let version = Object.values(versions)[Object.values(versions).length - 1].contracts;
+let version = versions[tag].contracts;
 
 async function main() {
   const ethers = hre.ethers;
