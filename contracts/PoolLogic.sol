@@ -95,7 +95,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 time
   );
 
+  event BeforeWithdrawal(
+    address fundAddress,
+    address asset,
+    uint256 portionAmount,
+    address to
+  );
+
   event TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time);
+
+  event BeforeTransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time);
 
   event PoolPrivacyUpdated(bool isPoolPrivate);
 
@@ -300,6 +309,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     (address stakingContract, bytes memory txData) =
       IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
     if (txData.length > 1) {
+      emit BeforeWithdrawal(address(this), asset, portion, to);
       (success, ) = stakingContract.call(txData);
       require(success, "failed to withdraw staked tokens");
     }
@@ -331,6 +341,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint8 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
+    emit BeforeTransactionExecuted(address(this), manager(), txType, block.timestamp);
     (success, ) = to.call(data);
     require(success, "failed to execute the call");
 
