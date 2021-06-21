@@ -143,6 +143,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     emit AssetAdded(poolLogic, manager, asset, isDeposit);
   }
 
+  /// @notice Remove asset from the pool
+  /// @dev Use true to remove from depositAsset, use false to remove the asset
+  /// @param _asset asset in struct Asset format
   function _removeAsset(Asset memory _asset) internal {
     address asset = _asset.asset;
     bool isDeposit = _asset.isDeposit;
