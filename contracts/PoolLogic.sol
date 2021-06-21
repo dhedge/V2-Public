@@ -95,12 +95,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 time
   );
 
-  event BeforeWithdrawal(
-    address fundAddress,
-    address asset,
-    uint256 portionAmount,
-    address to
-  );
+  event BeforeWithdrawal(address fundAddress, address asset, uint256 portionAmount, address to);
 
   event TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time);
 
