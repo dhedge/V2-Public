@@ -263,6 +263,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
+    // Reduce length for withdrawnAssets to remove the empty items
     uint256 reduceLength = assetCount.sub(index);
     assembly {
       mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
