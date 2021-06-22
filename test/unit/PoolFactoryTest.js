@@ -631,9 +631,7 @@ describe("PoolFactory", function () {
     expect(numberOfDepositAssets).to.be.equal(1);
 
     // Can not remove persist asset
-    await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith(
-      "only manager or trader",
-    );
+    await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith("only manager or trader");
 
     // Can't add invalid asset
     let invalid_synth_asset = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
