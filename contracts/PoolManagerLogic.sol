@@ -143,6 +143,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     emit AssetAdded(poolLogic, manager, asset, isDeposit);
   }
 
+  /// @notice Remove asset from the pool
+  /// @dev Use true to remove from depositAsset, use false to remove the asset
+  /// @param _asset asset in struct Asset format
   function _removeAsset(Asset memory _asset) internal {
     address asset = _asset.asset;
     bool isDeposit = _asset.isDeposit;
@@ -185,7 +188,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint8 index = 0;
     for (uint8 i = 0; i < assetCount; i++) {
       if (supportedAssets[i].isDeposit) {
-        depositAssets[i] = supportedAssets[i].asset;
+        depositAssets[index] = supportedAssets[i].asset;
         index++;
       }
     }
@@ -228,6 +231,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     )
   {
     uint256 assetCount = supportedAssets.length;
+    assets = new Asset[](assetCount);
+    balances = new uint256[](assetCount);
+    rates = new uint256[](assetCount);
 
     for (uint8 i = 0; i < assetCount; i++) {
       address asset = supportedAssets[i].asset;

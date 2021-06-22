@@ -86,7 +86,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
       uint256 withdrawAmount = stakedBalance.mul(withdrawPortion).div(10**18);
       if (withdrawAmount > 0) {
         txData = abi.encodeWithSelector(
-          bytes4(keccak256("withdrawAndHarvest(uint256, uint256, address)")),
+          bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)")),
           sushiPoolId,
           withdrawAmount,
           to
