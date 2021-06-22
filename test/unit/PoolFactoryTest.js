@@ -626,8 +626,12 @@ describe("PoolFactory", function () {
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(3);
 
+    depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
+    numberOfDepositAssets = depositAssets.length;
+    expect(numberOfDepositAssets).to.be.equal(1);
+
     // Can not remove persist asset
-    await expect(poolManagerLogicUser1Proxy.changeAssets([], [[slink, false]])).to.be.revertedWith(
+    await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith(
       "only manager or trader",
     );
 
@@ -642,34 +646,29 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1);
 
-    await expect(poolManagerLogicManagerProxy.changeAssets([], [[slink, false]])).to.be.revertedWith(
+    await expect(poolManagerLogicManagerProxy.changeAssets([], [slink])).to.be.revertedWith(
       "revert cannot remove non-empty asset",
     );
 
-    // Can remove asset
-    await slinkProxy.givenCalldataReturnUint(balanceOfABI, 0);
-    await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]);
-
-    supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
-    numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
-
+    // Can enable deposit asset
     await poolManagerLogicManagerProxy.changeAssets([[slink, true]], []);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.true;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
     numberOfDepositAssets = depositAssets.length;
-
     expect(numberOfDepositAssets).to.be.equal(2);
-    await poolManagerLogicManagerProxy.changeAssets([], [[slink, true]]);
+
+    // Can disable deposit asset
+    await poolManagerLogicManagerProxy.changeAssets([[slink, false]], []);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
     numberOfDepositAssets = depositAssets.length;
-
     expect(numberOfDepositAssets).to.be.equal(1);
-    await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]);
+
+    // Can remove asset
+    await slinkProxy.givenCalldataReturnUint(balanceOfABI, 0);
+    await poolManagerLogicManagerProxy.changeAssets([], [slink]);
 
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
@@ -1525,10 +1524,10 @@ describe("PoolFactory", function () {
       ]);
 
       // Disable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([], [[sushiToken.address, false]]);
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [sushiToken.address]);
 
       // Disable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([], [[wmaticToken.address, false]]);
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [wmaticToken.address]);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
