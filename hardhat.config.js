@@ -1,12 +1,12 @@
-require('dotenv').config();
+require("dotenv").config();
 // require('@eth-optimism/plugins/hardhat/compiler');
 // require('@eth-optimism/plugins/hardhat/ethers');
 require("@eth-optimism/hardhat-ovm");
-require('hardhat-gas-reporter');
-require('hardhat-abi-exporter');
-require('@nomiclabs/hardhat-waffle');
-require('solidity-coverage');
-require('@openzeppelin/hardhat-upgrades');
+require("hardhat-gas-reporter");
+require("hardhat-abi-exporter");
+require("@nomiclabs/hardhat-waffle");
+require("solidity-coverage");
+require("@openzeppelin/hardhat-upgrades");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -16,14 +16,14 @@ require('@openzeppelin/hardhat-upgrades');
  */
 
 module.exports = {
-  defaultNetwork: 'kovan-optimism',
+  defaultNetwork: "kovan-optimism",
   gasReporter: {
     showTimeSpent: true,
-    currency: 'USD',
+    currency: "USD",
   },
   networks: {
-    'kovan-optimism': {
-      url: process.env.KOVAN_OVM_URL || 'https://kovan.optimism.io',
+    "kovan-optimism": {
+      url: process.env.KOVAN_OVM_URL || "https://kovan.optimism.io",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 0,
       ovm: true,
@@ -45,7 +45,7 @@ module.exports = {
     },
   },
   ovm: {
-    solcVersion: '0.7.6',
+    solcVersion: "0.7.6",
     settings: {
       optimizer: {
         enabled: true,
@@ -54,7 +54,7 @@ module.exports = {
     },
   },
   solidity: {
-    version: '0.7.6',
+    version: "0.7.6",
     settings: {
       optimizer: {
         enabled: true,
@@ -66,10 +66,21 @@ module.exports = {
     timeout: false,
   },
   abiExporter: {
-    path: './abi',
+    path: "./abi",
     clear: true,
     flat: true,
-    only: ['PoolFactory', 'PoolLogic', 'PoolManagerLogic', 'AssetHandler', 'UniswapV3SwapGuard', 'ERC20Guard', 'SynthetixGuard', 'UniswapV2RouterGuard'],
-    spacing: 2
-  }
+    only: [
+      "PoolFactory",
+      "PoolLogic",
+      "PoolManagerLogic",
+      "AssetHandler",
+      "UniswapV3SwapGuard",
+      "ERC20Guard",
+      "SynthetixGuard",
+      "AaveLendingPoolGuard",
+      "UniswapV2RouterGuard",
+      "UniswapV3SwapGuard",
+    ],
+    spacing: 2,
+  },
 };
