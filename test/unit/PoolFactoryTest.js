@@ -1686,6 +1686,7 @@ describe("PoolFactory", function () {
       expect(withdrawSUSD[2]).to.equal(false);
       expect(withdrawLP[0]).to.equal(sushiLPLinkWeth);
       expect(withdrawLP[2]).to.equal(true);
+      expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
 
       expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
