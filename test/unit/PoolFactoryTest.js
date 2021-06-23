@@ -428,6 +428,7 @@ describe("PoolFactory", function () {
           fundAddress,
           investor,
           assetDeposited,
+          amountDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -442,6 +443,7 @@ describe("PoolFactory", function () {
             fundAddress: fundAddress,
             investor: investor,
             assetDeposited: assetDeposited,
+            amountDeposited: amountDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -474,6 +476,7 @@ describe("PoolFactory", function () {
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
     expect(event.assetDeposited).to.equal(susd);
+    expect(event.amountDeposited).to.equal((100e18).toString());
     expect(event.valueDeposited).to.equal((100e18).toString());
     expect(event.fundTokensReceived).to.equal((100e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((100e18).toString());
@@ -493,6 +496,7 @@ describe("PoolFactory", function () {
           totalInvestorFundTokens,
           fundValue,
           totalSupply,
+          withdrawnAssets,
           time,
           event,
         ) => {
@@ -506,6 +510,7 @@ describe("PoolFactory", function () {
             totalInvestorFundTokens: totalInvestorFundTokens,
             fundValue: fundValue,
             totalSupply: totalSupply,
+            withdrawnAssets: withdrawnAssets,
             time: time,
           });
         },
@@ -548,6 +553,10 @@ describe("PoolFactory", function () {
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
     expect(event.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
     expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
+    let withdrawnAsset = event.withdrawnAssets[0];
+    expect(withdrawnAsset[0]).to.equal(susd);
+    expect(withdrawnAsset[1].toString()).to.equal(withdrawAmount.toString());
+    expect(withdrawnAsset[2]).to.equal(false);
   });
 
   it("should be able to manage pool", async function () {
@@ -1571,6 +1580,7 @@ describe("PoolFactory", function () {
             totalInvestorFundTokens,
             fundValue,
             totalSupply,
+            withdrawnAssets,
             time,
             event,
           ) => {
@@ -1584,6 +1594,7 @@ describe("PoolFactory", function () {
               totalInvestorFundTokens: totalInvestorFundTokens,
               fundValue: fundValue,
               totalSupply: totalSupply,
+              withdrawnAssets: withdrawnAssets,
               time: time,
             });
           },
@@ -1668,6 +1679,14 @@ describe("PoolFactory", function () {
       expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
       expect(eventWithdrawal.totalSupply).to.equal((totalSupply - withdrawAmount).toString());
+
+      let withdrawSUSD = eventWithdrawal.withdrawnAssets[0];
+      let withdrawLP = eventWithdrawal.withdrawnAssets[1];
+      expect(withdrawSUSD[0]).to.equal(susd);
+      expect(withdrawSUSD[2]).to.equal(false);
+      expect(withdrawLP[0]).to.equal(sushiLPLinkWeth);
+      expect(withdrawLP[2]).to.equal(true);
+      expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
 
       expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);

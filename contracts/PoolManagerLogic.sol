@@ -192,7 +192,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
         index++;
       }
     }
-    uint256 reduceLength = assetCount - index;
+    // Reduce length for withdrawnAssets to remove the empty items
+    uint256 reduceLength = assetCount.sub(index);
     assembly {
       mstore(depositAssets, sub(mload(depositAssets), reduceLength))
     }
