@@ -336,7 +336,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       }, 60000);
     });
 
-    await poolManagerLogicProxy.connect(manager).changeAssets([[usdt, false]], [[weth, false]]);
+    await poolManagerLogicProxy.connect(manager).changeAssets([[usdt, false]], [weth]);
 
     const sourceAmount = (50e6).toString();
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
