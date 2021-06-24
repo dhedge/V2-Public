@@ -416,5 +416,62 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
+
+    it("Should be able to withdraw amusdc and receive usdc", async () => {
+      const amount = (100e6).toString();
+
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+      let withdrawABI = iLendingPool.encodeFunctionData("withdraw", [usdc, amount, poolLogicProxy.address]);
+
+      await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, withdrawABI)).to.be.revertedWith(
+        "non-zero address is required",
+      );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, withdrawABI),
+      ).to.be.revertedWith("invalid destination");
+
+      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [amusdt, amount, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
+        "unsupported withdraw asset",
+      );
+      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [usdc, amount, usdc]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
+        "recipient is not pool",
+      );
+
+      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [usdc, amount, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(usdc, withdrawABI)).to.be.revertedWith(
+        "invalid transaction",
+      );
+
+      // await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
+      //   "failed to execute the call",
+      // );
+
+      // // approve usdc
+      // const IERC20 = await hre.artifacts.readArtifact("IERC20");
+      // const iERC20 = new ethers.utils.Interface(IERC20.abi);
+      // let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
+      // await poolLogicProxy.connect(manager).execTransaction(amusdc, approveABI);
+
+      const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+      const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      // withdraw
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI);
+
+      const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+      const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
+      console.log(usdcBalanceBefore.toString(), usdcBalanceAfter.toString());
+      console.log(amusdcBalanceBefore.toString(), amusdcBalanceAfter.toString());
+      expect(ethers.BigNumber.from(usdcBalanceBefore).add(amount)).to.be.equal(usdcBalanceAfter);
+      expect(ethers.BigNumber.from(amusdcBalanceBefore).sub(amount)).to.be.equal(amusdcBalanceAfter);
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
   });
 });

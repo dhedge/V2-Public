@@ -48,6 +48,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
   event Deposit(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
+  event Withdraw(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
 
   address protocolDataProvider;
 
@@ -91,6 +92,25 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit Deposit(poolManagerLogic.poolLogic(), depositAsset, to, amount, block.timestamp);
 
       txType = 9; // Aave `Deposit` type
+      return txType;
+    } else if (method == bytes4(keccak256("withdraw(address,uint256,address)"))) {
+      address withdrawAsset = convert32toAddress(getInput(data, 0));
+      uint256 amount = uint256(getInput(data, 1));
+      address onBehalfOf = convert32toAddress(getInput(data, 2));
+      (address aToken, , ) = IAaveProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(withdrawAsset);
+
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
+      require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported withdraw asset");
+
+      require(poolManagerLogicAssets.isSupportedAsset(aToken), "unsupported aave interest bearing token");
+
+      require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
+
+      emit Withdraw(poolManagerLogic.poolLogic(), withdrawAsset, to, amount, block.timestamp);
+
+      txType = 10; // Aave `Withdraw` type
       return txType;
     }
   }
