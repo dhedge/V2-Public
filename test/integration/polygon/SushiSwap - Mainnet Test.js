@@ -851,6 +851,7 @@ describe("Sushiswap V2 Test", function () {
             totalInvestorFundTokens,
             fundValue,
             totalSupply,
+            withdrawnAssets,
             time,
             event,
           ) => {
@@ -864,6 +865,7 @@ describe("Sushiswap V2 Test", function () {
               totalInvestorFundTokens: totalInvestorFundTokens,
               fundValue: fundValue,
               totalSupply: totalSupply,
+              withdrawnAssets: withdrawnAssets,
               time: time,
             });
           },
