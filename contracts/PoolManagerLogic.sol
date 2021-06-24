@@ -57,7 +57,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   using AddressUpgradeable for address;
 
   event AssetAdded(address indexed fundAddress, address manager, address asset, bool isDeposit);
-  event AssetRemoved(address fundAddress, address manager, address asset, bool isDeposit);
+  event AssetRemoved(address fundAddress, address manager, address asset);
 
   event ManagerFeeSet(address fundAddress, address manager, uint256 numerator, uint256 denominator);
 
@@ -79,9 +79,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function initialize(
     address _factory,
     address _manager,
-    string memory _managerName,
+    string calldata _managerName,
     address _poolLogic,
-    Asset[] memory _supportedAssets
+    Asset[] calldata _supportedAssets
   ) public initializer {
     require(_factory != address(0), "Invalid factory");
     require(_manager != address(0), "Invalid manager");
@@ -91,7 +91,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     factory = _factory;
     poolLogic = _poolLogic;
 
-    _changeAssets(_supportedAssets, new Asset[](0));
+    _changeAssets(_supportedAssets, new address[](0));
   }
 
   function isSupportedAsset(address asset) public view override returns (bool) {
@@ -108,11 +108,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return IHasAssetInfo(factory).isValidAsset(asset);
   }
 
-  function changeAssets(Asset[] memory _addAssets, Asset[] memory _removeAssets) public onlyManagerOrTrader {
+  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets) external onlyManagerOrTrader {
     _changeAssets(_addAssets, _removeAssets);
   }
 
-  function _changeAssets(Asset[] memory _addAssets, Asset[] memory _removeAssets) internal {
+  function _changeAssets(Asset[] calldata _addAssets, address[] memory _removeAssets) internal {
     for (uint8 i = 0; i < _removeAssets.length; i++) {
       _removeAsset(_removeAssets[i]);
     }
@@ -126,7 +126,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     require(getDepositAssets().length >= 1, "at least one deposit asset");
   }
 
-  function _addAsset(Asset memory _asset) internal {
+  function _addAsset(Asset calldata _asset) internal {
     address asset = _asset.asset;
     bool isDeposit = _asset.isDeposit;
 
@@ -140,35 +140,30 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       assetPosition[asset] = supportedAssets.length;
     }
 
-    emit AssetAdded(poolLogic, manager(), asset, isDeposit);
+    emit AssetAdded(poolLogic, manager, asset, isDeposit);
   }
 
-  function _removeAsset(Asset memory _asset) internal {
-    address asset = _asset.asset;
-    bool isDeposit = _asset.isDeposit;
-
+  /// @notice Remove asset from the pool
+  /// @dev use asset address to remove from supportedAssets
+  /// @param asset asset address
+  function _removeAsset(address asset) internal {
     require(isSupportedAsset(asset), "asset not supported");
 
+    require(assetBalance(asset) == 0, "cannot remove non-empty asset");
+
+    uint256 length = supportedAssets.length;
+    Asset memory lastAsset = supportedAssets[length.sub(1)];
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
 
-    if (isDeposit) {
-      supportedAssets[index].isDeposit = false;
-    } else {
-      require(assetBalance(asset) == 0, "cannot remove non-empty asset");
+    // overwrite the asset to be removed with the last supported asset
+    supportedAssets[index] = lastAsset;
+    assetPosition[lastAsset.asset] = index.add(1); // adjusting the index to be 1-based
+    assetPosition[asset] = 0; // update the map
 
-      uint256 length = supportedAssets.length;
-      Asset memory lastAsset = supportedAssets[length.sub(1)];
+    // delete the last supported asset and resize the array
+    supportedAssets.pop();
 
-      // overwrite the asset to be removed with the last supported asset
-      supportedAssets[index] = lastAsset;
-      assetPosition[lastAsset.asset] = index.add(1); // adjusting the index to be 1-based
-      assetPosition[asset] = 0; // update the map
-
-      // delete the last supported asset and resize the array
-      supportedAssets.pop();
-    }
-
-    emit AssetRemoved(poolLogic, manager(), asset, isDeposit);
+    emit AssetRemoved(poolLogic, manager, asset);
   }
 
   /// @notice Get all the supported assets
@@ -185,11 +180,12 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint8 index = 0;
     for (uint8 i = 0; i < assetCount; i++) {
       if (supportedAssets[i].isDeposit) {
-        depositAssets[i] = supportedAssets[i].asset;
+        depositAssets[index] = supportedAssets[i].asset;
         index++;
       }
     }
-    uint256 reduceLength = assetCount - index;
+    // Reduce length for withdrawnAssets to remove the empty items
+    uint256 reduceLength = assetCount.sub(index);
     assembly {
       mstore(depositAssets, sub(mload(depositAssets), reduceLength))
     }
@@ -228,6 +224,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     )
   {
     uint256 assetCount = supportedAssets.length;
+    assets = new Asset[](assetCount);
+    balances = new uint256[](assetCount);
+    rates = new uint256[](assetCount);
 
     for (uint8 i = 0; i < assetCount; i++) {
       address asset = supportedAssets[i].asset;
@@ -248,7 +247,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(poolLogic);
 
-    emit ManagerFeeSet(poolLogic, manager(), managerFeeNumerator, managerFeeDenominator);
+    emit ManagerFeeSet(poolLogic, manager, managerFeeNumerator, managerFeeDenominator);
   }
 
   function announceManagerFeeIncrease(uint256 numerator) public onlyManager {
@@ -292,7 +291,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     IHasFeeInfo(factory).setPoolManagerFeeNumerator(poolLogic, numerator);
 
-    emit ManagerFeeSet(poolLogic, manager(), numerator, managerFeeDenominator);
+    emit ManagerFeeSet(poolLogic, manager, numerator, managerFeeDenominator);
   }
 
   function getManagerFeeIncreaseInfo() public view returns (uint256, uint256) {

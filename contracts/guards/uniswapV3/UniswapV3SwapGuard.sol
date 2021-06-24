@@ -69,8 +69,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
       uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
       bytes memory path = getBytes(data, 0, offset); // requires an offset due to dynamic Struct/tuple in calldata (abiencoder V2)
-      bytes memory firstPool = path.getFirstPool();
-      address srcAsset = firstPool.getPoolAddress();
+      bytes memory thePool = path.getFirstPool();
+      address srcAsset = thePool.getPoolAddress();
       uint256 srcAmount = uint256(getInput(data, 4));
       address dstAsset;
       bool hasMultiplePools = path.hasMultiplePools();

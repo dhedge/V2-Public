@@ -68,6 +68,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address fundAddress,
     address investor,
     address assetDeposited,
+    uint256 amountDeposited,
     uint256 valueDeposited,
     uint256 fundTokensReceived,
     uint256 totalInvestorFundTokens,
@@ -75,6 +76,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 totalSupply,
     uint256 time
   );
+
+  struct WithdrawnAsset {
+    address asset;
+    uint256 amount;
+    bool withdrawProcessed;
+  }
+
   event Withdrawal(
     address fundAddress,
     address investor,
@@ -83,8 +91,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 totalInvestorFundTokens,
     uint256 fundValue,
     uint256 totalSupply,
+    WithdrawnAsset[] withdrawnAssets,
     uint256 time
   );
+
   event TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time);
 
   event PoolPrivacyUpdated(bool isPoolPrivate);
@@ -202,6 +212,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       address(this),
       msg.sender,
       _asset,
+      _amount,
       usdAmount,
       liquidityMinted,
       balanceOf(msg.sender),
@@ -226,20 +237,36 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     //first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogic);
-    IHasSupportedAsset.Asset[] memory _supportedAssets = poolManagerLogicAssets.getSupportedAssets();
+    // TODO: Combining into one line to fix stack too deep,
+    //       need to refactor some variables into struct in order to have more variables
+    IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     uint256 assetCount = _supportedAssets.length;
+    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
+    uint8 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
       address asset = _supportedAssets[i].asset;
       uint256 totalAssetBalance = IERC20Upgradeable(asset).balanceOf(address(this));
       uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
+      bool withdrawProcessed = _withdrawProcessing(asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
         IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
+
+        withdrawnAssets[index] = WithdrawnAsset({
+          asset: asset,
+          amount: portionOfAssetBalance,
+          withdrawProcessed: withdrawProcessed
+        });
+        index++;
       }
-      _withdrawProcessing(asset, msg.sender, portion);
+    }
+
+    // Reduce length for withdrawnAssets to remove the empty items
+    uint256 reduceLength = assetCount.sub(index);
+    assembly {
+      mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
     }
 
     uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
@@ -252,6 +279,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       balanceOf(msg.sender),
       fundValue.sub(valueWithdrawn),
       totalSupply(),
+      withdrawnAssets,
       block.timestamp
     );
   }
@@ -261,18 +289,19 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param asset Asset for withdrawal processing
   /// @param to Investor account to send withdrawed tokens to
   /// @param portion Portion of investor withdrawal of the total dHedge pool
+  /// @return success A boolean for success or fail transaction
   function _withdrawProcessing(
     address asset,
     address to,
     uint256 portion
-  ) internal {
+  ) internal returns (bool success) {
     // Withdraw any external tokens (eg. staked tokens in other contracts)
     address guard = IHasGuardInfo(factory).getGuard(asset);
     require(guard != address(0), "invalid guard");
     (address stakingContract, bytes memory txData) =
       IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
     if (txData.length > 1) {
-      (bool success, ) = stakingContract.call(txData);
+      (success, ) = stakingContract.call(txData);
       require(success, "failed to withdraw staked tokens");
     }
   }
@@ -281,13 +310,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @dev execute transaction for the pool
   /// @param to The destination address for pool to talk to
   /// @param data The data that going to send in the transaction
-  /// @return A boolean for success or fail transaction
+  /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data)
     public
     onlyManagerOrTrader
     nonReentrant
     whenNotPaused
-    returns (bool)
+    returns (bool success)
   {
     require(to != address(0), "non-zero address is required");
 
@@ -303,12 +332,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint8 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
-    (bool success, ) = to.call(data);
+    (success, ) = to.call(data);
     require(success, "failed to execute the call");
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
-
-    return true;
   }
 
   function getFundSummary()
