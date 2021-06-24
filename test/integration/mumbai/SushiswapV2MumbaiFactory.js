@@ -112,6 +112,7 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
           fundAddress,
           investor,
           assetDeposited,
+          amountDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -126,6 +127,7 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
             fundAddress: fundAddress,
             investor: investor,
             assetDeposited: assetDeposited,
+            amountDeposited: amountDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -309,6 +311,7 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
           totalInvestorFundTokens,
           fundValue,
           totalSupply,
+          withdrawnAssets,
           time,
           event,
         ) => {
@@ -322,6 +325,7 @@ describe("Sushiswap V2 Test Mumbai Fork", function () {
             totalInvestorFundTokens: totalInvestorFundTokens,
             fundValue: fundValue,
             totalSupply: totalSupply,
+            withdrawnAssets: withdrawnAssets,
             time: time,
           });
         },
