@@ -428,6 +428,7 @@ describe("PoolFactory", function () {
           fundAddress,
           investor,
           assetDeposited,
+          amountDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -442,6 +443,7 @@ describe("PoolFactory", function () {
             fundAddress: fundAddress,
             investor: investor,
             assetDeposited: assetDeposited,
+            amountDeposited: amountDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -474,6 +476,7 @@ describe("PoolFactory", function () {
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
     expect(event.assetDeposited).to.equal(susd);
+    expect(event.amountDeposited).to.equal((100e18).toString());
     expect(event.valueDeposited).to.equal((100e18).toString());
     expect(event.fundTokensReceived).to.equal((100e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((100e18).toString());
@@ -493,6 +496,7 @@ describe("PoolFactory", function () {
           totalInvestorFundTokens,
           fundValue,
           totalSupply,
+          withdrawnAssets,
           time,
           event,
         ) => {
@@ -506,6 +510,7 @@ describe("PoolFactory", function () {
             totalInvestorFundTokens: totalInvestorFundTokens,
             fundValue: fundValue,
             totalSupply: totalSupply,
+            withdrawnAssets: withdrawnAssets,
             time: time,
           });
         },
@@ -548,6 +553,10 @@ describe("PoolFactory", function () {
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
     expect(event.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
     expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
+    let withdrawnAsset = event.withdrawnAssets[0];
+    expect(withdrawnAsset[0]).to.equal(susd);
+    expect(withdrawnAsset[1].toString()).to.equal(withdrawAmount.toString());
+    expect(withdrawnAsset[2]).to.equal(false);
   });
 
   it("should be able to manage pool", async function () {
@@ -626,10 +635,12 @@ describe("PoolFactory", function () {
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(3);
 
+    depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
+    numberOfDepositAssets = depositAssets.length;
+    expect(numberOfDepositAssets).to.be.equal(1);
+
     // Can not remove persist asset
-    await expect(poolManagerLogicUser1Proxy.changeAssets([], [[slink, false]])).to.be.revertedWith(
-      "only manager or trader",
-    );
+    await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith("only manager or trader");
 
     // Can't add invalid asset
     let invalid_synth_asset = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
@@ -642,34 +653,29 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1);
 
-    await expect(poolManagerLogicManagerProxy.changeAssets([], [[slink, false]])).to.be.revertedWith(
+    await expect(poolManagerLogicManagerProxy.changeAssets([], [slink])).to.be.revertedWith(
       "revert cannot remove non-empty asset",
     );
 
-    // Can remove asset
-    await slinkProxy.givenCalldataReturnUint(balanceOfABI, 0);
-    await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]);
-
-    supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
-    numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
-
+    // Can enable deposit asset
     await poolManagerLogicManagerProxy.changeAssets([[slink, true]], []);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.true;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
     numberOfDepositAssets = depositAssets.length;
-
     expect(numberOfDepositAssets).to.be.equal(2);
-    await poolManagerLogicManagerProxy.changeAssets([], [[slink, true]]);
+
+    // Can disable deposit asset
+    await poolManagerLogicManagerProxy.changeAssets([[slink, false]], []);
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
     numberOfDepositAssets = depositAssets.length;
-
     expect(numberOfDepositAssets).to.be.equal(1);
-    await poolManagerLogicManagerProxy.changeAssets([], [[slink, false]]);
+
+    // Can remove asset
+    await slinkProxy.givenCalldataReturnUint(balanceOfABI, 0);
+    await poolManagerLogicManagerProxy.changeAssets([], [slink]);
 
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
@@ -1525,10 +1531,10 @@ describe("PoolFactory", function () {
       ]);
 
       // Disable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([], [[sushiToken.address, false]]);
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [sushiToken.address]);
 
       // Disable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([], [[wmaticToken.address, false]]);
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [wmaticToken.address]);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
@@ -1571,6 +1577,7 @@ describe("PoolFactory", function () {
             totalInvestorFundTokens,
             fundValue,
             totalSupply,
+            withdrawnAssets,
             time,
             event,
           ) => {
@@ -1584,6 +1591,7 @@ describe("PoolFactory", function () {
               totalInvestorFundTokens: totalInvestorFundTokens,
               fundValue: fundValue,
               totalSupply: totalSupply,
+              withdrawnAssets: withdrawnAssets,
               time: time,
             });
           },
@@ -1668,6 +1676,14 @@ describe("PoolFactory", function () {
       expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
       expect(eventWithdrawal.totalSupply).to.equal((totalSupply - withdrawAmount).toString());
+
+      let withdrawSUSD = eventWithdrawal.withdrawnAssets[0];
+      let withdrawLP = eventWithdrawal.withdrawnAssets[1];
+      expect(withdrawSUSD[0]).to.equal(susd);
+      expect(withdrawSUSD[2]).to.equal(false);
+      expect(withdrawLP[0]).to.equal(sushiLPLinkWeth);
+      expect(withdrawLP[2]).to.equal(true);
+      expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
 
       expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);

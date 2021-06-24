@@ -48,6 +48,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "amountDeposited",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "valueDeposited",
         "type": "uint256"
       },
@@ -262,6 +268,29 @@
         "type": "uint256"
       },
       {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "asset",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "withdrawProcessed",
+            "type": "bool"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct PoolLogic.WithdrawnAsset[]",
+        "name": "withdrawnAssets",
+        "type": "tuple[]"
+      },
+      {
         "indexed": false,
         "internalType": "uint256",
         "name": "time",
@@ -455,7 +484,7 @@
     "outputs": [
       {
         "internalType": "bool",
-        "name": "",
+        "name": "success",
         "type": "bool"
       }
     ],
