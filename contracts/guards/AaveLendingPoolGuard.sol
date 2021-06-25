@@ -49,15 +49,16 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
   event Deposit(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Withdraw(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
+  event SetUserUseReserveAsCollateral(address fundAddress, address asset, bool useAsCollateral, uint256 time);
 
-  address protocolDataProvider;
+  address public protocolDataProvider;
 
   constructor(address _protocolDataProvider) {
     protocolDataProvider = _protocolDataProvider;
   }
 
   /// @notice Transaction guard for Synthetix Exchanger
-  /// @dev It supports Deposit, Withdraw, Borrow, Repay functionality
+  /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay functionality
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
@@ -111,6 +112,19 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit Withdraw(poolManagerLogic.poolLogic(), withdrawAsset, to, amount, block.timestamp);
 
       txType = 10; // Aave `Withdraw` type
+      return txType;
+    } else if (method == bytes4(keccak256("setUserUseReserveAsCollateral(address,bool)"))) {
+      address asset = convert32toAddress(getInput(data, 0));
+      bool useAsCollateral = uint256(getInput(data, 1)) != 0;
+
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
+      require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
+
+      emit SetUserUseReserveAsCollateral(poolManagerLogic.poolLogic(), asset, useAsCollateral, block.timestamp);
+
+      txType = 11; // Aave `SetUserUseReserveAsCollateral` type
       return txType;
     }
   }

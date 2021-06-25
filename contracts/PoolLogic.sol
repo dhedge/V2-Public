@@ -41,6 +41,7 @@
 // 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
 // 9. Deposit: Aave deposit tokens -> get Aave Interest Bearing Token
 // 10. Withdraw: Withdraw tokens from Aave Interest Bearing Token
+// 10. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
 
 // SPDX-License-Identifier: BUSL-1.1
 
