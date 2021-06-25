@@ -104,7 +104,7 @@ async function main() {
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("publish/mumbai/versions.json", data);
+  fs.writeFileSync("../../publish/mumbai/versions.json", data);
 }
 
 main()

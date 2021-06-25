@@ -149,7 +149,7 @@ async function main() {
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("publish/polygon/versions.json", data);
+  fs.writeFileSync("../../publish/polygon/versions.json", data);
 }
 
 main()

@@ -34,12 +34,33 @@
       "USDT-Aggregator": "0x92C09849638959196E976289418e5973CC96d645",
       "USDC-Aggregator": "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0",
       "ETH-Aggregator": "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
-      "PoolFactoryProxy": "0xeec15f2716c7a98fFe14F7aD0dEeC93962aF4437",
+      "PoolFactoryProxy": "0x1F2C6E90F3DF741E0191eAbB1170f0B9673F12b3",
       "PoolLogicProxy": "0x64C2025d67c58915D75542c70C4eB678f9eD96C6",
       "PoolManagerLogicProxy": "0xAABAFA725E7018581ca5d8c5cb2EcD91256E284E",
       "AssetHandlerProxy": "0xB341c71d9413Ecf3731c6311fecc8d4d5d2c451a",
       "ERC20Guard": "0x1928D9de962Ce05d46629863d6BF2fEbe49dD336",
       "UniswapV2RouterGuard": "0xF1f310360736133A57c193263A1500EA5B77a697"
     }
+  },
+  "v2.0.0-rc.5": {
+    "contracts": {
+      "TestUSDT": "0x9B8D42B4BFD869f061bc6Be17e0669A9EB7653c6",
+      "TestUSDC": "0x9D4Dc547d9c1822aEd5b6e19025894d1B7A54036",
+      "TestWETH": "0x21d867E9089d07570c682B9186697E2E326CEc8a",
+      "USDT-Aggregator": "0x92C09849638959196E976289418e5973CC96d645",
+      "USDC-Aggregator": "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0",
+      "ETH-Aggregator": "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
+      "PoolFactoryProxy": "0x1F2C6E90F3DF741E0191eAbB1170f0B9673F12b3",
+      "PoolLogicProxy": "0x64C2025d67c58915D75542c70C4eB678f9eD96C6",
+      "PoolManagerLogicProxy": "0xAABAFA725E7018581ca5d8c5cb2EcD91256E284E",
+      "AssetHandlerProxy": "0xB341c71d9413Ecf3731c6311fecc8d4d5d2c451a",
+      "ERC20Guard": "0x1928D9de962Ce05d46629863d6BF2fEbe49dD336",
+      "UniswapV2RouterGuard": "0xF1f310360736133A57c193263A1500EA5B77a697"
+    },
+    "network": {
+      "chainId": 31337,
+      "name": "localhost"
+    },
+    "date": "Fri, 25 Jun 2021 03:12:21 GMT"
   }
 }
