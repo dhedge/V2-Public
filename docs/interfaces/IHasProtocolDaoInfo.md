@@ -1,0 +1,14 @@
+## `IHasProtocolDaoInfo`
+
+
+
+
+
+
+### `owner() → address` (external)
+
+
+
+
+
+

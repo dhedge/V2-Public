@@ -1,0 +1,14 @@
+## `IHasPausable`
+
+
+
+
+
+
+### `isPaused() → bool` (external)
+
+
+
+
+
+
