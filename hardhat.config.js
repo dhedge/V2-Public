@@ -7,6 +7,7 @@ require("hardhat-abi-exporter");
 require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
+require("./scripts/upgrade.js");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -35,12 +36,14 @@ module.exports = {
     },
     polygon: {
       chainId: 137,
-      url: "https://rpc-mainnet.maticvigil.com/",
+      url: "https://rpc-mainnet.maticvigil.com/v1/" + process.env.MATIC_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {
       chainId: 80001,
-      url: "https://rpc-mumbai.maticvigil.com/",
+      url: process.env.MUMBAI_URL
+        ? process.env.MUMBAI_URL
+        : "https://rpc-mumbai.maticvigil.com/v1/" + process.env.MATIC_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
