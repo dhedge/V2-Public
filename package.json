@@ -21,6 +21,7 @@
     "coverage:unit": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --testfiles \"test/unit/*.js\" --network hardhat",
     "deploy:ovm": "node scripts/DHedge.deploy.js",
     "deploy:mumbai": "hardhat run ./scripts/Mumbai.deploy.js --network mumbai",
+    "doc:gen": "solidity-docgen --solc-module solc-0.7 -t templates",
     "prepare": "husky install"
   },
   "author": "dHEDGE Team",
