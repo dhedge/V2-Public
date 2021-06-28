@@ -1,13 +1,13 @@
-require('dotenv').config();
+require("dotenv").config();
 // require('@eth-optimism/plugins/hardhat/compiler');
 // require('@eth-optimism/plugins/hardhat/ethers');
 require("@eth-optimism/hardhat-ovm");
-require('hardhat-gas-reporter');
-require('hardhat-abi-exporter');
-require('@nomiclabs/hardhat-waffle');
-require('solidity-coverage');
-require('@openzeppelin/hardhat-upgrades');
-require('./scripts/upgrade.js');
+require("hardhat-gas-reporter");
+require("hardhat-abi-exporter");
+require("@nomiclabs/hardhat-waffle");
+require("solidity-coverage");
+require("@openzeppelin/hardhat-upgrades");
+require("./scripts/upgrade.js");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -17,14 +17,14 @@ require('./scripts/upgrade.js');
  */
 
 module.exports = {
-  defaultNetwork: 'kovan-optimism',
+  defaultNetwork: "kovan-optimism",
   gasReporter: {
     showTimeSpent: true,
-    currency: 'USD',
+    currency: "USD",
   },
   networks: {
-    'kovan-optimism': {
-      url: process.env.KOVAN_OVM_URL || 'https://kovan.optimism.io',
+    "kovan-optimism": {
+      url: process.env.KOVAN_OVM_URL || "https://kovan.optimism.io",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 0,
       ovm: true,
@@ -41,12 +41,14 @@ module.exports = {
     },
     mumbai: {
       chainId: 80001,
-      url: process.env.MUMBAI_URL ? process.env.MUMBAI_URL : "https://rpc-mumbai.maticvigil.com/v1/" + process.env.MATIC_KEY,
+      url: process.env.MUMBAI_URL
+        ? process.env.MUMBAI_URL
+        : "https://rpc-mumbai.maticvigil.com/v1/" + process.env.MATIC_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
   ovm: {
-    solcVersion: '0.7.6',
+    solcVersion: "0.7.6",
     settings: {
       optimizer: {
         enabled: true,
@@ -55,7 +57,7 @@ module.exports = {
     },
   },
   solidity: {
-    version: '0.7.6',
+    version: "0.7.6",
     settings: {
       optimizer: {
         enabled: true,
@@ -67,10 +69,21 @@ module.exports = {
     timeout: false,
   },
   abiExporter: {
-    path: './abi',
+    path: "./abi",
     clear: true,
     flat: true,
-    only: ['PoolFactory', 'PoolLogic', 'PoolManagerLogic', 'AssetHandler', 'UniswapV3SwapGuard', 'ERC20Guard', 'SynthetixGuard', 'UniswapV2RouterGuard'],
-    spacing: 2
-  }
+    only: [
+      "PoolFactory",
+      "PoolLogic",
+      "PoolManagerLogic",
+      "AssetHandler",
+      "UniswapV3SwapGuard",
+      "ERC20Guard",
+      "SynthetixGuard",
+      "AaveLendingPoolGuard",
+      "UniswapV2RouterGuard",
+      "UniswapV3SwapGuard",
+    ],
+    spacing: 2,
+  },
 };

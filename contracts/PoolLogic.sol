@@ -39,6 +39,8 @@
 // 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
 // 7. Claim: Claim rewards tokens from a third party contract (eg. SUSHI & MATIC rewards)
 // 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
+// 9. Deposit: Aave deposit tokens -> get Aave Interest Bearing Token
+// 10. Withdraw: Withdraw tokens from Aave Interest Bearing Token
 
 // SPDX-License-Identifier: BUSL-1.1
 
