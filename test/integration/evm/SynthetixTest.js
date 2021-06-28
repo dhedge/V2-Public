@@ -237,6 +237,7 @@ describe("Synthetix Test", function () {
           fundAddress,
           investor,
           assetDeposited,
+          amountDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -251,6 +252,7 @@ describe("Synthetix Test", function () {
             fundAddress: fundAddress,
             investor: investor,
             assetDeposited: assetDeposited,
+            amountDeposited: amountDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -398,6 +400,7 @@ describe("Synthetix Test", function () {
           totalInvestorFundTokens,
           fundValue,
           totalSupply,
+          withdrawnAssets,
           time,
           event,
         ) => {
@@ -411,6 +414,7 @@ describe("Synthetix Test", function () {
             totalInvestorFundTokens: totalInvestorFundTokens,
             fundValue: fundValue,
             totalSupply: totalSupply,
+            withdrawnAssets: withdrawnAssets,
             time: time,
           });
         },
