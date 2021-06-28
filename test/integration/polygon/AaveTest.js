@@ -418,7 +418,7 @@ describe("Polygon Mainnet Test", function () {
     });
 
     it("Should be able to withdraw amusdc and receive usdc", async () => {
-      const amount = (100e6).toString();
+      const amount = (50e6).toString();
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
@@ -466,12 +466,38 @@ describe("Polygon Mainnet Test", function () {
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
-      console.log(usdcBalanceBefore.toString(), usdcBalanceAfter.toString());
-      console.log(amusdcBalanceBefore.toString(), amusdcBalanceAfter.toString());
       expect(ethers.BigNumber.from(usdcBalanceBefore).add(amount)).to.be.equal(usdcBalanceAfter);
       expect(ethers.BigNumber.from(amusdcBalanceBefore).sub(amount)).to.be.equal(amusdcBalanceAfter);
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
+
+    it("Should be able to set reserve as collateral", async () => {
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const lendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
+
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+
+      let abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdt, true]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith(
+        "unsupported asset",
+      );
+
+      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [weth, true]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith(
+        "unsupported aave interest bearing token",
+      );
+
+      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdc, false]);
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi);
+
+      const userConfigBefore = await lendingPool.getUserConfiguration(poolLogicProxy.address);
+
+      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdc, true]);
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi);
+
+      const userConfigAfter = await lendingPool.getUserConfiguration(poolLogicProxy.address);
+      expect(userConfigBefore).to.be.not.equal(userConfigAfter);
     });
   });
 });
