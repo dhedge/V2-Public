@@ -50,7 +50,8 @@ import "./interfaces/IHasSupportedAsset.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-/// @title A Factory to spawn pools
+/// @title Pool Factory
+/// @dev A Factory to spawn pools
 contract PoolFactory is
   PausableUpgradeable,
   ProxyFactory,

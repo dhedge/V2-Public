@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const fs = require("fs");
-const { getTag } = require("./Helpers");
+const { getTag } = require("../Helpers");
 
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
@@ -61,12 +61,14 @@ async function main() {
   const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
-  const poolLogic = await PoolLogic.deploy();
-  console.log("PoolLogic deployed at ", poolLogic.address);
+  poolLogic = await upgrades.deployProxy(PoolLogic);
+  await poolLogic.deployed();
+  console.log("poolLogic deployed at ", poolLogic.address);
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-  const poolManagerLogic = await PoolManagerLogic.deploy();
-  console.log("PoolManagerLogic deployed at ", poolManagerLogic.address);
+  poolManagerLogic = await upgrades.deployProxy(PoolManagerLogic);
+  await poolManagerLogic.deployed();
+  console.log("poolManagerLogic deployed at ", poolManagerLogic.address);
 
   const PoolFactory = await ethers.getContractFactory("PoolFactory");
   poolFactory = await upgrades.deployProxy(PoolFactory, [
@@ -104,7 +106,7 @@ async function main() {
   console.log("PoolFactory set dao ", dao.address);
 
   let tag = await getTag();
-  let versions = require("../publish/mumbai/versions.json");
+  let versions = require("../../publish/mumbai/versions.json");
   versions[tag] = {
     tag: tag,
     network: network,
@@ -117,8 +119,8 @@ async function main() {
       "USDC-Aggregator": usdc_price_feed,
       "ETH-Aggregator": eth_price_feed,
       PoolFactoryProxy: poolFactory.address,
-      PoolLogic: poolLogic.address,
-      PoolManagerLogic: poolManagerLogic.address,
+      PoolLogicProxy: poolLogic.address,
+      PoolManagerLogicProxy: poolManagerLogic.address,
       AssetHandlerProxy: assetHandler.address,
       ERC20Guard: erc20Guard.address,
       UniswapV2RouterGuard: uniswapV2RouterGuard.address,
@@ -129,7 +131,7 @@ async function main() {
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("publish/mumbai/versions.json", data);
+  fs.writeFileSync("../../publish/mumbai/versions.json", data);
 }
 
 main()

@@ -251,6 +251,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
           fundAddress,
           investor,
           assetDeposited,
+          amountDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -265,6 +266,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
             fundAddress: fundAddress,
             investor: investor,
             assetDeposited: assetDeposited,
+            amountDeposited: amountDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -773,6 +775,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
           totalInvestorFundTokens,
           fundValue,
           totalSupply,
+          withdrawnAssets,
           time,
           event,
         ) => {
@@ -786,6 +789,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
             totalInvestorFundTokens: totalInvestorFundTokens,
             fundValue: fundValue,
             totalSupply: totalSupply,
+            withdrawnAssets: withdrawnAssets,
             time: time,
           });
         },

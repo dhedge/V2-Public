@@ -12,18 +12,19 @@ const checkAlmostSame = (a, b) => {
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
-const sushiswapFactory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 
-// For mumbai testnet
+// For Mumbai
+// test tokens
 const weth = "0x8e07dAfa396B1b2B226367D0266e009cA1B3248d";
 const usdc = "0x624429a012a8A935cc1110A9880B2d698587a744";
 const usdt = "0x5C03614553fF7b57C7dd583377c2e756D0408940";
-const eth_price_feed = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
-const usdc_price_feed = "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0";
-const usdt_price_feed = "0x92C09849638959196E976289418e5973CC96d645";
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-describe("Sushiswap V2 Test Mumbai", function () {
+//latest deployed proxy factory address and uniswap guard
+//const poolFactoryAddress = "0x91956c1098B047721686Bd831185ddB042b08684";
+const poolFactoryAddress = "0x85B287209B36e1BAb292a01dd7AAfb9059df1Cf6";
+const uniswapGuardAddress = "0xd39b31E06d9A6397b88212887dFa5e7D4cf42fCE";
+
+describe("Sushiswap V2 Test Mumbai Fork", function () {
   let WMatic, WETH, USDC, USDT;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
@@ -32,60 +33,13 @@ describe("Sushiswap V2 Test Mumbai", function () {
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-    const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
+    PoolFactory = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await PoolFactory.attach(poolFactoryAddress);
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
-    poolLogic = await PoolLogic.deploy();
-
-    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    poolManagerLogic = await PoolManagerLogic.deploy();
-
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      ZERO_ADDRESS,
-      dao.address,
-    ]);
-    await poolFactory.deployed();
-
-    // Initialize Asset Price Consumer
-    const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-    const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-    const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
-
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
-    await assetHandler.deployed();
-    await poolFactory.setAssetHandler(assetHandler.address);
-
-    //set higher timeout value for testnet
-    await assetHandler.setChainlinkTimeout(10000000);
-
-    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-    erc20Guard = await ERC20Guard.deploy();
-    erc20Guard.deployed();
-
-    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
-    uniswapV2RouterGuard.deployed();
-
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   });
 
   it("Should be able to createFund", async function () {
-    await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
-
-    console.log("Passed poolLogic Init!");
-
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [usdc, true],
-      [weth, true],
-    ]);
-
-    console.log("Passed poolManagerLogic Init!");
-
     let fundCreatedEvent = new Promise((resolve, reject) => {
       poolFactory.on(
         "FundCreated",
@@ -121,22 +75,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
       }, 60000);
     });
 
-    await expect(
-      poolFactory.createFund(
-        false,
-        manager.address,
-        "Barren Wuffet",
-        "Test Fund",
-        "DHTF",
-        new ethers.BigNumber.from("6000"),
-        [
-          [usdc, true],
-          [weth, true],
-        ],
-      ),
-    ).to.be.revertedWith("invalid fraction");
-
-    let tx = await poolFactory.createFund(
+    await poolFactory.createFund(
       false,
       manager.address,
       "Barren Wuffet",
@@ -160,32 +99,9 @@ describe("Sushiswap V2 Test Mumbai", function () {
     expect(event.managerFeeNumerator.toString()).to.equal("5000");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
-    let deployedFunds = await poolFactory.getDeployedFunds();
-    let deployedFundsLength = deployedFunds.length;
-    expect(deployedFundsLength.toString()).to.equal("1");
-
     let isPool = await poolFactory.isPool(fundAddress);
-    expect(isPool).to.be.true;
-
-    let poolManagerLogicAddress = await poolFactory.getLogic(1);
-    expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
-
-    let poolLogicAddress = await poolFactory.getLogic(2);
-    expect(poolLogicAddress).to.equal(poolLogic.address);
-
     poolLogicProxy = await PoolLogic.attach(fundAddress);
-    let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
-    poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
-
-    //default assets are supported
-    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-    let numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
-
-    //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.false;
+    expect(isPool).to.be.true;
   });
 
   it("should be able to deposit", async function () {
@@ -196,6 +112,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
           fundAddress,
           investor,
           assetDeposited,
+          amountDeposited,
           valueDeposited,
           fundTokensReceived,
           totalInvestorFundTokens,
@@ -210,6 +127,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
             fundAddress: fundAddress,
             investor: investor,
             assetDeposited: assetDeposited,
+            amountDeposited: amountDeposited,
             valueDeposited: valueDeposited,
             fundTokensReceived: fundTokensReceived,
             totalInvestorFundTokens: totalInvestorFundTokens,
@@ -225,13 +143,11 @@ describe("Sushiswap V2 Test Mumbai", function () {
       }, 60000);
     });
 
-    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
-    expect(totalFundValue.toString()).to.equal("0");
-
     await expect(poolLogicProxy.deposit(usdt, (10e6).toString())).to.be.revertedWith("invalid deposit asset");
 
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
+
     await USDC.approve(poolLogicProxy.address, (10e6).toString());
     await poolLogicProxy.deposit(usdc, (10e6).toString());
     let event = await depositEvent;
@@ -262,6 +178,8 @@ describe("Sushiswap V2 Test Mumbai", function () {
   });
 
   it("should be able to swap tokens on sushiswap.", async () => {
+    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.attach(uniswapGuardAddress);
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
         "Exchange",
@@ -290,7 +208,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
       sourceAmount,
       0,
       [usdc, weth],
-      poolManagerLogicProxy.address,
+      "0x0000000000000000000000000000000000000000",
       0,
     ]);
 
@@ -393,6 +311,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
           totalInvestorFundTokens,
           fundValue,
           totalSupply,
+          withdrawnAssets,
           time,
           event,
         ) => {
@@ -406,6 +325,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
             totalInvestorFundTokens: totalInvestorFundTokens,
             fundValue: fundValue,
             totalSupply: totalSupply,
+            withdrawnAssets: withdrawnAssets,
             time: time,
           });
         },
