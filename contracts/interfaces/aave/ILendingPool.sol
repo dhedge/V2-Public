@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 interface ILendingPool {
+  struct UserConfigurationMap {
+    uint256 data;
+  }
+
   function deposit(
     address asset,
     uint256 amount,
@@ -35,4 +40,6 @@ interface ILendingPool {
   function rebalanceStableBorrowRate(address asset, address user) external;
 
   function swapBorrowRateMode(address asset, uint256 rateMode) external;
+
+  function getUserConfiguration(address user) external view returns (UserConfigurationMap memory);
 }
