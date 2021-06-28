@@ -1,14 +1,9 @@
-## `IAggregatorV3Interface`
 
 
+# Functions:
+- [`latestRoundData()`](#IAggregatorV3Interface-latestRoundData--)
 
 
-
-
-### `latestRoundData() → uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound` (external)
-
-
-
-
-
+# Function `latestRoundData() → uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound` {#IAggregatorV3Interface-latestRoundData--}
+No description
 

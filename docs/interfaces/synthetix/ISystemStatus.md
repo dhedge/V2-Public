@@ -1,14 +1,9 @@
-## `ISystemStatus`
 
 
+# Functions:
+- [`requireSynthActive(bytes32 currencyKey)`](#ISystemStatus-requireSynthActive-bytes32-)
 
 
-
-
-### `requireSynthActive(bytes32 currencyKey)` (external)
-
-
-
-
-
+# Function `requireSynthActive(bytes32 currencyKey)` {#ISystemStatus-requireSynthActive-bytes32-}
+No description
 

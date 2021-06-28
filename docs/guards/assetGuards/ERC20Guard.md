@@ -1,38 +1,31 @@
-## `ERC20Guard`
-
-
-
 Asset type = 0
 A generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
 
+# Functions:
+- [`txGuard(address _poolManagerLogic, address, bytes data)`](#ERC20Guard-txGuard-address-address-bytes-)
+- [`getWithdrawStakedTx(address, address, uint256, address)`](#ERC20Guard-getWithdrawStakedTx-address-address-uint256-address-)
+- [`getBalance(address pool, address asset)`](#ERC20Guard-getBalance-address-address-)
 
-### `txGuard(address _poolManagerLogic, address, bytes data) → uint8 txType` (external)
+# Events:
+- [`Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time)`](#ERC20Guard-Approve-address-address-address-uint256-uint256-)
 
-Transaction guard for approving assets
-
-
+# Function `txGuard(address _poolManagerLogic, address, bytes data) → uint8 txType` {#ERC20Guard-txGuard-address-address-bytes-}
 Parses the manager transaction data to ensure transaction is valid
 
+## Parameters:
+- `_poolManagerLogic`: Pool address
 
-### `getWithdrawStakedTx(address, address, uint256, address) → address stakingContract, bytes txData` (external)
+- `data`: Transaction call data attempt by manager
 
-Creates transaction data for withdrawing staked tokens
-
-
+## Return Values:
+- txType transaction type described in PoolLogic
+# Function `getWithdrawStakedTx(address, address, uint256, address) → address stakingContract, bytes txData` {#ERC20Guard-getWithdrawStakedTx-address-address-uint256-address-}
 Withdrawal processing is not applicable for this guard
 
-
-### `getBalance(address pool, address asset) → uint256 balance` (external)
-
-Returns the balance of the managed asset
-
-
+## Return Values:
+- stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
+# Function `getBalance(address pool, address asset) → uint256 balance` {#ERC20Guard-getBalance-address-address-}
 May include any external balance in staking contracts
 
-
-### `Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time)`
-
-
-
-
-
+# Event `Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time)` {#ERC20Guard-Approve-address-address-address-uint256-uint256-}
+No description

@@ -1,14 +1,9 @@
-## `IUniswapV2Factory`
 
 
+# Functions:
+- [`getPair(address tokenA, address tokenB)`](#IUniswapV2Factory-getPair-address-address-)
 
 
-
-
-### `getPair(address tokenA, address tokenB) → address pair` (external)
-
-
-
-
-
+# Function `getPair(address tokenA, address tokenB) → address pair` {#IUniswapV2Factory-getPair-address-address-}
+No description
 

@@ -1,20 +1,12 @@
-## `ILendingPoolAddressesProvider`
 
 
+# Functions:
+- [`getLendingPool()`](#ILendingPoolAddressesProvider-getLendingPool--)
+- [`getPriceOracle()`](#ILendingPoolAddressesProvider-getPriceOracle--)
 
 
-
-
-### `getLendingPool() → address` (external)
-
-
-
-
-
-### `getPriceOracle() → address` (external)
-
-
-
-
-
+# Function `getLendingPool() → address` {#ILendingPoolAddressesProvider-getLendingPool--}
+No description
+# Function `getPriceOracle() → address` {#ILendingPoolAddressesProvider-getPriceOracle--}
+No description
 

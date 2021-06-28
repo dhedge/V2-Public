@@ -1,14 +1,9 @@
-## `IHasPausable`
 
 
+# Functions:
+- [`isPaused()`](#IHasPausable-isPaused--)
 
 
-
-
-### `isPaused() → bool` (external)
-
-
-
-
-
+# Function `isPaused() → bool` {#IHasPausable-isPaused--}
+No description
 

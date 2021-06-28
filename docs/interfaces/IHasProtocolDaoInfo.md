@@ -1,14 +1,9 @@
-## `IHasProtocolDaoInfo`
 
 
+# Functions:
+- [`owner()`](#IHasProtocolDaoInfo-owner--)
 
 
-
-
-### `owner() → address` (external)
-
-
-
-
-
+# Function `owner() → address` {#IHasProtocolDaoInfo-owner--}
+No description
 

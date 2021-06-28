@@ -1,14 +1,9 @@
-## `IHasGuardInfo`
 
 
+# Functions:
+- [`getGuard(address extContract)`](#IHasGuardInfo-getGuard-address-)
 
 
-
-
-### `getGuard(address extContract) → address` (external)
-
-
-
-
-
+# Function `getGuard(address extContract) → address` {#IHasGuardInfo-getGuard-address-}
+No description
 

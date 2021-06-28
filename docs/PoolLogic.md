@@ -1,204 +1,75 @@
-## `PoolLogic`
 
 
-
-
-
-### `onlyPrivate()`
-
-
-
-
-
-### `onlyManager()`
-
-
-
-
-
-### `onlyManagerOrTrader()`
-
-
-
-
-
-### `whenNotPaused()`
-
-
-
-
-
-
-### `initialize(address _factory, bool _privatePool, string _fundName, string _fundSymbol)` (public)
-
-
-
-
-
-### `_beforeTokenTransfer(address from, address to, uint256 amount)` (internal)
-
-
-
-
-
-### `setPoolPrivate(bool _privatePool)` (public)
-
-
-
-
-
-### `_setPoolPrivacy(bool _privacy)` (internal)
-
-
-
-
-
-### `deposit(address _asset, uint256 _amount) → uint256` (public)
-
-
-
-
-
-### `withdraw(uint256 _fundTokenAmount)` (public)
-
-
-
-
-
-### `_withdrawProcessing(address asset, address to, uint256 portion) → bool success` (internal)
-
-Perform any additional processing on withdrawal of asset
-
-
-Checks for staked tokens and withdraws them to the investor account
-
-
-### `execTransaction(address to, bytes data) → bool success` (public)
-
-Function to let pool talk to other protocol
-
-
+# Functions:
+- [`initialize(address _factory, bool _privatePool, string _fundName, string _fundSymbol)`](#PoolLogic-initialize-address-bool-string-string-)
+- [`setPoolPrivate(bool _privatePool)`](#PoolLogic-setPoolPrivate-bool-)
+- [`deposit(address _asset, uint256 _amount)`](#PoolLogic-deposit-address-uint256-)
+- [`withdraw(uint256 _fundTokenAmount)`](#PoolLogic-withdraw-uint256-)
+- [`execTransaction(address to, bytes data)`](#PoolLogic-execTransaction-address-bytes-)
+- [`getFundSummary()`](#PoolLogic-getFundSummary--)
+- [`tokenPrice()`](#PoolLogic-tokenPrice--)
+- [`availableManagerFee()`](#PoolLogic-availableManagerFee--)
+- [`mintManagerFee()`](#PoolLogic-mintManagerFee--)
+- [`getExitCooldown()`](#PoolLogic-getExitCooldown--)
+- [`getExitRemainingCooldown(address sender)`](#PoolLogic-getExitRemainingCooldown-address-)
+- [`setPoolManagerLogic(address _poolManagerLogic)`](#PoolLogic-setPoolManagerLogic-address-)
+- [`managerName()`](#PoolLogic-managerName--)
+- [`isMemberAllowed(address member)`](#PoolLogic-isMemberAllowed-address-)
+
+# Events:
+- [`Deposit(address fundAddress, address investor, address assetDeposited, uint256 amountDeposited, uint256 valueDeposited, uint256 fundTokensReceived, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, uint256 time)`](#PoolLogic-Deposit-address-address-address-uint256-uint256-uint256-uint256-uint256-uint256-uint256-)
+- [`Withdrawal(address fundAddress, address investor, uint256 valueWithdrawn, uint256 fundTokensWithdrawn, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, struct PoolLogic.WithdrawnAsset[] withdrawnAssets, uint256 time)`](#PoolLogic-Withdrawal-address-address-uint256-uint256-uint256-uint256-uint256-struct-PoolLogic-WithdrawnAsset---uint256-)
+- [`TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time)`](#PoolLogic-TransactionExecuted-address-address-uint8-uint256-)
+- [`PoolPrivacyUpdated(bool isPoolPrivate)`](#PoolLogic-PoolPrivacyUpdated-bool-)
+- [`ManagerFeeMinted(address pool, address manager, uint256 available, uint256 daoFee, uint256 managerFee, uint256 tokenPriceAtLastFeeMint)`](#PoolLogic-ManagerFeeMinted-address-address-uint256-uint256-uint256-uint256-)
+- [`PoolManagerLogicSet(address poolManagerLogic, address from)`](#PoolLogic-PoolManagerLogicSet-address-address-)
+
+# Function `initialize(address _factory, bool _privatePool, string _fundName, string _fundSymbol)` {#PoolLogic-initialize-address-bool-string-string-}
+No description
+# Function `setPoolPrivate(bool _privatePool)` {#PoolLogic-setPoolPrivate-bool-}
+No description
+# Function `deposit(address _asset, uint256 _amount) → uint256` {#PoolLogic-deposit-address-uint256-}
+No description
+# Function `withdraw(uint256 _fundTokenAmount)` {#PoolLogic-withdraw-uint256-}
+No description
+# Function `execTransaction(address to, bytes data) → bool success` {#PoolLogic-execTransaction-address-bytes-}
 execute transaction for the pool
 
-
-### `getFundSummary() → string, uint256, uint256, address, string, uint256, bool, uint256, uint256` (public)
-
-
-
-
-
-### `tokenPrice() → uint256` (public)
-
-
-
-
-
-### `_tokenPrice(uint256 _fundValue, uint256 _tokenSupply) → uint256` (internal)
-
-
-
-
-
-### `availableManagerFee() → uint256` (public)
-
-
-
-
-
-### `_availableManagerFee(uint256 _fundValue, uint256 _tokenSupply, uint256 _lastFeeMintPrice, uint256 _feeNumerator, uint256 _feeDenominator) → uint256` (internal)
-
-
-
-
-
-### `mintManagerFee()` (public)
-
-
-
-
-
-### `_mintManagerFee() → uint256 fundValue` (internal)
-
-
-
-
-
-### `getExitCooldown() → uint256` (public)
-
-
-
-
-
-### `getExitRemainingCooldown(address sender) → uint256` (public)
-
-
-
-
-
-### `setPoolManagerLogic(address _poolManagerLogic) → bool` (external)
-
-
-
-
-
-### `manager() → address` (internal)
-
-
-
-
-
-### `trader() → address` (internal)
-
-
-
-
-
-### `managerName() → string` (public)
-
-
-
-
-
-### `isMemberAllowed(address member) → bool` (public)
-
-
-
-
-
-
-### `Deposit(address fundAddress, address investor, address assetDeposited, uint256 amountDeposited, uint256 valueDeposited, uint256 fundTokensReceived, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, uint256 time)`
-
-
-
-
-
-### `Withdrawal(address fundAddress, address investor, uint256 valueWithdrawn, uint256 fundTokensWithdrawn, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, struct PoolLogic.WithdrawnAsset[] withdrawnAssets, uint256 time)`
-
-
-
-
-
-### `TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time)`
-
-
-
-
-
-### `PoolPrivacyUpdated(bool isPoolPrivate)`
-
-
-
-
-
-### `ManagerFeeMinted(address pool, address manager, uint256 available, uint256 daoFee, uint256 managerFee, uint256 tokenPriceAtLastFeeMint)`
-
-
-
-
-
-### `PoolManagerLogicSet(address poolManagerLogic, address from)`
-
-
-
-
-
+## Parameters:
+- `to`: The destination address for pool to talk to
+
+- `data`: The data that going to send in the transaction
+
+## Return Values:
+- success A boolean for success or fail transaction
+# Function `getFundSummary() → string, uint256, uint256, address, string, uint256, bool, uint256, uint256` {#PoolLogic-getFundSummary--}
+No description
+# Function `tokenPrice() → uint256` {#PoolLogic-tokenPrice--}
+No description
+# Function `availableManagerFee() → uint256` {#PoolLogic-availableManagerFee--}
+No description
+# Function `mintManagerFee()` {#PoolLogic-mintManagerFee--}
+No description
+# Function `getExitCooldown() → uint256` {#PoolLogic-getExitCooldown--}
+No description
+# Function `getExitRemainingCooldown(address sender) → uint256` {#PoolLogic-getExitRemainingCooldown-address-}
+No description
+# Function `setPoolManagerLogic(address _poolManagerLogic) → bool` {#PoolLogic-setPoolManagerLogic-address-}
+No description
+# Function `managerName() → string` {#PoolLogic-managerName--}
+No description
+# Function `isMemberAllowed(address member) → bool` {#PoolLogic-isMemberAllowed-address-}
+No description
+
+# Event `Deposit(address fundAddress, address investor, address assetDeposited, uint256 amountDeposited, uint256 valueDeposited, uint256 fundTokensReceived, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, uint256 time)` {#PoolLogic-Deposit-address-address-address-uint256-uint256-uint256-uint256-uint256-uint256-uint256-}
+No description
+# Event `Withdrawal(address fundAddress, address investor, uint256 valueWithdrawn, uint256 fundTokensWithdrawn, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, struct PoolLogic.WithdrawnAsset[] withdrawnAssets, uint256 time)` {#PoolLogic-Withdrawal-address-address-uint256-uint256-uint256-uint256-uint256-struct-PoolLogic-WithdrawnAsset---uint256-}
+No description
+# Event `TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time)` {#PoolLogic-TransactionExecuted-address-address-uint8-uint256-}
+No description
+# Event `PoolPrivacyUpdated(bool isPoolPrivate)` {#PoolLogic-PoolPrivacyUpdated-bool-}
+No description
+# Event `ManagerFeeMinted(address pool, address manager, uint256 available, uint256 daoFee, uint256 managerFee, uint256 tokenPriceAtLastFeeMint)` {#PoolLogic-ManagerFeeMinted-address-address-uint256-uint256-uint256-uint256-}
+No description
+# Event `PoolManagerLogicSet(address poolManagerLogic, address from)` {#PoolLogic-PoolManagerLogicSet-address-address-}
+No description

@@ -1,14 +1,9 @@
-## `IAddressResolver`
 
 
+# Functions:
+- [`getAddress(bytes32 name)`](#IAddressResolver-getAddress-bytes32-)
 
 
-
-
-### `getAddress(bytes32 name) → address` (external)
-
-
-
-
-
+# Function `getAddress(bytes32 name) → address` {#IAddressResolver-getAddress-bytes32-}
+No description
 

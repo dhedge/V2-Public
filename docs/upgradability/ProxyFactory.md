@@ -1,50 +1,19 @@
-## `ProxyFactory`
 
 
+# Functions:
+- [`setLogic(address _poolLogic, address _poolManagerLogic)`](#ProxyFactory-setLogic-address-address-)
+- [`getLogic(uint8 _proxyType)`](#ProxyFactory-getLogic-uint8-)
+- [`deploy(bytes _data, uint8 _proxyType)`](#ProxyFactory-deploy-bytes-uint8-)
 
+# Events:
+- [`ProxyCreated(address proxy)`](#ProxyFactory-ProxyCreated-address-)
 
+# Function `setLogic(address _poolLogic, address _poolManagerLogic)` {#ProxyFactory-setLogic-address-address-}
+No description
+# Function `getLogic(uint8 _proxyType) → address` {#ProxyFactory-getLogic-uint8-}
+No description
+# Function `deploy(bytes _data, uint8 _proxyType) → address` {#ProxyFactory-deploy-bytes-uint8-}
+No description
 
-
-### `__ProxyFactory_init(address _poolLogic, address _poolManagerLogic)` (internal)
-
-
-
-
-
-### `setLogic(address _poolLogic, address _poolManagerLogic)` (public)
-
-
-
-
-
-### `getLogic(uint8 _proxyType) → address` (public)
-
-
-
-
-
-### `deploy(bytes _data, uint8 _proxyType) → address` (public)
-
-
-
-
-
-### `_deployProxy(bytes _data, uint8 _proxyType) → address` (internal)
-
-
-
-
-
-### `_createProxy() → contract InitializableUpgradeabilityProxy` (internal)
-
-
-
-
-
-
-### `ProxyCreated(address proxy)`
-
-
-
-
-
+# Event `ProxyCreated(address proxy)` {#ProxyFactory-ProxyCreated-address-}
+No description

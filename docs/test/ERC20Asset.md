@@ -1,14 +1,9 @@
-## `ERC20Asset`
 
 
+# Functions:
+- [`constructor(string name, string symbol)`](#ERC20Asset-constructor-string-string-)
 
 
-
-
-### `constructor(string name, string symbol)` (public)
-
-
-
-
-
+# Function `constructor(string name, string symbol)` {#ERC20Asset-constructor-string-string-}
+No description
 

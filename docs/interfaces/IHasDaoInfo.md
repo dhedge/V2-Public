@@ -1,20 +1,12 @@
-## `IHasDaoInfo`
 
 
+# Functions:
+- [`getDaoFee()`](#IHasDaoInfo-getDaoFee--)
+- [`getDaoAddress()`](#IHasDaoInfo-getDaoAddress--)
 
 
-
-
-### `getDaoFee() → uint256, uint256` (external)
-
-
-
-
-
-### `getDaoAddress() → address` (external)
-
-
-
-
-
+# Function `getDaoFee() → uint256, uint256` {#IHasDaoInfo-getDaoFee--}
+No description
+# Function `getDaoAddress() → address` {#IHasDaoInfo-getDaoAddress--}
+No description
 

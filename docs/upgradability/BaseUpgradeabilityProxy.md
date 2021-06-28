@@ -1,51 +1,15 @@
-## `BaseUpgradeabilityProxy`
-
-
-
 This contract implements a proxy that allows to change the
 implementation address to which it will delegate.
 Such a change is called an implementation upgrade.
 
+# Functions:
 
-### `_implementation() → address` (internal)
-
-
-
-Returns the current implementation.
+# Events:
+- [`Upgraded(address implementation)`](#BaseUpgradeabilityProxy-Upgraded-address-)
 
 
-### `_proxyType() → uint8` (internal)
-
-
-
-
-
-### `_upgradeTo(address newImplementation)` (internal)
-
-
-
-Upgrades the proxy to a new implementation.
-
-
-### `_setImplementation(address newImplementation)` (internal)
-
-
-
-Sets the implementation address of the proxy.
-
-
-### `_setProxyType(uint8 proxyType)` (internal)
-
-
-
-Sets type of the proxy.
-
-
-
-### `Upgraded(address implementation)`
-
-
-
+# Event `Upgraded(address implementation)` {#BaseUpgradeabilityProxy-Upgraded-address-}
 Emitted when the implementation is upgraded.
 
-
+## Parameters:
+- `implementation`: Address of the new implementation.
