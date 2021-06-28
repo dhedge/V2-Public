@@ -79,14 +79,11 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       address depositAsset = convert32toAddress(getInput(data, 0));
       uint256 amount = uint256(getInput(data, 1));
       address onBehalfOf = convert32toAddress(getInput(data, 2));
-      (address aToken, , ) = IAaveProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(depositAsset);
 
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
       require(poolManagerLogicAssets.isSupportedAsset(depositAsset), "unsupported deposit asset");
-
-      require(poolManagerLogicAssets.isSupportedAsset(aToken), "unsupported aave interest bearing token");
 
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
 
@@ -98,14 +95,11 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       address withdrawAsset = convert32toAddress(getInput(data, 0));
       uint256 amount = uint256(getInput(data, 1));
       address onBehalfOf = convert32toAddress(getInput(data, 2));
-      (address aToken, , ) = IAaveProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(withdrawAsset);
 
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
       require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported withdraw asset");
-
-      require(poolManagerLogicAssets.isSupportedAsset(aToken), "unsupported aave interest bearing token");
 
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
 
@@ -115,14 +109,12 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       return txType;
     } else if (method == bytes4(keccak256("setUserUseReserveAsCollateral(address,bool)"))) {
       address asset = convert32toAddress(getInput(data, 0));
-      (address aToken, , ) = IAaveProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(asset);
       bool useAsCollateral = uint256(getInput(data, 1)) != 0;
 
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
       require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
-      require(poolManagerLogicAssets.isSupportedAsset(aToken), "unsupported aave interest bearing token");
 
       emit SetUserUseReserveAsCollateral(poolManagerLogic.poolLogic(), asset, useAsCollateral, block.timestamp);
 
