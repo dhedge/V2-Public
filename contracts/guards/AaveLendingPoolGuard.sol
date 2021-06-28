@@ -115,12 +115,14 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       return txType;
     } else if (method == bytes4(keccak256("setUserUseReserveAsCollateral(address,bool)"))) {
       address asset = convert32toAddress(getInput(data, 0));
+      (address aToken, , ) = IAaveProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(asset);
       bool useAsCollateral = uint256(getInput(data, 1)) != 0;
 
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
       require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
+      require(poolManagerLogicAssets.isSupportedAsset(aToken), "unsupported aave interest bearing token");
 
       emit SetUserUseReserveAsCollateral(poolManagerLogic.poolLogic(), asset, useAsCollateral, block.timestamp);
 
