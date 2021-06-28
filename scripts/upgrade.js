@@ -24,9 +24,11 @@ task("upgrade", "Upgrade proxy contracts")
 
     let contracts = versions[oldTag].contracts;
     versions[newTag] = new Object;
-    versions[newTag].contracts = contracts;
+    versions[newTag].contracts = { ...contracts };
     versions[newTag].network = network;
     versions[newTag].date = new Date().toUTCString();
+    const PoolFactory = await ethers.getContractFactory("PoolFactory");
+    let setLogic = false;
 
     if(taskArgs.poolFactory){
       // For testing
@@ -42,7 +44,6 @@ task("upgrade", "Upgrade proxy contracts")
       // const poolFactory = await upgrades.upgradeProxy(poolFactoryProxy.address, PoolFactory);
 
       let oldPoolFactory = contracts.PoolFactoryProxy;
-      const PoolFactory = await ethers.getContractFactory("PoolFactory");
       const poolFactory = await upgrades.upgradeProxy(oldPoolFactory, PoolFactory);
       console.log("poolFactory upgraded to: ", poolFactory.address);
       versions[newTag].contracts.PoolFactoryProxy = poolFactory.address;
@@ -55,18 +56,22 @@ task("upgrade", "Upgrade proxy contracts")
       versions[newTag].contracts.AssetHandlerProxy = assetHandler.address;
     }
     if(taskArgs.poolLogic){
-      let oldPoolLogic = contracts.PoolLogicProxy;
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
-      const poolLogic = await upgrades.upgradeProxy(oldPoolLogic, PoolLogic);
+      let poolLogic = await PoolLogic.deploy();
       console.log("poolLogic upgraded to: ", poolLogic.address);
-      versions[newTag].contracts.PoolLogicProxy = poolLogic.address;
+      versions[newTag].contracts.PoolLogic = poolLogic.address;
+      setLogic = true;
     }
     if(taskArgs.poolManagerLogic){
-      let oldPoolManagerLogic = contracts.PoolManagerLogicProxy;
       const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-      const poolManagerLogic = await upgrades.upgradeProxy(oldPoolManagerLogic, PoolManagerLogic);
+      const poolManagerLogic = await PoolManagerLogic.deploy();
       console.log("poolManagerLogic upgraded to: ", poolManagerLogic.address);
-      versions[newTag].contracts.PoolManagerLogicProxy = poolManagerLogic.address;
+      versions[newTag].contracts.PoolManagerLogic = poolManagerLogic.address;
+      setLogic = true;
+    }
+    if(setLogic){
+      let poolFactory = await PoolFactory.attach(versions[newTag].contracts.PoolFactoryProxy);
+      await poolFactory.setLogic(versions[newTag].contracts.PoolLogic, versions[newTag].contracts.PoolManagerLogic);
     }
 
     // convert JSON object to string

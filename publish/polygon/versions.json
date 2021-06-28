@@ -29,5 +29,35 @@
       "UniswapV2RouterGuard": "0x4D703Dfc3a001C77c619Dba67aca1Ce7510F0d9D",
       "SushiLPAssetGuard": "0x933016150e26179F9Fb49e416E7911c90d8890Da"
     }
+  },
+  "v2.1.0": {
+    "contracts": {
+      "WMatic": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+      "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+      "USDT": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "SUSHI": "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a",
+      "SushiLpUsdcWeth": "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27",
+      "WMatic-Aggregator": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
+      "WETH-Aggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945",
+      "USDT-Aggregator": "0x0A6513e40db6EB1b165753AD52E80663aeA50545",
+      "USDC-Aggregator": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",
+      "SUSHI-Aggregator": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0",
+      "SushiLpUsdcWeth-Aggregator": "0x445720a0237391a56c26a4CCc4d51079aCf95253",
+      "PoolFactoryProxy": "0x4e86b7555dB05FEA5A5bc1f9d2e9Df3EAc3E5112",
+      "PoolLogic": "0xb44D46a67e12438918ac93d55276cf52CaDc0745",
+      "PoolManagerLogic": "0xD9A6F8a221818470B59e97115A0DB41bDd0CD7Eb",
+      "AssetHandlerProxy": "0x816Ba3a9Dfc85B031c21a51093Fa70a6A554556d",
+      "ERC20Guard": "0xB46B97E525aCE3db8f5e4F770eCD51fb25b364e2",
+      "UniswapV2RouterGuard": "0x4D703Dfc3a001C77c619Dba67aca1Ce7510F0d9D",
+      "SushiLPAssetGuard": "0x933016150e26179F9Fb49e416E7911c90d8890Da"
+    },
+    "network": {
+      "name": "polygon",
+      "chainId": 137,
+      "ensAddress": null,
+      "_defaultProvider": null
+    },
+    "date": "Mon, 28 Jun 2021 15:23:05 GMT"
   }
 }
