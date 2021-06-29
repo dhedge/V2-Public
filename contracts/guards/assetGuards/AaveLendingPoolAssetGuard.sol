@@ -50,4 +50,9 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     (uint256 totalCollateralETH, uint256 totalDebtETH, , , , ) = ILendingPool(lendingPool).getUserAccountData(pool);
     balance = totalCollateralETH.sub(totalDebtETH);
   }
+
+  /// @notice Returns the decimal
+  function getDecimals(address _lendingPool) external view override returns (uint256 decimals) {
+    decimals = 18;
+  }
 }

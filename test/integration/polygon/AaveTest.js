@@ -79,7 +79,7 @@ describe("Polygon Mainnet Test", function () {
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
     const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    const assetAmusdc = { asset: amusdc, assetType: 0, aggregator: usdc_price_feed };
+    const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: eth_price_feed };
     const assetHandlerInitAssets = [
       assetWmatic,
       assetWeth,
@@ -87,7 +87,7 @@ describe("Polygon Mainnet Test", function () {
       assetUsdc,
       assetSushi,
       assetSushiLPWethUsdc,
-      assetAmusdc,
+      assetLendingPool,
     ];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
@@ -111,12 +111,17 @@ describe("Polygon Mainnet Test", function () {
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2, [[sushiLpUsdcWeth, sushiLPUsdcWethPoolId]]); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
+    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy();
+    aaveLendingPoolAssetGuard.deployed();
+
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveProtocolDataProvider);
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     aaveLendingPoolGuard.deployed();
 
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
     await poolFactory.connect(dao).setAssetGuard(2, sushiLPAssetGuard.address);
+    await poolFactory.connect(dao).setAssetGuard(3, aaveLendingPoolAssetGuard.address);
     await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await poolFactory.connect(dao).setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await poolFactory.connect(dao).setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
@@ -367,16 +372,16 @@ describe("Polygon Mainnet Test", function () {
 
       depositABI = iLendingPool.encodeFunctionData("deposit", [amusdt, amount, poolLogicProxy.address, 0]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
-        "unsupported deposit asset",
-      );
-
-      depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, amount, poolLogicProxy.address, 0]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
-        "unsupported aave interest bearing token",
+        "asset not enabled in pool",
       );
 
       // add supported assets
-      await poolManagerLogicProxy.connect(manager).changeAssets([[amusdc, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[aaveLendingPool, false]], []);
+
+      depositABI = iLendingPool.encodeFunctionData("deposit", [amusdt, amount, poolLogicProxy.address, 0]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
+        "unsupported deposit asset",
+      );
 
       depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, amount, usdc, 0]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
@@ -485,7 +490,7 @@ describe("Polygon Mainnet Test", function () {
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [weth, true]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith(
-        "unsupported aave interest bearing token",
+        "failed to execute the call",
       );
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdc, false]);

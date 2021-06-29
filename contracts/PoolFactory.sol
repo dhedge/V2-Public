@@ -422,12 +422,19 @@ contract PoolFactory is
   }
 
   // Transaction Guards
-  function getGuard(address extContract) public view override returns (address) {
+  function getGuard(address extContract) public view override returns (address guard) {
+    if (contractGuards[extContract] != address(0)) {
+      guard = contractGuards[extContract];
+    } else {
+      guard = getAssetGuard(extContract);
+    }
+  }
+
+  function getAssetGuard(address extContract) public view override returns (address guard) {
     if (isValidAsset(extContract)) {
       uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
-      return assetGuards[assetType];
+      guard = assetGuards[assetType];
     }
-    return contractGuards[extContract];
   }
 
   function setContractGuard(address extContract, address guardAddress) public onlyDao {

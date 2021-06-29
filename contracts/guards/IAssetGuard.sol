@@ -43,4 +43,6 @@ interface IAssetGuard {
   ) external returns (address, bytes memory);
 
   function getBalance(address pool, address asset) external view returns (uint256 balance);
+
+  function getDecimals(address asset) external view returns (uint256 decimals);
 }

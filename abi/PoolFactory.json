@@ -313,6 +313,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "extContract",
+        "type": "address"
+      }
+    ],
+    "name": "getAssetGuard",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "guard",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getAssetHandler",
     "outputs": [
@@ -432,7 +451,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "guard",
         "type": "address"
       }
     ],

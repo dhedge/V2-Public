@@ -41,7 +41,6 @@ import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/aave/IAaveProtocolDataProvider.sol";
 
 /// @title Transaction guard for Aave's lending pool contract
 contract AaveLendingPoolGuard is TxDataUtils, IGuard {
@@ -52,12 +51,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   event SetUserUseReserveAsCollateral(address fundAddress, address asset, bool useAsCollateral, uint256 time);
   event Borrow(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Repay(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
-
-  address public protocolDataProvider;
-
-  constructor(address _protocolDataProvider) {
-    protocolDataProvider = _protocolDataProvider;
-  }
 
   /// @notice Transaction guard for Synthetix Exchanger
   /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay functionality
