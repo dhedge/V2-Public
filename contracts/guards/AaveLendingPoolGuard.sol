@@ -50,6 +50,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   event Deposit(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Withdraw(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event SetUserUseReserveAsCollateral(address fundAddress, address asset, bool useAsCollateral, uint256 time);
+  event Borrow(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
+  event Repay(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
 
   address public protocolDataProvider;
 
@@ -83,6 +85,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
+      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(poolManagerLogicAssets.isSupportedAsset(depositAsset), "unsupported deposit asset");
 
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
@@ -99,6 +102,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
+      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported withdraw asset");
 
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
@@ -114,11 +118,46 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
+      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
 
       emit SetUserUseReserveAsCollateral(poolManagerLogic.poolLogic(), asset, useAsCollateral, block.timestamp);
 
       txType = 11; // Aave `SetUserUseReserveAsCollateral` type
+      return txType;
+    } else if (method == bytes4(keccak256("borrow(address,uint256,uint256,uint16,address)"))) {
+      address borrowAsset = convert32toAddress(getInput(data, 0));
+      uint256 amount = uint256(getInput(data, 1));
+      address onBehalfOf = convert32toAddress(getInput(data, 4));
+
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
+      require(poolManagerLogicAssets.isSupportedAsset(borrowAsset), "unsupported borrow asset");
+
+      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
+      require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
+
+      emit Borrow(poolManagerLogic.poolLogic(), borrowAsset, to, amount, block.timestamp);
+
+      txType = 12; // Aave `Borrow` type
+      return txType;
+    } else if (method == bytes4(keccak256("repay(address,uint256,uint256,address)"))) {
+      address repayAsset = convert32toAddress(getInput(data, 0));
+      uint256 amount = uint256(getInput(data, 1));
+      address onBehalfOf = convert32toAddress(getInput(data, 3));
+
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
+      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
+      require(poolManagerLogicAssets.isSupportedAsset(repayAsset), "unsupported repay asset");
+
+      require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
+
+      emit Repay(poolManagerLogic.poolLogic(), repayAsset, to, amount, block.timestamp);
+
+      txType = 13; // Aave `Repay` type
       return txType;
     }
   }

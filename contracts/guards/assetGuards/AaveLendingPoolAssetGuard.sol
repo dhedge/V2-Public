@@ -42,8 +42,6 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   using SafeMathUpgradeable for uint256;
 
-  constructor() {}
-
   /// @notice Returns the pool position of Aave lending pool
   /// @dev Returns the balance priced in ETH
   /// @param pool The pool logic address
