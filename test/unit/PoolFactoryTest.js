@@ -1020,7 +1020,7 @@ describe("PoolFactory", function () {
       "000bb8" + // fee
       slink.substring(2) + // path asset
       "000bb8" + // fee
-      seth.substring(2) // destination asset
+      seth.substring(2); // destination asset
     const exactInputParams = {
       path: path,
       recipient: poolManagerLogicProxy.address,
@@ -1044,7 +1044,7 @@ describe("PoolFactory", function () {
       "000bb8" +
       susd.substring(2) +
       "000bb8" +
-      seth.substring(2)
+      seth.substring(2);
     swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
       "unsupported source asset",
