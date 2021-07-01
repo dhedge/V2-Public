@@ -32,11 +32,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
+import "../interfaces/aave/ILendingPool.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
@@ -51,6 +53,12 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   event SetUserUseReserveAsCollateral(address fundAddress, address asset, bool useAsCollateral, uint256 time);
   event Borrow(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Repay(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
+
+  address aaveLendingPool;
+
+  constructor(address _aaveLendingPool) {
+    aaveLendingPool = _aaveLendingPool;
+  }
 
   /// @notice Transaction guard for Synthetix Exchanger
   /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay functionality
@@ -82,6 +90,11 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(depositAsset), "unsupported deposit asset");
 
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
+
+      // limit only one collateral asset
+      ILendingPool.ReserveData memory reserveData = ILendingPool(aaveLendingPool).getReserveData(depositAsset);
+      ILendingPool.UserConfigurationMap memory configuration = ILendingPool(aaveLendingPool).getUserConfiguration(onBehalfOf);
+      require(configuration.data == 0 || configuration.data == (1 << (reserveData.id * 2 + 1)), "collateral asset exists");
 
       emit Deposit(poolManagerLogic.poolLogic(), depositAsset, to, amount, block.timestamp);
 

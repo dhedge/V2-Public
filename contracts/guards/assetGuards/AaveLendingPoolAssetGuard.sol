@@ -100,7 +100,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   }
 
   /// @notice Returns the decimal
-  function getDecimals(address _lendingPool) external pure override returns (uint256 decimals) {
+  function getDecimals(address) external pure override returns (uint256 decimals) {
     decimals = 18;
   }
 

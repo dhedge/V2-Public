@@ -116,7 +116,7 @@ describe("Polygon Mainnet Test", function () {
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveLendingPool);
     aaveLendingPoolGuard.deployed();
 
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
@@ -471,8 +471,8 @@ describe("Polygon Mainnet Test", function () {
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
-      expect(ethers.BigNumber.from(usdcBalanceBefore).add(amount)).to.be.equal(usdcBalanceAfter);
-      expect(ethers.BigNumber.from(amusdcBalanceBefore).sub(amount)).to.be.equal(amusdcBalanceAfter);
+      checkAlmostSame(ethers.BigNumber.from(usdcBalanceBefore).add(amount), usdcBalanceAfter);
+      checkAlmostSame(ethers.BigNumber.from(amusdcBalanceBefore).sub(amount), amusdcBalanceAfter);
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
