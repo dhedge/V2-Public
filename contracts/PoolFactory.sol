@@ -431,10 +431,7 @@ contract PoolFactory is
     uint256 targetVersion,
     bytes calldata data
   ) external onlyOwner {
-    require(
-      startIndex <= endIndex && endIndex < deployedFunds.length,
-      "invalid bounds"
-    );
+    require(startIndex <= endIndex && endIndex < deployedFunds.length, "invalid bounds");
 
     for (uint256 i = startIndex; i <= endIndex; i++) {
       address pool = deployedFunds[i];
