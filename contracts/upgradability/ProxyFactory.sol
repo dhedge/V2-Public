@@ -48,16 +48,18 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
   function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic) internal {
     __Ownable_init();
 
-    poolLogic = _poolLogic;
+    require(_poolLogic != address(0), "Invalid poolLogic");
+    require(_poolManagerLogic != address(0), "Invalid poolManagerLogic");
 
+    poolLogic = _poolLogic;
     poolManagerLogic = _poolManagerLogic;
   }
 
   function setLogic(address _poolLogic, address _poolManagerLogic) public onlyOwner {
     require(_poolLogic != address(0), "Invalid poolLogic");
     require(_poolManagerLogic != address(0), "Invalid poolManagerLogic");
-    poolLogic = _poolLogic;
 
+    poolLogic = _poolLogic;
     poolManagerLogic = _poolManagerLogic;
   }
 
