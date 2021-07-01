@@ -54,7 +54,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   event Borrow(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Repay(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
 
-  address aaveLendingPool;
+  address public aaveLendingPool;
 
   constructor(address _aaveLendingPool) {
     aaveLendingPool = _aaveLendingPool;
@@ -93,8 +93,12 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
       // limit only one collateral asset
       ILendingPool.ReserveData memory reserveData = ILendingPool(aaveLendingPool).getReserveData(depositAsset);
-      ILendingPool.UserConfigurationMap memory configuration = ILendingPool(aaveLendingPool).getUserConfiguration(onBehalfOf);
-      require(configuration.data == 0 || configuration.data == (1 << (reserveData.id * 2 + 1)), "collateral asset exists");
+      ILendingPool.UserConfigurationMap memory configuration =
+        ILendingPool(aaveLendingPool).getUserConfiguration(onBehalfOf);
+      require(
+        configuration.data == 0 || configuration.data == (1 << (reserveData.id * 2 + 1)),
+        "collateral asset exists"
+      );
 
       emit Deposit(poolManagerLogic.poolLogic(), depositAsset, to, amount, block.timestamp);
 
