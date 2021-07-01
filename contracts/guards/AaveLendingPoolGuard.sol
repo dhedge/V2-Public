@@ -54,6 +54,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   event Borrow(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Repay(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
 
+  uint256 internal constant BORROWING_MASK = 0x5555555555555555555555555555555555555555555555555555555555555555;
+  uint256 internal constant COLLATERAL_MASK = 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
   address public aaveLendingPool;
 
   constructor(address _aaveLendingPool) {
@@ -95,10 +97,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       ILendingPool.ReserveData memory reserveData = ILendingPool(aaveLendingPool).getReserveData(depositAsset);
       ILendingPool.UserConfigurationMap memory configuration =
         ILendingPool(aaveLendingPool).getUserConfiguration(onBehalfOf);
-      require(
-        configuration.data == 0 || configuration.data == (1 << (reserveData.id * 2 + 1)),
-        "collateral asset exists"
-      );
+      uint256 colMaskedConf = configuration.data & COLLATERAL_MASK;
+      require(colMaskedConf == 0 || colMaskedConf == (1 << (reserveData.id * 2 + 1)), "collateral asset exists");
 
       emit Deposit(poolManagerLogic.poolLogic(), depositAsset, to, amount, block.timestamp);
 
@@ -147,6 +147,13 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
       require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
+
+      // limit only one borrow asset
+      ILendingPool.ReserveData memory reserveData = ILendingPool(aaveLendingPool).getReserveData(borrowAsset);
+      ILendingPool.UserConfigurationMap memory configuration =
+        ILendingPool(aaveLendingPool).getUserConfiguration(onBehalfOf);
+      uint256 borMaskedConf = configuration.data & BORROWING_MASK;
+      require(borMaskedConf == 0 || borMaskedConf == (1 << (reserveData.id * 2 + 1)), "borrowing asset exists");
 
       emit Borrow(poolManagerLogic.poolLogic(), borrowAsset, to, amount, block.timestamp);
 
