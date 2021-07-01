@@ -248,11 +248,6 @@ contract PoolFactory is
     return (_daoFeeNumerator, _daoFeeDenominator);
   }
 
-  modifier onlyPool() {
-    require(isPool[msg.sender], "Not a pool");
-    _;
-  }
-
   modifier onlyPoolManager() {
     require(isPoolManager[msg.sender], "Not a pool manager");
     _;
