@@ -32,27 +32,95 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
+
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ERC20Guard.sol";
 import "../../interfaces/aave/ILendingPool.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "../../interfaces/aave/IPriceOracle.sol";
+import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
+import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
+import "../../interfaces/IPoolLogic.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type = 3
 contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   using SafeMathUpgradeable for uint256;
 
+  // For Aave decimal calculation
+  uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+  uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
+
+  IAaveProtocolDataProvider public aaveProtocolDataProvider;
+  ILendingPoolAddressesProvider public aaveAddressProvider;
+  IPriceOracle public aavePriceOracle;
+  ILendingPool public aaveLendingPool;
+
+  constructor(address _aaveProtocolDataProvider) {
+    aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
+    aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
+    aavePriceOracle = IPriceOracle(aaveAddressProvider.getPriceOracle());
+    aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
+  }
+
   /// @notice Returns the pool position of Aave lending pool
   /// @dev Returns the balance priced in ETH
   /// @param pool The pool logic address
-  /// @param lendingPool The Aave lending pool
-  function getBalance(address pool, address lendingPool) external view override returns (uint256 balance) {
-    (uint256 totalCollateralETH, uint256 totalDebtETH, , , , ) = ILendingPool(lendingPool).getUserAccountData(pool);
-    balance = totalCollateralETH.sub(totalDebtETH);
+  function getBalance(address pool, address) external view override returns (uint256 balance) {
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
+    IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
+
+    address asset;
+    uint256 decimals;
+    uint256 tokenUnit;
+    uint256 tokenPrice;
+    uint256 collateralBalance;
+    uint256 debtBalance;
+    uint256 totalCollateralInETH;
+    uint256 totalDebtInETH;
+
+    uint256 length = supportedAssets.length;
+    for (uint256 i = 0; i < length; i++) {
+      asset = supportedAssets[i].asset;
+
+      (collateralBalance, debtBalance, decimals) = _calculateAaveBalance(pool, asset);
+
+      if (collateralBalance != 0 || debtBalance != 0) {
+        tokenUnit = 10**decimals;
+        tokenPrice = aavePriceOracle.getAssetPrice(asset);
+        totalCollateralInETH = totalCollateralInETH.add(tokenPrice.mul(collateralBalance).div(tokenUnit));
+        totalDebtInETH = totalDebtInETH.add(tokenPrice.mul(debtBalance).div(tokenUnit));
+      }
+    }
+
+    balance = totalCollateralInETH.sub(totalDebtInETH);
   }
 
   /// @notice Returns the decimal
-  function getDecimals(address _lendingPool) external view override returns (uint256 decimals) {
+  function getDecimals(address _lendingPool) external pure override returns (uint256 decimals) {
     decimals = 18;
+  }
+
+  function _calculateAaveBalance(address pool, address asset)
+    internal
+    view
+    returns (
+      uint256 collateralBalance,
+      uint256 debtBalance,
+      uint256 decimals
+    )
+  {
+    (address aToken, address stableDebtToken, address variableDebtToken) =
+      aaveProtocolDataProvider.getReserveTokensAddresses(asset);
+    if (aToken != address(0)) {
+      collateralBalance = IERC20(aToken).balanceOf(pool);
+      debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
+    }
+
+    ILendingPool.ReserveConfigurationMap memory configuration = aaveLendingPool.getConfiguration(asset);
+    decimals = (configuration.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
   }
 }
