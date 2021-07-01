@@ -139,7 +139,7 @@ contract PoolFactory is
     address _managerLogic,
     address assetHandler,
     address daoAddress
-  ) public initializer {
+  ) external initializer {
     __ProxyFactory_init(_poolLogic, _managerLogic);
     __Pausable_init();
 
@@ -167,7 +167,7 @@ contract PoolFactory is
     string memory _fundSymbol,
     uint256 _managerFeeNumerator,
     IHasSupportedAsset.Asset[] memory _supportedAssets
-  ) public returns (address) {
+  ) external returns (address) {
     bytes memory poolLogicData =
       abi.encodeWithSignature(
         "initialize(address,bool,string,string)",
@@ -217,11 +217,11 @@ contract PoolFactory is
 
   // DAO info
 
-  function getDaoAddress() public view override returns (address) {
+  function getDaoAddress() external view override returns (address) {
     return _daoAddress;
   }
 
-  function setDaoAddress(address daoAddress) public onlyOwner {
+  function setDaoAddress(address daoAddress) external onlyOwner {
     _setDaoAddress(daoAddress);
   }
 
@@ -233,7 +233,7 @@ contract PoolFactory is
     emit DaoAddressSet(daoAddress);
   }
 
-  function setDaoFee(uint256 numerator, uint256 denominator) public onlyOwner {
+  function setDaoFee(uint256 numerator, uint256 denominator) external onlyOwner {
     _setDaoFee(numerator, denominator);
   }
 
@@ -246,7 +246,7 @@ contract PoolFactory is
     emit DaoFeeSet(numerator, denominator);
   }
 
-  function getDaoFee() public view override returns (uint256, uint256) {
+  function getDaoFee() external view override returns (uint256, uint256) {
     return (_daoFeeNumerator, _daoFeeDenominator);
   }
 
@@ -284,7 +284,7 @@ contract PoolFactory is
     emit SetPoolManagerFee(numerator, denominator);
   }
 
-  function getMaximumManagerFee() public view returns (uint256, uint256) {
+  function getMaximumManagerFee() external view returns (uint256, uint256) {
     return (_MAXIMUM_MANAGER_FEE_NUMERATOR, _MANAGER_FEE_DENOMINATOR);
   }
 
@@ -303,7 +303,7 @@ contract PoolFactory is
     emit SetMaximumManagerFeeNumeratorChange(amount);
   }
 
-  function getMaximumManagerFeeNumeratorChange() public view override returns (uint256) {
+  function getMaximumManagerFeeNumeratorChange() external view override returns (uint256) {
     return maximumManagerFeeNumeratorChange;
   }
 
@@ -311,7 +311,7 @@ contract PoolFactory is
     managerFeeNumeratorChangeDelay = delay;
   }
 
-  function getManagerFeeNumeratorChangeDelay() public view override returns (uint256) {
+  function getManagerFeeNumeratorChangeDelay() external view override returns (uint256) {
     return managerFeeNumeratorChangeDelay;
   }
 
@@ -360,11 +360,11 @@ contract PoolFactory is
     return IAssetHandler(_assetHandler).assetTypes(asset);
   }
 
-  function getAssetHandler() public view returns (address) {
+  function getAssetHandler() external view returns (address) {
     return _assetHandler;
   }
 
-  function setAssetHandler(address assetHandler) public onlyOwner {
+  function setAssetHandler(address assetHandler) external onlyOwner {
     _setAssetHandler(assetHandler);
   }
 
@@ -388,7 +388,7 @@ contract PoolFactory is
     emit SetTrackingCode(code);
   }
 
-  function getTrackingCode() public view override returns (bytes32) {
+  function getTrackingCode() external view override returns (bytes32) {
     return _trackingCode;
   }
 
@@ -442,7 +442,7 @@ contract PoolFactory is
   }
 
   // Transaction Guards
-  function getGuard(address extContract) public view override returns (address) {
+  function getGuard(address extContract) external view override returns (address) {
     if (isValidAsset(extContract)) {
       uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
       return assetGuards[assetType];
@@ -450,7 +450,7 @@ contract PoolFactory is
     return contractGuards[extContract];
   }
 
-  function setContractGuard(address extContract, address guardAddress) public onlyDao {
+  function setContractGuard(address extContract, address guardAddress) external onlyDao {
     _setContractGuard(extContract, guardAddress);
   }
 
@@ -463,7 +463,7 @@ contract PoolFactory is
     emit SetContractGuard(extContract, guardAddress);
   }
 
-  function setAssetGuard(uint8 assetType, address guardAddress) public onlyDao {
+  function setAssetGuard(uint8 assetType, address guardAddress) external onlyDao {
     _setAssetGuard(assetType, guardAddress);
   }
 
@@ -475,21 +475,21 @@ contract PoolFactory is
     emit SetAssetGuard(assetType, guardAddress);
   }
 
-  function pause() public onlyDao {
+  function pause() external onlyDao {
     _pause();
   }
 
-  function unpause() public onlyDao {
+  function unpause() external onlyDao {
     _unpause();
   }
 
-  function isPaused() public view override returns (bool) {
+  function isPaused() external view override returns (bool) {
     return paused();
   }
 
   /// @notice Return full array of deployed funds
   /// @return full array of deployed funds
-  function getDeployedFunds() public view returns (address[] memory) {
+  function getDeployedFunds() external view returns (address[] memory) {
     return deployedFunds;
   }
 
