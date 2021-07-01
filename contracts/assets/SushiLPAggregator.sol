@@ -28,6 +28,9 @@ contract SushiLPAggregator is IAggregatorV3Interface {
     address _aggregator0,
     address _aggregator1
   ) {
+    require(_pair != address(0), "_pair address cannot be 0");
+    require(_aggregator0 != address(0), "_aggregator0 address cannot be 0");
+    require(_aggregator1 != address(0), "_aggregator1 cannot be 0");
     pair = _pair;
     token0 = IUniswapV2Pair(pair).token0();
     token1 = IUniswapV2Pair(pair).token1();
