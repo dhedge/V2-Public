@@ -113,8 +113,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   function _changeAssets(Asset[] calldata _addAssets, address[] memory _removeAssets) internal {
-    require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
-
     for (uint8 i = 0; i < _removeAssets.length; i++) {
       _removeAsset(_removeAssets[i]);
     }
@@ -122,6 +120,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     for (uint8 i = 0; i < _addAssets.length; i++) {
       _addAsset(_addAssets[i]);
     }
+
+    require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
 
     require(getDepositAssets().length >= 1, "at least one deposit asset");
   }
