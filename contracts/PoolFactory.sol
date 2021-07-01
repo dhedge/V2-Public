@@ -84,6 +84,20 @@ contract PoolFactory is
 
   event LogUpgrade(address indexed manager, address indexed pool);
 
+  event SetPoolManagerFee(uint256 numerator, uint256 denominator);
+
+  event SetMaximumManagerFee(uint256 numerator, uint256 denominator);
+
+  event SetMaximumManagerFeeNumeratorChange(uint256 amount);
+
+  event SetAssetHandler(address assetHandler);
+
+  event SetTrackingCode(bytes32 code);
+
+  event SetContractGuard(address extContract, address guardAddress);
+
+  event SetAssetGuard(uint8 assetType, address guardAddress);
+
   address[] public deployedFunds;
 
   address internal _daoAddress;
@@ -269,6 +283,8 @@ contract PoolFactory is
 
     poolManagerFeeNumerator[pool] = numerator;
     poolManagerFeeDenominator[pool] = denominator;
+
+    emit SetPoolManagerFee(numerator, denominator);
   }
 
   function getMaximumManagerFee() public view returns (uint256, uint256) {
@@ -280,10 +296,14 @@ contract PoolFactory is
 
     _MAXIMUM_MANAGER_FEE_NUMERATOR = numerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
+
+    emit SetMaximumManagerFee(numerator, denominator);
   }
 
   function setMaximumManagerFeeNumeratorChange(uint256 amount) public onlyOwner {
     maximumManagerFeeNumeratorChange = amount;
+
+    emit SetMaximumManagerFeeNumeratorChange(amount);
   }
 
   function getMaximumManagerFeeNumeratorChange() public view override returns (uint256) {
@@ -353,6 +373,8 @@ contract PoolFactory is
 
   function _setAssetHandler(address assetHandler) internal {
     _assetHandler = assetHandler;
+
+    emit SetAssetHandler(assetHandler);
   }
 
   // Synthetix tracking
@@ -363,6 +385,8 @@ contract PoolFactory is
 
   function _setTrackingCode(bytes32 code) internal {
     _trackingCode = code;
+
+    emit SetTrackingCode(code);
   }
 
   function getTrackingCode() public view override returns (bytes32) {
@@ -408,7 +432,7 @@ contract PoolFactory is
     bytes calldata data
   ) external onlyOwner {
     require(
-      startIndex <= endIndex && startIndex < deployedFunds.length && endIndex < deployedFunds.length,
+      startIndex <= endIndex && endIndex < deployedFunds.length,
       "invalid bounds"
     );
 
@@ -436,6 +460,8 @@ contract PoolFactory is
 
   function _setContractGuard(address extContract, address guardAddress) internal {
     contractGuards[extContract] = guardAddress;
+
+    emit SetContractGuard(extContract, guardAddress);
   }
 
   function setAssetGuard(uint8 assetType, address guardAddress) public onlyDao {
@@ -444,6 +470,8 @@ contract PoolFactory is
 
   function _setAssetGuard(uint8 assetType, address guardAddress) internal {
     assetGuards[assetType] = guardAddress;
+
+    emit SetAssetGuard(assetType, guardAddress);
   }
 
   function pause() public onlyDao {
