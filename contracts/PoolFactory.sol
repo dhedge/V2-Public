@@ -226,6 +226,8 @@ contract PoolFactory is
   }
 
   function _setDaoAddress(address daoAddress) internal {
+    require(daoAddress != address(0), "Invalid daoAddress");
+
     _daoAddress = daoAddress;
 
     emit DaoAddressSet(daoAddress);
@@ -367,6 +369,8 @@ contract PoolFactory is
   }
 
   function _setAssetHandler(address assetHandler) internal {
+    require(assetHandler != address(0), "Invalid assetHandler");
+
     _assetHandler = assetHandler;
 
     emit SetAssetHandler(assetHandler);
@@ -451,6 +455,9 @@ contract PoolFactory is
   }
 
   function _setContractGuard(address extContract, address guardAddress) internal {
+    require(extContract != address(0), "Invalid extContract address");
+    require(guardAddress != address(0), "Invalid guardAddress");
+
     contractGuards[extContract] = guardAddress;
 
     emit SetContractGuard(extContract, guardAddress);
@@ -461,6 +468,8 @@ contract PoolFactory is
   }
 
   function _setAssetGuard(uint8 assetType, address guardAddress) internal {
+    require(guardAddress != address(0), "Invalid guardAddress");
+
     assetGuards[assetType] = guardAddress;
 
     emit SetAssetGuard(assetType, guardAddress);
