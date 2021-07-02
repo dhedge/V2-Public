@@ -35,10 +35,11 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
-import "../interfaces/aave/ILendingPool.sol";
+import "../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
@@ -56,10 +57,16 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
   uint256 internal constant BORROWING_MASK = 0x5555555555555555555555555555555555555555555555555555555555555555;
   uint256 internal constant COLLATERAL_MASK = 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
-  address public aaveLendingPool;
+  address public aaveProtocolDataProvider;
+  mapping(address => bool) public isDepositAsset;
 
-  constructor(address _aaveLendingPool) {
-    aaveLendingPool = _aaveLendingPool;
+  constructor(address _aaveProtocolDataProvider, address[] memory _depositdAssets) {
+    aaveProtocolDataProvider = _aaveProtocolDataProvider;
+
+    uint256 length = _depositdAssets.length;
+    for (uint256 i = 0; i < length; i++) {
+      isDepositAsset[_depositdAssets[i]] = true;
+    }
   }
 
   /// @notice Transaction guard for Synthetix Exchanger
@@ -93,12 +100,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
 
-      // limit only one collateral asset
-      ILendingPool.ReserveData memory reserveData = ILendingPool(aaveLendingPool).getReserveData(depositAsset);
-      ILendingPool.UserConfigurationMap memory configuration =
-        ILendingPool(aaveLendingPool).getUserConfiguration(onBehalfOf);
-      uint256 colMaskedConf = configuration.data & COLLATERAL_MASK;
-      require(colMaskedConf == 0 || colMaskedConf == (1 << (reserveData.id * 2 + 1)), "collateral asset exists");
+      require(isDepositAsset[depositAsset], "deposit is not enabled");
 
       emit Deposit(poolManagerLogic.poolLogic(), depositAsset, to, amount, block.timestamp);
 
@@ -149,11 +151,24 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
 
       // limit only one borrow asset
-      ILendingPool.ReserveData memory reserveData = ILendingPool(aaveLendingPool).getReserveData(borrowAsset);
-      ILendingPool.UserConfigurationMap memory configuration =
-        ILendingPool(aaveLendingPool).getUserConfiguration(onBehalfOf);
-      uint256 borMaskedConf = configuration.data & BORROWING_MASK;
-      require(borMaskedConf == 0 || borMaskedConf == (1 << (reserveData.id * 2 + 1)), "borrowing asset exists");
+      IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
+      uint256 length = supportedAssets.length;
+      for (uint256 i = 0; i < length; i++) {
+        if (supportedAssets[i].asset == borrowAsset) {
+          continue;
+        }
+
+        // returns address(0) if it's not supported in aave
+        (, address stableDebtToken, address variableDebtToken) =
+          IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(supportedAssets[i].asset);
+
+        // check if asset is not supported or debt amount is zero
+        require(
+          (stableDebtToken != address(0) || IERC20(stableDebtToken).balanceOf(onBehalfOf) == 0) &&
+            (variableDebtToken != address(0) || IERC20(variableDebtToken).balanceOf(onBehalfOf) == 0),
+          "borrowing asset exists"
+        );
+      }
 
       emit Borrow(poolManagerLogic.poolLogic(), borrowAsset, to, amount, block.timestamp);
 

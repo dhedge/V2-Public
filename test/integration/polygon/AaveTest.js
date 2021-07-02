@@ -116,7 +116,7 @@ describe("Polygon Mainnet Test", function () {
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveLendingPool);
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveProtocolDataProvider, [usdc]);
     aaveLendingPoolGuard.deployed();
 
     await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);

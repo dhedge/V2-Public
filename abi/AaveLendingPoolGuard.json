@@ -3,8 +3,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_aaveLendingPool",
+        "name": "_aaveProtocolDataProvider",
         "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_depositdAssets",
+        "type": "address[]"
       }
     ],
     "stateMutability": "nonpayable",
@@ -228,7 +233,7 @@
   },
   {
     "inputs": [],
-    "name": "aaveLendingPool",
+    "name": "aaveProtocolDataProvider",
     "outputs": [
       {
         "internalType": "address",
@@ -424,6 +429,25 @@
       }
     ],
     "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isDepositAsset",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
