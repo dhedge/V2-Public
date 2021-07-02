@@ -154,6 +154,8 @@ contract PoolFactory is
     uint256 _managerFeeNumerator,
     IHasSupportedAsset.Asset[] memory _supportedAssets
   ) public returns (address) {
+    require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
+
     bytes memory poolLogicData =
       abi.encodeWithSignature(
         "initialize(address,bool,string,string)",
