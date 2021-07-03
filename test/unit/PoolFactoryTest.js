@@ -1231,7 +1231,9 @@ describe("PoolFactory", function () {
       await expect(assetHandler.getUSDPrice(ZERO_ADDRESS)).to.be.revertedWith("Price aggregator not found");
 
       // try with again with no aggregator
-      await expect(assetHandler.addAsset(badtoken, 1, ZERO_ADDRESS)).to.be.revertedWith("aggregator address cannot be 0");
+      await expect(assetHandler.addAsset(badtoken, 1, ZERO_ADDRESS)).to.be.revertedWith(
+        "aggregator address cannot be 0",
+      );
       await expect(assetHandler.getUSDPrice(badtoken)).to.be.revertedWith("Price aggregator not found");
       await assetHandler.removeAsset(badtoken);
 

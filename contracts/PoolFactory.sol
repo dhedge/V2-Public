@@ -143,7 +143,7 @@ contract PoolFactory is
     __ProxyFactory_init(_poolLogic, _managerLogic);
     __Pausable_init();
 
-    if(assetHandler != address(0)) _setAssetHandler(assetHandler);
+    if (assetHandler != address(0)) _setAssetHandler(assetHandler);
 
     _setDaoAddress(daoAddress);
 
