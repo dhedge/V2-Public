@@ -1212,6 +1212,7 @@ describe("PoolFactory", function () {
       await expect(assetHandler.connect(manager).setPoolFactory(ZERO_ADDRESS)).to.be.revertedWith(
         "Ownable: caller is not the owner",
       );
+
       await expect(assetHandler.setPoolFactory(ZERO_ADDRESS)).to.be.revertedWith("Invalid poolFactory");
 
       await assetHandler.setPoolFactory(user1.address);
@@ -1230,7 +1231,7 @@ describe("PoolFactory", function () {
       await expect(assetHandler.getUSDPrice(ZERO_ADDRESS)).to.be.revertedWith("Price aggregator not found");
 
       // try with again with no aggregator
-      await assetHandler.addAsset(badtoken, 1, ZERO_ADDRESS);
+      await expect(assetHandler.addAsset(badtoken, 1, ZERO_ADDRESS)).to.be.revertedWith("aggregator address cannot be 0");
       await expect(assetHandler.getUSDPrice(badtoken)).to.be.revertedWith("Price aggregator not found");
       await assetHandler.removeAsset(badtoken);
 
