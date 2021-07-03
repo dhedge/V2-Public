@@ -982,7 +982,7 @@ describe("PoolFactory", function () {
 
     let event = await exchangeEvent;
     expect(event.sourceAsset).to.equal(susd);
-    expect(event.sourceAmount).to.equal((100e18).toString());
+    expect(event.sourceAmount).to.equal(sourceAmount);
     expect(event.destinationAsset).to.equal(seth);
   });
 
@@ -1011,14 +1011,16 @@ describe("PoolFactory", function () {
     const sourceAmount = (100e18).toString();
     const IUniswapV3Router = await hre.artifacts.readArtifact("IUniswapV3Router");
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
+    // https://etherscan.io/tx/0xa8423934015c7e893e06721bbc01e42b8139b20764b9d23dbcb831e7b18b0e60
+    // path on etherscan 0x c4a11aaf6ea915ed7ac194161d2fc9384f15bff2 000bb8 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 0001f4 dac17f958d2ee523a2206206994597c13d831ec7
+    // path we have      0x 0165878A594ca255338adfa4d48449f69242Eb8F 000bb8 610178dA211FEF7D417bC0e6FeD39F05609AD788 000bb8 2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6
     const path =
       "0x" +
       susd.substring(2) + // source asset
       "000bb8" + // fee
       slink.substring(2) + // path asset
       "000bb8" + // fee
-      seth.substring(2) + // destination asset
-      "000000000000000000000000000000000000000000000000000000000000";
+      seth.substring(2); // destination asset
     const exactInputParams = {
       path: path,
       recipient: poolManagerLogicProxy.address,
@@ -1042,8 +1044,7 @@ describe("PoolFactory", function () {
       "000bb8" +
       susd.substring(2) +
       "000bb8" +
-      seth.substring(2) +
-      "000000000000000000000000000000000000000000000000000000000000";
+      seth.substring(2);
     swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
       "unsupported source asset",
@@ -1086,7 +1087,7 @@ describe("PoolFactory", function () {
 
     let event = await exchangeEvent;
     expect(event.sourceAsset).to.equal(susd);
-    expect(event.sourceAmount).to.equal((100e18).toString());
+    expect(event.sourceAmount).to.equal(sourceAmount);
     expect(event.destinationAsset).to.equal(seth);
   });
 

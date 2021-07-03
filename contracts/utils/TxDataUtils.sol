@@ -41,20 +41,20 @@ contract TxDataUtils {
   using BytesLib for bytes;
   using SafeMathUpgradeable for uint256;
 
-  function getMethod(bytes memory data) public pure returns (bytes4) {
+  function getMethod(bytes calldata data) public pure returns (bytes4) {
     return read4left(data, 0);
   }
 
-  function getParams(bytes memory data) public pure returns (bytes memory) {
+  function getParams(bytes calldata data) public pure returns (bytes memory) {
     return data.slice(4, data.length - 4);
   }
 
-  function getInput(bytes memory data, uint8 inputNum) public pure returns (bytes32) {
+  function getInput(bytes calldata data, uint8 inputNum) public pure returns (bytes32) {
     return read32(data, 32 * inputNum + 4, 32);
   }
 
   function getBytes(
-    bytes memory data,
+    bytes calldata data,
     uint8 inputNum,
     uint256 offset
   ) public pure returns (bytes memory) {
@@ -65,20 +65,20 @@ contract TxDataUtils {
     return data.slice(bytesLenPos + 4 + offset + 32, bytesLen);
   }
 
-  function getArrayLast(bytes memory data, uint8 inputNum) public pure returns (bytes32) {
+  function getArrayLast(bytes calldata data, uint8 inputNum) public pure returns (bytes32) {
     bytes32 arrayPos = read32(data, 32 * inputNum + 4, 32);
     bytes32 arrayLen = read32(data, uint256(arrayPos) + 4, 32);
     require(arrayLen > 0, "input is not array");
     return read32(data, uint256(arrayPos) + 4 + (uint256(arrayLen) * 32), 32);
   }
 
-  function getArrayLength(bytes memory data, uint8 inputNum) public pure returns (uint256) {
+  function getArrayLength(bytes calldata data, uint8 inputNum) public pure returns (uint256) {
     bytes32 arrayPos = read32(data, 32 * inputNum + 4, 32);
     return uint256(read32(data, uint256(arrayPos) + 4, 32));
   }
 
   function getArrayIndex(
-    bytes memory data,
+    bytes calldata data,
     uint8 inputNum,
     uint8 arrayIndex
   ) public pure returns (bytes32) {
