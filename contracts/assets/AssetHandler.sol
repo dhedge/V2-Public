@@ -23,6 +23,8 @@ import "../interfaces/IAssetHandler.sol";
 contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   using SafeMathUpgradeable for uint256;
 
+  event SetPoolFactory(address poolFactory);
+
   uint256 public chainlinkTimeout; // Chainlink oracle timeout period
   address public poolFactory;
 
@@ -32,7 +34,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
 
   // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
 
-  function initialize(address _poolFactory, Asset[] memory assets) public initializer {
+  function initialize(address _poolFactory, Asset[] memory assets) external initializer {
     require(_poolFactory != address(0), "Invalid poolFactory");
     __Ownable_init();
 
@@ -43,7 +45,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
 
   /* ========== VIEWS ========== */
 
-  function getAssetTypeAndAggregator(address asset) public view override returns (uint8, address) {
+  function getAssetTypeAndAggregator(address asset) external view override returns (uint8, address) {
     return (assetTypes[asset], priceAggregators[asset]);
   }
 
@@ -53,7 +55,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
    * @param asset the asset address
    * @return price Returns the latest price of a given asset (decimal: 18)
    */
-  function getUSDPrice(address asset) public view override returns (uint256 price) {
+  function getUSDPrice(address asset) external view override returns (uint256 price) {
     address aggregator = priceAggregators[asset];
 
     require(aggregator != address(0), "Price aggregator not found");
@@ -85,6 +87,8 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   function setPoolFactory(address _poolFactory) external onlyOwner {
     require(_poolFactory != address(0), "Invalid poolFactory");
     poolFactory = _poolFactory;
+
+    emit SetPoolFactory(_poolFactory);
   }
 
   function setChainlinkTimeout(uint256 newTimeoutPeriod) external onlyOwner {
@@ -97,6 +101,9 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
     uint8 assetType,
     address aggregator
   ) public override onlyOwner {
+    require(asset != address(0), "asset address cannot be 0");
+    require(aggregator != address(0), "aggregator address cannot be 0");
+
     assetTypes[asset] = assetType;
     priceAggregators[asset] = aggregator;
 
@@ -110,7 +117,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   }
 
   /// Remove valid asset
-  function removeAsset(address asset) public override onlyOwner {
+  function removeAsset(address asset) external override onlyOwner {
     assetTypes[asset] = 0;
     priceAggregators[asset] = address(0);
 
