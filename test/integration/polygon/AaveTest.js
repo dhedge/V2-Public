@@ -510,5 +510,52 @@ describe("Polygon Mainnet Test", function () {
       const userConfigAfter = await lendingPool.getUserConfiguration(poolLogicProxy.address);
       expect(userConfigBefore).to.be.not.equal(userConfigAfter);
     });
+
+    it("Should be able to borrow weth", async () => {
+      const amount = (50e6).toString();
+
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+      let borrowABI = iLendingPool.encodeFunctionData("borrow", [usdt, amount, 0, 0, poolLogicProxy.address]);
+
+      await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, borrowABI)).to.be.revertedWith(
+        "non-zero address is required",
+      );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
+      ).to.be.revertedWith("invalid destination");
+
+      borrowABI = iLendingPool.encodeFunctionData("borrow", [amusdt, amount, 0, 0, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+        "unsupported borrow asset",
+      );
+
+      await poolManagerLogicProxy.connect(manager).changeAssets([[usdt, false]], []);
+
+      borrowABI = iLendingPool.encodeFunctionData("borrow", [usdt, amount, 0, 0, usdc]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+        "recipient is not pool",
+      );
+
+      borrowABI = iLendingPool.encodeFunctionData("borrow", [usdt, amount, 0, 0, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(usdc, borrowABI)).to.be.revertedWith(
+        "invalid transaction",
+      );
+
+      const usdtBalanceBefore = await USDT.balanceOf(poolLogicProxy.address);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      expect(usdtBalanceBefore).to.be.equal(0);
+
+      // borrow
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith("1");
+
+      const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
+      expect(usdtBalanceAfter).to.be.equal((50e6).toString());
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
   });
 });
