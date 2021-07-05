@@ -145,6 +145,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
+      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(poolManagerLogicAssets.isSupportedAsset(borrowAsset), "unsupported borrow asset");
 
       require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
@@ -164,8 +165,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
         // check if asset is not supported or debt amount is zero
         require(
-          (stableDebtToken != address(0) || IERC20(stableDebtToken).balanceOf(onBehalfOf) == 0) &&
-            (variableDebtToken != address(0) || IERC20(variableDebtToken).balanceOf(onBehalfOf) == 0),
+          (stableDebtToken == address(0) || IERC20(stableDebtToken).balanceOf(onBehalfOf) == 0) &&
+            (variableDebtToken == address(0) || IERC20(variableDebtToken).balanceOf(onBehalfOf) == 0),
           "borrowing asset exists"
         );
       }
