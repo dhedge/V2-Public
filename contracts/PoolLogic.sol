@@ -250,10 +250,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint8 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
-      address asset = _supportedAssets[i].asset;
-      uint256 totalAssetBalance = IERC20Upgradeable(asset).balanceOf(address(this));
-      uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
-      bool withdrawProcessed = _withdrawProcessing(asset, msg.sender, portion);
+      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) = _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
@@ -294,20 +291,33 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param asset Asset for withdrawal processing
   /// @param to Investor account to send withdrawed tokens to
   /// @param portion Portion of investor withdrawal of the total dHedge pool
+  /// @return withdrawAsset Asset to be withdrawed
+  /// @return portionOfAssetBalance Asset balance amount to be withdrawed
   /// @return success A boolean for success or fail transaction
   function _withdrawProcessing(
     address asset,
     address to,
     uint256 portion
-  ) internal returns (bool success) {
-    // Withdraw any external tokens (eg. staked tokens in other contracts)
-    address guard = IHasGuardInfo(factory).getGuard(asset);
-    require(guard != address(0), "invalid guard");
-    (address stakingContract, bytes memory txData) =
-      IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
-    if (txData.length > 1) {
-      (success, ) = stakingContract.call(txData);
-      require(success, "failed to withdraw staked tokens");
+  ) internal returns (address withdrawAsset, uint256 portionOfAssetBalance, bool success) {
+    if (IHasAssetInfo(factory).getAssetType(asset) == 3) { // Aave Lending Pool Asset
+      withdrawAsset = asset;
+      success = true;
+    } else {
+      withdrawAsset = asset;
+
+      // Withdraw any external tokens (eg. staked tokens in other contracts)
+      address guard = IHasGuardInfo(factory).getGuard(asset);
+      require(guard != address(0), "invalid guard");
+
+      uint256 totalAssetBalance = IAssetGuard(guard).getBalance(address(this), asset);
+      portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
+
+      (address stakingContract, bytes memory txData) =
+        IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
+      if (txData.length > 1) {
+        (success, ) = stakingContract.call(txData);
+        require(success, "failed to withdraw staked tokens");
+      }
     }
   }
 

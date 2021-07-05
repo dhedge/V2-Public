@@ -5,6 +5,7 @@ const chaiAlmost = require("chai-almost");
 use(chaiAlmost());
 
 const checkAlmostSame = (a, b) => {
+  console.log(a.toString(), " === ", b.toString());
   expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
   expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
 };
@@ -355,7 +356,6 @@ describe("Polygon Mainnet Test", function () {
     expect(event.investor).to.equal(logicOwner.address);
     checkAlmostSame(event.valueDeposited, units(200));
     checkAlmostSame(event.fundTokensReceived, units(200));
-    checkAlmostSame(event.totalInvestorFundTokens, units(200));
     checkAlmostSame(event.fundValue, units(200));
     checkAlmostSame(event.totalSupply, units(200));
   });
@@ -615,6 +615,61 @@ describe("Polygon Mainnet Test", function () {
       expect(usdtBalanceAfter).to.be.equal((15e6).toString());
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
+
+    it("should be able to withdraw", async function () {
+      let withdrawalEvent = new Promise((resolve, reject) => {
+        poolLogicProxy.on(
+          "Withdrawal",
+          (
+            fundAddress,
+            investor,
+            valueWithdrawn,
+            fundTokensWithdrawn,
+            totalInvestorFundTokens,
+            fundValue,
+            totalSupply,
+            withdrawnAssets,
+            time,
+            event,
+          ) => {
+            event.removeListener();
+
+            resolve({
+              fundAddress: fundAddress,
+              investor: investor,
+              valueWithdrawn: valueWithdrawn,
+              fundTokensWithdrawn: fundTokensWithdrawn,
+              totalInvestorFundTokens: totalInvestorFundTokens,
+              fundValue: fundValue,
+              totalSupply: totalSupply,
+              withdrawnAssets: withdrawnAssets,
+              time: time,
+            });
+          },
+        );
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      // Withdraw 50%
+      let withdrawAmount = units(10);
+
+      await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
+
+      await poolFactory.setExitCooldown(0);
+
+      await poolLogicProxy.withdraw(withdrawAmount);
+
+      let event = await withdrawalEvent;
+      expect(event.fundAddress).to.equal(poolLogicProxy.address);
+      expect(event.investor).to.equal(logicOwner.address);
+      checkAlmostSame(event.valueWithdrawn, units(10));
+      checkAlmostSame(event.fundTokensWithdrawn, units(10));
+      checkAlmostSame(event.fundValue, units(180));
+      checkAlmostSame(event.totalSupply, units(180));
     });
   });
 });
