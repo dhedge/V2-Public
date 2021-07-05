@@ -57,6 +57,19 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "poolFactory",
+        "type": "address"
+      }
+    ],
+    "name": "SetPoolFactory",
+    "type": "event"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",

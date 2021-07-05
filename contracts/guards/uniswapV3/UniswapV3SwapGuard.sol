@@ -104,9 +104,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       if (dstAsset == address(0)) {
         // if the remaining path is just trailing zeros, use the last path asset instead
         dstAsset = asset;
-      } else {
-        require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
       }
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == toAddress, "recipient is not pool");
 

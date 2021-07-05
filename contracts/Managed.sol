@@ -69,7 +69,7 @@ contract Managed {
     return _memberPosition[member] != 0;
   }
 
-  function getMembers() public view returns (address[] memory) {
+  function getMembers() external view returns (address[] memory) {
     return _memberList;
   }
 
@@ -80,7 +80,7 @@ contract Managed {
     emit ManagerUpdated(newManager, newManagerName);
   }
 
-  function addMembers(address[] memory members) public onlyManager {
+  function addMembers(address[] memory members) external onlyManager {
     for (uint256 i = 0; i < members.length; i++) {
       if (isMemberAllowed(members[i])) continue;
 
@@ -88,7 +88,7 @@ contract Managed {
     }
   }
 
-  function removeMembers(address[] memory members) public onlyManager {
+  function removeMembers(address[] memory members) external onlyManager {
     for (uint256 i = 0; i < members.length; i++) {
       if (!isMemberAllowed(members[i])) continue;
 
@@ -96,32 +96,32 @@ contract Managed {
     }
   }
 
-  function addMember(address member) public onlyManager {
+  function addMember(address member) external onlyManager {
     if (isMemberAllowed(member)) return;
 
     _addMember(member);
   }
 
-  function removeMember(address member) public onlyManager {
+  function removeMember(address member) external onlyManager {
     if (!isMemberAllowed(member)) return;
 
     _removeMember(member);
   }
 
-  function trader() public view returns (address) {
+  function trader() external view returns (address) {
     return _trader;
   }
 
-  function setTrader(address newTrader) public onlyManager {
+  function setTrader(address newTrader) external onlyManager {
     require(newTrader != address(0), "Invalid trader");
     _trader = newTrader;
   }
 
-  function removeTrader() public onlyManager {
+  function removeTrader() external onlyManager {
     _trader = address(0);
   }
 
-  function numberOfMembers() public view returns (uint256) {
+  function numberOfMembers() external view returns (uint256) {
     return _memberList.length;
   }
 

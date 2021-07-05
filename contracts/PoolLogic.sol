@@ -154,7 +154,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     bool _privatePool,
     string memory _fundName,
     string memory _fundSymbol
-  ) public initializer {
+  ) external initializer {
     require(_factory != address(0), "Invalid factory");
     __ERC20_init(_fundName, _fundSymbol);
     __ReentrancyGuard_init();
@@ -177,7 +177,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(getExitRemainingCooldown(from) == 0, "cooldown active");
   }
 
-  function setPoolPrivate(bool _privatePool) public onlyManager {
+  function setPoolPrivate(bool _privatePool) external onlyManager {
     require(privatePool != _privatePool, "flag must be different");
 
     _setPoolPrivacy(_privatePool);
@@ -189,7 +189,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     emit PoolPrivacyUpdated(_privacy);
   }
 
-  function deposit(address _asset, uint256 _amount) public onlyPrivate whenNotPaused returns (uint256) {
+  function deposit(address _asset, uint256 _amount) external onlyPrivate whenNotPaused returns (uint256) {
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
 
     lastDeposit[msg.sender] = block.timestamp;
@@ -229,7 +229,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return liquidityMinted;
   }
 
-  function withdraw(uint256 _fundTokenAmount) public virtual nonReentrant whenNotPaused {
+  function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
     require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
@@ -323,7 +323,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
       (address stakingContract, bytes memory txData) =
         IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
-      if (txData.length > 1) {
+      if (txData.length > 0) {
         (success, ) = stakingContract.call(txData);
         require(success, "failed to withdraw staked tokens");
       }
@@ -336,7 +336,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param data The data that going to send in the transaction
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data)
-    public
+    external
     onlyManagerOrTrader
     nonReentrant
     whenNotPaused
@@ -363,7 +363,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   }
 
   function getFundSummary()
-    public
+    external
     view
     returns (
       string memory,
@@ -394,7 +394,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     );
   }
 
-  function tokenPrice() public view returns (uint256) {
+  function tokenPrice() external view returns (uint256) {
     uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
@@ -407,7 +407,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return _fundValue.mul(10**18).div(_tokenSupply);
   }
 
-  function availableManagerFee() public view returns (uint256) {
+  function availableManagerFee() external view returns (uint256) {
     uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
@@ -440,7 +440,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return available;
   }
 
-  function mintManagerFee() public whenNotPaused {
+  function mintManagerFee() external whenNotPaused {
     _mintManagerFee();
   }
 

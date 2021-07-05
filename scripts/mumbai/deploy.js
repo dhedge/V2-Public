@@ -61,12 +61,12 @@ async function main() {
   const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
-  poolLogic = await upgrades.deployProxy(PoolLogic);
+  poolLogic = await PoolLogic.deploy();
   await poolLogic.deployed();
   console.log("poolLogic deployed at ", poolLogic.address);
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-  poolManagerLogic = await upgrades.deployProxy(PoolManagerLogic);
+  poolManagerLogic = await PoolManagerLogic.deploy();
   await poolManagerLogic.deployed();
   console.log("poolManagerLogic deployed at ", poolManagerLogic.address);
 

@@ -54,6 +54,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
   IAddressResolver public addressResolver;
 
   constructor(IAddressResolver _addressResolver) {
+    require(address(_addressResolver) != address(0), "_addressResolver address cannot be 0");
     addressResolver = _addressResolver;
   }
 
