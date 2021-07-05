@@ -250,7 +250,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint8 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
-      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) = _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
+      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) =
+        _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
@@ -298,8 +299,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address asset,
     address to,
     uint256 portion
-  ) internal returns (address withdrawAsset, uint256 portionOfAssetBalance, bool success) {
-    if (IHasAssetInfo(factory).getAssetType(asset) == 3) { // Aave Lending Pool Asset
+  )
+    internal
+    returns (
+      address withdrawAsset,
+      uint256 portionOfAssetBalance,
+      bool success
+    )
+  {
+    if (IHasAssetInfo(factory).getAssetType(asset) == 3) {
+      // Aave Lending Pool Asset
       withdrawAsset = asset;
       success = true;
     } else {
