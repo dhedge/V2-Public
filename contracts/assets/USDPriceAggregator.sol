@@ -17,20 +17,25 @@ import "../utils/DhedgeMath.sol";
 contract USDPriceAggregator is IAggregatorV3Interface {
   /**
    * @dev Get the latest round data. Should be the same format as chainlink aggregator.
-   * @return Returns the latest round data of usd (price decimal: 8)
+   * @return roundId The round ID.
+   * @return answer The price - the latest round data of USD (price decimal: 8)
+   * @return startedAt Timestamp of when the round started.
+   * @return updatedAt Timestamp of when the round was updated.
+   * @return answeredInRound The round ID of the round in which the answer was computed.
    */
   function latestRoundData()
     external
     view
     override
     returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
     )
   {
-    return (0, 10**8, 0, block.timestamp, 0);
+    answer = 10**8;
+    updatedAt = block.timestamp;
   }
 }
