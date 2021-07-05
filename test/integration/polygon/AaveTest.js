@@ -44,7 +44,7 @@ const sushiLPUsdcWethPoolId = 1;
 
 describe("Polygon Mainnet Test", function () {
   let WMatic, WETH, USDC, USDT, SushiLPUSDCWETH, SUSHI, AMUSDC;
-  let sushiLPAggregator, sushiMiniChefV2Guard;
+  let sushiLPAggregator, usdPriceAggregator, sushiMiniChefV2Guard;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
@@ -72,6 +72,9 @@ describe("Polygon Mainnet Test", function () {
     // Deploy Sushi LP Aggregator
     const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
     sushiLPAggregator = await SushiLPAggregator.deploy(sushiLpUsdcWeth, usdc_price_feed, eth_price_feed);
+    // Deploy USD Price Aggregator
+    const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+    usdPriceAggregator = await USDPriceAggregator.deploy();
     // Initialize Asset Price Consumer
     const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
@@ -79,7 +82,7 @@ describe("Polygon Mainnet Test", function () {
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
     const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: eth_price_feed };
+    const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
     const assetHandlerInitAssets = [
       assetWmatic,
       assetWeth,
@@ -112,7 +115,10 @@ describe("Polygon Mainnet Test", function () {
     sushiLPAssetGuard.deployed();
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
+      aaveProtocolDataProvider,
+      assetHandler.address,
+    );
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");

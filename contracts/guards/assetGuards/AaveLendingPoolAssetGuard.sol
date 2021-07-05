@@ -39,9 +39,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ERC20Guard.sol";
 import "../../interfaces/aave/ILendingPool.sol";
-import "../../interfaces/aave/IPriceOracle.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
+import "../../interfaces/IAssetHandler.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
 
@@ -56,14 +56,14 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   ILendingPoolAddressesProvider public aaveAddressProvider;
-  IPriceOracle public aavePriceOracle;
   ILendingPool public aaveLendingPool;
+  IAssetHandler public assetHandler;
 
-  constructor(address _aaveProtocolDataProvider) {
+  constructor(address _aaveProtocolDataProvider, address _assetHandler) {
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
-    aavePriceOracle = IPriceOracle(aaveAddressProvider.getPriceOracle());
     aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
+    assetHandler = IAssetHandler(_assetHandler);
   }
 
   /// @notice Returns the pool position of Aave lending pool
@@ -76,11 +76,11 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     address asset;
     uint256 decimals;
     uint256 tokenUnit;
-    uint256 tokenPrice;
+    uint256 tokenPriceInUsd;
     uint256 collateralBalance;
     uint256 debtBalance;
-    uint256 totalCollateralInETH;
-    uint256 totalDebtInETH;
+    uint256 totalCollateralInUsd;
+    uint256 totalDebtInUsd;
 
     uint256 length = supportedAssets.length;
     for (uint256 i = 0; i < length; i++) {
@@ -90,13 +90,13 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
 
       if (collateralBalance != 0 || debtBalance != 0) {
         tokenUnit = 10**decimals;
-        tokenPrice = aavePriceOracle.getAssetPrice(asset);
-        totalCollateralInETH = totalCollateralInETH.add(tokenPrice.mul(collateralBalance).div(tokenUnit));
-        totalDebtInETH = totalDebtInETH.add(tokenPrice.mul(debtBalance).div(tokenUnit));
+        tokenPriceInUsd = assetHandler.getUSDPrice(asset);
+        totalCollateralInUsd = totalCollateralInUsd.add(tokenPriceInUsd.mul(collateralBalance).div(tokenUnit));
+        totalDebtInUsd = totalDebtInUsd.add(tokenPriceInUsd.mul(debtBalance).div(tokenUnit));
       }
     }
 
-    balance = totalCollateralInETH.sub(totalDebtInETH);
+    balance = totalCollateralInUsd.sub(totalDebtInUsd);
   }
 
   /// @notice Returns the decimal
