@@ -4,19 +4,6 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "dao",
-        "type": "address"
-      }
-    ],
-    "name": "DaoAddressSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "uint256",
         "name": "numerator",
         "type": "uint256"
@@ -122,6 +109,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "governanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "GovernanceAddressSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "manager",
@@ -200,50 +200,12 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint8",
-        "name": "assetType",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "SetAssetGuard",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "address",
         "name": "assetHandler",
         "type": "address"
       }
     ],
     "name": "SetAssetHandler",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "extContract",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "SetContractGuard",
     "type": "event"
   },
   {
@@ -480,19 +442,6 @@
   },
   {
     "inputs": [],
-    "name": "getDaoAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getDaoFee",
     "outputs": [
       {
@@ -686,7 +635,7 @@
       },
       {
         "internalType": "address",
-        "name": "daoAddress",
+        "name": "governanceAddress",
         "type": "address"
       }
     ],
@@ -904,61 +853,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint8",
-        "name": "assetType",
-        "type": "uint8"
-      },
-      {
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setAssetGuard",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "assetHandler",
         "type": "address"
       }
     ],
     "name": "setAssetHandler",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "extContract",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setContractGuard",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "daoAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setDaoAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -990,6 +890,19 @@
       }
     ],
     "name": "setExitCooldown",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "governanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setGovernanceAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

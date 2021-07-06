@@ -152,6 +152,10 @@ describe("PoolFactory", function () {
       eth_price_feed.address,
     );
 
+    const Governance = await ethers.getContractFactory("Governance");
+    let governance = await Governance.deploy();
+    console.log("governance deployed to:", governance.address);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -180,7 +184,7 @@ describe("PoolFactory", function () {
       poolLogic.address,
       poolManagerLogic.address,
       ZERO_ADDRESS,
-      dao.address,
+      governance.address,
     ]);
     await poolFactory.deployed();
     console.log("poolFactory deployed to:", poolFactory.address);
@@ -235,12 +239,12 @@ describe("PoolFactory", function () {
     ]); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setAssetGuard(2, sushiLPAssetGuard.address);
-    await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
-    await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
-    await poolFactory.connect(dao).setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
+    await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(2, sushiLPAssetGuard.address);
+    await governance.setContractGuard(synthetix.address, synthetixGuard.address);
+    await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
+    await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
   });
 
   it("Should be able to createFund", async function () {
@@ -752,7 +756,7 @@ describe("PoolFactory", function () {
     const sourceKey = susdKey;
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
-    const daoAddress = await poolFactory.getDaoAddress();
+    const daoAddress = await poolFactory.owner();
     const trackingCode = await poolFactory.getTrackingCode();
 
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
@@ -1091,38 +1095,14 @@ describe("PoolFactory", function () {
     expect(event.destinationAsset).to.equal(seth);
   });
 
-  it("should be able to pause deposit, exchange/execute and withdraw", async function () {
-    let poolLogicManagerProxy = poolLogicProxy.connect(manager);
-
-    await expect(poolFactory.pause()).to.be.revertedWith("only dao");
-    await poolFactory.connect(dao).pause();
-    expect(await poolFactory.isPaused()).to.be.true;
-
-    await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.be.revertedWith("contracts paused");
-    await expect(poolLogicProxy.withdraw((100e18).toString())).to.be.revertedWith("contracts paused");
-    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.be.revertedWith(
-      "contracts paused",
-    );
-
-    await expect(poolFactory.unpause()).to.be.revertedWith("only dao");
-    await poolFactory.connect(dao).unpause();
-    expect(await poolFactory.isPaused()).to.be.false;
-
-    await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.not.be.revertedWith("contracts paused");
-    await expect(poolLogicProxy.withdraw((100e18).toString())).to.not.be.revertedWith("contracts paused");
-    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.not.be.revertedWith(
-      "contracts paused",
-    );
-  });
-
   it("should be able to mint manager fee", async () => {
     await poolFactory.setDaoFee(10, 100);
     const daoFees = await poolFactory.getDaoFee();
     expect(daoFees[0]).to.be.equal(10);
     expect(daoFees[1]).to.be.equal(100);
 
-    await poolFactory.setDaoAddress(dao.address);
-    expect(await poolFactory.getDaoAddress()).to.be.equal(dao.address);
+    await poolFactory.transferOwnership(dao.address);
+    expect(await poolFactory.owner()).to.be.equal(dao.address);
 
     await assetHandler.setChainlinkTimeout(9000000);
 
@@ -1141,6 +1121,30 @@ describe("PoolFactory", function () {
     checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFee.mul(daoFees[0]).div(daoFees[1]));
 
     await assetHandler.setChainlinkTimeout(90000);
+  });
+
+  it("should be able to pause deposit, exchange/execute and withdraw", async function () {
+    let poolLogicManagerProxy = poolLogicProxy.connect(manager);
+
+    await expect(poolFactory.pause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.connect(dao).pause();
+    expect(await poolFactory.isPaused()).to.be.true;
+
+    await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.be.revertedWith("contracts paused");
+    await expect(poolLogicProxy.withdraw((100e18).toString())).to.be.revertedWith("contracts paused");
+    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.be.revertedWith(
+      "contracts paused",
+    );
+
+    await expect(poolFactory.unpause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.connect(dao).unpause();
+    expect(await poolFactory.isPaused()).to.be.false;
+
+    await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.not.be.revertedWith("contracts paused");
+    await expect(poolLogicProxy.withdraw((100e18).toString())).to.not.be.revertedWith("contracts paused");
+    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.not.be.revertedWith(
+      "contracts paused",
+    );
   });
 
   describe("AssetHandler", function () {
@@ -1698,7 +1702,8 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
-    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
+    await expect(poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith("caller is not the owner");
+    await poolFactory.connect(dao).setLogic(TESTNET_DAO, TESTNET_DAO);
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
     expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
@@ -1706,6 +1711,6 @@ describe("PoolFactory", function () {
     let poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(TESTNET_DAO);
 
-    await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
+    await poolFactory.connect(dao).setLogic(poolLogic.address, poolManagerLogic.address);
   });
 });
