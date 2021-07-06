@@ -34,6 +34,10 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
+    const Governance = await ethers.getContractFactory("Governance");
+    let governance = await Governance.deploy();
+    console.log("governance deployed to:", governance.address);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -45,7 +49,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
       poolLogic.address,
       poolManagerLogic.address,
       ZERO_ADDRESS,
-      dao.address,
+      governance.address,
     ]);
     await poolFactory.deployed();
 
@@ -70,8 +74,8 @@ describe("Sushiswap V2 Test Mumbai", function () {
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
     uniswapV2RouterGuard.deployed();
 
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
+    await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   });
 
   it("Should be able to createFund", async function () {

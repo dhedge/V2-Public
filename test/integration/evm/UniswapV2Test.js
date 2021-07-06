@@ -36,6 +36,10 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
+    const Governance = await ethers.getContractFactory("Governance");
+    let governance = await Governance.deploy();
+    console.log("governance deployed to:", governance.address);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -47,7 +51,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       poolLogic.address,
       poolManagerLogic.address,
       ZERO_ADDRESS,
-      dao.address,
+      governance.address,
     ]);
     await poolFactory.deployed();
 
@@ -79,9 +83,9 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     sushiswapGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
     sushiswapGuard.deployed();
 
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiswapRouter, sushiswapGuard.address);
+    await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(sushiswapRouter, sushiswapGuard.address);
   });
 
   it("Should be able to get WETH", async function () {

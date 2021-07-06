@@ -41,6 +41,10 @@ describe("Synthetix Test", function () {
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
+    const Governance = await ethers.getContractFactory("Governance");
+    let governance = await Governance.deploy();
+    console.log("governance deployed to:", governance.address);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -52,7 +56,7 @@ describe("Synthetix Test", function () {
       poolLogic.address,
       poolManagerLogic.address,
       ZERO_ADDRESS,
-      dao.address,
+      governance.address,
     ]);
     await poolFactory.deployed();
 
@@ -88,9 +92,9 @@ describe("Synthetix Test", function () {
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory);
     uniswapV2RouterGuard.deployed();
 
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
-    await poolFactory.connect(dao).setContractGuard(synthetix.address, synthetixGuard.address);
+    await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(synthetix.address, synthetixGuard.address);
   });
 
   it("Should be able to get susd", async function () {

@@ -44,6 +44,10 @@ describe("Sushiswap V2 Test", function () {
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
+    const Governance = await ethers.getContractFactory("Governance");
+    let governance = await Governance.deploy();
+    console.log("governance deployed to:", governance.address);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -55,7 +59,7 @@ describe("Sushiswap V2 Test", function () {
       poolLogic.address,
       poolManagerLogic.address,
       ZERO_ADDRESS,
-      dao.address,
+      governance.address,
     ]);
     await poolFactory.deployed();
 
@@ -92,10 +96,10 @@ describe("Sushiswap V2 Test", function () {
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2, [[sushiLpUsdcWeth, sushiLPUsdcWethPoolId]]); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setAssetGuard(2, sushiLPAssetGuard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
+    await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(2, sushiLPAssetGuard.address);
+    await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
   });
 
   it("Should be able to get USDC", async function () {
