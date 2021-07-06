@@ -35,7 +35,6 @@ contract USDPriceAggregator is IAggregatorV3Interface {
       uint80 answeredInRound
     )
   {
-    answer = 10**8;
-    updatedAt = block.timestamp;
+    return (0, 10**8, 0, block.timestamp, 0);
   }
 }
