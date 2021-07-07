@@ -51,25 +51,25 @@ describe("Synthetix Test", function () {
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      ZERO_ADDRESS,
-      governance.address,
-    ]);
-    await poolFactory.deployed();
-
     // Initialize Asset Price Consumer
     const assetSusd = { asset: susd, assetType: 0, aggregator: susd_price_feed };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed };
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed };
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
 
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
-    await poolFactory.setAssetHandler(assetHandler.address);
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year
+
+    PoolFactory = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      assetHandler.address,
+      dao.address,
+      governance.address,
+    ]);
+    await poolFactory.deployed();
 
     const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
     addressResolver = await ethers.getContractAt(IAddressResolver.abi, addressResolverAddress);

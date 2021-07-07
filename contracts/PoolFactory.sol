@@ -75,10 +75,14 @@ contract PoolFactory is
     uint256 managerFeeDenominator
   );
 
+  event DAOAddressSet(address daoAddress);
+
   event GovernanceAddressSet(address governanceAddress);
+
   event DaoFeeSet(uint256 numerator, uint256 denominator);
 
   event ExitFeeSet(uint256 numerator, uint256 denominator);
+
   event ExitCooldownSet(uint256 cooldown);
 
   event MaximumSupportedAssetCountSet(uint256 count);
@@ -97,7 +101,9 @@ contract PoolFactory is
 
   address[] public deployedFunds;
 
-  address internal _governanceAddress;
+  address public override daoAddress;
+  address public governanceAddress;
+
   address internal _assetHandler;
   uint256 internal _daoFeeNumerator;
   uint256 internal _daoFeeDenominator;
@@ -126,14 +132,17 @@ contract PoolFactory is
     address _poolLogic,
     address _managerLogic,
     address assetHandler,
-    address governanceAddress
+    address _daoAddress,
+    address _governanceAddress
   ) external initializer {
     __ProxyFactory_init(_poolLogic, _managerLogic);
     __Pausable_init();
 
-    if (assetHandler != address(0)) _setAssetHandler(assetHandler);
+    _setAssetHandler(assetHandler);
 
-    _setGovernanceAddress(governanceAddress);
+    _setDAOAddress(_daoAddress);
+
+    _setGovernanceAddress(_governanceAddress);
 
     _setMaximumManagerFee(5000, 10000);
 
@@ -205,18 +214,32 @@ contract PoolFactory is
     return fund;
   }
 
-  // DAO info
+  // DAO info (Uber Pool)
 
-  function setGovernanceAddress(address governanceAddress) external onlyOwner {
-    _setGovernanceAddress(governanceAddress);
+  function setDAOAddress(address _daoAddress) external onlyOwner {
+    _setDAOAddress(_daoAddress);
   }
 
-  function _setGovernanceAddress(address governanceAddress) internal {
-    require(governanceAddress != address(0), "Invalid governanceAddress");
+  function _setDAOAddress(address _daoAddress) internal {
+    require(_daoAddress != address(0), "Invalid daoAddress");
 
-    _governanceAddress = governanceAddress;
+    daoAddress = _daoAddress;
 
-    emit GovernanceAddressSet(governanceAddress);
+    emit DAOAddressSet(_daoAddress);
+  }
+
+  // Governance info
+
+  function setGovernanceAddress(address _governanceAddress) external onlyOwner {
+    _setGovernanceAddress(_governanceAddress);
+  }
+
+  function _setGovernanceAddress(address _governanceAddress) internal {
+    require(_governanceAddress != address(0), "Invalid governanceAddress");
+
+    governanceAddress = _governanceAddress;
+
+    emit GovernanceAddressSet(_governanceAddress);
   }
 
   function setDaoFee(uint256 numerator, uint256 denominator) external onlyOwner {
@@ -444,9 +467,9 @@ contract PoolFactory is
   function getGuard(address extContract) external view override returns (address) {
     if (isValidAsset(extContract)) {
       uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
-      return IGovernance(_governanceAddress).assetGuards(assetType);
+      return IGovernance(governanceAddress).assetGuards(assetType);
     }
-    return IGovernance(_governanceAddress).contractGuards(extContract);
+    return IGovernance(governanceAddress).contractGuards(extContract);
   }
 
   /// @notice Return full array of deployed funds

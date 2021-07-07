@@ -4,6 +4,19 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "daoAddress",
+        "type": "address"
+      }
+    ],
+    "name": "DAOAddressSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "numerator",
         "type": "uint256"
@@ -347,6 +360,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "daoAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes",
@@ -617,6 +643,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "governanceAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -635,7 +674,12 @@
       },
       {
         "internalType": "address",
-        "name": "governanceAddress",
+        "name": "_daoAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_governanceAddress",
         "type": "address"
       }
     ],
@@ -866,6 +910,19 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_daoAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setDAOAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "numerator",
         "type": "uint256"
@@ -898,7 +955,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "governanceAddress",
+        "name": "_governanceAddress",
         "type": "address"
       }
     ],

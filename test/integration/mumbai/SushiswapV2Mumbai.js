@@ -44,24 +44,24 @@ describe("Sushiswap V2 Test Mumbai", function () {
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      ZERO_ADDRESS,
-      governance.address,
-    ]);
-    await poolFactory.deployed();
-
     // Initialize Asset Price Consumer
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
-    await poolFactory.setAssetHandler(assetHandler.address);
+
+    PoolFactory = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      assetHandler.address,
+      dao.address,
+      governance.address,
+    ]);
+    await poolFactory.deployed();
 
     //set higher timeout value for testnet
     await assetHandler.setChainlinkTimeout(10000000);

@@ -162,35 +162,6 @@ describe("PoolFactory", function () {
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
-    const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    // poolFactoryLogic = await PoolFactoryLogic.deploy();
-
-    // Deploy ProxyAdmin
-    // const ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
-    // const proxyAdmin = await ProxyAdmin.deploy();
-    // await proxyAdmin.deployed();
-
-    // Deploy AssetHandlerProxy
-    // const AssetHandlerProxy = await ethers.getContractFactory("OZProxy");
-    // const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
-    // await assetHandlerProxy.deployed();
-
-    // assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
-
-    // Deploy PoolFactoryProxy
-    // const PoolFactoryProxy = await ethers.getContractFactory("OZProxy");
-    // const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
-    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      ZERO_ADDRESS,
-      governance.address,
-    ]);
-    await poolFactory.deployed();
-    console.log("poolFactory deployed to:", poolFactory.address);
-
-    // poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
-
     // Initialize Asset Price Consumer
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
@@ -202,10 +173,20 @@ describe("PoolFactory", function () {
 
     // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     // await assetHandler.deployed();
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
-    await poolFactory.setAssetHandler(assetHandler.address);
+
+    const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      assetHandler.address,
+      dao.address,
+      governance.address,
+    ]);
+    await poolFactory.deployed();
+    console.log("poolFactory deployed to:", poolFactory.address);
 
     // Initialise pool factory
     // await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
@@ -1208,24 +1189,6 @@ describe("PoolFactory", function () {
       await assetHandler.setChainlinkTimeout(90);
 
       expect(await assetHandler.chainlinkTimeout()).to.be.equal(90);
-    });
-
-    it("only owner should be able to set poolFactory", async function () {
-      expect(await assetHandler.poolFactory()).to.be.equal(poolFactory.address);
-
-      await expect(assetHandler.connect(manager).setPoolFactory(ZERO_ADDRESS)).to.be.revertedWith(
-        "Ownable: caller is not the owner",
-      );
-
-      await expect(assetHandler.setPoolFactory(ZERO_ADDRESS)).to.be.revertedWith("Invalid poolFactory");
-
-      await assetHandler.setPoolFactory(user1.address);
-
-      expect(await assetHandler.poolFactory()).to.be.equal(user1.address);
-
-      await assetHandler.setPoolFactory(poolFactory.address);
-
-      expect(await assetHandler.poolFactory()).to.be.equal(poolFactory.address);
     });
 
     it("should be able to get usd price", async function () {
