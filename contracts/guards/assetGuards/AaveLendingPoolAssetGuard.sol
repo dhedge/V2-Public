@@ -69,7 +69,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   /// @notice Returns the pool position of Aave lending pool
   /// @dev Returns the balance priced in ETH
   /// @param pool The pool logic address
-  function getBalance(address pool, address) external view override returns (uint256 balance) {
+  function getBalance(address pool, address) public view override returns (uint256 balance) {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
     IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
 
@@ -102,6 +102,23 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   /// @notice Returns the decimal
   function getDecimals(address) external pure override returns (uint256 decimals) {
     decimals = 18;
+  }
+
+  /// @notice Creates transaction data for withdrawing tokens
+  /// @dev Withdrawal processing is not applicable for this guard
+  /// @return withdrawAsset and
+  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
+  /// @return withdrawContract and
+  /// @return txData are used to execute the withdrawal transaction in PoolLogic
+  function withdrawProcessing(
+    address, // pool
+    address asset,
+    uint256, // portion
+    address // to
+  ) external virtual override returns (address withdrawAsset, uint256 withdrawBalance, address withdrawContract, bytes memory txData) {
+    withdrawAsset = asset;
+
+    return (withdrawAsset, withdrawBalance, withdrawContract, txData);
   }
 
   function _calculateAaveBalance(address pool, address asset)
