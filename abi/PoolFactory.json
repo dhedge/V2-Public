@@ -5,11 +5,11 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "dao",
+        "name": "daoAddress",
         "type": "address"
       }
     ],
-    "name": "DaoAddressSet",
+    "name": "DAOAddressSet",
     "type": "event"
   },
   {
@@ -122,6 +122,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "governanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "GovernanceAddressSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "manager",
@@ -200,50 +213,12 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint8",
-        "name": "assetType",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "SetAssetGuard",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "address",
         "name": "assetHandler",
         "type": "address"
       }
     ],
     "name": "SetAssetHandler",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "extContract",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "SetContractGuard",
     "type": "event"
   },
   {
@@ -385,6 +360,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "daoAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes",
@@ -473,19 +461,6 @@
         "internalType": "uint8",
         "name": "",
         "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getDaoAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -668,6 +643,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "governanceAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -686,7 +674,12 @@
       },
       {
         "internalType": "address",
-        "name": "daoAddress",
+        "name": "_daoAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_governanceAddress",
         "type": "address"
       }
     ],
@@ -904,24 +897,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint8",
-        "name": "assetType",
-        "type": "uint8"
-      },
-      {
-        "internalType": "address",
-        "name": "guardAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setAssetGuard",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "assetHandler",
         "type": "address"
@@ -936,29 +911,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "extContract",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "guardAddress",
+        "name": "_daoAddress",
         "type": "address"
       }
     ],
-    "name": "setContractGuard",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "daoAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setDaoAddress",
+    "name": "setDAOAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -990,6 +947,19 @@
       }
     ],
     "name": "setExitCooldown",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_governanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setGovernanceAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

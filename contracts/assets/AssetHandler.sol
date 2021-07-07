@@ -23,10 +23,7 @@ import "../interfaces/IAssetHandler.sol";
 contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   using SafeMathUpgradeable for uint256;
 
-  event SetPoolFactory(address poolFactory);
-
   uint256 public chainlinkTimeout; // Chainlink oracle timeout period
-  address public poolFactory;
 
   // Asset Mappings
   mapping(address => uint8) public override assetTypes; // for asset types refer to header comment
@@ -34,11 +31,9 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
 
   // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
 
-  function initialize(address _poolFactory, Asset[] memory assets) external initializer {
-    require(_poolFactory != address(0), "Invalid poolFactory");
+  function initialize(Asset[] memory assets) external initializer {
     __Ownable_init();
 
-    poolFactory = _poolFactory;
     chainlinkTimeout = 90000; // 25 hours
     addAssets(assets);
   }
@@ -83,13 +78,6 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   /* ========== MUTATIVE FUNCTIONS ========== */
 
   /* ---------- From Owner ---------- */
-
-  function setPoolFactory(address _poolFactory) external onlyOwner {
-    require(_poolFactory != address(0), "Invalid poolFactory");
-    poolFactory = _poolFactory;
-
-    emit SetPoolFactory(_poolFactory);
-  }
 
   function setChainlinkTimeout(uint256 newTimeoutPeriod) external onlyOwner {
     chainlinkTimeout = newTimeoutPeriod;
