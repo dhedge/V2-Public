@@ -78,7 +78,17 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     address asset,
     uint256 portion,
     address to
-  ) external virtual override returns (address withdrawAsset, uint256 withdrawBalance, address stakingContract, bytes memory txData) {
+  )
+    external
+    virtual
+    override
+    returns (
+      address withdrawAsset,
+      uint256 withdrawBalance,
+      address stakingContract,
+      bytes memory txData
+    )
+  {
     withdrawAsset = asset;
     uint256 totalAssetBalance = getBalance(pool, asset);
     withdrawBalance = totalAssetBalance.mul(portion).div(10**18);

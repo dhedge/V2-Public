@@ -313,8 +313,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     address withdrawContract;
     bytes memory txData;
-    (withdrawAsset, withdrawBalance, withdrawContract, txData) =
-      IAssetGuard(guard).withdrawProcessing(address(this), asset, portion, to);
+    (withdrawAsset, withdrawBalance, withdrawContract, txData) = IAssetGuard(guard).withdrawProcessing(
+      address(this),
+      asset,
+      portion,
+      to
+    );
 
     if (txData.length > 0) {
       (success, ) = withdrawContract.call(txData);

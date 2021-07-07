@@ -115,7 +115,17 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     address asset,
     uint256, // portion
     address // to
-  ) external virtual override returns (address withdrawAsset, uint256 withdrawBalance, address withdrawContract, bytes memory txData) {
+  )
+    external
+    virtual
+    override
+    returns (
+      address withdrawAsset,
+      uint256 withdrawBalance,
+      address withdrawContract,
+      bytes memory txData
+    )
+  {
     withdrawAsset = asset;
 
     return (withdrawAsset, withdrawBalance, withdrawContract, txData);
