@@ -30,12 +30,49 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 
-interface IHasDaoInfo {
-  function getDaoFee() external view returns (uint256, uint256);
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/IGovernance.sol";
 
-  function daoAddress() external view returns (address);
+/// @title Governance
+/// @dev A contract with storage managed by governance
+contract Governance is IGovernance, Ownable {
+  event SetContractGuard(address extContract, address guardAddress);
+
+  event SetAssetGuard(uint8 assetType, address guardAddress);
+
+  // Transaction Guards
+
+  mapping(address => address) public override contractGuards;
+  mapping(uint8 => address) public override assetGuards;
+
+  // Transaction Guards
+
+  function setContractGuard(address extContract, address guardAddress) external onlyOwner {
+    _setContractGuard(extContract, guardAddress);
+  }
+
+  function _setContractGuard(address extContract, address guardAddress) internal {
+    require(extContract != address(0), "Invalid extContract address");
+    require(guardAddress != address(0), "Invalid guardAddress");
+
+    contractGuards[extContract] = guardAddress;
+
+    emit SetContractGuard(extContract, guardAddress);
+  }
+
+  function setAssetGuard(uint8 assetType, address guardAddress) external onlyOwner {
+    _setAssetGuard(assetType, guardAddress);
+  }
+
+  function _setAssetGuard(uint8 assetType, address guardAddress) internal {
+    require(guardAddress != address(0), "Invalid guardAddress");
+
+    assetGuards[assetType] = guardAddress;
+
+    emit SetAssetGuard(assetType, guardAddress);
+  }
 }

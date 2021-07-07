@@ -44,6 +44,7 @@ import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IERC20Extended.sol"; // includes decimals()
 import "./interfaces/IHasSupportedAsset.sol";
+import "./interfaces/IHasOwnable.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
 import "./Managed.sol";
@@ -82,7 +83,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     string calldata _managerName,
     address _poolLogic,
     Asset[] calldata _supportedAssets
-  ) public initializer {
+  ) external initializer {
     require(_factory != address(0), "Invalid factory");
     require(_manager != address(0), "Invalid manager");
     require(_poolLogic != address(0), "Invalid poolLogic");
@@ -168,7 +169,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   /// @notice Get all the supported assets
   /// @return Return array of supported assets
-  function getSupportedAssets() public view override returns (Asset[] memory) {
+  function getSupportedAssets() external view override returns (Asset[] memory) {
     return supportedAssets;
   }
 
@@ -250,7 +251,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     emit ManagerFeeSet(poolLogic, manager, managerFeeNumerator, managerFeeDenominator);
   }
 
-  function announceManagerFeeIncrease(uint256 numerator) public onlyManager {
+  function announceManagerFeeIncrease(uint256 numerator) external onlyManager {
     uint256 maximumAllowedChange = IHasFeeInfo(factory).getMaximumManagerFeeNumeratorChange();
 
     uint256 currentFeeNumerator;
@@ -267,13 +268,13 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     emit ManagerFeeIncreaseAnnounced(numerator, announcedFeeIncreaseTimestamp);
   }
 
-  function renounceManagerFeeIncrease() public onlyManager {
+  function renounceManagerFeeIncrease() external onlyManager {
     announcedFeeIncreaseNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
     emit ManagerFeeIncreaseRenounced();
   }
 
-  function commitManagerFeeIncrease() public onlyManager {
+  function commitManagerFeeIncrease() external onlyManager {
     require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
 
     _setManagerFeeNumerator(announcedFeeIncreaseNumerator);
@@ -282,7 +283,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     announcedFeeIncreaseTimestamp = 0;
   }
 
-  function setManagerFeeNumerator(uint256 numerator) public onlyManager {
+  function setManagerFeeNumerator(uint256 numerator) external onlyManager {
     uint256 managerFeeNumerator;
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(poolLogic);
@@ -294,12 +295,12 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     emit ManagerFeeSet(poolLogic, manager, numerator, managerFeeDenominator);
   }
 
-  function getManagerFeeIncreaseInfo() public view returns (uint256, uint256) {
+  function getManagerFeeIncreaseInfo() external view returns (uint256, uint256) {
     return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
   }
 
   function setPoolLogic(address _poolLogic) external override returns (bool) {
-    address daoAddress = IHasDaoInfo(factory).getDaoAddress();
+    address daoAddress = IHasOwnable(factory).owner();
     require(msg.sender == daoAddress, "only DAO address allowed");
 
     require(IPoolLogic(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");
@@ -312,7 +313,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Return the total fund value of the pool
   /// @dev Calculate the total fund value from the supported assets
   /// @return value in USD
-  function totalFundValue() public view override returns (uint256) {
+  function totalFundValue() external view override returns (uint256) {
     uint256 total = 0;
     uint256 assetCount = supportedAssets.length;
 
