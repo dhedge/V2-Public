@@ -38,6 +38,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ERC20Guard.sol";
+import "./IAaveLendingPoolAssetGuard.sol";
 import "../../interfaces/aave/ILendingPool.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
@@ -47,7 +48,7 @@ import "../../interfaces/IPoolLogic.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type = 3
-contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
+contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolAssetGuard {
   using SafeMathUpgradeable for uint256;
 
   // For Aave decimal calculation
@@ -58,11 +59,13 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   ILendingPoolAddressesProvider public aaveAddressProvider;
   ILendingPool public aaveLendingPool;
   IAssetHandler public assetHandler;
+  address public override sushiswapRouter;
 
-  constructor(address _aaveProtocolDataProvider, address _assetHandler) {
+  constructor(address _aaveProtocolDataProvider, address _sushiswapRouter, address _assetHandler) {
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
     aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
+    sushiswapRouter = _sushiswapRouter;
     assetHandler = IAssetHandler(_assetHandler);
   }
 
@@ -111,9 +114,9 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   /// @return withdrawContract and
   /// @return txData are used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
-    address, // pool
-    address asset,
-    uint256, // portion
+    address pool, // pool
+    address, // asset
+    uint256 portion, // portion
     address // to
   )
     external
@@ -126,7 +129,15 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
       bytes memory txData
     )
   {
-    withdrawAsset = asset;
+    (address[] memory collateralAssets, uint256[] memory amounts) = _calculateCollateralAssets(pool);
+    (address borrowAsset, uint256 borrowAmount, uint256 interestRateMode) = _calculateBorrowAsset(pool);
+    uint256 portionOfAmount = borrowAmount.mul(portion).div(10**18);
+
+    withdrawAsset = borrowAsset;
+    withdrawContract = address(aaveLendingPool);
+
+    bytes memory params = abi.encode(interestRateMode, collateralAssets, amounts, portion);
+    txData = _prepareFlashLoan(pool, withdrawAsset, portionOfAmount, params);
 
     return (withdrawAsset, withdrawBalance, withdrawContract, txData);
   }
@@ -149,5 +160,99 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
 
     ILendingPool.ReserveConfigurationMap memory configuration = aaveLendingPool.getConfiguration(asset);
     decimals = (configuration.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
+  }
+
+  function _calculateCollateralAssets(address pool)
+    internal
+    view
+    returns (
+      address[] memory collateralAssets,
+      uint256[] memory amounts
+    )
+  {
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
+    IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
+    address aToken;
+    uint256 length = supportedAssets.length;
+    uint256[] memory _amounts = new uint256[](length);
+    uint256 collateralAssetCount = 0;
+    for (uint256 i = 0; i < length; i++) {
+      (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
+        .getReserveTokensAddresses(supportedAssets[i].asset);
+
+      if (aToken != address(0)) {
+        _amounts[i] = IERC20(aToken).balanceOf(pool);
+        if (_amounts[i] != 0) {
+          collateralAssetCount = collateralAssetCount.add(1);
+        }
+      }
+    }
+
+    collateralAssets = new address[](collateralAssetCount);
+    amounts = new uint256[](collateralAssetCount);
+    uint256 index = 0;
+    for (uint256 i = 0; i < length; i++) {
+      if (_amounts[i] != 0) {
+        collateralAssets[index] = supportedAssets[i].asset;
+        amounts[index] = _amounts[i];
+        index = index.add(1);
+      }
+    }
+  }
+
+  function _calculateBorrowAsset(address pool)
+    internal
+    view
+    returns (
+      address asset,
+      uint256 amount,
+      uint256 interestRateMode
+    )
+  {
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
+    IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
+    address stableDebtToken;
+    address variableDebtToken;
+    uint256 length = supportedAssets.length;
+    for (uint256 i = 0; i < length; i++) {
+      // returns address(0) if it's not supported in aave
+      (, stableDebtToken, variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
+        .getReserveTokensAddresses(supportedAssets[i].asset);
+
+      if (stableDebtToken != address(0) && IERC20(stableDebtToken).balanceOf(pool) != 0) {
+        asset = supportedAssets[i].asset;
+        amount = IERC20(stableDebtToken).balanceOf(pool);
+        interestRateMode = 1;
+
+        break;
+      }
+      if (variableDebtToken != address(0) && IERC20(variableDebtToken).balanceOf(pool) != 0) {
+        asset = supportedAssets[i].asset;
+        amount = IERC20(variableDebtToken).balanceOf(pool);
+        interestRateMode = 2;
+
+        break;
+      }
+    }
+  }
+
+  function _prepareFlashLoan(address pool, address asset, uint256 amount, bytes memory params) internal pure returns(bytes memory txData) {
+    address[] memory assets = new address[](1);
+    assets[0] = asset;
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = amount;
+    uint256[] memory modes = new uint256[](1);
+    modes[0] = 0;
+
+    txData = abi.encodeWithSelector(
+      bytes4(keccak256("flashLoan(address,address[],uint256[],uint256[],address,bytes,uint16)")),
+      pool, //receiverAddress
+      assets,
+      amounts,
+      modes,
+      pool, // onBehalfOf
+      params,
+      0 // referralCode
+    );
   }
 }

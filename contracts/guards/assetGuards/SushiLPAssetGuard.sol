@@ -90,7 +90,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     )
   {
     withdrawAsset = asset;
-    uint256 totalAssetBalance = getBalance(pool, asset);
+    uint256 totalAssetBalance = IERC20(asset).balanceOf(pool);
     withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
 
     uint256 sushiPoolId = sushiPoolIds[asset];

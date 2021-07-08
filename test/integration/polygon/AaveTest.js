@@ -6,8 +6,8 @@ use(chaiAlmost());
 
 const checkAlmostSame = (a, b) => {
   console.log(a.toString(), " === ", b.toString());
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
+  expect(ethers.BigNumber.from(a).gte(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
+  expect(ethers.BigNumber.from(a).lte(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
 };
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
@@ -118,6 +118,7 @@ describe("Polygon Mainnet Test", function () {
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
       aaveProtocolDataProvider,
+      sushiswapV2Router,
       assetHandler.address,
     );
     aaveLendingPoolAssetGuard.deployed();
@@ -654,12 +655,14 @@ describe("Polygon Mainnet Test", function () {
         }, 60000);
       });
 
-      // Withdraw 50%
+      // Withdraw 5%
       let withdrawAmount = units(10);
 
       await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
 
       await poolFactory.setExitCooldown(0);
+
+      const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
       await poolLogicProxy.withdraw(withdrawAmount);
 
@@ -668,8 +671,10 @@ describe("Polygon Mainnet Test", function () {
       expect(event.investor).to.equal(logicOwner.address);
       checkAlmostSame(event.valueWithdrawn, units(10));
       checkAlmostSame(event.fundTokensWithdrawn, units(10));
-      checkAlmostSame(event.fundValue, units(180));
-      checkAlmostSame(event.totalSupply, units(180));
+      checkAlmostSame(event.fundValue, units(190));
+      checkAlmostSame(event.totalSupply, units(190));
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(95).div(100));
     });
   });
 });

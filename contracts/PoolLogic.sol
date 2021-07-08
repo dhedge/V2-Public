@@ -58,8 +58,11 @@ import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IManaged.sol";
+import "./interfaces/IUniswapV2Router.sol";
+import "./interfaces/aave/ILendingPool.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
+import "./guards/assetGuards/IAaveLendingPoolAssetGuard.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -302,8 +305,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   )
     internal
     returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
+      address, // withdrawAsset
+      uint256, // withdrawBalance
       bool success
     )
   {
@@ -311,19 +314,22 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
 
-    address withdrawContract;
-    bytes memory txData;
-    (withdrawAsset, withdrawBalance, withdrawContract, txData) = IAssetGuard(guard).withdrawProcessing(
-      address(this),
-      asset,
-      portion,
-      to
-    );
+    (address withdrawAsset, uint256 withdrawBalance, address withdrawContract, bytes memory txData) =
+      IAssetGuard(guard).withdrawProcessing(address(this), asset, portion, to);
 
     if (txData.length > 0) {
+      uint256 assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+
       (success, ) = withdrawContract.call(txData);
-      require(success, "failed to withdraw staked tokens");
+      require(success, "failed to withdraw tokens");
+
+      uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+      if (withdrawBalance == 0) {
+        withdrawBalance = assetBalanceAfter.sub(assetBalanceBefore);
+      }
     }
+
+    return (withdrawAsset, withdrawBalance, success);
   }
 
   /// @notice Function to let pool talk to other protocol
@@ -511,6 +517,52 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   function isMemberAllowed(address member) public view returns (bool) {
     return IManaged(poolManagerLogic).isMemberAllowed(member);
+  }
+
+  function executeOperation(
+    address[] calldata assets,
+    uint256[] calldata amounts,
+    uint256[] calldata premiums,
+    address,
+    bytes calldata params
+  ) external returns (bool) {
+    address aaveLendingPool = msg.sender;
+    address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(aaveLendingPool);
+    require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
+    address sushiswapRouter = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).sushiswapRouter();
+
+    _repayAndWithdraw(aaveLendingPool, sushiswapRouter, assets[0], amounts[0], params);
+
+    // Approve the LendingPool contract allowance to *pull* the owed amount
+    IERC20Upgradeable(assets[0]).approve(address(aaveLendingPool), amounts[0].add(premiums[0]));
+
+    return true;
+  }
+
+  function _repayAndWithdraw(address aaveLendingPool, address sushiswapRouter, address repayAsset, uint256 repayAmount, bytes calldata params) internal {
+    (
+      uint256 interestRateMode,
+      address[] memory collateralAssets,
+      uint256[] memory amounts,
+      uint256 portion
+    ) = abi.decode(params, (uint256, address[], uint256[], uint256));
+
+    IERC20Upgradeable(repayAsset).approve(aaveLendingPool, repayAmount);
+    ILendingPool(aaveLendingPool).repay(repayAsset, repayAmount, interestRateMode, address(this));
+
+    address[] memory path = new address[](2);
+    uint256 portionOfBalance;
+
+    uint256 length = collateralAssets.length;
+    for(uint i = 0 ; i < length ; i ++) {
+      portionOfBalance = amounts[i].mul(portion).div(10**18);
+      ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], portionOfBalance, address(this));
+
+      path[0] = collateralAssets[i];
+      path[1] = repayAsset;
+      IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, portionOfBalance);
+      IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(portionOfBalance, 0, path, address(this), uint256(-1));
+    }
   }
 
   uint256[50] private __gap;
