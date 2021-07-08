@@ -61,7 +61,11 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   IAssetHandler public assetHandler;
   address public override sushiswapRouter;
 
-  constructor(address _aaveProtocolDataProvider, address _sushiswapRouter, address _assetHandler) {
+  constructor(
+    address _aaveProtocolDataProvider,
+    address _sushiswapRouter,
+    address _assetHandler
+  ) {
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
     aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
@@ -165,10 +169,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   function _calculateCollateralAssets(address pool)
     internal
     view
-    returns (
-      address[] memory collateralAssets,
-      uint256[] memory amounts
-    )
+    returns (address[] memory collateralAssets, uint256[] memory amounts)
   {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
     IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
@@ -177,8 +178,9 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     uint256[] memory _amounts = new uint256[](length);
     uint256 collateralAssetCount = 0;
     for (uint256 i = 0; i < length; i++) {
-      (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
-        .getReserveTokensAddresses(supportedAssets[i].asset);
+      (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
+        supportedAssets[i].asset
+      );
 
       if (aToken != address(0)) {
         _amounts[i] = IERC20(aToken).balanceOf(pool);
@@ -236,7 +238,12 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     }
   }
 
-  function _prepareFlashLoan(address pool, address asset, uint256 amount, bytes memory params) internal pure returns(bytes memory txData) {
+  function _prepareFlashLoan(
+    address pool,
+    address asset,
+    uint256 amount,
+    bytes memory params
+  ) internal pure returns (bytes memory txData) {
     address[] memory assets = new address[](1);
     assets[0] = asset;
     uint256[] memory amounts = new uint256[](1);

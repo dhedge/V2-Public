@@ -539,13 +539,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return true;
   }
 
-  function _repayAndWithdraw(address aaveLendingPool, address sushiswapRouter, address repayAsset, uint256 repayAmount, bytes calldata params) internal {
-    (
-      uint256 interestRateMode,
-      address[] memory collateralAssets,
-      uint256[] memory amounts,
-      uint256 portion
-    ) = abi.decode(params, (uint256, address[], uint256[], uint256));
+  function _repayAndWithdraw(
+    address aaveLendingPool,
+    address sushiswapRouter,
+    address repayAsset,
+    uint256 repayAmount,
+    bytes calldata params
+  ) internal {
+    (uint256 interestRateMode, address[] memory collateralAssets, uint256[] memory amounts, uint256 portion) =
+      abi.decode(params, (uint256, address[], uint256[], uint256));
 
     IERC20Upgradeable(repayAsset).approve(aaveLendingPool, repayAmount);
     ILendingPool(aaveLendingPool).repay(repayAsset, repayAmount, interestRateMode, address(this));
@@ -554,7 +556,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 portionOfBalance;
 
     uint256 length = collateralAssets.length;
-    for(uint i = 0 ; i < length ; i ++) {
+    for (uint256 i = 0; i < length; i++) {
       portionOfBalance = amounts[i].mul(portion).div(10**18);
       ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], portionOfBalance, address(this));
 
