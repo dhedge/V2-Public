@@ -43,6 +43,7 @@ import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasSupportedAsset.sol";
+import "./interfaces/IHasOwnable.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
 import "./Managed.sol";
@@ -304,7 +305,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   function setPoolLogic(address _poolLogic) external override returns (bool) {
-    address daoAddress = IHasDaoInfo(factory).getDaoAddress();
+    address daoAddress = IHasOwnable(factory).owner();
     require(msg.sender == daoAddress, "only DAO address allowed");
 
     require(IPoolLogic(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");

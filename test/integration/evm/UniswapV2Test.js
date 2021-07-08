@@ -36,20 +36,15 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
+    const Governance = await ethers.getContractFactory("Governance");
+    let governance = await Governance.deploy();
+    console.log("governance deployed to:", governance.address);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
-
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      ZERO_ADDRESS,
-      dao.address,
-    ]);
-    await poolFactory.deployed();
 
     // Initialize Asset Price Consumer
 
@@ -63,10 +58,19 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 0, aggregator: sushiLpAggregator.address };
     const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetSushiUsdcUsdt];
 
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
-    await poolFactory.setAssetHandler(assetHandler.address);
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
+
+    PoolFactory = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      assetHandler.address,
+      dao.address,
+      governance.address,
+    ]);
+    await poolFactory.deployed();
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
@@ -79,9 +83,9 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     sushiswapGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
     sushiswapGuard.deployed();
 
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiswapRouter, sushiswapGuard.address);
+    await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(sushiswapRouter, sushiswapGuard.address);
   });
 
   it("Should be able to get WETH", async function () {

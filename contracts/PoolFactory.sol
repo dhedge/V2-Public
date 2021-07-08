@@ -46,6 +46,7 @@ import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IHasSupportedAsset.sol";
+import "./interfaces/IGovernance.sol";
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -74,10 +75,14 @@ contract PoolFactory is
     uint256 managerFeeDenominator
   );
 
-  event DaoAddressSet(address dao);
+  event DAOAddressSet(address daoAddress);
+
+  event GovernanceAddressSet(address governanceAddress);
+
   event DaoFeeSet(uint256 numerator, uint256 denominator);
 
   event ExitFeeSet(uint256 numerator, uint256 denominator);
+
   event ExitCooldownSet(uint256 cooldown);
 
   event MaximumSupportedAssetCountSet(uint256 count);
@@ -94,13 +99,11 @@ contract PoolFactory is
 
   event SetTrackingCode(bytes32 code);
 
-  event SetContractGuard(address extContract, address guardAddress);
-
-  event SetAssetGuard(uint8 assetType, address guardAddress);
-
   address[] public deployedFunds;
 
-  address internal _daoAddress;
+  address public override daoAddress;
+  address public governanceAddress;
+
   address internal _assetHandler;
   uint256 internal _daoFeeNumerator;
   uint256 internal _daoFeeDenominator;
@@ -125,27 +128,21 @@ contract PoolFactory is
   uint256 public maximumManagerFeeNumeratorChange;
   uint256 public managerFeeNumeratorChangeDelay;
 
-  // Transaction Guards
-  mapping(address => address) internal contractGuards;
-  mapping(uint8 => address) internal assetGuards;
-
-  modifier onlyDao() {
-    require(msg.sender == _daoAddress, "only dao");
-    _;
-  }
-
   function initialize(
     address _poolLogic,
     address _managerLogic,
     address assetHandler,
-    address daoAddress
+    address _daoAddress,
+    address _governanceAddress
   ) external initializer {
     __ProxyFactory_init(_poolLogic, _managerLogic);
     __Pausable_init();
 
-    if (assetHandler != address(0)) _setAssetHandler(assetHandler);
+    _setAssetHandler(assetHandler);
 
-    _setDaoAddress(daoAddress);
+    _setDAOAddress(_daoAddress);
+
+    _setGovernanceAddress(_governanceAddress);
 
     _setMaximumManagerFee(5000, 10000);
 
@@ -217,22 +214,32 @@ contract PoolFactory is
     return fund;
   }
 
-  // DAO info
+  // DAO info (Uber Pool)
 
-  function getDaoAddress() external view override returns (address) {
-    return _daoAddress;
+  function setDAOAddress(address _daoAddress) external onlyOwner {
+    _setDAOAddress(_daoAddress);
   }
 
-  function setDaoAddress(address daoAddress) external onlyOwner {
-    _setDaoAddress(daoAddress);
+  function _setDAOAddress(address _daoAddress) internal {
+    require(_daoAddress != address(0), "Invalid daoAddress");
+
+    daoAddress = _daoAddress;
+
+    emit DAOAddressSet(_daoAddress);
   }
 
-  function _setDaoAddress(address daoAddress) internal {
-    require(daoAddress != address(0), "Invalid daoAddress");
+  // Governance info
 
-    _daoAddress = daoAddress;
+  function setGovernanceAddress(address _governanceAddress) external onlyOwner {
+    _setGovernanceAddress(_governanceAddress);
+  }
 
-    emit DaoAddressSet(daoAddress);
+  function _setGovernanceAddress(address _governanceAddress) internal {
+    require(_governanceAddress != address(0), "Invalid governanceAddress");
+
+    governanceAddress = _governanceAddress;
+
+    emit GovernanceAddressSet(_governanceAddress);
   }
 
   function setDaoFee(uint256 numerator, uint256 denominator) external onlyOwner {
@@ -443,11 +450,23 @@ contract PoolFactory is
     }
   }
 
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  function unpause() external onlyOwner {
+    _unpause();
+  }
+
+  function isPaused() external view override returns (bool) {
+    return paused();
+  }
+
   // Transaction Guards
+
   function getGuard(address extContract) external view override returns (address guard) {
-    if (contractGuards[extContract] != address(0)) {
-      guard = contractGuards[extContract];
-    } else {
+    guard = IGovernance(governanceAddress).contractGuards(extContract);
+    if (guard == address(0)) {
       guard = getAssetGuard(extContract);
     }
   }
@@ -455,45 +474,8 @@ contract PoolFactory is
   function getAssetGuard(address extContract) public view override returns (address guard) {
     if (isValidAsset(extContract)) {
       uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
-      guard = assetGuards[assetType];
+      guard = IGovernance(governanceAddress).assetGuards(assetType);
     }
-  }
-
-  function setContractGuard(address extContract, address guardAddress) external onlyDao {
-    _setContractGuard(extContract, guardAddress);
-  }
-
-  function _setContractGuard(address extContract, address guardAddress) internal {
-    require(extContract != address(0), "Invalid extContract address");
-    require(guardAddress != address(0), "Invalid guardAddress");
-
-    contractGuards[extContract] = guardAddress;
-
-    emit SetContractGuard(extContract, guardAddress);
-  }
-
-  function setAssetGuard(uint8 assetType, address guardAddress) external onlyDao {
-    _setAssetGuard(assetType, guardAddress);
-  }
-
-  function _setAssetGuard(uint8 assetType, address guardAddress) internal {
-    require(guardAddress != address(0), "Invalid guardAddress");
-
-    assetGuards[assetType] = guardAddress;
-
-    emit SetAssetGuard(assetType, guardAddress);
-  }
-
-  function pause() external onlyDao {
-    _pause();
-  }
-
-  function unpause() external onlyDao {
-    _unpause();
-  }
-
-  function isPaused() external view override returns (bool) {
-    return paused();
   }
 
   /// @notice Return full array of deployed funds

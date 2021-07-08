@@ -34,20 +34,15 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
+    const Governance = await ethers.getContractFactory("Governance");
+    let governance = await Governance.deploy();
+    console.log("governance deployed to:", governance.address);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
-
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      ZERO_ADDRESS,
-      dao.address,
-    ]);
-    await poolFactory.deployed();
 
     // Initialize Asset Price Consumer
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
@@ -55,9 +50,18 @@ describe("Sushiswap V2 Test Mumbai", function () {
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
-    await poolFactory.setAssetHandler(assetHandler.address);
+
+    PoolFactory = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
+      poolLogic.address,
+      poolManagerLogic.address,
+      assetHandler.address,
+      dao.address,
+      governance.address,
+    ]);
+    await poolFactory.deployed();
 
     //set higher timeout value for testnet
     await assetHandler.setChainlinkTimeout(10000000);
@@ -70,8 +74,8 @@ describe("Sushiswap V2 Test Mumbai", function () {
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
     uniswapV2RouterGuard.deployed();
 
-    await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-    await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
+    await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   });
 
   it("Should be able to createFund", async function () {
