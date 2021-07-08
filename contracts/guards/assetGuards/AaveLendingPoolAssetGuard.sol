@@ -210,7 +210,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
       (, stableDebtToken, variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
         .getReserveTokensAddresses(supportedAssets[i].asset);
 
-      if (stableDebtToken != address(0)){
+      if (stableDebtToken != address(0)) {
         amount = IERC20(stableDebtToken).balanceOf(pool);
         if (amount != 0) {
           asset = supportedAssets[i].asset;
@@ -219,7 +219,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
         }
       }
 
-      if (variableDebtToken != address(0)){
+      if (variableDebtToken != address(0)) {
         amount = IERC20(variableDebtToken).balanceOf(pool);
         if (amount != 0) {
           asset = supportedAssets[i].asset;

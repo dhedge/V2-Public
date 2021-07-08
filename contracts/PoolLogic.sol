@@ -564,7 +564,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         path[0] = collateralAssets[i];
         path[1] = repayAsset;
         IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, portionOfBalance);
-        IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(portionOfBalance, 0, path, address(this), uint256(-1));
+        IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(
+          portionOfBalance,
+          0,
+          path,
+          address(this),
+          uint256(-1)
+        );
         IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, 0);
       }
     }
