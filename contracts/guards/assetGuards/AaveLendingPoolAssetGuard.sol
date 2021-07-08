@@ -175,29 +175,18 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
     address aToken;
     uint256 length = supportedAssets.length;
-    uint256[] memory _amounts = new uint256[](length);
-    uint256 collateralAssetCount = 0;
+    collateralAssets = new address[](length);
+    amounts = new uint256[](length);
     for (uint256 i = 0; i < length; i++) {
       (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
         supportedAssets[i].asset
       );
 
       if (aToken != address(0)) {
-        _amounts[i] = IERC20(aToken).balanceOf(pool);
-        if (_amounts[i] != 0) {
-          collateralAssetCount = collateralAssetCount.add(1);
+        amounts[i] = IERC20(aToken).balanceOf(pool);
+        if (amounts[i] != 0) {
+          collateralAssets[i] = supportedAssets[i].asset;
         }
-      }
-    }
-
-    collateralAssets = new address[](collateralAssetCount);
-    amounts = new uint256[](collateralAssetCount);
-    uint256 index = 0;
-    for (uint256 i = 0; i < length; i++) {
-      if (_amounts[i] != 0) {
-        collateralAssets[index] = supportedAssets[i].asset;
-        amounts[index] = _amounts[i];
-        index = index.add(1);
       }
     }
   }
@@ -221,19 +210,22 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
       (, stableDebtToken, variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
         .getReserveTokensAddresses(supportedAssets[i].asset);
 
-      if (stableDebtToken != address(0) && IERC20(stableDebtToken).balanceOf(pool) != 0) {
-        asset = supportedAssets[i].asset;
+      if (stableDebtToken != address(0)){
         amount = IERC20(stableDebtToken).balanceOf(pool);
-        interestRateMode = 1;
-
-        break;
+        if (amount != 0) {
+          asset = supportedAssets[i].asset;
+          interestRateMode = 1;
+          break;
+        }
       }
-      if (variableDebtToken != address(0) && IERC20(variableDebtToken).balanceOf(pool) != 0) {
-        asset = supportedAssets[i].asset;
-        amount = IERC20(variableDebtToken).balanceOf(pool);
-        interestRateMode = 2;
 
-        break;
+      if (variableDebtToken != address(0)){
+        amount = IERC20(variableDebtToken).balanceOf(pool);
+        if (amount != 0) {
+          asset = supportedAssets[i].asset;
+          interestRateMode = 2;
+          break;
+        }
       }
     }
   }

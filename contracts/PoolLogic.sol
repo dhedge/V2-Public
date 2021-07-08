@@ -325,9 +325,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       require(success, "failed to withdraw tokens");
 
       uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
-      if (withdrawBalance == 0) {
-        withdrawBalance = assetBalanceAfter.sub(assetBalanceBefore);
-      }
+      withdrawBalance = withdrawBalance.add(assetBalanceAfter).sub(assetBalanceBefore);
     }
 
     return (withdrawAsset, withdrawBalance, success);
@@ -552,19 +550,23 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     IERC20Upgradeable(repayAsset).approve(aaveLendingPool, repayAmount);
     ILendingPool(aaveLendingPool).repay(repayAsset, repayAmount, interestRateMode, address(this));
+    IERC20Upgradeable(repayAsset).approve(aaveLendingPool, 0);
 
     address[] memory path = new address[](2);
     uint256 portionOfBalance;
 
     uint256 length = collateralAssets.length;
     for (uint256 i = 0; i < length; i++) {
-      portionOfBalance = amounts[i].mul(portion).div(10**18);
-      ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], portionOfBalance, address(this));
+      if (collateralAssets[i] != address(0) && amounts[i] != 0) {
+        portionOfBalance = amounts[i].mul(portion).div(10**18);
+        ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], portionOfBalance, address(this));
 
-      path[0] = collateralAssets[i];
-      path[1] = repayAsset;
-      IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, portionOfBalance);
-      IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(portionOfBalance, 0, path, address(this), uint256(-1));
+        path[0] = collateralAssets[i];
+        path[1] = repayAsset;
+        IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, portionOfBalance);
+        IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(portionOfBalance, 0, path, address(this), uint256(-1));
+        IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, 0);
+      }
     }
   }
 
