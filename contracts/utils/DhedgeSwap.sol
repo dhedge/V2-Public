@@ -1,4 +1,3 @@
-//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -34,6 +33,42 @@
 
 pragma solidity 0.7.6;
 
-interface IAaveLendingPoolAssetGuard {
-  function sushiswapRouter() external view returns (address);
+import "../interfaces/IUniswapV2Router.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+/**
+ * @title A library for tokens exchange.
+ * @dev Swap tokens using sushiswap router
+ */
+library DhedgeSwap {
+  /**
+   * @notice Swap tokens via sushiswap router
+   */
+  function swapTokens(
+    IUniswapV2Router sushiswapRouter,
+    address from,
+    address to,
+    uint256 amount
+  ) internal {
+    if (from == to) {
+      return;
+    }
+
+    address weth = sushiswapRouter.WETH();
+    IERC20(from).approve(address(sushiswapRouter), amount);
+
+    address[] memory path;
+    if (from == weth || to == weth) {
+      path = new address[](2);
+      path[0] = from;
+      path[1] = to;
+    } else {
+      path = new address[](3);
+      path[0] = from;
+      path[1] = weth;
+      path[2] = to;
+    }
+
+    sushiswapRouter.swapExactTokensForTokens(amount, 0, path, address(this), uint256(-1));
+  }
 }

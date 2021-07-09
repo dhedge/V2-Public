@@ -60,19 +60,16 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   ILendingPool public aaveLendingPool;
   IAssetHandler public assetHandler;
   address public override sushiswapRouter;
-  address public override weth;
 
   constructor(
     address _aaveProtocolDataProvider,
     address _sushiswapRouter,
-    address _weth,
     address _assetHandler
   ) {
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
     aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
     sushiswapRouter = _sushiswapRouter;
-    weth = _weth;
     assetHandler = IAssetHandler(_assetHandler);
   }
 

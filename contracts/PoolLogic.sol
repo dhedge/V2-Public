@@ -64,6 +64,7 @@ import "./interfaces/aave/ILendingPool.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
 import "./guards/assetGuards/IAaveLendingPoolAssetGuard.sol";
+import "./utils/DhedgeSwap.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -72,6 +73,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 
 contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
+  using DhedgeSwap for IUniswapV2Router;
 
   event Deposit(
     address fundAddress,
@@ -538,10 +540,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(aaveLendingPool);
     require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
     address sushiswapRouter = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).sushiswapRouter();
-    address weth = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).weth();
 
-    _repayAndWithdraw(aaveLendingPool, sushiswapRouter, weth, assets, amounts, params);
-    _repayFlashLoan(aaveLendingPool, sushiswapRouter, weth, assets, amounts, premiums);
+    _repayAndWithdraw(aaveLendingPool, sushiswapRouter, assets, amounts, params);
+    _repayFlashLoan(aaveLendingPool, sushiswapRouter, assets, amounts, premiums);
 
     return true;
   }
@@ -549,7 +550,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function _repayAndWithdraw(
     address aaveLendingPool,
     address sushiswapRouter,
-    address weth,
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
     bytes memory params
@@ -564,31 +564,29 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       ILendingPool(aaveLendingPool).repay(repayAssets[i], repayAmounts[i], interestRateModes[i], address(this));
     }
 
+    address weth = IUniswapV2Router(sushiswapRouter).WETH();
     length = collateralAssets.length;
     for (i = 0; i < length; i++) {
       ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], amounts[i], address(this));
-      _swapTokens(sushiswapRouter, weth, collateralAssets[i], weth, amounts[i]);
+      IUniswapV2Router(sushiswapRouter).swapTokens(collateralAssets[i], weth, amounts[i]);
     }
   }
 
   function _repayFlashLoan(
     address aaveLendingPool,
     address sushiswapRouter,
-    address weth,
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
     uint256[] memory premiums
   ) internal {
     uint256 repayAssetsCount = repayAssets.length;
-    address prevAsset = weth;
+    address prevAsset = IUniswapV2Router(sushiswapRouter).WETH();
     uint256 prevAmount;
     for (uint256 i = 0; i < repayAssetsCount; i++) {
       address currentAsset = repayAssets[i];
       prevAmount = IERC20Upgradeable(currentAsset).balanceOf(address(this));
 
-      _swapTokens(
-        sushiswapRouter,
-        weth,
+      IUniswapV2Router(sushiswapRouter).swapTokens(
         prevAsset,
         currentAsset,
         IERC20Upgradeable(prevAsset).balanceOf(address(this)).sub(prevAmount)
@@ -600,34 +598,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       // approve flash loan assets to be paid back.
       IERC20Upgradeable(currentAsset).approve(aaveLendingPool, repayAmounts[i].add(premiums[i]));
     }
-  }
-
-  function _swapTokens(
-    address sushiswapRouter,
-    address weth,
-    address from,
-    address to,
-    uint256 amount
-  ) internal {
-    if (from == to) {
-      return;
-    }
-
-    IERC20Upgradeable(from).approve(sushiswapRouter, amount);
-
-    address[] memory path;
-    if (from == weth || to == weth) {
-      path = new address[](2);
-      path[0] = from;
-      path[1] = to;
-    } else {
-      path = new address[](3);
-      path[0] = from;
-      path[1] = weth;
-      path[2] = to;
-    }
-
-    IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(amount, 0, path, address(this), uint256(-1));
   }
 
   uint256[50] private __gap;

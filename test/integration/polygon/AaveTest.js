@@ -123,7 +123,6 @@ describe("Polygon Mainnet Test", function () {
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
       aaveProtocolDataProvider,
       sushiswapV2Router,
-      weth,
       assetHandler.address,
     );
     aaveLendingPoolAssetGuard.deployed();
@@ -652,7 +651,7 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(90).div(100));
       const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
-      checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((16e6).toString()));
+      checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((12e6).toString()));
     });
   });
 });
