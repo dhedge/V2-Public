@@ -32,6 +32,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -97,7 +98,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   /// @dev Withdrawal processing is not applicable for this guard
   /// @return withdrawAsset and
   /// @return withdrawBalance are used to withdraw portion of asset balance to investor
-  /// @return withdrawContract and
+  /// @return withdrawContracts and
   /// @return txData are used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
     address pool,
@@ -111,14 +112,14 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     returns (
       address withdrawAsset,
       uint256 withdrawBalance,
-      address withdrawContract,
-      bytes memory txData
+      address[] memory withdrawContracts,
+      bytes[] memory txData
     )
   {
     withdrawAsset = asset;
     uint256 totalAssetBalance = getBalance(pool, asset);
     withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
-    return (withdrawAsset, withdrawBalance, withdrawContract, txData);
+    return (withdrawAsset, withdrawBalance, withdrawContracts, txData);
   }
 
   /// @notice Returns the balance of the managed asset

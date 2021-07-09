@@ -36,4 +36,6 @@ pragma solidity 0.7.6;
 
 interface IAaveLendingPoolAssetGuard {
   function sushiswapRouter() external view returns (address);
+
+  function weth() external view returns (address);
 }

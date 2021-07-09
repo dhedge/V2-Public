@@ -315,14 +315,17 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
 
-    (address withdrawAsset, uint256 withdrawBalance, address withdrawContract, bytes memory txData) =
+    (address withdrawAsset, uint256 withdrawBalance, address[] memory withdrawContracts, bytes[] memory txData) =
       IAssetGuard(guard).withdrawProcessing(address(this), asset, portion, to);
 
-    if (txData.length > 0) {
+    uint256 length = withdrawContracts.length;
+    if (length > 0) {
       uint256 assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
 
-      (success, ) = withdrawContract.call(txData);
-      require(success, "failed to withdraw tokens");
+      for (uint256 i = 0; i < length; i++) {
+        (success, ) = withdrawContracts[i].call(txData[i]);
+        require(success, "failed to withdraw tokens");
+      }
 
       uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
       withdrawBalance = withdrawBalance.add(assetBalanceAfter).sub(assetBalanceBefore);
@@ -519,21 +522,20 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   }
 
   function executeOperation(
-    address[] calldata assets,
-    uint256[] calldata amounts,
-    uint256[] calldata premiums,
+    address[] memory assets,
+    uint256[] memory amounts,
+    uint256[] memory premiums,
     address,
-    bytes calldata params
+    bytes memory params
   ) external returns (bool) {
     address aaveLendingPool = msg.sender;
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(aaveLendingPool);
     require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
     address sushiswapRouter = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).sushiswapRouter();
+    address weth = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).weth();
 
-    _repayAndWithdraw(aaveLendingPool, sushiswapRouter, assets[0], amounts[0], params);
-
-    // Approve the LendingPool contract allowance to *pull* the owed amount
-    IERC20Upgradeable(assets[0]).approve(address(aaveLendingPool), amounts[0].add(premiums[0]));
+    _repayAndWithdraw(aaveLendingPool, sushiswapRouter, weth, assets, amounts, params);
+    _repayFlashLoan(aaveLendingPool, sushiswapRouter, weth, assets, amounts, premiums);
 
     return true;
   }
@@ -541,39 +543,85 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function _repayAndWithdraw(
     address aaveLendingPool,
     address sushiswapRouter,
-    address repayAsset,
-    uint256 repayAmount,
-    bytes calldata params
+    address weth,
+    address[] memory repayAssets,
+    uint256[] memory repayAmounts,
+    bytes memory params
   ) internal {
-    (uint256 interestRateMode, address[] memory collateralAssets, uint256[] memory amounts, uint256 portion) =
-      abi.decode(params, (uint256, address[], uint256[], uint256));
+    (uint256[] memory interestRateModes, address[] memory collateralAssets, uint256[] memory amounts) =
+      abi.decode(params, (uint256[], address[], uint256[]));
 
-    IERC20Upgradeable(repayAsset).approve(aaveLendingPool, repayAmount);
-    ILendingPool(aaveLendingPool).repay(repayAsset, repayAmount, interestRateMode, address(this));
-    IERC20Upgradeable(repayAsset).approve(aaveLendingPool, 0);
-
-    address[] memory path = new address[](2);
-    uint256 portionOfBalance;
-
-    uint256 length = collateralAssets.length;
-    for (uint256 i = 0; i < length; i++) {
-      if (collateralAssets[i] != address(0) && amounts[i] != 0) {
-        portionOfBalance = amounts[i].mul(portion).div(10**18);
-        ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], portionOfBalance, address(this));
-
-        path[0] = collateralAssets[i];
-        path[1] = repayAsset;
-        IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, portionOfBalance);
-        IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(
-          portionOfBalance,
-          0,
-          path,
-          address(this),
-          uint256(-1)
-        );
-        IERC20Upgradeable(collateralAssets[i]).approve(sushiswapRouter, 0);
-      }
+    uint256 i;
+    uint256 length = repayAssets.length;
+    for (i = 0; i < length; i++) {
+      IERC20Upgradeable(repayAssets[i]).approve(aaveLendingPool, repayAmounts[i]);
+      ILendingPool(aaveLendingPool).repay(repayAssets[i], repayAmounts[i], interestRateModes[i], address(this));
     }
+
+    length = collateralAssets.length;
+    for (i = 0; i < length; i++) {
+      ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], amounts[i], address(this));
+      _swapTokens(sushiswapRouter, weth, collateralAssets[i], weth, amounts[i]);
+    }
+  }
+
+  function _repayFlashLoan(
+    address aaveLendingPool,
+    address sushiswapRouter,
+    address weth,
+    address[] memory repayAssets,
+    uint256[] memory repayAmounts,
+    uint256[] memory premiums
+  ) internal {
+    uint256 repayAssetsCount = repayAssets.length;
+    address prevAsset = weth;
+    uint256 prevAmount;
+    for (uint256 i = 0; i < repayAssetsCount; i++) {
+      address currentAsset = repayAssets[i];
+      prevAmount = IERC20Upgradeable(currentAsset).balanceOf(address(this));
+
+      _swapTokens(
+        sushiswapRouter,
+        weth,
+        prevAsset,
+        currentAsset,
+        IERC20Upgradeable(prevAsset).balanceOf(address(this)).sub(prevAmount)
+      );
+
+      prevAsset = currentAsset;
+      prevAmount = prevAmount.add(repayAmounts[i]).add(premiums[i]);
+
+      // approve flash loan assets to be paid back.
+      IERC20Upgradeable(currentAsset).approve(aaveLendingPool, repayAmounts[i].add(premiums[i]));
+    }
+  }
+
+  function _swapTokens(
+    address sushiswapRouter,
+    address weth,
+    address from,
+    address to,
+    uint256 amount
+  ) internal {
+    if (from == to) {
+      return;
+    }
+
+    IERC20Upgradeable(from).approve(sushiswapRouter, amount);
+
+    address[] memory path;
+    if (from == weth || to == weth) {
+      path = new address[](2);
+      path[0] = from;
+      path[1] = to;
+    } else {
+      path = new address[](3);
+      path[0] = from;
+      path[1] = weth;
+      path[2] = to;
+    }
+
+    IUniswapV2Router(sushiswapRouter).swapExactTokensForTokens(amount, 0, path, address(this), uint256(-1));
   }
 
   uint256[50] private __gap;

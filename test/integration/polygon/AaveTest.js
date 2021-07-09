@@ -123,6 +123,7 @@ describe("Polygon Mainnet Test", function () {
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
       aaveProtocolDataProvider,
       sushiswapV2Router,
+      weth,
       assetHandler.address,
     );
     aaveLendingPoolAssetGuard.deployed();

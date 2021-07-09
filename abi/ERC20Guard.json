@@ -421,14 +421,14 @@
         "type": "uint256"
       },
       {
-        "internalType": "address",
-        "name": "withdrawContract",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "withdrawContracts",
+        "type": "address[]"
       },
       {
-        "internalType": "bytes",
+        "internalType": "bytes[]",
         "name": "txData",
-        "type": "bytes"
+        "type": "bytes[]"
       }
     ],
     "stateMutability": "nonpayable",
