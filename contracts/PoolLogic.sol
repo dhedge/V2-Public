@@ -320,15 +320,21 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     uint256 length = withdrawContracts.length;
     if (length > 0) {
-      uint256 assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+      uint256 assetBalanceBefore;
+      if (withdrawAsset != address(0)) {
+        assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+      }
 
       for (uint256 i = 0; i < length; i++) {
         (success, ) = withdrawContracts[i].call(txData[i]);
         require(success, "failed to withdraw tokens");
       }
 
-      uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
-      withdrawBalance = withdrawBalance.add(assetBalanceAfter).sub(assetBalanceBefore);
+      if (withdrawAsset != address(0)) {
+        withdrawBalance = withdrawBalance.add(IERC20Upgradeable(withdrawAsset).balanceOf(address(this))).sub(
+          assetBalanceBefore
+        );
+      }
     }
 
     return (withdrawAsset, withdrawBalance, success);

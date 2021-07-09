@@ -517,6 +517,24 @@ describe("Polygon Mainnet Test", function () {
       expect(userConfigBefore).to.be.not.equal(userConfigAfter);
     });
 
+    it("should be able to withdraw 20%", async function () {
+      // Withdraw 20%
+      let withdrawAmount = units(40);
+
+      await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
+
+      await poolFactory.setExitCooldown(0);
+
+      const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+      const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+
+      await poolLogicProxy.withdraw(withdrawAmount);
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(80).div(100));
+      const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+      checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub("30000000"));
+    });
+
     it("Should be able to borrow usdt", async () => {
       const amount = (25e6).toString();
 
@@ -624,62 +642,17 @@ describe("Polygon Mainnet Test", function () {
     });
 
     it("should be able to withdraw", async function () {
-      let withdrawalEvent = new Promise((resolve, reject) => {
-        poolLogicProxy.on(
-          "Withdrawal",
-          (
-            fundAddress,
-            investor,
-            valueWithdrawn,
-            fundTokensWithdrawn,
-            totalInvestorFundTokens,
-            fundValue,
-            totalSupply,
-            withdrawnAssets,
-            time,
-            event,
-          ) => {
-            event.removeListener();
+      // Withdraw 10%
+      let withdrawAmount = units(16);
 
-            resolve({
-              fundAddress: fundAddress,
-              investor: investor,
-              valueWithdrawn: valueWithdrawn,
-              fundTokensWithdrawn: fundTokensWithdrawn,
-              totalInvestorFundTokens: totalInvestorFundTokens,
-              fundValue: fundValue,
-              totalSupply: totalSupply,
-              withdrawnAssets: withdrawnAssets,
-              time: time,
-            });
-          },
-        );
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
-      // Withdraw 5%
-      let withdrawAmount = units(10);
-
-      await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
-
-      await poolFactory.setExitCooldown(0);
-
+      const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
       await poolLogicProxy.withdraw(withdrawAmount);
 
-      let event = await withdrawalEvent;
-      expect(event.fundAddress).to.equal(poolLogicProxy.address);
-      expect(event.investor).to.equal(logicOwner.address);
-      checkAlmostSame(event.valueWithdrawn, units(10));
-      checkAlmostSame(event.fundTokensWithdrawn, units(10));
-      checkAlmostSame(event.fundValue, units(190));
-      checkAlmostSame(event.totalSupply, units(190));
-
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(95).div(100));
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(90).div(100));
+      const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
+      checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((16e6).toString()));
     });
   });
 });
