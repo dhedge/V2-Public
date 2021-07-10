@@ -650,6 +650,19 @@
   },
   {
     "inputs": [],
+    "name": "getSwapRouter",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "swapRouter",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getTrackingCode",
     "outputs": [
       {

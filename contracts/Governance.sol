@@ -44,10 +44,15 @@ contract Governance is IGovernance, Ownable {
 
   event SetAssetGuard(uint8 assetType, address guardAddress);
 
+  event SetSwapRouter(address swapRouter);
+
   // Transaction Guards
 
   mapping(address => address) public override contractGuards;
   mapping(uint8 => address) public override assetGuards;
+
+  // swap router with UniswapV2Router interface - e.g. sushiswapRouter, uniswapV2Router
+  address public override swapRouter;
 
   // Transaction Guards
 
@@ -74,5 +79,17 @@ contract Governance is IGovernance, Ownable {
     assetGuards[assetType] = guardAddress;
 
     emit SetAssetGuard(assetType, guardAddress);
+  }
+
+  function setSwapRouter(address _swapRouter) external onlyOwner {
+    _setSwapRouter(_swapRouter);
+  }
+
+  function _setSwapRouter(address _swapRouter) internal {
+    require(_swapRouter != address(0), "Invalid swap router");
+
+    swapRouter = _swapRouter;
+
+    emit SetSwapRouter(_swapRouter);
   }
 }

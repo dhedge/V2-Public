@@ -63,7 +63,6 @@ import "./interfaces/IUniswapV2Router.sol";
 import "./interfaces/aave/ILendingPool.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
-import "./guards/assetGuards/IAaveLendingPoolAssetGuard.sol";
 import "./utils/DhedgeSwap.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -539,17 +538,17 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address aaveLendingPool = msg.sender;
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(aaveLendingPool);
     require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
-    address sushiswapRouter = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).sushiswapRouter();
+    address swapRouter = IHasGuardInfo(factory).getSwapRouter();
 
-    _repayAndWithdraw(aaveLendingPool, sushiswapRouter, assets, amounts, params);
-    _repayFlashLoan(aaveLendingPool, sushiswapRouter, assets, amounts, premiums);
+    _repayAndWithdraw(aaveLendingPool, swapRouter, assets, amounts, params);
+    _repayFlashLoan(aaveLendingPool, swapRouter, assets, amounts, premiums);
 
     return true;
   }
 
   function _repayAndWithdraw(
     address aaveLendingPool,
-    address sushiswapRouter,
+    address swapRouter,
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
     bytes memory params
@@ -564,29 +563,29 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       ILendingPool(aaveLendingPool).repay(repayAssets[i], repayAmounts[i], interestRateModes[i], address(this));
     }
 
-    address weth = IUniswapV2Router(sushiswapRouter).WETH();
+    address weth = IUniswapV2Router(swapRouter).WETH();
     length = collateralAssets.length;
     for (i = 0; i < length; i++) {
       ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], amounts[i], address(this));
-      IUniswapV2Router(sushiswapRouter).swapTokens(collateralAssets[i], weth, amounts[i]);
+      IUniswapV2Router(swapRouter).swapTokens(collateralAssets[i], weth, amounts[i]);
     }
   }
 
   function _repayFlashLoan(
     address aaveLendingPool,
-    address sushiswapRouter,
+    address swapRouter,
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
     uint256[] memory premiums
   ) internal {
     uint256 repayAssetsCount = repayAssets.length;
-    address prevAsset = IUniswapV2Router(sushiswapRouter).WETH();
+    address prevAsset = IUniswapV2Router(swapRouter).WETH();
     uint256 prevAmount;
     for (uint256 i = 0; i < repayAssetsCount; i++) {
       address currentAsset = repayAssets[i];
       prevAmount = IERC20Upgradeable(currentAsset).balanceOf(address(this));
 
-      IUniswapV2Router(sushiswapRouter).swapTokens(
+      IUniswapV2Router(swapRouter).swapTokens(
         prevAsset,
         currentAsset,
         IERC20Upgradeable(prevAsset).balanceOf(address(this)).sub(prevAmount)

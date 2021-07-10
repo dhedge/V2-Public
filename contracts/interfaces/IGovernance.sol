@@ -6,4 +6,6 @@ interface IGovernance {
   function contractGuards(address target) external view returns (address guard);
 
   function assetGuards(uint8 assetType) external view returns (address guard);
+
+  function swapRouter() external view returns (address);
 }

@@ -122,7 +122,6 @@ describe("Polygon Mainnet Test", function () {
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
       aaveProtocolDataProvider,
-      sushiswapV2Router,
       assetHandler.address,
     );
     aaveLendingPoolAssetGuard.deployed();
@@ -137,6 +136,7 @@ describe("Polygon Mainnet Test", function () {
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
+    await governance.setSwapRouter(sushiswapV2Router);
   });
 
   it("Should be able to get USDC", async function () {

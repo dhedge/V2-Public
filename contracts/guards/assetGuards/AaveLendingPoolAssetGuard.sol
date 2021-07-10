@@ -38,7 +38,6 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ERC20Guard.sol";
-import "./IAaveLendingPoolAssetGuard.sol";
 import "../../interfaces/aave/ILendingPool.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
@@ -48,7 +47,7 @@ import "../../interfaces/IPoolLogic.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type = 3
-contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolAssetGuard {
+contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   using SafeMathUpgradeable for uint256;
 
   // For Aave decimal calculation
@@ -59,17 +58,11 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   ILendingPoolAddressesProvider public aaveAddressProvider;
   ILendingPool public aaveLendingPool;
   IAssetHandler public assetHandler;
-  address public override sushiswapRouter;
 
-  constructor(
-    address _aaveProtocolDataProvider,
-    address _sushiswapRouter,
-    address _assetHandler
-  ) {
+  constructor(address _aaveProtocolDataProvider, address _assetHandler) {
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
     aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
-    sushiswapRouter = _sushiswapRouter;
     assetHandler = IAssetHandler(_assetHandler);
   }
 

@@ -40,4 +40,7 @@ interface IHasGuardInfo {
 
   // Get asset guard
   function getAssetGuard(address extContract) external view returns (address);
+
+  // Get swap router
+  function getSwapRouter() external view returns (address);
 }
