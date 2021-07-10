@@ -26,7 +26,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   uint256 public chainlinkTimeout; // Chainlink oracle timeout period
 
   // Asset Mappings
-  mapping(address => uint8) public override assetTypes; // for asset types refer to header comment
+  mapping(address => uint16) public override assetTypes; // for asset types refer to header comment
   mapping(address => address) public override priceAggregators;
 
   // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
@@ -40,7 +40,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
 
   /* ========== VIEWS ========== */
 
-  function getAssetTypeAndAggregator(address asset) external view override returns (uint8, address) {
+  function getAssetTypeAndAggregator(address asset) external view override returns (uint16, address) {
     return (assetTypes[asset], priceAggregators[asset]);
   }
 
@@ -86,7 +86,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   /// Add valid asset with price aggregator
   function addAsset(
     address asset,
-    uint8 assetType,
+    uint16 assetType,
     address aggregator
   ) public override onlyOwner {
     require(asset != address(0), "asset address cannot be 0");
