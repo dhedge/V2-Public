@@ -40,19 +40,18 @@ import "./interfaces/IGovernance.sol";
 /// @title Governance
 /// @dev A contract with storage managed by governance
 contract Governance is IGovernance, Ownable {
-  event SetContractGuard(address extContract, address guardAddress);
-
-  event SetAssetGuard(uint8 assetType, address guardAddress);
-
-  event SetSwapRouter(address swapRouter);
+  event ContractGuardSet(address extContract, address guardAddress);
+  event AssetGuardSet(uint8 assetType, address guardAddress);
+  event AddressSet(bytes32 name, address destination);
 
   // Transaction Guards
-
   mapping(address => address) public override contractGuards;
   mapping(uint8 => address) public override assetGuards;
 
-  // swap router with UniswapV2Router interface - e.g. sushiswapRouter, uniswapV2Router
-  address public override swapRouter;
+  // Addresses
+  mapping(bytes32 => address) public nameToDestination;
+
+  /* ========== RESTRICTED FUNCTIONS ========== */
 
   // Transaction Guards
 
@@ -66,7 +65,7 @@ contract Governance is IGovernance, Ownable {
 
     contractGuards[extContract] = guardAddress;
 
-    emit SetContractGuard(extContract, guardAddress);
+    emit ContractGuardSet(extContract, guardAddress);
   }
 
   function setAssetGuard(uint8 assetType, address guardAddress) external onlyOwner {
@@ -78,18 +77,37 @@ contract Governance is IGovernance, Ownable {
 
     assetGuards[assetType] = guardAddress;
 
-    emit SetAssetGuard(assetType, guardAddress);
+    emit AssetGuardSet(assetType, guardAddress);
   }
 
-  function setSwapRouter(address _swapRouter) external onlyOwner {
-    _setSwapRouter(_swapRouter);
+  // Addresses
+
+  function setAddresses(bytes32[] calldata names, address[] calldata destinations) external onlyOwner {
+    require(names.length == destinations.length, "input lengths must match");
+
+    for (uint256 i = 0; i < names.length; i++) {
+      bytes32 name = names[i];
+      address destination = destinations[i];
+      nameToDestination[name] = destination;
+      emit AddressSet(name, destination);
+    }
   }
 
-  function _setSwapRouter(address _swapRouter) internal {
-    require(_swapRouter != address(0), "Invalid swap router");
+  /* ========== VIEWS ========== */
 
-    swapRouter = _swapRouter;
+  function areAddressesSet(bytes32[] calldata names, address[] calldata destinations) external view returns (bool) {
+    require(names.length == destinations.length, "input lengths must match");
 
-    emit SetSwapRouter(_swapRouter);
+    for (uint256 i = 0; i < names.length; i++) {
+      if (nameToDestination[names[i]] != destinations[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function getAddress(bytes32 name) external view override returns (address destination) {
+    destination = nameToDestination[name];
+    require(destination != address(0), "governance: invalid name");
   }
 }
