@@ -427,7 +427,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "swapRouter",
+        "name": "destination",
         "type": "address"
       }
     ],
