@@ -590,7 +590,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
       balanceBefore = IERC20Upgradeable(currentAsset).balanceOf(address(this));
       IUniswapV2Router(swapRouter).swapTokens(prevAsset, currentAsset, prevAmount);
-      
+
       prevAsset = currentAsset;
       prevAmount = IERC20Upgradeable(currentAsset).balanceOf(address(this)).sub(balanceBefore);
 
