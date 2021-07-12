@@ -183,9 +183,9 @@
       },
       {
         "indexed": false,
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "transactionType",
-        "type": "uint8"
+        "type": "uint16"
       },
       {
         "indexed": false,

@@ -42,14 +42,14 @@ import "./interfaces/IGovernance.sol";
 contract Governance is IGovernance, Ownable {
   event SetContractGuard(address extContract, address guardAddress);
 
-  event SetAssetGuard(uint8 assetType, address guardAddress);
+  event SetAssetGuard(uint16 assetType, address guardAddress);
 
   event SetSwapRouter(address swapRouter);
 
   // Transaction Guards
 
   mapping(address => address) public override contractGuards;
-  mapping(uint8 => address) public override assetGuards;
+  mapping(uint16 => address) public override assetGuards;
 
   // swap router with UniswapV2Router interface - e.g. sushiswapRouter, uniswapV2Router
   address public override swapRouter;
@@ -69,11 +69,11 @@ contract Governance is IGovernance, Ownable {
     emit SetContractGuard(extContract, guardAddress);
   }
 
-  function setAssetGuard(uint8 assetType, address guardAddress) external onlyOwner {
+  function setAssetGuard(uint16 assetType, address guardAddress) external onlyOwner {
     _setAssetGuard(assetType, guardAddress);
   }
 
-  function _setAssetGuard(uint8 assetType, address guardAddress) internal {
+  function _setAssetGuard(uint16 assetType, address guardAddress) internal {
     require(guardAddress != address(0), "Invalid guardAddress");
 
     assetGuards[assetType] = guardAddress;
