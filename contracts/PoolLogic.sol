@@ -44,6 +44,7 @@
 // 11. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
 // 12. Borrow: Aave borrow tokens
 // 13. Repay: Aave repay tokens
+// 14. SwapBorrowRateMode: Aave change borrow rate mode (stable/variable)
 
 // SPDX-License-Identifier: BUSL-1.1
 
