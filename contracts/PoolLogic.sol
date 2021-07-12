@@ -332,6 +332,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
 
       if (withdrawAsset != address(0)) {
+        // calculated the balance change after withdraw process.
         withdrawBalance = withdrawBalance.add(IERC20Upgradeable(withdrawAsset).balanceOf(address(this))).sub(
           assetBalanceBefore
         );
@@ -532,9 +533,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address[] memory assets,
     uint256[] memory amounts,
     uint256[] memory premiums,
-    address,
+    address originator,
     bytes memory params
   ) external returns (bool) {
+    require(originator == address(this), "only pool flash loan origin");
+
     address aaveLendingPool = msg.sender;
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(aaveLendingPool);
     require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
