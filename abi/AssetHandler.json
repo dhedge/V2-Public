@@ -10,9 +10,9 @@
       },
       {
         "indexed": false,
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "assetType",
-        "type": "uint8"
+        "type": "uint16"
       },
       {
         "indexed": false,
@@ -64,9 +64,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "assetType",
-        "type": "uint8"
+        "type": "uint16"
       },
       {
         "internalType": "address",
@@ -89,9 +89,9 @@
             "type": "address"
           },
           {
-            "internalType": "uint8",
+            "internalType": "uint16",
             "name": "assetType",
-            "type": "uint8"
+            "type": "uint16"
           },
           {
             "internalType": "address",
@@ -120,9 +120,9 @@
     "name": "assetTypes",
     "outputs": [
       {
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "",
-        "type": "uint8"
+        "type": "uint16"
       }
     ],
     "stateMutability": "view",
@@ -152,9 +152,9 @@
     "name": "getAssetTypeAndAggregator",
     "outputs": [
       {
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "",
-        "type": "uint8"
+        "type": "uint16"
       },
       {
         "internalType": "address",
@@ -194,9 +194,9 @@
             "type": "address"
           },
           {
-            "internalType": "uint8",
+            "internalType": "uint16",
             "name": "assetType",
-            "type": "uint8"
+            "type": "uint16"
           },
           {
             "internalType": "address",

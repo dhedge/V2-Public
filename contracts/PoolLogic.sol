@@ -101,7 +101,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 time
   );
 
-  event TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time);
+  event TransactionExecuted(address pool, address manager, uint16 transactionType, uint256 time);
 
   event PoolPrivacyUpdated(bool isPoolPrivate);
 
@@ -248,7 +248,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     uint256 assetCount = _supportedAssets.length;
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
-    uint8 index = 0;
+    uint16 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
       address asset = _supportedAssets[i].asset;
@@ -304,8 +304,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // Withdraw any external tokens (eg. staked tokens in other contracts)
     address guard = IHasGuardInfo(factory).getGuard(asset);
     require(guard != address(0), "invalid guard");
-    (address stakingContract, bytes memory txData) =
-      IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
+    (address stakingContract, bytes memory txData) = IAssetGuard(guard).getWithdrawStakedTx(
+      address(this),
+      asset,
+      portion,
+      to
+    );
     if (txData.length > 0) {
       (success, ) = stakingContract.call(txData);
       require(success, "failed to withdraw staked tokens");
@@ -335,7 +339,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
-    uint8 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
+    uint16 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
     (success, ) = to.call(data);
@@ -414,10 +418,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
-    uint256 available =
-      currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
-        currentTokenPrice
-      );
+    uint256 available = currentTokenPrice
+    .sub(_lastFeeMintPrice)
+    .mul(_tokenSupply)
+    .mul(_feeNumerator)
+    .div(_feeDenominator)
+    .div(currentTokenPrice);
 
     return available;
   }
@@ -434,8 +440,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
 
-    uint256 available =
-      _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
+    uint256 available = _availableManagerFee(
+      fundValue,
+      tokenSupply,
+      tokenPriceAtLastFeeMint,
+      managerFeeNumerator,
+      managerFeeDenominator
+    );
 
     // Ignore dust when minting performance fees
     if (available < 10000) return fundValue;

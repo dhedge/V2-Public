@@ -82,7 +82,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint8 txType // transaction type
+      uint16 txType // transaction type
     )
   {
     bytes4 method = getMethod(data);

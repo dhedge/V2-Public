@@ -41,5 +41,5 @@ interface IGuard {
     address poolManagerLogic,
     address to,
     bytes calldata data
-  ) external returns (uint8 txType);
+  ) external returns (uint16 txType);
 }
