@@ -2,6 +2,8 @@ const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 
+const { toBytes32 } = require("../../unit/TestHelpers");
+
 use(chaiAlmost());
 
 const checkAlmostSame = (a, b) => {
@@ -136,7 +138,7 @@ describe("Polygon Mainnet Test", function () {
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
-    await governance.setSwapRouter(sushiswapV2Router);
+    await governance.setAddresses([toBytes32("sushiV2Router")], [sushiswapV2Router]);
   });
 
   it("Should be able to get USDC", async function () {
