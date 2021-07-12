@@ -49,7 +49,7 @@ contract Governance is IGovernance, Ownable {
   mapping(uint16 => address) public override assetGuards;
 
   // Addresses
-  mapping(bytes32 => address) public nameToDestination;
+  mapping(bytes32 => address) public override nameToDestination;
 
   /* ========== RESTRICTED FUNCTIONS ========== */
 
@@ -106,13 +106,6 @@ contract Governance is IGovernance, Ownable {
   }
 
   /* ========== VIEWS ========== */
-
-  /// @notice Get contract address from a name eg. "sushiV2Router"
-  /// @return destination address from the name
-  function getAddress(bytes32 name) external view override returns (address destination) {
-    destination = nameToDestination[name];
-    require(destination != address(0), "governance: invalid name");
-  }
 
   /// @notice Internally used to verify correct settings of names and addresses
   /// @dev After calling `setAddresses()`, can call `areAddressesSet()` to verify

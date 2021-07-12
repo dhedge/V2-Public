@@ -50,14 +50,15 @@ describe("Governance", async () => {
     expect(areAddressesSet).to.equal(false);
 
     // Check correct mappings
-    const address1Mapping = await governance.getAddress(toBytes32(name1));
-    const address2Mapping = await governance.getAddress(toBytes32(name2));
-    const address3Mapping = await governance.getAddress(toBytes32(name3));
+    const address1Mapping = await governance.nameToDestination(toBytes32(name1));
+    const address2Mapping = await governance.nameToDestination(toBytes32(name2));
+    const address3Mapping = await governance.nameToDestination(toBytes32(name3));
     expect(address1).to.equal(address1Mapping);
     expect(address2).to.equal(address2Mapping);
     expect(address3).to.equal(address3Mapping);
 
-    // Check fail on bad name call
-    await expect(governance.getAddress(toBytes32("badName"))).to.be.revertedWith("governance: invalid name");
+    // Check 0x0 return on bad name call
+    const zeroAddress = await governance.nameToDestination(toBytes32("badName"));
+    expect(zeroAddress).to.equal("0x0000000000000000000000000000000000000000");
   });
 });
