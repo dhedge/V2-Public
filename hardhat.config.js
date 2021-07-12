@@ -36,7 +36,7 @@ module.exports = {
     },
     polygon: {
       chainId: 137,
-      url: process.env.ALCHEMY_URL + process.env.ALCHEMY_KEY,
+      url: "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {
