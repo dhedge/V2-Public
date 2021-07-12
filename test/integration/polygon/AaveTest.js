@@ -578,7 +578,7 @@ describe("Polygon Mainnet Test", function () {
       // Pool balance: 104 USDC, $16 in WETH
       // Aave balance: 40 amUSDC
 
-      const amount = (25e18).toString();
+      const amount = units(25).toString();
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
@@ -624,7 +624,7 @@ describe("Polygon Mainnet Test", function () {
       );
 
       const daiBalanceAfter = await DAI.balanceOf(poolLogicProxy.address);
-      expect(daiBalanceAfter).to.be.equal((25e18).toString());
+      expect(daiBalanceAfter).to.be.equal(units(25));
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
@@ -633,7 +633,7 @@ describe("Polygon Mainnet Test", function () {
       // Pool balance: 104 USDC, 25 DAI, $16 in WETH
       // Aave balance: 40 amUSDC, 25 debtDAI
 
-      const amount = (10e18).toString();
+      const amount = units(10);
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
@@ -673,7 +673,7 @@ describe("Polygon Mainnet Test", function () {
       await poolLogicProxy.connect(manager).execTransaction(dai, approveABI);
 
       const daiBalanceBefore = await DAI.balanceOf(poolLogicProxy.address);
-      expect(daiBalanceBefore).to.be.equal((25e18).toString());
+      expect(daiBalanceBefore).to.be.equal(units(25));
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
@@ -681,7 +681,7 @@ describe("Polygon Mainnet Test", function () {
       await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI);
 
       const daiBalanceAfter = await DAI.balanceOf(poolLogicProxy.address);
-      expect(daiBalanceAfter).to.be.equal((15e18).toString());
+      expect(daiBalanceAfter).to.be.equal(units(15));
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
@@ -704,7 +704,7 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(90).div(100));
       const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
-      checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((12e18).toString()));
+      checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(units(12)));
     });
   });
 });
