@@ -55,7 +55,10 @@ library DhedgeSwap {
     }
 
     address weth = swapRouter.WETH();
-    IERC20(from).approve(address(swapRouter), amount);
+    // Approve if not enough swap allowance
+    if (IERC20(from).allowance(address(this), address(swapRouter)) < amount) {
+      IERC20(from).approve(address(swapRouter), amount);
+    }
 
     address[] memory path;
     if (from == weth || to == weth) {
