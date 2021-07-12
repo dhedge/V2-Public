@@ -540,8 +540,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
     address swapRouter = IHasGuardInfo(factory).getSwapRouter();
 
-    uint256 wethBalance = _repayAndWithdraw(aaveLendingPool, swapRouter, assets, amounts, params);
-    _repayFlashLoan(aaveLendingPool, swapRouter, wethBalance, assets, amounts, premiums);
+    _repayFlashLoan(aaveLendingPool, swapRouter, assets, amounts, premiums, params);
 
     return true;
   }
@@ -552,7 +551,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
     bytes memory params
-  ) internal returns (uint256) {
+  ) internal {
     (uint256[] memory interestRateModes, address[] memory collateralAssets, uint256[] memory amounts) =
       abi.decode(params, (uint256[], address[], uint256[]));
 
@@ -564,33 +563,34 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     address weth = IUniswapV2Router(swapRouter).WETH();
-    uint256 prevWethBalance = IERC20Upgradeable(weth).balanceOf(address(this));
     length = collateralAssets.length;
     for (i = 0; i < length; i++) {
       ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], amounts[i], address(this));
       IUniswapV2Router(swapRouter).swapTokens(collateralAssets[i], weth, amounts[i]);
     }
-
-    return IERC20Upgradeable(weth).balanceOf(address(this)).sub(prevWethBalance);
   }
 
   function _repayFlashLoan(
     address aaveLendingPool,
     address swapRouter,
-    uint256 wethBalance,
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
-    uint256[] memory premiums
+    uint256[] memory premiums,
+    bytes memory params
   ) internal {
     uint256 repayAssetsCount = repayAssets.length;
     address prevAsset = IUniswapV2Router(swapRouter).WETH();
-    uint256 prevAmount = wethBalance;
+
+    uint256 balanceBefore = IERC20Upgradeable(prevAsset).balanceOf(address(this));
+    _repayAndWithdraw(aaveLendingPool, swapRouter, repayAssets, repayAmounts, params);
+    uint256 prevAmount = IERC20Upgradeable(prevAsset).balanceOf(address(this)).sub(balanceBefore);
+
     for (uint256 i = 0; i < repayAssetsCount; i++) {
       address currentAsset = repayAssets[i];
-      uint256 balanceBefore = IERC20Upgradeable(currentAsset).balanceOf(address(this));
 
+      balanceBefore = IERC20Upgradeable(currentAsset).balanceOf(address(this));
       IUniswapV2Router(swapRouter).swapTokens(prevAsset, currentAsset, prevAmount);
-
+      
       prevAsset = currentAsset;
       prevAmount = IERC20Upgradeable(currentAsset).balanceOf(address(this)).sub(balanceBefore);
 
