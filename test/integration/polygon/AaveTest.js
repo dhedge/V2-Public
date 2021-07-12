@@ -127,7 +127,7 @@ describe("Polygon Mainnet Test", function () {
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveProtocolDataProvider, [usdc]);
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveProtocolDataProvider);
     aaveLendingPoolGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);

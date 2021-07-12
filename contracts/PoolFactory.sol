@@ -363,7 +363,7 @@ contract PoolFactory is
     return IAssetHandler(_assetHandler).getUSDPrice(asset);
   }
 
-  function getAssetType(address asset) external view override returns (uint8) {
+  function getAssetType(address asset) external view override returns (uint16) {
     return IAssetHandler(_assetHandler).assetTypes(asset);
   }
 
@@ -471,7 +471,7 @@ contract PoolFactory is
 
   function getAssetGuard(address extContract) public view override returns (address guard) {
     if (isValidAsset(extContract)) {
-      uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
+      uint16 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
       guard = IGovernance(governanceAddress).assetGuards(assetType);
     }
   }

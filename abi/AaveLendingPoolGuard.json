@@ -5,11 +5,6 @@
         "internalType": "address",
         "name": "_aaveProtocolDataProvider",
         "type": "address"
-      },
-      {
-        "internalType": "address[]",
-        "name": "_depositdAssets",
-        "type": "address[]"
       }
     ],
     "stateMutability": "nonpayable",
@@ -434,25 +429,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "isDepositAsset",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "bytes",
         "name": "data",
         "type": "bytes"
@@ -524,9 +500,9 @@
     "name": "txGuard",
     "outputs": [
       {
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "txType",
-        "type": "uint8"
+        "type": "uint16"
       }
     ],
     "stateMutability": "nonpayable",

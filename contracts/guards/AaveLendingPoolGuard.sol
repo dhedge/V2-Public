@@ -58,15 +58,9 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   uint256 internal constant BORROWING_MASK = 0x5555555555555555555555555555555555555555555555555555555555555555;
   uint256 internal constant COLLATERAL_MASK = 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
   address public aaveProtocolDataProvider;
-  mapping(address => bool) public isDepositAsset;
 
-  constructor(address _aaveProtocolDataProvider, address[] memory _depositdAssets) {
+  constructor(address _aaveProtocolDataProvider) {
     aaveProtocolDataProvider = _aaveProtocolDataProvider;
-
-    uint256 length = _depositdAssets.length;
-    for (uint256 i = 0; i < length; i++) {
-      isDepositAsset[_depositdAssets[i]] = true;
-    }
   }
 
   /// @notice Transaction guard for Synthetix Exchanger
@@ -82,7 +76,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint8 txType // transaction type
+      uint16 txType // transaction type
     )
   {
     bytes4 method = getMethod(data);
@@ -99,8 +93,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(depositAsset), "unsupported deposit asset");
 
       require(onBehalfOf == poolManagerLogic.poolLogic(), "recipient is not pool");
-
-      require(isDepositAsset[depositAsset], "deposit is not enabled");
 
       emit Deposit(poolManagerLogic.poolLogic(), depositAsset, to, amount, block.timestamp);
 

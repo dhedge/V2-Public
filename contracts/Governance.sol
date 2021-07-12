@@ -44,9 +44,11 @@ contract Governance is IGovernance, Ownable {
   event AssetGuardSet(uint8 assetType, address guardAddress);
   event AddressSet(bytes32 name, address destination);
 
+  event SetAssetGuard(uint16 assetType, address guardAddress);
+
   // Transaction Guards
   mapping(address => address) public override contractGuards;
-  mapping(uint8 => address) public override assetGuards;
+  mapping(uint16 => address) public override assetGuards;
 
   // Addresses
   mapping(bytes32 => address) public nameToDestination;
@@ -75,11 +77,11 @@ contract Governance is IGovernance, Ownable {
   /// @dev Asset types are defined in AssetHandler.sol
   /// @param assetType Asset type as defined in Asset Handler
   /// @param guardAddress The asset guard address that allows manager interaction
-  function setAssetGuard(uint8 assetType, address guardAddress) external onlyOwner {
+  function setAssetGuard(uint16 assetType, address guardAddress) external onlyOwner {
     _setAssetGuard(assetType, guardAddress);
   }
 
-  function _setAssetGuard(uint8 assetType, address guardAddress) internal {
+  function _setAssetGuard(uint16 assetType, address guardAddress) internal {
     require(guardAddress != address(0), "Invalid guardAddress");
 
     assetGuards[assetType] = guardAddress;
