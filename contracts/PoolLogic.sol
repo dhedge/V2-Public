@@ -304,12 +304,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // Withdraw any external tokens (eg. staked tokens in other contracts)
     address guard = IHasGuardInfo(factory).getGuard(asset);
     require(guard != address(0), "invalid guard");
-    (address stakingContract, bytes memory txData) = IAssetGuard(guard).getWithdrawStakedTx(
-      address(this),
-      asset,
-      portion,
-      to
-    );
+    (address stakingContract, bytes memory txData) =
+      IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
     if (txData.length > 0) {
       (success, ) = stakingContract.call(txData);
       require(success, "failed to withdraw staked tokens");
@@ -418,12 +414,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
-    uint256 available = currentTokenPrice
-    .sub(_lastFeeMintPrice)
-    .mul(_tokenSupply)
-    .mul(_feeNumerator)
-    .div(_feeDenominator)
-    .div(currentTokenPrice);
+    uint256 available =
+      currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
+        currentTokenPrice
+      );
 
     return available;
   }
@@ -440,13 +434,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
 
-    uint256 available = _availableManagerFee(
-      fundValue,
-      tokenSupply,
-      tokenPriceAtLastFeeMint,
-      managerFeeNumerator,
-      managerFeeDenominator
-    );
+    uint256 available =
+      _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
 
     // Ignore dust when minting performance fees
     if (available < 10000) return fundValue;
