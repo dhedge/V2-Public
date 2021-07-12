@@ -55,6 +55,9 @@ contract Governance is IGovernance, Ownable {
 
   // Transaction Guards
 
+  /// @notice Maps an exernal contract to a guard which enables managers to use the contract
+  /// @param extContract The third party contract to integrate
+  /// @param guardAddress The protections for manager third party contract interaction
   function setContractGuard(address extContract, address guardAddress) external onlyOwner {
     _setContractGuard(extContract, guardAddress);
   }
@@ -68,6 +71,10 @@ contract Governance is IGovernance, Ownable {
     emit ContractGuardSet(extContract, guardAddress);
   }
 
+  /// @notice Maps an asset type to an asset guard which allows managers to enable the asset
+  /// @dev Asset types are defined in AssetHandler.sol
+  /// @param assetType Asset type as defined in Asset Handler
+  /// @param guardAddress The asset guard address that allows manager interaction
   function setAssetGuard(uint8 assetType, address guardAddress) external onlyOwner {
     _setAssetGuard(assetType, guardAddress);
   }
@@ -82,6 +89,11 @@ contract Governance is IGovernance, Ownable {
 
   // Addresses
 
+  /// @notice Maps multiple contract names to destination addresses
+  /// @dev This is a central source that can be used to reference third party contracts
+  /// @dev After calling `setAddresses()`, can call `areAddressesSet()` to verify
+  /// @param names The contract names eg. "sushiV2Router"
+  /// @param destinations The contract addresses to map to names
   function setAddresses(bytes32[] calldata names, address[] calldata destinations) external onlyOwner {
     require(names.length == destinations.length, "input lengths must match");
 
@@ -95,6 +107,15 @@ contract Governance is IGovernance, Ownable {
 
   /* ========== VIEWS ========== */
 
+  /// @notice Get contract address from a name eg. "sushiV2Router"
+  /// @return destination address from the name
+  function getAddress(bytes32 name) external view override returns (address destination) {
+    destination = nameToDestination[name];
+    require(destination != address(0), "governance: invalid name");
+  }
+
+  /// @notice Internally used to verify correct settings of names and addresses
+  /// @dev After calling `setAddresses()`, can call `areAddressesSet()` to verify
   function areAddressesSet(bytes32[] calldata names, address[] calldata destinations) external view returns (bool) {
     require(names.length == destinations.length, "input lengths must match");
 
@@ -104,10 +125,5 @@ contract Governance is IGovernance, Ownable {
       }
     }
     return true;
-  }
-
-  function getAddress(bytes32 name) external view override returns (address destination) {
-    destination = nameToDestination[name];
-    require(destination != address(0), "governance: invalid name");
   }
 }
