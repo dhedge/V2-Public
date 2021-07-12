@@ -3,6 +3,7 @@
 // 0 = Chainlink direct USD price feed with 8 decimals
 // 1 = Synthetix synth with Chainlink direct USD price feed
 // 2 = Sushi LP tokens
+// 3 = Aave Lending Pool Asset
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;

@@ -1,5 +1,6 @@
 node_modules
 .env
+.openzeppelin/unknown-31337.json
 
 #Hardhat files
 cache
