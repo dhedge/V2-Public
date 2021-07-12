@@ -36,7 +36,8 @@ module.exports = {
     },
     polygon: {
       chainId: 137,
-      url: "https://rpc-mainnet.maticvigil.com/v1/" + process.env.MATIC_KEY,
+      // url: "https://rpc-mainnet.maticvigil.com/v1/" + process.env.MATIC_KEY,
+      url: process.env.ALCHEMY_URL + process.env.ALCHEMY_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {

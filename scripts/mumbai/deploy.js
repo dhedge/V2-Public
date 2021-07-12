@@ -58,7 +58,9 @@ async function main() {
   const tWETH = await TestWETH.deploy("1000000000");
   console.log("TestWETH deployed at ", tWETH.address);
 
-  const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
+  const Governance = await ethers.getContractFactory("Governance");
+  let governance = await Governance.deploy();
+  console.log("governance deployed to:", governance.address);
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   poolLogic = await PoolLogic.deploy();
@@ -70,26 +72,28 @@ async function main() {
   await poolManagerLogic.deployed();
   console.log("poolManagerLogic deployed at ", poolManagerLogic.address);
 
-  const PoolFactory = await ethers.getContractFactory("PoolFactory");
-  poolFactory = await upgrades.deployProxy(PoolFactory, [
-    poolLogic.address,
-    poolManagerLogic.address,
-    ZERO_ADDRESS,
-    dao.address,
-  ]);
-  await poolFactory.deployed();
-  console.log("PoolFactoryProxy deployed at ", poolFactory.address);
-
   // Initialize Asset Price Consumer
   const assetWeth = { asset: tWETH.address, assetType: 0, aggregator: eth_price_feed };
   const assetUsdt = { asset: tUSDT.address, assetType: 0, aggregator: usdt_price_feed };
   const assetUsdc = { asset: tUSDC.address, assetType: 0, aggregator: usdc_price_feed };
   const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-  const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
+  const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
+  const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
   await assetHandler.deployed();
   await poolFactory.setAssetHandler(assetHandler.address);
   console.log("AssetHandler deployed at ", assetHandler.address);
+
+  const PoolFactory = await ethers.getContractFactory("PoolFactory");
+  poolFactory = await upgrades.deployProxy(PoolFactory, [
+    poolLogic.address,
+    poolManagerLogic.address,
+    assetHandler.address,
+    dao.address,
+    governance.address,
+  ]);
+  await poolFactory.deployed();
+  console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
@@ -101,9 +105,8 @@ async function main() {
   uniswapV2RouterGuard.deployed();
   console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
 
-  await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-  await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
-  console.log("PoolFactory set dao ", dao.address);
+  await governance.setAssetGuard(0, erc20Guard.address);
+  await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
 
   let tag = await getTag();
   let versions = require("../../publish/mumbai/versions.json");
@@ -118,6 +121,7 @@ async function main() {
       "USDT-Aggregator": usdt_price_feed,
       "USDC-Aggregator": usdc_price_feed,
       "ETH-Aggregator": eth_price_feed,
+      Governance: governance.address,
       PoolFactoryProxy: poolFactory.address,
       PoolLogicProxy: poolLogic.address,
       PoolManagerLogicProxy: poolManagerLogic.address,
