@@ -20,6 +20,12 @@ describe("Governance", async () => {
     const newAssetGuard = await governance.assetGuards("0");
     expect(newContractGuard).to.equal(contractGuard);
     expect(newAssetGuard).to.equal(assetGuard);
+
+    // Check guard sets are successful
+    const areContractGuardsSet = await governance.areContractGuardsSet([contract], [contractGuard]);
+    expect(areContractGuardsSet).to.equal(true);
+    const areAssetGuardsSet = await governance.areAssetGuardsSet([0], [assetGuard]);
+    expect(areAssetGuardsSet).to.equal(true);
   });
 
   it("should be able to set and get addresses", async () => {

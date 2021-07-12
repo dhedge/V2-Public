@@ -107,6 +107,40 @@ contract Governance is IGovernance, Ownable {
 
   /* ========== VIEWS ========== */
 
+  /// @notice Internally used to verify correct settings of contract guards
+  /// @dev After calling `setContractGuard()`, can call `areContractGuardsSet()` to verify
+  function areContractGuardsSet(address[] calldata extContracts, address[] calldata guardAddresses)
+    external
+    view
+    returns (bool)
+  {
+    require(extContracts.length == guardAddresses.length, "input lengths must match");
+
+    for (uint256 i = 0; i < guardAddresses.length; i++) {
+      if (contractGuards[extContracts[i]] != guardAddresses[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// @notice Internally used to verify correct settings of contract guards
+  /// @dev After calling `setAssetGuard()`, can call `areAssetGuardsSet()` to verify
+  function areAssetGuardsSet(uint16[] calldata assetTypes, address[] calldata guardAddresses)
+    external
+    view
+    returns (bool)
+  {
+    require(assetTypes.length == guardAddresses.length, "input lengths must match");
+
+    for (uint256 i = 0; i < guardAddresses.length; i++) {
+      if (assetGuards[assetTypes[i]] != guardAddresses[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// @notice Internally used to verify correct settings of names and addresses
   /// @dev After calling `setAddresses()`, can call `areAddressesSet()` to verify
   function areAddressesSet(bytes32[] calldata names, address[] calldata destinations) external view returns (bool) {
