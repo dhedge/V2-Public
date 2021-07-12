@@ -566,14 +566,14 @@ describe("Polygon Mainnet Test", function () {
 
       const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
-      const userUsdcBalanceBefore = await USDC.balanceOf(logicOwner.address)
+      const userUsdcBalanceBefore = await USDC.balanceOf(logicOwner.address);
 
       await poolLogicProxy.withdraw(withdrawAmount);
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(80).div(100));
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub("26000000"));
-      const userUsdcBalanceAfter = await USDC.balanceOf(logicOwner.address)
+      const userUsdcBalanceAfter = await USDC.balanceOf(logicOwner.address);
       checkAlmostSame(userUsdcBalanceAfter, userUsdcBalanceBefore.add("26000000").add("10000000"));
     });
 
