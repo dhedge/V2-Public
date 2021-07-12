@@ -5,11 +5,6 @@
         "internalType": "address",
         "name": "_aaveProtocolDataProvider",
         "type": "address"
-      },
-      {
-        "internalType": "address[]",
-        "name": "_depositdAssets",
-        "type": "address[]"
       }
     ],
     "stateMutability": "nonpayable",
@@ -429,25 +424,6 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "isDepositAsset",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
