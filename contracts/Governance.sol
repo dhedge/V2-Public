@@ -41,10 +41,8 @@ import "./interfaces/IGovernance.sol";
 /// @dev A contract with storage managed by governance
 contract Governance is IGovernance, Ownable {
   event ContractGuardSet(address extContract, address guardAddress);
-  event AssetGuardSet(uint8 assetType, address guardAddress);
+  event AssetGuardSet(uint16 assetType, address guardAddress);
   event AddressSet(bytes32 name, address destination);
-
-  event SetAssetGuard(uint16 assetType, address guardAddress);
 
   // Transaction Guards
   mapping(address => address) public override contractGuards;
