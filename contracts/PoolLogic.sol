@@ -234,6 +234,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return liquidityMinted;
   }
 
+  /// @notice Withdraw assets based on the fund token amount
+  /// @param _fundTokenAmount the fund token amount
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
@@ -529,6 +531,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return IManaged(poolManagerLogic).isMemberAllowed(member);
   }
 
+  /// @notice execute function of aave flash loan
+  /// @dev This function is called after your contract has received the flash loaned amount
+  /// @param assets the loaned assets
+  /// @param amounts the loaned amounts per each asset
+  /// @param premiums the additional owed amount per each asset
+  /// @param originator the origin caller address of the flash loan
+  /// @param params Variadic packed params to pass to the receiver as extra information
   function executeOperation(
     address[] memory assets,
     uint256[] memory amounts,
@@ -548,6 +557,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return true;
   }
 
+  /// @notice Repay and withdraw portion of AToken
+  /// @param aaveLendingPool the Aave lending pool address
+  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
+  /// @param repayAssets the repay assets list
+  /// @param repayAmounts the repay assets amount
+  /// @param params Variadic packed params to pass to the receiver as extra information
   function _repayAndWithdraw(
     address aaveLendingPool,
     address swapRouter,
@@ -573,6 +588,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
   }
 
+  /// @notice Repay flashloan
+  /// @param aaveLendingPool the Aave lending pool address
+  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
+  /// @param repayAssets the repay assets list
+  /// @param repayAmounts the repay assets amount
+  /// @param premiums the additional owed amount per each asset
+  /// @param params Variadic packed params to pass to the receiver as extra information
   function _repayFlashLoan(
     address aaveLendingPool,
     address swapRouter,

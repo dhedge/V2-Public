@@ -145,6 +145,13 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     return (withdrawAsset, withdrawBalance, withdrawContracts, txData);
   }
 
+  /// @notice Prepare flashlan transaction data
+  /// @param pool the PoolLogic address
+  /// @param borrowAssets the borrowed assets list
+  /// @param borrowAmounts the borrowed amount per each asset
+  /// @param interestRateModes the interest rate mode per each asset
+  /// @param portion the portion of assets to be withdrawn
+  /// @return txData are used to execute the withdrawal transaction in PoolLogic
   function _prepareFlashLoan(
     address pool,
     address[] memory borrowAssets,
@@ -168,6 +175,14 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     );
   }
 
+  /// @notice Prepare withdraw/transfer transacton data
+  /// @param pool the PoolLogic address
+  /// @param to the recipient address
+  /// @param portion the portion of assets to be withdrawn
+  /// @return withdrawAsset the asset to be withdrawn
+  /// @return withdrawBalance the asset amount to be withdrawn
+  /// @return withdrawContracts the contracts for transaction execution
+  /// @return txData are used to execute the withdrawal transaction in PoolLogic
   function _withdrawAndTransfer(
     address pool,
     address to,
@@ -205,6 +220,12 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     return (withdrawAsset, withdrawBalance, withdrawContracts, txData);
   }
 
+  /// @notice Calculates AToken/DebtToken balances
+  /// @param pool the PoolLogic address
+  /// @param asset the asset address
+  /// @return collateralBalance the AToken balance
+  /// @return debtBalance the DebtToken balance
+  /// @return decimals the asset decimals
   function _calculateAaveBalance(address pool, address asset)
     internal
     view
@@ -225,6 +246,11 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     decimals = (configuration.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
   }
 
+  /// @notice Calculates AToken balances
+  /// @param pool the PoolLogic address
+  /// @param portion the portion of assets to be withdrawn
+  /// @return collateralAssets the collateral assets list
+  /// @return amounts the asset balance per each collateral asset
   function _calculateCollateralAssets(address pool, uint256 portion)
     internal
     view
@@ -262,6 +288,12 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     }
   }
 
+  /// @notice Calculates DebtToken balances
+  /// @param pool the PoolLogic address
+  /// @param portion the portion of assets to be withdrawn
+  /// @return borrowAssets the borrow assets list
+  /// @return amounts the asset balance per each borrow asset
+  /// @return interestRateModes the interest rate modes per each borrow asset
   function _calculateBorrowAssets(address pool, uint256 portion)
     internal
     view
