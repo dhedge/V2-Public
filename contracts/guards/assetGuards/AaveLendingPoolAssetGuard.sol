@@ -41,7 +41,7 @@ import "./ERC20Guard.sol";
 import "../../interfaces/aave/ILendingPool.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
-import "../../interfaces/IAssetHandler.sol";
+import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
 
@@ -57,13 +57,11 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   ILendingPoolAddressesProvider public aaveAddressProvider;
   ILendingPool public aaveLendingPool;
-  IAssetHandler public assetHandler;
 
-  constructor(address _aaveProtocolDataProvider, address _assetHandler) {
+  constructor(address _aaveProtocolDataProvider) {
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
     aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
-    assetHandler = IAssetHandler(_assetHandler);
   }
 
   /// @notice Returns the pool position of Aave lending pool
@@ -75,12 +73,12 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
 
     address asset;
     uint256 decimals;
-    uint256 tokenUnit;
     uint256 tokenPriceInUsd;
     uint256 collateralBalance;
     uint256 debtBalance;
     uint256 totalCollateralInUsd;
     uint256 totalDebtInUsd;
+    address factory = IPoolLogic(pool).factory();
 
     uint256 length = supportedAssets.length;
     for (uint256 i = 0; i < length; i++) {
@@ -89,10 +87,9 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
       (collateralBalance, debtBalance, decimals) = _calculateAaveBalance(pool, asset);
 
       if (collateralBalance != 0 || debtBalance != 0) {
-        tokenUnit = 10**decimals;
-        tokenPriceInUsd = assetHandler.getUSDPrice(asset);
-        totalCollateralInUsd = totalCollateralInUsd.add(tokenPriceInUsd.mul(collateralBalance).div(tokenUnit));
-        totalDebtInUsd = totalDebtInUsd.add(tokenPriceInUsd.mul(debtBalance).div(tokenUnit));
+        tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(asset);
+        totalCollateralInUsd = totalCollateralInUsd.add(tokenPriceInUsd.mul(collateralBalance).div(10**decimals));
+        totalDebtInUsd = totalDebtInUsd.add(tokenPriceInUsd.mul(debtBalance).div(10**decimals));
       }
     }
 
@@ -126,8 +123,11 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
       bytes[] memory txData
     )
   {
-    (address[] memory borrowAssets, uint256[] memory borrowAmounts, uint256[] memory interestRateModes) =
-      _calculateBorrowAssets(pool, portion);
+    (
+      address[] memory borrowAssets,
+      uint256[] memory borrowAmounts,
+      uint256[] memory interestRateModes
+    ) = _calculateBorrowAssets(pool, portion);
 
     if (borrowAssets.length > 0) {
       // set withdrawAsset as the last index of borrow assets
@@ -213,8 +213,8 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
       uint256 decimals
     )
   {
-    (address aToken, address stableDebtToken, address variableDebtToken) =
-      aaveProtocolDataProvider.getReserveTokensAddresses(asset);
+    (address aToken, address stableDebtToken, address variableDebtToken) = aaveProtocolDataProvider
+    .getReserveTokensAddresses(asset);
     if (aToken != address(0)) {
       collateralBalance = IERC20(aToken).balanceOf(pool);
       debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
@@ -283,7 +283,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     for (uint256 i = 0; i < length; i++) {
       // returns address(0) if it's not supported in aave
       (, stableDebtToken, variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
-        .getReserveTokensAddresses(supportedAssets[i].asset);
+      .getReserveTokensAddresses(supportedAssets[i].asset);
 
       if (stableDebtToken != address(0)) {
         amounts[index] = IERC20(stableDebtToken).balanceOf(pool);
