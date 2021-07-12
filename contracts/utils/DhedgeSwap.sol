@@ -45,7 +45,7 @@ library DhedgeSwap {
    * @notice Swap tokens via sushiswap router
    */
   function swapTokens(
-    IUniswapV2Router sushiswapRouter,
+    IUniswapV2Router swapRouter,
     address from,
     address to,
     uint256 amount
@@ -54,8 +54,8 @@ library DhedgeSwap {
       return;
     }
 
-    address weth = sushiswapRouter.WETH();
-    IERC20(from).approve(address(sushiswapRouter), amount);
+    address weth = swapRouter.WETH();
+    IERC20(from).approve(address(swapRouter), amount);
 
     address[] memory path;
     if (from == weth || to == weth) {
@@ -69,6 +69,6 @@ library DhedgeSwap {
       path[2] = to;
     }
 
-    sushiswapRouter.swapExactTokensForTokens(amount, 0, path, address(this), uint256(-1));
+    swapRouter.swapExactTokensForTokens(amount, 0, path, address(this), uint256(-1));
   }
 }
