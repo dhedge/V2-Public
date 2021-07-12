@@ -107,6 +107,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     address // to
   )
     external
+    view
     virtual
     override
     returns (

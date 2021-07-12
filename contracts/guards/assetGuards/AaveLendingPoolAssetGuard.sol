@@ -117,6 +117,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     address to
   )
     external
+    view
     virtual
     override
     returns (
