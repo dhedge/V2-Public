@@ -52,9 +52,13 @@ describe("Polygon Mainnet Test", function () {
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+  let IERC20, iERC20;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
+
+    IERC20 = await hre.artifacts.readArtifact("IERC20");
+    iERC20 = new ethers.utils.Interface(IERC20.abi);
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
@@ -146,7 +150,6 @@ describe("Polygon Mainnet Test", function () {
   it("Should be able to get USDC", async function () {
     const IWETH = await hre.artifacts.readArtifact("IWETH");
     WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
-    const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDT = await ethers.getContractAt(IERC20.abi, usdt);
     DAI = await ethers.getContractAt(IERC20.abi, dai);
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
@@ -374,8 +377,6 @@ describe("Polygon Mainnet Test", function () {
     // Pool balance: 200 USDC
 
     // First approve USDC
-    const IERC20 = await hre.artifacts.readArtifact("IERC20");
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
     approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (200e6).toString()]);
     await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
 
@@ -442,8 +443,6 @@ describe("Polygon Mainnet Test", function () {
       );
 
       // approve usdc
-      const IERC20 = await hre.artifacts.readArtifact("IERC20");
-      const iERC20 = new ethers.utils.Interface(IERC20.abi);
       let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
       await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
 
@@ -495,16 +494,6 @@ describe("Polygon Mainnet Test", function () {
       await expect(poolLogicProxy.connect(manager).execTransaction(usdc, withdrawABI)).to.be.revertedWith(
         "invalid transaction",
       );
-
-      // await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
-      //   "failed to execute the call",
-      // );
-
-      // // approve usdc
-      // const IERC20 = await hre.artifacts.readArtifact("IERC20");
-      // const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      // let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
-      // await poolLogicProxy.connect(manager).execTransaction(amusdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -566,14 +555,14 @@ describe("Polygon Mainnet Test", function () {
 
       const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
-      const userUsdcBalanceBefore = await USDC.balanceOf(logicOwner.address)
+      const userUsdcBalanceBefore = await USDC.balanceOf(logicOwner.address);
 
       await poolLogicProxy.withdraw(withdrawAmount);
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(80).div(100));
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub("26000000"));
-      const userUsdcBalanceAfter = await USDC.balanceOf(logicOwner.address)
+      const userUsdcBalanceAfter = await USDC.balanceOf(logicOwner.address);
       checkAlmostSame(userUsdcBalanceAfter, userUsdcBalanceBefore.add("26000000").add("10000000"));
     });
 
@@ -670,8 +659,6 @@ describe("Polygon Mainnet Test", function () {
       );
 
       // approve dai
-      const IERC20 = await hre.artifacts.readArtifact("IERC20");
-      const iERC20 = new ethers.utils.Interface(IERC20.abi);
       let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
       await poolLogicProxy.connect(manager).execTransaction(dai, approveABI);
 
@@ -700,6 +687,10 @@ describe("Polygon Mainnet Test", function () {
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
       checkAlmostSame(totalFundValueBefore, units(160));
+
+      // Unapprove WETH in Sushiswap to test conditional approval logic
+      approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (0).toString()]);
+      await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
 
       await poolLogicProxy.withdraw(withdrawAmount);
 
