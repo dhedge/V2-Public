@@ -68,7 +68,11 @@ library DhedgeSwap {
       path[2] = to;
     }
 
-    IERC20(from).approve(address(swapRouter), amountIn);
+    // Approve if not enough swap allowance
+    if (IERC20(from).allowance(address(this), address(swapRouter)) < amountIn) {
+      IERC20(from).approve(address(swapRouter), amountIn);
+    }
+
     swapRouter.swapExactTokensForTokens(amountIn, 0, path, address(this), uint256(-1));
   }
 
@@ -99,9 +103,20 @@ library DhedgeSwap {
       path[2] = to;
     }
 
-    uint256 amountInMax = IERC20(from).balanceOf(address(this));
-    IERC20(from).approve(address(swapRouter), amountInMax);
-    swapRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), uint256(-1));
-    IERC20(from).approve(address(swapRouter), 0);
+    // Approve if not enough swap allowance
+    bool approved;
+    uint256 fromBalance = IERC20(from).balanceOf(address(this));
+    if (IERC20(from).allowance(address(this), address(swapRouter)) < fromBalance) {
+      IERC20(from).approve(address(swapRouter), fromBalance);
+      approved = true;
+    }
+
+    swapRouter.swapTokensForExactTokens(amountOut, fromBalance, path, address(this), uint256(-1));
+
+    // Only remove swap allowance if approved by this function
+    // So that manager will not have to approve again
+    if (approved) {
+      IERC20(from).approve(address(swapRouter), 0);
+    }
   }
 }
