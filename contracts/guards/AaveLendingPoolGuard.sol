@@ -54,6 +54,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   event SetUserUseReserveAsCollateral(address fundAddress, address asset, bool useAsCollateral, uint256 time);
   event Borrow(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Repay(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
+  event SwapBorrowRateMode(address fundAddress, address asset, uint256 rateMode);
 
   uint256 internal constant BORROWING_MASK = 0x5555555555555555555555555555555555555555555555555555555555555555;
   uint256 internal constant COLLATERAL_MASK = 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
@@ -70,7 +71,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   }
 
   /// @notice Transaction guard for Synthetix Exchanger
-  /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay functionality
+  /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode functionality
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
@@ -192,6 +193,18 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
       txType = 13; // Aave `Repay` type
       return txType;
+    } else if (method == bytes4(keccak256("swapBorrowRateMode(address,uint256)"))) {
+      address asset = convert32toAddress(getInput(data, 0));
+      uint256 rateMode = uint256(getInput(data, 1));
+
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
+      require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
+
+      emit SwapBorrowRateMode(poolManagerLogic.poolLogic(), asset, rateMode);
+
+      txType = 14; // Aave `SwapBorrowRateMode` type
     }
   }
 }
