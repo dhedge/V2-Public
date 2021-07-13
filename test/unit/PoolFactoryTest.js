@@ -7,7 +7,7 @@ const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("./TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("../TestHelpers");
 
 let logicOwner, manager, dao, user1;
 let poolFactory,
