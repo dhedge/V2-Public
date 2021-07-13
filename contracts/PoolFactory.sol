@@ -478,8 +478,9 @@ contract PoolFactory is
     }
   }
 
-  function getSwapRouter() external view override returns (address swapRouter) {
-    swapRouter = IGovernance(governanceAddress).swapRouter();
+  function getAddress(bytes32 name) external view override returns (address destination) {
+    destination = IGovernance(governanceAddress).nameToDestination(name);
+    require(destination != address(0), "governance: invalid name");
   }
 
   /// @notice Return full array of deployed funds

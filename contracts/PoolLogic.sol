@@ -551,7 +551,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address aaveLendingPool = msg.sender;
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(aaveLendingPool);
     require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
-    address swapRouter = IHasGuardInfo(factory).getSwapRouter();
+    address swapRouter = IHasGuardInfo(factory).getAddress("sushiV2Router");
 
     _repayFlashLoan(aaveLendingPool, swapRouter, assets, amounts, premiums, params);
 
