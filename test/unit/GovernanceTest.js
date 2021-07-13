@@ -22,10 +22,10 @@ describe("Governance", async () => {
     expect(newAssetGuard).to.equal(assetGuard);
 
     // Check guard sets are successful
-    const areContractGuardsSet = await governance.areContractGuardsSet([contract], [contractGuard]);
-    expect(areContractGuardsSet).to.equal(true);
-    const areAssetGuardsSet = await governance.areAssetGuardsSet([0], [assetGuard]);
-    expect(areAssetGuardsSet).to.equal(true);
+    const contractGuardCheck = await governance.contractGuards(contract);
+    expect(contractGuardCheck).to.equal(contractGuard);
+    const assetGuardCheck = await governance.assetGuards(0);
+    expect(assetGuardCheck).to.equal(assetGuard);
   });
 
   it("should be able to set and get addresses", async () => {
@@ -41,19 +41,8 @@ describe("Governance", async () => {
     await governance.setAddresses(namesBytes, addresses);
 
     // Check set is successful
-    let areAddressesSet = await governance.areAddressesSet(namesBytes, addresses);
-    expect(areAddressesSet).to.equal(true);
-
-    // Check that it throws on bad checks
-    areAddressesSet = await governance.areAddressesSet(namesBytes, addresses.reverse());
-    expect(areAddressesSet).to.equal(false);
-
-    namesBytes.push(toBytes32("badName"));
-    await expect(governance.areAddressesSet(namesBytes, addresses)).to.be.revertedWith("input lengths must match");
-
-    addresses.push(address1);
-    areAddressesSet = await governance.areAddressesSet(namesBytes, addresses);
-    expect(areAddressesSet).to.equal(false);
+    let destinationCheck = await governance.nameToDestination(namesBytes[0]);
+    expect(destinationCheck).to.equal(addresses[0]);
 
     // Check correct mappings
     const address1Mapping = await governance.nameToDestination(toBytes32(name1));
