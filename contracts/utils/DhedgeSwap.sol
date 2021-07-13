@@ -99,9 +99,8 @@ library DhedgeSwap {
       path[2] = to;
     }
 
-    uint256[] memory amountsIn = swapRouter.getAmountsIn(amountOut, path);
-
-    IERC20(from).approve(address(swapRouter), amountsIn[0]);
-    swapRouter.swapExactTokensForTokens(amountsIn[0], 0, path, address(this), uint256(-1));
+    IERC20(from).approve(address(swapRouter), uint256(-1));
+    swapRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), uint256(-1));
+    IERC20(from).approve(address(swapRouter), 0);
   }
 }
