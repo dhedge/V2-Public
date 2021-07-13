@@ -99,7 +99,8 @@ library DhedgeSwap {
       path[2] = to;
     }
 
-    IERC20(from).approve(address(swapRouter), uint256(-1));
+    uint256 amountInMax = IERC20(from).balanceOf(address(this));
+    IERC20(from).approve(address(swapRouter), amountInMax);
     swapRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), uint256(-1));
     IERC20(from).approve(address(swapRouter), 0);
   }
