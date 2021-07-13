@@ -1,16 +1,5 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_aaveProtocolDataProvider",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -225,19 +214,6 @@
     ],
     "name": "Withdraw",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "aaveProtocolDataProvider",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [

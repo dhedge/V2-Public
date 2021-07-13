@@ -122,14 +122,11 @@ describe("Polygon Mainnet Test", function () {
     sushiLPAssetGuard.deployed();
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
-      aaveProtocolDataProvider,
-      assetHandler.address,
-    );
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveProtocolDataProvider);
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     aaveLendingPoolGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
@@ -138,7 +135,10 @@ describe("Polygon Mainnet Test", function () {
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
-    await governance.setAddresses([toBytes32("sushiV2Router")], [sushiswapV2Router]);
+    await governance.setAddresses(
+      [toBytes32("sushiV2Router"), toBytes32("aaveProtocolDataProvider")],
+      [sushiswapV2Router, aaveProtocolDataProvider],
+    );
   });
 
   it("Should be able to get USDC", async function () {
