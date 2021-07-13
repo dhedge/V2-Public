@@ -44,6 +44,8 @@ import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
 import "../../interfaces/IAssetHandler.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
+import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/IUniswapV2Router.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type = 3
@@ -132,7 +134,9 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
 
     if (borrowAssets.length > 0) {
       // set withdrawAsset as the last index of borrow assets
-      withdrawAsset = borrowAssets[borrowAssets.length - 1];
+      address factory = IPoolLogic(pool).factory();
+      address swapRouter = IHasGuardInfo(factory).getSwapRouter();
+      withdrawAsset = IUniswapV2Router(swapRouter).WETH();
       withdrawContracts = new address[](1);
       withdrawContracts[0] = address(aaveLendingPool);
 

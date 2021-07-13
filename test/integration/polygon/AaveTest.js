@@ -693,6 +693,9 @@ describe("Polygon Mainnet Test", function () {
       // Pool balance: 104 USDC, 15 DAI, $16 in WETH
       // Aave balance: 40 amUSDC, 15 debtDAI
 
+      // enable wmatic to check withdraw process
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+
       // Withdraw 10%
       let withdrawAmount = units(16);
 
@@ -701,7 +704,12 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(totalFundValueBefore, units(160));
 
+      const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
+
       await poolLogicProxy.withdraw(withdrawAmount);
+
+      // const wmaticBalanceAfter = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
+      // checkAlmostSame(wmaticBalanceAfter, wmaticBalanceBefore);
 
       const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
