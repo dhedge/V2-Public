@@ -126,11 +126,8 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
       bytes[] memory txData
     )
   {
-    (
-      address[] memory borrowAssets,
-      uint256[] memory borrowAmounts,
-      uint256[] memory interestRateModes
-    ) = _calculateBorrowAssets(pool, portion);
+    (address[] memory borrowAssets, uint256[] memory borrowAmounts, uint256[] memory interestRateModes) =
+      _calculateBorrowAssets(pool, portion);
 
     if (borrowAssets.length > 0) {
       // set withdrawAsset as the last index of borrow assets
@@ -239,8 +236,8 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
       uint256 decimals
     )
   {
-    (address aToken, address stableDebtToken, address variableDebtToken) = aaveProtocolDataProvider
-    .getReserveTokensAddresses(asset);
+    (address aToken, address stableDebtToken, address variableDebtToken) =
+      aaveProtocolDataProvider.getReserveTokensAddresses(asset);
     if (aToken != address(0)) {
       collateralBalance = IERC20(aToken).balanceOf(pool);
       debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
@@ -320,7 +317,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     for (uint256 i = 0; i < length; i++) {
       // returns address(0) if it's not supported in aave
       (, stableDebtToken, variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
-      .getReserveTokensAddresses(supportedAssets[i].asset);
+        .getReserveTokensAddresses(supportedAssets[i].asset);
 
       if (stableDebtToken != address(0)) {
         amounts[index] = IERC20(stableDebtToken).balanceOf(pool);

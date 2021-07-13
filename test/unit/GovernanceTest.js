@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { toBytes32 } = require("./TestHelpers");
+const { toBytes32 } = require("../TestHelpers");
 let governance;
 
 describe("Governance", async () => {
