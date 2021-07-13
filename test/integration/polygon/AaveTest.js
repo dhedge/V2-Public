@@ -1,9 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame } = require("../../TestHelpers");
-
-const { toBytes32 } = require("../../unit/TestHelpers");
+const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
