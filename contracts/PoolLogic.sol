@@ -44,6 +44,7 @@
 // 11. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
 // 12. Borrow: Aave borrow tokens
 // 13. Repay: Aave repay tokens
+// 14. SwapBorrowRateMode: Aave change borrow rate mode (stable/variable)
 
 // SPDX-License-Identifier: BUSL-1.1
 
@@ -234,6 +235,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return liquidityMinted;
   }
 
+  /// @notice Withdraw assets based on the fund token amount
+  /// @param _fundTokenAmount the fund token amount
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
@@ -529,6 +532,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return IManaged(poolManagerLogic).isMemberAllowed(member);
   }
 
+  /// @notice execute function of aave flash loan
+  /// @dev This function is called after your contract has received the flash loaned amount
+  /// @param assets the loaned assets
+  /// @param amounts the loaned amounts per each asset
+  /// @param premiums the additional owed amount per each asset
+  /// @param originator the origin caller address of the flash loan
+  /// @param params Variadic packed params to pass to the receiver as extra information
   function executeOperation(
     address[] memory assets,
     uint256[] memory amounts,
@@ -548,6 +558,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return true;
   }
 
+  /// @notice Repay and withdraw portion of AToken
+  /// @param aaveLendingPool the Aave lending pool address
+  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
+  /// @param repayAssets the repay assets list
+  /// @param repayAmounts the repay assets amount
+  /// @param params Variadic packed params to pass to the receiver as extra information
   function _repayAndWithdraw(
     address aaveLendingPool,
     address swapRouter,
@@ -569,10 +585,17 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     length = collateralAssets.length;
     for (i = 0; i < length; i++) {
       ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], amounts[i], address(this));
-      IUniswapV2Router(swapRouter).swapTokens(collateralAssets[i], weth, amounts[i]);
+      IUniswapV2Router(swapRouter).swapTokensIn(collateralAssets[i], weth, amounts[i]);
     }
   }
 
+  /// @notice Repay flashloan
+  /// @param aaveLendingPool the Aave lending pool address
+  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
+  /// @param repayAssets the repay assets list
+  /// @param repayAmounts the repay assets amount
+  /// @param premiums the additional owed amount per each asset
+  /// @param params Variadic packed params to pass to the receiver as extra information
   function _repayFlashLoan(
     address aaveLendingPool,
     address swapRouter,
@@ -581,24 +604,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256[] memory premiums,
     bytes memory params
   ) internal {
-    uint256 repayAssetsCount = repayAssets.length;
-    address prevAsset = IUniswapV2Router(swapRouter).WETH();
-
-    uint256 balanceBefore = IERC20Upgradeable(prevAsset).balanceOf(address(this));
     _repayAndWithdraw(aaveLendingPool, swapRouter, repayAssets, repayAmounts, params);
-    uint256 prevAmount = IERC20Upgradeable(prevAsset).balanceOf(address(this)).sub(balanceBefore);
 
-    for (uint256 i = 0; i < repayAssetsCount; i++) {
+    address weth = IUniswapV2Router(swapRouter).WETH();
+
+    for (uint256 i = 0; i < repayAssets.length; i++) {
       address currentAsset = repayAssets[i];
+      uint256 amountOwing = repayAmounts[i].add(premiums[i]);
+      IUniswapV2Router(swapRouter).swapTokensOut(weth, currentAsset, amountOwing);
 
-      balanceBefore = IERC20Upgradeable(currentAsset).balanceOf(address(this));
-      IUniswapV2Router(swapRouter).swapTokens(prevAsset, currentAsset, prevAmount);
-
-      prevAsset = currentAsset;
-      prevAmount = IERC20Upgradeable(currentAsset).balanceOf(address(this)).sub(balanceBefore);
-
-      // approve flash loan assets to be paid back.
-      IERC20Upgradeable(currentAsset).approve(aaveLendingPool, repayAmounts[i].add(premiums[i]));
+      IERC20Upgradeable(currentAsset).approve(aaveLendingPool, amountOwing);
     }
   }
 

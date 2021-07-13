@@ -680,6 +680,9 @@ describe("Polygon Mainnet Test", function () {
       // Pool balance: 104 USDC, 15 DAI, $16 in WETH
       // Aave balance: 40 amUSDC, 15 debtDAI
 
+      // enable wmatic to check withdraw process
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+
       // Withdraw 10%
       let withdrawAmount = units(16);
 
@@ -688,17 +691,51 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(totalFundValueBefore, units(160));
 
+      const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
+
       // Unapprove WETH in Sushiswap to test conditional approval logic
       approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (0).toString()]);
       await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
 
       await poolLogicProxy.withdraw(withdrawAmount);
 
+      // const wmaticBalanceAfter = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
+      // checkAlmostSame(wmaticBalanceAfter, wmaticBalanceBefore);
+
       const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
       checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(90).div(100));
       const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
       checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((12e6).toString()));
+    });
+
+    it("should be able to swap borrow rate mode", async function () {
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+      let borrowABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [usdc, 1]);
+
+      await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, borrowABI)).to.be.revertedWith(
+        "non-zero address is required",
+      );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
+      ).to.be.revertedWith("invalid destination");
+
+      borrowABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [amdai, 1]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+        "unsupported asset",
+      );
+
+      borrowABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [usdc, 1]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+        "failed to execute the call",
+      );
+
+      borrowABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [usdc, 2]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+        "failed to execute the call",
+      );
     });
   });
 });
