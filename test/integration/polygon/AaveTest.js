@@ -143,10 +143,10 @@ describe("Polygon Mainnet Test", function () {
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
-    await governance.setAddresses(
-      [toBytes32("sushiV2Router"), toBytes32("aaveProtocolDataProvider")],
-      [sushiswapV2Router, aaveProtocolDataProvider],
-    );
+    await governance.setAddresses([
+      [toBytes32("sushiV2Router"), sushiswapV2Router],
+      [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
+    ]);
   });
 
   it("Should be able to get USDC", async function () {
