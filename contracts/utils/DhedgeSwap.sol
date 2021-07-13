@@ -44,18 +44,17 @@ library DhedgeSwap {
   /**
    * @notice Swap tokens via sushiswap router
    */
-  function swapTokens(
-    IUniswapV2Router sushiswapRouter,
+  function swapTokensIn(
+    IUniswapV2Router swapRouter,
     address from,
     address to,
-    uint256 amount
+    uint256 amountIn
   ) internal {
     if (from == to) {
       return;
     }
 
-    address weth = sushiswapRouter.WETH();
-    IERC20(from).approve(address(sushiswapRouter), amount);
+    address weth = swapRouter.WETH();
 
     address[] memory path;
     if (from == weth || to == weth) {
@@ -69,6 +68,55 @@ library DhedgeSwap {
       path[2] = to;
     }
 
-    sushiswapRouter.swapExactTokensForTokens(amount, 0, path, address(this), uint256(-1));
+    // Approve if not enough swap allowance
+    if (IERC20(from).allowance(address(this), address(swapRouter)) < amountIn) {
+      IERC20(from).approve(address(swapRouter), amountIn);
+    }
+
+    swapRouter.swapExactTokensForTokens(amountIn, 0, path, address(this), uint256(-1));
+  }
+
+  /**
+   * @notice Swap tokens via sushiswap router
+   */
+  function swapTokensOut(
+    IUniswapV2Router swapRouter,
+    address from,
+    address to,
+    uint256 amountOut
+  ) internal {
+    if (from == to) {
+      return;
+    }
+
+    address weth = swapRouter.WETH();
+
+    address[] memory path;
+    if (from == weth || to == weth) {
+      path = new address[](2);
+      path[0] = from;
+      path[1] = to;
+    } else {
+      path = new address[](3);
+      path[0] = from;
+      path[1] = weth;
+      path[2] = to;
+    }
+
+    // Approve if not enough swap allowance
+    bool approved;
+    uint256 fromBalance = IERC20(from).balanceOf(address(this));
+    if (IERC20(from).allowance(address(this), address(swapRouter)) < fromBalance) {
+      IERC20(from).approve(address(swapRouter), fromBalance);
+      approved = true;
+    }
+
+    swapRouter.swapTokensForExactTokens(amountOut, fromBalance, path, address(this), uint256(-1));
+
+    // Only remove swap allowance if approved by this function
+    // So that manager will not have to approve again
+    if (approved) {
+      IERC20(from).approve(address(swapRouter), 0);
+    }
   }
 }

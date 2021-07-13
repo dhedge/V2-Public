@@ -880,24 +880,6 @@ describe("Sushiswap V2 Test", function () {
         }, 60000);
       });
 
-      const withdrawStakedEvent = new Promise((resolve, reject) => {
-        sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress,
-            asset,
-            to,
-            withdrawAmount,
-            time,
-          });
-        });
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
       // remove manager fee so that performance fee minting doesn't get in the way
       await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
 
@@ -929,7 +911,6 @@ describe("Sushiswap V2 Test", function () {
       await poolLogicProxy.withdraw(withdrawAmount);
 
       const eventWithdrawal = await withdrawalEvent;
-      const eventWithdrawStaked = await withdrawStakedEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
       const expectedWithdrawAmount = availableLpToken
@@ -948,11 +929,6 @@ describe("Sushiswap V2 Test", function () {
       checkAlmostSame(eventWithdrawal.totalInvestorFundTokens, (investorFundBalance - withdrawAmount).toString());
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
       checkAlmostSame(eventWithdrawal.totalSupply, (totalSupply - withdrawAmount).toString());
-
-      expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
-      expect(eventWithdrawStaked.asset).to.equal(sushiLpUsdcWeth);
-      expect(eventWithdrawStaked.to).to.equal(logicOwner.address);
-      checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
     });
   });
 });

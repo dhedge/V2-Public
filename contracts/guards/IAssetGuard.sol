@@ -43,6 +43,7 @@ interface IAssetGuard {
     address to
   )
     external
+    view
     returns (
       address,
       uint256,

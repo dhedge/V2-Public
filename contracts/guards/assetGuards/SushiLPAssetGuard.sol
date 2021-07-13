@@ -52,8 +52,6 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
 
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
-  event WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time);
-
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
   /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
   constructor(address _sushiStaking, SushiPool[] memory sushiPools) {
@@ -80,6 +78,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     address to
   )
     external
+    view
     virtual
     override
     returns (
@@ -110,7 +109,6 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
           withdrawAmount,
           to
         );
-        emit WithdrawStaked(pool, asset, to, withdrawAmount, block.timestamp);
       }
     }
   }
