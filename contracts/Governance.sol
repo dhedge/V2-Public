@@ -33,6 +33,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IGovernance.sol";
@@ -43,6 +44,11 @@ contract Governance is IGovernance, Ownable {
   event ContractGuardSet(address extContract, address guardAddress);
   event AssetGuardSet(uint16 assetType, address guardAddress);
   event AddressSet(bytes32 name, address destination);
+
+  struct ContractName {
+    bytes32 name;
+    address destination;
+  }
 
   // Transaction Guards
   mapping(address => address) public override contractGuards;
@@ -91,15 +97,11 @@ contract Governance is IGovernance, Ownable {
 
   /// @notice Maps multiple contract names to destination addresses
   /// @dev This is a central source that can be used to reference third party contracts
-  /// @dev After calling `setAddresses()`, can call `areAddressesSet()` to verify
-  /// @param names The contract names eg. "sushiV2Router"
-  /// @param destinations The contract addresses to map to names
-  function setAddresses(bytes32[] calldata names, address[] calldata destinations) external onlyOwner {
-    require(names.length == destinations.length, "input lengths must match");
-
-    for (uint256 i = 0; i < names.length; i++) {
-      bytes32 name = names[i];
-      address destination = destinations[i];
+  /// @param contractNames The contract names and addresses struct
+  function setAddresses(ContractName[] calldata contractNames) external onlyOwner {
+    for (uint256 i = 0; i < contractNames.length; i++) {
+      bytes32 name = contractNames[i].name;
+      address destination = contractNames[i].destination;
       nameToDestination[name] = destination;
       emit AddressSet(name, destination);
     }

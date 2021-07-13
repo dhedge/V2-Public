@@ -37,17 +37,22 @@ describe("Governance", async () => {
     const address2 = "0x2222222222222222222222222222222222222222";
     const address3 = "0x3333333333333333333333333333333333333333";
     let addresses = [address1, address2, address3];
+    const setAddressesTuple = [
+      [toBytes32(name1), address1],
+      [toBytes32(name2), address2],
+      [toBytes32(name3), address3],
+    ];
 
-    await governance.setAddresses(namesBytes, addresses);
+    await governance.setAddresses(setAddressesTuple);
 
     // Check set is successful
     let destinationCheck = await governance.nameToDestination(namesBytes[0]);
     expect(destinationCheck).to.equal(addresses[0]);
 
     // Check correct mappings
-    const address1Mapping = await governance.nameToDestination(toBytes32(name1));
-    const address2Mapping = await governance.nameToDestination(toBytes32(name2));
-    const address3Mapping = await governance.nameToDestination(toBytes32(name3));
+    const address1Mapping = await governance.nameToDestination(namesBytes[0]);
+    const address2Mapping = await governance.nameToDestination(namesBytes[1]);
+    const address3Mapping = await governance.nameToDestination(namesBytes[2]);
     expect(address1).to.equal(address1Mapping);
     expect(address2).to.equal(address2Mapping);
     expect(address3).to.equal(address3Mapping);
