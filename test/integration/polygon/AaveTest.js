@@ -137,8 +137,9 @@ describe("Polygon Mainnet Test", function () {
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
     await governance.setAddresses([
-      [toBytes32("sushiV2Router"), sushiswapV2Router],
+      [toBytes32("swapRouter"), sushiswapV2Router],
       [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
+      [toBytes32("weth"), weth],
     ]);
   });
 
@@ -675,8 +676,8 @@ describe("Polygon Mainnet Test", function () {
       // Pool balance: 104 USDC, 15 DAI, $16 in WETH
       // Aave balance: 40 amUSDC, 15 debtDAI
 
-      // enable wmatic to check withdraw process
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+      // enable weth to check withdraw process
+      await poolManagerLogicProxy.connect(manager).changeAssets([[weth, false]], []);
 
       // Withdraw 10%
       let withdrawAmount = units(16);
@@ -686,16 +687,11 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(totalFundValueBefore, units(160));
 
-      const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
-
       // Unapprove WETH in Sushiswap to test conditional approval logic
       approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (0).toString()]);
       await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
 
       await poolLogicProxy.withdraw(withdrawAmount);
-
-      // const wmaticBalanceAfter = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
-      // checkAlmostSame(wmaticBalanceAfter, wmaticBalanceBefore);
 
       const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 

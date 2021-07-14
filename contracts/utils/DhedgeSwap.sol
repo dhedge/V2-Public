@@ -46,6 +46,7 @@ library DhedgeSwap {
    */
   function swapTokensIn(
     IUniswapV2Router swapRouter,
+    address weth,
     address from,
     address to,
     uint256 amountIn
@@ -53,8 +54,6 @@ library DhedgeSwap {
     if (from == to) {
       return;
     }
-
-    address weth = swapRouter.WETH();
 
     address[] memory path;
     if (from == weth || to == weth) {
@@ -81,6 +80,7 @@ library DhedgeSwap {
    */
   function swapTokensOut(
     IUniswapV2Router swapRouter,
+    address weth,
     address from,
     address to,
     uint256 amountOut
@@ -88,8 +88,6 @@ library DhedgeSwap {
     if (from == to) {
       return;
     }
-
-    address weth = swapRouter.WETH();
 
     address[] memory path;
     if (from == weth || to == weth) {

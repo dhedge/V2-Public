@@ -132,8 +132,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
     if (borrowAssets.length > 0) {
       // set withdrawAsset as the last index of borrow assets
       address factory = IPoolLogic(pool).factory();
-      address swapRouter = IHasGuardInfo(factory).getAddress("sushiV2Router");
-      withdrawAsset = IUniswapV2Router(swapRouter).WETH();
+      withdrawAsset = IHasGuardInfo(factory).getAddress("weth");
       withdrawContracts = new address[](1);
       withdrawContracts[0] = address(aaveLendingPool);
 
