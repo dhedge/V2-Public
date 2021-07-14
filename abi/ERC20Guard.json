@@ -225,6 +225,25 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      }
+    ],
+    "name": "getDecimals",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "decimals",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes",
         "name": "data",
         "type": "bytes"
@@ -397,9 +416,9 @@
     "name": "txGuard",
     "outputs": [
       {
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "txType",
-        "type": "uint8"
+        "type": "uint16"
       }
     ],
     "stateMutability": "nonpayable",

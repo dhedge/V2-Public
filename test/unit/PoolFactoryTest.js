@@ -141,9 +141,6 @@ describe("PoolFactory", function () {
     // Aggregators
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
-    AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-    // assetHandlerLogic = await AssetHandlerLogic.deploy();
-
     // Deploy Sushi LP Aggregator
     const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
     sushiLPAggregator = await SushiLPAggregator.deploy(
@@ -173,6 +170,7 @@ describe("PoolFactory", function () {
 
     // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     // await assetHandler.deployed();
+    AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);

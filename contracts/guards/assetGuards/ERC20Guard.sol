@@ -39,6 +39,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../IGuard.sol";
 import "../IAssetGuard.sol";
 import "../../utils/TxDataUtils.sol";
+import "../../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
@@ -64,7 +65,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     external
     override
     returns (
-      uint8 txType // transaction type
+      uint16 txType // transaction type
     )
   {
     bytes4 method = getMethod(data);
@@ -110,5 +111,10 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   function getBalance(address pool, address asset) external view virtual override returns (uint256 balance) {
     // The base ERC20 guard has no externally staked tokens
     balance = IERC20(asset).balanceOf(pool);
+  }
+
+  /// @notice Returns the decimal of the managed asset
+  function getDecimals(address asset) external view virtual override returns (uint256 decimals) {
+    decimals = IERC20Extended(asset).decimals();
   }
 }

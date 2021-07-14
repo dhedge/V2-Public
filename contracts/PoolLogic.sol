@@ -41,7 +41,9 @@
 // 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
 // 9. Deposit: Aave deposit tokens -> get Aave Interest Bearing Token
 // 10. Withdraw: Withdraw tokens from Aave Interest Bearing Token
-// 10. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
+// 11. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
+// 12. Borrow: Aave borrow tokens
+// 13. Repay: Aave repay tokens
 
 // SPDX-License-Identifier: BUSL-1.1
 
@@ -99,7 +101,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 time
   );
 
-  event TransactionExecuted(address pool, address manager, uint8 transactionType, uint256 time);
+  event TransactionExecuted(address pool, address manager, uint16 transactionType, uint256 time);
 
   event PoolPrivacyUpdated(bool isPoolPrivate);
 
@@ -246,7 +248,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     uint256 assetCount = _supportedAssets.length;
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
-    uint8 index = 0;
+    uint16 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
       address asset = _supportedAssets[i].asset;
@@ -333,7 +335,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
-    uint8 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
+    uint16 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
     (success, ) = to.call(data);

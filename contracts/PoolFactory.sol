@@ -365,7 +365,7 @@ contract PoolFactory is
     return IAssetHandler(_assetHandler).getUSDPrice(asset);
   }
 
-  function getAssetType(address asset) external view override returns (uint8) {
+  function getAssetType(address asset) external view override returns (uint16) {
     return IAssetHandler(_assetHandler).assetTypes(asset);
   }
 
@@ -464,12 +464,18 @@ contract PoolFactory is
 
   // Transaction Guards
 
-  function getGuard(address extContract) external view override returns (address) {
-    if (isValidAsset(extContract)) {
-      uint8 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
-      return IGovernance(governanceAddress).assetGuards(assetType);
+  function getGuard(address extContract) external view override returns (address guard) {
+    guard = IGovernance(governanceAddress).contractGuards(extContract);
+    if (guard == address(0)) {
+      guard = getAssetGuard(extContract);
     }
-    return IGovernance(governanceAddress).contractGuards(extContract);
+  }
+
+  function getAssetGuard(address extContract) public view override returns (address guard) {
+    if (isValidAsset(extContract)) {
+      uint16 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
+      guard = IGovernance(governanceAddress).assetGuards(assetType);
+    }
   }
 
   /// @notice Return full array of deployed funds

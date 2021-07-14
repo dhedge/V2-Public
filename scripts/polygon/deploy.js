@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const fs = require("fs");
 const { getTag } = require("../Helpers");
+const csv = require('csvtojson');
 
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
@@ -28,8 +29,46 @@ const sushiLPUsdcWethPoolId = 1;
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 async function main() {
+
   const ethers = hre.ethers;
   const upgrades = hre.upgrades;
+
+  fileName = "./dHEDGE Assets list - Polygon.csv";
+
+  const assets = await csv().fromFile(fileName);
+
+  const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+  let  assetHandlerInitAssets = [];
+  for(let i = 0; i < assets.length; i++){
+    const asset = assets[i];
+    const assetType = asset.AssetType;
+    switch(assetType){
+      case('2'):
+        // Deploy Sushi LP Aggregator
+        console.log("Deploying ", asset["Asset Name"]);
+        const sushiLPAggregator = await SushiLPAggregator.deploy(
+          asset.Address, 
+          asset['Token 0 Chainlink Price Feed'], 
+          asset['Token 1 Chainlink Price Feed']
+        );
+        await sushiLPAggregator.deployed();
+        console.log(`${asset['Asset Name']} SushiLPAggregator deployed at `, sushiLPAggregator.address);
+        assetHandlerInitAssets.push({
+          name: asset['Asset Name'],
+          asset: asset.Address,
+          assetType: assetType,
+          aggregator: sushiLPAggregator.address,
+        })
+        break;
+      default: 
+        assetHandlerInitAssets.push({
+          name: asset['Asset Name'],
+          asset: asset.Address,
+          assetType: assetType,
+          aggregator: asset['Chainlink Price Feed'],
+        })
+    }
+  }
 
   let network = await ethers.provider.getNetwork();
   console.log("network:", network);
@@ -44,7 +83,9 @@ async function main() {
   console.log("manager address: ", manager.address);
   console.log("dao address: ", dao.address);
 
-  const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
+  const Governance = await ethers.getContractFactory("Governance");
+  let governance = await Governance.deploy();
+  console.log("governance deployed to:", governance.address);
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   poolLogic = await PoolLogic.deploy();
@@ -56,35 +97,30 @@ async function main() {
   await poolManagerLogic.deployed();
   console.log("poolManagerLogic deployed at ", poolManagerLogic.address);
 
+  // Initialize Asset Price Consumer
+  // const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
+  // const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
+  // const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
+  // const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
+  // const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
+  // const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregatorUSDCWETH.address };
+  // const assetHandlerInitAssets = [assetWmatic, assetWeth, assetUsdt, assetUsdc, assetSushi, assetSushiLPWethUsdc];
+
+  const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
+  const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
+  await assetHandler.deployed();
+  console.log("AssetHandler deployed at ", assetHandler.address);
+
   const PoolFactory = await ethers.getContractFactory("PoolFactory");
   poolFactory = await upgrades.deployProxy(PoolFactory, [
     poolLogic.address,
     poolManagerLogic.address,
-    ZERO_ADDRESS,
+    assetHandler.address,
     dao.address,
+    governance.address,
   ]);
   await poolFactory.deployed();
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
-
-  // Deploy Sushi LP Aggregator - USDC/WETH
-  const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-  const sushiLPAggregatorUSDCWETH = await SushiLPAggregator.deploy(sushiLpUsdcWeth, usdc_price_feed, eth_price_feed);
-  await sushiLPAggregatorUSDCWETH.deployed();
-  console.log("SushiLPAggregator - USDC/WETH deployed at ", sushiLPAggregatorUSDCWETH.address);
-
-  // Initialize Asset Price Consumer
-  const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
-  const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-  const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-  const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-  const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
-  const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregatorUSDCWETH.address };
-  const assetHandlerInitAssets = [assetWmatic, assetWeth, assetUsdt, assetUsdc, assetSushi, assetSushiLPWethUsdc];
-
-  const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [poolFactory.address, assetHandlerInitAssets]);
-  await assetHandler.deployed();
-  await poolFactory.setAssetHandler(assetHandler.address);
-  console.log("AssetHandler deployed at ", assetHandler.address);
 
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
@@ -106,34 +142,19 @@ async function main() {
   await sushiLPAssetGuard.deployed();
   console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
 
-  await poolFactory.connect(dao).setAssetGuard(0, erc20Guard.address);
-  console.log("setAssetGuard erc20Guard");
-  await poolFactory.connect(dao).setAssetGuard(2, sushiLPAssetGuard.address);
-  console.log("setAssetGuard sushiLPAssetGuard");
-  await poolFactory.connect(dao).setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
-  console.log("setContractGuard uniswapV2RouterGuard");
-  await poolFactory.connect(dao).setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
-  console.log("setContractGuard sushiMiniChefV2Guard");
+  await governance.setAssetGuard(0, erc20Guard.address);
+  await governance.setAssetGuard(2, sushiLPAssetGuard.address);
+  await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
+  await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
 
   let tag = await getTag();
   let versions = require("../../publish/polygon/versions.json");
   versions[tag] = {
-    tag: tag,
     network: network,
     date: new Date().toUTCString(),
     contracts: {
-      WMatic: wmatic,
-      WETH: weth,
-      USDT: usdt,
-      USDC: usdc,
-      SUSHI: sushiToken,
-      SushiLpUsdcWeth: sushiLpUsdcWeth,
-      "WMatic-Aggregator": matic_price_feed,
-      "WETH-Aggregator": eth_price_feed,
-      "USDT-Aggregator": usdt_price_feed,
-      "USDC-Aggregator": usdc_price_feed,
-      "SUSHI-Aggregator": sushi_price_feed,
-      "SushiLpUsdcWeth-Aggregator": sushiLPAggregatorUSDCWETH.address,
+      Assets: assetHandlerInitAssets,
+      Governance: governance.address,
       PoolFactoryProxy: poolFactory.address,
       PoolLogicProxy: poolLogic.address,
       PoolManagerLogicProxy: poolManagerLogic.address,
@@ -149,7 +170,7 @@ async function main() {
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("../../publish/polygon/versions.json", data);
+  fs.writeFileSync("./publish/polygon/versions.json", data);
 }
 
 main()

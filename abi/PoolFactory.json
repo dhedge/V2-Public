@@ -416,6 +416,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "extContract",
+        "type": "address"
+      }
+    ],
+    "name": "getAssetGuard",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "guard",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getAssetHandler",
     "outputs": [
@@ -458,9 +477,9 @@
     "name": "getAssetType",
     "outputs": [
       {
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "",
-        "type": "uint8"
+        "type": "uint16"
       }
     ],
     "stateMutability": "view",
@@ -522,7 +541,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "guard",
         "type": "address"
       }
     ],
