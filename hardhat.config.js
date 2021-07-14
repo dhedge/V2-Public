@@ -36,8 +36,11 @@ module.exports = {
     },
     polygon: {
       chainId: 137,
-      url: "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
+      url: process.env.POLYGON_RPC
+        ? process.env.POLYGON_RPC
+        : "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 
     },
     mumbai: {
       chainId: 80001,
