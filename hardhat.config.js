@@ -85,6 +85,7 @@ module.exports = {
       "AaveLendingPoolGuard",
       "UniswapV2RouterGuard",
       "UniswapV3SwapGuard",
+      "SushiMiniChefV2Guard",
     ],
     spacing: 2,
   },
