@@ -55,12 +55,13 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   event Borrow(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event Repay(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
   event SwapBorrowRateMode(address fundAddress, address asset, uint256 rateMode);
+  event RebalanceStableBorrowRate(address fundAddress, address asset);
 
   uint256 internal constant BORROWING_MASK = 0x5555555555555555555555555555555555555555555555555555555555555555;
   uint256 internal constant COLLATERAL_MASK = 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
 
   /// @notice Transaction guard for Synthetix Exchanger
-  /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode functionality
+  /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode, rebalanceStableBorrowRate functionality
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
@@ -190,6 +191,19 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit SwapBorrowRateMode(poolManagerLogic.poolLogic(), asset, rateMode);
 
       txType = 14; // Aave `SwapBorrowRateMode` type
+    } else if (method == bytes4(keccak256("rebalanceStableBorrowRate(address,address)"))) {
+      address asset = convert32toAddress(getInput(data, 0));
+      address user = convert32toAddress(getInput(data, 1));
+
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
+      require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
+      require(user == poolLogic, "user is not pool");
+
+      emit RebalanceStableBorrowRate(poolManagerLogic.poolLogic(), asset);
+
+      txType = 15; // Aave `RebalanceStableBorrowRate` type
     }
   }
 }
