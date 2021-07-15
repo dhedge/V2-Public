@@ -45,6 +45,7 @@
 // 12. Borrow: Aave borrow tokens
 // 13. Repay: Aave repay tokens
 // 14. SwapBorrowRateMode: Aave change borrow rate mode (stable/variable)
+// 15. RebalanceStableBorrowRate: Aave rebalance stable borrow rate
 
 // SPDX-License-Identifier: BUSL-1.1
 

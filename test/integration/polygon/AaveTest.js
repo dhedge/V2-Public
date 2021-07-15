@@ -733,5 +733,39 @@ describe("Polygon Mainnet Test", function () {
         "failed to execute the call",
       );
     });
+
+    it("should be able to swap borrow rate mode", async function () {
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+      let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
+
+      await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, rebalanceAPI)).to.be.revertedWith(
+        "non-zero address is required",
+      );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
+      ).to.be.revertedWith("invalid destination");
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [amdai, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "unsupported asset",
+      );
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, weth]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "user is not pool",
+      );
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "failed to execute the call",
+      );
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [dai, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "failed to execute the call",
+      );
+    });
   });
 });

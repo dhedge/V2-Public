@@ -1,14 +1,9 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
+const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
 
 use(chaiAlmost());
-
-const checkAlmostSame = (a, b) => {
-  console.log(a.toString(), " === ", b.toString());
-  expect(ethers.BigNumber.from(a).gte(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lte(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
-};
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
@@ -95,21 +90,22 @@ describe("Polygon Mainnet Test", function () {
     uniswapV2RouterGuard.deployed();
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
-      aaveProtocolDataProvider,
-      assetHandler.address,
-    );
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(aaveProtocolDataProvider, [usdc]);
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     aaveLendingPoolGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
-    await governance.setSwapRouter(sushiswapV2Router);
+    await governance.setAddresses([
+      [toBytes32("swapRouter"), sushiswapV2Router],
+      [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
+      [toBytes32("weth"), weth],
+    ]);
   });
 
   it("Should be able to get USDC", async function () {
@@ -714,6 +710,40 @@ describe("Polygon Mainnet Test", function () {
 
       expect(await VariableDAI.balanceOf(poolLogicProxy.address)).to.gt(0);
       expect(await StableDAI.balanceOf(poolLogicProxy.address)).to.equal(0);
+    });
+
+    it("should be able to swap borrow rate mode", async function () {
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+      let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
+
+      await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, rebalanceAPI)).to.be.revertedWith(
+        "non-zero address is required",
+      );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
+      ).to.be.revertedWith("invalid destination");
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [adai, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "unsupported asset",
+      );
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, weth]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "user is not pool",
+      );
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "failed to execute the call",
+      );
+
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [dai, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+        "failed to execute the call",
+      );
     });
   });
 });
