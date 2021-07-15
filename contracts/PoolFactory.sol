@@ -478,6 +478,11 @@ contract PoolFactory is
     }
   }
 
+  function getAddress(bytes32 name) external view override returns (address destination) {
+    destination = IGovernance(governanceAddress).nameToDestination(name);
+    require(destination != address(0), "governance: invalid name");
+  }
+
   /// @notice Return full array of deployed funds
   /// @return full array of deployed funds
   function getDeployedFunds() external view returns (address[] memory) {

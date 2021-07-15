@@ -33,14 +33,23 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 interface IAssetGuard {
-  function getWithdrawStakedTx(
+  function withdrawProcessing(
     address pool,
     address asset,
     uint256 withdrawPortion,
     address to
-  ) external returns (address, bytes memory);
+  )
+    external
+    view
+    returns (
+      address,
+      uint256,
+      address[] memory,
+      bytes[] memory
+    );
 
   function getBalance(address pool, address asset) external view returns (uint256 balance);
 

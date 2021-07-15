@@ -7,7 +7,7 @@ const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("./TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("../TestHelpers");
 
 let logicOwner, manager, dao, user1;
 let poolFactory,
@@ -1571,24 +1571,6 @@ describe("PoolFactory", function () {
         }, 60000);
       });
 
-      const withdrawStakedEvent = new Promise((resolve, reject) => {
-        sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress,
-            asset,
-            to,
-            withdrawAmount,
-            time,
-          });
-        });
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
       // refresh timestamp of Chainlink price round data
       await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
@@ -1631,7 +1613,6 @@ describe("PoolFactory", function () {
       await poolLogicProxy.connect(investor).withdraw(withdrawAmount);
 
       const eventWithdrawal = await withdrawalEvent;
-      const eventWithdrawStaked = await withdrawStakedEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
       const fractionWithdrawn = withdrawAmount / totalSupply;
@@ -1653,12 +1634,6 @@ describe("PoolFactory", function () {
       expect(withdrawLP[0]).to.equal(sushiLPLinkWeth);
       expect(withdrawLP[2]).to.equal(true);
       expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
-
-      expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
-      expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
-      expect(eventWithdrawStaked.to).to.equal(investor.address);
-      checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
-      expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
     });
   });
 

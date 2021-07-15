@@ -44,6 +44,8 @@
 // 11. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
 // 12. Borrow: Aave borrow tokens
 // 13. Repay: Aave repay tokens
+// 14. SwapBorrowRateMode: Aave change borrow rate mode (stable/variable)
+// 15. RebalanceStableBorrowRate: Aave rebalance stable borrow rate
 
 // SPDX-License-Identifier: BUSL-1.1
 
@@ -59,8 +61,11 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IManaged.sol";
+import "./interfaces/IUniswapV2Router.sol";
+import "./interfaces/aave/ILendingPool.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
+import "./utils/DhedgeSwap.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -69,6 +74,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 
 contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
+  using DhedgeSwap for IUniswapV2Router;
 
   event Deposit(
     address fundAddress,
@@ -230,6 +236,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return liquidityMinted;
   }
 
+  /// @notice Withdraw assets based on the fund token amount
+  /// @param _fundTokenAmount the fund token amount
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
@@ -251,10 +259,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint16 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
-      address asset = _supportedAssets[i].asset;
-      uint256 totalAssetBalance = IERC20Upgradeable(asset).balanceOf(address(this));
-      uint256 portionOfAssetBalance = totalAssetBalance.mul(portion).div(10**18);
-      bool withdrawProcessed = _withdrawProcessing(asset, msg.sender, portion);
+      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) =
+        _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
@@ -295,21 +301,49 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param asset Asset for withdrawal processing
   /// @param to Investor account to send withdrawed tokens to
   /// @param portion Portion of investor withdrawal of the total dHedge pool
+  /// @return withdrawAsset Asset to be withdrawed
+  /// @return withdrawBalance Asset balance amount to be withdrawed
   /// @return success A boolean for success or fail transaction
   function _withdrawProcessing(
     address asset,
     address to,
     uint256 portion
-  ) internal returns (bool success) {
+  )
+    internal
+    returns (
+      address, // withdrawAsset
+      uint256, // withdrawBalance
+      bool success
+    )
+  {
     // Withdraw any external tokens (eg. staked tokens in other contracts)
-    address guard = IHasGuardInfo(factory).getGuard(asset);
+    address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
-    (address stakingContract, bytes memory txData) =
-      IAssetGuard(guard).getWithdrawStakedTx(address(this), asset, portion, to);
-    if (txData.length > 0) {
-      (success, ) = stakingContract.call(txData);
-      require(success, "failed to withdraw staked tokens");
+
+    (address withdrawAsset, uint256 withdrawBalance, address[] memory withdrawContracts, bytes[] memory txData) =
+      IAssetGuard(guard).withdrawProcessing(address(this), asset, portion, to);
+
+    uint256 length = withdrawContracts.length;
+    if (length > 0) {
+      uint256 assetBalanceBefore;
+      if (withdrawAsset != address(0)) {
+        assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+      }
+
+      for (uint256 i = 0; i < length; i++) {
+        (success, ) = withdrawContracts[i].call(txData[i]);
+        require(success, "failed to withdraw tokens");
+      }
+
+      if (withdrawAsset != address(0)) {
+        // calculated the balance change after withdraw process.
+        withdrawBalance = withdrawBalance.add(IERC20Upgradeable(withdrawAsset).balanceOf(address(this))).sub(
+          assetBalanceBefore
+        );
+      }
     }
+
+    return (withdrawAsset, withdrawBalance, success);
   }
 
   /// @notice Function to let pool talk to other protocol
@@ -497,6 +531,90 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   function isMemberAllowed(address member) public view returns (bool) {
     return IManaged(poolManagerLogic).isMemberAllowed(member);
+  }
+
+  /// @notice execute function of aave flash loan
+  /// @dev This function is called after your contract has received the flash loaned amount
+  /// @param assets the loaned assets
+  /// @param amounts the loaned amounts per each asset
+  /// @param premiums the additional owed amount per each asset
+  /// @param originator the origin caller address of the flash loan
+  /// @param params Variadic packed params to pass to the receiver as extra information
+  function executeOperation(
+    address[] memory assets,
+    uint256[] memory amounts,
+    uint256[] memory premiums,
+    address originator,
+    bytes memory params
+  ) external returns (bool) {
+    require(originator == address(this), "only pool flash loan origin");
+
+    address aaveLendingPool = msg.sender;
+    address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(aaveLendingPool);
+    require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
+    address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
+    address weth = IHasGuardInfo(factory).getAddress("weth");
+
+    _repayAndWithdraw(aaveLendingPool, swapRouter, weth, assets, amounts, params);
+    _repayFlashLoan(aaveLendingPool, swapRouter, weth, assets, amounts, premiums);
+
+    return true;
+  }
+
+  /// @notice Repay and withdraw portion of AToken
+  /// @param aaveLendingPool the Aave lending pool address
+  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
+  /// @param weth the WETH address
+  /// @param repayAssets the repay assets list
+  /// @param repayAmounts the repay assets amount
+  /// @param params Variadic packed params to pass to the receiver as extra information
+  function _repayAndWithdraw(
+    address aaveLendingPool,
+    address swapRouter,
+    address weth,
+    address[] memory repayAssets,
+    uint256[] memory repayAmounts,
+    bytes memory params
+  ) internal {
+    (uint256[] memory interestRateModes, address[] memory collateralAssets, uint256[] memory amounts) =
+      abi.decode(params, (uint256[], address[], uint256[]));
+
+    uint256 i;
+    uint256 length = repayAssets.length;
+    for (i = 0; i < length; i++) {
+      IERC20Upgradeable(repayAssets[i]).approve(aaveLendingPool, repayAmounts[i]);
+      ILendingPool(aaveLendingPool).repay(repayAssets[i], repayAmounts[i], interestRateModes[i], address(this));
+    }
+
+    length = collateralAssets.length;
+    for (i = 0; i < length; i++) {
+      ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], amounts[i], address(this));
+      IUniswapV2Router(swapRouter).swapTokensIn(weth, collateralAssets[i], weth, amounts[i]);
+    }
+  }
+
+  /// @notice Repay flashloan
+  /// @param aaveLendingPool the Aave lending pool address
+  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
+  /// @param weth the WETH address
+  /// @param repayAssets the repay assets list
+  /// @param repayAmounts the repay assets amount
+  /// @param premiums the additional owed amount per each asset
+  function _repayFlashLoan(
+    address aaveLendingPool,
+    address swapRouter,
+    address weth,
+    address[] memory repayAssets,
+    uint256[] memory repayAmounts,
+    uint256[] memory premiums
+  ) internal {
+    for (uint256 i = 0; i < repayAssets.length; i++) {
+      address currentAsset = repayAssets[i];
+      uint256 amountOwing = repayAmounts[i].add(premiums[i]);
+      IUniswapV2Router(swapRouter).swapTokensOut(weth, weth, currentAsset, amountOwing);
+
+      IERC20Upgradeable(currentAsset).approve(aaveLendingPool, amountOwing);
+    }
   }
 
   uint256[50] private __gap;

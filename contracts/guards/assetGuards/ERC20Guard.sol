@@ -32,6 +32,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -93,22 +94,39 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     }
   }
 
-  /// @notice Creates transaction data for withdrawing staked tokens
+  /// @notice Creates transaction data for withdrawing tokens
   /// @dev Withdrawal processing is not applicable for this guard
-  /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
-  function getWithdrawStakedTx(
-    address, // pool
-    address, // asset
-    uint256, // withdrawPortion
+  /// @return withdrawAsset and
+  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
+  /// @return withdrawContracts and
+  /// @return txData are used to execute the withdrawal transaction in PoolLogic
+  function withdrawProcessing(
+    address pool,
+    address asset,
+    uint256 portion,
     address // to
-  ) external virtual override returns (address stakingContract, bytes memory txData) {
-    // The base ERC20 guard has no externally staked tokens to withdraw
-    return (stakingContract, txData);
+  )
+    external
+    view
+    virtual
+    override
+    returns (
+      address withdrawAsset,
+      uint256 withdrawBalance,
+      address[] memory withdrawContracts,
+      bytes[] memory txData
+    )
+  {
+    withdrawAsset = asset;
+    uint256 totalAssetBalance = getBalance(pool, asset);
+    withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
+    return (withdrawAsset, withdrawBalance, withdrawContracts, txData);
   }
 
   /// @notice Returns the balance of the managed asset
   /// @dev May include any external balance in staking contracts
-  function getBalance(address pool, address asset) external view virtual override returns (uint256 balance) {
+  /// @return balance The asset balance of given pool
+  function getBalance(address pool, address asset) public view virtual override returns (uint256 balance) {
     // The base ERC20 guard has no externally staked tokens
     balance = IERC20(asset).balanceOf(pool);
   }

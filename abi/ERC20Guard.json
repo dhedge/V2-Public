@@ -306,45 +306,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "getWithdrawStakedTx",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "stakingContract",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "txData",
-        "type": "bytes"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "bytes",
         "name": "data",
         "type": "bytes"
@@ -422,6 +383,55 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "portion",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawProcessing",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "withdrawAsset",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "withdrawBalance",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address[]",
+        "name": "withdrawContracts",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "txData",
+        "type": "bytes[]"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

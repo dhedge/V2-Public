@@ -1,13 +1,9 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
+const { checkAlmostSame } = require("../../TestHelpers");
 
 use(chaiAlmost());
-
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
-};
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
@@ -880,24 +876,6 @@ describe("Sushiswap V2 Test", function () {
         }, 60000);
       });
 
-      const withdrawStakedEvent = new Promise((resolve, reject) => {
-        sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress,
-            asset,
-            to,
-            withdrawAmount,
-            time,
-          });
-        });
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
       // remove manager fee so that performance fee minting doesn't get in the way
       await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
 
@@ -929,7 +907,6 @@ describe("Sushiswap V2 Test", function () {
       await poolLogicProxy.withdraw(withdrawAmount);
 
       const eventWithdrawal = await withdrawalEvent;
-      const eventWithdrawStaked = await withdrawStakedEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
       const expectedWithdrawAmount = availableLpToken
@@ -948,11 +925,6 @@ describe("Sushiswap V2 Test", function () {
       checkAlmostSame(eventWithdrawal.totalInvestorFundTokens, (investorFundBalance - withdrawAmount).toString());
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
       checkAlmostSame(eventWithdrawal.totalSupply, (totalSupply - withdrawAmount).toString());
-
-      expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
-      expect(eventWithdrawStaked.asset).to.equal(sushiLpUsdcWeth);
-      expect(eventWithdrawStaked.to).to.equal(logicOwner.address);
-      checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
     });
   });
 });

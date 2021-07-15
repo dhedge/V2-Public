@@ -52,8 +52,6 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
 
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
-  event WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time);
-
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
   /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
   constructor(address _sushiStaking, SushiPool[] memory sushiPools) {
@@ -67,38 +65,57 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
   /// @dev The same interface can be used for other types of stakeable tokens
   /// @param pool Pool address
   /// @param asset Staked asset
-  /// @param withdrawPortion The fraction of total staked asset to withdraw
+  /// @param portion The fraction of total staked asset to withdraw
   /// @param to The investor address to withdraw to
-  /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
-  function getWithdrawStakedTx(
+  /// @return withdrawAsset and
+  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
+  /// @return stakingContracts and
+  /// @return txData are used to execute the staked withdrawal transaction in PoolLogic
+  function withdrawProcessing(
     address pool,
     address asset,
-    uint256 withdrawPortion,
+    uint256 portion,
     address to
-  ) external override returns (address stakingContract, bytes memory txData) {
+  )
+    external
+    view
+    virtual
+    override
+    returns (
+      address withdrawAsset,
+      uint256 withdrawBalance,
+      address[] memory stakingContracts,
+      bytes[] memory txData
+    )
+  {
+    withdrawAsset = asset;
+    uint256 totalAssetBalance = IERC20(asset).balanceOf(pool);
+    withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
+
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
 
     // If there is a staked balance in Sushi MiniChefV2 staking contract
     // Then create the withdrawal transaction data to be executed by PoolLogic
     if (stakedBalance > 0) {
-      stakingContract = sushiStaking;
-      uint256 withdrawAmount = stakedBalance.mul(withdrawPortion).div(10**18);
+      stakingContracts = new address[](1);
+      stakingContracts[0] = sushiStaking;
+      uint256 withdrawAmount = stakedBalance.mul(portion).div(10**18);
       if (withdrawAmount > 0) {
-        txData = abi.encodeWithSelector(
+        txData = new bytes[](1);
+        txData[0] = abi.encodeWithSelector(
           bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)")),
           sushiPoolId,
           withdrawAmount,
           to
         );
-        emit WithdrawStaked(pool, asset, to, withdrawAmount, block.timestamp);
       }
     }
   }
 
   /// @notice Returns the balance of the managed asset
   /// @dev May include any external balance in staking contracts
-  function getBalance(address pool, address asset) external view override returns (uint256 balance) {
+  function getBalance(address pool, address asset) public view override returns (uint256 balance) {
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
     uint256 poolBalance = IERC20(asset).balanceOf(pool);

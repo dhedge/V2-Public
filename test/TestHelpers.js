@@ -31,4 +31,7 @@ const checkAlmostSame = (a, b) => {
   expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
 };
 
-module.exports = { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame };
+/// Converts a string into a hex representation of bytes32
+const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
+
+module.exports = { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32 };
