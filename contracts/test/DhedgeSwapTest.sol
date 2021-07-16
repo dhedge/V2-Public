@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 // We import the contract so truffle compiles it, and we have the ABI
 // available when working from truffle console.
 import "../utils/DhedgeSwap.sol";
-import "../interfaces/IUniswapV2Router.sol";
+import "../interfaces/uniswapv2/IUniswapV2Router.sol";
 
 contract DhedgeSwapTest {
   using DhedgeSwap for IUniswapV2Router;
