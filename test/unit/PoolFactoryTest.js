@@ -637,7 +637,7 @@ describe("PoolFactory", function () {
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1);
 
     await expect(poolManagerLogicManagerProxy.changeAssets([], [slink])).to.be.revertedWith(
-      "revert cannot remove non-empty asset",
+      "cannot remove non-empty asset",
     );
 
     // Can enable deposit asset
