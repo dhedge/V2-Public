@@ -108,8 +108,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   /// @dev Withdrawal processing is not applicable for this guard
   /// @return withdrawAsset and
   /// @return withdrawBalance are used to withdraw portion of asset balance to investor
-  /// @return withdrawContracts and
-  /// @return txData are used to execute the withdrawal transaction in PoolLogic
+  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
     address pool, // pool
     address, // asset
@@ -148,19 +147,19 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   /// @param borrowAmounts the borrowed amount per each asset
   /// @param interestRateModes the interest rate mode per each asset
   /// @param portion the portion of assets to be withdrawn
-  /// @return txData are used to execute the withdrawal transaction in PoolLogic
+  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function _prepareFlashLoan(
     address pool,
     uint256 portion,
     address[] memory borrowAssets,
     uint256[] memory borrowAmounts,
     uint256[] memory interestRateModes
-  ) internal pure returns (MultiTransactions memory transactions) {
+  ) internal view returns (MultiTransactions memory transactions) {
     transactions.contracts = new address[](1);
     transactions.txData = new bytes[](1);
     transactions.txCount = 1;
 
-    transactions.contracts = address(aaveLendingPool);
+    transactions.contracts[0] = address(aaveLendingPool);
 
     bytes memory params = abi.encode(interestRateModes, portion);
     uint256[] memory modes = new uint256[](borrowAssets.length);
@@ -180,10 +179,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   /// @param pool the PoolLogic address
   /// @param to the recipient address
   /// @param portion the portion of assets to be withdrawn
-  /// @return withdrawAsset the asset to be withdrawn
-  /// @return withdrawBalance the asset amount to be withdrawn
-  /// @return withdrawContracts the contracts for transaction execution
-  /// @return txData are used to execute the withdrawal transaction in PoolLogic
+  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function _withdrawAndTransfer(
     address pool,
     address to,

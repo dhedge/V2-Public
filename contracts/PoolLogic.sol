@@ -322,7 +322,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
 
-    (address withdrawAsset, uint256 withdrawBalance, IAaveLendingPoolAssetGuard.MultiTransactions memory transactions) =
+    (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransactions memory transactions) =
       IAssetGuard(guard).withdrawProcessing(address(this), asset, portion, to);
 
     if (transactions.txCount > 0) {
@@ -555,7 +555,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
 
-    IAaveLendingPoolAssetGuard.MultiTransactions memory transactions =
+    IAssetGuard.MultiTransactions memory transactions =
       IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).flashloanProcessing(
         address(this),
         portion,

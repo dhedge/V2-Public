@@ -421,14 +421,26 @@
         "type": "uint256"
       },
       {
-        "internalType": "address[]",
-        "name": "withdrawContracts",
-        "type": "address[]"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "txData",
-        "type": "bytes[]"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "txCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "contracts",
+            "type": "address[]"
+          },
+          {
+            "internalType": "bytes[]",
+            "name": "txData",
+            "type": "bytes[]"
+          }
+        ],
+        "internalType": "struct IAssetGuard.MultiTransactions",
+        "name": "transactions",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",

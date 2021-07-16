@@ -35,13 +35,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-interface IAaveLendingPoolAssetGuard {
-  struct MultiTransactions {
-    uint256 txCount;
-    address[] contracts;
-    bytes[] txData;
-  }
+import "../IAssetGuard.sol";
 
+interface IAaveLendingPoolAssetGuard {
   function flashloanProcessing(
     address pool,
     uint256 portion,
@@ -49,5 +45,5 @@ interface IAaveLendingPoolAssetGuard {
     uint256[] memory repayAmounts,
     uint256[] memory premiums,
     uint256[] memory interestRateModes
-  ) external view returns (MultiTransactions memory transactions);
+  ) external view returns (IAssetGuard.MultiTransactions memory transactions);
 }

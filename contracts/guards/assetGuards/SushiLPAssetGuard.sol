@@ -69,8 +69,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
   /// @param to The investor address to withdraw to
   /// @return withdrawAsset and
   /// @return withdrawBalance are used to withdraw portion of asset balance to investor
-  /// @return stakingContracts and
-  /// @return txData are used to execute the staked withdrawal transaction in PoolLogic
+  /// @return transactions is used to execute the staked withdrawal transaction in PoolLogic
   function withdrawProcessing(
     address pool,
     address asset,
@@ -84,8 +83,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     returns (
       address withdrawAsset,
       uint256 withdrawBalance,
-      address[] memory stakingContracts,
-      bytes[] memory txData
+      MultiTransactions memory transactions
     )
   {
     withdrawAsset = asset;
@@ -98,12 +96,13 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     // If there is a staked balance in Sushi MiniChefV2 staking contract
     // Then create the withdrawal transaction data to be executed by PoolLogic
     if (stakedBalance > 0) {
-      stakingContracts = new address[](1);
-      stakingContracts[0] = sushiStaking;
       uint256 withdrawAmount = stakedBalance.mul(portion).div(10**18);
       if (withdrawAmount > 0) {
-        txData = new bytes[](1);
-        txData[0] = abi.encodeWithSelector(
+        transactions.txCount = 1;
+        transactions.contracts = new address[](1);
+        transactions.contracts[0] = sushiStaking;
+        transactions.txData = new bytes[](1);
+        transactions.txData[0] = abi.encodeWithSelector(
           bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)")),
           sushiPoolId,
           withdrawAmount,
