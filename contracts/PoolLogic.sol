@@ -61,14 +61,10 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IManaged.sol";
-import "./interfaces/IUniswapV2Router.sol";
-import "./interfaces/aave/ILendingPool.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
 import "./guards/assetGuards/IAaveLendingPoolAssetGuard.sol";
-import "./utils/DhedgeSwap.sol";
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -76,7 +72,6 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 
 contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
-  using DhedgeSwap for IUniswapV2Router;
 
   event Deposit(
     address fundAddress,
@@ -566,75 +561,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       );
 
     for (uint256 i = 0; i < transactions.txCount; i++) {
-      console.log("i - ", i);
-      console.log("transactions.contracts[i] - ", transactions.contracts[i]);
       (success, ) = transactions.contracts[i].call(transactions.txData[i]);
       require(success, "failed to process flashloan");
     }
-
-    // address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
-    // address weth = IHasGuardInfo(factory).getAddress("weth");
-
-    // _repayAndWithdraw(aaveLendingPool, swapRouter, weth, assets, amounts, params);
-    // _repayFlashLoan(aaveLendingPool, swapRouter, weth, assets, amounts, premiums);
   }
-
-  /*
-  /// @notice Repay and withdraw portion of AToken
-  /// @param aaveLendingPool the Aave lending pool address
-  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
-  /// @param weth the WETH address
-  /// @param repayAssets the repay assets list
-  /// @param repayAmounts the repay assets amount
-  /// @param params Variadic packed params to pass to the receiver as extra information
-  function _repayAndWithdraw(
-    address aaveLendingPool,
-    address swapRouter,
-    address weth,
-    address[] memory repayAssets,
-    uint256[] memory repayAmounts,
-    bytes memory params
-  ) internal {
-    (uint256[] memory interestRateModes, address[] memory collateralAssets, uint256[] memory amounts) =
-      abi.decode(params, (uint256[], address[], uint256[]));
-
-    uint256 i;
-    uint256 length = repayAssets.length;
-    for (i = 0; i < length; i++) {
-      IERC20Upgradeable(repayAssets[i]).approve(aaveLendingPool, repayAmounts[i]);
-      ILendingPool(aaveLendingPool).repay(repayAssets[i], repayAmounts[i], interestRateModes[i], address(this));
-    }
-
-    length = collateralAssets.length;
-    for (i = 0; i < length; i++) {
-      ILendingPool(aaveLendingPool).withdraw(collateralAssets[i], amounts[i], address(this));
-      IUniswapV2Router(swapRouter).swapTokensIn(weth, collateralAssets[i], weth, amounts[i]);
-    }
-  }
-
-  /// @notice Repay flashloan
-  /// @param aaveLendingPool the Aave lending pool address
-  /// @param swapRouter the swap router(e.g. UniswapV2Router, SushiswapRouter, ...)
-  /// @param weth the WETH address
-  /// @param repayAssets the repay assets list
-  /// @param repayAmounts the repay assets amount
-  /// @param premiums the additional owed amount per each asset
-  function _repayFlashLoan(
-    address aaveLendingPool,
-    address swapRouter,
-    address weth,
-    address[] memory repayAssets,
-    uint256[] memory repayAmounts,
-    uint256[] memory premiums
-  ) internal {
-    for (uint256 i = 0; i < repayAssets.length; i++) {
-      address currentAsset = repayAssets[i];
-      uint256 amountOwing = repayAmounts[i].add(premiums[i]);
-      IUniswapV2Router(swapRouter).swapTokensOut(weth, weth, currentAsset, amountOwing);
-
-      IERC20Upgradeable(currentAsset).approve(aaveLendingPool, amountOwing);
-    }
-  }*/
 
   uint256[50] private __gap;
 }

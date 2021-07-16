@@ -474,22 +474,22 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     uint256[] memory repayAmounts,
     uint256[] memory premiums
   ) internal view returns (MultiTransactions memory transactions) {
-    transactions.contracts = new address[](repayAssets.length * 4);
-    transactions.txData = new bytes[](repayAssets.length * 4);
+    transactions.contracts = new address[](repayAssets.length * 2 + 2);
+    transactions.txData = new bytes[](repayAssets.length * 2 + 2);
 
     address[] memory path = new address[](2);
     path[0] = weth;
 
+    transactions.contracts[transactions.txCount] = weth;
+    transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      bytes4(keccak256("approve(address,uint256)")),
+      swapRouter,
+      uint256(-1)
+    );
+    transactions.txCount++;
+
     for (uint256 i = 0; i < repayAssets.length; i++) {
       uint256 amountOwing = repayAmounts[i].add(premiums[i]);
-
-      transactions.contracts[transactions.txCount] = repayAssets[i];
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
-        bytes4(keccak256("approve(address,uint256)")),
-        swapRouter,
-        amountOwing
-      );
-      transactions.txCount++;
 
       path[1] = repayAssets[i];
       transactions.contracts[transactions.txCount] = swapRouter;
@@ -510,14 +510,14 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
         amountOwing
       );
       transactions.txCount++;
-
-      transactions.contracts[transactions.txCount] = repayAssets[i];
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
-        bytes4(keccak256("approve(address,uint256)")),
-        swapRouter,
-        0
-      );
-      transactions.txCount++;
     }
+
+    transactions.contracts[transactions.txCount] = weth;
+    transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      bytes4(keccak256("approve(address,uint256)")),
+      swapRouter,
+      0
+    );
+    transactions.txCount++;
   }
 }
