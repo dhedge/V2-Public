@@ -774,10 +774,10 @@ describe("Polygon Mainnet Test", function () {
     });
 
     it("should fail to remove asset", async () => {
-      expect(poolManagerLogicProxy.changeAssets([], [dai])).to.revertedWith("remove from Aave first");
+      expect(poolManagerLogicProxy.changeAssets([], [dai])).to.revertedWith("repay Aave debt first");
+      expect(poolManagerLogicProxy.changeAssets([], [usdc])).to.revertedWith("withdraw Aave collateral first");
       expect(poolManagerLogicProxy.changeAssets([], [aaveLendingPool])).to.revertedWith("clear your position first");
       expect(poolManagerLogicProxy.changeAssets([], [weth])).to.revertedWith("clear your position first");
-      expect(poolManagerLogicProxy.changeAssets([], [usdc])).to.revertedWith("clear your position first");
     });
   });
 });
