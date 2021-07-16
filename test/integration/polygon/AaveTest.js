@@ -77,11 +77,11 @@ describe("Polygon Mainnet Test", function () {
     const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-    const assetDai = { asset: dai, assetType: 0, aggregator: dai_price_feed };
-    const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
     const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
+    const assetDai = { asset: dai, assetType: 4, aggregator: dai_price_feed }; // Lending enabled
+    const assetUsdc = { asset: usdc, assetType: 4, aggregator: usdc_price_feed }; // Lending enabled
     const assetHandlerInitAssets = [
       assetWmatic,
       assetWeth,
@@ -130,9 +130,14 @@ describe("Polygon Mainnet Test", function () {
     const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     aaveLendingPoolGuard.deployed();
 
+    const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+    const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
+    lendingEnabledAssetGuard.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
+    await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
@@ -766,6 +771,13 @@ describe("Polygon Mainnet Test", function () {
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
         "failed to execute the call",
       );
+    });
+
+    it("should fail to remove asset", async () => {
+      expect(poolManagerLogicProxy.changeAssets([], [dai])).to.revertedWith("remove from Aave first");
+      expect(poolManagerLogicProxy.changeAssets([], [aaveLendingPool])).to.revertedWith("clear your position first");
+      expect(poolManagerLogicProxy.changeAssets([], [weth])).to.revertedWith("clear your position first");
+      expect(poolManagerLogicProxy.changeAssets([], [usdc])).to.revertedWith("clear your position first");
     });
   });
 });

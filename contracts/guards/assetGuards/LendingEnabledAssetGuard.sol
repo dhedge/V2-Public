@@ -1,4 +1,3 @@
-//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -30,30 +29,41 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-interface IAssetGuard {
-  function withdrawProcessing(
-    address pool,
-    address asset,
-    uint256 withdrawPortion,
-    address to
-  )
-    external
-    view
-    returns (
-      address,
-      uint256,
-      address[] memory,
-      bytes[] memory
-    );
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-  function getBalance(address pool, address asset) external view returns (uint256 balance);
+import "./ERC20Guard.sol";
+import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 
-  function getDecimals(address asset) external view returns (uint256 decimals);
+/// @title Lending/Borrowing enabled token asset guard eg Aave
+/// @dev Asset type = 4
+contract LendingEnabledAssetGuard is ERC20Guard {
+  using SafeMathUpgradeable for uint256;
 
-  function removeAssetCheck(address poolLogic, address asset) external view;
+  /// @notice Checks that asset can be removed from supported pool assets
+  /// @dev Cannot remove asset if it's deposited in Aave
+  /// @dev Additional lending / borrowing protocol checks can be added in the future
+  function removeAssetCheck(address pool, address asset) external view override {
+    // check AAVE lending balances
+    // returns address(0) if it's not supported in aave
+    address factory = IPoolManagerLogic(pool).factory();
+    address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
+
+    (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
+      aaveProtocolDataProvider
+    ).getReserveTokensAddresses(asset);
+
+    if (aToken != address(0)) {
+      uint256 collateralBalance = IERC20Extended(aToken).balanceOf(pool);
+      uint256 debtBalance = IERC20Extended(stableDebtToken).balanceOf(pool).add(
+        IERC20Extended(variableDebtToken).balanceOf(pool)
+      );
+      require(collateralBalance == 0 && debtBalance == 0, "remove from Aave first");
+    }
+  }
 }
