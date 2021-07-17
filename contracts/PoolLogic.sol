@@ -61,7 +61,7 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IManaged.sol";
-import "./interfaces/IUniswapV2Router.sol";
+import "./interfaces/uniswapv2/IUniswapV2Router.sol";
 import "./interfaces/aave/ILendingPool.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
