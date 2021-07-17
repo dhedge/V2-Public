@@ -83,8 +83,9 @@ describe("Uniswap V3 Test", function () {
     const IUniswapV3Router = await hre.artifacts.readArtifact("IUniswapV3Router");
     UniswapRouter = await ethers.getContractAt(IUniswapV3Router.abi, uniswapV3Router);
     // deposit ETH -> WETH
-    await WETH.deposit({ value: (5e18).toString() });
+    await WETH.deposit({ value: (10e18).toString() });
     // WETH -> USDT
+    let sourceAmount = (5e18).toString();
     await WETH.approve(uniswapV3Router, (5e18).toString());
     const exactInputSingleParams = {
       tokenIn: weth,
@@ -92,11 +93,27 @@ describe("Uniswap V3 Test", function () {
       fee: 10000,
       recipient: logicOwner.address,
       deadline: deadLine,
-      amountIn: (5e18).toString(),
+      amountIn: sourceAmount,
       amountOutMinimum: 0,
       sqrtPriceLimitX96: 0,
     };
     await UniswapRouter.exactInputSingle(exactInputSingleParams);
+
+    // const path =
+    //   "0x" +
+    //   weth.substring(2) + // source asset
+    //   "0001f4" + // fee
+    //   usdc.substring(2) + // path asset
+    //   "0001f4" + // fee
+    //   usdt.substring(2); // destination asset
+    // const exactInputParams = {
+    //   path: path,
+    //   recipient: logicOwner.address,
+    //   deadline: deadLine,
+    //   amountIn: sourceAmount,
+    //   amountOutMinimum: 0,
+    // };
+    // await UniswapRouter.exactInput(exactInputParams);
   });
 
   it("Should be able to createFund", async function () {
@@ -257,6 +274,7 @@ describe("Uniswap V3 Test", function () {
 
     await expect(poolLogicProxy.deposit(usdt, (100e6).toString())).to.be.revertedWith("invalid deposit asset");
 
+    // Approve and deposit 100 USDC
     await USDC.approve(poolLogicProxy.address, (100e6).toString());
     await poolLogicProxy.deposit(usdc, (100e6).toString());
     let event = await depositEvent;
@@ -268,6 +286,10 @@ describe("Uniswap V3 Test", function () {
     checkAlmostSame(event.totalInvestorFundTokens, (100e18).toString());
     checkAlmostSame(event.fundValue, (100e18).toString());
     checkAlmostSame(event.totalSupply, (100e18).toString());
+
+    // Approve and deposit 5 WETH
+    await WETH.approve(poolLogicProxy.address, (5e18).toString());
+    await poolLogicProxy.deposit(weth, (5e18).toString());
   });
 
   it("Should be able to approve", async () => {
@@ -282,121 +304,14 @@ describe("Uniswap V3 Test", function () {
       "unsupported spender approval",
     );
 
+    // Approve to swap 100 USDC
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV3Router, (100e6).toString()]);
     await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+
+    // Approve to swap 1 WETH
+    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3Router, (1e18).toString()]);
+    await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
   });
-
-  it("should be able to swap tokens - multi swap", async () => {
-    let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
-
-        resolve({
-          pool: pool,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
-    });
-
-    await poolManagerLogicProxy.connect(manager).changeAssets([[usdt, false]], []);
-
-    const sourceAmount = (1e18).toString();
-    const IUniswapV3Router = await hre.artifacts.readArtifact("IUniswapV3Router");
-    const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
-    // https://etherscan.io/tx/0xf74db2cc2a321de029800754ed3c8c7b85a9e1233e3bd2001218d0f407fd3a93
-    // data on etherscan: 0xc04b8d59000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060f1c58700000000000000000000000000000000000000000000000000000001126dc7d6000000000000000000000000000000000000000000000000210a5097b6c2a7010000000000000000000000000000000000000000000000000000000000000042
-    // dac17f958d2ee523a2206206994597c13d831ec7 0001f4 a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 0001f4 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000000000000000000000000000000000000000
-
-    // data we have:      0xc04b8d59000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000893bacb707c0c0d9a46a3eaea2c3b44df449137b0000000000000000000000000000000000000000000000000000000066e7a8180000000000000000000000000000000000000000000000008ac7230489e8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042
-    // a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 000bb8 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 000bb8 dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000000000000000000000000000000000000000
-
-    // path on etherscan: 0x dac17f958d2ee523a2206206994597c13d831ec7 0001f4 a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 0001f4 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
-    // path we have:      0x a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 0001f4 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 0001f4 dac17f958d2ee523a2206206994597c13d831ec7
-    const path =
-      "0x" +
-      usdc.substring(2) + // source asset
-      "0001f4" + // fee
-      usdt.substring(2) + // path asset
-      "0001f4" + // fee
-      weth.substring(2); // destination asset
-    const exactInputParams = {
-      path: path,
-      recipient: poolLogicProxy.address,
-      deadline: deadLine,
-      amountIn: sourceAmount,
-      amountOutMinimum: 0,
-    };
-    let badExactInputParams = exactInputParams;
-    let badPath = path;
-
-    // fail to swap direct asset to asset because it is interaction is with 0x0 address
-    let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
-      "non-zero address is required",
-    );
-
-    // fail to swap direct asset to asset because unsupported source asset
-    badExactInputParams.path =
-      "0x" +
-      sushi_usdc_usdt.substring(2) + // unsupported asset
-      "000bb8" +
-      weth.substring(2) +
-      "000bb8" +
-      usdt.substring(2);
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    // // TODO: add invalid path asset check if enabled in the Uniswap V3 swap guard
-    // // fail to swap direct asset to asset because invalid path asset, unsupported by dhedge protocol
-    // badExactInputParams.path =
-    //   '0x' +
-    //   susd.substring(2) +
-    //   '000bb8' +
-    //   badtoken.substring(2) + // invalid asset
-    //   '000bb8' +
-    //   seth.substring(2);
-    // swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [badExactInputParams]);
-    // await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-    //   'invalid path asset',
-    // );
-
-    // fail to swap direct asset to asset because unsupported destination asset
-    badExactInputParams.path =
-      "0x" + usdc.substring(2) + "000bb8" + weth.substring(2) + "000bb8" + sushi_usdc_usdt.substring(2); // unsupported asset
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI)).to.be.revertedWith(
-      "unsupported destination asset",
-    );
-    badExactInputParams.path = path;
-
-    // fail to swap direct asset to asset because recipient is not the pool address
-    badExactInputParams.recipient = user.address;
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI)).to.be.revertedWith(
-      "recipient is not pool",
-    );
-
-    exactInputParams.recipient = poolLogicProxy.address;
-    // succeed swapping direct asset to asset
-    console.log("exactInputParams: ", exactInputParams);
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
-    await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI);
-
-    let event = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(usdc);
-    expect(event.sourceAmount).to.equal(sourceAmount);
-    expect(event.destinationAsset).to.equal(usdt);
-  });
-  return;
 
   it("should be able to swap tokens - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
@@ -471,4 +386,116 @@ describe("Uniswap V3 Test", function () {
     expect(event.sourceAmount).to.equal(sourceAmount);
     expect(event.destinationAsset).to.equal(weth);
   });
+
+  it("should be able to swap tokens - multi swap", async () => {
+    let exchangeEvent = new Promise((resolve, reject) => {
+      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+        event.removeListener();
+
+        resolve({
+          pool: pool,
+          sourceAsset: sourceAsset,
+          sourceAmount: sourceAmount,
+          destinationAsset: destinationAsset,
+          time: time,
+        });
+      });
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
+    });
+
+    await poolManagerLogicProxy.connect(manager).changeAssets([[usdt, false]], []);
+
+    const sourceAmount = (1e18).toString();
+    const IUniswapV3Router = await hre.artifacts.readArtifact("IUniswapV3Router");
+    const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
+    // https://etherscan.io/tx/0xf74db2cc2a321de029800754ed3c8c7b85a9e1233e3bd2001218d0f407fd3a93
+    // data on etherscan: 0xc04b8d59000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060f1c58700000000000000000000000000000000000000000000000000000001126dc7d6000000000000000000000000000000000000000000000000210a5097b6c2a7010000000000000000000000000000000000000000000000000000000000000042
+    // dac17f958d2ee523a2206206994597c13d831ec7 0001f4 a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 0001f4 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000000000000000000000000000000000000000
+
+    // data we have:      0xc04b8d59000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000893bacb707c0c0d9a46a3eaea2c3b44df449137b0000000000000000000000000000000000000000000000000000000066e7a8180000000000000000000000000000000000000000000000008ac7230489e8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042
+    // a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 000bb8 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 000bb8 dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000000000000000000000000000000000000000
+
+    // path on etherscan: 0x dac17f958d2ee523a2206206994597c13d831ec7 0001f4 a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 0001f4 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+    // path we have:      0x C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 0001f4 A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 0001f4 dAC17F958D2ee523a2206206994597C13D831ec7
+    const path =
+      "0x" +
+      weth.substring(2) + // source asset
+      "0001f4" + // fee
+      usdc.substring(2) + // path asset
+      "0001f4" + // fee
+      usdt.substring(2); // destination asset
+    const exactInputParams = {
+      path: path,
+      recipient: poolLogicProxy.address,
+      deadline: deadLine,
+      amountIn: sourceAmount,
+      amountOutMinimum: 0,
+    };
+    let badExactInputParams = exactInputParams;
+    let badPath = path;
+
+    // fail to swap direct asset to asset because it is interaction is with 0x0 address
+    let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
+      "non-zero address is required",
+    );
+
+    // fail to swap direct asset to asset because unsupported source asset
+    badExactInputParams.path =
+      "0x" +
+      sushi_usdc_usdt.substring(2) + // unsupported asset
+      "000bb8" +
+      usdc.substring(2) +
+      "000bb8" +
+      usdt.substring(2);
+    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI)).to.be.revertedWith(
+      "unsupported source asset",
+    );
+
+    // // TODO: add invalid path asset check if enabled in the Uniswap V3 swap guard
+    // // fail to swap direct asset to asset because invalid path asset, unsupported by dhedge protocol
+    // badExactInputParams.path =
+    //   '0x' +
+    //   susd.substring(2) +
+    //   '000bb8' +
+    //   badtoken.substring(2) + // invalid asset
+    //   '000bb8' +
+    //   seth.substring(2);
+    // swapABI = iUniswapV3Router.encodeFunctionData('exactInput', [badExactInputParams]);
+    // await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
+    //   'invalid path asset',
+    // );
+
+    // fail to swap direct asset to asset because unsupported destination asset
+    badExactInputParams.path =
+      "0x" + weth.substring(2) + "000bb8" + usdc.substring(2) + "000bb8" + sushi_usdc_usdt.substring(2); // unsupported asset
+    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI)).to.be.revertedWith(
+      "unsupported destination asset",
+    );
+    badExactInputParams.path = path;
+
+    // fail to swap direct asset to asset because recipient is not the pool address
+    badExactInputParams.recipient = user.address;
+    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI)).to.be.revertedWith(
+      "recipient is not pool",
+    );
+
+    exactInputParams.recipient = poolLogicProxy.address;
+    // succeed swapping direct asset to asset
+    console.log("exactInputParams: ", exactInputParams);
+    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
+    await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI);
+
+    let event = await exchangeEvent;
+    expect(event.sourceAsset).to.equal(weth);
+    expect(event.sourceAmount).to.equal(sourceAmount);
+    expect(event.destinationAsset).to.equal(usdt);
+  });
+
 });
