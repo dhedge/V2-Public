@@ -488,7 +488,6 @@ describe("Uniswap V3 Test", function () {
 
     exactInputParams.recipient = poolLogicProxy.address;
     // succeed swapping direct asset to asset
-    console.log("exactInputParams: ", exactInputParams);
     swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router, swapABI);
 
