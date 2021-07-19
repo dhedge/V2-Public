@@ -547,7 +547,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(originator == address(this), "only pool flash loan origin");
 
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(msg.sender);
-    require(aaveLendingPoolAssetGuard != address(0), "invalid lending pool");
+    require(
+      aaveLendingPoolAssetGuard != address(0) &&
+        msg.sender == IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).aaveLendingPool(),
+      "invalid lending pool"
+    );
 
     (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
 

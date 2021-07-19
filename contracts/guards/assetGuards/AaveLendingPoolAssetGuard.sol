@@ -59,12 +59,12 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   ILendingPoolAddressesProvider public aaveAddressProvider;
-  ILendingPool public aaveLendingPool;
+  address public override aaveLendingPool;
 
   constructor(address _aaveProtocolDataProvider) {
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
-    aaveLendingPool = ILendingPool(aaveAddressProvider.getLendingPool());
+    aaveLendingPool = aaveAddressProvider.getLendingPool();
   }
 
   /// @notice Returns the pool position of Aave lending pool
@@ -157,7 +157,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
   ) internal view returns (MultiTransaction[] memory transactions) {
     transactions = new MultiTransaction[](1);
 
-    transactions[0].to = address(aaveLendingPool);
+    transactions[0].to = aaveLendingPool;
 
     bytes memory params = abi.encode(interestRateModes, portion);
     uint256[] memory modes = new uint256[](borrowAssets.length);
@@ -188,7 +188,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
 
     uint256 txCount;
     for (uint256 i = 0; i < collateralAssets.length; i++) {
-      transactions[txCount].to = address(aaveLendingPool);
+      transactions[txCount].to = aaveLendingPool;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("withdraw(address,uint256,address)")),
         collateralAssets[i], // receiverAddress
@@ -229,7 +229,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
       debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
     }
 
-    ILendingPool.ReserveConfigurationMap memory configuration = aaveLendingPool.getConfiguration(asset);
+    ILendingPool.ReserveConfigurationMap memory configuration = ILendingPool(aaveLendingPool).getConfiguration(asset);
     decimals = (configuration.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
   }
 
@@ -396,7 +396,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
       );
       txCount++;
 
-      transactions[txCount].to = address(aaveLendingPool);
+      transactions[txCount].to = aaveLendingPool;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("repay(address,uint256,uint256,address)")),
         repayAssets[i],
@@ -423,7 +423,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
 
     uint256 txCount;
     for (uint256 i = 0; i < collateralAssets.length; i++) {
-      transactions[txCount].to = address(aaveLendingPool);
+      transactions[txCount].to = aaveLendingPool;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("withdraw(address,uint256,address)")),
         collateralAssets[i],
@@ -502,7 +502,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
       transactions[txCount].to = repayAssets[i];
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("approve(address,uint256)")),
-        address(aaveLendingPool),
+        aaveLendingPool,
         amountOwing
       );
       txCount++;

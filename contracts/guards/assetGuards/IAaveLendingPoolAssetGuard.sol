@@ -46,4 +46,6 @@ interface IAaveLendingPoolAssetGuard {
     uint256[] memory premiums,
     uint256[] memory interestRateModes
   ) external view returns (IAssetGuard.MultiTransaction[] memory transactions);
+
+  function aaveLendingPool() external view returns (address);
 }
