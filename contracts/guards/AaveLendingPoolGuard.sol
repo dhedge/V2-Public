@@ -37,8 +37,8 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
+import "../interfaces/guards/IGuard.sol";
 import "../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasGuardInfo.sol";
@@ -148,8 +148,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
         // returns address(0) if it's not supported in aave
         address factory = IPoolManagerLogic(_poolManagerLogic).factory();
         address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
-        (, address stableDebtToken, address variableDebtToken) =
-          IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(supportedAssets[i].asset);
+        (, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
+        .getReserveTokensAddresses(supportedAssets[i].asset);
 
         // check if asset is not supported or debt amount is zero
         require(

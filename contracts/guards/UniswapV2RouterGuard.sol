@@ -35,8 +35,8 @@ pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
+import "../interfaces/guards/IGuard.sol";
 import "../interfaces/uniswapv2/IUniswapV2Factory.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";

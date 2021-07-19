@@ -40,8 +40,8 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
+import "../interfaces/guards/IGuard.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/sushi/IMiniChefV2.sol";

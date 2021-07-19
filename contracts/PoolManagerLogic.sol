@@ -44,8 +44,8 @@ import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
-import "./guards/IGuard.sol";
-import "./guards/IAssetGuard.sol";
+import "./interfaces/guards/IGuard.sol";
+import "./interfaces/guards/IAssetGuard.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
