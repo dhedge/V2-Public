@@ -49,7 +49,7 @@ import "../../interfaces/uniswapv2/IUniswapV2Router.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type = 3
-contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
+contract AaveLendingPoolAssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
 
   // For Aave decimal calculation
@@ -69,6 +69,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard {
   /// @notice Returns the pool position of Aave lending pool
   /// @dev Returns the balance priced in ETH
   /// @param pool The pool logic address
+  /// @return balance The total balance of the pool
   function getBalance(address pool, address) public view override returns (uint256 balance) {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
     IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();

@@ -40,7 +40,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Sushi LP token asset guard
 /// @dev Asset type = 2
-contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
+contract SushiLPAssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
 
   struct SushiPool {
@@ -115,6 +115,9 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
 
   /// @notice Returns the balance of the managed asset
   /// @dev May include any external balance in staking contracts
+  /// @param pool address of the pool
+  /// @param asset address of the asset
+  /// @return balance The asset balance of given pool
   function getBalance(address pool, address asset) public view override returns (uint256 balance) {
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
