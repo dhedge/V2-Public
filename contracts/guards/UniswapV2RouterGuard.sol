@@ -37,7 +37,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./IGuard.sol";
 import "../utils/TxDataUtils.sol";
-import "../interfaces/IUniswapV2Factory.sol";
+import "../interfaces/uniswapv2/IUniswapV2Factory.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/IHasGuardInfo.sol";

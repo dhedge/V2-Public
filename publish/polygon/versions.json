@@ -186,6 +186,7 @@
       "AssetHandlerProxy": "0xc16E5dbfe74C0c30FeA2a8eCA6e1832F51E2A9B2",
       "ERC20Guard": "0xEe05745451CDc4942271fDc8626CB3aE98145590",
       "UniswapV2RouterGuard": "0xe599ED237195Bc9519de657Dcc3CA53A914e29f5",
+      "SushiMiniChefV2Guard": "0xf66bd3E6AAd8f2Bb9d988d87Fcc38b2CfEf29B89",
       "SushiLPAssetGuard": "0x138077e2175A2eb7d2cBb298304C5952DABa3955"
     }
   }
