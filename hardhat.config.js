@@ -38,7 +38,7 @@ module.exports = {
       chainId: 137,
       url: process.env.POLYGON_RPC
         ? process.env.POLYGON_RPC
-        : "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
+        : "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_POLYGON_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {
