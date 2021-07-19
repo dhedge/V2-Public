@@ -122,7 +122,7 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     returns (
       address withdrawAsset,
       uint256 withdrawBalance,
-      MultiTransactions memory transactions
+      MultiTransaction[] memory transactions
     )
   {
     (address[] memory borrowAssets, uint256[] memory borrowAmounts, uint256[] memory interestRateModes) =
@@ -154,16 +154,14 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     address[] memory borrowAssets,
     uint256[] memory borrowAmounts,
     uint256[] memory interestRateModes
-  ) internal view returns (MultiTransactions memory transactions) {
-    transactions.contracts = new address[](1);
-    transactions.txData = new bytes[](1);
-    transactions.txCount = 1;
+  ) internal view returns (MultiTransaction[] memory transactions) {
+    transactions = new MultiTransaction[](1);
 
-    transactions.contracts[0] = address(aaveLendingPool);
+    transactions[0].to = address(aaveLendingPool);
 
     bytes memory params = abi.encode(interestRateModes, portion);
     uint256[] memory modes = new uint256[](borrowAssets.length);
-    transactions.txData[0] = abi.encodeWithSelector(
+    transactions[0].txData = abi.encodeWithSelector(
       bytes4(keccak256("flashLoan(address,address[],uint256[],uint256[],address,bytes,uint16)")),
       pool, // receiverAddress
       borrowAssets,
@@ -184,28 +182,28 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     address pool,
     address to,
     uint256 portion
-  ) internal view returns (MultiTransactions memory transactions) {
+  ) internal view returns (MultiTransaction[] memory transactions) {
     (address[] memory collateralAssets, uint256[] memory amounts) = _calculateCollateralAssets(pool, portion);
-    uint256 length = collateralAssets.length;
-    transactions.contracts = new address[](length * 2);
-    transactions.txData = new bytes[](length * 2);
-    for (uint256 i = 0; i < length; i++) {
-      transactions.contracts[transactions.txCount] = address(aaveLendingPool);
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+    transactions = new MultiTransaction[](collateralAssets.length * 2);
+
+    uint256 txCount;
+    for (uint256 i = 0; i < collateralAssets.length; i++) {
+      transactions[txCount].to = address(aaveLendingPool);
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("withdraw(address,uint256,address)")),
         collateralAssets[i], // receiverAddress
         amounts[i],
         pool // onBehalfOf
       );
-      transactions.txCount++;
+      txCount++;
 
-      transactions.contracts[transactions.txCount] = collateralAssets[i];
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = collateralAssets[i];
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("transfer(address,uint256)")),
         to, // recipient
         amounts[i]
       );
-      transactions.txCount++;
+      txCount++;
     }
   }
 
@@ -346,39 +344,37 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     uint256[] memory repayAmounts,
     uint256[] memory premiums,
     uint256[] memory interestRateModes
-  ) external view virtual override returns (MultiTransactions memory transactions) {
+  ) external view virtual override returns (MultiTransaction[] memory transactions) {
     address factory = IPoolLogic(pool).factory();
     address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
     address weth = IHasGuardInfo(factory).getAddress("weth");
 
-    MultiTransactions memory aaveRepayTransactions =
+    MultiTransaction[] memory aaveRepayTransactions =
       _repayAaveTransactions(pool, repayAssets, repayAmounts, interestRateModes);
-    MultiTransactions memory aaveWithdrawTransactions = _withdrawAaveTransactions(pool, portion, swapRouter, weth);
-    MultiTransactions memory flashloanWithdrawTransactions =
+    MultiTransaction[] memory aaveWithdrawTransactions = _withdrawAaveTransactions(pool, portion, swapRouter, weth);
+    MultiTransaction[] memory flashloanWithdrawTransactions =
       _repayFlashloanTransactions(pool, swapRouter, weth, repayAssets, repayAmounts, premiums);
 
-    transactions.contracts = new address[](
-      aaveRepayTransactions.txCount + aaveWithdrawTransactions.txCount + flashloanWithdrawTransactions.txCount
-    );
-    transactions.txData = new bytes[](
-      aaveRepayTransactions.txCount + aaveWithdrawTransactions.txCount + flashloanWithdrawTransactions.txCount
+    transactions = new MultiTransaction[](
+      aaveRepayTransactions.length + aaveWithdrawTransactions.length + flashloanWithdrawTransactions.length
     );
 
     uint256 i;
-    for (i = 0; i < aaveRepayTransactions.txCount; i++) {
-      transactions.contracts[transactions.txCount] = aaveRepayTransactions.contracts[i];
-      transactions.txData[transactions.txCount] = aaveRepayTransactions.txData[i];
-      transactions.txCount++;
+    uint256 txCount;
+    for (i = 0; i < aaveRepayTransactions.length; i++) {
+      transactions[txCount].to = aaveRepayTransactions[i].to;
+      transactions[txCount].txData = aaveRepayTransactions[i].txData;
+      txCount++;
     }
-    for (i = 0; i < aaveWithdrawTransactions.txCount; i++) {
-      transactions.contracts[transactions.txCount] = aaveWithdrawTransactions.contracts[i];
-      transactions.txData[transactions.txCount] = aaveWithdrawTransactions.txData[i];
-      transactions.txCount++;
+    for (i = 0; i < aaveWithdrawTransactions.length; i++) {
+      transactions[txCount].to = aaveWithdrawTransactions[i].to;
+      transactions[txCount].txData = aaveWithdrawTransactions[i].txData;
+      txCount++;
     }
-    for (i = 0; i < flashloanWithdrawTransactions.txCount; i++) {
-      transactions.contracts[transactions.txCount] = flashloanWithdrawTransactions.contracts[i];
-      transactions.txData[transactions.txCount] = flashloanWithdrawTransactions.txData[i];
-      transactions.txCount++;
+    for (i = 0; i < flashloanWithdrawTransactions.length; i++) {
+      transactions[txCount].to = flashloanWithdrawTransactions[i].to;
+      transactions[txCount].txData = flashloanWithdrawTransactions[i].txData;
+      txCount++;
     }
   }
 
@@ -387,28 +383,28 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
     uint256[] memory interestRateModes
-  ) internal view returns (MultiTransactions memory transactions) {
-    transactions.contracts = new address[](repayAssets.length * 2);
-    transactions.txData = new bytes[](repayAssets.length * 2);
+  ) internal view returns (MultiTransaction[] memory transactions) {
+    transactions = new MultiTransaction[](repayAssets.length * 2);
 
+    uint256 txCount;
     for (uint256 i = 0; i < repayAssets.length; i++) {
-      transactions.contracts[transactions.txCount] = repayAssets[i];
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = repayAssets[i];
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("approve(address,uint256)")),
         aaveLendingPool,
         repayAmounts[i]
       );
-      transactions.txCount++;
+      txCount++;
 
-      transactions.contracts[transactions.txCount] = address(aaveLendingPool);
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = address(aaveLendingPool);
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("repay(address,uint256,uint256,address)")),
         repayAssets[i],
         repayAmounts[i],
         interestRateModes[i],
         pool // onBehalfOf
       );
-      transactions.txCount++;
+      txCount++;
     }
   }
 
@@ -417,36 +413,36 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     uint256 portion,
     address swapRouter,
     address weth
-  ) internal view returns (MultiTransactions memory transactions) {
+  ) internal view returns (MultiTransaction[] memory transactions) {
     (address[] memory collateralAssets, uint256[] memory amounts) = _calculateCollateralAssets(pool, portion);
 
-    transactions.contracts = new address[](collateralAssets.length * 4);
-    transactions.txData = new bytes[](collateralAssets.length * 4);
+    transactions = new MultiTransaction[](collateralAssets.length * 4);
 
     address[] memory path = new address[](2);
     path[1] = weth;
 
+    uint256 txCount;
     for (uint256 i = 0; i < collateralAssets.length; i++) {
-      transactions.contracts[transactions.txCount] = address(aaveLendingPool);
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = address(aaveLendingPool);
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("withdraw(address,uint256,address)")),
         collateralAssets[i],
         amounts[i],
         pool
       );
-      transactions.txCount++;
+      txCount++;
 
-      transactions.contracts[transactions.txCount] = collateralAssets[i];
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = collateralAssets[i];
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("approve(address,uint256)")),
         swapRouter,
         amounts[i]
       );
-      transactions.txCount++;
+      txCount++;
 
       path[0] = collateralAssets[i];
-      transactions.contracts[transactions.txCount] = swapRouter;
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = swapRouter;
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)")),
         amounts[i],
         0,
@@ -454,15 +450,15 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
         pool,
         uint256(-1)
       );
-      transactions.txCount++;
+      txCount++;
 
-      transactions.contracts[transactions.txCount] = collateralAssets[i];
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = collateralAssets[i];
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("approve(address,uint256)")),
         swapRouter,
         0
       );
-      transactions.txCount++;
+      txCount++;
     }
   }
 
@@ -473,27 +469,27 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
     address[] memory repayAssets,
     uint256[] memory repayAmounts,
     uint256[] memory premiums
-  ) internal view returns (MultiTransactions memory transactions) {
-    transactions.contracts = new address[](repayAssets.length * 2 + 2);
-    transactions.txData = new bytes[](repayAssets.length * 2 + 2);
+  ) internal view returns (MultiTransaction[] memory transactions) {
+    transactions = new MultiTransaction[](repayAssets.length * 2 + 2);
 
     address[] memory path = new address[](2);
     path[0] = weth;
 
-    transactions.contracts[transactions.txCount] = weth;
-    transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+    uint256 txCount;
+    transactions[txCount].to = weth;
+    transactions[txCount].txData = abi.encodeWithSelector(
       bytes4(keccak256("approve(address,uint256)")),
       swapRouter,
       uint256(-1)
     );
-    transactions.txCount++;
+    txCount++;
 
     for (uint256 i = 0; i < repayAssets.length; i++) {
       uint256 amountOwing = repayAmounts[i].add(premiums[i]);
 
       path[1] = repayAssets[i];
-      transactions.contracts[transactions.txCount] = swapRouter;
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = swapRouter;
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("swapTokensForExactTokens(uint256,uint256,address[],address,uint256)")),
         amountOwing,
         uint256(-1),
@@ -501,23 +497,19 @@ contract AaveLendingPoolAssetGuard is TxDataUtils, ERC20Guard, IAaveLendingPoolA
         pool,
         uint256(-1)
       );
-      transactions.txCount++;
+      txCount++;
 
-      transactions.contracts[transactions.txCount] = repayAssets[i];
-      transactions.txData[transactions.txCount] = abi.encodeWithSelector(
+      transactions[txCount].to = repayAssets[i];
+      transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("approve(address,uint256)")),
         address(aaveLendingPool),
         amountOwing
       );
-      transactions.txCount++;
+      txCount++;
     }
 
-    transactions.contracts[transactions.txCount] = weth;
-    transactions.txData[transactions.txCount] = abi.encodeWithSelector(
-      bytes4(keccak256("approve(address,uint256)")),
-      swapRouter,
-      0
-    );
-    transactions.txCount++;
+    transactions[txCount].to = weth;
+    transactions[txCount].txData = abi.encodeWithSelector(bytes4(keccak256("approve(address,uint256)")), swapRouter, 0);
+    txCount++;
   }
 }

@@ -423,24 +423,19 @@
       {
         "components": [
           {
-            "internalType": "uint256",
-            "name": "txCount",
-            "type": "uint256"
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
           },
           {
-            "internalType": "address[]",
-            "name": "contracts",
-            "type": "address[]"
-          },
-          {
-            "internalType": "bytes[]",
+            "internalType": "bytes",
             "name": "txData",
-            "type": "bytes[]"
+            "type": "bytes"
           }
         ],
-        "internalType": "struct IAssetGuard.MultiTransactions",
+        "internalType": "struct IAssetGuard.MultiTransaction[]",
         "name": "transactions",
-        "type": "tuple"
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",

@@ -112,7 +112,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     returns (
       address withdrawAsset,
       uint256 withdrawBalance,
-      MultiTransactions memory transactions
+      MultiTransaction[] memory transactions
     )
   {
     withdrawAsset = asset;

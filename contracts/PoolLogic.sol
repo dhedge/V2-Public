@@ -317,17 +317,18 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
 
-    (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransactions memory transactions) =
+    (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransaction[] memory transactions) =
       IAssetGuard(guard).withdrawProcessing(address(this), asset, portion, to);
 
-    if (transactions.txCount > 0) {
+    uint256 txCount = transactions.length;
+    if (txCount > 0) {
       uint256 assetBalanceBefore;
       if (withdrawAsset != address(0)) {
         assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
       }
 
-      for (uint256 i = 0; i < transactions.txCount; i++) {
-        (success, ) = transactions.contracts[i].call(transactions.txData[i]);
+      for (uint256 i = 0; i < txCount; i++) {
+        (success, ) = transactions[i].to.call(transactions[i].txData);
         require(success, "failed to withdraw tokens");
       }
 
@@ -550,7 +551,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
 
-    IAssetGuard.MultiTransactions memory transactions =
+    IAssetGuard.MultiTransaction[] memory transactions =
       IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).flashloanProcessing(
         address(this),
         portion,
@@ -560,8 +561,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         interestRateModes
       );
 
-    for (uint256 i = 0; i < transactions.txCount; i++) {
-      (success, ) = transactions.contracts[i].call(transactions.txData[i]);
+    for (uint256 i = 0; i < transactions.length; i++) {
+      (success, ) = transactions[i].to.call(transactions[i].txData);
       require(success, "failed to process flashloan");
     }
   }

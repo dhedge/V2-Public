@@ -36,10 +36,9 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 interface IAssetGuard {
-  struct MultiTransactions {
-    uint256 txCount;
-    address[] contracts;
-    bytes[] txData;
+  struct MultiTransaction {
+    address to;
+    bytes txData;
   }
 
   function withdrawProcessing(
@@ -53,7 +52,7 @@ interface IAssetGuard {
     returns (
       address,
       uint256,
-      MultiTransactions memory transactions
+      MultiTransaction[] memory transactions
     );
 
   function getBalance(address pool, address asset) external view returns (uint256 balance);

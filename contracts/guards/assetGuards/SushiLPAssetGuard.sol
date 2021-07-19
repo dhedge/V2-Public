@@ -83,7 +83,7 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     returns (
       address withdrawAsset,
       uint256 withdrawBalance,
-      MultiTransactions memory transactions
+      MultiTransaction[] memory transactions
     )
   {
     withdrawAsset = asset;
@@ -98,11 +98,9 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     if (stakedBalance > 0) {
       uint256 withdrawAmount = stakedBalance.mul(portion).div(10**18);
       if (withdrawAmount > 0) {
-        transactions.txCount = 1;
-        transactions.contracts = new address[](1);
-        transactions.contracts[0] = sushiStaking;
-        transactions.txData = new bytes[](1);
-        transactions.txData[0] = abi.encodeWithSelector(
+        transactions = new MultiTransaction[](1);
+        transactions[0].to = sushiStaking;
+        transactions[0].txData = abi.encodeWithSelector(
           bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)")),
           sushiPoolId,
           withdrawAmount,
