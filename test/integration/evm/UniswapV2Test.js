@@ -440,7 +440,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
   it("should be able to add liquidity on sushiswap.", async () => {
     let addLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on("AddLiquidity", (managerLogicAddress, tokenA, tokenB, pair, time, event) => {
+      sushiswapGuard.on("AddLiquidity", (managerLogicAddress, tokenA, tokenB, pair, amountADesired, amountBDesired, amountAMin, amountBMin, time, event) => {
         event.removeListener();
 
         resolve({
@@ -450,6 +450,8 @@ describe("Sushiswap/Uniswap V2 Test", function () {
           pair,
           amountADesired,
           amountBDesired,
+          amountAMin,
+          amountBMin,
           time,
         });
       });
@@ -583,11 +585,15 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     expect(event.tokenA).to.equal(usdc);
     expect(event.tokenB).to.equal(usdt);
     expect(event.pair).to.equal(sushi_usdc_usdt);
+    expect(event.amountADesired).to.equal(amountADesired);
+    expect(event.amountBDesired).to.equal(amountBDesired);
+    expect(event.amountAMin).to.equal(0);
+    expect(event.amountBMin).to.equal(0);
   });
 
   it("should be able to remove liquidity on sushiswap.", async () => {
     let removeLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on("RemoveLiquidity", (managerLogicAddress, tokenA, tokenB, pair, liquidity, time, event) => {
+      sushiswapGuard.on("RemoveLiquidity", (managerLogicAddress, tokenA, tokenB, pair, liquidity, amountAMin, amountBMin, time, event) => {
         event.removeListener();
 
         resolve({
@@ -596,6 +602,8 @@ describe("Sushiswap/Uniswap V2 Test", function () {
           tokenB,
           pair,
           liquidity,
+          amountAMin,
+          amountBMin,
           time,
         });
       });
@@ -712,10 +720,9 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     expect(event.tokenB).to.equal(usdt);
     expect(event.pair).to.equal(sushi_usdc_usdt);
     expect(event.liquidity).to.equal(liquidity);
+    expect(event.amountAMin).to.equal(0);
+    expect(event.amountBMin).to.equal(0);
     checkAlmostSame(await USDC.balanceOf(poolLogicProxy.address), (50e6).toString());
-    console.log((await USDC.balanceOf(poolLogicProxy.address)).toString());
-    console.log((await USDT.balanceOf(poolLogicProxy.address)).toString());
-    console.log((await poolLogicProxy.balanceOf(logicOwner.address)).toString());
   });
 
   it("should be able to swap tokens back on uniswap.", async () => {
