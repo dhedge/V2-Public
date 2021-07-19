@@ -57,7 +57,8 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     uint256 amountBDesired,
     uint256 amountAMin,
     uint256 amountBMin,
-    uint256 time);
+    uint256 time
+  );
 
   event RemoveLiquidity(
     address fundAddress,
@@ -125,7 +126,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
 
       address tokenA = convert32toAddress(getInput(data, 0));
       address tokenB = convert32toAddress(getInput(data, 1));
-      
+
       uint256 amountADesired = uint256(getInput(data, 2));
       uint256 amountBDesired = uint256(getInput(data, 3));
       uint256 amountAMin = uint256(getInput(data, 4));
@@ -140,7 +141,17 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address to = convert32toAddress(getInput(data, 6));
       require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
 
-      emit AddLiquidity(poolManagerLogic.poolLogic(), tokenA, tokenB, pair, amountADesired, amountBDesired, amountAMin, amountBMin, block.timestamp);
+      emit AddLiquidity(
+        poolManagerLogic.poolLogic(),
+        tokenA,
+        tokenB,
+        pair,
+        amountADesired,
+        amountBDesired,
+        amountAMin,
+        amountBMin,
+        block.timestamp
+      );
 
       txType = 3; // `Add Liquidity` type
     } else if (
@@ -165,7 +176,16 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address to = convert32toAddress(getInput(data, 5));
       require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
 
-      emit RemoveLiquidity(poolManagerLogic.poolLogic(), tokenA, tokenB, pair, liquidity, amountAMin, amountBMin, block.timestamp);
+      emit RemoveLiquidity(
+        poolManagerLogic.poolLogic(),
+        tokenA,
+        tokenB,
+        pair,
+        liquidity,
+        amountAMin,
+        amountBMin,
+        block.timestamp
+      );
 
       txType = 4; // `Remove Liquidity` type
     }

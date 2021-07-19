@@ -440,10 +440,9 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
   it("should be able to add liquidity on sushiswap.", async () => {
     let addLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on("AddLiquidity", (managerLogicAddress, tokenA, tokenB, pair, amountADesired, amountBDesired, amountAMin, amountBMin, time, event) => {
-        event.removeListener();
-
-        resolve({
+      sushiswapGuard.on(
+        "AddLiquidity",
+        (
           managerLogicAddress,
           tokenA,
           tokenB,
@@ -453,8 +452,23 @@ describe("Sushiswap/Uniswap V2 Test", function () {
           amountAMin,
           amountBMin,
           time,
-        });
-      });
+          event,
+        ) => {
+          event.removeListener();
+
+          resolve({
+            managerLogicAddress,
+            tokenA,
+            tokenB,
+            pair,
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin,
+            time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -593,20 +607,23 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
   it("should be able to remove liquidity on sushiswap.", async () => {
     let removeLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on("RemoveLiquidity", (managerLogicAddress, tokenA, tokenB, pair, liquidity, amountAMin, amountBMin, time, event) => {
-        event.removeListener();
+      sushiswapGuard.on(
+        "RemoveLiquidity",
+        (managerLogicAddress, tokenA, tokenB, pair, liquidity, amountAMin, amountBMin, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress,
-          tokenA,
-          tokenB,
-          pair,
-          liquidity,
-          amountAMin,
-          amountBMin,
-          time,
-        });
-      });
+          resolve({
+            managerLogicAddress,
+            tokenA,
+            tokenB,
+            pair,
+            liquidity,
+            amountAMin,
+            amountBMin,
+            time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));
