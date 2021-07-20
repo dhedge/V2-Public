@@ -1130,7 +1130,6 @@ describe("PoolFactory", function () {
       expect(await assetHandler.priceAggregators(seth)).to.be.equal(eth_price_feed.address);
       expect(await assetHandler.priceAggregators(slink)).to.be.equal(link_price_feed.address);
       expect(await assetHandler.priceAggregators(ZERO_ADDRESS)).to.be.equal(ZERO_ADDRESS);
-      expect(await assetHandler.getAssetTypeAndAggregator(susd)).to.deep.equal([0, usd_price_feed.address]);
 
       await expect(assetHandler.connect(manager).removeAsset(slink)).to.be.revertedWith(
         "Ownable: caller is not the owner",

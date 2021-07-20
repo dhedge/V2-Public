@@ -30,8 +30,8 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   mapping(address => uint16) public override assetTypes; // for asset types refer to header comment
   mapping(address => address) public override priceAggregators;
 
-  // Note: in the future, we can add more mappings for new assets if necessary (eg ERC721)
-
+  /// @dev initialisation for the contract
+  /// @param assets An array of assets to initialise
   function initialize(Asset[] memory assets) external initializer {
     __Ownable_init();
 
@@ -40,10 +40,6 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   }
 
   /* ========== VIEWS ========== */
-
-  function getAssetTypeAndAggregator(address asset) external view override returns (uint16, address) {
-    return (assetTypes[asset], priceAggregators[asset]);
-  }
 
   /**
    * @notice Currenly only use chainlink price feed.
@@ -80,11 +76,16 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
 
   /* ---------- From Owner ---------- */
 
+  /// @dev Setting the timeout for the Chainlink price feed
+  /// @param newTimeoutPeriod A new time in seconds for the timeout
   function setChainlinkTimeout(uint256 newTimeoutPeriod) external onlyOwner {
     chainlinkTimeout = newTimeoutPeriod;
   }
 
-  /// Add valid asset with price aggregator
+  /// @dev Add valid asset with price aggregator
+  /// @param asset Address of the asset to add
+  /// @param assetType Type of the asset
+  /// @param aggregator Address of the aggregator
   function addAsset(
     address asset,
     uint16 assetType,
@@ -99,13 +100,16 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
     emit AddedAsset(asset, assetType, aggregator);
   }
 
+  /// @dev Add valid assets with price aggregator
+  /// @param assets An array of assets to add
   function addAssets(Asset[] memory assets) public override onlyOwner {
     for (uint8 i = 0; i < assets.length; i++) {
       addAsset(assets[i].asset, assets[i].assetType, assets[i].aggregator);
     }
   }
 
-  /// Remove valid asset
+  /// @dev Remove valid asset
+  /// @param asset Address of the asset to remove
   function removeAsset(address asset) external override onlyOwner {
     assetTypes[asset] = 0;
     priceAggregators[asset] = address(0);
