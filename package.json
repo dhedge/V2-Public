@@ -9,8 +9,8 @@
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.js\"",
-    "fork:evm": "hardhat node --fork https://mainnet.infura.io/v3/$(grep INFURA_KEY .env | cut -d '=' -f2)",
-    "fork:polygon": "hardhat node --fork $(grep ALCHEMY_URL .env | cut -d '=' -f2)$(grep ALCHEMY_KEY .env | cut -d '=' -f2)",
+    "fork:evm": "hardhat node --fork $(grep ALCHEMY_EVM_URL .env | cut -d '=' -f2)$(grep ALCHEMY_EVM_KEY .env | cut -d '=' -f2)",
+    "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/v1/$(grep MATIC_KEY .env | cut -d '=' -f2)",
     "test:unit": "hardhat test test/unit/*.js --network hardhat",
     "test:inte:ovm": "hardhat test test/integration/ovm/*.js",

@@ -161,7 +161,7 @@ async function main() {
       AssetHandlerProxy: assetHandler.address,
       ERC20Guard: erc20Guard.address,
       UniswapV2RouterGuard: uniswapV2RouterGuard.address,
-      SushiMiniChefV2Guard: sushiMiniChefV2.address,
+      SushiMiniChefV2Guard: sushiMiniChefV2Guard.address,
       SushiLPAssetGuard: sushiLPAssetGuard.address,
     },
   };

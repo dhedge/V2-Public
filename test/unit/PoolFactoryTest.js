@@ -893,20 +893,17 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on(
-        "Exchange",
-        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-          event.removeListener();
+      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+        event.removeListener();
 
-          resolve({
-            managerLogicAddress: managerLogicAddress,
-            sourceAsset: sourceAsset,
-            sourceAmount: sourceAmount,
-            destinationAsset: destinationAsset,
-            time: time,
-          });
-        },
-      );
+        resolve({
+          pool: pool,
+          sourceAsset: sourceAsset,
+          sourceAmount: sourceAmount,
+          destinationAsset: destinationAsset,
+          time: time,
+        });
+      });
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -971,20 +968,17 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on(
-        "Exchange",
-        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-          event.removeListener();
+      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+        event.removeListener();
 
-          resolve({
-            managerLogicAddress: managerLogicAddress,
-            sourceAsset: sourceAsset,
-            sourceAmount: sourceAmount,
-            destinationAsset: destinationAsset,
-            time: time,
-          });
-        },
-      );
+        resolve({
+          pool: pool,
+          sourceAsset: sourceAsset,
+          sourceAmount: sourceAmount,
+          destinationAsset: destinationAsset,
+          time: time,
+        });
+      });
 
       setTimeout(() => {
         reject(new Error("timeout"));

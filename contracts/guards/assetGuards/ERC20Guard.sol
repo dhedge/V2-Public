@@ -37,9 +37,9 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../IGuard.sol";
-import "../IAssetGuard.sol";
 import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IAssetGuard.sol";
+import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";

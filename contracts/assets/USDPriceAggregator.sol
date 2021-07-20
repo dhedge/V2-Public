@@ -5,9 +5,7 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
-import "../interfaces/IUniswapV2Pair.sol";
 import "../interfaces/IERC20Extended.sol"; // includes decimals()
-import "../utils/DhedgeMath.sol";
 
 /**
  * @title USD price aggregator. For dHEDGE LP Price Feeds.
