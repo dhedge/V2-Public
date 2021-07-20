@@ -98,8 +98,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   /// @dev Withdrawal processing is not applicable for this guard
   /// @return withdrawAsset and
   /// @return withdrawBalance are used to withdraw portion of asset balance to investor
-  /// @return withdrawContracts and
-  /// @return txData are used to execute the withdrawal transaction in PoolLogic
+  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
     address pool,
     address asset,
@@ -113,14 +112,13 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     returns (
       address withdrawAsset,
       uint256 withdrawBalance,
-      address[] memory withdrawContracts,
-      bytes[] memory txData
+      MultiTransaction[] memory transactions
     )
   {
     withdrawAsset = asset;
     uint256 totalAssetBalance = getBalance(pool, asset);
     withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
-    return (withdrawAsset, withdrawBalance, withdrawContracts, txData);
+    return (withdrawAsset, withdrawBalance, transactions);
   }
 
   /// @notice Returns the balance of the managed asset

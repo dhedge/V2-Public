@@ -148,8 +148,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
         // returns address(0) if it's not supported in aave
         address factory = IPoolManagerLogic(_poolManagerLogic).factory();
         address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
-        (, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
-        .getReserveTokensAddresses(supportedAssets[i].asset);
+        (, address stableDebtToken, address variableDebtToken) =
+          IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(supportedAssets[i].asset);
 
         // check if asset is not supported or debt amount is zero
         require(
