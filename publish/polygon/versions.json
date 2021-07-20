@@ -149,10 +149,10 @@
           "aggregator": "0xDd3988fBdAD0D180f7c921035a83196c4F9289C5"
         },
         {
-          "name": "Sushi LP WETH-USDC",
+          "name": "Sushi LP USDC-WETH",
           "asset": "0x34965ba0ac2451a34a0471f04cca3f990b8dea27",
           "assetType": "2",
-          "aggregator": "0xCA62ffC0DF456226E07708076663B1725f3Aa487"
+          "aggregator": "0x3E10fB10f4e10e5bE527841Fc56F743DcB2672d0"
         },
         {
           "name": "Sushi LP SNX-WETH",
