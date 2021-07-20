@@ -61,9 +61,9 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IManaged.sol";
-import "./guards/IGuard.sol";
-import "./guards/IAssetGuard.sol";
-import "./guards/assetGuards/IAaveLendingPoolAssetGuard.sol";
+import "./interfaces/guards/IGuard.sol";
+import "./interfaces/guards/IAssetGuard.sol";
+import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
