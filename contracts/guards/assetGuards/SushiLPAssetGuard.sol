@@ -52,12 +52,14 @@ contract SushiLPAssetGuard is ERC20Guard {
 
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
+  /// @notice Initialise for the contract
+  /// @dev Set up the sushiPoolIds mapping from sushiStaking contract
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
-  /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
-  constructor(address _sushiStaking, SushiPool[] memory sushiPools) {
+  constructor(address _sushiStaking) {
     sushiStaking = _sushiStaking;
-    for (uint256 i = 0; i < sushiPools.length; i++) {
-      sushiPoolIds[sushiPools[i].lpToken] = sushiPools[i].stakingPoolId;
+    IMiniChefV2 sushiMiniChefV2 = IMiniChefV2(sushiStaking);
+    for (uint256 i = 0; i < sushiMiniChefV2.poolLength(); i++) {
+      sushiPoolIds[sushiMiniChefV2.lpToken(i)] = i;
     }
   }
 
