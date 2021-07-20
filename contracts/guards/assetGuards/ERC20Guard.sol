@@ -135,4 +135,13 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   function getDecimals(address asset) external view virtual override returns (uint256 decimals) {
     decimals = IERC20Extended(asset).decimals();
   }
+
+  /// @notice Necessary check for remove asset
+  /// @param pool Address of the pool
+  /// @param asset Address of the remove asset
+  function removeAssetCheck(address pool, address asset) external view virtual override {
+    uint256 balance = getBalance(pool, asset);
+    // Allowing some dust
+    require(balance <= 10000, "clear your position first");
+  }
 }
