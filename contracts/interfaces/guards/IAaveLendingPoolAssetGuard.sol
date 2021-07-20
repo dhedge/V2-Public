@@ -35,7 +35,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "../IAssetGuard.sol";
+import "./IAssetGuard.sol";
 
 interface IAaveLendingPoolAssetGuard {
   function flashloanProcessing(

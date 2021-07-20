@@ -61,9 +61,9 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IManaged.sol";
-import "./guards/IGuard.sol";
-import "./guards/IAssetGuard.sol";
-import "./guards/assetGuards/IAaveLendingPoolAssetGuard.sol";
+import "./interfaces/guards/IGuard.sol";
+import "./interfaces/guards/IAssetGuard.sol";
+import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -256,8 +256,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint16 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
-      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) =
-        _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
+      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) = _withdrawProcessing(
+        _supportedAssets[i].asset,
+        msg.sender,
+        portion
+      );
 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
@@ -445,10 +448,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
-    uint256 available =
-      currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
-        currentTokenPrice
-      );
+    uint256 available = currentTokenPrice
+    .sub(_lastFeeMintPrice)
+    .mul(_tokenSupply)
+    .mul(_feeNumerator)
+    .div(_feeDenominator)
+    .div(currentTokenPrice);
 
     return available;
   }
@@ -465,8 +470,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
 
-    uint256 available =
-      _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
+    uint256 available = _availableManagerFee(
+      fundValue,
+      tokenSupply,
+      tokenPriceAtLastFeeMint,
+      managerFeeNumerator,
+      managerFeeDenominator
+    );
 
     // Ignore dust when minting performance fees
     if (available < 10000) return fundValue;
