@@ -52,6 +52,8 @@ contract SushiLPAssetGuard is ERC20Guard {
 
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
+  event SushiPoolAdded(address indexed lpToken, uint256 indexed poolId);
+
   /// @notice Initialise for the contract
   /// @dev Set up the sushiPoolIds mapping from sushiStaking contract
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
@@ -122,5 +124,12 @@ contract SushiLPAssetGuard is ERC20Guard {
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
     uint256 poolBalance = IERC20(asset).balanceOf(pool);
     balance = stakedBalance.add(poolBalance);
+  }
+
+  function setSushiPoolId(address lpToken, uint256 poolId) external {
+    require(lpToken != address(0), "Invalid lpToken address");
+
+    sushiPoolIds[lpToken] = poolId;
+    emit SushiPoolAdded(lpToken, poolId);
   }
 }
