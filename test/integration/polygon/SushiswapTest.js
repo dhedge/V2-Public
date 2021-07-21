@@ -935,6 +935,5 @@ describe("Sushiswap V2 Test", function () {
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
       checkAlmostSame(eventWithdrawal.totalSupply, (totalSupply - withdrawAmount).toString());
     });
-
   });
 });
