@@ -795,7 +795,6 @@ describe("Polygon Mainnet Test", function () {
 
       const incentivesController = await ethers.getContractAt(IAaveIncentivesController.abi, aaveIncentivesController);
       const remainingRewardsBefore = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
-      console.log("remainingRewardsBefore - ", remainingRewardsBefore);
       expect(remainingRewardsBefore).to.be.gt(0);
       const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
@@ -820,7 +819,6 @@ describe("Polygon Mainnet Test", function () {
       await poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi);
 
       const remainingRewardsAfter = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
-      console.log("remainingRewardsAfter - ", remainingRewardsAfter);
       expect(remainingRewardsAfter).to.lt(remainingRewardsBefore);
       const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
       expect(totalFundValueAfter).to.be.gt(totalFundValueBefore);
