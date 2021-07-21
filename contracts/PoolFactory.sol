@@ -99,6 +99,8 @@ contract PoolFactory is
 
   event SetTrackingCode(bytes32 code);
 
+  event SetManagerFeeNumeratorChangeDelay(uint256 delay);
+
   address[] public deployedFunds;
 
   address public override daoAddress;
@@ -318,6 +320,8 @@ contract PoolFactory is
 
   function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
     managerFeeNumeratorChangeDelay = delay;
+
+    emit SetManagerFeeNumeratorChangeDelay(delay);
   }
 
   function getManagerFeeNumeratorChangeDelay() external view override returns (uint256) {

@@ -57,6 +57,19 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "_chainlinkTimeout",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetChainlinkTimeout",
+    "type": "event"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
