@@ -49,7 +49,7 @@ import "../interfaces/IHasSupportedAsset.sol";
 contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
-  event ClaimRewards(address fundAddress, address aaveIncentivesController, uint256 amount);
+  event ClaimRewards(address fundAddress, address aaveIncentivesController, uint256 amount, uint256 time);
 
   /// @notice Transaction guard for Aave incentives controller
   /// @dev It supports claimRewards functionality
@@ -76,9 +76,9 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
 
       require(onBehalfOf == poolLogic, "recipient is not pool");
 
-      emit ClaimRewards(poolLogic, to, amount);
+      emit ClaimRewards(poolLogic, to, amount, block.timestamp);
 
-      txType = 16; // Aave `ClaimRewards` type
+      txType = 7; // `Claim` type
       return txType;
     }
   }
