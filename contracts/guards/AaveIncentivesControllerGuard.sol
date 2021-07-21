@@ -49,7 +49,7 @@ import "../interfaces/IHasSupportedAsset.sol";
 contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
-  event ClaimRewards(address fundAddress, address aaveIncentivesController, uint256 amount, uint256 time);
+  event Claim(address fundAddress, address stakingContract, uint256 time);
 
   address public rewardToken;
 
@@ -77,13 +77,12 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
     if (method == bytes4(keccak256("claimRewards(address[],uint256,address)"))) {
-      uint256 amount = uint256(getInput(data, 1));
       address onBehalfOf = convert32toAddress(getInput(data, 2));
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardToken), "unsupported reward asset");
       require(onBehalfOf == poolLogic, "recipient is not pool");
 
-      emit ClaimRewards(poolLogic, to, amount, block.timestamp);
+      emit Claim(poolLogic, to, block.timestamp);
 
       txType = 7; // `Claim` type
       return txType;

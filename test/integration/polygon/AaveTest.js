@@ -781,13 +781,6 @@ describe("Polygon Mainnet Test", function () {
       );
     });
 
-    it("should fail to remove asset", async () => {
-      expect(poolManagerLogicProxy.changeAssets([], [dai])).to.revertedWith("repay Aave debt first");
-      expect(poolManagerLogicProxy.changeAssets([], [usdc])).to.revertedWith("withdraw Aave collateral first");
-      expect(poolManagerLogicProxy.changeAssets([], [aaveLendingPool])).to.revertedWith("clear your position first");
-      expect(poolManagerLogicProxy.changeAssets([], [weth])).to.revertedWith("clear your position first");
-    });
-
     it("should be able to claim matic rewards", async function () {
       const IAaveIncentivesController = await hre.artifacts.readArtifact("IAaveIncentivesController");
       const iAaveIncentivesController = new ethers.utils.Interface(IAaveIncentivesController.abi);
@@ -796,8 +789,6 @@ describe("Polygon Mainnet Test", function () {
       const incentivesController = await ethers.getContractAt(IAaveIncentivesController.abi, aaveIncentivesController);
       const remainingRewardsBefore = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
       expect(remainingRewardsBefore).to.be.gt(0);
-      const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
-      const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi),
@@ -816,6 +807,9 @@ describe("Polygon Mainnet Test", function () {
         poolLogicProxy.address,
       ]);
 
+      const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
+      const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+
       await poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi);
 
       const remainingRewardsAfter = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
@@ -824,6 +818,13 @@ describe("Polygon Mainnet Test", function () {
       expect(totalFundValueAfter).to.be.gt(totalFundValueBefore);
       const wmaticBalanceAfter = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
       expect(wmaticBalanceAfter).to.be.gt(wmaticBalanceBefore);
+    });
+
+    it("should fail to remove asset", async () => {
+      expect(poolManagerLogicProxy.changeAssets([], [dai])).to.revertedWith("repay Aave debt first");
+      expect(poolManagerLogicProxy.changeAssets([], [usdc])).to.revertedWith("withdraw Aave collateral first");
+      expect(poolManagerLogicProxy.changeAssets([], [aaveLendingPool])).to.revertedWith("clear your position first");
+      expect(poolManagerLogicProxy.changeAssets([], [weth])).to.revertedWith("clear your position first");
     });
   });
 });
