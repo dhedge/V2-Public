@@ -7,4 +7,6 @@ interface IAaveIncentivesController {
     uint256 amount,
     address to
   ) external;
+
+  function getUserUnclaimedRewards(address user) external view returns (uint256 rewards);
 }

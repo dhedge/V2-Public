@@ -51,6 +51,12 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
 
   event ClaimRewards(address fundAddress, address aaveIncentivesController, uint256 amount, uint256 time);
 
+  address public rewardToken;
+
+  constructor(address _rewardToken) {
+    rewardToken = _rewardToken;
+  }
+
   /// @notice Transaction guard for Aave incentives controller
   /// @dev It supports claimRewards functionality
   /// @param _poolManagerLogic the pool manager logic
@@ -74,6 +80,7 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
       uint256 amount = uint256(getInput(data, 1));
       address onBehalfOf = convert32toAddress(getInput(data, 2));
 
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardToken), "unsupported reward asset");
       require(onBehalfOf == poolLogic, "recipient is not pool");
 
       emit ClaimRewards(poolLogic, to, amount, block.timestamp);
