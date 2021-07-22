@@ -87,6 +87,12 @@ contract SushiLPAggregator is IAggregatorV3Interface {
 
   /* ========== INTERNAL ========== */
 
+  /**
+   * @dev Get the latest round data from Chainlink for aggregator0 and aggregator1.
+   * @return answer0 The price - the latest round data of token0
+   * @return answer1 The price - the latest round data of token1
+   * @return updatedAt Timestamp of when the round was updated.
+   */
   function _getTokenPrices()
     internal
     view
@@ -108,6 +114,11 @@ contract SushiLPAggregator is IAggregatorV3Interface {
     return (uint256(answer0), uint256(answer1), updatedAt);
   }
 
+  /**
+   * @dev Get the latest round data from Chainlink for the token.
+   * @return _answer The price - the latest round data of a given token
+   * @return updatedAt Timestamp of when the round was updated.
+   */
   function _getTokenPrice(address aggregator) internal view returns (int256 answer, uint256 updatedAt) {
     try IAggregatorV3Interface(aggregator).latestRoundData() returns (
       uint80,
