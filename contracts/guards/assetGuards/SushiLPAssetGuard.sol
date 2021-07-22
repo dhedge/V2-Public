@@ -54,12 +54,16 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
 
   event WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time);
 
+  event SushiPoolAdded(address indexed lpToken, uint256 indexed poolId);
+
+  /// @notice Initialise for the contract
+  /// @dev Set up the sushiPoolIds mapping from sushiStaking contract
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
-  /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
-  constructor(address _sushiStaking, SushiPool[] memory sushiPools) {
+  constructor(address _sushiStaking) {
     sushiStaking = _sushiStaking;
-    for (uint256 i = 0; i < sushiPools.length; i++) {
-      sushiPoolIds[sushiPools[i].lpToken] = sushiPools[i].stakingPoolId;
+    IMiniChefV2 sushiMiniChefV2 = IMiniChefV2(sushiStaking);
+    for (uint256 i = 0; i < sushiMiniChefV2.poolLength(); i++) {
+      sushiPoolIds[sushiMiniChefV2.lpToken(i)] = i;
     }
   }
 
@@ -104,4 +108,14 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
     uint256 poolBalance = IERC20(asset).balanceOf(pool);
     balance = stakedBalance.add(poolBalance);
   }
+
+  /// @dev Set pool Id for sushiPool
+  /// @param lpToken The address of the LP token
+  /// @param poolId The Id of the staking pool
+  function setSushiPoolId(address lpToken, uint256 poolId) external {
+     require(lpToken != address(0), "Invalid lpToken address");
+
+     sushiPoolIds[lpToken] = poolId;
+     emit SushiPoolAdded(lpToken, poolId);
+   }
 }
