@@ -34,21 +34,13 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import "../utils/TxDataUtils.sol";
 import "../interfaces/guards/IGuard.sol";
-import "../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 
 /// @title Transaction guard for Aave's incentives controller contract
 contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
-  using SafeMathUpgradeable for uint256;
-
   event Claim(address fundAddress, address stakingContract, uint256 time);
 
   address public rewardToken;
@@ -77,6 +69,8 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
     if (method == bytes4(keccak256("claimRewards(address[],uint256,address)"))) {
+      // https://github.com/aave/aave-stake-v2/blob/feat/deployment-scripts/contracts/stake/AaveIncentivesController.sol#L129
+
       address onBehalfOf = convert32toAddress(getInput(data, 2));
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardToken), "unsupported reward asset");
