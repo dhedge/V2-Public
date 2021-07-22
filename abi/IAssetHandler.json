@@ -117,6 +117,30 @@
         "type": "address"
       }
     ],
+    "name": "getAssetTypeAndAggregator",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      }
+    ],
     "name": "getUSDPrice",
     "outputs": [
       {
