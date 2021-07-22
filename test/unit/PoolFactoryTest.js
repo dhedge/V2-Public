@@ -68,7 +68,7 @@ describe("PoolFactory", function () {
     seth = sethProxy.address;
     slink = slinkProxy.address;
     sushiLPLinkWeth = sushiLPLinkWethAsset.address;
-    sushiLPLinkWethPoolId = 1; // set Sushi LP staking contract Pool Id
+    sushiLPLinkWethPoolId = 0; // set Sushi LP staking contract Pool Id
     badtoken = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
     // mock IAddressResolver
@@ -213,9 +213,7 @@ describe("PoolFactory", function () {
     erc20Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address, [
-      [sushiLPLinkWeth, sushiLPLinkWethPoolId],
-    ]); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
@@ -386,8 +384,10 @@ describe("PoolFactory", function () {
       userInfo,
       abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
     );
-    const lpToken = iMiniChefV2.encodeFunctionData("lpToken", [sushiLPLinkWethPoolId]);
-    await sushiMiniChefV2.givenCalldataReturn(lpToken, abiCoder.encode(["address"], [sushiLPLinkWeth]));
+    const poolLengthABI = iMiniChefV2.encodeFunctionData("poolLength", []);
+    await sushiMiniChefV2.givenCalldataReturnUint(poolLengthABI, "1");
+    const lpTokenABI = iMiniChefV2.encodeFunctionData("lpToken", [sushiLPLinkWethPoolId]);
+    await sushiMiniChefV2.givenCalldataReturnAddress(lpTokenABI, sushiLPLinkWeth);
   });
 
   it("should return correct values ", async function () {
@@ -637,7 +637,7 @@ describe("PoolFactory", function () {
     await slinkProxy.givenCalldataReturnUint(balanceOfABI, 1);
 
     await expect(poolManagerLogicManagerProxy.changeAssets([], [slink])).to.be.revertedWith(
-      "revert cannot remove non-empty asset",
+      "cannot remove non-empty asset",
     );
 
     // Can enable deposit asset
@@ -1270,6 +1270,15 @@ describe("PoolFactory", function () {
 
       expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
     });
+  });
+
+  it("can set Sushi pool ID", async () => {
+    expect(sushiLPAssetGuard.setSushiPoolId(ZERO_ADDRESS, "1")).to.be.revertedWith("Invalid lpToken address");
+
+    const contract = "0x1111111111111111111111111111111111111111";
+    await sushiLPAssetGuard.setSushiPoolId(contract, "1");
+    const poolId = await sushiLPAssetGuard.sushiPoolIds(contract);
+    expect(poolId).to.be.equal("1");
   });
 
   describe("Staking", function () {
