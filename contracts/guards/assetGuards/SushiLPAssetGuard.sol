@@ -113,9 +113,9 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
   /// @param lpToken The address of the LP token
   /// @param poolId The Id of the staking pool
   function setSushiPoolId(address lpToken, uint256 poolId) external {
-     require(lpToken != address(0), "Invalid lpToken address");
+    require(lpToken != address(0), "Invalid lpToken address");
 
-     sushiPoolIds[lpToken] = poolId;
-     emit SushiPoolAdded(lpToken, poolId);
-   }
+    sushiPoolIds[lpToken] = poolId;
+    emit SushiPoolAdded(lpToken, poolId);
+  }
 }
