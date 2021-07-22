@@ -72,13 +72,17 @@ describe("PoolFactory", function () {
     badtoken = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
     // mock IAddressResolver
-    const IAddressResolver = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/IAddressResolver.sol:IAddressResolver");
+    const IAddressResolver = await hre.artifacts.readArtifact(
+      "contracts/interfaces/synthetix/IAddressResolver.sol:IAddressResolver",
+    );
     const iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi);
     let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
     // mock Sushi LINK-WETH LP
-    const IUniswapV2Pair = await hre.artifacts.readArtifact("contracts/interfaces/uniswapv2/IUniswapV2Pair.sol:IUniswapV2Pair");
+    const IUniswapV2Pair = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv2/IUniswapV2Pair.sol:IUniswapV2Pair",
+    );
     const iUniswapV2Pair = new ethers.utils.Interface(IUniswapV2Pair.abi);
     const token0Abi = iUniswapV2Pair.encodeFunctionData("token0", []);
     await sushiLPLinkWethAsset.givenCalldataReturnAddress(token0Abi, slink);
@@ -121,7 +125,9 @@ describe("PoolFactory", function () {
     await slinkAsset.givenCalldataReturnAddress(proxyABI, slinkProxy.address);
 
     // mock ISynthAddressProxy
-    const ISynthAddressProxy = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthAddressProxy.sol:ISynthAddressProxy");
+    const ISynthAddressProxy = await hre.artifacts.readArtifact(
+      "contracts/interfaces/synthetix/ISynthAddressProxy.sol:ISynthAddressProxy",
+    );
     const iSynthAddressProxy = new ethers.utils.Interface(ISynthAddressProxy.abi);
     const targetABI = iSynthAddressProxy.encodeFunctionData("target", []);
     await susdProxy.givenCalldataReturnAddress(targetABI, susdAsset.address);
@@ -142,7 +148,9 @@ describe("PoolFactory", function () {
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
     // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("contracts/assets/SushiLPAggregator.sol:SushiLPAggregator");
+    const SushiLPAggregator = await ethers.getContractFactory(
+      "contracts/assets/SushiLPAggregator.sol:SushiLPAggregator",
+    );
     sushiLPAggregator = await SushiLPAggregator.deploy(
       sushiLPLinkWeth,
       link_price_feed.address,
@@ -203,15 +211,21 @@ describe("PoolFactory", function () {
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
 
-    const UniswapV2RouterGuard = await ethers.getContractFactory("contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard");
+    const UniswapV2RouterGuard = await ethers.getContractFactory(
+      "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
+    );
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory.address);
     uniswapV2RouterGuard.deployed();
 
-    const UniswapV3SwapGuard = await ethers.getContractFactory("contracts/guards/uniswapV3/UniswapV3SwapGuard.sol:UniswapV3SwapGuard");
+    const UniswapV3SwapGuard = await ethers.getContractFactory(
+      "contracts/guards/uniswapV3/UniswapV3SwapGuard.sol:UniswapV3SwapGuard",
+    );
     uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
     uniswapV3SwapGuard.deployed();
 
-    const SushiMiniChefV2Guard = await ethers.getContractFactory("contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard");
+    const SushiMiniChefV2Guard = await ethers.getContractFactory(
+      "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
+    );
     sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken.address, wmaticToken.address);
     sushiMiniChefV2Guard.deployed();
 
@@ -220,7 +234,9 @@ describe("PoolFactory", function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const SushiLPAssetGuard = await ethers.getContractFactory("contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard");
+    const SushiLPAssetGuard = await ethers.getContractFactory(
+      "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
+    );
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address, [
       [sushiLPLinkWeth, sushiLPLinkWethPoolId],
     ]); // initialise with Sushi staking pool Id
@@ -235,7 +251,9 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
-    await expect(poolFactory.connect(user1).setLogic(poolLogic.address, poolManagerLogic.address)).to.be.revertedWith("caller is not the owner");
+    await expect(poolFactory.connect(user1).setLogic(poolLogic.address, poolManagerLogic.address)).to.be.revertedWith(
+      "caller is not the owner",
+    );
     await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
@@ -820,7 +838,9 @@ describe("PoolFactory", function () {
     });
 
     const sourceAmount = (100e18).toString();
-    const IUniswapV2Router = await hre.artifacts.readArtifact("contracts/interfaces/uniswapv2/IUniswapV2Router.sol:IUniswapV2Router");
+    const IUniswapV2Router = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv2/IUniswapV2Router.sol:IUniswapV2Router",
+    );
     const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
     let swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
@@ -930,7 +950,9 @@ describe("PoolFactory", function () {
     });
 
     const sourceAmount = (100e18).toString();
-    const IUniswapV3Router = await hre.artifacts.readArtifact("contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router");
+    const IUniswapV3Router = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router",
+    );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     const exactInputSingleParams = {
       tokenIn: susd,
@@ -1005,7 +1027,9 @@ describe("PoolFactory", function () {
     });
 
     const sourceAmount = (100e18).toString();
-    const IUniswapV3Router = await hre.artifacts.readArtifact("contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router");
+    const IUniswapV3Router = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router",
+    );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     // https://etherscan.io/tx/0xa8423934015c7e893e06721bbc01e42b8139b20764b9d23dbcb831e7b18b0e60
     // path on etherscan 0x c4a11aaf6ea915ed7ac194161d2fc9384f15bff2 000bb8 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 0001f4 dac17f958d2ee523a2206206994597c13d831ec7
@@ -1648,5 +1672,4 @@ describe("PoolFactory", function () {
       expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
     });
   });
-
 });
