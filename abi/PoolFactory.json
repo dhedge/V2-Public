@@ -227,6 +227,19 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "delay",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetManagerFeeNumeratorChangeDelay",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "numerator",
         "type": "uint256"
       },
