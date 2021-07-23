@@ -34,7 +34,7 @@
 
 pragma solidity 0.7.6;
 
-interface IHasGuardInfo {
+interface IHasGuardInfoV23 {
   // Get guard
   function getGuard(address extContract) external view returns (address);
 

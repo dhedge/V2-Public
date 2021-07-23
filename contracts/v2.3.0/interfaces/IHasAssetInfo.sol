@@ -34,7 +34,7 @@
 
 pragma solidity 0.7.6;
 
-interface IHasAssetInfo {
+interface IHasAssetInfoV23 {
   function isValidAsset(address asset) external view returns (bool);
 
   function getAssetPrice(address asset) external view returns (uint256);

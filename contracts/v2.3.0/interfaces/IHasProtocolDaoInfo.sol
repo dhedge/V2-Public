@@ -34,6 +34,6 @@
 
 pragma solidity 0.7.6;
 
-interface IHasProtocolDaoInfo {
+interface IHasProtocolDaoInfoV23 {
   function owner() external view returns (address);
 }

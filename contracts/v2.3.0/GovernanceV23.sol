@@ -39,7 +39,7 @@ import "./interfaces/IGovernance.sol";
 
 /// @title Governance
 /// @dev A contract with storage managed by governance
-contract GovernanceV23 is IGovernance, Ownable {
+contract GovernanceV23 is IGovernanceV23, Ownable {
   event SetContractGuard(address extContract, address guardAddress);
 
   event SetAssetGuard(uint16 assetType, address guardAddress);
