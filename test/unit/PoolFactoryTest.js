@@ -1629,6 +1629,18 @@ describe("PoolFactory", function () {
       expect(withdrawLP[2]).to.equal(true);
       expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
     });
+
+    it("can set Sushi pool ID", async () => {
+      expect(sushiLPAssetGuard.setSushiPoolId(ZERO_ADDRESS, "1")).to.be.revertedWith("Invalid lpToken address");
+
+      const contract = "0x1111111111111111111111111111111111111111";
+      expect(sushiLPAssetGuard.connect(user1).setSushiPoolId(contract, "1")).to.be.revertedWith("caller is not the owner");
+
+      await sushiLPAssetGuard.setSushiPoolId(contract, "1");
+      const poolId = await sushiLPAssetGuard.sushiPoolIds(contract);
+      expect(poolId).to.be.equal("1");
+    });
+
   });
 
   it("should be able to upgrade/set implementation logic", async function () {

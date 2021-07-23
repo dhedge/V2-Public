@@ -36,11 +36,13 @@ pragma experimental ABIEncoderV2;
 
 import "./ERC20Guard.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Sushi LP token asset guard
 /// @dev Asset type = 2
-contract SushiLPAssetGuard is ERC20Guard {
+contract SushiLPAssetGuard is ERC20Guard, Ownable {
   using SafeMathUpgradeable for uint256;
 
   struct SushiPool {
@@ -126,7 +128,10 @@ contract SushiLPAssetGuard is ERC20Guard {
     balance = stakedBalance.add(poolBalance);
   }
 
-  function setSushiPoolId(address lpToken, uint256 poolId) external {
+  /// @notice Setting sushi pool Id
+  /// @param lpToken address of the LP Token
+  /// @param poolId Id of LP pair pool
+  function setSushiPoolId(address lpToken, uint256 poolId) external onlyOwner {
     require(lpToken != address(0), "Invalid lpToken address");
 
     sushiPoolIds[lpToken] = poolId;

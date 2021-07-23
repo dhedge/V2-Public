@@ -98,15 +98,6 @@ describe("Sushiswap V2 Test", function () {
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
   });
 
-  it("can set Sushi pool ID", async () => {
-    expect(sushiLPAssetGuard.setSushiPoolId(ZERO_ADDRESS, "1")).to.be.revertedWith("Invalid lpToken address");
-
-    const contract = "0x1111111111111111111111111111111111111111";
-    await sushiLPAssetGuard.setSushiPoolId(contract, "1");
-    const poolId = await sushiLPAssetGuard.sushiPoolIds(contract);
-    expect(poolId).to.be.equal("1");
-  });
-
   it("Should be able to get USDC", async function () {
     const IWETH = await hre.artifacts.readArtifact("IWETH");
     WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
