@@ -30,6 +30,8 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   mapping(address => uint16) public override assetTypes; // for asset types refer to header comment
   mapping(address => address) public override priceAggregators;
 
+  event SetChainlinkTimeout(uint256 _chainlinkTimeout);
+
   /// @dev initialisation for the contract
   /// @param assets An array of assets to initialise
   function initialize(Asset[] memory assets) external initializer {
@@ -80,6 +82,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   /// @param newTimeoutPeriod A new time in seconds for the timeout
   function setChainlinkTimeout(uint256 newTimeoutPeriod) external onlyOwner {
     chainlinkTimeout = newTimeoutPeriod;
+    emit SetChainlinkTimeout(newTimeoutPeriod);
   }
 
   /// @dev Add valid asset with price aggregator

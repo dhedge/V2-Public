@@ -47,9 +47,11 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IGovernance.sol";
+import "./interfaces/IManaged.sol";
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /// @title Pool Factory
 /// @dev A Factory to spawn pools
@@ -98,6 +100,8 @@ contract PoolFactory is
   event SetAssetHandler(address assetHandler);
 
   event SetTrackingCode(bytes32 code);
+
+  event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
   address[] public deployedFunds;
 
@@ -318,6 +322,8 @@ contract PoolFactory is
 
   function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
     managerFeeNumeratorChangeDelay = delay;
+
+    emit SetManagerFeeNumeratorChangeDelay(delay);
   }
 
   function getManagerFeeNumeratorChangeDelay() external view override returns (uint256) {
@@ -487,6 +493,51 @@ contract PoolFactory is
   /// @return full array of deployed funds
   function getDeployedFunds() external view returns (address[] memory) {
     return deployedFunds;
+  }
+
+  /**
+   * @notice Returns all invested pools by a given user
+   * @param user the user address
+   */
+  function getInvestedPools(address user) external view returns (address[] memory) {
+    uint256 length = deployedFunds.length;
+    address[] memory investedPools = new address[](length);
+    uint256 index = 0;
+    for (uint256 i = 0; i < length; i++) {
+      if (IERC20Upgradeable(deployedFunds[i]).balanceOf(user) > 0) {
+        investedPools[index] = deployedFunds[i];
+        index++;
+      }
+    }
+
+    uint256 reduceLength = length.sub(index);
+    assembly {
+      mstore(investedPools, sub(mload(investedPools), reduceLength))
+    }
+    return investedPools;
+  }
+
+  /**
+   * @notice Returns all managed pools by a given manager
+   * @param manager the manager address
+   */
+  function getManagedPools(address manager) external view returns (address[] memory) {
+    uint256 length = deployedFunds.length;
+    address[] memory managedPools = new address[](length);
+    uint256 index = 0;
+    for (uint256 i = 0; i < length; i++) {
+      address poolManagerLogic = IPoolLogic(deployedFunds[i]).poolManagerLogic();
+      if (IManaged(poolManagerLogic).manager() == manager) {
+        managedPools[index] = deployedFunds[i];
+        index++;
+      }
+    }
+
+    uint256 reduceLength = length.sub(index);
+    assembly {
+      mstore(managedPools, sub(mload(managedPools), reduceLength))
+    }
+    return managedPools;
   }
 
   uint256[50] private __gap;

@@ -100,7 +100,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     balance = totalCollateralInUsd.sub(totalDebtInUsd);
   }
 
-  /// @notice Returns the decimal
+  /// @notice Returns decimal of the Aave lending pool asset
+  /// @dev Returns decimal 18
   function getDecimals(address) external pure override returns (uint256 decimals) {
     decimals = 18;
   }
@@ -276,7 +277,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
-  /// @notice Calculates DebtToken balances
+  /// @dev Calculates DebtToken balances
   /// @param pool the PoolLogic address
   /// @param portion the portion of assets to be withdrawn
   /// @return borrowAssets the borrow assets list
@@ -338,6 +339,14 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
+  /// @dev process flash loan and return the transactions for execution
+  /// @param pool the PoolLogic address
+  /// @param portion the portion of assets to be withdrawn
+  /// @param repayAssets Array of assets to be repaid
+  /// @param repayAmounts Array of amounts to be repaid
+  /// @param premiums Array of premiums to be paid for flash loan
+  /// @param interestRateModes Array of interest rate modes of the debts
+  /// @return transactions Array of transactions to be executed
   function flashloanProcessing(
     address pool,
     uint256 portion,
@@ -379,6 +388,12 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
+  /// @dev calculate and return repay Aave transactions for execution
+  /// @param pool the PoolLogic address
+  /// @param repayAssets Array of assets to be repaid
+  /// @param repayAmounts Array of amounts to be repaid
+  /// @param interestRateModes Array of interest rate modes of the debts
+  /// @return transactions Array of transactions to be executed
   function _repayAaveTransactions(
     address pool,
     address[] memory repayAssets,
@@ -409,6 +424,12 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
+  /// @dev calculate and return withdraw Aave transactions for execution
+  /// @param pool the PoolLogic address
+  /// @param portion the portion of assets to be withdrawn
+  /// @param swapRouter the swapRouter address
+  /// @param weth the weth address to swap in the path
+  /// @return transactions Array of transactions to be executed
   function _withdrawAaveTransactions(
     address pool,
     uint256 portion,
@@ -463,6 +484,14 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
+  /// @dev calculate and return repay flash loan transactions for execution
+  /// @param pool the PoolLogic address
+  /// @param swapRouter the swapRouter address
+  /// @param weth the weth address to swap in the path
+  /// @param repayAssets Array of assets to be repaid
+  /// @param repayAmounts Array of amounts to be repaid
+  /// @param premiums Array of premiums to be paid for flash loan
+  /// @return transactions Array of transactions to be executed
   function _repayFlashloanTransactions(
     address pool,
     address swapRouter,
