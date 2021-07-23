@@ -68,7 +68,7 @@ describe("PoolFactory", function () {
     seth = sethProxy.address;
     slink = slinkProxy.address;
     sushiLPLinkWeth = sushiLPLinkWethAsset.address;
-    sushiLPLinkWethPoolId = 1; // set Sushi LP staking contract Pool Id
+    sushiLPLinkWethPoolId = 0; // set Sushi LP staking contract Pool Id
     badtoken = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
     // mock IAddressResolver
@@ -237,9 +237,7 @@ describe("PoolFactory", function () {
     const SushiLPAssetGuard = await ethers.getContractFactory(
       "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
     );
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address, [
-      [sushiLPLinkWeth, sushiLPLinkWethPoolId],
-    ]); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
@@ -423,8 +421,10 @@ describe("PoolFactory", function () {
       userInfo,
       abiCoder.encode(["uint256", "uint256"], [amountLPStaked, amountRewarded]),
     );
-    const lpToken = iMiniChefV2.encodeFunctionData("lpToken", [sushiLPLinkWethPoolId]);
-    await sushiMiniChefV2.givenCalldataReturn(lpToken, abiCoder.encode(["address"], [sushiLPLinkWeth]));
+    const poolLengthABI = iMiniChefV2.encodeFunctionData("poolLength", []);
+    await sushiMiniChefV2.givenCalldataReturnUint(poolLengthABI, "1");
+    const lpTokenABI = iMiniChefV2.encodeFunctionData("lpToken", [sushiLPLinkWethPoolId]);
+    await sushiMiniChefV2.givenCalldataReturnAddress(lpTokenABI, sushiLPLinkWeth);
   });
 
   it("should return correct values ", async function () {
@@ -1670,6 +1670,19 @@ describe("PoolFactory", function () {
       expect(withdrawLP[0]).to.equal(sushiLPLinkWeth);
       expect(withdrawLP[2]).to.equal(true);
       expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
+    });
+
+    it("can set Sushi pool ID", async () => {
+      expect(sushiLPAssetGuard.setSushiPoolId(ZERO_ADDRESS, "1")).to.be.revertedWith("Invalid lpToken address");
+
+      const contract = "0x1111111111111111111111111111111111111111";
+      expect(sushiLPAssetGuard.connect(user1).setSushiPoolId(contract, "1")).to.be.revertedWith(
+        "caller is not the owner",
+      );
+
+      await sushiLPAssetGuard.setSushiPoolId(contract, "1");
+      const poolId = await sushiLPAssetGuard.sushiPoolIds(contract);
+      expect(poolId).to.be.equal("1");
     });
   });
 

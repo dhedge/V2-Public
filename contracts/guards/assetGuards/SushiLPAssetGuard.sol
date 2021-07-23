@@ -36,11 +36,13 @@ pragma experimental ABIEncoderV2;
 
 import "./ERC20Guard.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Sushi LP token asset guard
 /// @dev Asset type = 2
-contract SushiLPAssetGuard is ERC20Guard {
+contract SushiLPAssetGuard is ERC20Guard, Ownable {
   using SafeMathUpgradeable for uint256;
 
   struct SushiPool {
@@ -52,12 +54,16 @@ contract SushiLPAssetGuard is ERC20Guard {
 
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
 
+  event SushiPoolAdded(address indexed lpToken, uint256 indexed poolId);
+
+  /// @notice Initialise for the contract
+  /// @dev Set up the sushiPoolIds mapping from sushiStaking contract
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
-  /// @param sushiPools For mapping Sushi LP tokens to MiniChefV2 pool IDs
-  constructor(address _sushiStaking, SushiPool[] memory sushiPools) {
+  constructor(address _sushiStaking) {
     sushiStaking = _sushiStaking;
-    for (uint256 i = 0; i < sushiPools.length; i++) {
-      sushiPoolIds[sushiPools[i].lpToken] = sushiPools[i].stakingPoolId;
+    IMiniChefV2 sushiMiniChefV2 = IMiniChefV2(sushiStaking);
+    for (uint256 i = 0; i < sushiMiniChefV2.poolLength(); i++) {
+      sushiPoolIds[sushiMiniChefV2.lpToken(i)] = i;
     }
   }
 
@@ -120,5 +126,15 @@ contract SushiLPAssetGuard is ERC20Guard {
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
     uint256 poolBalance = IERC20(asset).balanceOf(pool);
     balance = stakedBalance.add(poolBalance);
+  }
+
+  /// @notice Setting sushi pool Id
+  /// @param lpToken address of the LP Token
+  /// @param poolId Id of LP pair pool
+  function setSushiPoolId(address lpToken, uint256 poolId) external onlyOwner {
+    require(lpToken != address(0), "Invalid lpToken address");
+
+    sushiPoolIds[lpToken] = poolId;
+    emit SushiPoolAdded(lpToken, poolId);
   }
 }
