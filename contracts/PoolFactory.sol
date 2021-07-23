@@ -158,6 +158,8 @@ contract PoolFactory is
     _setMaximumSupportedAssetCount(10);
 
     _setTrackingCode(0x4448454447450000000000000000000000000000000000000000000000000000);
+
+    poolStorageVersion = 230; // V2.3.0;
   }
 
   function createFund(
