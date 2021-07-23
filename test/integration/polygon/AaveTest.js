@@ -15,6 +15,7 @@ const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 // aave
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
 const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
+const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
 
 // For mainnet
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
@@ -28,6 +29,8 @@ const amweth = "0x28424507fefb6f7f8E9D3860F56504E4e5f5f390";
 const amusdc = "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F";
 const amusdt = "0x60D55F02A771d515e077c9C2403a1ef324885CeC";
 const amdai = "0x27f8d03b3a2196956ed754badc28d73be8830a6e";
+
+const variableDebtDai = "0x75c4d1Fb84429023170086f06E682DcbBF537b7d";
 
 const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
 const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
@@ -134,6 +137,10 @@ describe("Polygon Mainnet Test", function () {
     const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
     lendingEnabledAssetGuard.deployed();
 
+    const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
+    const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
+    aaveIncentivesControllerGuard.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
@@ -141,6 +148,7 @@ describe("Polygon Mainnet Test", function () {
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
     await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
+    await governance.setContractGuard(aaveIncentivesController, aaveIncentivesControllerGuard.address);
     await governance.setAddresses([
       [toBytes32("swapRouter"), sushiswapV2Router],
       [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
@@ -771,6 +779,45 @@ describe("Polygon Mainnet Test", function () {
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
         "failed to execute the call",
       );
+    });
+
+    it("should be able to claim matic rewards", async function () {
+      const IAaveIncentivesController = await hre.artifacts.readArtifact("IAaveIncentivesController");
+      const iAaveIncentivesController = new ethers.utils.Interface(IAaveIncentivesController.abi);
+      let claimRewardsAbi = iAaveIncentivesController.encodeFunctionData("claimRewards", [[variableDebtDai], 1, dai]);
+
+      const incentivesController = await ethers.getContractAt(IAaveIncentivesController.abi, aaveIncentivesController);
+      const remainingRewardsBefore = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
+      expect(remainingRewardsBefore).to.be.gt(0);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi),
+      ).to.be.revertedWith("unsupported reward asset");
+
+      // add supported assets
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      claimRewardsAbi = iAaveIncentivesController.encodeFunctionData("claimRewards", [
+        [variableDebtDai],
+        remainingRewardsBefore,
+        poolLogicProxy.address,
+      ]);
+
+      const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
+      const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+
+      await poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi);
+
+      const remainingRewardsAfter = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
+      expect(remainingRewardsAfter).to.lt(remainingRewardsBefore);
+      const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+      expect(totalFundValueAfter).to.be.gt(totalFundValueBefore);
+      const wmaticBalanceAfter = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
+      expect(wmaticBalanceAfter).to.be.gt(wmaticBalanceBefore);
     });
 
     it("should fail to remove asset", async () => {
