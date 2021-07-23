@@ -124,7 +124,7 @@ describe("Polygon Mainnet Test", function () {
     sushiMiniChefV2Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2, [[sushiLpUsdcWeth, sushiLPUsdcWethPoolId]]); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");

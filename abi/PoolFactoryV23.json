@@ -227,19 +227,6 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "delay",
-        "type": "uint256"
-      }
-    ],
-    "name": "SetManagerFeeNumeratorChangeDelay",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
         "name": "numerator",
         "type": "uint256"
       },
@@ -356,7 +343,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHasSupportedAsset.Asset[]",
+        "internalType": "struct IHasSupportedAssetV23.Asset[]",
         "name": "_supportedAssets",
         "type": "tuple[]"
       }
@@ -422,25 +409,6 @@
       {
         "internalType": "address",
         "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "name",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "destination",
         "type": "address"
       }
     ],
@@ -583,25 +551,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "getInvestedPools",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint8",
         "name": "_proxyType",
         "type": "uint8"
@@ -613,25 +562,6 @@
         "internalType": "address",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "manager",
-        "type": "address"
-      }
-    ],
-    "name": "getManagedPools",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
       }
     ],
     "stateMutability": "view",

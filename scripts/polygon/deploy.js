@@ -134,7 +134,7 @@ async function main() {
   console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
 
   const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-  sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2, [[sushiLpUsdcWeth, sushiLPUsdcWethPoolId]]); // initialise with Sushi staking pool Id
+  sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
   await sushiLPAssetGuard.deployed();
   console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
 
