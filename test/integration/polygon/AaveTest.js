@@ -67,9 +67,6 @@ describe("Polygon Mainnet Test", function () {
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
-    // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLpUsdcWeth, usdc_price_feed, eth_price_feed);
     // Deploy USD Price Aggregator
     const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
     usdPriceAggregator = await USDPriceAggregator.deploy();
@@ -78,7 +75,6 @@ describe("Polygon Mainnet Test", function () {
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
     const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
-    const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
     const assetDai = { asset: dai, assetType: 4, aggregator: dai_price_feed }; // Lending enabled
     const assetUsdc = { asset: usdc, assetType: 4, aggregator: usdc_price_feed }; // Lending enabled
@@ -89,7 +85,6 @@ describe("Polygon Mainnet Test", function () {
       assetDai,
       assetUsdc,
       assetSushi,
-      assetSushiLPWethUsdc,
       assetLendingPool,
     ];
 
@@ -106,6 +101,13 @@ describe("Polygon Mainnet Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+
+    // Deploy Sushi LP Aggregator
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
+    const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    await assetHandler.addAssets([assetSushiLPWethUsdc]);
+
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();

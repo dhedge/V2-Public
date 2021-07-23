@@ -27,6 +27,7 @@ const updateChainlinkAggregators = async (usd_price_feed, eth_price_feed, link_p
 };
 
 const checkAlmostSame = (a, b) => {
+  console.log(a.toString(), " = ", b.toString());
   expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
   expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
 };
