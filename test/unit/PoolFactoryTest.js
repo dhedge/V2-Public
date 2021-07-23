@@ -147,16 +147,6 @@ describe("PoolFactory", function () {
     // Aggregators
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
-    // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory(
-      "contracts/assets/SushiLPAggregator.sol:SushiLPAggregator",
-    );
-    sushiLPAggregator = await SushiLPAggregator.deploy(
-      sushiLPLinkWeth,
-      link_price_feed.address,
-      eth_price_feed.address,
-    );
-
     const Governance = await ethers.getContractFactory("Governance");
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
@@ -177,8 +167,7 @@ describe("PoolFactory", function () {
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
     const assetSushi = { asset: sushiToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
     const assetWmatic = { asset: wmaticToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
-    const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic, assetSushiLPLinkWeth];
+    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic];
 
     // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     // await assetHandler.deployed();
@@ -202,9 +191,11 @@ describe("PoolFactory", function () {
     poolFactory = await upgrades.upgradeProxy(poolFactoryV23.address, PoolFactoryLogic);
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
-    // Initialise pool factory
-    // await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-    // await poolFactory.deployed();
+    // Deploy Sushi LP Aggregator
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLPLinkWeth, poolFactory.address);
+    const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    await assetHandler.addAssets([assetSushiLPLinkWeth]);
 
     // Deploy contract guards
     const SynthetixGuard = await ethers.getContractFactory("contracts/guards/SynthetixGuard.sol:SynthetixGuard");

@@ -44,15 +44,10 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
     // Initialize Asset Price Consumer
 
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, usdc_price_feed, usdt_price_feed);
-    sushiLpAggregator.deployed();
-
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-    const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 0, aggregator: sushiLpAggregator.address };
-    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetSushiUsdcUsdt];
+    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
@@ -67,6 +62,12 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, poolFactory);
+    sushiLpAggregator.deployed();
+    const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 2, aggregator: sushiLpAggregator.address };
+    await assetHandler.addAssets([assetSushiUsdcUsdt]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
