@@ -34,7 +34,7 @@
 
 pragma solidity 0.7.6;
 
-interface IHasFeeInfo {
+interface IHasFeeInfoV23 {
   // Manager fee
   function getPoolManagerFee(address pool) external view returns (uint256, uint256);
 

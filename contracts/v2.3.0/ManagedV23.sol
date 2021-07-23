@@ -36,7 +36,7 @@ pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-contract Managed {
+contract ManagedV23 {
   using SafeMathUpgradeable for uint256;
 
   event ManagerUpdated(address newManager, string newManagerName);

@@ -37,8 +37,8 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "./PoolLogicV23.sol";
-import "./upgradability/ProxyFactory.sol";
-import "./interfaces/IAssetHandler.sol";
+import "../upgradability/ProxyFactory.sol";
+import "../interfaces/IAssetHandler.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
@@ -56,11 +56,11 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 contract PoolFactoryV23 is
   PausableUpgradeable,
   ProxyFactory,
-  IHasDaoInfo,
-  IHasFeeInfo,
-  IHasAssetInfo,
-  IHasGuardInfo,
-  IHasPausable
+  IHasDaoInfoV23,
+  IHasFeeInfoV23,
+  IHasAssetInfoV23,
+  IHasGuardInfoV23,
+  IHasPausableV23
 {
   using SafeMathUpgradeable for uint256;
 
@@ -163,34 +163,32 @@ contract PoolFactoryV23 is
     string memory _fundName,
     string memory _fundSymbol,
     uint256 _managerFeeNumerator,
-    IHasSupportedAsset.Asset[] memory _supportedAssets
+    IHasSupportedAssetV23.Asset[] memory _supportedAssets
   ) external returns (address) {
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
 
-    bytes memory poolLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,bool,string,string)",
-        address(this),
-        _privatePool,
-        _fundName,
-        _fundSymbol
-      );
+    bytes memory poolLogicData = abi.encodeWithSignature(
+      "initialize(address,bool,string,string)",
+      address(this),
+      _privatePool,
+      _fundName,
+      _fundSymbol
+    );
 
     address fund = deploy(poolLogicData, 2);
 
-    bytes memory managerLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,address,string,address,(address,bool)[])",
-        address(this),
-        _manager,
-        _managerName,
-        fund,
-        _supportedAssets
-      );
+    bytes memory managerLogicData = abi.encodeWithSignature(
+      "initialize(address,address,string,address,(address,bool)[])",
+      address(this),
+      _manager,
+      _managerName,
+      fund,
+      _supportedAssets
+    );
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
-    IPoolLogic(fund).setPoolManagerLogic(managerLogic);
+    IPoolLogicV23(fund).setPoolManagerLogic(managerLogic);
 
     deployedFunds.push(fund);
     isPool[fund] = true;
@@ -420,12 +418,12 @@ contract PoolFactoryV23 is
     assembly {
       let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
       switch iszero(succeeded)
-        case 1 {
-          // throw if delegatecall failed
-          let size := returndatasize()
-          returndatacopy(0x00, 0x00, size)
-          revert(0x00, size)
-        }
+      case 1 {
+        // throw if delegatecall failed
+        let size := returndatasize()
+        returndatacopy(0x00, 0x00, size)
+        revert(0x00, size)
+      }
     }
     emit LogUpgrade(msg.sender, pool);
 
@@ -465,7 +463,7 @@ contract PoolFactoryV23 is
   // Transaction Guards
 
   function getGuard(address extContract) external view override returns (address guard) {
-    guard = IGovernance(governanceAddress).contractGuards(extContract);
+    guard = IGovernanceV23(governanceAddress).contractGuards(extContract);
     if (guard == address(0)) {
       guard = getAssetGuard(extContract);
     }
@@ -474,7 +472,7 @@ contract PoolFactoryV23 is
   function getAssetGuard(address extContract) public view override returns (address guard) {
     if (isValidAsset(extContract)) {
       uint16 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
-      guard = IGovernance(governanceAddress).assetGuards(assetType);
+      guard = IGovernanceV23(governanceAddress).assetGuards(assetType);
     }
   }
 

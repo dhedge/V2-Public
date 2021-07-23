@@ -34,7 +34,7 @@
 
 pragma solidity 0.7.6;
 
-interface IGuard {
+interface IGuardV23 {
   event Exchange(address fundAddress, address sourceAsset, uint256 sourceAmount, address dstAsset, uint256 time);
 
   function txGuard(

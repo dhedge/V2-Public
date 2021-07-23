@@ -34,7 +34,7 @@
 
 pragma solidity 0.7.6;
 
-interface IPoolManagerLogic {
+interface IPoolManagerLogicV23 {
   function poolLogic() external view returns (address);
 
   function isDepositAsset(address asset) external view returns (bool);

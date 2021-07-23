@@ -36,7 +36,7 @@ pragma solidity 0.7.6;
 
 pragma experimental ABIEncoderV2;
 
-interface IHasSupportedAsset {
+interface IHasSupportedAssetV23 {
   struct Asset {
     address asset;
     bool isDeposit;

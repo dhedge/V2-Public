@@ -34,7 +34,7 @@
 
 pragma solidity 0.7.6;
 
-interface IManaged {
+interface IManagedV23 {
   function manager() external view returns (address);
 
   function trader() external view returns (address);
