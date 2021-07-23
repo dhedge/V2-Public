@@ -245,8 +245,8 @@ contract PoolLogicV23 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     // TODO: Combining into one line to fix stack too deep,
     //       need to refactor some variables into struct in order to have more variables
-    IHasSupportedAssetV23.Asset[] memory _supportedAssets = IHasSupportedAssetV23(poolManagerLogic)
-    .getSupportedAssets();
+    IHasSupportedAssetV23.Asset[] memory _supportedAssets =
+      IHasSupportedAssetV23(poolManagerLogic).getSupportedAssets();
     uint256 assetCount = _supportedAssets.length;
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
     uint16 index = 0;
@@ -305,12 +305,8 @@ contract PoolLogicV23 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // Withdraw any external tokens (eg. staked tokens in other contracts)
     address guard = IHasGuardInfoV23(factory).getGuard(asset);
     require(guard != address(0), "invalid guard");
-    (address stakingContract, bytes memory txData) = IAssetGuardV23(guard).getWithdrawStakedTx(
-      address(this),
-      asset,
-      portion,
-      to
-    );
+    (address stakingContract, bytes memory txData) =
+      IAssetGuardV23(guard).getWithdrawStakedTx(address(this), asset, portion, to);
     if (txData.length > 0) {
       (success, ) = stakingContract.call(txData);
       require(success, "failed to withdraw staked tokens");
@@ -419,12 +415,10 @@ contract PoolLogicV23 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
-    uint256 available = currentTokenPrice
-    .sub(_lastFeeMintPrice)
-    .mul(_tokenSupply)
-    .mul(_feeNumerator)
-    .div(_feeDenominator)
-    .div(currentTokenPrice);
+    uint256 available =
+      currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
+        currentTokenPrice
+      );
 
     return available;
   }
@@ -441,13 +435,8 @@ contract PoolLogicV23 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfoV23(factory).getPoolManagerFee(address(this));
 
-    uint256 available = _availableManagerFee(
-      fundValue,
-      tokenSupply,
-      tokenPriceAtLastFeeMint,
-      managerFeeNumerator,
-      managerFeeDenominator
-    );
+    uint256 available =
+      _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
 
     // Ignore dust when minting performance fees
     if (available < 10000) return fundValue;
