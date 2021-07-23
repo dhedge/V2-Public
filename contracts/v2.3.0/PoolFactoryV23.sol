@@ -36,9 +36,9 @@ pragma solidity 0.7.6;
 
 pragma experimental ABIEncoderV2;
 
-import "./PoolLogic.sol";
-import "./upgradability/ProxyFactory.sol";
-import "./interfaces/IAssetHandler.sol";
+import "./PoolLogicV23.sol";
+import "../upgradability/ProxyFactory.sol";
+import "../interfaces/IAssetHandler.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
@@ -47,22 +47,20 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IGovernance.sol";
-import "./interfaces/IManaged.sol";
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /// @title Pool Factory
 /// @dev A Factory to spawn pools
-contract PoolFactory is
+contract PoolFactoryV23 is
   PausableUpgradeable,
   ProxyFactory,
-  IHasDaoInfo,
-  IHasFeeInfo,
-  IHasAssetInfo,
-  IHasGuardInfo,
-  IHasPausable
+  IHasDaoInfoV23,
+  IHasFeeInfoV23,
+  IHasAssetInfoV23,
+  IHasGuardInfoV23,
+  IHasPausableV23
 {
   using SafeMathUpgradeable for uint256;
 
@@ -100,8 +98,6 @@ contract PoolFactory is
   event SetAssetHandler(address assetHandler);
 
   event SetTrackingCode(bytes32 code);
-
-  event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
   address[] public deployedFunds;
 
@@ -167,7 +163,7 @@ contract PoolFactory is
     string memory _fundName,
     string memory _fundSymbol,
     uint256 _managerFeeNumerator,
-    IHasSupportedAsset.Asset[] memory _supportedAssets
+    IHasSupportedAssetV23.Asset[] memory _supportedAssets
   ) external returns (address) {
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
 
@@ -194,7 +190,7 @@ contract PoolFactory is
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
-    IPoolLogic(fund).setPoolManagerLogic(managerLogic);
+    IPoolLogicV23(fund).setPoolManagerLogic(managerLogic);
 
     deployedFunds.push(fund);
     isPool[fund] = true;
@@ -322,8 +318,6 @@ contract PoolFactory is
 
   function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
     managerFeeNumeratorChangeDelay = delay;
-
-    emit SetManagerFeeNumeratorChangeDelay(delay);
   }
 
   function getManagerFeeNumeratorChangeDelay() external view override returns (uint256) {
@@ -471,7 +465,7 @@ contract PoolFactory is
   // Transaction Guards
 
   function getGuard(address extContract) external view override returns (address guard) {
-    guard = IGovernance(governanceAddress).contractGuards(extContract);
+    guard = IGovernanceV23(governanceAddress).contractGuards(extContract);
     if (guard == address(0)) {
       guard = getAssetGuard(extContract);
     }
@@ -480,64 +474,14 @@ contract PoolFactory is
   function getAssetGuard(address extContract) public view override returns (address guard) {
     if (isValidAsset(extContract)) {
       uint16 assetType = IAssetHandler(_assetHandler).assetTypes(extContract);
-      guard = IGovernance(governanceAddress).assetGuards(assetType);
+      guard = IGovernanceV23(governanceAddress).assetGuards(assetType);
     }
-  }
-
-  function getAddress(bytes32 name) external view override returns (address destination) {
-    destination = IGovernance(governanceAddress).nameToDestination(name);
-    require(destination != address(0), "governance: invalid name");
   }
 
   /// @notice Return full array of deployed funds
   /// @return full array of deployed funds
   function getDeployedFunds() external view returns (address[] memory) {
     return deployedFunds;
-  }
-
-  /**
-   * @notice Returns all invested pools by a given user
-   * @param user the user address
-   */
-  function getInvestedPools(address user) external view returns (address[] memory) {
-    uint256 length = deployedFunds.length;
-    address[] memory investedPools = new address[](length);
-    uint256 index = 0;
-    for (uint256 i = 0; i < length; i++) {
-      if (IERC20Upgradeable(deployedFunds[i]).balanceOf(user) > 0) {
-        investedPools[index] = deployedFunds[i];
-        index++;
-      }
-    }
-
-    uint256 reduceLength = length.sub(index);
-    assembly {
-      mstore(investedPools, sub(mload(investedPools), reduceLength))
-    }
-    return investedPools;
-  }
-
-  /**
-   * @notice Returns all managed pools by a given manager
-   * @param manager the manager address
-   */
-  function getManagedPools(address manager) external view returns (address[] memory) {
-    uint256 length = deployedFunds.length;
-    address[] memory managedPools = new address[](length);
-    uint256 index = 0;
-    for (uint256 i = 0; i < length; i++) {
-      address poolManagerLogic = IPoolLogic(deployedFunds[i]).poolManagerLogic();
-      if (IManaged(poolManagerLogic).manager() == manager) {
-        managedPools[index] = deployedFunds[i];
-        index++;
-      }
-    }
-
-    uint256 reduceLength = length.sub(index);
-    assembly {
-      mstore(managedPools, sub(mload(managedPools), reduceLength))
-    }
-    return managedPools;
   }
 
   uint256[50] private __gap;
