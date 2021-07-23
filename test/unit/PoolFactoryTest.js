@@ -9,7 +9,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 
 const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("../TestHelpers");
 
-let logicOwner, manager, dao, user1;
+let logicOwner, manager, dao, investor, user1, user2;
 let poolFactory,
   PoolLogic,
   PoolManagerLogic,
@@ -1628,6 +1628,63 @@ describe("PoolFactory", function () {
       expect(withdrawLP[2]).to.equal(true);
       expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
     });
+  });
+
+  it("should be ale to query invested/managed pools", async function () {
+    let pools = await poolFactory.getDeployedFunds();
+
+    expect(await poolFactory.getManagedPools(manager.address)).to.be.deep.equal([pools[0]]);
+    expect(await poolFactory.getManagedPools(user1.address)).to.be.deep.equal([pools[1]]);
+
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+
+    await poolFactory.createFund(
+      false,
+      user1.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    pools = await poolFactory.getDeployedFunds();
+
+    expect(await poolFactory.getManagedPools(manager.address)).to.be.deep.equal([pools[0], pools[2]]);
+    expect(await poolFactory.getManagedPools(user1.address)).to.be.deep.equal([pools[1], pools[3]]);
+    expect(await poolFactory.getManagedPools(logicOwner.address)).to.be.deep.equal([]);
+
+    await assetHandler.setChainlinkTimeout(9000000);
+
+    expect(await poolFactory.getInvestedPools(investor.address)).to.be.deep.equal([pools[0]]);
+    expect(await poolFactory.getInvestedPools(logicOwner.address)).to.be.deep.equal([pools[1]]);
+
+    let newPoolLogic = await PoolLogic.attach(pools[3]);
+    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+      investor.address,
+      newPoolLogic.address,
+      (100e18).toString(),
+    ]);
+    await susdProxy.givenCalldataReturnBool(transferFromABI, true);
+    await newPoolLogic.connect(investor).deposit(susd, (100e18).toString());
+
+    expect(await poolFactory.getInvestedPools(investor.address)).to.be.deep.equal([pools[0], pools[3]]);
+    expect(await poolFactory.getInvestedPools(user2.address)).to.be.deep.equal([]);
+
+    await assetHandler.setChainlinkTimeout(90000);
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
