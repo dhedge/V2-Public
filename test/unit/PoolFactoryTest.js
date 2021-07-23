@@ -234,7 +234,9 @@ describe("PoolFactory", function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const SushiLPAssetGuard = await ethers.getContractFactory("contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard");
+    const SushiLPAssetGuard = await ethers.getContractFactory(
+      "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
+    );
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
