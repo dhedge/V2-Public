@@ -325,7 +325,7 @@ describe("Synthetix Test", function () {
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
     const daoAddress = await poolFactory.getDaoAddress();
-    const trackingCode = await poolFactory.getTrackingCode();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
