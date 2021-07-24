@@ -122,8 +122,6 @@ contract PoolFactory is
 
   uint256 internal _maximumSupportedAssetCount;
 
-  bytes32 internal _trackingCode; // TODO: remove before mainnet launch
-
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
 
@@ -154,8 +152,6 @@ contract PoolFactory is
     setMaximumManagerFeeNumeratorChange(1000);
 
     _setMaximumSupportedAssetCount(10);
-
-    _trackingCode = bytes32(0); // TODO: remove before mainnet launch
 
     poolStorageVersion = 230; // V2.3.0;
   }
