@@ -101,6 +101,8 @@ contract PoolFactory is
 
   event SetTrackingCode(bytes32 code);
 
+  event SetPoolStorageVersion(uint256 poolStorageVersion);
+
   event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
   address[] public deployedFunds;
@@ -159,7 +161,7 @@ contract PoolFactory is
 
     _setTrackingCode(0x4448454447450000000000000000000000000000000000000000000000000000);
 
-    poolStorageVersion = 230; // V2.3.0;
+    _setPoolStorageVersion(230); // V2.3.0;
   }
 
   function createFund(
@@ -173,26 +175,24 @@ contract PoolFactory is
   ) external returns (address) {
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
 
-    bytes memory poolLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,bool,string,string)",
-        address(this),
-        _privatePool,
-        _fundName,
-        _fundSymbol
-      );
+    bytes memory poolLogicData = abi.encodeWithSignature(
+      "initialize(address,bool,string,string)",
+      address(this),
+      _privatePool,
+      _fundName,
+      _fundSymbol
+    );
 
     address fund = deploy(poolLogicData, 2);
 
-    bytes memory managerLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,address,string,address,(address,bool)[])",
-        address(this),
-        _manager,
-        _managerName,
-        fund,
-        _supportedAssets
-      );
+    bytes memory managerLogicData = abi.encodeWithSignature(
+      "initialize(address,address,string,address,(address,bool)[])",
+      address(this),
+      _manager,
+      _managerName,
+      fund,
+      _supportedAssets
+    );
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
@@ -411,6 +411,17 @@ contract PoolFactory is
 
   // Upgrade
 
+  function setPoolStorageVersion(uint256 _poolStorageVersion) external onlyOwner {
+    require(_poolStorageVersion > poolStorageVersion, "version needs to be higher");
+    _setPoolStorageVersion(_poolStorageVersion);
+  }
+
+  function _setPoolStorageVersion(uint256 _poolStorageVersion) internal {
+    poolStorageVersion = _poolStorageVersion;
+
+    emit SetPoolStorageVersion(_poolStorageVersion);
+  }
+
   /**
    * @dev Backdoor function
    * @param pool Address of the target.
@@ -428,12 +439,12 @@ contract PoolFactory is
     assembly {
       let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
       switch iszero(succeeded)
-        case 1 {
-          // throw if delegatecall failed
-          let size := returndatasize()
-          returndatacopy(0x00, 0x00, size)
-          revert(0x00, size)
-        }
+      case 1 {
+        // throw if delegatecall failed
+        let size := returndatasize()
+        returndatacopy(0x00, 0x00, size)
+        revert(0x00, size)
+      }
     }
     emit LogUpgrade(msg.sender, pool);
 

@@ -252,6 +252,15 @@ describe("PoolFactory", function () {
     expect(poolLogicAddress).to.equal(poolLogic.address);
   });
 
+  it("Should be able to set pool storage version", async function () {
+    await expect(poolFactory.connect(user1).setPoolStorageVersion("230")).to.be.revertedWith("caller is not the owner");
+
+    await poolFactory.setPoolStorageVersion("230");
+
+    const poolStorageVersion = await poolFactory.poolStorageVersion();
+    expect(poolStorageVersion).to.equal("230");
+  });
+
   it("Should be able to createFund", async function () {
     await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
 
@@ -401,6 +410,10 @@ describe("PoolFactory", function () {
 
     //Other assets are not supported
     expect(await poolManagerLogicProxy.isSupportedAsset(slink)).to.be.false;
+
+    // check pool storage version
+    const poolVersion = await poolFactory.poolVersion(poolLogicProxy.address);
+    expect(poolVersion).to.equal("230");
 
     // mock IMiniChefV2
     IMiniChefV2 = await hre.artifacts.readArtifact("contracts/interfaces/sushi/IMiniChefV2.sol:IMiniChefV2");
