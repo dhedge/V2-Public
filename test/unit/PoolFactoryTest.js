@@ -1137,6 +1137,21 @@ describe("PoolFactory", function () {
     await poolFactory.connect(dao).pause();
     expect(await poolFactory.isPaused()).to.be.true;
 
+    await expect(
+      poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        new ethers.BigNumber.from("6000"),
+        [
+          [susd, true],
+          [seth, true],
+        ],
+      ),
+    ).to.be.revertedWith("contracts paused");
+
     await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.be.revertedWith("contracts paused");
     await expect(poolLogicProxy.withdraw((100e18).toString())).to.be.revertedWith("contracts paused");
     await expect(poolLogicManagerProxy.execTransaction(synthetix.address, "0x00")).to.be.revertedWith(
