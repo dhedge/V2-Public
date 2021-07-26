@@ -41,6 +41,8 @@ const TEN_TOKENS = "10000000000000000000";
 const TWENTY_TOKENS = "20000000000000000000";
 const ONE_HUNDRED_TOKENS = "100000000000000000000";
 
+const POOL_STORAGE_VERSION = "99999";
+
 describe("PoolFactory", function () {
   before(async function () {
     [logicOwner, manager, dao, investor, user1, user2, user3, user4] = await ethers.getSigners();
@@ -253,12 +255,12 @@ describe("PoolFactory", function () {
   });
 
   it("Should be able to set pool storage version", async function () {
-    await expect(poolFactory.connect(user1).setPoolStorageVersion("230")).to.be.revertedWith("caller is not the owner");
+    await expect(poolFactory.connect(user1).setPoolStorageVersion(POOL_STORAGE_VERSION)).to.be.revertedWith("caller is not the owner");
 
-    await poolFactory.setPoolStorageVersion("230");
+    await poolFactory.setPoolStorageVersion(POOL_STORAGE_VERSION);
 
     const poolStorageVersion = await poolFactory.poolStorageVersion();
-    expect(poolStorageVersion).to.equal("230");
+    expect(poolStorageVersion).to.equal(POOL_STORAGE_VERSION);
   });
 
   it("Should be able to createFund", async function () {
@@ -420,7 +422,7 @@ describe("PoolFactory", function () {
 
     // check pool storage version
     const poolVersion = await poolFactory.poolVersion(poolLogicProxy.address);
-    expect(poolVersion).to.equal("230");
+    expect(poolVersion).to.equal(POOL_STORAGE_VERSION);
 
     // mock IMiniChefV2
     IMiniChefV2 = await hre.artifacts.readArtifact("contracts/interfaces/sushi/IMiniChefV2.sol:IMiniChefV2");
