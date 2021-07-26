@@ -99,6 +99,8 @@ contract PoolFactory is
 
   event SetAssetHandler(address assetHandler);
 
+  event SetPoolStorageVersion(uint256 poolStorageVersion);
+
   event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
   address[] public deployedFunds;
@@ -153,7 +155,7 @@ contract PoolFactory is
 
     _setMaximumSupportedAssetCount(10);
 
-    poolStorageVersion = 230; // V2.3.0;
+    _setPoolStorageVersion(230); // V2.3.0;
   }
 
   function createFund(
@@ -387,6 +389,18 @@ contract PoolFactory is
   }
 
   // Upgrade
+
+  function setPoolStorageVersion(uint256 _poolStorageVersion) external onlyOwner {
+    _setPoolStorageVersion(_poolStorageVersion);
+  }
+
+  function _setPoolStorageVersion(uint256 _poolStorageVersion) internal {
+    require(_poolStorageVersion > poolStorageVersion, "version needs to be higher");
+
+    poolStorageVersion = _poolStorageVersion;
+
+    emit SetPoolStorageVersion(_poolStorageVersion);
+  }
 
   /**
    * @dev Backdoor function

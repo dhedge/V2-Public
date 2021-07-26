@@ -290,6 +290,19 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint256",
+        "name": "poolStorageVersion",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetPoolStorageVersion",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "address",
         "name": "account",
         "type": "address"
@@ -1098,6 +1111,19 @@
       }
     ],
     "name": "setPoolManagerFeeNumerator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_poolStorageVersion",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPoolStorageVersion",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
