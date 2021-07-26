@@ -650,19 +650,6 @@
   },
   {
     "inputs": [],
-    "name": "getTrackingCode",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "governanceAddress",
     "outputs": [
       {
@@ -1054,19 +1041,6 @@
       }
     ],
     "name": "setPoolManagerFeeNumerator",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "code",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setTrackingCode",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

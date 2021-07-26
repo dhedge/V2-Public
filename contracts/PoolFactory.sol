@@ -99,8 +99,6 @@ contract PoolFactory is
 
   event SetAssetHandler(address assetHandler);
 
-  event SetTrackingCode(bytes32 code);
-
   event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
   address[] public deployedFunds;
@@ -123,8 +121,6 @@ contract PoolFactory is
   uint256 internal _exitCooldown;
 
   uint256 internal _maximumSupportedAssetCount;
-
-  bytes32 internal _trackingCode;
 
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
@@ -156,8 +152,6 @@ contract PoolFactory is
     setMaximumManagerFeeNumeratorChange(1000);
 
     _setMaximumSupportedAssetCount(10);
-
-    _setTrackingCode(0x4448454447450000000000000000000000000000000000000000000000000000);
 
     poolStorageVersion = 230; // V2.3.0;
   }
@@ -390,22 +384,6 @@ contract PoolFactory is
     _assetHandler = assetHandler;
 
     emit SetAssetHandler(assetHandler);
-  }
-
-  // Synthetix tracking
-
-  function setTrackingCode(bytes32 code) external onlyOwner {
-    _setTrackingCode(code);
-  }
-
-  function _setTrackingCode(bytes32 code) internal {
-    _trackingCode = code;
-
-    emit SetTrackingCode(code);
-  }
-
-  function getTrackingCode() external view override returns (bytes32) {
-    return _trackingCode;
   }
 
   // Upgrade

@@ -120,8 +120,6 @@ contract PoolFactoryV23 is
 
   uint256 internal _maximumSupportedAssetCount;
 
-  bytes32 internal _trackingCode;
-
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
 
@@ -152,8 +150,6 @@ contract PoolFactoryV23 is
     setMaximumManagerFeeNumeratorChange(1000);
 
     _setMaximumSupportedAssetCount(10);
-
-    _setTrackingCode(0x4448454447450000000000000000000000000000000000000000000000000000);
   }
 
   function createFund(
@@ -167,26 +163,24 @@ contract PoolFactoryV23 is
   ) external returns (address) {
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
 
-    bytes memory poolLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,bool,string,string)",
-        address(this),
-        _privatePool,
-        _fundName,
-        _fundSymbol
-      );
+    bytes memory poolLogicData = abi.encodeWithSignature(
+      "initialize(address,bool,string,string)",
+      address(this),
+      _privatePool,
+      _fundName,
+      _fundSymbol
+    );
 
     address fund = deploy(poolLogicData, 2);
 
-    bytes memory managerLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,address,string,address,(address,bool)[])",
-        address(this),
-        _manager,
-        _managerName,
-        fund,
-        _supportedAssets
-      );
+    bytes memory managerLogicData = abi.encodeWithSignature(
+      "initialize(address,address,string,address,(address,bool)[])",
+      address(this),
+      _manager,
+      _managerName,
+      fund,
+      _supportedAssets
+    );
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
@@ -385,22 +379,6 @@ contract PoolFactoryV23 is
     emit SetAssetHandler(assetHandler);
   }
 
-  // Synthetix tracking
-
-  function setTrackingCode(bytes32 code) external onlyOwner {
-    _setTrackingCode(code);
-  }
-
-  function _setTrackingCode(bytes32 code) internal {
-    _trackingCode = code;
-
-    emit SetTrackingCode(code);
-  }
-
-  function getTrackingCode() external view override returns (bytes32) {
-    return _trackingCode;
-  }
-
   // Upgrade
 
   /**
@@ -420,12 +398,12 @@ contract PoolFactoryV23 is
     assembly {
       let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
       switch iszero(succeeded)
-        case 1 {
-          // throw if delegatecall failed
-          let size := returndatasize()
-          returndatacopy(0x00, 0x00, size)
-          revert(0x00, size)
-        }
+      case 1 {
+        // throw if delegatecall failed
+        let size := returndatasize()
+        returndatacopy(0x00, 0x00, size)
+        revert(0x00, size)
+      }
     }
     emit LogUpgrade(msg.sender, pool);
 

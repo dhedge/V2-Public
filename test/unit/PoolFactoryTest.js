@@ -764,7 +764,7 @@ describe("PoolFactory", function () {
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
     const daoAddress = await poolFactory.owner();
-    const trackingCode = await poolFactory.getTrackingCode();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
     const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
