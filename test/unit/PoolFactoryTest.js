@@ -777,7 +777,7 @@ describe("PoolFactory", function () {
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
     const daoAddress = await poolFactory.owner();
-    const trackingCode = await poolFactory.getTrackingCode();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
     const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
@@ -1149,6 +1149,21 @@ describe("PoolFactory", function () {
     await expect(poolFactory.pause()).to.be.revertedWith("caller is not the owner");
     await poolFactory.connect(dao).pause();
     expect(await poolFactory.isPaused()).to.be.true;
+
+    await expect(
+      poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        new ethers.BigNumber.from("6000"),
+        [
+          [susd, true],
+          [seth, true],
+        ],
+      ),
+    ).to.be.revertedWith("contracts paused");
 
     await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.be.revertedWith("contracts paused");
     await expect(poolLogicProxy.withdraw((100e18).toString())).to.be.revertedWith("contracts paused");
