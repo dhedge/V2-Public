@@ -120,10 +120,17 @@ describe("Synthetix Test", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [susd, true],
-      [seth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [susd, true],
+        [seth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -175,7 +182,7 @@ describe("Synthetix Test", function () {
           [seth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     let tx = await poolFactory.createFund(
       false,
