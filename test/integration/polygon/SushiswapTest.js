@@ -1,13 +1,9 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
+const { checkAlmostSame } = require("../../TestHelpers");
 
 use(chaiAlmost());
-
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
-};
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
@@ -54,17 +50,13 @@ describe("Sushiswap V2 Test", function () {
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
-    // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLpUsdcWeth, usdc_price_feed, eth_price_feed);
     // Initialize Asset Price Consumer
     const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
-    const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    const assetHandlerInitAssets = [assetWmatic, assetWeth, assetUsdt, assetUsdc, assetSushi, assetSushiLPWethUsdc];
+    const assetHandlerInitAssets = [assetWmatic, assetWeth, assetUsdt, assetUsdc, assetSushi];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
@@ -80,6 +72,12 @@ describe("Sushiswap V2 Test", function () {
     ]);
     await poolFactory.deployed();
 
+    // Deploy Sushi LP Aggregator
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
+    const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    await assetHandler.addAssets([assetSushiLPWethUsdc]);
+
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
@@ -93,7 +91,7 @@ describe("Sushiswap V2 Test", function () {
     sushiMiniChefV2Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2, [[sushiLpUsdcWeth, sushiLPUsdcWethPoolId]]); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
@@ -140,10 +138,17 @@ describe("Sushiswap V2 Test", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [usdc, true],
-      [weth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [usdc, true],
+        [weth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -195,7 +200,7 @@ describe("Sushiswap V2 Test", function () {
           [weth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     await poolFactory.createFund(
       false,
@@ -880,24 +885,6 @@ describe("Sushiswap V2 Test", function () {
         }, 60000);
       });
 
-      const withdrawStakedEvent = new Promise((resolve, reject) => {
-        sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress,
-            asset,
-            to,
-            withdrawAmount,
-            time,
-          });
-        });
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
       // remove manager fee so that performance fee minting doesn't get in the way
       await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
 
@@ -929,7 +916,6 @@ describe("Sushiswap V2 Test", function () {
       await poolLogicProxy.withdraw(withdrawAmount);
 
       const eventWithdrawal = await withdrawalEvent;
-      const eventWithdrawStaked = await withdrawStakedEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
       const expectedWithdrawAmount = availableLpToken
@@ -948,11 +934,6 @@ describe("Sushiswap V2 Test", function () {
       checkAlmostSame(eventWithdrawal.totalInvestorFundTokens, (investorFundBalance - withdrawAmount).toString());
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
       checkAlmostSame(eventWithdrawal.totalSupply, (totalSupply - withdrawAmount).toString());
-
-      expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
-      expect(eventWithdrawStaked.asset).to.equal(sushiLpUsdcWeth);
-      expect(eventWithdrawStaked.to).to.equal(logicOwner.address);
-      checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
     });
   });
 });

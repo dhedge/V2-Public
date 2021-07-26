@@ -5,8 +5,9 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
-import "../interfaces/IUniswapV2Pair.sol";
+import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
 import "../interfaces/IERC20Extended.sol"; // includes decimals()
+import "../interfaces/IHasAssetInfo.sol";
 import "../utils/DhedgeMath.sol";
 
 /**
@@ -20,22 +21,14 @@ contract SushiLPAggregator is IAggregatorV3Interface {
   address public pair;
   address public token0;
   address public token1;
-  address public aggregator0;
-  address public aggregator1;
+  address public factory;
 
-  constructor(
-    address _pair,
-    address _aggregator0,
-    address _aggregator1
-  ) {
+  constructor(address _pair, address _factory) {
     require(_pair != address(0), "_pair address cannot be 0");
-    require(_aggregator0 != address(0), "_aggregator0 address cannot be 0");
-    require(_aggregator1 != address(0), "_aggregator1 cannot be 0");
     pair = _pair;
     token0 = IUniswapV2Pair(pair).token0();
     token1 = IUniswapV2Pair(pair).token1();
-    aggregator0 = _aggregator0;
-    aggregator1 = _aggregator1;
+    factory = _factory;
   }
 
   /* ========== VIEWS ========== */
@@ -60,7 +53,7 @@ contract SushiLPAggregator is IAggregatorV3Interface {
       uint80
     )
   {
-    (uint256 answer0, uint256 answer1, uint256 updatedAt) = _getTokenPrices();
+    (uint256 answer0, uint256 answer1) = _getTokenPrices();
 
     // calculate lp price
     // referenced from
@@ -77,48 +70,17 @@ contract SushiLPAggregator is IAggregatorV3Interface {
 
     uint256 r = DhedgeMath.sqrt(r0.mul(r1)); // decimal = 18
 
-    uint256 p = DhedgeMath.sqrt(answer0.mul(answer1)); // decimal = 8
+    uint256 p = DhedgeMath.sqrt(answer0.mul(answer1)); // decimal = 18
 
-    uint256 answer = r.mul(p).mul(2).div(totalSupply); // decimal = 8
+    uint256 answer = r.mul(p).mul(2).div(totalSupply).div(10**10); // decimal = 8
 
     // we don't need roundId, startedAt and answeredInRound
-    return (0, int256(answer), 0, updatedAt, 0);
+    return (0, int256(answer), 0, block.timestamp, 0);
   }
 
   /* ========== INTERNAL ========== */
 
-  function _getTokenPrices()
-    internal
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256
-    )
-  {
-    (int256 answer0, uint256 updatedAt0) = _getTokenPrice(aggregator0);
-    (int256 answer1, uint256 updatedAt1) = _getTokenPrice(aggregator1);
-
-    // calculate updatedAt
-    uint256 updatedAt = updatedAt0;
-    if (updatedAt0 > updatedAt1) {
-      updatedAt = updatedAt1;
-    }
-
-    return (uint256(answer0), uint256(answer1), updatedAt);
-  }
-
-  function _getTokenPrice(address aggregator) internal view returns (int256 answer, uint256 updatedAt) {
-    try IAggregatorV3Interface(aggregator).latestRoundData() returns (
-      uint80,
-      int256 _answer,
-      uint256,
-      uint256 _updatedAt,
-      uint80
-    ) {
-      return (_answer, _updatedAt);
-    } catch {
-      revert("Price get failed");
-    }
+  function _getTokenPrices() internal view returns (uint256, uint256) {
+    return (IHasAssetInfo(factory).getAssetPrice(token0), IHasAssetInfo(factory).getAssetPrice(token1));
   }
 }

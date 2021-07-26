@@ -47,9 +47,11 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IGovernance.sol";
+import "./interfaces/IManaged.sol";
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /// @title Pool Factory
 /// @dev A Factory to spawn pools
@@ -97,7 +99,9 @@ contract PoolFactory is
 
   event SetAssetHandler(address assetHandler);
 
-  event SetTrackingCode(bytes32 code);
+  event SetPoolStorageVersion(uint256 poolStorageVersion);
+
+  event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
   address[] public deployedFunds;
 
@@ -113,20 +117,16 @@ contract PoolFactory is
 
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
   uint256 private _MANAGER_FEE_DENOMINATOR;
-  mapping(address => uint256) public poolManagerFeeNumerator;
-  mapping(address => uint256) public poolManagerFeeDenominator;
 
   uint256 internal _exitCooldown;
 
   uint256 internal _maximumSupportedAssetCount;
 
-  bytes32 internal _trackingCode;
-
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
 
-  uint256 public maximumManagerFeeNumeratorChange;
-  uint256 public managerFeeNumeratorChangeDelay;
+  uint256 public override maximumManagerFeeNumeratorChange;
+  uint256 public override managerFeeNumeratorChangeDelay;
 
   function initialize(
     address _poolLogic,
@@ -153,7 +153,7 @@ contract PoolFactory is
 
     _setMaximumSupportedAssetCount(10);
 
-    _setTrackingCode(0x4448454447450000000000000000000000000000000000000000000000000000);
+    _setPoolStorageVersion(230); // V2.3.0;
   }
 
   function createFund(
@@ -165,28 +165,29 @@ contract PoolFactory is
     uint256 _managerFeeNumerator,
     IHasSupportedAsset.Asset[] memory _supportedAssets
   ) external returns (address) {
+    require(!paused(), "contracts paused");
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
+    require(_managerFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
 
-    bytes memory poolLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,bool,string,string)",
-        address(this),
-        _privatePool,
-        _fundName,
-        _fundSymbol
-      );
+    bytes memory poolLogicData = abi.encodeWithSignature(
+      "initialize(address,bool,string,string)",
+      address(this),
+      _privatePool,
+      _fundName,
+      _fundSymbol
+    );
 
     address fund = deploy(poolLogicData, 2);
 
-    bytes memory managerLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,address,string,address,(address,bool)[])",
-        address(this),
-        _manager,
-        _managerName,
-        fund,
-        _supportedAssets
-      );
+    bytes memory managerLogicData = abi.encodeWithSignature(
+      "initialize(address,address,string,address,uint256,(address,bool)[])",
+      address(this),
+      _manager,
+      _managerName,
+      fund,
+      _managerFeeNumerator,
+      _supportedAssets
+    );
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
@@ -197,8 +198,6 @@ contract PoolFactory is
     isPoolManager[managerLogic] = true;
 
     poolVersion[fund] = poolStorageVersion;
-
-    _setPoolManagerFee(fund, _managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
 
     emit FundCreated(
       fund,
@@ -266,35 +265,12 @@ contract PoolFactory is
 
   // Manager fees
 
-  function getPoolManagerFee(address pool) external view override returns (uint256, uint256) {
-    require(isPool[pool], "supplied address is not a pool");
-
-    return (poolManagerFeeNumerator[pool], poolManagerFeeDenominator[pool]);
-  }
-
-  function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override onlyPoolManager {
-    // require(pool == msg.sender, "only a pool can change own fee");
-    require(isPool[pool], "supplied address is not a pool");
-    require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
-
-    _setPoolManagerFee(pool, numerator, _MANAGER_FEE_DENOMINATOR);
-  }
-
-  function _setPoolManagerFee(
-    address pool,
-    uint256 numerator,
-    uint256 denominator
-  ) internal {
-    require(numerator <= denominator && numerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid fraction");
-
-    poolManagerFeeNumerator[pool] = numerator;
-    poolManagerFeeDenominator[pool] = denominator;
-
-    emit SetPoolManagerFee(numerator, denominator);
-  }
-
-  function getMaximumManagerFee() external view returns (uint256, uint256) {
+  function getMaximumManagerFee() external view override returns (uint256, uint256) {
     return (_MAXIMUM_MANAGER_FEE_NUMERATOR, _MANAGER_FEE_DENOMINATOR);
+  }
+
+  function setMaximumManagerFee(uint256 numerator) external onlyOwner {
+    _setMaximumManagerFee(numerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   function _setMaximumManagerFee(uint256 numerator, uint256 denominator) internal {
@@ -312,16 +288,10 @@ contract PoolFactory is
     emit SetMaximumManagerFeeNumeratorChange(amount);
   }
 
-  function getMaximumManagerFeeNumeratorChange() external view override returns (uint256) {
-    return maximumManagerFeeNumeratorChange;
-  }
-
   function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
     managerFeeNumeratorChangeDelay = delay;
-  }
 
-  function getManagerFeeNumeratorChangeDelay() external view override returns (uint256) {
-    return managerFeeNumeratorChangeDelay;
+    emit SetManagerFeeNumeratorChangeDelay(delay);
   }
 
   function setExitCooldown(uint256 cooldown) external onlyOwner {
@@ -385,23 +355,19 @@ contract PoolFactory is
     emit SetAssetHandler(assetHandler);
   }
 
-  // Synthetix tracking
-
-  function setTrackingCode(bytes32 code) external onlyOwner {
-    _setTrackingCode(code);
-  }
-
-  function _setTrackingCode(bytes32 code) internal {
-    _trackingCode = code;
-
-    emit SetTrackingCode(code);
-  }
-
-  function getTrackingCode() external view override returns (bytes32) {
-    return _trackingCode;
-  }
-
   // Upgrade
+
+  function setPoolStorageVersion(uint256 _poolStorageVersion) external onlyOwner {
+    _setPoolStorageVersion(_poolStorageVersion);
+  }
+
+  function _setPoolStorageVersion(uint256 _poolStorageVersion) internal {
+    require(_poolStorageVersion > poolStorageVersion, "version needs to be higher");
+
+    poolStorageVersion = _poolStorageVersion;
+
+    emit SetPoolStorageVersion(_poolStorageVersion);
+  }
 
   /**
    * @dev Backdoor function
@@ -420,12 +386,12 @@ contract PoolFactory is
     assembly {
       let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
       switch iszero(succeeded)
-        case 1 {
-          // throw if delegatecall failed
-          let size := returndatasize()
-          returndatacopy(0x00, 0x00, size)
-          revert(0x00, size)
-        }
+      case 1 {
+        // throw if delegatecall failed
+        let size := returndatasize()
+        returndatacopy(0x00, 0x00, size)
+        revert(0x00, size)
+      }
     }
     emit LogUpgrade(msg.sender, pool);
 
@@ -478,10 +444,60 @@ contract PoolFactory is
     }
   }
 
+  function getAddress(bytes32 name) external view override returns (address destination) {
+    destination = IGovernance(governanceAddress).nameToDestination(name);
+    require(destination != address(0), "governance: invalid name");
+  }
+
   /// @notice Return full array of deployed funds
   /// @return full array of deployed funds
   function getDeployedFunds() external view returns (address[] memory) {
     return deployedFunds;
+  }
+
+  /**
+   * @notice Returns all invested pools by a given user
+   * @param user the user address
+   */
+  function getInvestedPools(address user) external view returns (address[] memory) {
+    uint256 length = deployedFunds.length;
+    address[] memory investedPools = new address[](length);
+    uint256 index = 0;
+    for (uint256 i = 0; i < length; i++) {
+      if (IERC20Upgradeable(deployedFunds[i]).balanceOf(user) > 0) {
+        investedPools[index] = deployedFunds[i];
+        index++;
+      }
+    }
+
+    uint256 reduceLength = length.sub(index);
+    assembly {
+      mstore(investedPools, sub(mload(investedPools), reduceLength))
+    }
+    return investedPools;
+  }
+
+  /**
+   * @notice Returns all managed pools by a given manager
+   * @param manager the manager address
+   */
+  function getManagedPools(address manager) external view returns (address[] memory) {
+    uint256 length = deployedFunds.length;
+    address[] memory managedPools = new address[](length);
+    uint256 index = 0;
+    for (uint256 i = 0; i < length; i++) {
+      address poolManagerLogic = IPoolLogic(deployedFunds[i]).poolManagerLogic();
+      if (IManaged(poolManagerLogic).manager() == manager) {
+        managedPools[index] = deployedFunds[i];
+        index++;
+      }
+    }
+
+    uint256 reduceLength = length.sub(index);
+    assembly {
+      mstore(managedPools, sub(mload(managedPools), reduceLength))
+    }
+    return managedPools;
   }
 
   uint256[50] private __gap;

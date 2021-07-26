@@ -32,13 +32,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../IGuard.sol";
-import "../IAssetGuard.sol";
 import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IAssetGuard.sol";
+import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
@@ -93,22 +94,37 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     }
   }
 
-  /// @notice Creates transaction data for withdrawing staked tokens
+  /// @notice Creates transaction data for withdrawing tokens
   /// @dev Withdrawal processing is not applicable for this guard
-  /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
-  function getWithdrawStakedTx(
-    address, // pool
-    address, // asset
-    uint256, // withdrawPortion
+  /// @return withdrawAsset and
+  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
+  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
+  function withdrawProcessing(
+    address pool,
+    address asset,
+    uint256 portion,
     address // to
-  ) external virtual override returns (address stakingContract, bytes memory txData) {
-    // The base ERC20 guard has no externally staked tokens to withdraw
-    return (stakingContract, txData);
+  )
+    external
+    view
+    virtual
+    override
+    returns (
+      address withdrawAsset,
+      uint256 withdrawBalance,
+      MultiTransaction[] memory transactions
+    )
+  {
+    withdrawAsset = asset;
+    uint256 totalAssetBalance = getBalance(pool, asset);
+    withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
+    return (withdrawAsset, withdrawBalance, transactions);
   }
 
   /// @notice Returns the balance of the managed asset
   /// @dev May include any external balance in staking contracts
-  function getBalance(address pool, address asset) external view virtual override returns (uint256 balance) {
+  /// @return balance The asset balance of given pool
+  function getBalance(address pool, address asset) public view virtual override returns (uint256 balance) {
     // The base ERC20 guard has no externally staked tokens
     balance = IERC20(asset).balanceOf(pool);
   }
@@ -116,5 +132,14 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   /// @notice Returns the decimal of the managed asset
   function getDecimals(address asset) external view virtual override returns (uint256 decimals) {
     decimals = IERC20Extended(asset).decimals();
+  }
+
+  /// @notice Necessary check for remove asset
+  /// @param pool Address of the pool
+  /// @param asset Address of the remove asset
+  function removeAssetCheck(address pool, address asset) external view virtual override {
+    uint256 balance = getBalance(pool, asset);
+    // Allowing some dust
+    require(balance <= 10000, "clear your position first");
   }
 }

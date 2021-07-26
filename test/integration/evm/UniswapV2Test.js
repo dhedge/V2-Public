@@ -1,13 +1,9 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
+const { checkAlmostSame } = require("../../TestHelpers");
 
 use(chaiAlmost());
-
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(95).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(105).div(100))).to.be.true;
-};
 
 const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -48,15 +44,10 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
     // Initialize Asset Price Consumer
 
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, usdc_price_feed, usdt_price_feed);
-    sushiLpAggregator.deployed();
-
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-    const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 0, aggregator: sushiLpAggregator.address };
-    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetSushiUsdcUsdt];
+    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
@@ -71,6 +62,12 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, poolFactory);
+    sushiLpAggregator.deployed();
+    const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 2, aggregator: sushiLpAggregator.address };
+    await assetHandler.addAssets([assetSushiUsdcUsdt]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
@@ -138,10 +135,17 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [usdc, true],
-      [weth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [usdc, true],
+        [weth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -193,7 +197,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
           [weth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     await poolFactory.createFund(
       false,
@@ -444,19 +448,35 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
   it("should be able to add liquidity on sushiswap.", async () => {
     let addLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on("AddLiquidity", (managerLogicAddress, tokenA, tokenB, pair, time, event) => {
-        event.removeListener();
-
-        resolve({
+      sushiswapGuard.on(
+        "AddLiquidity",
+        (
           managerLogicAddress,
           tokenA,
           tokenB,
           pair,
           amountADesired,
           amountBDesired,
+          amountAMin,
+          amountBMin,
           time,
-        });
-      });
+          event,
+        ) => {
+          event.removeListener();
+
+          resolve({
+            managerLogicAddress,
+            tokenA,
+            tokenB,
+            pair,
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin,
+            time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -587,22 +607,31 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     expect(event.tokenA).to.equal(usdc);
     expect(event.tokenB).to.equal(usdt);
     expect(event.pair).to.equal(sushi_usdc_usdt);
+    expect(event.amountADesired).to.equal(amountADesired);
+    expect(event.amountBDesired).to.equal(amountBDesired);
+    expect(event.amountAMin).to.equal(0);
+    expect(event.amountBMin).to.equal(0);
   });
 
   it("should be able to remove liquidity on sushiswap.", async () => {
     let removeLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on("RemoveLiquidity", (managerLogicAddress, tokenA, tokenB, pair, liquidity, time, event) => {
-        event.removeListener();
+      sushiswapGuard.on(
+        "RemoveLiquidity",
+        (managerLogicAddress, tokenA, tokenB, pair, liquidity, amountAMin, amountBMin, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress,
-          tokenA,
-          tokenB,
-          pair,
-          liquidity,
-          time,
-        });
-      });
+          resolve({
+            managerLogicAddress,
+            tokenA,
+            tokenB,
+            pair,
+            liquidity,
+            amountAMin,
+            amountBMin,
+            time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -716,10 +745,9 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     expect(event.tokenB).to.equal(usdt);
     expect(event.pair).to.equal(sushi_usdc_usdt);
     expect(event.liquidity).to.equal(liquidity);
+    expect(event.amountAMin).to.equal(0);
+    expect(event.amountBMin).to.equal(0);
     checkAlmostSame(await USDC.balanceOf(poolLogicProxy.address), (50e6).toString());
-    console.log((await USDC.balanceOf(poolLogicProxy.address)).toString());
-    console.log((await USDT.balanceOf(poolLogicProxy.address)).toString());
-    console.log((await poolLogicProxy.balanceOf(logicOwner.address)).toString());
   });
 
   it("should be able to swap tokens back on uniswap.", async () => {

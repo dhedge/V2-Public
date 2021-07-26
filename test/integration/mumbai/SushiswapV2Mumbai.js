@@ -1,13 +1,9 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
+const { checkAlmostSame } = require("../../TestHelpers");
 
 use(chaiAlmost());
-
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
-};
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
@@ -83,10 +79,17 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [usdc, true],
-      [weth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [usdc, true],
+        [weth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -138,7 +141,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
           [weth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     let tx = await poolFactory.createFund(
       false,

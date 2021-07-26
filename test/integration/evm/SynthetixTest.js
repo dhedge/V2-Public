@@ -1,13 +1,9 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
+const { checkAlmostSame } = require("../../TestHelpers");
 
 use(chaiAlmost());
-
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gt(ethers.BigNumber.from(b).mul(95).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lt(ethers.BigNumber.from(b).mul(105).div(100))).to.be.true;
-};
 
 const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -124,10 +120,17 @@ describe("Synthetix Test", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [susd, true],
-      [seth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [susd, true],
+        [seth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -179,7 +182,7 @@ describe("Synthetix Test", function () {
           [seth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     let tx = await poolFactory.createFund(
       false,
@@ -329,7 +332,7 @@ describe("Synthetix Test", function () {
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
     const daoAddress = await poolFactory.getDaoAddress();
-    const trackingCode = await poolFactory.getTrackingCode();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);

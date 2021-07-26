@@ -40,4 +40,7 @@ interface IHasGuardInfo {
 
   // Get asset guard
   function getAssetGuard(address extContract) external view returns (address);
+
+  // Get mapped addresses from Governance
+  function getAddress(bytes32 name) external view returns (address);
 }

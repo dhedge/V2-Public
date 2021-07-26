@@ -7,9 +7,9 @@ const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("./TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("../TestHelpers");
 
-let logicOwner, manager, dao, user1;
+let logicOwner, manager, dao, investor, user1, user2;
 let poolFactory,
   PoolLogic,
   PoolManagerLogic,
@@ -40,6 +40,8 @@ const FIVE_TOKENS = "5000000000000000000";
 const TEN_TOKENS = "10000000000000000000";
 const TWENTY_TOKENS = "20000000000000000000";
 const ONE_HUNDRED_TOKENS = "100000000000000000000";
+
+const POOL_STORAGE_VERSION = "99999";
 
 describe("PoolFactory", function () {
   before(async function () {
@@ -72,13 +74,17 @@ describe("PoolFactory", function () {
     badtoken = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
     // mock IAddressResolver
-    const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
+    const IAddressResolver = await hre.artifacts.readArtifact(
+      "contracts/interfaces/synthetix/IAddressResolver.sol:IAddressResolver",
+    );
     const iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi);
     let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
     // mock Sushi LINK-WETH LP
-    const IUniswapV2Pair = await hre.artifacts.readArtifact("IUniswapV2Pair");
+    const IUniswapV2Pair = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv2/IUniswapV2Pair.sol:IUniswapV2Pair",
+    );
     const iUniswapV2Pair = new ethers.utils.Interface(IUniswapV2Pair.abi);
     const token0Abi = iUniswapV2Pair.encodeFunctionData("token0", []);
     await sushiLPLinkWethAsset.givenCalldataReturnAddress(token0Abi, slink);
@@ -96,7 +102,7 @@ describe("PoolFactory", function () {
     );
 
     // mock ISynthetix
-    const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
+    const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
     let synthsABI = iSynthetix.encodeFunctionData("synths", [susdKey]);
     await synthetix.givenCalldataReturnAddress(synthsABI, susdAsset.address);
@@ -113,7 +119,7 @@ describe("PoolFactory", function () {
     await synthetix.givenCalldataReturn(synthsByAddressABI, slinkKey);
 
     // mock ISynth
-    const ISynth = await hre.artifacts.readArtifact("ISynth");
+    const ISynth = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynth.sol:ISynth");
     const iSynth = new ethers.utils.Interface(ISynth.abi);
     const proxyABI = iSynth.encodeFunctionData("proxy", []);
     await susdAsset.givenCalldataReturnAddress(proxyABI, susdProxy.address);
@@ -121,7 +127,9 @@ describe("PoolFactory", function () {
     await slinkAsset.givenCalldataReturnAddress(proxyABI, slinkProxy.address);
 
     // mock ISynthAddressProxy
-    const ISynthAddressProxy = await hre.artifacts.readArtifact("ISynthAddressProxy");
+    const ISynthAddressProxy = await hre.artifacts.readArtifact(
+      "contracts/interfaces/synthetix/ISynthAddressProxy.sol:ISynthAddressProxy",
+    );
     const iSynthAddressProxy = new ethers.utils.Interface(ISynthAddressProxy.abi);
     const targetABI = iSynthAddressProxy.encodeFunctionData("target", []);
     await susdProxy.givenCalldataReturnAddress(targetABI, susdAsset.address);
@@ -141,21 +149,17 @@ describe("PoolFactory", function () {
     // Aggregators
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
-    // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLPAggregator = await SushiLPAggregator.deploy(
-      sushiLPLinkWeth,
-      link_price_feed.address,
-      eth_price_feed.address,
-    );
-
     const Governance = await ethers.getContractFactory("Governance");
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    PoolLogicV23 = await ethers.getContractFactory("PoolLogic"); // TODO: Update pre-upgrade version
+    poolLogicV23 = await PoolLogicV23.deploy();
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
+    PoolManagerLogicV23 = await ethers.getContractFactory("PoolManagerLogic"); // TODO: Update pre-upgrade version
+    poolManagerLogicV23 = await PoolManagerLogicV23.deploy();
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
@@ -165,54 +169,67 @@ describe("PoolFactory", function () {
     const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
     const assetSushi = { asset: sushiToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
     const assetWmatic = { asset: wmaticToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
-    const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic, assetSushiLPLinkWeth];
+    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic];
 
     // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     // await assetHandler.deployed();
-    AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
+    AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
 
-    const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [
-      poolLogic.address,
-      poolManagerLogic.address,
+    const PoolFactoryLogicV23 = await ethers.getContractFactory("PoolFactory"); // TODO: Update pre-upgrade version
+    poolFactoryV23 = await upgrades.deployProxy(PoolFactoryLogicV23, [
+      poolLogicV23.address,
+      poolManagerLogicV23.address,
       assetHandler.address,
       dao.address,
       governance.address,
     ]);
-    await poolFactory.deployed();
-    console.log("poolFactory deployed to:", poolFactory.address);
+    await poolFactoryV23.deployed();
+    console.log("poolFactoryV23 deployed to:", poolFactoryV23.address);
 
-    // Initialise pool factory
-    // await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, dao.address);
-    // await poolFactory.deployed();
+    const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
+    poolFactory = await upgrades.upgradeProxy(poolFactoryV23.address, PoolFactoryLogic);
+    console.log("poolFactory upgraded to: ", poolFactory.address);
+
+    // Deploy Sushi LP Aggregator
+    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLPLinkWeth, poolFactory.address);
+    const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    await assetHandler.addAssets([assetSushiLPLinkWeth]);
 
     // Deploy contract guards
-    const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
+    const SynthetixGuard = await ethers.getContractFactory("contracts/guards/SynthetixGuard.sol:SynthetixGuard");
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
 
-    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+    const UniswapV2RouterGuard = await ethers.getContractFactory(
+      "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
+    );
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory.address);
     uniswapV2RouterGuard.deployed();
 
-    const UniswapV3SwapGuard = await ethers.getContractFactory("UniswapV3SwapGuard");
+    const UniswapV3SwapGuard = await ethers.getContractFactory(
+      "contracts/guards/uniswapV3/UniswapV3SwapGuard.sol:UniswapV3SwapGuard",
+    );
     uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
     uniswapV3SwapGuard.deployed();
 
-    const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
+    const SushiMiniChefV2Guard = await ethers.getContractFactory(
+      "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
+    );
     sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken.address, wmaticToken.address);
     sushiMiniChefV2Guard.deployed();
 
     // Deploy asset guards
-    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+    const ERC20Guard = await ethers.getContractFactory("contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
+    const SushiLPAssetGuard = await ethers.getContractFactory(
+      "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
+    );
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
@@ -224,15 +241,46 @@ describe("PoolFactory", function () {
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
   });
 
+  it("should be able to upgrade/set implementation logic", async function () {
+    await expect(poolFactory.connect(user1).setLogic(poolLogic.address, poolManagerLogic.address)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+    await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
+
+    let poolManagerLogicAddress = await poolFactory.getLogic(1);
+    expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
+
+    let poolLogicAddress = await poolFactory.getLogic(2);
+    expect(poolLogicAddress).to.equal(poolLogic.address);
+  });
+
+  it("Should be able to set pool storage version", async function () {
+    await expect(poolFactory.connect(user1).setPoolStorageVersion(POOL_STORAGE_VERSION)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+
+    await poolFactory.setPoolStorageVersion(POOL_STORAGE_VERSION);
+
+    const poolStorageVersion = await poolFactory.poolStorageVersion();
+    expect(poolStorageVersion).to.equal(POOL_STORAGE_VERSION);
+  });
+
   it("Should be able to createFund", async function () {
     await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [susd, true],
-      [seth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [susd, true],
+        [seth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -249,7 +297,7 @@ describe("PoolFactory", function () {
           [seth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     console.log("Creating Fund...");
 
@@ -301,7 +349,7 @@ describe("PoolFactory", function () {
           [seth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     await expect(
       poolFactory.createFund(
@@ -374,8 +422,12 @@ describe("PoolFactory", function () {
     //Other assets are not supported
     expect(await poolManagerLogicProxy.isSupportedAsset(slink)).to.be.false;
 
+    // check pool storage version
+    const poolVersion = await poolFactory.poolVersion(poolLogicProxy.address);
+    expect(poolVersion).to.equal(POOL_STORAGE_VERSION);
+
     // mock IMiniChefV2
-    IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
+    IMiniChefV2 = await hre.artifacts.readArtifact("contracts/interfaces/sushi/IMiniChefV2.sol:IMiniChefV2");
     iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
     const userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
     const amountLPStaked = "0";
@@ -736,9 +788,9 @@ describe("PoolFactory", function () {
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
     const daoAddress = await poolFactory.owner();
-    const trackingCode = await poolFactory.getTrackingCode();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
-    const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
+    const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
     const exchangeWithTrackingABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
       sourceKey,
@@ -801,7 +853,9 @@ describe("PoolFactory", function () {
     });
 
     const sourceAmount = (100e18).toString();
-    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+    const IUniswapV2Router = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv2/IUniswapV2Router.sol:IUniswapV2Router",
+    );
     const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
     let swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
@@ -893,20 +947,17 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on(
-        "Exchange",
-        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-          event.removeListener();
+      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+        event.removeListener();
 
-          resolve({
-            managerLogicAddress: managerLogicAddress,
-            sourceAsset: sourceAsset,
-            sourceAmount: sourceAmount,
-            destinationAsset: destinationAsset,
-            time: time,
-          });
-        },
-      );
+        resolve({
+          pool: pool,
+          sourceAsset: sourceAsset,
+          sourceAmount: sourceAmount,
+          destinationAsset: destinationAsset,
+          time: time,
+        });
+      });
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -914,7 +965,9 @@ describe("PoolFactory", function () {
     });
 
     const sourceAmount = (100e18).toString();
-    const IUniswapV3Router = await hre.artifacts.readArtifact("IUniswapV3Router");
+    const IUniswapV3Router = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router",
+    );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     const exactInputSingleParams = {
       tokenIn: susd,
@@ -971,20 +1024,17 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on(
-        "Exchange",
-        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-          event.removeListener();
+      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+        event.removeListener();
 
-          resolve({
-            managerLogicAddress: managerLogicAddress,
-            sourceAsset: sourceAsset,
-            sourceAmount: sourceAmount,
-            destinationAsset: destinationAsset,
-            time: time,
-          });
-        },
-      );
+        resolve({
+          pool: pool,
+          sourceAsset: sourceAsset,
+          sourceAmount: sourceAmount,
+          destinationAsset: destinationAsset,
+          time: time,
+        });
+      });
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -992,7 +1042,9 @@ describe("PoolFactory", function () {
     });
 
     const sourceAmount = (100e18).toString();
-    const IUniswapV3Router = await hre.artifacts.readArtifact("IUniswapV3Router");
+    const IUniswapV3Router = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router",
+    );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     // https://etherscan.io/tx/0xa8423934015c7e893e06721bbc01e42b8139b20764b9d23dbcb831e7b18b0e60
     // path on etherscan 0x c4a11aaf6ea915ed7ac194161d2fc9384f15bff2 000bb8 c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 0001f4 dac17f958d2ee523a2206206994597c13d831ec7
@@ -1085,19 +1137,33 @@ describe("PoolFactory", function () {
 
     await assetHandler.setChainlinkTimeout(9000000);
 
-    let availableFee = await poolLogicProxy.availableManagerFee();
-    let tokenPricePreMint = await poolLogicProxy.tokenPrice();
-    let totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
+    const availableFeePreMint = await poolLogicProxy.availableManagerFee();
+    const tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
+    const calculatedAvailableFee = tokenPricePreMint
+      .sub(tokenPriceAtLastFeeMint)
+      .mul(totalSupplyPreMint)
+      .mul(managerFeeNumerator)
+      .div(10000)
+      .div(tokenPricePreMint);
+
+    expect(availableFeePreMint).to.be.gt("0"); // the test needs to have some available fee to claim
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
 
     await poolLogicProxy.mintManagerFee();
 
-    let tokenPricePostMint = await poolLogicProxy.tokenPrice();
-    let totalSupplyPostMint = await poolLogicProxy.totalSupply();
+    const tokenPricePostMint = await poolLogicProxy.tokenPrice();
+    const totalSupplyPostMint = await poolLogicProxy.totalSupply();
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFee));
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
     checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
 
-    checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFee.mul(daoFees[0]).div(daoFees[1]));
+    checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFeePreMint.mul(daoFees[0]).div(daoFees[1]));
+
+    const availableFeePostMint = await poolLogicProxy.availableManagerFee();
+    expect(availableFeePostMint).to.be.eq("0");
 
     await assetHandler.setChainlinkTimeout(90000);
   });
@@ -1108,6 +1174,21 @@ describe("PoolFactory", function () {
     await expect(poolFactory.pause()).to.be.revertedWith("caller is not the owner");
     await poolFactory.connect(dao).pause();
     expect(await poolFactory.isPaused()).to.be.true;
+
+    await expect(
+      poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        new ethers.BigNumber.from("6000"),
+        [
+          [susd, true],
+          [seth, true],
+        ],
+      ),
+    ).to.be.revertedWith("contracts paused");
 
     await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.be.revertedWith("contracts paused");
     await expect(poolLogicProxy.withdraw((100e18).toString())).to.be.revertedWith("contracts paused");
@@ -1136,7 +1217,6 @@ describe("PoolFactory", function () {
       expect(await assetHandler.priceAggregators(seth)).to.be.equal(eth_price_feed.address);
       expect(await assetHandler.priceAggregators(slink)).to.be.equal(link_price_feed.address);
       expect(await assetHandler.priceAggregators(ZERO_ADDRESS)).to.be.equal(ZERO_ADDRESS);
-      expect(await assetHandler.getAssetTypeAndAggregator(susd)).to.deep.equal([0, usd_price_feed.address]);
 
       await expect(assetHandler.connect(manager).removeAsset(slink)).to.be.revertedWith(
         "Ownable: caller is not the owner",
@@ -1580,24 +1660,6 @@ describe("PoolFactory", function () {
         }, 60000);
       });
 
-      const withdrawStakedEvent = new Promise((resolve, reject) => {
-        sushiLPAssetGuard.on("WithdrawStaked", (fundAddress, asset, to, withdrawAmount, time, event) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress,
-            asset,
-            to,
-            withdrawAmount,
-            time,
-          });
-        });
-
-        setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 60000);
-      });
-
       // refresh timestamp of Chainlink price round data
       await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
@@ -1640,7 +1702,6 @@ describe("PoolFactory", function () {
       await poolLogicProxy.connect(investor).withdraw(withdrawAmount);
 
       const eventWithdrawal = await withdrawalEvent;
-      const eventWithdrawStaked = await withdrawStakedEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
       const fractionWithdrawn = withdrawAmount / totalSupply;
@@ -1662,13 +1723,77 @@ describe("PoolFactory", function () {
       expect(withdrawLP[0]).to.equal(sushiLPLinkWeth);
       expect(withdrawLP[2]).to.equal(true);
       expect(eventWithdrawal.withdrawnAssets.length).to.equal(2);
-
-      expect(eventWithdrawStaked.fundAddress).to.equal(poolLogicProxy.address);
-      expect(eventWithdrawStaked.asset).to.equal(sushiLPLinkWeth);
-      expect(eventWithdrawStaked.to).to.equal(investor.address);
-      checkAlmostSame(eventWithdrawStaked.withdrawAmount, expectedWithdrawAmount.toString());
-      expect(eventWithdrawStaked.time).to.equal((await currentBlockTimestamp()).toString());
     });
+
+    it("can set Sushi pool ID", async () => {
+      expect(sushiLPAssetGuard.setSushiPoolId(ZERO_ADDRESS, "1")).to.be.revertedWith("Invalid lpToken address");
+
+      const contract = "0x1111111111111111111111111111111111111111";
+      expect(sushiLPAssetGuard.connect(user1).setSushiPoolId(contract, "1")).to.be.revertedWith(
+        "caller is not the owner",
+      );
+
+      await sushiLPAssetGuard.setSushiPoolId(contract, "1");
+      const poolId = await sushiLPAssetGuard.sushiPoolIds(contract);
+      expect(poolId).to.be.equal("1");
+    });
+  });
+
+  it("should be ale to query invested/managed pools", async function () {
+    let pools = await poolFactory.getDeployedFunds();
+
+    expect(await poolFactory.getManagedPools(manager.address)).to.be.deep.equal([pools[0]]);
+    expect(await poolFactory.getManagedPools(user1.address)).to.be.deep.equal([pools[1]]);
+
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+
+    await poolFactory.createFund(
+      false,
+      user1.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    pools = await poolFactory.getDeployedFunds();
+
+    expect(await poolFactory.getManagedPools(manager.address)).to.be.deep.equal([pools[0], pools[2]]);
+    expect(await poolFactory.getManagedPools(user1.address)).to.be.deep.equal([pools[1], pools[3]]);
+    expect(await poolFactory.getManagedPools(logicOwner.address)).to.be.deep.equal([]);
+
+    await assetHandler.setChainlinkTimeout(9000000);
+
+    expect(await poolFactory.getInvestedPools(investor.address)).to.be.deep.equal([pools[0]]);
+    expect(await poolFactory.getInvestedPools(logicOwner.address)).to.be.deep.equal([pools[1]]);
+
+    let newPoolLogic = await PoolLogic.attach(pools[3]);
+    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+      investor.address,
+      newPoolLogic.address,
+      (100e18).toString(),
+    ]);
+    await susdProxy.givenCalldataReturnBool(transferFromABI, true);
+    await newPoolLogic.connect(investor).deposit(susd, (100e18).toString());
+
+    expect(await poolFactory.getInvestedPools(investor.address)).to.be.deep.equal([pools[0], pools[3]]);
+    expect(await poolFactory.getInvestedPools(user2.address)).to.be.deep.equal([]);
+
+    await assetHandler.setChainlinkTimeout(90000);
   });
 
   it("should be able to upgrade/set implementation logic", async function () {

@@ -27,7 +27,5 @@ interface IAssetHandler {
 
   function assetTypes(address asset) external view returns (uint16);
 
-  function getAssetTypeAndAggregator(address asset) external view returns (uint16, address);
-
   function getUSDPrice(address asset) external view returns (uint256);
 }

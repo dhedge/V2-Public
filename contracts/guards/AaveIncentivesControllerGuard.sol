@@ -1,4 +1,3 @@
-//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -30,19 +29,57 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
-interface IAssetGuard {
-  function getWithdrawStakedTx(
-    address pool,
-    address asset,
-    uint256 withdrawPortion,
-    address to
-  ) external returns (address, bytes memory);
+import "../utils/TxDataUtils.sol";
+import "../interfaces/guards/IGuard.sol";
+import "../interfaces/IPoolManagerLogic.sol";
+import "../interfaces/IHasSupportedAsset.sol";
 
-  function getBalance(address pool, address asset) external view returns (uint256 balance);
+/// @title Transaction guard for Aave's incentives controller contract
+contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
+  event Claim(address fundAddress, address stakingContract, uint256 time);
 
-  function getDecimals(address asset) external view returns (uint256 decimals);
+  address public rewardToken;
+
+  constructor(address _rewardToken) {
+    rewardToken = _rewardToken;
+  }
+
+  /// @notice Transaction guard for Aave incentives controller
+  /// @dev It supports claimRewards functionality
+  /// @param _poolManagerLogic the pool manager logic
+  /// @param data the transaction data
+  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  function txGuard(
+    address _poolManagerLogic,
+    address to, // to
+    bytes calldata data
+  )
+    external
+    override
+    returns (
+      uint16 txType // transaction type
+    )
+  {
+    bytes4 method = getMethod(data);
+    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
+
+    if (method == bytes4(keccak256("claimRewards(address[],uint256,address)"))) {
+      // https://github.com/aave/aave-stake-v2/blob/feat/deployment-scripts/contracts/stake/AaveIncentivesController.sol#L129
+
+      address onBehalfOf = convert32toAddress(getInput(data, 2));
+
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardToken), "unsupported reward asset");
+      require(onBehalfOf == poolLogic, "recipient is not pool");
+
+      emit Claim(poolLogic, to, block.timestamp);
+
+      txType = 7; // `Claim` type
+      return txType;
+    }
+  }
 }

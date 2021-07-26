@@ -36,11 +36,13 @@ pragma experimental ABIEncoderV2;
 
 import "./ERC20Guard.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Sushi LP token asset guard
 /// @dev Asset type = 2
-contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
+contract SushiLPAssetGuard is ERC20Guard, Ownable {
   using SafeMathUpgradeable for uint256;
 
   struct SushiPool {
@@ -51,8 +53,6 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
   address public sushiStaking; // Sushi's staking MiniChefV2 contract
 
   mapping(address => uint256) public sushiPoolIds; // Sushi's staking MiniChefV2 Pool IDs
-
-  event WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time);
 
   event SushiPoolAdded(address indexed lpToken, uint256 indexed poolId);
 
@@ -71,48 +71,67 @@ contract SushiLPAssetGuard is TxDataUtils, ERC20Guard {
   /// @dev The same interface can be used for other types of stakeable tokens
   /// @param pool Pool address
   /// @param asset Staked asset
-  /// @param withdrawPortion The fraction of total staked asset to withdraw
+  /// @param portion The fraction of total staked asset to withdraw
   /// @param to The investor address to withdraw to
-  /// @return stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
-  function getWithdrawStakedTx(
+  /// @return withdrawAsset and
+  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
+  /// @return transactions is used to execute the staked withdrawal transaction in PoolLogic
+  function withdrawProcessing(
     address pool,
     address asset,
-    uint256 withdrawPortion,
+    uint256 portion,
     address to
-  ) external override returns (address stakingContract, bytes memory txData) {
+  )
+    external
+    view
+    virtual
+    override
+    returns (
+      address withdrawAsset,
+      uint256 withdrawBalance,
+      MultiTransaction[] memory transactions
+    )
+  {
+    withdrawAsset = asset;
+    uint256 totalAssetBalance = IERC20(asset).balanceOf(pool);
+    withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
+
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
 
     // If there is a staked balance in Sushi MiniChefV2 staking contract
     // Then create the withdrawal transaction data to be executed by PoolLogic
     if (stakedBalance > 0) {
-      stakingContract = sushiStaking;
-      uint256 withdrawAmount = stakedBalance.mul(withdrawPortion).div(10**18);
+      uint256 withdrawAmount = stakedBalance.mul(portion).div(10**18);
       if (withdrawAmount > 0) {
-        txData = abi.encodeWithSelector(
+        transactions = new MultiTransaction[](1);
+        transactions[0].to = sushiStaking;
+        transactions[0].txData = abi.encodeWithSelector(
           bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)")),
           sushiPoolId,
           withdrawAmount,
           to
         );
-        emit WithdrawStaked(pool, asset, to, withdrawAmount, block.timestamp);
       }
     }
   }
 
   /// @notice Returns the balance of the managed asset
   /// @dev May include any external balance in staking contracts
-  function getBalance(address pool, address asset) external view override returns (uint256 balance) {
+  /// @param pool address of the pool
+  /// @param asset address of the asset
+  /// @return balance The asset balance of given pool
+  function getBalance(address pool, address asset) public view override returns (uint256 balance) {
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
     uint256 poolBalance = IERC20(asset).balanceOf(pool);
     balance = stakedBalance.add(poolBalance);
   }
 
-  /// @dev Set pool Id for sushiPool
-  /// @param lpToken The address of the LP token
-  /// @param poolId The Id of the staking pool
-  function setSushiPoolId(address lpToken, uint256 poolId) external {
+  /// @notice Setting sushi pool Id
+  /// @param lpToken address of the LP Token
+  /// @param poolId Id of LP pair pool
+  function setSushiPoolId(address lpToken, uint256 poolId) external onlyOwner {
     require(lpToken != address(0), "Invalid lpToken address");
 
     sushiPoolIds[lpToken] = poolId;

@@ -50,4 +50,6 @@ interface IPoolManagerLogic {
   function setPoolLogic(address fundAddress) external returns (bool);
 
   function totalFundValue() external view returns (uint256);
+
+  function getManagerFee() external view returns (uint256, uint256);
 }
