@@ -412,11 +412,12 @@ contract PoolFactory is
   // Upgrade
 
   function setPoolStorageVersion(uint256 _poolStorageVersion) external onlyOwner {
-    require(_poolStorageVersion > poolStorageVersion, "version needs to be higher");
     _setPoolStorageVersion(_poolStorageVersion);
   }
 
   function _setPoolStorageVersion(uint256 _poolStorageVersion) internal {
+    require(_poolStorageVersion > poolStorageVersion, "version needs to be higher");
+
     poolStorageVersion = _poolStorageVersion;
 
     emit SetPoolStorageVersion(_poolStorageVersion);
