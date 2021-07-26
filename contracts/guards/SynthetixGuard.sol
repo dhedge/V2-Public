@@ -96,11 +96,13 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     }
   }
 
-  function getAssetProxy(bytes32 key) public view returns (address) {
+  /// @notice Get asset proxy address from addressResolver
+  /// @param key the key of the asset
+  /// @return proxy the proxy address of the asset
+  function getAssetProxy(bytes32 key) public view returns (address proxy) {
     address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
     require(synth != address(0), "invalid key");
-    address proxy = ISynth(synth).proxy();
+    proxy = ISynth(synth).proxy();
     require(proxy != address(0), "invalid proxy");
-    return proxy;
   }
 }

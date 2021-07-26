@@ -47,7 +47,11 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;
   using SafeMathUpgradeable for uint256;
 
-  // transaction guard for Uniswap Swap Router
+  /// @notice Transaction guard for UniswavpV3SwapGuard
+  /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @param _poolManagerLogic Pool address
+  /// @param data Transaction call data attempt by manager
+  /// @return txType transaction type described in PoolLogic
   function txGuard(
     address _poolManagerLogic,
     address, // to
