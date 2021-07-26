@@ -189,5 +189,159 @@
       "SushiMiniChefV2Guard": "0xf66bd3E6AAd8f2Bb9d988d87Fcc38b2CfEf29B89",
       "SushiLPAssetGuard": "0x2ada4bb6b2e06681e110be339affa1a1fcd9c9b9"
     }
+  },
+  "v2.4.0": {
+    "network": {
+      "name": "matic",
+      "chainId": 137,
+      "ensAddress": null,
+      "_defaultProvider": null
+    },
+    "date": "Mon, 26 Jul 2021 15:46:39 GMT",
+    "contracts": {
+      "Assets": [
+        {
+          "name": "USD Coin",
+          "asset": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+          "assetType": "0",
+          "aggregator": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+        },
+        {
+          "name": "Tether USD",
+          "asset": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+          "assetType": "0",
+          "aggregator": "0x0A6513e40db6EB1b165753AD52E80663aeA50545"
+        },
+        {
+          "name": "Dai USD",
+          "asset": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+          "assetType": "0",
+          "aggregator": "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D"
+        },
+        {
+          "name": "Wrapped Matic",
+          "asset": "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+          "assetType": "0",
+          "aggregator": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0"
+        },
+        {
+          "name": "Wrapped Ether",
+          "asset": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+          "assetType": "0",
+          "aggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945"
+        },
+        {
+          "name": "Wrapped Bitcoin",
+          "asset": "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
+          "assetType": "0",
+          "aggregator": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
+        },
+        {
+          "name": "Chainlink",
+          "asset": "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39",
+          "assetType": "0",
+          "aggregator": "0xd9FFdb71EbE7496cC440152d43986Aae0AB76665"
+        },
+        {
+          "name": "Synthetix",
+          "asset": "0x50b728d8d964fd00c2d0aad81718b71311fef68a",
+          "assetType": "0",
+          "aggregator": "0xbF90A5D9B6EE9019028dbFc2a9E50056d5252894"
+        },
+        {
+          "name": "Aave",
+          "asset": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
+          "assetType": "0",
+          "aggregator": "0x72484B12719E23115761D5DA1646945632979bB6"
+        },
+        {
+          "name": "Sushi",
+          "asset": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
+          "assetType": "0",
+          "aggregator": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0"
+        },
+        {
+          "name": "CRV",
+          "asset": "0x172370d5cd63279efa6d502dab29171933a610af",
+          "assetType": "0",
+          "aggregator": "0x336584C8E6Dc19637A5b36206B1c79923111b405"
+        },
+        {
+          "name": "Sushi LP USDC-DAI",
+          "asset": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
+          "assetType": "2",
+          "aggregator": "0xbd092455c72A64e91A2F7dAB2ec47Ea495deee20"
+        },
+        {
+          "name": "Sushi LP USDC-USDT",
+          "asset": "0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001",
+          "assetType": "2",
+          "aggregator": "0x219FD4b899582B03BF150792F15d7e740F1C1af8"
+        },
+        {
+          "name": "Sushi LP WETH-DAI",
+          "asset": "0x6ff62bfb8c12109e8000935a6de54dad83a4f39f",
+          "assetType": "2",
+          "aggregator": "0xe12d3c7864e0C3C09b286c1ef44b0D3e9adFbBb7"
+        },
+        {
+          "name": "Sushi LP WETH-USDT",
+          "asset": "0xc2755915a85c6f6c1c0f3a86ac8c058f11caa9c9",
+          "assetType": "2",
+          "aggregator": "0x38e64aDAF7332330Df14d4f623977D3661622B79"
+        },
+        {
+          "name": "Sushi LP USDC-WETH",
+          "asset": "0x34965ba0ac2451a34a0471f04cca3f990b8dea27",
+          "assetType": "2",
+          "aggregator": "0x2C595EB6f1e242eA6E7B9Ded2466CeF505a31C3e"
+        },
+        {
+          "name": "Sushi LP SNX-WETH",
+          "asset": "0x116ff0d1caa91a6b94276b3471f33dbeb52073e7",
+          "assetType": "2",
+          "aggregator": "0x7247A377A81ECD2FEEE63527624F76107B25ba37"
+        },
+        {
+          "name": "Sushi LP LINK-WETH",
+          "asset": "0x74d23f21f780ca26b47db16b0504f2e3832b9321",
+          "assetType": "2",
+          "aggregator": "0x4d2F0e592cBdcff693Ebe8f5172e3432aFf7725E"
+        },
+        {
+          "name": "Sushi LP WBTC-WETH",
+          "asset": "0xe62ec2e799305e0d367b0cc3ee2cda135bf89816",
+          "assetType": "2",
+          "aggregator": "0xe83ABEd10b1DDCeA63D3Ee844E6e6BaD7090fc12"
+        },
+        {
+          "name": "Sushi LP WMATIC-WETH",
+          "asset": "0xc4e595acdd7d12fec385e5da5d43160e8a0bac0e",
+          "assetType": "2",
+          "aggregator": "0x4dF8fc73b898A0C48095F1F2e12c729618F03218"
+        },
+        {
+          "name": "Sushi LP WETH-AAVE",
+          "asset": "0x2813d43463c374a680f235c428fb1d7f08de0b69",
+          "assetType": "2",
+          "aggregator": "0x32D0fb93BD87cce2F2479F6F1ccce1Bd282cAD2D"
+        },
+        {
+          "name": "Sushi LP WETH-CRV",
+          "asset": "0x396e655c309676caf0acf4607a868e0cded876db",
+          "assetType": "2",
+          "aggregator": "0x68376e228Dd9080115d1313900834c6546Cf0190"
+        }
+      ],
+      "Governance": "0x5fE28849f413069C014EABb7bf172Bd9Ef3ee0de",
+      "PoolFactoryProxy": "0xeA6cD3d4C65736Af8378341b2Dd6FD1d0B515b9B",
+      "PoolLogicProxy": "0xeAe893FAAfF2B6c053620f91fda77a191A692BA1",
+      "PoolManagerLogicProxy": "0xE21e35Bc593fAeeea6e4575F34E11d96A8CA45e8",
+      "AssetHandlerProxy": "0x17077A224160d110B947CDa1da11010E74Cf59b4",
+      "ERC20Guard": "0x17e3AeA5de29Ac6333303fCB2fB3E525241B2C84",
+      "UniswapV2RouterGuard": "0x2172D31F769a139B87Eea9313734Fa267AB80e89",
+      "SushiMiniChefV2Guard": "0xA2A11368BE61508E471dc00490781747b3c94a97",
+      "SushiLPAssetGuard": "0x3603B3078ea609F05e99d849122c7222A3078281"
+    }
   }
 }
