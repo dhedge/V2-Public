@@ -255,7 +255,9 @@ describe("PoolFactory", function () {
   });
 
   it("Should be able to set pool storage version", async function () {
-    await expect(poolFactory.connect(user1).setPoolStorageVersion(POOL_STORAGE_VERSION)).to.be.revertedWith("caller is not the owner");
+    await expect(poolFactory.connect(user1).setPoolStorageVersion(POOL_STORAGE_VERSION)).to.be.revertedWith(
+      "caller is not the owner",
+    );
 
     await poolFactory.setPoolStorageVersion(POOL_STORAGE_VERSION);
 
