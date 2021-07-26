@@ -47,13 +47,13 @@ contract BaseUpgradeabilityProxy is Proxy {
     return HasLogic(factory).getLogic(_proxyType());
   }
 
-  function _proxyType() internal view returns (uint8) {
-    uint8 proxyType;
+  /// @dev Return the proxy type.
+  /// @return proxyType Return type of the proxy.
+  function _proxyType() internal view returns (uint8 proxyType) {
     bytes32 slot = PROXY_TYPE;
     assembly {
       proxyType := sload(slot)
     }
-    return proxyType;
   }
 
   /**
