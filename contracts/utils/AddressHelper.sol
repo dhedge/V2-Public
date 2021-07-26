@@ -49,11 +49,11 @@ library AddressHelper {
     assembly {
       success := call(gas(), to, 0, add(data, 0x20), mload(data), 0, 0)
       switch iszero(success)
-      case 1 {
-        let size := returndatasize()
-        returndatacopy(0x00, 0x00, size)
-        revert(0x00, size)
-      }
+        case 1 {
+          let size := returndatasize()
+          returndatacopy(0x00, 0x00, size)
+          revert(0x00, size)
+        }
     }
   }
 
@@ -67,11 +67,11 @@ library AddressHelper {
     assembly {
       success := delegatecall(gas(), to, add(data, 0x20), mload(data), 0, 0)
       switch iszero(success)
-      case 1 {
-        let size := returndatasize()
-        returndatacopy(0x00, 0x00, size)
-        revert(0x00, size)
-      }
+        case 1 {
+          let size := returndatasize()
+          returndatacopy(0x00, 0x00, size)
+          revert(0x00, size)
+        }
     }
   }
 
