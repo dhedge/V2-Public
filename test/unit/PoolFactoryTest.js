@@ -1352,6 +1352,15 @@ describe("PoolFactory", function () {
     });
   });
 
+  it("can set Sushi pool ID", async () => {
+    expect(sushiLPAssetGuard.setSushiPoolId(ZERO_ADDRESS, "1")).to.be.revertedWith("Invalid lpToken address");
+
+    const contract = "0x1111111111111111111111111111111111111111";
+    await sushiLPAssetGuard.setSushiPoolId(contract, "1");
+    const poolId = await sushiLPAssetGuard.sushiPoolIds(contract);
+    expect(poolId).to.be.equal("1");
+  });
+
   describe("Staking", function () {
     it("manager can Stake Sushi LP token", async function () {
       const stakeEvent = new Promise((resolve, reject) => {
