@@ -64,7 +64,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     await poolFactory.deployed();
 
     const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, poolFactory);
+    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, poolFactory.address);
     sushiLpAggregator.deployed();
     const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 2, aggregator: sushiLpAggregator.address };
     await assetHandler.addAssets([assetSushiUsdcUsdt]);
@@ -419,7 +419,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       0,
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "failed to execute the call",
+      "UniswapV2Router: EXPIRED",
     );
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
@@ -570,7 +570,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       0,
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapRouter, addLiquidityAbi)).to.be.revertedWith(
-      "failed to execute the call",
+      "revert UniswapV2Router: EXPIRED",
     );
 
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
@@ -711,7 +711,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     ]);
     await expect(
       poolLogicProxy.connect(manager).execTransaction(sushiswapRouter, removeLiquidityAbi),
-    ).to.be.revertedWith("failed to execute the call");
+    ).to.be.revertedWith("UniswapV2Router: EXPIRED");
 
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);

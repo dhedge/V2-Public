@@ -442,7 +442,7 @@ describe("Sushiswap V2 Test", function () {
       0,
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
-      "failed to execute the call",
+      "UniswapV2Router: EXPIRED",
     );
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
