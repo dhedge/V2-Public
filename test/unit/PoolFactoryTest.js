@@ -151,12 +151,12 @@ describe("PoolFactory", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
-    PoolLogicV23 = await ethers.getContractFactory("PoolLogicV23");
+    PoolLogicV23 = await ethers.getContractFactory("PoolLogic"); // TODO: Update pre-upgrade version
     poolLogicV23 = await PoolLogicV23.deploy();
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
-    PoolManagerLogicV23 = await ethers.getContractFactory("PoolManagerLogicV23");
+    PoolManagerLogicV23 = await ethers.getContractFactory("PoolManagerLogic"); // TODO: Update pre-upgrade version
     poolManagerLogicV23 = await PoolManagerLogicV23.deploy();
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
@@ -176,7 +176,7 @@ describe("PoolFactory", function () {
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
 
-    const PoolFactoryLogicV23 = await ethers.getContractFactory("PoolFactoryV23");
+    const PoolFactoryLogicV23 = await ethers.getContractFactory("PoolFactory"); // TODO: Update pre-upgrade version
     poolFactoryV23 = await upgrades.deployProxy(PoolFactoryLogicV23, [
       poolLogicV23.address,
       poolManagerLogicV23.address,
@@ -257,10 +257,17 @@ describe("PoolFactory", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [susd, true],
-      [seth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [susd, true],
+        [seth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -277,7 +284,7 @@ describe("PoolFactory", function () {
           [seth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     console.log("Creating Fund...");
 
@@ -329,7 +336,7 @@ describe("PoolFactory", function () {
           [seth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     await expect(
       poolFactory.createFund(
@@ -1113,19 +1120,33 @@ describe("PoolFactory", function () {
 
     await assetHandler.setChainlinkTimeout(9000000);
 
-    let availableFee = await poolLogicProxy.availableManagerFee();
-    let tokenPricePreMint = await poolLogicProxy.tokenPrice();
-    let totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
+    const availableFeePreMint = await poolLogicProxy.availableManagerFee();
+    const tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
+    const calculatedAvailableFee = tokenPricePreMint
+      .sub(tokenPriceAtLastFeeMint)
+      .mul(totalSupplyPreMint)
+      .mul(managerFeeNumerator)
+      .div(10000)
+      .div(tokenPricePreMint);
+
+    expect(availableFeePreMint).to.be.gt("0"); // the test needs to have some available fee to claim
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
 
     await poolLogicProxy.mintManagerFee();
 
-    let tokenPricePostMint = await poolLogicProxy.tokenPrice();
-    let totalSupplyPostMint = await poolLogicProxy.totalSupply();
+    const tokenPricePostMint = await poolLogicProxy.tokenPrice();
+    const totalSupplyPostMint = await poolLogicProxy.totalSupply();
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFee));
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
     checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
 
-    checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFee.mul(daoFees[0]).div(daoFees[1]));
+    checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFeePreMint.mul(daoFees[0]).div(daoFees[1]));
+
+    const availableFeePostMint = await poolLogicProxy.availableManagerFee();
+    expect(availableFeePostMint).to.be.eq("0");
 
     await assetHandler.setChainlinkTimeout(90000);
   });

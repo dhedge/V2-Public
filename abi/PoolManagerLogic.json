@@ -468,6 +468,37 @@
   },
   {
     "inputs": [],
+    "name": "getMaximumManagerFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMaximumManagerFeeChange",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getMembers",
     "outputs": [
       {
@@ -525,6 +556,11 @@
         "internalType": "address",
         "name": "_poolLogic",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_managerFeeNumerator",
+        "type": "uint256"
       },
       {
         "components": [
@@ -614,6 +650,19 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "managerFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
