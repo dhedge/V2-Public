@@ -39,7 +39,7 @@ import "./interfaces/IManaged.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @notice Role manage contract
-contract Managed is IManaged{
+contract Managed is IManaged {
   using SafeMathUpgradeable for uint256;
 
   event ManagerUpdated(address newManager, string newManagerName);
@@ -74,7 +74,7 @@ contract Managed is IManaged{
   /// @notice Return boolean if the address is a member of the list
   /// @param member The address of the member
   /// @return Ture if the address is a member of the list, false otherwise
-  function isMemberAllowed(address member) public override view returns (bool) {
+  function isMemberAllowed(address member) public view override returns (bool) {
     return _memberPosition[member] != 0;
   }
 
@@ -132,7 +132,7 @@ contract Managed is IManaged{
 
   /// @notice Return the address of the trader
   /// @return Address of the trader
-  function trader() external override view returns (address) {
+  function trader() external view override returns (address) {
     return _trader;
   }
 
@@ -143,7 +143,7 @@ contract Managed is IManaged{
     _trader = newTrader;
   }
 
-  /// @notice Remove the trader 
+  /// @notice Remove the trader
   function removeTrader() external onlyManager {
     _trader = address(0);
   }
@@ -175,5 +175,4 @@ contract Managed is IManaged{
 
     _memberList.pop();
   }
-
 }
