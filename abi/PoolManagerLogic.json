@@ -226,7 +226,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "balance",
         "type": "uint256"
       }
     ],
@@ -245,7 +245,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "decimal",
         "type": "uint256"
       }
     ],
@@ -288,7 +288,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -307,7 +307,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -472,12 +472,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "numerator",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "denominator",
         "type": "uint256"
       }
     ],
@@ -490,7 +490,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "change",
         "type": "uint256"
       }
     ],
@@ -503,7 +503,7 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "",
+        "name": "members",
         "type": "address[]"
       }
     ],
@@ -687,7 +687,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_numberOfMembers",
         "type": "uint256"
       }
     ],

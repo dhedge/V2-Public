@@ -31,7 +31,7 @@ contract BaseUpgradeabilityProxy is Proxy {
   bytes32 internal constant PROXY_TYPE = 0x1000000000000000000000000000000000000000000000000000000000000000;
 
   /**
-   * @dev Returns the current implementation.
+   * @notice Returns the current implementation.
    * @return impl Address of the current implementation
    */
   function _implementation() internal view override returns (address) {
@@ -47,7 +47,7 @@ contract BaseUpgradeabilityProxy is Proxy {
     return HasLogic(factory).getLogic(_proxyType());
   }
 
-  /// @dev Return the proxy type.
+  /// @notice Return the proxy type.
   /// @return proxyType Return type of the proxy.
   function _proxyType() internal view returns (uint8 proxyType) {
     bytes32 slot = PROXY_TYPE;
@@ -57,7 +57,7 @@ contract BaseUpgradeabilityProxy is Proxy {
   }
 
   /**
-   * @dev Upgrades the proxy to a new implementation.
+   * @notice Upgrades the proxy to a new implementation.
    * @param newImplementation Address of the new implementation.
    */
   function _upgradeTo(address newImplementation) internal {
@@ -66,7 +66,7 @@ contract BaseUpgradeabilityProxy is Proxy {
   }
 
   /**
-   * @dev Sets the implementation address of the proxy.
+   * @notice Sets the implementation address of the proxy.
    * @param newImplementation Address of the new implementation.
    */
   function _setImplementation(address newImplementation) internal {
@@ -80,8 +80,8 @@ contract BaseUpgradeabilityProxy is Proxy {
   }
 
   /**
-   * @dev Sets type of the proxy.
-   * @param proxyType type of the proxy.
+   * @notice Sets type of the proxy.
+   * @param proxyType Type of the proxy.
    */
   function _setProxyType(uint8 proxyType) internal {
     bytes32 slot = PROXY_TYPE;

@@ -277,7 +277,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
-  /// @dev Calculates DebtToken balances
+  /// @notice Calculates DebtToken balances
   /// @param pool the PoolLogic address
   /// @param portion the portion of assets to be withdrawn
   /// @return borrowAssets the borrow assets list
@@ -339,7 +339,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
-  /// @dev process flash loan and return the transactions for execution
+  /// @notice process flash loan and return the transactions for execution
   /// @param pool the PoolLogic address
   /// @param portion the portion of assets to be withdrawn
   /// @param repayAssets Array of assets to be repaid
@@ -388,7 +388,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
-  /// @dev calculate and return repay Aave transactions for execution
+  /// @notice calculate and return repay Aave transactions for execution
   /// @param pool the PoolLogic address
   /// @param repayAssets Array of assets to be repaid
   /// @param repayAmounts Array of amounts to be repaid
@@ -424,7 +424,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
-  /// @dev calculate and return withdraw Aave transactions for execution
+  /// @notice calculate and return withdraw Aave transactions for execution
   /// @param pool the PoolLogic address
   /// @param portion the portion of assets to be withdrawn
   /// @param swapRouter the swapRouter address
@@ -484,7 +484,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
-  /// @dev calculate and return repay flash loan transactions for execution
+  /// @notice calculate and return repay flash loan transactions for execution
   /// @param pool the PoolLogic address
   /// @param swapRouter the swapRouter address
   /// @param weth the weth address to swap in the path

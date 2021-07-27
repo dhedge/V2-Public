@@ -354,7 +354,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "fee",
         "type": "uint256"
       }
     ],
@@ -460,7 +460,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "liquidityMinted",
         "type": "uint256"
       }
     ],
@@ -549,7 +549,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "exitCooldown",
         "type": "uint256"
       }
     ],
@@ -568,7 +568,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "remaining",
         "type": "uint256"
       }
     ],
@@ -724,7 +724,7 @@
     "outputs": [
       {
         "internalType": "string",
-        "name": "",
+        "name": "_managerName",
         "type": "string"
       }
     ],
@@ -828,7 +828,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "price",
         "type": "uint256"
       }
     ],
