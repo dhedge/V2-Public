@@ -64,6 +64,7 @@ import "./interfaces/IManaged.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import "./utils/AddressHelper.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -73,6 +74,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 /// @notice Logic implementation for pool
 contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
+  using AddressHelper for address;
 
   event Deposit(
     address fundAddress,
@@ -348,7 +350,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
 
       for (uint256 i = 0; i < txCount; i++) {
-        (success, ) = transactions[i].to.call(transactions[i].txData);
+        success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
         require(success, "failed to withdraw tokens");
       }
 
@@ -389,7 +391,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint16 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
-    (success, ) = to.call(data);
+    success = to.tryAssemblyCall(data);
     require(success, "failed to execute the call");
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
@@ -628,7 +630,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       );
 
     for (uint256 i = 0; i < transactions.length; i++) {
-      (success, ) = transactions[i].to.call(transactions[i].txData);
+      success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
       require(success, "failed to process flashloan");
     }
   }

@@ -408,7 +408,7 @@ describe("Polygon Mainnet Test", function () {
       );
 
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "SafeERC20: low-level call failed",
       );
 
       // approve usdc
@@ -466,16 +466,6 @@ describe("Polygon Mainnet Test", function () {
         "invalid transaction",
       );
 
-      // await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
-      //   "failed to execute the call",
-      // );
-
-      // // approve usdc
-      // const IERC20 = await hre.artifacts.readArtifact("IERC20");
-      // const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      // let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
-      // await poolLogicProxy.connect(manager).execTransaction(ausdc, approveABI);
-
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
       const ausdcBalanceBefore = await AUSDC.balanceOf(poolLogicProxy.address);
 
@@ -507,9 +497,7 @@ describe("Polygon Mainnet Test", function () {
       );
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [weth, true]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith(
-        "failed to execute the call",
-      );
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith("19");
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdc, false]);
       await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi);
@@ -636,7 +624,7 @@ describe("Polygon Mainnet Test", function () {
       );
 
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "SafeERC20: low-level call failed",
       );
 
       // approve dai
@@ -700,7 +688,7 @@ describe("Polygon Mainnet Test", function () {
 
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [usdc, 1]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "17",
       );
 
       expect(await VariableDAI.balanceOf(poolLogicProxy.address)).to.gt(0);
@@ -744,12 +732,12 @@ describe("Polygon Mainnet Test", function () {
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
-        "failed to execute the call",
+        "22",
       );
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [dai, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
-        "failed to execute the call",
+        "22",
       );
     });
   });
