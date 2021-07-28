@@ -99,7 +99,7 @@ contract PoolFactory is
 
   event SetAssetHandler(address assetHandler);
 
-  event SetTrackingCode(bytes32 code);
+  event SetPoolStorageVersion(uint256 poolStorageVersion);
 
   event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
@@ -117,20 +117,16 @@ contract PoolFactory is
 
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
   uint256 private _MANAGER_FEE_DENOMINATOR;
-  mapping(address => uint256) public poolManagerFeeNumerator;
-  mapping(address => uint256) public poolManagerFeeDenominator;
 
   uint256 internal _exitCooldown;
 
   uint256 internal _maximumSupportedAssetCount;
 
-  bytes32 internal _trackingCode;
-
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
 
-  uint256 public maximumManagerFeeNumeratorChange;
-  uint256 public managerFeeNumeratorChangeDelay;
+  uint256 public override maximumManagerFeeNumeratorChange;
+  uint256 public override managerFeeNumeratorChangeDelay;
 
   function initialize(
     address _poolLogic,
@@ -157,9 +153,7 @@ contract PoolFactory is
 
     _setMaximumSupportedAssetCount(10);
 
-    _setTrackingCode(0x4448454447450000000000000000000000000000000000000000000000000000);
-
-    poolStorageVersion = 230; // V2.3.0;
+    _setPoolStorageVersion(230); // V2.3.0;
   }
 
   function createFund(
@@ -173,6 +167,7 @@ contract PoolFactory is
   ) external returns (address) {
     require(!paused(), "contracts paused");
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
+    require(_managerFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
 
     bytes memory poolLogicData =
       abi.encodeWithSignature(
@@ -187,11 +182,12 @@ contract PoolFactory is
 
     bytes memory managerLogicData =
       abi.encodeWithSignature(
-        "initialize(address,address,string,address,(address,bool)[])",
+        "initialize(address,address,string,address,uint256,(address,bool)[])",
         address(this),
         _manager,
         _managerName,
         fund,
+        _managerFeeNumerator,
         _supportedAssets
       );
 
@@ -204,8 +200,6 @@ contract PoolFactory is
     isPoolManager[managerLogic] = true;
 
     poolVersion[fund] = poolStorageVersion;
-
-    _setPoolManagerFee(fund, _managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
 
     emit FundCreated(
       fund,
@@ -273,35 +267,12 @@ contract PoolFactory is
 
   // Manager fees
 
-  function getPoolManagerFee(address pool) external view override returns (uint256, uint256) {
-    require(isPool[pool], "supplied address is not a pool");
-
-    return (poolManagerFeeNumerator[pool], poolManagerFeeDenominator[pool]);
-  }
-
-  function setPoolManagerFeeNumerator(address pool, uint256 numerator) external override onlyPoolManager {
-    // require(pool == msg.sender, "only a pool can change own fee");
-    require(isPool[pool], "supplied address is not a pool");
-    require(numerator <= poolManagerFeeNumerator[pool].add(maximumManagerFeeNumeratorChange), "manager fee too high");
-
-    _setPoolManagerFee(pool, numerator, _MANAGER_FEE_DENOMINATOR);
-  }
-
-  function _setPoolManagerFee(
-    address pool,
-    uint256 numerator,
-    uint256 denominator
-  ) internal {
-    require(numerator <= denominator && numerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid fraction");
-
-    poolManagerFeeNumerator[pool] = numerator;
-    poolManagerFeeDenominator[pool] = denominator;
-
-    emit SetPoolManagerFee(numerator, denominator);
-  }
-
-  function getMaximumManagerFee() external view returns (uint256, uint256) {
+  function getMaximumManagerFee() external view override returns (uint256, uint256) {
     return (_MAXIMUM_MANAGER_FEE_NUMERATOR, _MANAGER_FEE_DENOMINATOR);
+  }
+
+  function setMaximumManagerFee(uint256 numerator) external onlyOwner {
+    _setMaximumManagerFee(numerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   function _setMaximumManagerFee(uint256 numerator, uint256 denominator) internal {
@@ -319,18 +290,10 @@ contract PoolFactory is
     emit SetMaximumManagerFeeNumeratorChange(amount);
   }
 
-  function getMaximumManagerFeeNumeratorChange() external view override returns (uint256) {
-    return maximumManagerFeeNumeratorChange;
-  }
-
   function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
     managerFeeNumeratorChangeDelay = delay;
 
     emit SetManagerFeeNumeratorChangeDelay(delay);
-  }
-
-  function getManagerFeeNumeratorChangeDelay() external view override returns (uint256) {
-    return managerFeeNumeratorChangeDelay;
   }
 
   function setExitCooldown(uint256 cooldown) external onlyOwner {
@@ -394,23 +357,19 @@ contract PoolFactory is
     emit SetAssetHandler(assetHandler);
   }
 
-  // Synthetix tracking
-
-  function setTrackingCode(bytes32 code) external onlyOwner {
-    _setTrackingCode(code);
-  }
-
-  function _setTrackingCode(bytes32 code) internal {
-    _trackingCode = code;
-
-    emit SetTrackingCode(code);
-  }
-
-  function getTrackingCode() external view override returns (bytes32) {
-    return _trackingCode;
-  }
-
   // Upgrade
+
+  function setPoolStorageVersion(uint256 _poolStorageVersion) external onlyOwner {
+    _setPoolStorageVersion(_poolStorageVersion);
+  }
+
+  function _setPoolStorageVersion(uint256 _poolStorageVersion) internal {
+    require(_poolStorageVersion > poolStorageVersion, "version needs to be higher");
+
+    poolStorageVersion = _poolStorageVersion;
+
+    emit SetPoolStorageVersion(_poolStorageVersion);
+  }
 
   /**
    * @dev Backdoor function

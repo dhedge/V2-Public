@@ -394,7 +394,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   {
     uint256 managerFeeNumerator;
     uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
+    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
 
     return (
       name(),
@@ -428,7 +428,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     uint256 managerFeeNumerator;
     uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
+    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
 
     return
       _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
@@ -465,7 +465,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     uint256 managerFeeNumerator;
     uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfo(factory).getPoolManagerFee(address(this));
+    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
 
     uint256 available =
       _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);

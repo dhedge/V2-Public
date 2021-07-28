@@ -120,10 +120,17 @@ describe("Synthetix Test", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [susd, true],
-      [seth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [susd, true],
+        [seth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -175,7 +182,7 @@ describe("Synthetix Test", function () {
           [seth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     let tx = await poolFactory.createFund(
       false,
@@ -325,7 +332,7 @@ describe("Synthetix Test", function () {
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
     const daoAddress = await poolFactory.getDaoAddress();
-    const trackingCode = await poolFactory.getTrackingCode();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);

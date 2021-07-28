@@ -146,10 +146,17 @@ describe("Polygon Mainnet Test", function () {
 
     console.log("Passed poolLogic Init!");
 
-    await poolManagerLogic.initialize(poolFactory.address, manager.address, "Barren Wuffet", poolLogic.address, [
-      [usdc, true],
-      [weth, true],
-    ]);
+    await poolManagerLogic.initialize(
+      poolFactory.address,
+      manager.address,
+      "Barren Wuffet",
+      poolLogic.address,
+      "1000",
+      [
+        [usdc, true],
+        [weth, true],
+      ],
+    );
 
     console.log("Passed poolManagerLogic Init!");
 
@@ -201,7 +208,7 @@ describe("Polygon Mainnet Test", function () {
           [weth, true],
         ],
       ),
-    ).to.be.revertedWith("invalid fraction");
+    ).to.be.revertedWith("invalid manager fee");
 
     await poolFactory.createFund(
       false,

@@ -120,8 +120,6 @@ contract PoolFactoryV23 is
 
   uint256 internal _maximumSupportedAssetCount;
 
-  bytes32 internal _trackingCode;
-
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
 
@@ -152,8 +150,6 @@ contract PoolFactoryV23 is
     setMaximumManagerFeeNumeratorChange(1000);
 
     _setMaximumSupportedAssetCount(10);
-
-    _setTrackingCode(0x4448454447450000000000000000000000000000000000000000000000000000);
   }
 
   function createFund(
@@ -383,22 +379,6 @@ contract PoolFactoryV23 is
     _assetHandler = assetHandler;
 
     emit SetAssetHandler(assetHandler);
-  }
-
-  // Synthetix tracking
-
-  function setTrackingCode(bytes32 code) external onlyOwner {
-    _setTrackingCode(code);
-  }
-
-  function _setTrackingCode(bytes32 code) internal {
-    _trackingCode = code;
-
-    emit SetTrackingCode(code);
-  }
-
-  function getTrackingCode() external view override returns (bytes32) {
-    return _trackingCode;
   }
 
   // Upgrade
