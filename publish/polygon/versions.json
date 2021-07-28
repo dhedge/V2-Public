@@ -197,7 +197,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 26 Jul 2021 15:46:39 GMT",
+    "date": "Wed, 28 Jul 2021 02:19:03 GMT",
     "contracts": {
       "Assets": [
         {
@@ -270,78 +270,78 @@
           "name": "Sushi LP USDC-DAI",
           "asset": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
           "assetType": "2",
-          "aggregator": "0xbd092455c72A64e91A2F7dAB2ec47Ea495deee20"
+          "aggregator": "0x4dA292111E93F603936cAEbf9Cc6b24B513d5323"
         },
         {
           "name": "Sushi LP USDC-USDT",
           "asset": "0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001",
           "assetType": "2",
-          "aggregator": "0x219FD4b899582B03BF150792F15d7e740F1C1af8"
+          "aggregator": "0x3be271B0b0519B378FF4A7d41097a1c7cAff2B13"
         },
         {
           "name": "Sushi LP WETH-DAI",
           "asset": "0x6ff62bfb8c12109e8000935a6de54dad83a4f39f",
           "assetType": "2",
-          "aggregator": "0xe12d3c7864e0C3C09b286c1ef44b0D3e9adFbBb7"
+          "aggregator": "0xbA904f4a727bBb7F22801A23d2e7132868C0a99b"
         },
         {
           "name": "Sushi LP WETH-USDT",
           "asset": "0xc2755915a85c6f6c1c0f3a86ac8c058f11caa9c9",
           "assetType": "2",
-          "aggregator": "0x38e64aDAF7332330Df14d4f623977D3661622B79"
+          "aggregator": "0x933cA75F00F0FA9E92f03e723F8D005e1e5e780c"
         },
         {
           "name": "Sushi LP USDC-WETH",
           "asset": "0x34965ba0ac2451a34a0471f04cca3f990b8dea27",
           "assetType": "2",
-          "aggregator": "0x2C595EB6f1e242eA6E7B9Ded2466CeF505a31C3e"
+          "aggregator": "0xF6d493D318B97e3cd526D63969164c5a276C7072"
         },
         {
           "name": "Sushi LP SNX-WETH",
           "asset": "0x116ff0d1caa91a6b94276b3471f33dbeb52073e7",
           "assetType": "2",
-          "aggregator": "0x7247A377A81ECD2FEEE63527624F76107B25ba37"
+          "aggregator": "0xCf0760f172BBA370267cD77ed47D9f9847dD4db3"
         },
         {
           "name": "Sushi LP LINK-WETH",
           "asset": "0x74d23f21f780ca26b47db16b0504f2e3832b9321",
           "assetType": "2",
-          "aggregator": "0x4d2F0e592cBdcff693Ebe8f5172e3432aFf7725E"
+          "aggregator": "0xD6f244Da5737E80F911aD189bDD9872efE055285"
         },
         {
           "name": "Sushi LP WBTC-WETH",
           "asset": "0xe62ec2e799305e0d367b0cc3ee2cda135bf89816",
           "assetType": "2",
-          "aggregator": "0xe83ABEd10b1DDCeA63D3Ee844E6e6BaD7090fc12"
+          "aggregator": "0x1B5E9F94fcB214737bf0cdF7E860Bee65A65500E"
         },
         {
           "name": "Sushi LP WMATIC-WETH",
           "asset": "0xc4e595acdd7d12fec385e5da5d43160e8a0bac0e",
           "assetType": "2",
-          "aggregator": "0x4dF8fc73b898A0C48095F1F2e12c729618F03218"
+          "aggregator": "0xAD2D7164CB32c1e54F2C1B9091AcE1bFC12Bf4F3"
         },
         {
           "name": "Sushi LP WETH-AAVE",
           "asset": "0x2813d43463c374a680f235c428fb1d7f08de0b69",
           "assetType": "2",
-          "aggregator": "0x32D0fb93BD87cce2F2479F6F1ccce1Bd282cAD2D"
+          "aggregator": "0xd7dD4D2bf5FA90159070d19797b3fFb5A3789483"
         },
         {
           "name": "Sushi LP WETH-CRV",
           "asset": "0x396e655c309676caf0acf4607a868e0cded876db",
           "assetType": "2",
-          "aggregator": "0x68376e228Dd9080115d1313900834c6546Cf0190"
+          "aggregator": "0xcc37315085087a0c324d32494eC8E36a1DFE4bFC"
         }
       ],
-      "Governance": "0x5fE28849f413069C014EABb7bf172Bd9Ef3ee0de",
-      "PoolFactoryProxy": "0xeA6cD3d4C65736Af8378341b2Dd6FD1d0B515b9B",
-      "PoolLogicProxy": "0xeAe893FAAfF2B6c053620f91fda77a191A692BA1",
-      "PoolManagerLogicProxy": "0xE21e35Bc593fAeeea6e4575F34E11d96A8CA45e8",
-      "AssetHandlerProxy": "0x17077A224160d110B947CDa1da11010E74Cf59b4",
-      "ERC20Guard": "0x17e3AeA5de29Ac6333303fCB2fB3E525241B2C84",
-      "UniswapV2RouterGuard": "0x2172D31F769a139B87Eea9313734Fa267AB80e89",
-      "SushiMiniChefV2Guard": "0xA2A11368BE61508E471dc00490781747b3c94a97",
-      "SushiLPAssetGuard": "0x3603B3078ea609F05e99d849122c7222A3078281"
+      "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
+      "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
+      "PoolLogic": "0xf21848C9852eE543606D3C92962272D70028D3f1",
+      "PoolManagerLogic": "0x9A3de79a99adCAA5fd15510B7024a138f6d842A6",
+      "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
+      "ERC20Guard": "0x3Cf903B98755CBf2174fDBD2e1027e538745A918",
+      "UniswapV2RouterGuard": "0x3047511a1b78f63E132E3884c987eA315dd46045",
+      "SushiMiniChefV2Guard": "0x47C444b9d91D1F8ceF52f3170218EF89819d6E1b",
+      "SushiLPAssetGuard": "0xF291D94C6DE82D67655170dFE90D16204a4b4EBf"
     }
   }
 }

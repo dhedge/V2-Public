@@ -43,13 +43,17 @@ pragma solidity 0.7.6;
  */
 abstract contract Proxy {
   /**
-   * @dev Fallback function.
+   * @notice Fallback function.
    * Implemented entirely in `_fallback`.
    */
   fallback() external payable {
     _fallback();
   }
 
+  /**
+   * @notice Receive function.
+   * Implemented entirely in `_fallback`.
+   */
   receive() external payable {
     _fallback();
   }
@@ -60,7 +64,7 @@ abstract contract Proxy {
   function _implementation() internal view virtual returns (address);
 
   /**
-   * @dev Delegates execution to an implementation contract.
+   * @notice Delegates execution to an implementation contract.
    * This is a low level function that doesn't return to its internal call site.
    * It will return to the external caller whatever the implementation returns.
    * @param implementation Address to delegate.
@@ -92,14 +96,14 @@ abstract contract Proxy {
   }
 
   /**
-   * @dev Function that is run as the first thing in the fallback function.
+   * @notice Function that is run as the first thing in the fallback function.
    * Can be redefined in derived contracts to add functionality.
    * Redefinitions must call super._willFallback().
    */
   function _willFallback() internal virtual {}
 
   /**
-   * @dev fallback implementation.
+   * @notice fallback implementation.
    * Extracted to enable manual triggering.
    */
   function _fallback() internal {

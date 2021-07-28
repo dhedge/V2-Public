@@ -802,9 +802,7 @@ describe("PoolFactory", function () {
 
     await synthetix.givenCalldataRevert(exchangeWithTrackingABI);
 
-    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI)).to.be.revertedWith(
-      "failed to execute the call",
-    );
+    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI)).to.be.reverted;
 
     await synthetix.givenCalldataReturnUint(exchangeWithTrackingABI, (1e18).toString());
     await poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI);
@@ -932,9 +930,7 @@ describe("PoolFactory", function () {
       0,
     ]);
     await uniswapV2Router.givenCalldataRevert(swapABI);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "failed to execute the call",
-    );
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.reverted;
 
     await uniswapV2Router.givenCalldataReturn(swapABI, []);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
