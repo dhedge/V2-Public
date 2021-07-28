@@ -48,6 +48,7 @@ import "./interfaces/IHasPausable.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IGovernance.sol";
 import "./interfaces/IManaged.sol";
+import "./utils/AddressHelper.sol";
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -65,6 +66,7 @@ contract PoolFactory is
   IHasPausable
 {
   using SafeMathUpgradeable for uint256;
+  using AddressHelper for address;
 
   event FundCreated(
     address fundAddress,
@@ -384,17 +386,9 @@ contract PoolFactory is
   ) internal {
     require(pool != address(0), "target-invalid");
     require(data.length > 0, "data-invalid");
-    bytes memory _data = data;
-    assembly {
-      let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
-      switch iszero(succeeded)
-        case 1 {
-          // throw if delegatecall failed
-          let size := returndatasize()
-          returndatacopy(0x00, 0x00, size)
-          revert(0x00, size)
-        }
-    }
+
+    pool.tryAssemblyDelegateCall(data);
+
     emit LogUpgrade(msg.sender, pool);
 
     poolVersion[pool] = targetVersion;
