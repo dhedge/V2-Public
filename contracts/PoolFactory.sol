@@ -115,7 +115,6 @@ contract PoolFactory is
   uint256 internal _daoFeeDenominator;
 
   mapping(address => bool) public isPool;
-  mapping(address => bool) public isPoolManager;
 
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
   uint256 private _MANAGER_FEE_DENOMINATOR;
@@ -199,7 +198,6 @@ contract PoolFactory is
 
     deployedFunds.push(fund);
     isPool[fund] = true;
-    isPoolManager[managerLogic] = true;
 
     poolVersion[fund] = poolStorageVersion;
 
@@ -260,11 +258,6 @@ contract PoolFactory is
 
   function getDaoFee() external view override returns (uint256, uint256) {
     return (_daoFeeNumerator, _daoFeeDenominator);
-  }
-
-  modifier onlyPoolManager() {
-    require(isPoolManager[msg.sender], "Not a pool manager");
-    _;
   }
 
   // Manager fees
