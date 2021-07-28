@@ -66,6 +66,3 @@ Setting sushi pool Id
 
 
 
-# Event `SushiPoolAdded(address lpToken, uint256 poolId)` {#SushiLPAssetGuard-SushiPoolAdded-address-uint256-}
-No description
-

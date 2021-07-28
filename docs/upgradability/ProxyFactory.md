@@ -38,6 +38,3 @@ Deploy proxy contract external call
 
 
 
-# Event `ProxyCreated(address proxy)` {#ProxyFactory-ProxyCreated-address-}
-No description
-

@@ -251,21 +251,3 @@ Setter for poolLogic contract
 
 
 
-# Event `AssetAdded(address fundAddress, address manager, address asset, bool isDeposit)` {#PoolManagerLogic-AssetAdded-address-address-address-bool-}
-No description
-
-# Event `AssetRemoved(address fundAddress, address manager, address asset)` {#PoolManagerLogic-AssetRemoved-address-address-address-}
-No description
-
-# Event `ManagerFeeSet(address fundAddress, address manager, uint256 numerator, uint256 denominator)` {#PoolManagerLogic-ManagerFeeSet-address-address-uint256-uint256-}
-No description
-
-# Event `ManagerFeeIncreaseAnnounced(uint256 newNumerator, uint256 announcedFeeActivationTime)` {#PoolManagerLogic-ManagerFeeIncreaseAnnounced-uint256-uint256-}
-No description
-
-# Event `ManagerFeeIncreaseRenounced()` {#PoolManagerLogic-ManagerFeeIncreaseRenounced--}
-No description
-
-# Event `PoolLogicSet(address poolLogic, address from)` {#PoolManagerLogic-PoolLogicSet-address-address-}
-No description
-

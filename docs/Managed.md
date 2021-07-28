@@ -124,6 +124,3 @@ Return the number of members
 
 
 
-# Event `ManagerUpdated(address newManager, string newManagerName)` {#Managed-ManagerUpdated-address-string-}
-No description
-

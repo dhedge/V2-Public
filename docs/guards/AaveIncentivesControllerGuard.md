@@ -28,6 +28,3 @@ Transaction guard for Aave incentives controller
 - txType the transaction type of a given transaction data. 2 for `Exchange` type
 
 
-# Event `Claim(address fundAddress, address stakingContract, uint256 time)` {#AaveIncentivesControllerGuard-Claim-address-address-uint256-}
-No description
-

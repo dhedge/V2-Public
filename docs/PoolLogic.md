@@ -208,21 +208,3 @@ execute function of aave flash loan
 
 
 
-# Event `Deposit(address fundAddress, address investor, address assetDeposited, uint256 amountDeposited, uint256 valueDeposited, uint256 fundTokensReceived, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, uint256 time)` {#PoolLogic-Deposit-address-address-address-uint256-uint256-uint256-uint256-uint256-uint256-uint256-}
-No description
-
-# Event `Withdrawal(address fundAddress, address investor, uint256 valueWithdrawn, uint256 fundTokensWithdrawn, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, struct PoolLogic.WithdrawnAsset[] withdrawnAssets, uint256 time)` {#PoolLogic-Withdrawal-address-address-uint256-uint256-uint256-uint256-uint256-struct-PoolLogic-WithdrawnAsset---uint256-}
-No description
-
-# Event `TransactionExecuted(address pool, address manager, uint16 transactionType, uint256 time)` {#PoolLogic-TransactionExecuted-address-address-uint16-uint256-}
-No description
-
-# Event `PoolPrivacyUpdated(bool isPoolPrivate)` {#PoolLogic-PoolPrivacyUpdated-bool-}
-No description
-
-# Event `ManagerFeeMinted(address pool, address manager, uint256 available, uint256 daoFee, uint256 managerFee, uint256 tokenPriceAtLastFeeMint)` {#PoolLogic-ManagerFeeMinted-address-address-uint256-uint256-uint256-uint256-}
-No description
-
-# Event `PoolManagerLogicSet(address poolManagerLogic, address from)` {#PoolLogic-PoolManagerLogicSet-address-address-}
-No description
-

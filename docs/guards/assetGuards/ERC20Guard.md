@@ -70,6 +70,3 @@ Necessary check for remove asset
 
 
 
-# Event `Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time)` {#ERC20Guard-Approve-address-address-address-uint256-uint256-}
-No description
-

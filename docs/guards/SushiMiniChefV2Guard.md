@@ -32,12 +32,3 @@ Transaction guard for Sushi MiniChefV2
 - txType the transaction type of a given transaction data. 5 for `Stake` type, 6 for `Unstake`, 7 for `Claim`, 8 for `UnstakeAndClaim`
 
 
-# Event `Stake(address fundAddress, address asset, address stakingContract, uint256 amount, uint256 time)` {#SushiMiniChefV2Guard-Stake-address-address-address-uint256-uint256-}
-No description
-
-# Event `Unstake(address fundAddress, address asset, address stakingContract, uint256 amount, uint256 time)` {#SushiMiniChefV2Guard-Unstake-address-address-address-uint256-uint256-}
-No description
-
-# Event `Claim(address fundAddress, address stakingContract, uint256 time)` {#SushiMiniChefV2Guard-Claim-address-address-uint256-}
-No description
-

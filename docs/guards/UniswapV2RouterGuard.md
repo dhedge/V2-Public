@@ -30,9 +30,3 @@ Transaction guard for Uniswap V2
 - txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
 
 
-# Event `AddLiquidity(address fundAddress, address tokenA, address tokenB, address pair, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, uint256 time)` {#UniswapV2RouterGuard-AddLiquidity-address-address-address-address-uint256-uint256-uint256-uint256-uint256-}
-No description
-
-# Event `RemoveLiquidity(address fundAddress, address tokenA, address tokenB, address pair, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, uint256 time)` {#UniswapV2RouterGuard-RemoveLiquidity-address-address-address-address-uint256-uint256-uint256-uint256-}
-No description
-

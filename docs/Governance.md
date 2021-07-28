@@ -46,12 +46,3 @@ Maps multiple contract names to destination addresses
 
 
 
-# Event `ContractGuardSet(address extContract, address guardAddress)` {#Governance-ContractGuardSet-address-address-}
-No description
-
-# Event `AssetGuardSet(uint16 assetType, address guardAddress)` {#Governance-AssetGuardSet-uint16-address-}
-No description
-
-# Event `AddressSet(bytes32 name, address destination)` {#Governance-AddressSet-bytes32-address-}
-No description
-

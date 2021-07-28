@@ -73,6 +73,3 @@ Remove valid asset
 
 
 
-# Event `SetChainlinkTimeout(uint256 _chainlinkTimeout)` {#AssetHandler-SetChainlinkTimeout-uint256-}
-No description
-
