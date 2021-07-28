@@ -113,7 +113,6 @@ contract PoolFactory is
   uint256 internal _daoFeeDenominator;
 
   mapping(address => bool) public isPool;
-  mapping(address => bool) public isPoolManager;
 
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
   uint256 private _MANAGER_FEE_DENOMINATOR;
@@ -169,25 +168,27 @@ contract PoolFactory is
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
     require(_managerFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
 
-    bytes memory poolLogicData = abi.encodeWithSignature(
-      "initialize(address,bool,string,string)",
-      address(this),
-      _privatePool,
-      _fundName,
-      _fundSymbol
-    );
+    bytes memory poolLogicData =
+      abi.encodeWithSignature(
+        "initialize(address,bool,string,string)",
+        address(this),
+        _privatePool,
+        _fundName,
+        _fundSymbol
+      );
 
     address fund = deploy(poolLogicData, 2);
 
-    bytes memory managerLogicData = abi.encodeWithSignature(
-      "initialize(address,address,string,address,uint256,(address,bool)[])",
-      address(this),
-      _manager,
-      _managerName,
-      fund,
-      _managerFeeNumerator,
-      _supportedAssets
-    );
+    bytes memory managerLogicData =
+      abi.encodeWithSignature(
+        "initialize(address,address,string,address,uint256,(address,bool)[])",
+        address(this),
+        _manager,
+        _managerName,
+        fund,
+        _managerFeeNumerator,
+        _supportedAssets
+      );
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
@@ -195,7 +196,6 @@ contract PoolFactory is
 
     deployedFunds.push(fund);
     isPool[fund] = true;
-    isPoolManager[managerLogic] = true;
 
     poolVersion[fund] = poolStorageVersion;
 
@@ -256,11 +256,6 @@ contract PoolFactory is
 
   function getDaoFee() external view override returns (uint256, uint256) {
     return (_daoFeeNumerator, _daoFeeDenominator);
-  }
-
-  modifier onlyPoolManager() {
-    require(isPoolManager[msg.sender], "Not a pool manager");
-    _;
   }
 
   // Manager fees
@@ -386,12 +381,12 @@ contract PoolFactory is
     assembly {
       let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
       switch iszero(succeeded)
-      case 1 {
-        // throw if delegatecall failed
-        let size := returndatasize()
-        returndatacopy(0x00, 0x00, size)
-        revert(0x00, size)
-      }
+        case 1 {
+          // throw if delegatecall failed
+          let size := returndatasize()
+          returndatacopy(0x00, 0x00, size)
+          revert(0x00, size)
+        }
     }
     emit LogUpgrade(msg.sender, pool);
 
