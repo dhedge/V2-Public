@@ -81,6 +81,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     sushiswapGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(2, erc20Guard.address); // as normal erc20 token
     await governance.setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiswapRouter, sushiswapGuard.address);
   });
