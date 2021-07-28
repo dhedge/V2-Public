@@ -1,4 +1,4 @@
-
+Role manage contract
 
 # Functions:
 - [`isMemberAllowed(address member)`](#Managed-isMemberAllowed-address-)
@@ -16,28 +16,114 @@
 # Events:
 - [`ManagerUpdated(address newManager, string newManagerName)`](#Managed-ManagerUpdated-address-string-)
 
+
+
+
 # Function `isMemberAllowed(address member) → bool` {#Managed-isMemberAllowed-address-}
-No description
-# Function `getMembers() → address[]` {#Managed-getMembers--}
-No description
+Return boolean if the address is a member of the list
+
+
+## Parameters:
+- `member`: The address of the member
+
+
+## Return Values:
+- Ture if the address is a member of the list, false otherwise
+
+
+# Function `getMembers() → address[] members` {#Managed-getMembers--}
+Get a list of members
+
+
+
+## Return Values:
+- members Array of member addresses
+
+
 # Function `changeManager(address newManager, string newManagerName)` {#Managed-changeManager-address-string-}
-No description
+change the manager address
+
+
+## Parameters:
+- `newManager`: The address of the new manager
+
+- `newManagerName`: The name of the new manager
+
+
+
 # Function `addMembers(address[] members)` {#Managed-addMembers-address---}
-No description
+add a list of members
+
+
+## Parameters:
+- `members`: Array of member addresses
+
+
+
 # Function `removeMembers(address[] members)` {#Managed-removeMembers-address---}
-No description
+remove a list of members
+
+
+## Parameters:
+- `members`: Array of member addresses
+
+
+
 # Function `addMember(address member)` {#Managed-addMember-address-}
-No description
+add a member
+
+
+## Parameters:
+- `member`: The address of the member
+
+
+
 # Function `removeMember(address member)` {#Managed-removeMember-address-}
-No description
+remove a member
+
+
+## Parameters:
+- `member`: The address of the member
+
+
+
 # Function `trader() → address` {#Managed-trader--}
-No description
+Return the address of the trader
+
+
+
+## Return Values:
+- Address of the trader
+
+
 # Function `setTrader(address newTrader)` {#Managed-setTrader-address-}
-No description
+Set the address of the trader
+
+
+## Parameters:
+- `newTrader`: The address of the new trader
+
+
+
 # Function `removeTrader()` {#Managed-removeTrader--}
-No description
-# Function `numberOfMembers() → uint256` {#Managed-numberOfMembers--}
-No description
+Remove the trader
+
+
+
+
+# Function `numberOfMembers() → uint256 _numberOfMembers` {#Managed-numberOfMembers--}
+Return the number of members
+
+
+
+## Return Values:
+- _numberOfMembers The number of members
+
+
+
+
+
 
 # Event `ManagerUpdated(address newManager, string newManagerName)` {#Managed-ManagerUpdated-address-string-}
 No description
+

@@ -1,35 +1,71 @@
-Asset type = 2
+
 
 # Functions:
-- [`constructor(address _sushiStaking, struct SushiLPAssetGuard.SushiPool[] sushiPools)`](#SushiLPAssetGuard-constructor-address-struct-SushiLPAssetGuard-SushiPool---)
-- [`getWithdrawStakedTx(address pool, address asset, uint256 withdrawPortion, address to)`](#SushiLPAssetGuard-getWithdrawStakedTx-address-address-uint256-address-)
+- [`constructor(address _sushiStaking)`](#SushiLPAssetGuard-constructor-address-)
+- [`withdrawProcessing(address pool, address asset, uint256 portion, address to)`](#SushiLPAssetGuard-withdrawProcessing-address-address-uint256-address-)
 - [`getBalance(address pool, address asset)`](#SushiLPAssetGuard-getBalance-address-address-)
+- [`setSushiPoolId(address lpToken, uint256 poolId)`](#SushiLPAssetGuard-setSushiPoolId-address-uint256-)
 
 # Events:
-- [`WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time)`](#SushiLPAssetGuard-WithdrawStaked-address-address-address-uint256-uint256-)
+- [`SushiPoolAdded(address lpToken, uint256 poolId)`](#SushiLPAssetGuard-SushiPoolAdded-address-uint256-)
 
-# Function `constructor(address _sushiStaking, struct SushiLPAssetGuard.SushiPool[] sushiPools)` {#SushiLPAssetGuard-constructor-address-struct-SushiLPAssetGuard-SushiPool---}
-No description
+
+# Function `constructor(address _sushiStaking)` {#SushiLPAssetGuard-constructor-address-}
+Initialise for the contract
+
+
 ## Parameters:
 - `_sushiStaking`: Sushi's staking MiniChefV2 contract
 
-- `sushiPools`: For mapping Sushi LP tokens to MiniChefV2 pool IDs
-# Function `getWithdrawStakedTx(address pool, address asset, uint256 withdrawPortion, address to) → address stakingContract, bytes txData` {#SushiLPAssetGuard-getWithdrawStakedTx-address-address-uint256-address-}
-The same interface can be used for other types of stakeable tokens
+
+
+# Function `withdrawProcessing(address pool, address asset, uint256 portion, address to) → address withdrawAsset, uint256 withdrawBalance, struct IAssetGuard.MultiTransaction[] transactions` {#SushiLPAssetGuard-withdrawProcessing-address-address-uint256-address-}
+Creates transaction data for withdrawing staked tokens
+
 
 ## Parameters:
 - `pool`: Pool address
 
 - `asset`: Staked asset
 
-- `withdrawPortion`: The fraction of total staked asset to withdraw
+- `portion`: The fraction of total staked asset to withdraw
 
 - `to`: The investor address to withdraw to
 
-## Return Values:
-- stakingContract and txData are used to execute the staked withdrawal transaction in PoolLogic
-# Function `getBalance(address pool, address asset) → uint256 balance` {#SushiLPAssetGuard-getBalance-address-address-}
-May include any external balance in staking contracts
 
-# Event `WithdrawStaked(address fundAddress, address asset, address to, uint256 withdrawAmount, uint256 time)` {#SushiLPAssetGuard-WithdrawStaked-address-address-address-uint256-uint256-}
+## Return Values:
+- withdrawAsset and
+
+- withdrawBalance are used to withdraw portion of asset balance to investor
+
+- transactions is used to execute the staked withdrawal transaction in PoolLogic
+
+
+# Function `getBalance(address pool, address asset) → uint256 balance` {#SushiLPAssetGuard-getBalance-address-address-}
+Returns the balance of the managed asset
+
+
+## Parameters:
+- `pool`: address of the pool
+
+- `asset`: address of the asset
+
+
+## Return Values:
+- balance The asset balance of given pool
+
+
+# Function `setSushiPoolId(address lpToken, uint256 poolId)` {#SushiLPAssetGuard-setSushiPoolId-address-uint256-}
+Setting sushi pool Id
+
+
+## Parameters:
+- `lpToken`: address of the LP Token
+
+- `poolId`: Id of LP pair pool
+
+
+
+# Event `SushiPoolAdded(address lpToken, uint256 poolId)` {#SushiLPAssetGuard-SushiPoolAdded-address-uint256-}
 No description
+
