@@ -52,6 +52,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
+/// @notice Logic implmentation for pool manager
 contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
   using SafeMathUpgradeable for uint256;
   using AddressUpgradeable for address;
@@ -77,6 +78,13 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public announcedFeeIncreaseTimestamp;
   uint256 public managerFeeNumerator;
 
+  /// @notice initialize the pool manager
+  /// @param _factory address of the factory
+  /// @param _manager address of the manager
+  /// @param _managerName name of the manager
+  /// @param _poolLogic address of the pool logic
+  /// @param _managerFeeNumerator numerator of the manager fee
+  /// @param _supportedAssets array of supported assets
   function initialize(
     address _factory,
     address _manager,
@@ -96,24 +104,36 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     _changeAssets(_supportedAssets, new address[](0));
   }
 
+  /// @notice Return true if it's supported asset, false otherwise
+  /// @param asset address of the asset
   function isSupportedAsset(address asset) public view override returns (bool) {
     return assetPosition[asset] != 0;
   }
 
+  /// @notice Return true if it's deposit asset, false otherwise
+  /// @param asset address of the asset
   function isDepositAsset(address asset) public view override returns (bool) {
     uint256 index = assetPosition[asset];
 
     return index != 0 && supportedAssets[index.sub(1)].isDeposit;
   }
 
+  /// @notice Return true if it's valid asset, false otherwise
+  /// @param asset address of the asset
   function validateAsset(address asset) public view override returns (bool) {
     return IHasAssetInfo(factory).isValidAsset(asset);
   }
 
+  /// @notice Change assets of the pool
+  /// @param _addAssets array of assets to add
+  /// @param _removeAssets array of asset addresses to remove
   function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets) external onlyManagerOrTrader {
     _changeAssets(_addAssets, _removeAssets);
   }
 
+  /// @notice Change assets of the pool internal call
+  /// @param _addAssets array of assets to add
+  /// @param _removeAssets array of asset addresses to remove
   function _changeAssets(Asset[] calldata _addAssets, address[] memory _removeAssets) internal {
     for (uint8 i = 0; i < _removeAssets.length; i++) {
       _removeAsset(_removeAssets[i]);
@@ -128,6 +148,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     require(getDepositAssets().length >= 1, "at least one deposit asset");
   }
 
+  /// @notice Add an asset to the pool
+  /// @param _asset an asset struct
   function _addAsset(Asset calldata _asset) internal {
     address asset = _asset.asset;
     bool isDeposit = _asset.isDeposit;
@@ -195,26 +217,35 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   /// @notice Get asset balance including any staked balance in external contracts
-  function assetBalance(address asset) public view returns (uint256) {
+  /// @return balance of the asset
+  function assetBalance(address asset) public view returns (uint256 balance) {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
-    return IAssetGuard(guard).getBalance(poolLogic, asset);
+    balance = IAssetGuard(guard).getBalance(poolLogic, asset);
   }
 
   /// @notice Get asset decimal
-  function assetDecimal(address asset) public view returns (uint256) {
+  /// @return decimal of the asset
+  function assetDecimal(address asset) public view returns (uint256 decimal) {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
-    return IAssetGuard(guard).getDecimals(asset);
+    decimal = IAssetGuard(guard).getDecimals(asset);
   }
 
-  function assetValue(address asset, uint256 amount) public view override returns (uint256) {
+  /// @notice Get value of the asset
+  /// @param asset address of the asset
+  /// @param amount amount of the asset
+  /// @return value of the asset
+  function assetValue(address asset, uint256 amount) public view override returns (uint256 value) {
     uint256 price = IHasAssetInfo(factory).getAssetPrice(asset);
     uint256 decimals = assetDecimal(asset);
 
-    return price.mul(amount).div(10**decimals);
+    value = price.mul(amount).div(10**decimals);
   }
 
-  function assetValue(address asset) public view override returns (uint256) {
-    return assetValue(asset, assetBalance(asset));
+  /// @notice Get value of the asset
+  /// @param asset address of the asset
+  /// @return value of the asset
+  function assetValue(address asset) public view override returns (uint256 value) {
+    value = assetValue(asset, assetBalance(asset));
   }
 
   /// @notice Return the fund composition of the pool
@@ -259,27 +290,36 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   /* ========== MANAGER FEES ========== */
 
+  /// @notice Return the manager fees
   function getManagerFee() external view override returns (uint256, uint256) {
     (, uint256 managerFeeDenominator) = IHasFeeInfo(factory).getMaximumManagerFee();
     return (managerFeeNumerator, managerFeeDenominator);
   }
 
-  function getMaximumManagerFee() public view returns (uint256, uint256) {
-    return IHasFeeInfo(factory).getMaximumManagerFee();
+  /// @notice Get maximum manager fee
+  /// @return numerator numberator of the maximum manager fee
+  /// @return denominator denominator of the maximum manager fee
+  function getMaximumManagerFee() public view returns (uint256 numerator, uint256 denominator) {
+    (numerator, denominator) = IHasFeeInfo(factory).getMaximumManagerFee();
   }
 
-  function getMaximumManagerFeeChange() public view returns (uint256) {
-    return IHasFeeInfo(factory).maximumManagerFeeNumeratorChange();
+  /// @notice Get maximum manager fee change
+  /// @return change change of the maximum manager fee
+  function getMaximumManagerFeeChange() public view returns (uint256 change) {
+    change = IHasFeeInfo(factory).maximumManagerFeeNumeratorChange();
   }
 
   // Manager fee decreases
 
   /// @notice Manager can decrease performance fee
+  /// @param numerator numberator of the performance fee to set
   function setManagerFeeNumerator(uint256 numerator) external onlyManager {
     require(numerator <= managerFeeNumerator, "manager fee too high");
     _setManagerFeeNumerator(numerator);
   }
 
+  /// @notice Manager can decrease performance fee internal call
+  /// @param numerator numberator of the performance fee to set
   function _setManagerFeeNumerator(uint256 numerator) internal {
     (uint256 maximumNumerator, uint256 denominator) = getMaximumManagerFee();
     require(numerator <= denominator && numerator <= maximumNumerator, "invalid manager fee");
@@ -329,6 +369,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     announcedFeeIncreaseTimestamp = 0;
   }
 
+  /// @notice Get manager fee increase information
   function getManagerFeeIncreaseInfo() external view returns (uint256, uint256) {
     return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
   }

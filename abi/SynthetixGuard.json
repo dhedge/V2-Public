@@ -168,7 +168,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "proxy",
         "type": "address"
       }
     ],

@@ -130,6 +130,8 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   }
 
   /// @notice Returns the decimal of the managed asset
+  /// @param asset Address of the managed asset
+  /// @return decimals The decimal of given asset
   function getDecimals(address asset) external view virtual override returns (uint256 decimals) {
     decimals = IERC20Extended(asset).decimals();
   }
