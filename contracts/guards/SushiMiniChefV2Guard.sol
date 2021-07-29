@@ -93,6 +93,8 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
       require(poolLogic == receiver, "recipient is not pool");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable reward token");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable reward token");
 
       emit Stake(poolLogic, lpToken, to, amount, block.timestamp);
 
