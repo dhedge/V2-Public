@@ -8,6 +8,11 @@ const { toBytes32 } = require("../../test/TestHelpers");
 const KOVAN_ADDRESS_RESOLVER = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
+// Polygon addresses
+const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+const uberPool = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
+const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
+
 // sushiswap
 const sushiswapV2Factory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
@@ -215,6 +220,12 @@ const deploy = async (env) => {
 
     versions[tag].contracts = { ...versions[tag].contracts, ...aaveContracts };
   }
+
+  // DAO Settings
+  await poolFactory.setDAOAddress(uberPool);
+  await poolFactory.transferOwnership(protocolDao);
+  await governance.transferOwnership(protocolDao);
+  await assetHandler.transferOwnership(protocolDao);
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
