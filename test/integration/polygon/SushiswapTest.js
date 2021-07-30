@@ -636,14 +636,14 @@ describe("Sushiswap V2 Test", function () {
       );
 
       await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
-        "enable reward token",
+        "enable rewardA token",
       );
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken, false]], []);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
-        "enable reward token",
+        "enable rewardB token",
       );
 
       // enable WMATIC token in pool
