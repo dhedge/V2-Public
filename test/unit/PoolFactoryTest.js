@@ -1413,6 +1413,20 @@ describe("PoolFactory", function () {
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badDepositAbi),
       ).to.be.revertedWith("recipient is not pool");
 
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
+      ).to.be.revertedWith("enable rewardA token");
+
+      // enable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
+      ).to.be.revertedWith("enable rewardB token");
+
+      // enable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
+
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi);
 
       const event = await stakeEvent;
@@ -1487,20 +1501,6 @@ describe("PoolFactory", function () {
       });
 
       const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
-
-      await expect(
-        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
-      ).to.be.revertedWith("enable reward token");
-
-      // enable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
-
-      await expect(
-        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
-      ).to.be.revertedWith("enable reward token");
-
-      // enable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
 
       // attempt to harvest with manager as recipient
       const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
@@ -1592,14 +1592,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable reward token");
+      ).to.be.revertedWith("enable rewardA token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable reward token");
+      ).to.be.revertedWith("enable rewardB token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);

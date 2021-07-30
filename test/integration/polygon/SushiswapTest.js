@@ -635,6 +635,20 @@ describe("Sushiswap V2 Test", function () {
         "recipient is not pool",
       );
 
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
+        "enable rewardA token",
+      );
+
+      // enable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken, false]], []);
+
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
+        "enable rewardB token",
+      );
+
+      // enable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
       let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
@@ -722,20 +736,6 @@ describe("Sushiswap V2 Test", function () {
       });
 
       const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPUsdcWethPoolId, poolLogicProxy.address]);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, harvestAbi)).to.be.revertedWith(
-        "enable reward token",
-      );
-
-      // enable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken, false]], []);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, harvestAbi)).to.be.revertedWith(
-        "enable reward token",
-      );
-
-      // enable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
 
       // attempt to harvest with manager as recipient
       const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
