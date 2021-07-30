@@ -219,13 +219,13 @@ const deploy = async (env) => {
     };
 
     versions[tag].contracts = { ...versions[tag].contracts, ...aaveContracts };
+  }else{
+    // DAO Settings
+    await poolFactory.setDAOAddress(uberPool);
+    await poolFactory.transferOwnership(protocolDao);
+    await governance.transferOwnership(protocolDao);
+    await assetHandler.transferOwnership(protocolDao);
   }
-
-  // DAO Settings
-  await poolFactory.setDAOAddress(uberPool);
-  await poolFactory.transferOwnership(protocolDao);
-  await governance.transferOwnership(protocolDao);
-  await assetHandler.transferOwnership(protocolDao);
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
