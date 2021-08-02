@@ -300,6 +300,11 @@
         "internalType": "uint16",
         "name": "txType",
         "type": "uint16"
+      },
+      {
+        "internalType": "bool",
+        "name": "isPublic",
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",

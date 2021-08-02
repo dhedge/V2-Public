@@ -69,6 +69,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
   /// @param to The contract to send transaction to
   /// @param data The transaction data
   /// @return txType the transaction type of a given transaction data. 5 for `Stake` type, 6 for `Unstake`, 7 for `Claim`, 8 for `UnstakeAndClaim`
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
     address to,
@@ -77,7 +78,8 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -125,6 +127,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 7; // `Claim` type
+      isPublic = true;
     } else if (method == bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)"))) {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       address poolLogic = poolManagerLogic.poolLogic();
@@ -143,5 +146,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
 
       txType = 8; // `UnstakeAndClaim` type
     }
+
+    return (txType, isPublic);
   }
 }
