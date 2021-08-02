@@ -1,5 +1,7 @@
 const fs = require("fs");
 const { getTag } = require("./Helpers");
+const Safe = require("@gnosis.pm/safe-core-sdk");
+const { EthersAdapter } = require('@gnosis.pm/safe-core-sdk');
 
 task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("poolFactory", "upgrade poolFactory", false, types.boolean)
@@ -7,8 +9,31 @@ task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
   .addOptionalParam("poolManagerLogic", "upgrade poolManagerLogic", false, types.boolean)
   .setAction(async taskArgs => {
+
+    const provider = ethers.provider;
+    const owner1 = provider.getSigner(0);
+    const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
+    const chainId = await ethAdapter.getChainId();
+
+    const contractNetworks = {
+      [chainId]: {
+        // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
+        multiSendAddress: '0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761'
+      }
+    }
+
+    // I'm having Safe.create is not a function issue
+    const safeSdk = await Safe.default.create({
+      ethAdapter,
+      safeAddress: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
+      contractNetworks
+    });
+
+    owner1Address = await owner1.getAddress();
+
     let network = await ethers.provider.getNetwork();
     console.log("network:", network);
+
     const hre = require("hardhat");
     let networks = hre.config.networks;
     networkNames = Object.keys(networks);
@@ -20,7 +45,7 @@ task("upgrade", "Upgrade proxy contracts")
     let versions = require(`../publish/${network.name}/versions.json`);
     let newTag = await getTag();
     let oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
-    if (newTag == oldTag) throw("Error: No new version to upgrade");
+    // if (newTag == oldTag) throw("Error: No new version to upgrade");
 
     let contracts = versions[oldTag].contracts;
     versions[newTag] = new Object;
@@ -31,21 +56,32 @@ task("upgrade", "Upgrade proxy contracts")
     let setLogic = false;
 
     if(taskArgs.poolFactory){
-      // For testing
-      // const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-      // const PoolFactory = await ethers.getContractFactory("PoolFactory");
-      // const poolFactoryProxy = await upgrades.deployProxy(PoolFactory, [
-      //   contracts.PoolLogicProxy,
-      //   contracts.PoolManagerLogicProxy,
-      //   ZERO_ADDRESS,
-      //   ZERO_ADDRESS,
-      // ]);
-      // console.log("poolFactory deployed at: ", poolFactoryProxy.address);
-      // const poolFactory = await upgrades.upgradeProxy(poolFactoryProxy.address, PoolFactory);
-
       let oldPoolFactory = contracts.PoolFactoryProxy;
-      const poolFactory = await upgrades.upgradeProxy(oldPoolFactory, PoolFactory);
-      console.log("poolFactory upgraded to: ", poolFactory.address);
+      const newPoolFactoryProxy = await upgrades.prepareUpgrade(oldPoolFactory, PoolFactory);
+      console.log("New PoolFactoryProxy deployed to: ", newPoolFactoryProxy);
+
+      const TransparentUpgradeableProxy = await hre.artifacts.readArtifact("TransparentUpgradeableProxy");
+      const transparentUpgradeableProxy = new ethers.utils.Interface(TransparentUpgradeableProxy.abi);
+      const transparentUpgradeableProxyABI = transparentUpgradeableProxy.encodeFunctionData("upgradeTo", [newPoolFactoryProxy]);
+      console.log(transparentUpgradeableProxyABI);
+
+      const nonce = await safeSdk.getNonce();
+      console.log(nonce);
+
+      const transactions = [{
+        to: oldPoolFactory,
+        // to: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
+        value: "0",
+        data: transparentUpgradeableProxyABI,
+        // data: "0x",
+        nonce,
+      }]
+
+      const safeTransaction = await safeSdk.createTransaction(...transactions)
+      await safeSdk.signTransaction(safeTransaction)
+      console.log(safeTransaction);
+      return;
+
       versions[newTag].contracts.PoolFactoryProxy = poolFactory.address;
     }
     if(taskArgs.assetHandler){
