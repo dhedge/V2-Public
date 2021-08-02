@@ -227,6 +227,19 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "delay",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetManagerFeeNumeratorChangeDelay",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "numerator",
         "type": "uint256"
       },
@@ -277,12 +290,12 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "bytes32",
-        "name": "code",
-        "type": "bytes32"
+        "internalType": "uint256",
+        "name": "poolStorageVersion",
+        "type": "uint256"
       }
     ],
-    "name": "SetTrackingCode",
+    "name": "SetPoolStorageVersion",
     "type": "event"
   },
   {
@@ -343,7 +356,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHasSupportedAssetV23.Asset[]",
+        "internalType": "struct IHasSupportedAssetV24.Asset[]",
         "name": "_supportedAssets",
         "type": "tuple[]"
       }
@@ -409,6 +422,25 @@
       {
         "internalType": "address",
         "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "name",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "destination",
         "type": "address"
       }
     ],
@@ -551,6 +583,25 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "getInvestedPools",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint8",
         "name": "_proxyType",
         "type": "uint8"
@@ -568,13 +619,19 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getManagerFeeNumeratorChangeDelay",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "manager",
+        "type": "address"
+      }
+    ],
+    "name": "getManagedPools",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "address[]",
         "name": "",
-        "type": "uint256"
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -600,45 +657,8 @@
   },
   {
     "inputs": [],
-    "name": "getMaximumManagerFeeNumeratorChange",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getMaximumSupportedAssetCount",
     "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "pool",
-        "type": "address"
-      }
-    ],
-    "name": "getPoolManagerFee",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
       {
         "internalType": "uint256",
         "name": "",
@@ -824,44 +844,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "poolManagerFeeDenominator",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "poolManagerFeeNumerator",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "poolStorageVersion",
     "outputs": [
@@ -1005,6 +987,19 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "numerator",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMaximumManagerFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
@@ -1030,17 +1025,12 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "pool",
-        "type": "address"
-      },
-      {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "_poolStorageVersion",
         "type": "uint256"
       }
     ],
-    "name": "setPoolManagerFeeNumerator",
+    "name": "setPoolStorageVersion",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

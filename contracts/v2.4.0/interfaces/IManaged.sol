@@ -34,6 +34,12 @@
 
 pragma solidity 0.7.6;
 
-interface IHasOwnableV23 {
-  function owner() external view returns (address);
+interface IManagedV24 {
+  function manager() external view returns (address);
+
+  function trader() external view returns (address);
+
+  function managerName() external view returns (string memory);
+
+  function isMemberAllowed(address member) external view returns (bool);
 }

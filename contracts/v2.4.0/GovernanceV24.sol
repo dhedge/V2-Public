@@ -33,24 +33,41 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IGovernance.sol";
 
 /// @title Governance
 /// @dev A contract with storage managed by governance
-contract GovernanceV23 is IGovernanceV23, Ownable {
-  event SetContractGuard(address extContract, address guardAddress);
+contract GovernanceV24 is IGovernanceV24, Ownable {
+  event ContractGuardSet(address extContract, address guardAddress);
+  event AssetGuardSet(uint16 assetType, address guardAddress);
+  event AddressSet(bytes32 name, address destination);
 
-  event SetAssetGuard(uint16 assetType, address guardAddress);
+  struct ContractName {
+    bytes32 name;
+    address destination;
+  }
 
   // Transaction Guards
-
   mapping(address => address) public override contractGuards;
   mapping(uint16 => address) public override assetGuards;
 
+  // Addresses
+
+  // "aaveProtocolDataProvider": aave protocol data provider
+  // "swapRouter": swapRouter with uniswap v2 interface.
+  // "weth": weth address which is used token swap
+  mapping(bytes32 => address) public override nameToDestination;
+
+  /* ========== RESTRICTED FUNCTIONS ========== */
+
   // Transaction Guards
 
+  /// @notice Maps an exernal contract to a guard which enables managers to use the contract
+  /// @param extContract The third party contract to integrate
+  /// @param guardAddress The protections for manager third party contract interaction
   function setContractGuard(address extContract, address guardAddress) external onlyOwner {
     _setContractGuard(extContract, guardAddress);
   }
@@ -61,9 +78,13 @@ contract GovernanceV23 is IGovernanceV23, Ownable {
 
     contractGuards[extContract] = guardAddress;
 
-    emit SetContractGuard(extContract, guardAddress);
+    emit ContractGuardSet(extContract, guardAddress);
   }
 
+  /// @notice Maps an asset type to an asset guard which allows managers to enable the asset
+  /// @dev Asset types are defined in AssetHandler.sol
+  /// @param assetType Asset type as defined in Asset Handler
+  /// @param guardAddress The asset guard address that allows manager interaction
   function setAssetGuard(uint16 assetType, address guardAddress) external onlyOwner {
     _setAssetGuard(assetType, guardAddress);
   }
@@ -73,6 +94,20 @@ contract GovernanceV23 is IGovernanceV23, Ownable {
 
     assetGuards[assetType] = guardAddress;
 
-    emit SetAssetGuard(assetType, guardAddress);
+    emit AssetGuardSet(assetType, guardAddress);
+  }
+
+  // Addresses
+
+  /// @notice Maps multiple contract names to destination addresses
+  /// @dev This is a central source that can be used to reference third party contracts
+  /// @param contractNames The contract names and addresses struct
+  function setAddresses(ContractName[] calldata contractNames) external onlyOwner {
+    for (uint256 i = 0; i < contractNames.length; i++) {
+      bytes32 name = contractNames[i].name;
+      address destination = contractNames[i].destination;
+      nameToDestination[name] = destination;
+      emit AddressSet(name, destination);
+    }
   }
 }
