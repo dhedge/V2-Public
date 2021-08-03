@@ -194,8 +194,8 @@ describe("PoolFactory", function () {
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
     // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLPLinkWeth, poolFactory.address);
+    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLPLinkWeth, poolFactory.address);
     const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     await assetHandler.addAssets([assetSushiLPLinkWeth]);
 
