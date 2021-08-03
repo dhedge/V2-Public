@@ -58,6 +58,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   /// @param _poolManagerLogic Pool address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
     address, // to
@@ -66,7 +67,8 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -90,8 +92,9 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
       );
 
       txType = 1; // 'Approve' type
-      return txType;
     }
+
+    return (txType, false);
   }
 
   /// @notice Creates transaction data for withdrawing tokens
