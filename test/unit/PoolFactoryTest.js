@@ -752,8 +752,24 @@ describe("PoolFactory", function () {
 
   // Synthetix transaction guard
   it("Only manager or trader can execute transaction", async () => {
+    const sourceKey = susdKey;
+    const sourceAmount = (100e18).toString();
+    const destinationKey = sethKey;
+    const daoAddress = await poolFactory.owner();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
+
+    const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
+    const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
+    const exchangeWithTrackingABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
+      sourceKey,
+      sourceAmount,
+      destinationKey,
+      daoAddress,
+      trackingCode,
+    ]);
+
     await expect(
-      poolLogicProxy.connect(logicOwner).execTransaction(synthetix.address, "0x00000000"),
+      poolLogicProxy.connect(logicOwner).execTransaction(synthetix.address, exchangeWithTrackingABI),
     ).to.be.revertedWith("only manager or trader");
   });
 
@@ -1514,6 +1530,44 @@ describe("PoolFactory", function () {
       ).to.be.revertedWith("recipient is not pool");
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi);
+
+      const event = await claimEvent;
+      expect(event.fundAddress).to.equal(poolLogicProxy.address);
+      expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(event.time).to.equal((await currentBlockTimestamp()).toString());
+    });
+
+    it("user can Harvest staked Sushi LP token", async function () {
+      const claimEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            stakingContract,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
+
+      // attempt to harvest with manager as recipient
+      const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(logicOwner).execTransaction(sushiMiniChefV2.address, badHarvestAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      await poolLogicProxy.connect(logicOwner).execTransaction(sushiMiniChefV2.address, harvestAbi);
 
       const event = await claimEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
