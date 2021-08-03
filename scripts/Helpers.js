@@ -11,11 +11,6 @@ const getTag = async () => {
 };
 
 const isSameBytecode = (creationBytecode, runtimeBytecode) => {
-  const firstChars = runtimeBytecode.substring(0, 39);
-  if (creationBytecode.indexOf(firstChars) < 0) {
-    return false;
-  }
-
   const bytecodeB = runtimeBytecode.substring(39);
   const bytecodeSnippet = bytecodeB.substring(0, 100);
   const indexOfSnippet = creationBytecode.indexOf(bytecodeSnippet);
