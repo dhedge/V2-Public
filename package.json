@@ -32,6 +32,7 @@
     "upgrade:polygon:poolLogic": "npx hardhat upgrade --pool-logic true --network mumbai",
     "upgrade:polygon:poolManagerLogic": "npx hardhat upgrade --pool-manager-logic true --network mumbai",
     "upgrade:polygon:all": "npx hardhat upgrade --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --network mumbai",
+    "verifyDeployment:polygon": "hardhat run ./scripts/polygon/verifyDeployment.js --network polygon",
     "doc:gen": "solidity-docgen --solc-module solc-0.7 -t templates",
     "prepare": "husky install"
   },
