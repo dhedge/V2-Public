@@ -75,7 +75,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
     override
     returns (
       uint16 txType, // transaction type
-      bool isPublic
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -203,6 +203,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       txType = 15; // Aave `RebalanceStableBorrowRate` type
     }
 
-    return (txType, isPublic);
+    return (txType, false);
   }
 }

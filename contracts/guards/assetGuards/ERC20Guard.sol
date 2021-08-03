@@ -68,7 +68,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     override
     returns (
       uint16 txType, // transaction type
-      bool isPublic
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -94,7 +94,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
       txType = 1; // 'Approve' type
     }
 
-    return (txType, isPublic);
+    return (txType, false);
   }
 
   /// @notice Creates transaction data for withdrawing tokens

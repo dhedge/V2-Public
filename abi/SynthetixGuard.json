@@ -346,7 +346,7 @@
       },
       {
         "internalType": "bool",
-        "name": "isPublic",
+        "name": "",
         "type": "bool"
       }
     ],

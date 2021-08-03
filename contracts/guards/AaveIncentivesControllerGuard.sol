@@ -83,7 +83,5 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
       txType = 7; // `Claim` type
       isPublic = true;
     }
-
-    return (txType, isPublic);
   }
 }

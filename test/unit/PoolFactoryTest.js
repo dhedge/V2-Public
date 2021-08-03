@@ -770,7 +770,7 @@ describe("PoolFactory", function () {
 
     await expect(
       poolLogicProxy.connect(logicOwner).execTransaction(synthetix.address, exchangeWithTrackingABI),
-    ).to.be.revertedWith("only manager or trader");
+    ).to.be.revertedWith("only manager or trader or public function");
   });
 
   it("Should fail with invalid destination", async () => {

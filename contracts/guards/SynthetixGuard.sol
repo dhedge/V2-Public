@@ -73,7 +73,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     override
     returns (
       uint16 txType, // transaction type
-      bool isPublic
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -96,7 +96,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
       txType = 2; // 'Exchange' type
     }
 
-    return (txType, isPublic);
+    return (txType, false);
   }
 
   /// @notice Get asset proxy address from addressResolver

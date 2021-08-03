@@ -93,7 +93,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     override
     returns (
       uint16 txType, // transaction type
-      bool isPublic
+      bool // isPublic
     )
   {
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
@@ -190,6 +190,6 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       txType = 4; // `Remove Liquidity` type
     }
 
-    return (txType, isPublic);
+    return (txType, false);
   }
 }

@@ -146,7 +146,5 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
 
       txType = 8; // `UnstakeAndClaim` type
     }
-
-    return (txType, isPublic);
   }
 }
