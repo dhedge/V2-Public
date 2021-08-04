@@ -25,13 +25,14 @@ const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 const poolFactoryAddress = "0x13E1c2d49dB12F97becAbEe57d1308fBdD365D42";
 const assetHandlerAddress = "0x53d5b36f154a22Ef89ff2DfdAFA67AfE090B9d6E";
 
-let tag, signer;
+let version, signer;
 let proxyAdmin, poolFactory, governance, assetHandler; // contracts
 let owner = {};
 
 const main = async () => {
   signer = (await ethers.getSigners())[0];
-  tag = await getTag();
+  // version = await getTag();
+  version = "v2.4.0"; // TODO: replace with getTag() once new version updated
 
   const PoolFactoryProxy = await ethers.getContractFactory("PoolFactory");
   const PoolFactory = PoolFactoryProxy;
@@ -45,7 +46,7 @@ const main = async () => {
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
 
-  let contracts = versions[tag].contracts;
+  let contracts = versions[version].contracts;
   contracts["ProxyAdmin"] = proxyAdminAddress;
   contracts["PoolFactory"] = poolFactoryAddress;
   contracts["AssetHandler"] = assetHandlerAddress;
@@ -91,7 +92,7 @@ const main = async () => {
   // // Check Assets settings against latest Assets CSV file
   // console.log("Checking assets..");
 
-  // const assets = versions[tag].contracts.Assets;
+  // const assets = versions[version].contracts.Assets;
   // const csvAssets = await csv().fromFile(csvFileName);
 
   // // Check for any new assets in the CSV
