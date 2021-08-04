@@ -54,15 +54,17 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address to, // to
+    address to,
     bytes calldata data
   )
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -79,7 +81,7 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 7; // `Claim` type
-      return txType;
+      isPublic = true;
     }
   }
 }
