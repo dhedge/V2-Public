@@ -752,9 +752,25 @@ describe("PoolFactory", function () {
 
   // Synthetix transaction guard
   it("Only manager or trader can execute transaction", async () => {
+    const sourceKey = susdKey;
+    const sourceAmount = (100e18).toString();
+    const destinationKey = sethKey;
+    const daoAddress = await poolFactory.owner();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
+
+    const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
+    const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
+    const exchangeWithTrackingABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
+      sourceKey,
+      sourceAmount,
+      destinationKey,
+      daoAddress,
+      trackingCode,
+    ]);
+
     await expect(
-      poolLogicProxy.connect(logicOwner).execTransaction(synthetix.address, "0x00000000"),
-    ).to.be.revertedWith("only manager or trader");
+      poolLogicProxy.connect(logicOwner).execTransaction(synthetix.address, exchangeWithTrackingABI),
+    ).to.be.revertedWith("only manager or trader or public function");
   });
 
   it("Should fail with invalid destination", async () => {
@@ -802,9 +818,7 @@ describe("PoolFactory", function () {
 
     await synthetix.givenCalldataRevert(exchangeWithTrackingABI);
 
-    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI)).to.be.revertedWith(
-      "failed to execute the call",
-    );
+    await expect(poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI)).to.be.reverted;
 
     await synthetix.givenCalldataReturnUint(exchangeWithTrackingABI, (1e18).toString());
     await poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI);
@@ -932,9 +946,7 @@ describe("PoolFactory", function () {
       0,
     ]);
     await uniswapV2Router.givenCalldataRevert(swapABI);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "failed to execute the call",
-    );
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.reverted;
 
     await uniswapV2Router.givenCalldataReturn(swapABI, []);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
@@ -1417,6 +1429,20 @@ describe("PoolFactory", function () {
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, badDepositAbi),
       ).to.be.revertedWith("recipient is not pool");
 
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
+      ).to.be.revertedWith("enable rewardA token");
+
+      // enable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
+      ).to.be.revertedWith("enable rewardB token");
+
+      // enable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
+
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi);
 
       const event = await stakeEvent;
@@ -1492,20 +1518,6 @@ describe("PoolFactory", function () {
 
       const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
 
-      await expect(
-        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
-      ).to.be.revertedWith("enable reward token");
-
-      // enable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
-
-      await expect(
-        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi),
-      ).to.be.revertedWith("enable reward token");
-
-      // enable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
-
       // attempt to harvest with manager as recipient
       const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
         sushiLPLinkWethPoolId,
@@ -1518,6 +1530,44 @@ describe("PoolFactory", function () {
       ).to.be.revertedWith("recipient is not pool");
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi);
+
+      const event = await claimEvent;
+      expect(event.fundAddress).to.equal(poolLogicProxy.address);
+      expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
+      expect(event.time).to.equal((await currentBlockTimestamp()).toString());
+    });
+
+    it("user can Harvest staked Sushi LP token", async function () {
+      const claimEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            stakingContract,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
+
+      // attempt to harvest with manager as recipient
+      const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
+        sushiLPLinkWethPoolId,
+        FIVE_TOKENS,
+        manager.address,
+      ]);
+
+      await expect(
+        poolLogicProxy.connect(logicOwner).execTransaction(sushiMiniChefV2.address, badHarvestAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      await poolLogicProxy.connect(logicOwner).execTransaction(sushiMiniChefV2.address, harvestAbi);
 
       const event = await claimEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
@@ -1596,14 +1646,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable reward token");
+      ).to.be.revertedWith("enable rewardA token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable reward token");
+      ).to.be.revertedWith("enable rewardB token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);

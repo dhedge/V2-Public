@@ -63,6 +63,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
     address, // to
@@ -71,7 +72,8 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -92,15 +94,18 @@ contract SynthetixGuard is TxDataUtils, IGuard {
       emit Exchange(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-      return txType;
     }
+
+    return (txType, false);
   }
 
-  function getAssetProxy(bytes32 key) public view returns (address) {
+  /// @notice Get asset proxy address from addressResolver
+  /// @param key the key of the asset
+  /// @return proxy the proxy address of the asset
+  function getAssetProxy(bytes32 key) public view returns (address proxy) {
     address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
     require(synth != address(0), "invalid key");
-    address proxy = ISynth(synth).proxy();
+    proxy = ISynth(synth).proxy();
     require(proxy != address(0), "invalid proxy");
-    return proxy;
   }
 }

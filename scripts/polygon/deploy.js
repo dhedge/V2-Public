@@ -2,14 +2,26 @@ const hre = require("hardhat");
 const fs = require("fs");
 const { getTag } = require("../Helpers");
 const csv = require("csvtojson");
+const { toBytes32 } = require("../../test/TestHelpers");
 
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
+// Polygon addresses
+const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+const uberPool = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
+const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
+
+// sushiswap
 const sushiswapV2Factory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
+
+// aave
+const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
+const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
+const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
 
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
 const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
@@ -28,7 +40,13 @@ const sushiLPUsdcWethPoolId = 1;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-async function main() {
+const prodVersionFile = "./publish/polygon/versions.json";
+const stagingVersionFile = "./publish/polygon/staging-versions.json";
+
+const prodFileName = "./dHEDGE Assets list - Polygon.csv";
+const stagingFileName = "./dHEDGE Assets list - Polygon Staging.csv";
+
+const deploy = async (env) => {
   const ethers = hre.ethers;
   const upgrades = hre.upgrades;
 
@@ -84,8 +102,7 @@ async function main() {
   await poolFactory.deployed();
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
-  fileName = "./dHEDGE Assets list - Polygon.csv";
-
+  const fileName = env === "staging" ? stagingFileName : prodFileName;
   const assets = await csv().fromFile(fileName);
 
   const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
@@ -144,7 +161,7 @@ async function main() {
   await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
 
   let tag = await getTag();
-  let versions = require("../../publish/polygon/versions.json");
+  let versions = new Object;
   versions[tag] = {
     network: network,
     date: new Date().toUTCString(),
@@ -162,16 +179,60 @@ async function main() {
     },
   };
 
+  if(env === "staging"){
+    // Aave
+    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
+    await aaveLendingPoolAssetGuard.deployed();
+    console.log("AaveLendingPoolAssetGuard deployed at ", aaveLendingPoolAssetGuard.address);
+
+    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+    await aaveLendingPoolGuard.deployed();
+    console.log("AaveLendingPoolGuard deployed at ", aaveLendingPoolGuard.address);
+
+    const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+    const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
+    await lendingEnabledAssetGuard.deployed();
+    console.log("LendingEnabledAssetGuard deployed at ", lendingEnabledAssetGuard.address);
+
+    const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
+    const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
+    await aaveIncentivesControllerGuard.deployed();
+    console.log("AaveIncentivesControllerGuard deployed at ", aaveIncentivesControllerGuard.address);
+
+    await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
+    await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
+    await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
+    await governance.setContractGuard(aaveIncentivesController, aaveIncentivesControllerGuard.address);
+    await governance.setAddresses([
+      [toBytes32("swapRouter"), sushiswapV2Router],
+      [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
+      [toBytes32("weth"), weth],
+    ]);
+
+    aaveContracts = { 
+      AaveLendingPoolAssetGuard: aaveLendingPoolAssetGuard.address,
+      AaveLendingPoolGuard: aaveLendingPoolGuard.address,
+      LendingEnabledAssetGuard: lendingEnabledAssetGuard.address,
+      AaveIncentivesControllerGuard: aaveIncentivesControllerGuard.address,
+    };
+
+    versions[tag].contracts = { ...versions[tag].contracts, ...aaveContracts };
+  }else{
+    // DAO Settings
+    await poolFactory.setDAOAddress(uberPool);
+    await poolFactory.transferOwnership(protocolDao);
+    await governance.transferOwnership(protocolDao);
+    await assetHandler.transferOwnership(protocolDao);
+  }
+
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("./publish/polygon/versions.json", data);
-}
+  versionFile = env === "prod" ? productionVersionFile : stagingVersionFile;
+  fs.writeFileSync(versionFile, data);
+};
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+module.exports = { deploy };

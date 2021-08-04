@@ -47,7 +47,12 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;
   using SafeMathUpgradeable for uint256;
 
-  // transaction guard for Uniswap Swap Router
+  /// @notice Transaction guard for UniswavpV3SwapGuard
+  /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @param _poolManagerLogic Pool address
+  /// @param data Transaction call data attempt by manager
+  /// @return txType transaction type described in PoolLogic
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
     address, // to
@@ -56,7 +61,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -112,10 +118,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-      return txType;
-    }
-
-    if (
+    } else if (
       method == bytes4(keccak256("exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"))
     ) {
       address srcAsset = convert32toAddress(getInput(data, 0));
@@ -131,8 +134,9 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
 
       emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
-      txType = 2;
-      return txType; // 'Exchange' type
+      txType = 2; // 'Exchange' type
     }
+
+    return (txType, false);
   }
 }

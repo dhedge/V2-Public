@@ -64,16 +64,18 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode, rebalanceStableBorrowRate functionality
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  /// @return txType the transaction type of a given transaction data.
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address to, // to
+    address to,
     bytes calldata data
   )
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -94,7 +96,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit Deposit(poolLogic, depositAsset, to, amount, block.timestamp);
 
       txType = 9; // Aave `Deposit` type
-      return txType;
     } else if (method == bytes4(keccak256("withdraw(address,uint256,address)"))) {
       address withdrawAsset = convert32toAddress(getInput(data, 0));
       uint256 amount = uint256(getInput(data, 1));
@@ -110,7 +111,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit Withdraw(poolLogic, withdrawAsset, to, amount, block.timestamp);
 
       txType = 10; // Aave `Withdraw` type
-      return txType;
     } else if (method == bytes4(keccak256("setUserUseReserveAsCollateral(address,bool)"))) {
       address asset = convert32toAddress(getInput(data, 0));
       bool useAsCollateral = uint256(getInput(data, 1)) != 0;
@@ -123,7 +123,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit SetUserUseReserveAsCollateral(poolLogic, asset, useAsCollateral, block.timestamp);
 
       txType = 11; // Aave `SetUserUseReserveAsCollateral` type
-      return txType;
     } else if (method == bytes4(keccak256("borrow(address,uint256,uint256,uint16,address)"))) {
       address borrowAsset = convert32toAddress(getInput(data, 0));
       uint256 amount = uint256(getInput(data, 1));
@@ -162,7 +161,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit Borrow(poolLogic, borrowAsset, to, amount, block.timestamp);
 
       txType = 12; // Aave `Borrow` type
-      return txType;
     } else if (method == bytes4(keccak256("repay(address,uint256,uint256,address)"))) {
       address repayAsset = convert32toAddress(getInput(data, 0));
       uint256 amount = uint256(getInput(data, 1));
@@ -178,7 +176,6 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       emit Repay(poolLogic, repayAsset, to, amount, block.timestamp);
 
       txType = 13; // Aave `Repay` type
-      return txType;
     } else if (method == bytes4(keccak256("swapBorrowRateMode(address,uint256)"))) {
       address asset = convert32toAddress(getInput(data, 0));
       uint256 rateMode = uint256(getInput(data, 1));
@@ -205,5 +202,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
       txType = 15; // Aave `RebalanceStableBorrowRate` type
     }
+
+    return (txType, false);
   }
 }
