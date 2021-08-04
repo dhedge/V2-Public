@@ -8,6 +8,7 @@ require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
 require("./scripts/upgrade.js");
+require("@nomiclabs/hardhat-etherscan");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -89,5 +90,8 @@ module.exports = {
       "Managed",
     ],
     spacing: 2,
+  },
+  etherscan: {
+    apiKey: process.env.POLYGONSCAN_API_KEY,
   },
 };
