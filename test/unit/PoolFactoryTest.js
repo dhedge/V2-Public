@@ -155,7 +155,7 @@ describe("PoolFactory", function () {
 
     PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
     poolLogicV24 = await PoolLogicV24.deploy();
-    PoolLogic = await ethers.getContractFactory("PoolLogicV24");
+    PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
     PoolManagerLogicV24 = await ethers.getContractFactory("PoolManagerLogicV24");
