@@ -295,7 +295,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         });
         index++;
       }
-
     }
 
     // Reduce length for withdrawnAssets to remove the empty items

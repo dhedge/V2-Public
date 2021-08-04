@@ -144,7 +144,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       // There is no asset to withdraw as the above executes the withdraw to the withdrawer(to)
       return (address(0), 0, transactions);
     }
-
   }
 
   /// @notice Prepare flashlan transaction data
