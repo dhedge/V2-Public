@@ -70,7 +70,7 @@ describe("Quickswap V2 Test", function () {
     // Deploy Quick LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
     quickLPAggregator = await UniV2LPAggregator.deploy(quickLpUsdcWeth, poolFactory.address);
-    const assetQuickLPWethUsdc = { asset: quickLpUsdcWeth, assetType: 4, aggregator: quickLPAggregator.address };
+    const assetQuickLPWethUsdc = { asset: quickLpUsdcWeth, assetType: 5, aggregator: quickLPAggregator.address };
     await assetHandler.addAssets([assetQuickLPWethUsdc]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
@@ -81,12 +81,11 @@ describe("Quickswap V2 Test", function () {
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(quickswapFactory);
     uniswapV2RouterGuard.deployed();
 
-    const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
-    quickLPAssetGuard = await QuickLPAssetGuard.deploy();
+    quickLPAssetGuard = await ERC20Guard.deploy();
     quickLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setAssetGuard(4, quickLPAssetGuard.address);
+    await governance.setAssetGuard(5, quickLPAssetGuard.address);
     await governance.setContractGuard(quickswapRouter, uniswapV2RouterGuard.address);
   });
 

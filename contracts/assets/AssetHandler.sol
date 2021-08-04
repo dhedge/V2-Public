@@ -4,7 +4,8 @@
 // 1 = Synthetix synth with Chainlink direct USD price feed
 // 2 = Sushi LP tokens
 // 3 = Aave Lending Pool Asset
-// 4 = Quick LP tokens
+// 4 = Lending Enable Asset
+// 5 = Quick LP tokens
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
