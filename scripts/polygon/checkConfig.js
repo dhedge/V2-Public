@@ -62,95 +62,95 @@ const main = async () => {
   poolLogic = PoolLogic.attach(contracts.PoolLogic);
   poolManagerLogic = PoolManagerLogic.attach(contracts.PoolManagerLogic);
 
-  // // Check ownership
-  // console.log("Checking ownership..");
+  // Check ownership
+  console.log("Checking ownership..");
 
-  // owner.proxyAdmin = await proxyAdmin.owner();
-  // owner.poolFactoryProxy = await poolFactoryProxy.owner();
-  // owner.governance = await governance.owner();
-  // owner.assetHandlerProxy = await assetHandlerProxy.owner();
-  // owner.sushiLPAssetGuard = await sushiLPAssetGuard.owner();
+  owner.proxyAdmin = await proxyAdmin.owner();
+  owner.poolFactoryProxy = await poolFactoryProxy.owner();
+  owner.governance = await governance.owner();
+  owner.assetHandlerProxy = await assetHandlerProxy.owner();
+  owner.sushiLPAssetGuard = await sushiLPAssetGuard.owner();
 
-  // expect(owner.proxyAdmin).to.equal(protocolDao);
-  // expect(owner.poolFactoryProxy).to.equal(protocolDao);
-  // expect(owner.governance).to.equal(protocolDao);
-  // expect(owner.assetHandlerProxy).to.equal(protocolDao);
-  // expect(owner.sushiLPAssetGuard).to.equal(protocolDao);
+  expect(owner.proxyAdmin).to.equal(protocolDao);
+  expect(owner.poolFactoryProxy).to.equal(protocolDao);
+  expect(owner.governance).to.equal(protocolDao);
+  expect(owner.assetHandlerProxy).to.equal(protocolDao);
+  expect(owner.sushiLPAssetGuard).to.equal(protocolDao);
 
-  // // Check Factory settings
-  // console.log("Checking Factory settings..");
+  // Check Factory settings
+  console.log("Checking Factory settings..");
 
-  // const uberpoolSetting = await poolFactoryProxy.daoAddress();
-  // expect(uberpoolSetting).to.equal(uberPool);
+  const uberpoolSetting = await poolFactoryProxy.daoAddress();
+  expect(uberpoolSetting).to.equal(uberPool);
 
-  // const governanceSetting = await poolFactoryProxy.governanceAddress();
-  // expect(governanceSetting).to.equal(governance.address);
+  const governanceSetting = await poolFactoryProxy.governanceAddress();
+  expect(governanceSetting).to.equal(governance.address);
 
-  // const assetHandlerSetting = await poolFactoryProxy.getAssetHandler();
-  // expect(assetHandlerSetting).to.equal(assetHandlerProxy.address);
+  const assetHandlerSetting = await poolFactoryProxy.getAssetHandler();
+  expect(assetHandlerSetting).to.equal(assetHandlerProxy.address);
 
-  // // Check Assets settings against latest Assets CSV file
-  // console.log("Checking assets..");
+  // Check Assets settings against latest Assets CSV file
+  console.log("Checking assets..");
 
-  // const assets = versions[version].contracts.Assets;
-  // const csvAssets = await csv().fromFile(csvFileName);
+  const assets = versions[version].contracts.Assets;
+  const csvAssets = await csv().fromFile(csvFileName);
 
-  // // Check for any new assets in the CSV
-  // for (const csvAsset of csvAssets) {
-  //   let foundInVersions = false;
-  //   for (const asset of assets) {
-  //     if (csvAsset.Address === asset.asset) foundInVersions = true;
-  //   }
-  //   assert(foundInVersions, `Couldn't find ${csvAsset["Asset Name"]} address in published versions.json list.`);
-  // }
+  // Check for any new assets in the CSV
+  for (const csvAsset of csvAssets) {
+    let foundInVersions = false;
+    for (const asset of assets) {
+      if (csvAsset.Address === asset.asset) foundInVersions = true;
+    }
+    assert(foundInVersions, `Couldn't find ${csvAsset["Asset Name"]} address in published versions.json list.`);
+  }
 
-  // for (const asset of assets) {
-  //   const assetAddress = asset.asset;
-  //   const assetPrice = parseInt(await poolFactoryProxy.getAssetPrice(assetAddress));
-  //   const assetType = parseInt(await poolFactoryProxy.getAssetType(assetAddress));
+  for (const asset of assets) {
+    const assetAddress = asset.asset;
+    const assetPrice = parseInt(await poolFactoryProxy.getAssetPrice(assetAddress));
+    const assetType = parseInt(await poolFactoryProxy.getAssetType(assetAddress));
 
-  //   assert(assetPrice > 0, `${asset.name} price is not above 0`);
-  //   assert(
-  //     assetType == parseInt(asset.assetType),
-  //     `${asset.name} assetType mismatch. Deployed assetType = ${asset.assetType}, Contract assetType = ${assetType}`,
-  //   );
+    assert(assetPrice > 0, `${asset.name} price is not above 0`);
+    assert(
+      assetType == parseInt(asset.assetType),
+      `${asset.name} assetType mismatch. Deployed assetType = ${asset.assetType}, Contract assetType = ${assetType}`,
+    );
 
-  //   let foundInCsv = false;
-  //   for (const csvAsset of csvAssets) {
-  //     if (csvAsset.Address == assetAddress) {
-  //       foundInCsv = true;
-  //       assert(
-  //         assetType == parseInt(csvAsset.AssetType),
-  //         `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.AssetType}, Contract assetType = ${assetType}`,
-  //       );
-  //     }
-  //   }
-  //   assert(foundInCsv, `Couldn't find ${asset.name} address in the Assets CSV.`);
+    let foundInCsv = false;
+    for (const csvAsset of csvAssets) {
+      if (csvAsset.Address == assetAddress) {
+        foundInCsv = true;
+        assert(
+          assetType == parseInt(csvAsset.AssetType),
+          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.AssetType}, Contract assetType = ${assetType}`,
+        );
+      }
+    }
+    assert(foundInCsv, `Couldn't find ${asset.name} address in the Assets CSV.`);
 
-  //   // Check primitive asset prices against Coingecko (correct price oracle config)
-  //   const assetPriceUsd = assetPrice / 1e18;
-  //   let coingeckoAssetPriceUsd;
+    // Check primitive asset prices against Coingecko (correct price oracle config)
+    const assetPriceUsd = assetPrice / 1e18;
+    let coingeckoAssetPriceUsd;
 
-  //   if (assetType == 0 || assetType == 1 || assetType == 4) {
-  //     const url = `https://api.coingecko.com/api/v3/simple/token_price/${coingeckoNetwork}?contract_addresses=${assetAddress}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=true`;
-  //     try {
-  //       const { data } = await axios.get(url);
-  //       coingeckoAssetPriceUsd = data[assetAddress].usd;
+    if (assetType == 0 || assetType == 1 || assetType == 4) {
+      const url = `https://api.coingecko.com/api/v3/simple/token_price/${coingeckoNetwork}?contract_addresses=${assetAddress}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=true`;
+      try {
+        const { data } = await axios.get(url);
+        coingeckoAssetPriceUsd = data[assetAddress].usd;
 
-  //       const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
+        const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
 
-  //       assert(
-  //         approxEq(assetPriceUsd, coingeckoAssetPriceUsd),
-  //         `${asset.name} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
-  //       );
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   }
-  //   console.log(
-  //     `${asset.name} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
-  //   );
-  // }
+        assert(
+          approxEq(assetPriceUsd, coingeckoAssetPriceUsd),
+          `${asset.name} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    console.log(
+      `${asset.name} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
+    );
+  }
 
   // Check latest contract bytecodes (what needs to be upgraded on next release)
   console.log("Checking latest bytecodes against last deployment..");
