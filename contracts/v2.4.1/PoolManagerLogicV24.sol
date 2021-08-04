@@ -46,13 +46,13 @@ import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./guards/IGuard.sol";
 import "./guards/IAssetGuard.sol";
-import "./ManagedV23.sol";
+import "./ManagedV24.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
-contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupportedAssetV23, ManagedV23 {
+contract PoolManagerLogicV24 is Initializable, IPoolManagerLogicV24, IHasSupportedAssetV24, ManagedV24 {
   using SafeMathUpgradeable for uint256;
   using AddressUpgradeable for address;
 
@@ -75,12 +75,14 @@ contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupport
   // Fee increase announcement
   uint256 public announcedFeeIncreaseNumerator;
   uint256 public announcedFeeIncreaseTimestamp;
+  uint256 public managerFeeNumerator;
 
   function initialize(
     address _factory,
     address _manager,
     string calldata _managerName,
     address _poolLogic,
+    uint256 _managerFeeNumerator,
     Asset[] calldata _supportedAssets
   ) external initializer {
     require(_factory != address(0), "Invalid factory");
@@ -90,7 +92,7 @@ contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupport
 
     factory = _factory;
     poolLogic = _poolLogic;
-
+    managerFeeNumerator = _managerFeeNumerator;
     _changeAssets(_supportedAssets, new address[](0));
   }
 
@@ -105,7 +107,7 @@ contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupport
   }
 
   function validateAsset(address asset) public view override returns (bool) {
-    return IHasAssetInfoV23(factory).isValidAsset(asset);
+    return IHasAssetInfoV24(factory).isValidAsset(asset);
   }
 
   function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets) external onlyManagerOrTrader {
@@ -122,7 +124,7 @@ contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupport
     }
 
     require(
-      supportedAssets.length < IHasAssetInfoV23(factory).getMaximumSupportedAssetCount(),
+      supportedAssets.length < IHasAssetInfoV24(factory).getMaximumSupportedAssetCount(),
       "maximum assets reached"
     );
 
@@ -197,18 +199,18 @@ contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupport
 
   /// @notice Get asset balance including any staked balance in external contracts
   function assetBalance(address asset) public view returns (uint256) {
-    address guard = IHasGuardInfoV23(factory).getAssetGuard(asset);
-    return IAssetGuardV23(guard).getBalance(poolLogic, asset);
+    address guard = IHasGuardInfoV24(factory).getAssetGuard(asset);
+    return IAssetGuardV24(guard).getBalance(poolLogic, asset);
   }
 
   /// @notice Get asset decimal
   function assetDecimal(address asset) public view returns (uint256) {
-    address guard = IHasGuardInfoV23(factory).getAssetGuard(asset);
-    return IAssetGuardV23(guard).getDecimals(asset);
+    address guard = IHasGuardInfoV24(factory).getAssetGuard(asset);
+    return IAssetGuardV24(guard).getDecimals(asset);
   }
 
   function assetValue(address asset, uint256 amount) public view override returns (uint256) {
-    uint256 price = IHasAssetInfoV23(factory).getAssetPrice(asset);
+    uint256 price = IHasAssetInfoV24(factory).getAssetPrice(asset);
     uint256 decimals = assetDecimal(asset);
 
     return price.mul(amount).div(10**decimals);
@@ -241,81 +243,8 @@ contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupport
       address asset = supportedAssets[i].asset;
       balances[i] = assetBalance(asset);
       assets[i] = supportedAssets[i];
-      rates[i] = IHasAssetInfoV23(factory).getAssetPrice(asset);
+      rates[i] = IHasAssetInfoV24(factory).getAssetPrice(asset);
     }
-  }
-
-  function getManagerFee() public view returns (uint256, uint256) {
-    return IHasFeeInfoV23(factory).getPoolManagerFee(poolLogic);
-  }
-
-  function _setManagerFeeNumerator(uint256 numerator) internal {
-    IHasFeeInfoV23(factory).setPoolManagerFeeNumerator(poolLogic, numerator);
-
-    uint256 managerFeeNumerator;
-    uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfoV23(factory).getPoolManagerFee(poolLogic);
-
-    emit ManagerFeeSet(poolLogic, manager, managerFeeNumerator, managerFeeDenominator);
-  }
-
-  function announceManagerFeeIncrease(uint256 numerator) external onlyManager {
-    uint256 maximumAllowedChange = IHasFeeInfoV23(factory).getMaximumManagerFeeNumeratorChange();
-
-    uint256 currentFeeNumerator;
-    uint256 currentFeeDenominator;
-    (currentFeeNumerator, currentFeeDenominator) = getManagerFee();
-
-    require(numerator <= currentFeeDenominator, "invalid fraction");
-    require(numerator <= currentFeeNumerator.add(maximumAllowedChange), "exceeded allowed increase");
-
-    uint256 feeChangeDelay = IHasFeeInfoV23(factory).getManagerFeeNumeratorChangeDelay();
-
-    announcedFeeIncreaseNumerator = numerator;
-    announcedFeeIncreaseTimestamp = block.timestamp + feeChangeDelay;
-    emit ManagerFeeIncreaseAnnounced(numerator, announcedFeeIncreaseTimestamp);
-  }
-
-  function renounceManagerFeeIncrease() external onlyManager {
-    announcedFeeIncreaseNumerator = 0;
-    announcedFeeIncreaseTimestamp = 0;
-    emit ManagerFeeIncreaseRenounced();
-  }
-
-  function commitManagerFeeIncrease() external onlyManager {
-    require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
-
-    _setManagerFeeNumerator(announcedFeeIncreaseNumerator);
-
-    announcedFeeIncreaseNumerator = 0;
-    announcedFeeIncreaseTimestamp = 0;
-  }
-
-  function setManagerFeeNumerator(uint256 numerator) external onlyManager {
-    uint256 managerFeeNumerator;
-    uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IHasFeeInfoV23(factory).getPoolManagerFee(poolLogic);
-
-    require(numerator < managerFeeNumerator, "manager fee too high");
-
-    IHasFeeInfoV23(factory).setPoolManagerFeeNumerator(poolLogic, numerator);
-
-    emit ManagerFeeSet(poolLogic, manager, numerator, managerFeeDenominator);
-  }
-
-  function getManagerFeeIncreaseInfo() external view returns (uint256, uint256) {
-    return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
-  }
-
-  function setPoolLogic(address _poolLogic) external override returns (bool) {
-    address daoAddress = IHasOwnableV23(factory).owner();
-    require(msg.sender == daoAddress, "only DAO address allowed");
-
-    require(IPoolLogicV23(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");
-
-    poolLogic = _poolLogic;
-    emit PoolLogicSet(_poolLogic, msg.sender);
-    return true;
   }
 
   /// @notice Return the total fund value of the pool
@@ -329,6 +258,95 @@ contract PoolManagerLogicV23 is Initializable, IPoolManagerLogicV23, IHasSupport
       total = total.add(assetValue(supportedAssets[i].asset));
     }
     return total;
+  }
+
+  /* ========== MANAGER FEES ========== */
+
+  function getManagerFee() external view override returns (uint256, uint256) {
+    (, uint256 managerFeeDenominator) = IHasFeeInfoV24(factory).getMaximumManagerFee();
+    return (managerFeeNumerator, managerFeeDenominator);
+  }
+
+  function getMaximumManagerFee() public view returns (uint256, uint256) {
+    return IHasFeeInfoV24(factory).getMaximumManagerFee();
+  }
+
+  function getMaximumManagerFeeChange() public view returns (uint256) {
+    return IHasFeeInfoV24(factory).maximumManagerFeeNumeratorChange();
+  }
+
+  // Manager fee decreases
+
+  /// @notice Manager can decrease performance fee
+  function setManagerFeeNumerator(uint256 numerator) external onlyManager {
+    require(numerator <= managerFeeNumerator, "manager fee too high");
+    _setManagerFeeNumerator(numerator);
+  }
+
+  function _setManagerFeeNumerator(uint256 numerator) internal {
+    (uint256 maximumNumerator, uint256 denominator) = getMaximumManagerFee();
+    require(numerator <= denominator && numerator <= maximumNumerator, "invalid manager fee");
+
+    managerFeeNumerator = numerator;
+
+    emit ManagerFeeSet(poolLogic, manager, numerator, denominator);
+  }
+
+  // Manager fee increases
+
+  /// @notice Manager can announce an increase to the performance fee
+  /// @dev The commit to the new fee can happen after a time delay
+  function announceManagerFeeIncrease(uint256 numerator) external onlyManager {
+    (uint256 maximumNumerator, uint256 denominator) = getMaximumManagerFee();
+    uint256 maximumAllowedChange = getMaximumManagerFeeChange();
+
+    require(numerator <= denominator, "invalid fraction");
+    require(
+      numerator <= maximumNumerator && numerator <= managerFeeNumerator.add(maximumAllowedChange),
+      "exceeded allowed increase"
+    );
+
+    uint256 feeChangeDelay = IHasFeeInfoV24(factory).managerFeeNumeratorChangeDelay();
+
+    announcedFeeIncreaseNumerator = numerator;
+    announcedFeeIncreaseTimestamp = block.timestamp + feeChangeDelay;
+    emit ManagerFeeIncreaseAnnounced(numerator, announcedFeeIncreaseTimestamp);
+  }
+
+  /// @notice Manager can cancel the performance fee increase
+  /// @dev Fee increase needs to be announced first
+  function renounceManagerFeeIncrease() external onlyManager {
+    announcedFeeIncreaseNumerator = 0;
+    announcedFeeIncreaseTimestamp = 0;
+    emit ManagerFeeIncreaseRenounced();
+  }
+
+  /// @notice Manager can commit the performance fee increase
+  /// @dev Fee increase needs to be announced first
+  function commitManagerFeeIncrease() external onlyManager {
+    require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
+
+    _setManagerFeeNumerator(announcedFeeIncreaseNumerator);
+
+    announcedFeeIncreaseNumerator = 0;
+    announcedFeeIncreaseTimestamp = 0;
+  }
+
+  function getManagerFeeIncreaseInfo() external view returns (uint256, uint256) {
+    return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
+  }
+
+  /// @notice Setter for poolLogic contract
+  /// @dev Not required to be used under normal circumstances
+  function setPoolLogic(address _poolLogic) external override returns (bool) {
+    address daoAddress = IHasOwnableV24(factory).owner();
+    require(msg.sender == daoAddress, "only DAO address allowed");
+
+    require(IPoolLogicV24(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");
+
+    poolLogic = _poolLogic;
+    emit PoolLogicSet(_poolLogic, msg.sender);
+    return true;
   }
 
   uint256[51] private __gap;

@@ -34,12 +34,15 @@
 
 pragma solidity 0.7.6;
 
-interface IManagedV23 {
-  function manager() external view returns (address);
+interface IHasFeeInfoV24 {
+  // Manager fee
+  function getMaximumManagerFee() external view returns (uint256, uint256);
 
-  function trader() external view returns (address);
+  function maximumManagerFeeNumeratorChange() external view returns (uint256);
 
-  function managerName() external view returns (string memory);
+  function managerFeeNumeratorChangeDelay() external view returns (uint256);
 
-  function isMemberAllowed(address member) external view returns (bool);
+  // Exit fee
+  // function getExitFee() external view returns (uint256, uint256);
+  function getExitCooldown() external view returns (uint256);
 }

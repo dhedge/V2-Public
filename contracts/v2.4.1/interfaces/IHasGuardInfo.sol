@@ -34,12 +34,13 @@
 
 pragma solidity 0.7.6;
 
-interface IGuardV23 {
-  event Exchange(address fundAddress, address sourceAsset, uint256 sourceAmount, address dstAsset, uint256 time);
+interface IHasGuardInfoV24 {
+  // Get guard
+  function getGuard(address extContract) external view returns (address);
 
-  function txGuard(
-    address poolManagerLogic,
-    address to,
-    bytes calldata data
-  ) external returns (uint16 txType);
+  // Get asset guard
+  function getAssetGuard(address extContract) external view returns (address);
+
+  // Get mapped addresses from Governance
+  function getAddress(bytes32 name) external view returns (address);
 }
