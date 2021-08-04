@@ -113,7 +113,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
     address pool, // pool
-    address, // asset
+    address asset, // asset
     uint256 portion, // portion
     address to
   )
@@ -131,16 +131,20 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       _calculateBorrowAssets(pool, portion);
 
     if (borrowAssets.length > 0) {
-      // set withdrawAsset as the last index of borrow assets
       address factory = IPoolLogic(pool).factory();
+      // We take a flashloan then swap the tokens to wrapped eth
+      // TODO: better comment explaning this logic
       withdrawAsset = IHasGuardInfo(factory).getAddress("weth");
-
+      // This adds a transaction that will initiate the flashloan flow from aave,
+      // Aave will callback the higher level PoolLogic.executeOperation
       transactions = _prepareFlashLoan(pool, portion, borrowAssets, borrowAmounts, interestRateModes);
+      return (withdrawAsset, 0, transactions);
     } else {
       transactions = _withdrawAndTransfer(pool, to, portion);
+      // There is no asset to withdraw as the above executes the withdraw to the withdrawer(to)
+      return (address(0), 0, transactions);
     }
 
-    return (withdrawAsset, withdrawBalance, transactions);
   }
 
   /// @notice Prepare flashlan transaction data
