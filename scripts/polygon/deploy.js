@@ -144,7 +144,7 @@ async function main() {
   await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
 
   let tag = await getTag();
-  let versions = require("../../publish/polygon/versions.json");
+  let versions = require("../../publish/matic/versions.json");
   versions[tag] = {
     network: network,
     date: new Date().toUTCString(),
@@ -166,7 +166,7 @@ async function main() {
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("./publish/polygon/versions.json", data);
+  fs.writeFileSync("./publish/matic/versions.json", data);
 }
 
 main()

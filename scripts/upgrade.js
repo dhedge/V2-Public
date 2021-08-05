@@ -2,6 +2,12 @@ const fs = require("fs");
 const { getTag } = require("./Helpers");
 const Safe = require("@gnosis.pm/safe-core-sdk");
 const { EthersAdapter } = require('@gnosis.pm/safe-core-sdk');
+const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
+const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
+const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+// https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
+const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
+const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
 
 task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("poolFactory", "upgrade poolFactory", false, types.boolean)
@@ -17,15 +23,14 @@ task("upgrade", "Upgrade proxy contracts")
 
     const contractNetworks = {
       [chainId]: {
-        // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
-        multiSendAddress: '0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761'
+        multiSendAddress: multiSendAddress,
       }
     }
 
     // I'm having Safe.create is not a function issue
     const safeSdk = await Safe.default.create({
       ethAdapter,
-      safeAddress: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
+      safeAddress: safeAddress,
       contractNetworks
     });
 
@@ -37,15 +42,12 @@ task("upgrade", "Upgrade proxy contracts")
     const hre = require("hardhat");
     let networks = hre.config.networks;
     networkNames = Object.keys(networks);
-    networkNames.map((name) => {
-      if(networks[name].chainId === network.chainId){
-        network.name = name;
-      }
-    })
     let versions = require(`../publish/${network.name}/versions.json`);
     let newTag = await getTag();
     let oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
-    // if (newTag == oldTag) throw("Error: No new version to upgrade");
+    console.log(`oldTag: ${oldTag}`);
+    console.log(`newTag: ${newTag}`);
+    if (newTag == oldTag) throw("Error: No new version to upgrade");
 
     let contracts = versions[oldTag].contracts;
     versions[newTag] = new Object;
@@ -56,40 +58,37 @@ task("upgrade", "Upgrade proxy contracts")
     let setLogic = false;
 
     if(taskArgs.poolFactory){
-      let oldPoolFactory = contracts.PoolFactoryProxy;
-      const newPoolFactoryProxy = await upgrades.prepareUpgrade(oldPoolFactory, PoolFactory);
-      console.log("New PoolFactoryProxy deployed to: ", newPoolFactoryProxy);
+      let poolFactoryProxy = contracts.PoolFactoryProxy;
+      const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactory);
+      console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
-      const TransparentUpgradeableProxy = await hre.artifacts.readArtifact("TransparentUpgradeableProxy");
-      const transparentUpgradeableProxy = new ethers.utils.Interface(TransparentUpgradeableProxy.abi);
-      const transparentUpgradeableProxyABI = transparentUpgradeableProxy.encodeFunctionData("upgradeTo", [newPoolFactoryProxy]);
-      console.log(transparentUpgradeableProxyABI);
+      const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
+      const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
+      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
 
-      const nonce = await safeSdk.getNonce();
-      console.log(nonce);
-
-      const transactions = [{
-        to: oldPoolFactory,
-        // to: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
+      const transaction = {
+        to: proxyAdminAddress,
         value: "0",
-        data: transparentUpgradeableProxyABI,
-        // data: "0x",
-        nonce,
-      }]
+        data: upgradeABI,
+      }
 
-      const safeTransaction = await safeSdk.createTransaction(...transactions)
-      await safeSdk.signTransaction(safeTransaction)
-      console.log(safeTransaction);
-      return;
+      const safeTransaction = await safeSdk.createTransaction(...[transaction])
+      // off-chain sign
+      const txHash = await safeSdk.getTransactionHash(safeTransaction);
+      const signature = await safeSdk.signTransactionHash(txHash);
+      // on-chain sign
+      // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
+      // console.log("approveTxResponse", approveTxResponse);
+      console.log("safeTransaction: ", safeTransaction);
 
-      versions[newTag].contracts.PoolFactoryProxy = poolFactory.address;
+      const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature)
+      console.log("ProposeTx: ", proposeTx);
     }
     if(taskArgs.assetHandler){
       let oldAssetHandler = contracts.AssetHandlerProxy;
       const AssetHandler = await ethers.getContractFactory("AssetHandler");
       const assetHandler = await upgrades.upgradeProxy(oldAssetHandler, AssetHandler);
       console.log("assetHandler upgraded to: ", assetHandler.address);
-      versions[newTag].contracts.AssetHandlerProxy = assetHandler.address;
     }
     if(taskArgs.poolLogic){
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
