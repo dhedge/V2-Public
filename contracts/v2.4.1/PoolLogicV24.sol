@@ -248,18 +248,15 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     // TODO: Combining into one line to fix stack too deep,
     //       need to refactor some variables into struct in order to have more variables
-    IHasSupportedAssetV24.Asset[] memory _supportedAssets = IHasSupportedAssetV24(poolManagerLogic)
-      .getSupportedAssets();
+    IHasSupportedAssetV24.Asset[] memory _supportedAssets =
+      IHasSupportedAssetV24(poolManagerLogic).getSupportedAssets();
     uint256 assetCount = _supportedAssets.length;
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
     uint16 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
-      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) = _withdrawProcessing(
-        _supportedAssets[i].asset,
-        msg.sender,
-        portion
-      );
+      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) =
+        _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
         // Ignoring return value for transfer as want to transfer no matter what happened
@@ -319,11 +316,8 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address guard = IHasGuardInfoV24(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
 
-    (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      IAssetGuardV24.MultiTransaction[] memory transactions
-    ) = IAssetGuardV24(guard).withdrawProcessing(address(this), asset, portion, to);
+    (address withdrawAsset, uint256 withdrawBalance, IAssetGuardV24.MultiTransaction[] memory transactions) =
+      IAssetGuardV24(guard).withdrawProcessing(address(this), asset, portion, to);
 
     uint256 txCount = transactions.length;
     if (txCount > 0) {
@@ -450,12 +444,10 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
-    uint256 available = currentTokenPrice
-      .sub(_lastFeeMintPrice)
-      .mul(_tokenSupply)
-      .mul(_feeNumerator)
-      .div(_feeDenominator)
-      .div(currentTokenPrice);
+    uint256 available =
+      currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
+        currentTokenPrice
+      );
 
     return available;
   }
@@ -472,13 +464,8 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogicV24(poolManagerLogic).getManagerFee();
 
-    uint256 available = _availableManagerFee(
-      fundValue,
-      tokenSupply,
-      tokenPriceAtLastFeeMint,
-      managerFeeNumerator,
-      managerFeeDenominator
-    );
+    uint256 available =
+      _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
 
     // Ignore dust when minting performance fees
     if (available < 10000) return fundValue;
@@ -567,8 +554,15 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
 
-    IAssetGuardV24.MultiTransaction[] memory transactions = IAaveLendingPoolAssetGuardV24(aaveLendingPoolAssetGuard)
-      .flashloanProcessing(address(this), portion, assets, amounts, premiums, interestRateModes);
+    IAssetGuardV24.MultiTransaction[] memory transactions =
+      IAaveLendingPoolAssetGuardV24(aaveLendingPoolAssetGuard).flashloanProcessing(
+        address(this),
+        portion,
+        assets,
+        amounts,
+        premiums,
+        interestRateModes
+      );
 
     for (uint256 i = 0; i < transactions.length; i++) {
       (success, ) = transactions[i].to.call(transactions[i].txData);
