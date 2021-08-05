@@ -277,7 +277,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
-        assert(asset != address(0), "requires asset to withdraw");
+        require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
         IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
       }
@@ -285,7 +285,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       if (externalWithdrawProcessed || portionOfAssetBalance > 0) {
         withdrawnAssets[index] = WithdrawnAsset({
           asset: asset,
-          amount: portionOfAssetBalance, // 0
+          amount: portionOfAssetBalance,
           externalWithdrawProcessed: externalWithdrawProcessed
         });
         index++;
