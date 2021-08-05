@@ -153,13 +153,13 @@ describe("PoolFactory", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
-    PoolLogicV23 = await ethers.getContractFactory("PoolLogic"); // TODO: Update pre-upgrade version
-    poolLogicV23 = await PoolLogicV23.deploy();
+    PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
+    poolLogicV24 = await PoolLogicV24.deploy();
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
-    PoolManagerLogicV23 = await ethers.getContractFactory("PoolManagerLogic"); // TODO: Update pre-upgrade version
-    poolManagerLogicV23 = await PoolManagerLogicV23.deploy();
+    PoolManagerLogicV24 = await ethers.getContractFactory("PoolManagerLogicV24");
+    poolManagerLogicV24 = await PoolManagerLogicV24.deploy();
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
@@ -178,24 +178,24 @@ describe("PoolFactory", function () {
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
 
-    const PoolFactoryLogicV23 = await ethers.getContractFactory("PoolFactory"); // TODO: Update pre-upgrade version
-    poolFactoryV23 = await upgrades.deployProxy(PoolFactoryLogicV23, [
-      poolLogicV23.address,
-      poolManagerLogicV23.address,
+    const PoolFactoryLogicV24 = await ethers.getContractFactory("PoolFactoryV24");
+    poolFactoryV24 = await upgrades.deployProxy(PoolFactoryLogicV24, [
+      poolLogicV24.address,
+      poolManagerLogicV24.address,
       assetHandler.address,
       dao.address,
       governance.address,
     ]);
-    await poolFactoryV23.deployed();
-    console.log("poolFactoryV23 deployed to:", poolFactoryV23.address);
+    await poolFactoryV24.deployed();
+    console.log("poolFactoryV24 deployed to:", poolFactoryV24.address);
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.upgradeProxy(poolFactoryV23.address, PoolFactoryLogic);
+    poolFactory = await upgrades.upgradeProxy(poolFactoryV24.address, PoolFactoryLogic);
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
     // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLPLinkWeth, poolFactory.address);
+    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLPLinkWeth, poolFactory.address);
     const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     await assetHandler.addAssets([assetSushiLPLinkWeth]);
 

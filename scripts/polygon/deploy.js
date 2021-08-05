@@ -105,7 +105,7 @@ const deploy = async (env) => {
   const fileName = env === "staging" ? stagingFileName : prodFileName;
   const assets = await csv().fromFile(fileName);
 
-  const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+  const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
   let assetHandlerInitAssets = [];
   for (let i = 0; i < assets.length; i++) {
     const asset = assets[i];
@@ -114,9 +114,9 @@ const deploy = async (env) => {
       case "2":
         // Deploy Sushi LP Aggregator
         console.log("Deploying ", asset["Asset Name"]);
-        const sushiLPAggregator = await SushiLPAggregator.deploy(asset.Address, poolFactory.address);
+        const sushiLPAggregator = await UniV2LPAggregator.deploy(asset.Address, poolFactory.address);
         await sushiLPAggregator.deployed();
-        console.log(`${asset["Asset Name"]} SushiLPAggregator deployed at `, sushiLPAggregator.address);
+        console.log(`${asset["Asset Name"]} UniV2LPAggregator deployed at `, sushiLPAggregator.address);
         assetHandlerInitAssets.push({
           name: asset["Asset Name"],
           asset: asset.Address,
@@ -161,7 +161,7 @@ const deploy = async (env) => {
   await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
 
   let tag = await getTag();
-  let versions = new Object;
+  let versions = new Object();
   versions[tag] = {
     network: network,
     date: new Date().toUTCString(),
@@ -179,7 +179,7 @@ const deploy = async (env) => {
     },
   };
 
-  if(env === "staging"){
+  if (env === "staging") {
     // Aave
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
@@ -211,7 +211,7 @@ const deploy = async (env) => {
       [toBytes32("weth"), weth],
     ]);
 
-    aaveContracts = { 
+    aaveContracts = {
       AaveLendingPoolAssetGuard: aaveLendingPoolAssetGuard.address,
       AaveLendingPoolGuard: aaveLendingPoolGuard.address,
       LendingEnabledAssetGuard: lendingEnabledAssetGuard.address,
@@ -219,7 +219,7 @@ const deploy = async (env) => {
     };
 
     versions[tag].contracts = { ...versions[tag].contracts, ...aaveContracts };
-  }else{
+  } else {
     // DAO Settings
     await poolFactory.setDAOAddress(uberPool);
     await poolFactory.transferOwnership(protocolDao);

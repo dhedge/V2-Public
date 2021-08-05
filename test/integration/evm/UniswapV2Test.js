@@ -63,8 +63,8 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     ]);
     await poolFactory.deployed();
 
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, poolFactory.address);
+    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+    sushiLpAggregator = await UniV2LPAggregator.deploy(sushi_usdc_usdt, poolFactory.address);
     sushiLpAggregator.deployed();
     const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 2, aggregator: sushiLpAggregator.address };
     await assetHandler.addAssets([assetSushiUsdcUsdt]);
