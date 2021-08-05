@@ -22,11 +22,10 @@ const coingeckoNetwork = "polygon-pos";
 const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 const uberPool = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
 const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
-const poolFactoryAddress = "0x13E1c2d49dB12F97becAbEe57d1308fBdD365D42";
-const assetHandlerAddress = "0x53d5b36f154a22Ef89ff2DfdAFA67AfE090B9d6E";
 
 let version, signer;
 let proxyAdmin, poolFactory, governance, assetHandler; // contracts
+let poolFactoryAddress, assetHandlerAddress; // proxy implementations
 let owner = {};
 
 const main = async () => {
@@ -47,17 +46,24 @@ const main = async () => {
   const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
 
   let contracts = versions[version].contracts;
-  contracts["ProxyAdmin"] = proxyAdminAddress;
-  contracts["PoolFactory"] = poolFactoryAddress;
-  contracts["AssetHandler"] = assetHandlerAddress;
 
   // create contract instances
   proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdmin.abi, signer);
+  contracts["ProxyAdmin"] = proxyAdminAddress;
+
   poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy);
+  poolFactoryAddress = await proxyAdmin.getProxyImplementation(poolFactoryProxy.address);
   poolFactory = PoolFactory.attach(poolFactoryAddress);
-  governance = Governance.attach(contracts.Governance);
+  contracts["PoolFactory"] = poolFactoryAddress;
+  console.log("poolFactory implementation:", poolFactoryAddress);
+
   assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy);
+  assetHandlerAddress = await proxyAdmin.getProxyImplementation(assetHandlerProxy.address);
   assetHandler = AssetHandler.attach(assetHandlerAddress);
+  contracts["AssetHandler"] = assetHandlerAddress;
+  console.log("assetHandler implementation:", assetHandlerAddress);
+
+  governance = Governance.attach(contracts.Governance);
   sushiLPAssetGuard = SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
   poolLogic = PoolLogic.attach(contracts.PoolLogic);
   poolManagerLogic = PoolManagerLogic.attach(contracts.PoolManagerLogic);
