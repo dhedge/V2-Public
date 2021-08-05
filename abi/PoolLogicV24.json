@@ -286,7 +286,7 @@
           }
         ],
         "indexed": false,
-        "internalType": "struct PoolLogicV23.WithdrawnAsset[]",
+        "internalType": "struct PoolLogicV24.WithdrawnAsset[]",
         "name": "withdrawnAssets",
         "type": "tuple[]"
       },
@@ -481,6 +481,45 @@
       }
     ],
     "name": "execTransaction",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "assets",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "premiums",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "address",
+        "name": "originator",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "params",
+        "type": "bytes"
+      }
+    ],
+    "name": "executeOperation",
     "outputs": [
       {
         "internalType": "bool",

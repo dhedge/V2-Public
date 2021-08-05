@@ -33,13 +33,19 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
-interface IHasAssetInfoV23 {
-  function isValidAsset(address asset) external view returns (bool);
+import "./IAssetGuard.sol";
 
-  function getAssetPrice(address asset) external view returns (uint256);
+interface IAaveLendingPoolAssetGuardV24 {
+  function flashloanProcessing(
+    address pool,
+    uint256 portion,
+    address[] memory repayAssets,
+    uint256[] memory repayAmounts,
+    uint256[] memory premiums,
+    uint256[] memory interestRateModes
+  ) external view returns (IAssetGuardV24.MultiTransaction[] memory transactions);
 
-  function getAssetType(address asset) external view returns (uint16);
-
-  function getMaximumSupportedAssetCount() external view returns (uint256);
+  function aaveLendingPool() external view returns (address);
 }

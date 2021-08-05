@@ -11,11 +11,11 @@ import "../interfaces/IHasAssetInfo.sol";
 import "../utils/DhedgeMath.sol";
 
 /**
- * @title Sushi LP aggregator. For dHEDGE LP Price Feeds.
+ * @title Uni-v2 LP aggregator. For dHEDGE LP Price Feeds.
  * @notice You can use this contract for lp token pricing oracle.
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
-contract SushiLPAggregator is IAggregatorV3Interface {
+contract UniV2LPAggregator is IAggregatorV3Interface {
   using SafeMathUpgradeable for uint256;
 
   address public pair;
@@ -36,7 +36,7 @@ contract SushiLPAggregator is IAggregatorV3Interface {
   /**
    * @notice Get the latest round data. Should be the same format as chainlink aggregator.
    * @return roundId The round ID.
-   * @return answer The price - the latest round data of a given sushi lp token (price decimal: 8)
+   * @return answer The price - the latest round data of a given uni-v2 lp token (price decimal: 8)
    * @return startedAt Timestamp of when the round started.
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.

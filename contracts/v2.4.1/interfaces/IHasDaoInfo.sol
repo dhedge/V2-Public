@@ -34,20 +34,8 @@
 
 pragma solidity 0.7.6;
 
-interface IPoolManagerLogicV23 {
-  function poolLogic() external view returns (address);
+interface IHasDaoInfoV24 {
+  function getDaoFee() external view returns (uint256, uint256);
 
-  function isDepositAsset(address asset) external view returns (bool);
-
-  function validateAsset(address asset) external view returns (bool);
-
-  function assetValue(address asset) external view returns (uint256);
-
-  function assetValue(address asset, uint256 amount) external view returns (uint256);
-
-  function factory() external view returns (address);
-
-  function setPoolLogic(address fundAddress) external returns (bool);
-
-  function totalFundValue() external view returns (uint256);
+  function daoAddress() external view returns (address);
 }

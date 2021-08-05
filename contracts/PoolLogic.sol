@@ -146,11 +146,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     _;
   }
 
-  modifier onlyManagerOrTrader() {
-    require(msg.sender == manager() || msg.sender == trader(), "only manager or trader");
-    _;
-  }
-
   modifier whenNotPaused() {
     require(!IHasPausable(factory).isPaused(), "contracts paused");
     _;
@@ -373,13 +368,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param to The destination address for pool to talk to
   /// @param data The data that going to send in the transaction
   /// @return success A boolean for success or fail transaction
-  function execTransaction(address to, bytes memory data)
-    external
-    onlyManagerOrTrader
-    nonReentrant
-    whenNotPaused
-    returns (bool success)
-  {
+  function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
 
     address guard = IHasGuardInfo(factory).getGuard(to);
@@ -391,8 +380,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
-    uint16 txType = IGuard(guard).txGuard(poolManagerLogic, to, data);
+    (uint16 txType, bool isPublic) = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
+    require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
 
     success = to.tryAssemblyCall(data);
     require(success, "failed to execute the call");
