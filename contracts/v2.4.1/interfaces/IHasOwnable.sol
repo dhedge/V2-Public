@@ -34,15 +34,6 @@
 
 pragma solidity 0.7.6;
 
-interface IAssetGuardV23 {
-  function getWithdrawStakedTx(
-    address pool,
-    address asset,
-    uint256 withdrawPortion,
-    address to
-  ) external returns (address, bytes memory);
-
-  function getBalance(address pool, address asset) external view returns (uint256 balance);
-
-  function getDecimals(address asset) external view returns (uint256 decimals);
+interface IHasOwnableV24 {
+  function owner() external view returns (address);
 }

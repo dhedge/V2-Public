@@ -83,6 +83,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
     address, // to
@@ -91,9 +92,13 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool // isPublic
     )
   {
+    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
     bytes4 method = getMethod(data);
 
     if (method == bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)"))) {
@@ -103,13 +108,13 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address toAddress = convert32toAddress(getInput(data, 3));
       uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
 
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
       require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
 
       // validate Uniswap routing addresses
+      address routingAsset;
       for (uint8 i = 1; i < routeLength - 1; i++) {
-        require(poolManagerLogic.validateAsset(convert32toAddress(getArrayIndex(data, 2, i))), "invalid routing asset");
+        routingAsset = convert32toAddress(getArrayIndex(data, 2, i));
+        require(poolManagerLogic.validateAsset(routingAsset), "invalid routing asset");
       }
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
@@ -122,8 +127,6 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     } else if (
       method == bytes4(keccak256("addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)"))
     ) {
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-
       address tokenA = convert32toAddress(getInput(data, 0));
       address tokenB = convert32toAddress(getInput(data, 1));
 
@@ -132,14 +135,13 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       uint256 amountAMin = uint256(getInput(data, 4));
       uint256 amountBMin = uint256(getInput(data, 5));
 
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenA), "unsupported asset: tokenA");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenB), "unsupported asset: tokenB");
+      require(poolManagerLogicAssets.isSupportedAsset(tokenA), "unsupported asset: tokenA");
+      require(poolManagerLogicAssets.isSupportedAsset(tokenB), "unsupported asset: tokenB");
 
       address pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(pair), "unsupported lp asset");
+      require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
 
-      address to = convert32toAddress(getInput(data, 6));
-      require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
+      require(poolManagerLogic.poolLogic() == convert32toAddress(getInput(data, 6)), "recipient is not pool");
 
       emit AddLiquidity(
         poolManagerLogic.poolLogic(),
@@ -157,8 +159,6 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     } else if (
       method == bytes4(keccak256("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)"))
     ) {
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-
       address tokenA = convert32toAddress(getInput(data, 0));
       address tokenB = convert32toAddress(getInput(data, 1));
 
@@ -167,11 +167,11 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       uint256 amountAMin = uint256(getInput(data, 3));
       uint256 amountBMin = uint256(getInput(data, 4));
 
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenA), "unsupported asset: tokenA");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(tokenB), "unsupported asset: tokenB");
+      require(poolManagerLogicAssets.isSupportedAsset(tokenA), "unsupported asset: tokenA");
+      require(poolManagerLogicAssets.isSupportedAsset(tokenB), "unsupported asset: tokenB");
 
       address pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(pair), "unsupported lp asset");
+      require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
 
       address to = convert32toAddress(getInput(data, 5));
       require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
@@ -189,5 +189,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
 
       txType = 4; // `Remove Liquidity` type
     }
+
+    return (txType, false);
   }
 }
