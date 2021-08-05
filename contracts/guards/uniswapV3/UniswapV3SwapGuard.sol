@@ -115,7 +115,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
     } else if (
@@ -132,7 +132,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
     }

@@ -311,17 +311,20 @@ describe("Synthetix Test", function () {
 
   it("should be able to swap tokens on synthetix.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.on("Exchange", (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
+      synthetixGuard.on(
+        "ExchangeFrom",
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress: managerLogicAddress,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));

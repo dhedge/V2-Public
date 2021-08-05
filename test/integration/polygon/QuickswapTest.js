@@ -200,6 +200,7 @@ describe("Quickswap V2 Test", function () {
       [
         [usdc, true],
         [weth, true],
+        [usdt, true],
       ],
     );
 
@@ -234,12 +235,13 @@ describe("Quickswap V2 Test", function () {
     //default assets are supported
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(2);
+    expect(numberOfSupportedAssets).to.eq(3);
     expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
     expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.true;
 
     //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.false;
+    expect(await poolManagerLogicProxy.isSupportedAsset(wmatic)).to.be.false;
   });
 
   it("should be able to deposit", async function () {
@@ -306,7 +308,7 @@ describe("Quickswap V2 Test", function () {
     totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
-    await expect(poolLogicProxy.deposit(usdt, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
+    await expect(poolLogicProxy.deposit(wmatic, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
 
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
     await poolLogicProxy.deposit(usdc, (200e6).toString());
@@ -325,7 +327,7 @@ describe("Quickswap V2 Test", function () {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [usdc, (200e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(wmatic, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
 
@@ -337,10 +339,130 @@ describe("Quickswap V2 Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
   });
 
-  it("should be able to swap tokens on quickswap.", async () => {
+  it("should be able to swap tokens on quickswap(swapTokensForExactTokens).", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeTo",
+        (managerLogicAddress, sourceAsset, destinationAsset, dstAmount, time, event) => {
+          event.removeListener();
+
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            destinationAsset: destinationAsset,
+            dstAmount: dstAmount,
+            time: time,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
+    });
+
+    const dstAmount = (100e6).toString();
+    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+    const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
+    let swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      0,
+      [usdc, usdt],
+      poolManagerLogicProxy.address,
+      0,
+    ]);
+
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
+    ).to.be.revertedWith("non-zero address is required");
+
+    swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      0,
+      [usdc, usdt],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(usdc, swapABI)).to.be.revertedWith(
+      "invalid transaction",
+    );
+
+    swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      0,
+      [wmatic, weth],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI)).to.be.revertedWith(
+      "unsupported source asset",
+    );
+
+    swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      0,
+      [usdc, user.address, weth],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI)).to.be.revertedWith(
+      "invalid routing asset",
+    );
+
+    swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      0,
+      [usdc, weth, wmatic],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI)).to.be.revertedWith(
+      "unsupported destination asset",
+    );
+
+    swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      0,
+      [usdc, usdt],
+      user.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI)).to.be.revertedWith(
+      "recipient is not pool",
+    );
+
+    swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      ethers.constants.MaxUint256,
+      [usdc, usdt],
+      poolLogicProxy.address,
+      0,
+    ]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI)).to.be.revertedWith(
+      "UniswapV2Router: EXPIRED",
+    );
+
+    swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
+      dstAmount,
+      ethers.constants.MaxUint256,
+      [usdc, usdt],
+      poolLogicProxy.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    ]);
+    await poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI);
+
+    checkAlmostSame(await USDC.balanceOf(poolLogicProxy.address), dstAmount);
+
+    let event = await exchangeEvent;
+    expect(event.sourceAsset).to.equal(usdc);
+    expect(event.destinationAsset).to.equal(usdt);
+    expect(event.dstAmount).to.equal(dstAmount);
+  });
+
+  it("should be able to swap tokens on quickswap(swapExactTokensForTokens).", async () => {
+    let exchangeEvent = new Promise((resolve, reject) => {
+      uniswapV2RouterGuard.on(
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -359,7 +481,7 @@ describe("Quickswap V2 Test", function () {
       }, 60000);
     });
 
-    const sourceAmount = (100e6).toString();
+    const sourceAmount = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address)).div(2);
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
     let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
@@ -377,7 +499,7 @@ describe("Quickswap V2 Test", function () {
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdt, weth],
+      [wmatic, weth],
       poolLogicProxy.address,
       0,
     ]);
@@ -388,7 +510,7 @@ describe("Quickswap V2 Test", function () {
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdt, weth],
+      [wmatic, weth],
       poolLogicProxy.address,
       0,
     ]);
@@ -410,7 +532,7 @@ describe("Quickswap V2 Test", function () {
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdc, weth, usdt],
+      [usdc, weth, wmatic],
       poolLogicProxy.address,
       0,
     ]);
@@ -449,11 +571,11 @@ describe("Quickswap V2 Test", function () {
     ]);
     await poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI);
 
-    expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal(100e6);
+    checkAlmostSame(await USDC.balanceOf(poolLogicProxy.address), sourceAmount);
 
     let event = await exchangeEvent;
     expect(event.sourceAsset).to.equal(usdc);
-    expect(event.sourceAmount).to.equal((100e6).toString());
+    expect(event.sourceAmount).to.equal(sourceAmount);
     expect(event.destinationAsset).to.equal(weth);
   });
 
@@ -563,7 +685,7 @@ describe("Quickswap V2 Test", function () {
     const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
 
     let removeLiquidityAbi = iUniswapV2Router.encodeFunctionData("removeLiquidity", [
-      usdt,
+      wmatic,
       tokenB,
       liquidity,
       0,
@@ -577,7 +699,7 @@ describe("Quickswap V2 Test", function () {
 
     removeLiquidityAbi = iUniswapV2Router.encodeFunctionData("removeLiquidity", [
       tokenA,
-      usdt,
+      wmatic,
       liquidity,
       0,
       0,
