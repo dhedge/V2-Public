@@ -348,10 +348,6 @@ describe("Synthetix Test", function () {
       poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
     ).to.be.revertedWith("non-zero address is required");
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(susd_price_feed, swapABI)).to.be.revertedWith(
-      "invalid destination",
-    );
-
     await expect(poolLogicProxy.connect(manager).execTransaction(synthetix.address, "0xaaaaaaaa")).to.be.revertedWith(
       "invalid transaction",
     );

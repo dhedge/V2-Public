@@ -773,12 +773,6 @@ describe("PoolFactory", function () {
     ).to.be.revertedWith("only manager or trader or public function");
   });
 
-  it("Should fail with invalid destination", async () => {
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00000000"),
-    ).to.be.revertedWith("invalid destination");
-  });
-
   it("Should exec transaction", async () => {
     let poolLogicManagerProxy = poolLogicProxy.connect(manager);
 

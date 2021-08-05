@@ -181,25 +181,27 @@ contract PoolFactoryV24 is
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
     require(_managerFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
 
-    bytes memory poolLogicData = abi.encodeWithSignature(
-      "initialize(address,bool,string,string)",
-      address(this),
-      _privatePool,
-      _fundName,
-      _fundSymbol
-    );
+    bytes memory poolLogicData =
+      abi.encodeWithSignature(
+        "initialize(address,bool,string,string)",
+        address(this),
+        _privatePool,
+        _fundName,
+        _fundSymbol
+      );
 
     fund = deploy(poolLogicData, 2);
 
-    bytes memory managerLogicData = abi.encodeWithSignature(
-      "initialize(address,address,string,address,uint256,(address,bool)[])",
-      address(this),
-      _manager,
-      _managerName,
-      fund,
-      _managerFeeNumerator,
-      _supportedAssets
-    );
+    bytes memory managerLogicData =
+      abi.encodeWithSignature(
+        "initialize(address,address,string,address,uint256,(address,bool)[])",
+        address(this),
+        _manager,
+        _managerName,
+        fund,
+        _managerFeeNumerator,
+        _supportedAssets
+      );
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
@@ -446,12 +448,12 @@ contract PoolFactoryV24 is
     assembly {
       let succeeded := delegatecall(gas(), pool, add(_data, 0x20), mload(_data), 0, 0)
       switch iszero(succeeded)
-      case 1 {
-        // throw if delegatecall failed
-        let size := returndatasize()
-        returndatacopy(0x00, 0x00, size)
-        revert(0x00, size)
-      }
+        case 1 {
+          // throw if delegatecall failed
+          let size := returndatasize()
+          returndatacopy(0x00, 0x00, size)
+          revert(0x00, size)
+        }
     }
     emit LogUpgrade(msg.sender, pool);
 

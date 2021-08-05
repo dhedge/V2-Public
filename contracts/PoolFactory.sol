@@ -505,6 +505,9 @@ contract PoolFactory is
     guard = IGovernance(governanceAddress).contractGuards(extContract);
     if (guard == address(0)) {
       guard = getAssetGuard(extContract);
+      if (guard == address(0)) {
+        return IGovernance(governanceAddress).openGuard();
+      }
     }
   }
 
