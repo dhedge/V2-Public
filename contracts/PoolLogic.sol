@@ -60,6 +60,7 @@ import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
+import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IManaged.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
@@ -513,7 +514,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // Ignore dust when minting performance fees
     if (available < 10000) return fundValue;
 
-    address daoAddress = IHasOwnable(factory).owner();
+    address daoAddress = IHasDaoInfo(factory).daoAddress();
     uint256 daoFeeNumerator;
     uint256 daoFeeDenominator;
 
@@ -553,7 +554,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(_poolManagerLogic != address(0), "Invalid poolManagerLogic address");
     require(
       msg.sender == address(factory) || msg.sender == IHasOwnable(factory).owner(),
-      "only DAO or factory allowed"
+      "only owner or factory allowed"
     );
 
     poolManagerLogic = _poolManagerLogic;
