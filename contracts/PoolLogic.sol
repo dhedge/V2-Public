@@ -320,7 +320,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param portion Portion of investor withdrawal of the total dHedge pool
   /// @return withdrawAsset Asset to be withdrawed
   /// @return withdrawBalance Asset balance amount to be withdrawed
-  /// @return success A boolean for success or fail transaction
+  /// @return externalWithdrawProcessed A boolean for success or fail transaction
   function _withdrawProcessing(
     address asset,
     address to,

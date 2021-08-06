@@ -281,7 +281,7 @@
           },
           {
             "internalType": "bool",
-            "name": "withdrawProcessed",
+            "name": "externalWithdrawProcessed",
             "type": "bool"
           }
         ],

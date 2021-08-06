@@ -113,7 +113,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
     address pool, // pool
-    address asset, // asset
+    address, // asset
     uint256 portion, // portion
     address to
   )
