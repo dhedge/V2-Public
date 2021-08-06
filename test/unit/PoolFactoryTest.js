@@ -891,28 +891,6 @@ describe("PoolFactory", function () {
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [slink, seth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [susd, user1.address, seth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
       [susd, seth, slink],
       poolLogicProxy.address,
       0,
@@ -993,14 +971,6 @@ describe("PoolFactory", function () {
       "non-zero address is required",
     );
 
-    // fail to swap direct asset to asset because unsupported source asset
-    badExactInputSingleParams.tokenIn = slink;
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [badExactInputSingleParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-    badExactInputSingleParams.tokenIn = susd;
-
     // fail to swap direct asset to asset because unsupported destination asset
     badExactInputSingleParams.tokenOut = slink;
     swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [badExactInputSingleParams]);
@@ -1076,19 +1046,6 @@ describe("PoolFactory", function () {
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
       "non-zero address is required",
-    );
-
-    // fail to swap direct asset to asset because unsupported source asset
-    badExactInputParams.path =
-      "0x" +
-      slink.substring(2) + // unsupported asset
-      "000bb8" +
-      susd.substring(2) +
-      "000bb8" +
-      seth.substring(2);
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
     );
 
     // // TODO: add invalid path asset check if enabled in the Uniswap V3 swap guard

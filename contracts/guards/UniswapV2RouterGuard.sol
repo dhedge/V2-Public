@@ -106,16 +106,6 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
       uint256 srcAmount = uint256(getInput(data, 0));
       address toAddress = convert32toAddress(getInput(data, 3));
-      uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
-
-      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
-
-      // validate Uniswap routing addresses
-      address routingAsset;
-      for (uint8 i = 1; i < routeLength - 1; i++) {
-        routingAsset = convert32toAddress(getArrayIndex(data, 2, i));
-        require(poolManagerLogic.validateAsset(routingAsset), "invalid routing asset");
-      }
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 

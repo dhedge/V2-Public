@@ -353,17 +353,6 @@ describe("Synthetix Test", function () {
     );
 
     swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
-      slinkKey,
-      sourceAmount,
-      destinationKey,
-      daoAddress,
-      trackingCode,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
       sourceKey,
       sourceAmount,
       slinkKey,

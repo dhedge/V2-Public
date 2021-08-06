@@ -400,28 +400,6 @@ describe("Sushiswap V2 Test", function () {
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdt, weth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [usdc, user.address, weth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
-    );
-
-    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
       [usdc, weth, usdt],
       poolLogicProxy.address,
       0,

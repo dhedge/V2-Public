@@ -394,28 +394,6 @@ describe("Quickswap V2 Test", function () {
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdt, weth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [usdc, user.address, weth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
-    );
-
-    swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
       [usdc, weth, usdt],
       poolLogicProxy.address,
       0,
@@ -652,12 +630,13 @@ describe("Quickswap V2 Test", function () {
 
   it("Should be able to approve non-supported asset", async () => {
     // transfer wmatic for testing
-    await WMatic.deposit({ value: units(500) });
-    await WMatic.transfer(poolLogicProxy.address, units(500));
+    const depositAmount = units(500);
+    await WMatic.deposit({ value: depositAmount });
+    await WMatic.transfer(poolLogicProxy.address, depositAmount);
 
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [dai, (200e6).toString()]);
+    let approveABI = iERC20.encodeFunctionData("approve", [dai, depositAmount]);
 
     await expect(poolLogicProxy.connect(manager).execTransaction(dai, approveABI)).to.be.revertedWith("invalid asset");
 
@@ -665,28 +644,27 @@ describe("Quickswap V2 Test", function () {
       "unsupported spender approval",
     );
 
-    approveABI = iERC20.encodeFunctionData("approve", [quickswapRouter, (200e6).toString()]);
-    await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+    approveABI = iERC20.encodeFunctionData("approve", [quickswapRouter, depositAmount]);
+    await poolLogicProxy.connect(manager).execTransaction(wmatic, approveABI);
   });
 
-  // it("Should be able to swap non-supported asset", async () => {
-  //   // transfer wmatic for testing
-  //   const sourceAmount = units(500);
-  //   const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-  //   const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
-  //   let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
-  //     sourceAmount,
-  //     0,
-  //     [wmatic, weth],
-  //     poolLogicProxy.address,
-  //     Math.floor(Date.now() / 1000 + 100000000),
-  //   ]);
+  it("Should be able to swap non-supported asset", async () => {
+    const sourceAmount = units(500);
+    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+    const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
+    let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [wmatic, weth],
+      poolLogicProxy.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    ]);
 
-  //   const wethBalanceBefore = await WETH.balnceOf(poolLogicProxy.address);
+    const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
 
-  //   await poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI);
+    await poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI);
 
-  //   const wethBalanceAfter = await WETH.balnceOf(poolLogicProxy.address);
-  //   expect(wethBalanceAfter).gt(wethBalanceBefore);
-  // });
+    const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
+    expect(wethBalanceAfter).gt(wethBalanceBefore);
+  });
 });
