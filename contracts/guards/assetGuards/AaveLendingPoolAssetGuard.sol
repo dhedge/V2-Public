@@ -132,8 +132,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
     if (borrowAssets.length > 0) {
       address factory = IPoolLogic(pool).factory();
-      // We take a flashloan then swap the tokens to wrapped eth
-      // TODO: better comment explaning this logic
+      // Changing the withdraw asset to WETH here as this is the asset used in `_repayFlashloanTransactions`
+      // for the remaining after flashloan replay.
       withdrawAsset = IHasGuardInfo(factory).getAddress("weth");
       // This adds a transaction that will initiate the flashloan flow from aave,
       // Aave will callback the higher level PoolLogic.executeOperation
