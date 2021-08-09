@@ -328,7 +328,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   it("should be able to swap tokens on uniswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -732,7 +732,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   it("should be able to swap tokens back on uniswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 

@@ -322,7 +322,7 @@ describe("Uniswap V3 Test", function () {
 
   it("should be able to swap tokens - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -388,7 +388,7 @@ describe("Uniswap V3 Test", function () {
 
   it("should be able to swap tokens - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({

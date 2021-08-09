@@ -777,17 +777,20 @@ describe("PoolFactory", function () {
     let poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
     let exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.on("Exchange", (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
+      synthetixGuard.on(
+        "ExchangeFrom",
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress: managerLogicAddress,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -841,7 +844,7 @@ describe("PoolFactory", function () {
   it("should be able to swap tokens on Uniswap v2", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -931,7 +934,7 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -1000,7 +1003,7 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({

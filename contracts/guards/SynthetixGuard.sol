@@ -90,7 +90,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
-      emit Exchange(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
+      emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
     }

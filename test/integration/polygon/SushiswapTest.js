@@ -352,7 +352,7 @@ describe("Sushiswap V2 Test", function () {
   it("should be able to swap tokens on sushiswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
