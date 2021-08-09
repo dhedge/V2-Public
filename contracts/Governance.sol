@@ -43,7 +43,6 @@ import "./interfaces/IGovernance.sol";
 contract Governance is IGovernance, Ownable {
   event ContractGuardSet(address extContract, address guardAddress);
   event AssetGuardSet(uint16 assetType, address guardAddress);
-  event OpenGuardSet(address guardAddress);
   event AddressSet(bytes32 name, address destination);
 
   struct ContractName {
@@ -54,7 +53,6 @@ contract Governance is IGovernance, Ownable {
   // Transaction Guards
   mapping(address => address) public override contractGuards;
   mapping(uint16 => address) public override assetGuards;
-  address public override openGuard;
 
   // Addresses
 
@@ -103,16 +101,6 @@ contract Governance is IGovernance, Ownable {
     assetGuards[assetType] = guardAddress;
 
     emit AssetGuardSet(assetType, guardAddress);
-  }
-
-  /// @notice Set open guard address
-  /// @param guardAddress The asset guard address that allows manager interaction
-  function setOpenGuard(address guardAddress) external {
-    require(guardAddress != address(0), "Invalid guardAddress");
-
-    openGuard = guardAddress;
-
-    emit OpenGuardSet(guardAddress);
   }
 
   // Addresses

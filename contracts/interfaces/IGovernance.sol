@@ -7,7 +7,5 @@ interface IGovernance {
 
   function assetGuards(uint16 assetType) external view returns (address guard);
 
-  function openGuard() external view returns (address guard);
-
   function nameToDestination(bytes32 name) external view returns (address);
 }

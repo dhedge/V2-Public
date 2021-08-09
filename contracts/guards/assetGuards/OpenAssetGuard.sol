@@ -45,7 +45,7 @@ import "../../interfaces/IManaged.sol";
 
 /// @title Generic ERC20 asset guard
 /// @dev This is for only non-supported assets
-contract OpenGuard is IGuard, TxDataUtils, Ownable {
+contract OpenAssetGuard is IGuard, TxDataUtils, Ownable {
   using SafeMathUpgradeable for uint256;
 
   mapping(address => bool) public isValidAsset;

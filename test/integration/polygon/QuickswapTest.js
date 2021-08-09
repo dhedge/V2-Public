@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -78,9 +78,9 @@ describe("Quickswap V2 Test", function () {
     erc20Guard = await ERC20Guard.deploy();
     await erc20Guard.deployed();
 
-    const OpenGuard = await ethers.getContractFactory("OpenGuard");
-    openGuard = await OpenGuard.deploy([wmatic, quick]);
-    await openGuard.deployed();
+    const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+    openAssetGuard = await OpenAssetGuard.deploy([wmatic, quick]);
+    await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(quickswapFactory);
@@ -92,7 +92,7 @@ describe("Quickswap V2 Test", function () {
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(5, quickLPAssetGuard.address);
     await governance.setContractGuard(quickswapRouter, uniswapV2RouterGuard.address);
-    await governance.setOpenGuard(openGuard.address);
+    await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
   });
 
   it("Should be able to get USDC", async function () {
@@ -649,13 +649,33 @@ describe("Quickswap V2 Test", function () {
   });
 
   it("Should be able to swap non-supported asset", async () => {
-    const sourceAmount = units(500);
+    const sourceAmount = units(100);
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
     let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
       [wmatic, weth],
+      poolLogicProxy.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    ]);
+
+    const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
+
+    await poolLogicProxy.connect(manager).execTransaction(quickswapRouter, swapABI);
+
+    const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
+    expect(wethBalanceAfter).gt(wethBalanceBefore);
+  });
+
+  it("Should be able to swap non-supported asset (routing)", async () => {
+    const sourceAmount = units(100);
+    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+    const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
+    let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      0,
+      [wmatic, quick, weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
     ]);

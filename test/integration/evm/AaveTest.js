@@ -380,6 +380,10 @@ describe("Polygon Mainnet Test", function () {
         "non-zero address is required",
       );
 
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, depositABI),
+      ).to.be.revertedWith("invalid destination");
+
       depositABI = iLendingPool.encodeFunctionData("deposit", [ausdt, amount, poolLogicProxy.address, 0]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
         "asset not enabled in pool",
