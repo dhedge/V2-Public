@@ -8,6 +8,31 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
+const hre = require("hardhat");
+
+const proposeTx = async(oldAddress, implementation) => {
+  const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
+  const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
+  const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAddress, implementation]);
+
+  const transaction = {
+    to: proxyAdminAddress,
+    value: "0",
+    data: upgradeABI,
+  };
+
+  const safeTransaction = await safeSdk.createTransaction(...[transaction])
+  // off-chain sign
+  const txHash = await safeSdk.getTransactionHash(safeTransaction);
+  const signature = await safeSdk.signTransactionHash(txHash);
+  // on-chain sign
+  // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
+  // console.log("approveTxResponse", approveTxResponse);
+  console.log("safeTransaction: ", safeTransaction);
+
+  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature)
+  console.log("ProposeTx: ", proposeTx);
+};
 
 task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("poolFactory", "upgrade poolFactory", false, types.boolean)
@@ -62,47 +87,48 @@ task("upgrade", "Upgrade proxy contracts")
       const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactory);
       console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
-      const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
-      const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
-      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
+      await hre.run("verify:verify", {
+        address: newPoolFactoryLogic,
+        contract: "contracts/PoolFactory.sol:PoolFactory",
+      });
 
-      const transaction = {
-        to: proxyAdminAddress,
-        value: "0",
-        data: upgradeABI,
-      }
-
-      const safeTransaction = await safeSdk.createTransaction(...[transaction])
-      // off-chain sign
-      const txHash = await safeSdk.getTransactionHash(safeTransaction);
-      const signature = await safeSdk.signTransactionHash(txHash);
-      // on-chain sign
-      // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
-      // console.log("approveTxResponse", approveTxResponse);
-      console.log("safeTransaction: ", safeTransaction);
-
-      const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature)
-      console.log("ProposeTx: ", proposeTx);
+      proposeTx(poolFactoryProxy, newPoolFactoryLogic);
     }
     if(taskArgs.assetHandler){
       let oldAssetHandler = contracts.AssetHandlerProxy;
       const AssetHandler = await ethers.getContractFactory("AssetHandler");
-      const assetHandler = await upgrades.upgradeProxy(oldAssetHandler, AssetHandler);
-      console.log("assetHandler upgraded to: ", assetHandler.address);
+      const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
+      console.log("assetHandler logic deployed to: ", assetHandler);
+
+      await hre.run("verify:verify", {
+        address: assetHandler,
+        contract: "contracts/assets/AssetHandler.sol:AssetHandler",
+      });
+
+      proposeTx(oldAssetHandler, assetHandler);
     }
     if(taskArgs.poolLogic){
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
       let poolLogic = await PoolLogic.deploy();
-      console.log("poolLogic upgraded to: ", poolLogic.address);
+      console.log("poolLogic deployed to: ", poolLogic.address);
       versions[newTag].contracts.PoolLogic = poolLogic.address;
       setLogic = true;
+
+      await hre.run("verify:verify", {
+        address: poolLogic.address,
+        contract: "contracts/PoolLogic.sol:PoolLogic",
+      });
     }
     if(taskArgs.poolManagerLogic){
       const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
       const poolManagerLogic = await PoolManagerLogic.deploy();
-      console.log("poolManagerLogic upgraded to: ", poolManagerLogic.address);
+      console.log("poolManagerLogic deployed to: ", poolManagerLogic.address);
       versions[newTag].contracts.PoolManagerLogic = poolManagerLogic.address;
       setLogic = true;
+      await hre.run("verify:verify", {
+        address: poolManagerLogic.address,
+        contract: "contracts/PoolManagerLogic.sol:PoolManagerLogic",
+      });
     }
     if(setLogic){
       let poolFactory = await PoolFactory.attach(versions[newTag].contracts.PoolFactoryProxy);
