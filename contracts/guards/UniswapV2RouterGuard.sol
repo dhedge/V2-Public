@@ -244,7 +244,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     uint256 srcAmount,
     uint256 dstAmount,
     address poolFactory
-  ) internal {
+  ) internal view {
     uint256 srcDecimals = IERC20Extended(srcAsset).decimals();
     uint256 dstDecimals = IERC20Extended(dstAsset).decimals();
     uint256 srcPrice = IHasAssetInfo(poolFactory).getAssetPrice(srcAsset);

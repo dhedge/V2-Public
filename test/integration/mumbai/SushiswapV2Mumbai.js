@@ -67,7 +67,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
     erc20Guard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory, sushiswapV2Router, 2, 100); // set slippage 2%
     uniswapV2RouterGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);

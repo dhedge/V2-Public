@@ -101,7 +101,7 @@ async function main() {
   console.log("ERC20Guard deployed at ", erc20Guard.address);
 
   const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-  const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
+  const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory, sushiswapV2Router, 2, 100); // set slippage 2%
   uniswapV2RouterGuard.deployed();
   console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
 

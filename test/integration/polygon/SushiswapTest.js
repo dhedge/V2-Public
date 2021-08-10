@@ -83,7 +83,7 @@ describe("Sushiswap V2 Test", function () {
     erc20Guard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory, sushiswapV2Router, 2, 100); // set slippage 2%
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");

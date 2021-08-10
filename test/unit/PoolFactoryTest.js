@@ -209,7 +209,7 @@ describe("PoolFactory", function () {
     const UniswapV2RouterGuard = await ethers.getContractFactory(
       "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
     );
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory.address);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory.address, uniswapV2Router.address, 2, 100); // set slippage 2%
     uniswapV2RouterGuard.deployed();
 
     const UniswapV3SwapGuard = await ethers.getContractFactory(
@@ -940,6 +940,20 @@ describe("PoolFactory", function () {
       poolLogicProxy.address,
       0,
     ]);
+    let getAmountsOutABI = iUniswapV2Router.encodeFunctionData("getAmountsOut", [sourceAmount, [susd, seth]]);
+    await assetHandler.setChainlinkTimeout(9000000);
+    await uniswapV2Router.givenCalldataReturn(
+      getAmountsOutABI,
+      abiCoder.encode(["uint256[]"], [[ethers.BigNumber.from(sourceAmount).mul(97).div(2000).div(100)]]),
+    ); // set slippage to 3% (susd: $1, seth: $2000)
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
+      "slippage limit exceed",
+    );
+
+    await uniswapV2Router.givenCalldataReturn(
+      getAmountsOutABI,
+      abiCoder.encode(["uint256[]"], [[ethers.BigNumber.from(sourceAmount).mul(99).div(2000).div(100)]]),
+    ); // set slippage to 1% (susd: $1, seth: $2000)
     await uniswapV2Router.givenCalldataRevert(swapABI);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.reverted;
 
