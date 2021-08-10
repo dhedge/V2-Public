@@ -378,7 +378,6 @@ describe("Synthetix Test", function () {
       "unsupported destination asset",
     );
 
-    console.log('there');
     swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
       sourceKey,
       sourceAmount,
@@ -387,7 +386,6 @@ describe("Synthetix Test", function () {
       trackingCode,
     ]);
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
-    console.log('there1');
 
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
 
@@ -396,7 +394,6 @@ describe("Synthetix Test", function () {
     expect(event.sourceAmount).to.equal((100e18).toString());
     expect(event.destinationAsset).to.equal(seth);
   });
-  return;
 
   it("should be able to withdraw", async function () {
     let withdrawalEvent = new Promise((resolve, reject) => {
