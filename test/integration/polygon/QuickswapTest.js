@@ -205,7 +205,6 @@ describe("Quickswap V2 Test", function () {
       new ethers.BigNumber.from("5000"),
       [
         [usdc, true],
-        [weth, true],
         [usdt, true],
       ],
     );
@@ -241,9 +240,8 @@ describe("Quickswap V2 Test", function () {
     //default assets are supported
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(3);
+    expect(numberOfSupportedAssets).to.eq(2);
     expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
     expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.true;
 
     //Other assets are not supported
@@ -333,7 +331,7 @@ describe("Quickswap V2 Test", function () {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [usdc, (200e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(wmatic, approveABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(weth, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
 
@@ -465,6 +463,8 @@ describe("Quickswap V2 Test", function () {
       }, 60000);
     });
 
+    await poolManagerLogicProxy.connect(manager).changeAssets([[weth, false]], []);
+
     const sourceAmount = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address)).div(2);
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
@@ -494,7 +494,7 @@ describe("Quickswap V2 Test", function () {
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdc, weth, usdt],
+      [usdc, weth, wmatic],
       poolLogicProxy.address,
       0,
     ]);

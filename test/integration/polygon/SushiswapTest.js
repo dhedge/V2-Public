@@ -883,7 +883,7 @@ describe("Sushiswap V2 Test", function () {
       checkAlmostSame(totalFundValue, expectedFundValue.toString());
 
       // Withdraw all
-      const withdrawAmount = units(100);
+      const withdrawAmount = units(10);
       const investorFundBalance = await poolLogicProxy.balanceOf(logicOwner.address);
 
       const sushiBalanceBefore = await SUSHI.balanceOf(logicOwner.address);

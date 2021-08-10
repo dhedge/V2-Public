@@ -115,6 +115,10 @@ describe("Polygon Mainnet Test", function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+    openAssetGuard = await OpenAssetGuard.deploy([]);
+    await openAssetGuard.deployed();
+
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
     uniswapV2RouterGuard.deployed();
@@ -155,6 +159,7 @@ describe("Polygon Mainnet Test", function () {
       [toBytes32("swapRouter"), sushiswapV2Router],
       [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
       [toBytes32("weth"), weth],
+      [toBytes32("openAssetGuard"), openAssetGuard.address],
     ]);
   });
 
@@ -429,6 +434,10 @@ describe("Polygon Mainnet Test", function () {
         "non-zero address is required",
       );
 
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, depositABI),
+      ).to.be.revertedWith("invalid transaction");
+
       depositABI = iLendingPool.encodeFunctionData("deposit", [amusdt, amount, poolLogicProxy.address, 0]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
         "asset not enabled in pool",
@@ -490,6 +499,10 @@ describe("Polygon Mainnet Test", function () {
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, withdrawABI)).to.be.revertedWith(
         "non-zero address is required",
       );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, withdrawABI),
+      ).to.be.revertedWith("invalid transaction");
 
       withdrawABI = iLendingPool.encodeFunctionData("withdraw", [amusdt, amount, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
@@ -588,6 +601,10 @@ describe("Polygon Mainnet Test", function () {
         "non-zero address is required",
       );
 
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
+      ).to.be.revertedWith("invalid transaction");
+
       borrowABI = iLendingPool.encodeFunctionData("borrow", [amdai, amount, 2, 0, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
         "unsupported borrow asset",
@@ -638,6 +655,10 @@ describe("Polygon Mainnet Test", function () {
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, repayABI)).to.be.revertedWith(
         "non-zero address is required",
       );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, repayABI),
+      ).to.be.revertedWith("invalid transaction");
 
       repayABI = iLendingPool.encodeFunctionData("repay", [amdai, amount, 2, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI)).to.be.revertedWith(
@@ -713,6 +734,10 @@ describe("Polygon Mainnet Test", function () {
         "non-zero address is required",
       );
 
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, swapRateABI),
+      ).to.be.revertedWith("invalid transaction");
+
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [amdai, 1]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
         "unsupported asset",
@@ -742,6 +767,10 @@ describe("Polygon Mainnet Test", function () {
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, rebalanceAPI)).to.be.revertedWith(
         "non-zero address is required",
       );
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
+      ).to.be.revertedWith("invalid transaction");
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [amdai, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
