@@ -8,9 +8,8 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
-const hre = require("hardhat");
 
-const proposeTx = async(oldAddress, implementation) => {
+const proposeTx = async(hre, oldAddress, implementation) => {
   const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
   const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
   const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAddress, implementation]);
@@ -40,11 +39,11 @@ task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
   .addOptionalParam("poolManagerLogic", "upgrade poolManagerLogic", false, types.boolean)
   .setAction(async taskArgs => {
-
     const provider = ethers.provider;
     const owner1 = provider.getSigner(0);
     const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
     const chainId = await ethAdapter.getChainId();
+    const hre = require("hardhat");
 
     const contractNetworks = {
       [chainId]: {
@@ -64,7 +63,6 @@ task("upgrade", "Upgrade proxy contracts")
     let network = await ethers.provider.getNetwork();
     console.log("network:", network);
 
-    const hre = require("hardhat");
     let networks = hre.config.networks;
     networkNames = Object.keys(networks);
     let versions = require(`../publish/${network.name}/versions.json`);
@@ -92,7 +90,7 @@ task("upgrade", "Upgrade proxy contracts")
         contract: "contracts/PoolFactory.sol:PoolFactory",
       });
 
-      proposeTx(poolFactoryProxy, newPoolFactoryLogic);
+      proposeTx(hre, poolFactoryProxy, newPoolFactoryLogic);
     }
     if(taskArgs.assetHandler){
       let oldAssetHandler = contracts.AssetHandlerProxy;
@@ -105,7 +103,7 @@ task("upgrade", "Upgrade proxy contracts")
         contract: "contracts/assets/AssetHandler.sol:AssetHandler",
       });
 
-      proposeTx(oldAssetHandler, assetHandler);
+      proposeTx(hre, oldAssetHandler, assetHandler);
     }
     if(taskArgs.poolLogic){
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
