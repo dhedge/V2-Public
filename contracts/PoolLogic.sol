@@ -92,7 +92,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   struct WithdrawnAsset {
     address asset;
     uint256 amount;
-    bool withdrawProcessed;
+    bool externalWithdrawProcessed;
   }
 
   event Withdrawal(
@@ -273,17 +273,20 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint16 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
-      (address asset, uint256 portionOfAssetBalance, bool withdrawProcessed) =
+      (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) =
         _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
+        require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
         IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
+      }
 
+      if (externalWithdrawProcessed || portionOfAssetBalance > 0) {
         withdrawnAssets[index] = WithdrawnAsset({
           asset: asset,
           amount: portionOfAssetBalance,
-          withdrawProcessed: withdrawProcessed
+          externalWithdrawProcessed: externalWithdrawProcessed
         });
         index++;
       }
@@ -317,7 +320,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param portion Portion of investor withdrawal of the total dHedge pool
   /// @return withdrawAsset Asset to be withdrawed
   /// @return withdrawBalance Asset balance amount to be withdrawed
-  /// @return success A boolean for success or fail transaction
+  /// @return externalWithdrawProcessed A boolean for success or fail transaction
   function _withdrawProcessing(
     address asset,
     address to,
@@ -327,7 +330,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     returns (
       address, // withdrawAsset
       uint256, // withdrawBalance
-      bool success
+      bool externalWithdrawProcessed
     )
   {
     // Withdraw any external tokens (eg. staked tokens in other contracts)
@@ -345,8 +348,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
 
       for (uint256 i = 0; i < txCount; i++) {
-        success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
-        require(success, "failed to withdraw tokens");
+        externalWithdrawProcessed = transactions[i].to.tryAssemblyCall(transactions[i].txData);
+        require(externalWithdrawProcessed, "failed to withdraw tokens");
       }
 
       if (withdrawAsset != address(0)) {
@@ -357,7 +360,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
-    return (withdrawAsset, withdrawBalance, success);
+    return (withdrawAsset, withdrawBalance, externalWithdrawProcessed);
   }
 
   /// @notice Function to let pool talk to other protocol
