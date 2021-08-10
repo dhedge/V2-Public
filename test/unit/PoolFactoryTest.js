@@ -1844,7 +1844,9 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
-    await expect(poolFactory.connect(manager).setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith("caller is not the owner");
+    await expect(poolFactory.connect(manager).setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith(
+      "caller is not the owner",
+    );
     await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
