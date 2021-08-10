@@ -3,11 +3,13 @@ const { ethers, upgrades } = require("hardhat");
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
+const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
+const externalInvalidToken = "0x7cea675598da73f859696b483c05a4f135b2092e"; //random address
 
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("../TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32 } = require("../TestHelpers");
 
 let logicOwner, manager, dao, investor, user1, user2;
 let poolFactory,
@@ -20,7 +22,7 @@ let poolFactory,
   fundAddress;
 let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
 let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard, sushiMiniChefV2Guard; // contract guards
-let erc20Guard, sushiLPAssetGuard; // asset guards
+let erc20Guard, sushiLPAssetGuard, openAssetGuard; // asset guards
 let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
@@ -233,12 +235,22 @@ describe("PoolFactory", function () {
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory(
+      "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
+    );
+    openAssetGuard = await OpenAssetGuard.deploy([externalValidToken]); // initialise with random external token
+    openAssetGuard.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
+    await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+
+    const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
+    console.log("openAssetGuardSetting:", openAssetGuardSetting);
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
@@ -834,6 +846,14 @@ describe("PoolFactory", function () {
 
     await expect(poolLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith(
       "unsupported spender approval",
+    );
+
+    // should be able to approve valid external token (OpenAssetGuard)
+    await poolLogicProxy.connect(manager).execTransaction(externalValidToken, approveABI);
+
+    // shouldn't be able to approve invalid external token (OpenAssetGuard)
+    await expect(poolLogicProxy.connect(manager).execTransaction(externalInvalidToken, approveABI)).to.be.revertedWith(
+      "invalid asset",
     );
 
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, (100e18).toString()]);
