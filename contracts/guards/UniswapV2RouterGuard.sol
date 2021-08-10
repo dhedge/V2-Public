@@ -38,8 +38,11 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../utils/TxDataUtils.sol";
 import "../interfaces/guards/IGuard.sol";
 import "../interfaces/uniswapv2/IUniswapV2Factory.sol";
+import "../interfaces/uniswapv2/IUniswapV2Router.sol";
+import "../interfaces/IERC20Extended.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
+import "../interfaces/IHasAssetInfo.sol";
 import "../interfaces/IHasGuardInfo.sol";
 import "../interfaces/IManaged.sol";
 
@@ -73,10 +76,22 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   );
 
   address public factory; // uniswap v2 factory
+  address public router; // uniswap v2 router
+  uint256 public slippageLimitNumerator;
+  uint256 public slippageLimitDenominator;
 
-  constructor(address _factory) {
+  constructor(
+    address _factory,
+    address _router,
+    uint256 _slippageLimitNumerator,
+    uint256 _slippageLimitDenominator
+  ) {
     require(_factory != address(0), "_factory address cannot be 0");
     factory = _factory;
+    router = _router;
+
+    slippageLimitNumerator = _slippageLimitNumerator;
+    slippageLimitDenominator = _slippageLimitDenominator;
   }
 
   /// @notice Transaction guard for Uniswap V2
@@ -112,6 +127,19 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
 
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
+      if (poolManagerLogicAssets.isSupportedAsset(srcAsset)) {
+        // check slippage
+        uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
+        address[] memory path = new address[](routeLength);
+        for (uint8 i = 0; i < routeLength; i++) {
+          path[i] = convert32toAddress(getArrayIndex(data, 2, i));
+        }
+
+        uint256[] memory amountsOut = IUniswapV2Router(router).getAmountsOut(srcAmount, path);
+        uint256 dstAmount = amountsOut[amountsOut.length - 1];
+        _checkSlippageLimit(srcAsset, dstAsset, srcAmount, dstAmount, poolManagerLogic.factory());
+      }
+
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
@@ -120,20 +148,23 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
       uint256 dstAmount = uint256(getInput(data, 0));
       address toAddress = convert32toAddress(getInput(data, 3));
-      uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
-
-      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
-
-      // validate Uniswap routing addresses
-      address routingAsset;
-      for (uint8 i = 1; i < routeLength - 1; i++) {
-        routingAsset = convert32toAddress(getArrayIndex(data, 2, i));
-        require(poolManagerLogic.validateAsset(routingAsset), "invalid routing asset");
-      }
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
+
+      if (poolManagerLogicAssets.isSupportedAsset(srcAsset)) {
+        // check slippage
+        uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
+        address[] memory path = new address[](routeLength);
+        for (uint8 i = 0; i < routeLength; i++) {
+          path[i] = convert32toAddress(getArrayIndex(data, 2, i));
+        }
+
+        uint256[] memory amountsIn = IUniswapV2Router(router).getAmountsIn(dstAmount, path);
+        uint256 srcAmount = amountsIn[0];
+        _checkSlippageLimit(srcAsset, dstAsset, srcAmount, dstAmount, poolManagerLogic.factory());
+      }
 
       emit ExchangeTo(poolManagerLogic.poolLogic(), srcAsset, dstAsset, uint256(dstAmount), block.timestamp);
 
@@ -205,5 +236,27 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     }
 
     return (txType, false);
+  }
+
+  function _checkSlippageLimit(
+    address srcAsset,
+    address dstAsset,
+    uint256 srcAmount,
+    uint256 dstAmount,
+    address poolFactory
+  ) internal {
+    uint256 srcDecimals = IERC20Extended(srcAsset).decimals();
+    uint256 dstDecimals = IERC20Extended(dstAsset).decimals();
+    uint256 srcPrice = IHasAssetInfo(poolFactory).getAssetPrice(srcAsset);
+    uint256 dstPrice = IHasAssetInfo(poolFactory).getAssetPrice(dstAsset);
+
+    uint256 srcUSDAmount = srcAmount.mul(srcPrice).div(10**srcDecimals);
+    uint256 dstUSDAmount = dstAmount.mul(dstPrice).div(10**dstDecimals);
+
+    require(
+      dstUSDAmount.mul(slippageLimitDenominator).div(srcUSDAmount) >=
+        slippageLimitDenominator.sub(slippageLimitNumerator),
+      "slippage limit exceed"
+    );
   }
 }
