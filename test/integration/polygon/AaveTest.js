@@ -436,7 +436,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, depositABI),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("invalid destination");
 
       depositABI = iLendingPool.encodeFunctionData("deposit", [amusdt, amount, poolLogicProxy.address, 0]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
@@ -502,7 +502,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, withdrawABI),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("invalid destination");
 
       withdrawABI = iLendingPool.encodeFunctionData("withdraw", [amusdt, amount, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
@@ -603,7 +603,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("invalid destination");
 
       borrowABI = iLendingPool.encodeFunctionData("borrow", [amdai, amount, 2, 0, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
@@ -658,7 +658,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, repayABI),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("invalid destination");
 
       repayABI = iLendingPool.encodeFunctionData("repay", [amdai, amount, 2, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI)).to.be.revertedWith(

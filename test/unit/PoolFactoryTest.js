@@ -853,7 +853,7 @@ describe("PoolFactory", function () {
 
     // shouldn't be able to approve invalid external token (OpenAssetGuard)
     await expect(poolLogicProxy.connect(manager).execTransaction(externalInvalidToken, approveABI)).to.be.revertedWith(
-      "invalid asset",
+      "invalid destination",
     );
 
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, (100e18).toString()]);
