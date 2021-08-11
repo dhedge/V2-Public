@@ -34,10 +34,6 @@
 
 pragma solidity 0.7.6;
 
-interface IHasGuardInfoV23 {
-  // Get guard
-  function getGuard(address extContract) external view returns (address);
-
-  // Get asset guard
-  function getAssetGuard(address extContract) external view returns (address);
+interface IHasPausableV24 {
+  function isPaused() external view returns (bool);
 }

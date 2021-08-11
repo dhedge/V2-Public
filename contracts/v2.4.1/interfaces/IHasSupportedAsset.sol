@@ -34,17 +34,15 @@
 
 pragma solidity 0.7.6;
 
-interface IHasFeeInfoV23 {
-  // Manager fee
-  function getPoolManagerFee(address pool) external view returns (uint256, uint256);
+pragma experimental ABIEncoderV2;
 
-  function setPoolManagerFeeNumerator(address pool, uint256 numerator) external;
+interface IHasSupportedAssetV24 {
+  struct Asset {
+    address asset;
+    bool isDeposit;
+  }
 
-  function getMaximumManagerFeeNumeratorChange() external view returns (uint256);
+  function getSupportedAssets() external view returns (Asset[] memory);
 
-  function getManagerFeeNumeratorChangeDelay() external view returns (uint256);
-
-  // Exit fee
-  // function getExitFee() external view returns (uint256, uint256);
-  function getExitCooldown() external view returns (uint256);
+  function isSupportedAsset(address asset) external view returns (bool);
 }
