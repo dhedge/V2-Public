@@ -162,7 +162,6 @@ contract PoolFactoryV23 is
     IHasSupportedAssetV23.Asset[] memory _supportedAssets
   ) external returns (address) {
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
-    require(_managerFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
 
     bytes memory poolLogicData =
       abi.encodeWithSignature(
@@ -173,16 +172,15 @@ contract PoolFactoryV23 is
         _fundSymbol
       );
 
-    fund = deploy(poolLogicData, 2);
+    address fund = deploy(poolLogicData, 2);
 
     bytes memory managerLogicData =
       abi.encodeWithSignature(
-        "initialize(address,address,string,address,uint256,(address,bool)[])",
+        "initialize(address,address,string,address,(address,bool)[])",
         address(this),
         _manager,
         _managerName,
         fund,
-        _managerFeeNumerator,
         _supportedAssets
       );
 
