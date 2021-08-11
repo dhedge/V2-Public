@@ -153,13 +153,13 @@ describe("PoolFactory", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
-    PoolLogicV23 = await ethers.getContractFactory("PoolLogic"); // TODO: Update pre-upgrade version
-    poolLogicV23 = await PoolLogicV23.deploy();
+    PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
+    poolLogicV24 = await PoolLogicV24.deploy();
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
-    PoolManagerLogicV23 = await ethers.getContractFactory("PoolManagerLogic"); // TODO: Update pre-upgrade version
-    poolManagerLogicV23 = await PoolManagerLogicV23.deploy();
+    PoolManagerLogicV24 = await ethers.getContractFactory("PoolManagerLogicV24");
+    poolManagerLogicV24 = await PoolManagerLogicV24.deploy();
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
@@ -178,19 +178,19 @@ describe("PoolFactory", function () {
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
 
-    const PoolFactoryLogicV23 = await ethers.getContractFactory("PoolFactory"); // TODO: Update pre-upgrade version
-    poolFactoryV23 = await upgrades.deployProxy(PoolFactoryLogicV23, [
-      poolLogicV23.address,
-      poolManagerLogicV23.address,
+    const PoolFactoryLogicV24 = await ethers.getContractFactory("PoolFactoryV24");
+    poolFactoryV24 = await upgrades.deployProxy(PoolFactoryLogicV24, [
+      poolLogicV24.address,
+      poolManagerLogicV24.address,
       assetHandler.address,
       dao.address,
       governance.address,
     ]);
-    await poolFactoryV23.deployed();
-    console.log("poolFactoryV23 deployed to:", poolFactoryV23.address);
+    await poolFactoryV24.deployed();
+    console.log("poolFactoryV24 deployed to:", poolFactoryV24.address);
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.upgradeProxy(poolFactoryV23.address, PoolFactoryLogic);
+    poolFactory = await upgrades.upgradeProxy(poolFactoryV24.address, PoolFactoryLogic);
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
     // Deploy Sushi LP Aggregator
@@ -1132,9 +1132,6 @@ describe("PoolFactory", function () {
     expect(daoFees[0]).to.be.equal(10);
     expect(daoFees[1]).to.be.equal(100);
 
-    await poolFactory.transferOwnership(dao.address);
-    expect(await poolFactory.owner()).to.be.equal(dao.address);
-
     await assetHandler.setChainlinkTimeout(9000000);
 
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
@@ -1171,8 +1168,8 @@ describe("PoolFactory", function () {
   it("should be able to pause deposit, exchange/execute and withdraw", async function () {
     let poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
-    await expect(poolFactory.pause()).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).pause();
+    await expect(poolFactory.connect(manager).pause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.pause();
     expect(await poolFactory.isPaused()).to.be.true;
 
     await expect(
@@ -1196,8 +1193,8 @@ describe("PoolFactory", function () {
       "contracts paused",
     );
 
-    await expect(poolFactory.unpause()).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).unpause();
+    await expect(poolFactory.connect(manager).unpause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.unpause();
     expect(await poolFactory.isPaused()).to.be.false;
 
     await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.not.be.revertedWith("contracts paused");
@@ -1797,8 +1794,10 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
-    await expect(poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).setLogic(TESTNET_DAO, TESTNET_DAO);
+    await expect(poolFactory.connect(manager).setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
     expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
@@ -1806,6 +1805,6 @@ describe("PoolFactory", function () {
     let poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(TESTNET_DAO);
 
-    await poolFactory.connect(dao).setLogic(poolLogic.address, poolManagerLogic.address);
+    await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
   });
 });

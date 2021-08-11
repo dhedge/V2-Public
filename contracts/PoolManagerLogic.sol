@@ -336,8 +336,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Setter for poolLogic contract
   /// @dev Not required to be used under normal circumstances
   function setPoolLogic(address _poolLogic) external override returns (bool) {
-    address daoAddress = IHasOwnable(factory).owner();
-    require(msg.sender == daoAddress, "only DAO address allowed");
+    address owner = IHasOwnable(factory).owner();
+    require(msg.sender == owner, "only owner address allowed");
 
     require(IPoolLogic(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");
 

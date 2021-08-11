@@ -329,7 +329,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHasSupportedAssetV23.Asset[]",
+        "internalType": "struct IHasSupportedAssetV24.Asset[]",
         "name": "_addAssets",
         "type": "tuple[]"
       },
@@ -412,7 +412,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHasSupportedAssetV23.Asset[]",
+        "internalType": "struct IHasSupportedAssetV24.Asset[]",
         "name": "assets",
         "type": "tuple[]"
       },
@@ -468,6 +468,37 @@
   },
   {
     "inputs": [],
+    "name": "getMaximumManagerFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMaximumManagerFeeChange",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getMembers",
     "outputs": [
       {
@@ -496,7 +527,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHasSupportedAssetV23.Asset[]",
+        "internalType": "struct IHasSupportedAssetV24.Asset[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -527,6 +558,11 @@
         "type": "address"
       },
       {
+        "internalType": "uint256",
+        "name": "_managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
         "components": [
           {
             "internalType": "address",
@@ -539,7 +575,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IHasSupportedAssetV23.Asset[]",
+        "internalType": "struct IHasSupportedAssetV24.Asset[]",
         "name": "_supportedAssets",
         "type": "tuple[]"
       }
@@ -614,6 +650,19 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "managerFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
