@@ -2,16 +2,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_factory",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_router",
-        "type": "address"
-      },
-      {
         "internalType": "uint256",
         "name": "_slippageLimitNumerator",
         "type": "uint256"
@@ -232,19 +222,6 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "factory",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -469,16 +446,21 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "router",
-    "outputs": [
+    "inputs": [
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_slippageLimitNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_slippageLimitDenominator",
+        "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "name": "setSlippageLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -516,7 +498,7 @@
       },
       {
         "internalType": "address",
-        "name": "",
+        "name": "to",
         "type": "address"
       },
       {

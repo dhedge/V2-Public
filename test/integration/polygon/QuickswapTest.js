@@ -83,7 +83,7 @@ describe("Quickswap V2 Test", function () {
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(quickswapFactory, quickswapRouter, 2, 100); // set slippage 2%
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
     await uniswapV2RouterGuard.deployed();
 
     quickLPAssetGuard = await ERC20Guard.deploy();
