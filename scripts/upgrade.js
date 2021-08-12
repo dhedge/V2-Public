@@ -38,6 +38,7 @@ task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("assetHandler", "upgrade assetHandler", false, types.boolean)
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
   .addOptionalParam("poolManagerLogic", "upgrade poolManagerLogic", false, types.boolean)
+  .addOptionalParam("production", "production environment", false, types.boolean)
   .setAction(async taskArgs => {
     const provider = ethers.provider;
     const owner1 = provider.getSigner(0);
@@ -60,12 +61,13 @@ task("upgrade", "Upgrade proxy contracts")
 
     owner1Address = await owner1.getAddress();
 
-    let network = await ethers.provider.getNetwork();
+    const network = await ethers.provider.getNetwork();
     console.log("network:", network);
 
-    let networks = hre.config.networks;
+    const networks = hre.config.networks;
     networkNames = Object.keys(networks);
-    let versions = require(`../publish/${network.name}/versions.json`);
+    const versionFile = taskArgs.production ? "versions" : "staging-versions"
+    const versions = require(`../publish/${network.name}/${versionFile}.json`);
     let newTag = await getTag();
     let oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
     console.log(`oldTag: ${oldTag}`);
@@ -90,7 +92,8 @@ task("upgrade", "Upgrade proxy contracts")
         contract: "contracts/PoolFactory.sol:PoolFactory",
       });
 
-      proposeTx(hre, poolFactoryProxy, newPoolFactoryLogic);
+      const proposeTx = await proposeTx(hre, poolFactoryProxy, newPoolFactoryLogic);
+      console.log("ProposeTx: ", proposeTx);
     }
     if(taskArgs.assetHandler){
       let oldAssetHandler = contracts.AssetHandlerProxy;
@@ -103,7 +106,8 @@ task("upgrade", "Upgrade proxy contracts")
         contract: "contracts/assets/AssetHandler.sol:AssetHandler",
       });
 
-      proposeTx(hre, oldAssetHandler, assetHandler);
+      const proposeTx = await proposeTx(hre, oldAssetHandler, assetHandler);
+      console.log("ProposeTx: ", proposeTx);
     }
     if(taskArgs.poolLogic){
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -137,7 +141,7 @@ task("upgrade", "Upgrade proxy contracts")
     const data = JSON.stringify(versions, null, 2);
     console.log(data);
 
-    fs.writeFileSync(`./publish/${network.name}/versions.json`, data);
+    fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
   });
 
 module.exports = {};
