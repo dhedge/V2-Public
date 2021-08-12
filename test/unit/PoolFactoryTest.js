@@ -942,24 +942,12 @@ describe("PoolFactory", function () {
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      ethers.BigNumber.from(sourceAmount).mul(97).div(2000).div(100),
       [susd, seth],
       poolLogicProxy.address,
       0,
     ]);
-    let getAmountsOutABI = iUniswapV2Router.encodeFunctionData("getAmountsOut", [sourceAmount, [susd, seth]]);
     await assetHandler.setChainlinkTimeout(9000000);
-    await uniswapV2Router.givenCalldataReturn(
-      getAmountsOutABI,
-      abiCoder.encode(["uint256[]"], [[ethers.BigNumber.from(sourceAmount).mul(97).div(2000).div(100)]]),
-    ); // set slippage to 3% (susd: $1, seth: $2000)
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "slippage limit exceed",
-    );
-    await uniswapV2Router.givenCalldataReturn(
-      getAmountsOutABI,
-      abiCoder.encode(["uint256[]"], [[ethers.BigNumber.from(sourceAmount).mul(103).div(2000).div(100)]]),
-    ); // set slippage to 3% (susd: $1, seth: $2000)
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
       "slippage limit exceed",
     );

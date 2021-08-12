@@ -83,7 +83,7 @@ describe("Quickswap V2 Test", function () {
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(100, 100); // set slippage 100% for testing
     await uniswapV2RouterGuard.deployed();
 
     quickLPAssetGuard = await ERC20Guard.deploy();
@@ -415,7 +415,7 @@ describe("Quickswap V2 Test", function () {
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
       dstAmount,
-      ethers.constants.MaxUint256,
+      (10000e6).toString(),
       [usdc, usdt],
       poolLogicProxy.address,
       0,
@@ -426,7 +426,7 @@ describe("Quickswap V2 Test", function () {
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
       dstAmount,
-      ethers.constants.MaxUint256,
+      (10000e6).toString(),
       [usdc, usdt],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),

@@ -112,18 +112,14 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
       address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0)); // gets the second input (path) first item (token to swap from)
       address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
       uint256 srcAmount = uint256(getInput(data, 0));
+      uint256 amountOutMin = uint256(getInput(data, 1));
       address toAddress = convert32toAddress(getInput(data, 3));
-      uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
-      address[] memory path = new address[](routeLength);
-      for (uint8 i = 0; i < routeLength; i++) {
-        path[i] = convert32toAddress(getArrayIndex(data, 2, i));
-      }
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
-      _checkSlippageLimit(to, srcAmount, 0, path, address(poolManagerLogic));
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
@@ -132,18 +128,14 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
       address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0)); // gets the second input (path) first item (token to swap from)
       address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
       uint256 dstAmount = uint256(getInput(data, 0));
+      uint256 amountInMax = uint256(getInput(data, 1));
       address toAddress = convert32toAddress(getInput(data, 3));
-      uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
-      address[] memory path = new address[](routeLength);
-      for (uint8 i = 0; i < routeLength; i++) {
-        path[i] = convert32toAddress(getArrayIndex(data, 2, i));
-      }
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
-      _checkSlippageLimit(to, 0, dstAmount, path, address(poolManagerLogic));
+      _checkSlippageLimit(srcAsset, dstAsset, amountInMax, dstAmount, address(poolManagerLogic));
 
       emit ExchangeTo(poolManagerLogic.poolLogic(), srcAsset, dstAsset, uint256(dstAmount), block.timestamp);
 
@@ -225,30 +217,19 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
   }
 
   /// @notice Check slippage limit when swap tokens
-  /// @param router the uniswap V2 router address
+  /// @param srcAsset the source asset address
+  /// @param srcAmount the destination asset address
   /// @param srcAmount the source asset amount
   /// @param dstAmount the destination asset amount
-  /// @param path the swap path
   /// @param poolManagerLogic the pool manager logic address
   function _checkSlippageLimit(
-    address router,
+    address srcAsset,
+    address dstAsset,
     uint256 srcAmount,
     uint256 dstAmount,
-    address[] memory path,
     address poolManagerLogic
   ) internal view {
-    address srcAsset = path[0];
-    address dstAsset = path[path.length - 1];
     if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(srcAsset)) {
-      uint256[] memory amounts;
-      if (dstAmount == 0) {
-        amounts = IUniswapV2Router(router).getAmountsOut(srcAmount, path);
-        dstAmount = amounts[amounts.length - 1];
-      } else if (srcAmount == 0) {
-        amounts = IUniswapV2Router(router).getAmountsIn(dstAmount, path);
-        srcAmount = amounts[0];
-      }
-
       uint256 srcDecimals = IERC20Extended(srcAsset).decimals();
       uint256 dstDecimals = IERC20Extended(dstAsset).decimals();
       address poolFactory = IPoolManagerLogic(poolManagerLogic).factory();
@@ -259,10 +240,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
       dstAmount = dstAmount.mul(dstPrice).div(10**dstDecimals); // to USD amount
 
       require(
-        dstAmount.mul(slippageLimitDenominator).div(srcAmount) >=
-          slippageLimitDenominator.sub(slippageLimitNumerator) &&
-          dstAmount.mul(slippageLimitDenominator).div(srcAmount) <=
-          slippageLimitDenominator.add(slippageLimitNumerator),
+        dstAmount.mul(slippageLimitDenominator).div(srcAmount) >= slippageLimitDenominator.sub(slippageLimitNumerator),
         "slippage limit exceed"
       );
     }
