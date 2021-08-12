@@ -34,6 +34,7 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../utils/TxDataUtils.sol";
 import "../interfaces/guards/IGuard.sol";
@@ -48,7 +49,7 @@ import "../interfaces/IManaged.sol";
 
 /// @notice Transaction guard for UniswapV2Router
 /// @dev This will be used for sushiswap as well since Sushi uses the same interface.
-contract UniswapV2RouterGuard is TxDataUtils, IGuard {
+contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
   using SafeMathUpgradeable for uint256;
 
   event ExchangeTo(address fundAddress, address sourceAsset, address dstAsset, uint256 dstAmount, uint256 time);
@@ -78,7 +79,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   uint256 public slippageLimitNumerator;
   uint256 public slippageLimitDenominator;
 
-  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) {
+  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) Ownable() {
     slippageLimitNumerator = _slippageLimitNumerator;
     slippageLimitDenominator = _slippageLimitDenominator;
   }
@@ -218,7 +219,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   /// @notice Update slippage limit numerator/denominator
   /// @param _slippageLimitNumerator slippage limit numerator - slippage limit would be numerator/denominator
   /// @param _slippageLimitDenominator slippage limit denominiator - slippage limit would be numerator/denominator
-  function setSlippageLimit(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) external {
+  function setSlippageLimit(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) external onlyOwner {
     slippageLimitNumerator = _slippageLimitNumerator;
     slippageLimitDenominator = _slippageLimitDenominator;
   }
