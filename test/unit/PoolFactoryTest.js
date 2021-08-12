@@ -3,11 +3,13 @@ const { ethers, upgrades } = require("hardhat");
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
+const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
+const externalInvalidToken = "0x7cea675598da73f859696b483c05a4f135b2092e"; //random address
 
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("../TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32 } = require("../TestHelpers");
 
 let logicOwner, manager, dao, investor, user1, user2;
 let poolFactory,
@@ -20,7 +22,7 @@ let poolFactory,
   fundAddress;
 let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
 let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard, sushiMiniChefV2Guard; // contract guards
-let erc20Guard, sushiLPAssetGuard; // asset guards
+let erc20Guard, sushiLPAssetGuard, openAssetGuard; // asset guards
 let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
@@ -233,12 +235,22 @@ describe("PoolFactory", function () {
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory(
+      "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
+    );
+    openAssetGuard = await OpenAssetGuard.deploy([externalValidToken]); // initialise with random external token
+    openAssetGuard.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
+    await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+
+    const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
+    console.log("openAssetGuardSetting:", openAssetGuardSetting);
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
@@ -773,12 +785,6 @@ describe("PoolFactory", function () {
     ).to.be.revertedWith("only manager or trader or public function");
   });
 
-  it("Should fail with invalid destination", async () => {
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00000000"),
-    ).to.be.revertedWith("invalid destination");
-  });
-
   it("Should exec transaction", async () => {
     let poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
@@ -842,6 +848,14 @@ describe("PoolFactory", function () {
       "unsupported spender approval",
     );
 
+    // should be able to approve valid external token (OpenAssetGuard)
+    await poolLogicProxy.connect(manager).execTransaction(externalValidToken, approveABI);
+
+    // shouldn't be able to approve invalid external token (OpenAssetGuard)
+    await expect(poolLogicProxy.connect(manager).execTransaction(externalInvalidToken, approveABI)).to.be.revertedWith(
+      "invalid destination",
+    );
+
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, (100e18).toString()]);
     await susdAsset.givenCalldataReturnBool(approveABI, true);
     await poolLogicProxy.connect(manager).execTransaction(susd, approveABI);
@@ -895,28 +909,6 @@ describe("PoolFactory", function () {
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(susd, swapABI)).to.be.revertedWith(
       "invalid transaction",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [slink, seth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [susd, user1.address, seth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
     );
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
@@ -1002,14 +994,6 @@ describe("PoolFactory", function () {
       "non-zero address is required",
     );
 
-    // fail to swap direct asset to asset because unsupported source asset
-    badExactInputSingleParams.tokenIn = slink;
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [badExactInputSingleParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-    badExactInputSingleParams.tokenIn = susd;
-
     // fail to swap direct asset to asset because unsupported destination asset
     badExactInputSingleParams.tokenOut = slink;
     swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [badExactInputSingleParams]);
@@ -1085,19 +1069,6 @@ describe("PoolFactory", function () {
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
       "non-zero address is required",
-    );
-
-    // fail to swap direct asset to asset because unsupported source asset
-    badExactInputParams.path =
-      "0x" +
-      slink.substring(2) + // unsupported asset
-      "000bb8" +
-      susd.substring(2) +
-      "000bb8" +
-      seth.substring(2);
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
     );
 
     // // TODO: add invalid path asset check if enabled in the Uniswap V3 swap guard

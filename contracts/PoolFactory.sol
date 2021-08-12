@@ -504,8 +504,14 @@ contract PoolFactory is
   function getGuard(address extContract) external view override returns (address guard) {
     guard = IGovernance(governanceAddress).contractGuards(extContract);
     if (guard == address(0)) {
-      guard = getAssetGuard(extContract);
+      if (isValidAsset(extContract)) {
+        guard = getAssetGuard(extContract);
+      } else {
+        guard = getAddress("openAssetGuard");
+      }
     }
+
+    require(guard != address(0), "Guard not found");
   }
 
   /// @notice Get address of the asset guard
@@ -521,7 +527,7 @@ contract PoolFactory is
   /// @notice Get address from the Governance contract
   /// @param name The name of the address
   /// @return destination The destination address
-  function getAddress(bytes32 name) external view override returns (address destination) {
+  function getAddress(bytes32 name) public view override returns (address destination) {
     destination = IGovernance(governanceAddress).nameToDestination(name);
     require(destination != address(0), "governance: invalid name");
   }

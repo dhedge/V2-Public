@@ -378,28 +378,6 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [weth, usdt],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [usdc, user.address, usdt],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
       [usdc, usdt, weth],
       poolLogicProxy.address,
       0,

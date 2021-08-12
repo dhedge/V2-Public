@@ -36,7 +36,7 @@ const dai_price_feed = "0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-describe("Polygon Mainnet Test", function () {
+describe("Aave Test", function () {
   let WETH, USDC, USDT, DAI, AUSDC, StableDAI, VariableDAI;
   let usdPriceAggregator;
   let logicOwner, manager, dao, user;
@@ -85,6 +85,10 @@ describe("Polygon Mainnet Test", function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+    openAssetGuard = await OpenAssetGuard.deploy([]);
+    await openAssetGuard.deployed();
+
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
     uniswapV2RouterGuard.deployed();
@@ -105,6 +109,7 @@ describe("Polygon Mainnet Test", function () {
       [toBytes32("swapRouter"), sushiswapV2Router],
       [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
       [toBytes32("weth"), weth],
+      [toBytes32("openAssetGuard"), openAssetGuard.address],
     ]);
   });
 

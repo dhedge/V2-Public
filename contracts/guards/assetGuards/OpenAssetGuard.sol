@@ -32,41 +32,42 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "../utils/TxDataUtils.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
-import "../interfaces/synthetix/ISynth.sol";
-import "../interfaces/synthetix/ISynthetix.sol";
-import "../interfaces/synthetix/IAddressResolver.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/IManaged.sol";
 
-/// @title Transaction guard for Synthetix's Exchanger contract
-contract SynthetixGuard is TxDataUtils, IGuard {
+/// @title Generic ERC20 asset guard
+/// @dev This is for only non-supported assets
+contract OpenAssetGuard is IGuard, TxDataUtils, Ownable {
   using SafeMathUpgradeable for uint256;
 
-  bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
+  mapping(address => bool) public isValidAsset;
 
-  IAddressResolver public addressResolver;
+  event SetValidAsset(address asset, bool isValid);
+  event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
 
-  constructor(IAddressResolver _addressResolver) {
-    require(address(_addressResolver) != address(0), "_addressResolver address cannot be 0");
-    addressResolver = _addressResolver;
+  constructor(address[] memory _assets) Ownable() {
+    for (uint256 i = 0; i < _assets.length; i++) {
+      isValidAsset[_assets[i]] = true;
+    }
   }
 
-  /// @notice Transaction guard for Synthetix Exchanger
-  /// @dev It supports exchangeWithTracking functionality
-  /// @param _poolManagerLogic the pool manager logic
-  /// @param data the transaction data
-  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  /// @notice Transaction guard for approving assets
+  /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @param _poolManagerLogic Pool address
+  /// @param data Transaction call data attempt by manager
+  /// @return txType transaction type described in PoolLogic
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address, // to
+    address to,
     bytes calldata data
   )
     external
@@ -76,35 +77,40 @@ contract SynthetixGuard is TxDataUtils, IGuard {
       bool // isPublic
     )
   {
+    require(isValidAsset[to], "invalid destination");
+
     bytes4 method = getMethod(data);
 
-    if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-      bytes32 srcKey = getInput(data, 0);
-      bytes32 srcAmount = getInput(data, 1);
-      bytes32 dstKey = getInput(data, 2);
-
-      address srcAsset = getAssetProxy(srcKey);
-      address dstAsset = getAssetProxy(dstKey);
+    if (method == bytes4(keccak256("approve(address,uint256)"))) {
+      address spender = convert32toAddress(getInput(data, 0));
+      uint256 amount = uint256(getInput(data, 1));
 
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
-      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
-      emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
+      address factory = poolManagerLogic.factory();
+      address spenderGuard = IHasGuardInfo(factory).getGuard(spender);
+      require(spenderGuard != address(0) && spenderGuard != address(this), "unsupported spender approval"); // checks that the spender is an approved address
 
-      txType = 2; // 'Exchange' type
+      emit Approve(
+        poolManagerLogic.poolLogic(),
+        IManaged(_poolManagerLogic).manager(),
+        spender,
+        amount,
+        block.timestamp
+      );
+
+      txType = 1; // 'Approve' type
     }
 
     return (txType, false);
   }
 
-  /// @notice Get asset proxy address from addressResolver
-  /// @param key the key of the asset
-  /// @return proxy the proxy address of the asset
-  function getAssetProxy(bytes32 key) public view returns (address proxy) {
-    address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
-    require(synth != address(0), "invalid key");
-    proxy = ISynth(synth).proxy();
-    require(proxy != address(0), "invalid proxy");
+  /// @notice Setting a valid asset
+  /// @param _asset the asset address
+  /// @param _isValid is valid or not
+  function setValidAsset(address _asset, bool _isValid) external onlyOwner {
+    isValidAsset[_asset] = _isValid;
+
+    emit SetValidAsset(_asset, _isValid);
   }
 }

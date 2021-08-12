@@ -374,8 +374,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     address guard = IHasGuardInfo(factory).getGuard(to);
 
-    require(guard != address(0), "invalid destination");
-
     if (IHasAssetInfo(factory).isValidAsset(to)) {
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
     }
