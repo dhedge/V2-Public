@@ -156,5 +156,163 @@
       "LendingEnabledAssetGuard": "0xCb1687Cac48733BA7F04fD7d461A375D4Ab46F26",
       "AaveIncentivesControllerGuard": "0x45aDb0586a7899cEDd331191e6B4B238607DEC67"
     }
+  },
+  "v2.4.3": {
+    "contracts": {
+      "Assets": [
+        {
+          "name": "USD Coin",
+          "asset": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+          "assetType": "4",
+          "aggregator": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+        },
+        {
+          "name": "Tether USD",
+          "asset": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+          "assetType": "4",
+          "aggregator": "0x0A6513e40db6EB1b165753AD52E80663aeA50545"
+        },
+        {
+          "name": "Dai USD",
+          "asset": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+          "assetType": "4",
+          "aggregator": "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D"
+        },
+        {
+          "name": "Wrapped Matic",
+          "asset": "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+          "assetType": "0",
+          "aggregator": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0"
+        },
+        {
+          "name": "Wrapped Ether",
+          "asset": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+          "assetType": "4",
+          "aggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945"
+        },
+        {
+          "name": "Wrapped Bitcoin",
+          "asset": "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
+          "assetType": "4",
+          "aggregator": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
+        },
+        {
+          "name": "Chainlink",
+          "asset": "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39",
+          "assetType": "4",
+          "aggregator": "0xd9FFdb71EbE7496cC440152d43986Aae0AB76665"
+        },
+        {
+          "name": "Synthetix",
+          "asset": "0x50b728d8d964fd00c2d0aad81718b71311fef68a",
+          "assetType": "4",
+          "aggregator": "0xbF90A5D9B6EE9019028dbFc2a9E50056d5252894"
+        },
+        {
+          "name": "Aave",
+          "asset": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
+          "assetType": "0",
+          "aggregator": "0x72484B12719E23115761D5DA1646945632979bB6"
+        },
+        {
+          "name": "Sushi",
+          "asset": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
+          "assetType": "0",
+          "aggregator": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0"
+        },
+        {
+          "name": "CRV",
+          "asset": "0x172370d5cd63279efa6d502dab29171933a610af",
+          "assetType": "4",
+          "aggregator": "0x336584C8E6Dc19637A5b36206B1c79923111b405"
+        },
+        {
+          "name": "Sushi LP USDC-DAI",
+          "asset": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
+          "assetType": "2",
+          "aggregator": "0xCD9537EE38A7d33106423197b05ebaf977eCa386"
+        },
+        {
+          "name": "Sushi LP USDC-USDT",
+          "asset": "0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001",
+          "assetType": "2",
+          "aggregator": "0xa99CD5A68E2d06A944Be7eb9812fd114a8dF5e43"
+        },
+        {
+          "name": "Sushi LP WETH-DAI",
+          "asset": "0x6ff62bfb8c12109e8000935a6de54dad83a4f39f",
+          "assetType": "2",
+          "aggregator": "0xcB5974894fd98F14D914DCCA207e77610FEc92E2"
+        },
+        {
+          "name": "Sushi LP WETH-USDT",
+          "asset": "0xc2755915a85c6f6c1c0f3a86ac8c058f11caa9c9",
+          "assetType": "2",
+          "aggregator": "0x2DF72868c90A4DBb2d49B94D38F05f3c237D257a"
+        },
+        {
+          "name": "Sushi LP USDC-WETH",
+          "asset": "0x34965ba0ac2451a34a0471f04cca3f990b8dea27",
+          "assetType": "2",
+          "aggregator": "0x0531BEBbF617654febB1FAd88EF2C7A1cA379DA7"
+        },
+        {
+          "name": "Sushi LP SNX-WETH",
+          "asset": "0x116ff0d1caa91a6b94276b3471f33dbeb52073e7",
+          "assetType": "2",
+          "aggregator": "0x3feE405C646b7B3355A3C02d86ad6F070D4164ac"
+        },
+        {
+          "name": "Sushi LP LINK-WETH",
+          "asset": "0x74d23f21f780ca26b47db16b0504f2e3832b9321",
+          "assetType": "2",
+          "aggregator": "0xE9cd5690B5F526D7c73eD9192B075FC39d4DC08A"
+        },
+        {
+          "name": "Sushi LP WBTC-WETH",
+          "asset": "0xe62ec2e799305e0d367b0cc3ee2cda135bf89816",
+          "assetType": "2",
+          "aggregator": "0x228D1bB551d9e2C85D4b514108ED2a480e9eBe76"
+        },
+        {
+          "name": "Sushi LP WMATIC-WETH",
+          "asset": "0xc4e595acdd7d12fec385e5da5d43160e8a0bac0e",
+          "assetType": "2",
+          "aggregator": "0xE9A38F4636799f95248fAEfF547b2930fa4227dD"
+        },
+        {
+          "name": "Sushi LP WETH-AAVE",
+          "asset": "0x2813d43463c374a680f235c428fb1d7f08de0b69",
+          "assetType": "2",
+          "aggregator": "0x1A2D51763DbfF46eDdcB3Dc2191770216a1CBF87"
+        },
+        {
+          "name": "Sushi LP WETH-CRV",
+          "asset": "0x396e655c309676caf0acf4607a868e0cded876db",
+          "assetType": "2",
+          "aggregator": "0x5D3Ff64f93Bc2577653206607B80108C7Bc90837"
+        }
+      ],
+      "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
+      "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
+      "PoolLogic": "0xf017298b91ceE57225D897F194B9E81491277145",
+      "PoolManagerLogic": "0x50A3Cd7AA1E34a3bBadDEB20fF883FA14E0ea094",
+      "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
+      "ERC20Guard": "0x14D67240a043e3c83eC642846B0df39B2587e657",
+      "UniswapV2RouterGuard": "0x70Cc5FE285FF63929a9Ce1FCF67147AA61D088FB",
+      "SushiMiniChefV2Guard": "0x9F2737da319B5C83385d25540007571fC66047aC",
+      "SushiLPAssetGuard": "0x02785E63804F41fF9D582beE0Eb4847AaD99F619",
+      "AaveLendingPoolAssetGuard": "0x4eda65fD78adC4447B827e292fd996fDF2AF3E24",
+      "AaveLendingPoolGuard": "0xCdaAB55CCC6A50a1389eCC3234567bf3DaBa4966",
+      "LendingEnabledAssetGuard": "0xCb1687Cac48733BA7F04fD7d461A375D4Ab46F26",
+      "AaveIncentivesControllerGuard": "0x45aDb0586a7899cEDd331191e6B4B238607DEC67"
+    },
+    "network": {
+      "name": "matic",
+      "chainId": 137,
+      "ensAddress": null,
+      "_defaultProvider": null
+    },
+    "date": "Thu, 12 Aug 2021 03:45:53 GMT"
   }
 }
