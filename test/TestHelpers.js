@@ -34,4 +34,25 @@ const checkAlmostSame = (a, b) => {
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-module.exports = { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32 };
+const getAmountOut = async (routerAddress, amountIn, path) => {
+  const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+  const router = await ethers.getContractAt(IUniswapV2Router.abi, routerAddress);
+  const amountsOut = await router.getAmountsOut(amountIn, path);
+  return amountsOut[amountsOut.length - 1];
+};
+
+const getAmountIn = async (routerAddress, amountOut, path) => {
+  const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+  const router = await ethers.getContractAt(IUniswapV2Router.abi, routerAddress);
+  const amountsIn = await router.getAmountsIn(amountOut, path);
+  return amountsIn[0];
+};
+
+module.exports = {
+  updateChainlinkAggregators,
+  currentBlockTimestamp,
+  checkAlmostSame,
+  toBytes32,
+  getAmountOut,
+  getAmountIn,
+};
