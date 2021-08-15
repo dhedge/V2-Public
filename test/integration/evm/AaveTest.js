@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -90,7 +90,7 @@ describe("Aave Test", function () {
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory, sushiswapV2Router, 2, 100); // set slippage 2%
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     uniswapV2RouterGuard.deployed();
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
@@ -360,7 +360,7 @@ describe("Aave Test", function () {
 
     const swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),

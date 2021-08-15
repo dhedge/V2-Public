@@ -34,6 +34,7 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../utils/TxDataUtils.sol";
 import "../interfaces/guards/IGuard.sol";
@@ -48,7 +49,7 @@ import "../interfaces/IManaged.sol";
 
 /// @notice Transaction guard for UniswapV2Router
 /// @dev This will be used for sushiswap as well since Sushi uses the same interface.
-contract UniswapV2RouterGuard is TxDataUtils, IGuard {
+contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
   using SafeMathUpgradeable for uint256;
 
   event ExchangeTo(address fundAddress, address sourceAsset, address dstAsset, uint256 dstAmount, uint256 time);
@@ -75,21 +76,10 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     uint256 time
   );
 
-  address public factory; // uniswap v2 factory
-  address public router; // uniswap v2 router
   uint256 public slippageLimitNumerator;
   uint256 public slippageLimitDenominator;
 
-  constructor(
-    address _factory,
-    address _router,
-    uint256 _slippageLimitNumerator,
-    uint256 _slippageLimitDenominator
-  ) {
-    require(_factory != address(0), "_factory address cannot be 0");
-    factory = _factory;
-    router = _router;
-
+  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) Ownable() {
     slippageLimitNumerator = _slippageLimitNumerator;
     slippageLimitDenominator = _slippageLimitDenominator;
   }
@@ -97,12 +87,13 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   /// @notice Transaction guard for Uniswap V2
   /// @dev It supports exchange, addLiquidity and removeLiquidity functionalities
   /// @param _poolManagerLogic the pool manager logic
+  /// @param to the router address
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address, // to
+    address to,
     bytes calldata data
   )
     external
@@ -121,24 +112,14 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0)); // gets the second input (path) first item (token to swap from)
       address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
       uint256 srcAmount = uint256(getInput(data, 0));
+      uint256 amountOutMin = uint256(getInput(data, 1));
       address toAddress = convert32toAddress(getInput(data, 3));
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
-      if (poolManagerLogicAssets.isSupportedAsset(srcAsset)) {
-        // check slippage
-        uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
-        address[] memory path = new address[](routeLength);
-        for (uint8 i = 0; i < routeLength; i++) {
-          path[i] = convert32toAddress(getArrayIndex(data, 2, i));
-        }
-
-        uint256[] memory amountsOut = IUniswapV2Router(router).getAmountsOut(srcAmount, path);
-        uint256 dstAmount = amountsOut[amountsOut.length - 1];
-        _checkSlippageLimit(srcAsset, dstAsset, srcAmount, dstAmount, poolManagerLogic.factory());
-      }
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
@@ -147,24 +128,14 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0)); // gets the second input (path) first item (token to swap from)
       address dstAsset = convert32toAddress(getArrayLast(data, 2)); // gets second input (path) last item (token to swap to)
       uint256 dstAmount = uint256(getInput(data, 0));
+      uint256 amountInMax = uint256(getInput(data, 1));
       address toAddress = convert32toAddress(getInput(data, 3));
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
-      if (poolManagerLogicAssets.isSupportedAsset(srcAsset)) {
-        // check slippage
-        uint256 routeLength = getArrayLength(data, 2); // length of the routing addresses
-        address[] memory path = new address[](routeLength);
-        for (uint8 i = 0; i < routeLength; i++) {
-          path[i] = convert32toAddress(getArrayIndex(data, 2, i));
-        }
-
-        uint256[] memory amountsIn = IUniswapV2Router(router).getAmountsIn(dstAmount, path);
-        uint256 srcAmount = amountsIn[0];
-        _checkSlippageLimit(srcAsset, dstAsset, srcAmount, dstAmount, poolManagerLogic.factory());
-      }
+      _checkSlippageLimit(srcAsset, dstAsset, amountInMax, dstAmount, address(poolManagerLogic));
 
       emit ExchangeTo(poolManagerLogic.poolLogic(), srcAsset, dstAsset, uint256(dstAmount), block.timestamp);
 
@@ -183,7 +154,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(tokenA), "unsupported asset: tokenA");
       require(poolManagerLogicAssets.isSupportedAsset(tokenB), "unsupported asset: tokenB");
 
-      address pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+      address pair = IUniswapV2Factory(IUniswapV2Router(to).factory()).getPair(tokenA, tokenB);
       require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
 
       require(poolManagerLogic.poolLogic() == convert32toAddress(getInput(data, 6)), "recipient is not pool");
@@ -215,11 +186,10 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(tokenA), "unsupported asset: tokenA");
       require(poolManagerLogicAssets.isSupportedAsset(tokenB), "unsupported asset: tokenB");
 
-      address pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+      address pair = IUniswapV2Factory(IUniswapV2Router(to).factory()).getPair(tokenA, tokenB);
       require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
 
-      address to = convert32toAddress(getInput(data, 5));
-      require(poolManagerLogic.poolLogic() == to, "recipient is not pool");
+      require(poolManagerLogic.poolLogic() == convert32toAddress(getInput(data, 5)), "recipient is not pool");
 
       emit RemoveLiquidity(
         poolManagerLogic.poolLogic(),
@@ -238,25 +208,41 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     return (txType, false);
   }
 
+  /// @notice Update slippage limit numerator/denominator
+  /// @param _slippageLimitNumerator slippage limit numerator - slippage limit would be numerator/denominator
+  /// @param _slippageLimitDenominator slippage limit denominiator - slippage limit would be numerator/denominator
+  function setSlippageLimit(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) external onlyOwner {
+    slippageLimitNumerator = _slippageLimitNumerator;
+    slippageLimitDenominator = _slippageLimitDenominator;
+  }
+
+  /// @notice Check slippage limit when swap tokens
+  /// @param srcAsset the source asset address
+  /// @param srcAmount the destination asset address
+  /// @param srcAmount the source asset amount
+  /// @param dstAmount the destination asset amount
+  /// @param poolManagerLogic the pool manager logic address
   function _checkSlippageLimit(
     address srcAsset,
     address dstAsset,
     uint256 srcAmount,
     uint256 dstAmount,
-    address poolFactory
+    address poolManagerLogic
   ) internal view {
-    uint256 srcDecimals = IERC20Extended(srcAsset).decimals();
-    uint256 dstDecimals = IERC20Extended(dstAsset).decimals();
-    uint256 srcPrice = IHasAssetInfo(poolFactory).getAssetPrice(srcAsset);
-    uint256 dstPrice = IHasAssetInfo(poolFactory).getAssetPrice(dstAsset);
+    if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(srcAsset)) {
+      uint256 srcDecimals = IERC20Extended(srcAsset).decimals();
+      uint256 dstDecimals = IERC20Extended(dstAsset).decimals();
+      address poolFactory = IPoolManagerLogic(poolManagerLogic).factory();
+      uint256 srcPrice = IHasAssetInfo(poolFactory).getAssetPrice(srcAsset);
+      uint256 dstPrice = IHasAssetInfo(poolFactory).getAssetPrice(dstAsset);
 
-    uint256 srcUSDAmount = srcAmount.mul(srcPrice).div(10**srcDecimals);
-    uint256 dstUSDAmount = dstAmount.mul(dstPrice).div(10**dstDecimals);
+      srcAmount = srcAmount.mul(srcPrice).div(10**srcDecimals); // to USD amount
+      dstAmount = dstAmount.mul(dstPrice).div(10**dstDecimals); // to USD amount
 
-    require(
-      dstUSDAmount.mul(slippageLimitDenominator).div(srcUSDAmount) >=
-        slippageLimitDenominator.sub(slippageLimitNumerator),
-      "slippage limit exceed"
-    );
+      require(
+        dstAmount.mul(slippageLimitDenominator).div(srcAmount) >= slippageLimitDenominator.sub(slippageLimitNumerator),
+        "slippage limit exceed"
+      );
+    }
   }
 }

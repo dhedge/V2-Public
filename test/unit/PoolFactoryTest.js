@@ -83,6 +83,13 @@ describe("PoolFactory", function () {
     let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
+    const IUniswapV2Router = await hre.artifacts.readArtifact(
+      "contracts/interfaces/uniswapv2/IUniswapV2Router.sol:IUniswapV2Router",
+    );
+    const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
+    let factoryABI = iUniswapV2Router.encodeFunctionData("factory", []);
+    await uniswapV2Router.givenCalldataReturnAddress(factoryABI, uniswapV2Factory.address);
+
     // mock Sushi LINK-WETH LP
     const IUniswapV2Pair = await hre.artifacts.readArtifact(
       "contracts/interfaces/uniswapv2/IUniswapV2Pair.sol:IUniswapV2Pair",
@@ -209,7 +216,7 @@ describe("PoolFactory", function () {
     const UniswapV2RouterGuard = await ethers.getContractFactory(
       "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
     );
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory.address, uniswapV2Router.address, 2, 100); // set slippage 2%
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
     uniswapV2RouterGuard.deployed();
 
     const UniswapV3SwapGuard = await ethers.getContractFactory(
@@ -935,25 +942,17 @@ describe("PoolFactory", function () {
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      ethers.BigNumber.from(sourceAmount).mul(97).div(2000).div(100),
       [susd, seth],
       poolLogicProxy.address,
       0,
     ]);
-    let getAmountsOutABI = iUniswapV2Router.encodeFunctionData("getAmountsOut", [sourceAmount, [susd, seth]]);
     await assetHandler.setChainlinkTimeout(9000000);
-    await uniswapV2Router.givenCalldataReturn(
-      getAmountsOutABI,
-      abiCoder.encode(["uint256[]"], [[ethers.BigNumber.from(sourceAmount).mul(97).div(2000).div(100)]]),
-    ); // set slippage to 3% (susd: $1, seth: $2000)
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
       "slippage limit exceed",
     );
 
-    await uniswapV2Router.givenCalldataReturn(
-      getAmountsOutABI,
-      abiCoder.encode(["uint256[]"], [[ethers.BigNumber.from(sourceAmount).mul(99).div(2000).div(100)]]),
-    ); // set slippage to 1% (susd: $1, seth: $2000)
+    await uniswapV2RouterGuard.setSlippageLimit(4, 100); // update slippage limit to 4 %
     await uniswapV2Router.givenCalldataRevert(swapABI);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.reverted;
 
