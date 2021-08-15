@@ -7,7 +7,9 @@ require("hardhat-abi-exporter");
 require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
+
 require("./scripts/upgrade.js");
+require("./scripts/polygon/checks/checkConfig");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

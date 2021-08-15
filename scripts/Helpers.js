@@ -30,4 +30,7 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
   return true;
 };
 
-module.exports = { getTag, isSameBytecode };
+/// Converts a string into a hex representation of bytes32
+const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
+
+module.exports = { getTag, isSameBytecode, toBytes32 };
