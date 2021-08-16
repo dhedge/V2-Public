@@ -58,7 +58,12 @@ const init = async (environment, deployedVersion = "") => {
     { contract: SushiLPAssetGuard, name: "SushiLPAssetGuard" },
   ];
 
-  let contracts = versions[version].contracts;
+  let contracts;
+  try {
+    contracts = versions[version].contracts;
+  } catch (error) {
+    throw `Couldn't get version ${version} from the published versions JSON file. Try using "--v v2.X.Y" in the command to specify existing deployed version.`;
+  }
 
   // create contract instances
   proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdmin.abi, signer);
