@@ -5,13 +5,11 @@ const csv = require("csvtojson");
 
 use(chaiAlmost());
 
-const versions = require("../../../publish/polygon/versions.json");
-
 // Coingecko API
 const coingeckoNetwork = "polygon-pos";
 
 const main = async (initializeData) => {
-  const { assetsFileName, version, poolFactoryProxy } = initializeData;
+  const { versions, version, assetsFileName, poolFactoryProxy } = initializeData;
 
   // Check Assets settings against latest Assets CSV file
   console.log("Checking assets..");
@@ -36,7 +34,7 @@ const main = async (initializeData) => {
     assert(assetPrice > 0, `${asset.name} price is not above 0`);
     assert(
       assetType == parseInt(asset.assetType),
-      `${asset.name} assetType mismatch. Deployed assetType = ${asset.assetType}, Contract assetType = ${assetType}`,
+      `${asset.name} assetType mismatch. Deployed version ${version} assetType = ${asset.assetType}, Contract assetType = ${assetType}`,
     );
 
     let foundInCsv = false;

@@ -7,6 +7,7 @@ const main = async (initializeData) => {
   const {
     protocolDao,
     proxyAdmin,
+    proxyAdminOwner,
     poolFactoryProxy,
     assetHandlerProxy,
     governance,
@@ -24,11 +25,12 @@ const main = async (initializeData) => {
   owner.sushiLPAssetGuard = await sushiLPAssetGuard.owner();
 
   console.log("Protocol DAO address:", protocolDao);
+  console.log("ProxyAdmin owner address:", proxyAdminOwner);
 
-  expect(owner.proxyAdmin).to.equal(protocolDao);
-  console.log("proxyAdmin owned by pDAO");
+  expect(owner.proxyAdmin).to.equal(proxyAdminOwner);
+  console.log("proxyAdmin owned by proxyAdminOwner");
   expect(owner.poolFactoryProxy).to.equal(protocolDao);
-  console.log("poolFactoryProxy 0wned by pDAO");
+  console.log("poolFactoryProxy owned by pDAO");
   expect(owner.governance).to.equal(protocolDao);
   console.log("governance owned by pDAO");
   expect(owner.assetHandlerProxy).to.equal(protocolDao);

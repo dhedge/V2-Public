@@ -61,7 +61,7 @@ const main = async (initializeData) => {
 
   // Check Governance nameToDestination mappings match the CSV
   for (const csvName of csvNames) {
-    const destinationAddress = await governance.nameToDestination(toBytes32("weth"));
+    const destinationAddress = await governance.nameToDestination(toBytes32(csvName.Name));
 
     assert(
       csvName.Destination.toLowerCase() == destinationAddress.toLowerCase(),

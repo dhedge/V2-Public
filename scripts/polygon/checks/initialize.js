@@ -7,27 +7,27 @@ const { getTag } = require("../../Helpers");
 
 use(chaiAlmost());
 
-// Polygon addresses
-const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
-const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
-const protocolTreasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
-
-// Deployed versions
-const versions = require("../../../publish/polygon/versions.json");
-// CSV
-const assetsFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
-const namesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
-const assetGuardsFileName = "./config/prod/dHEDGE Governance Asset Guards - Polygon.csv";
-const contractGuardsFileName = "./config/prod/dHEDGE Governance Contract Guards - Polygon.csv";
-
-let version, signer;
 let proxyAdmin, poolFactory, governance, assetHandler; // contracts
 let poolFactoryAddress, assetHandlerAddress; // proxy implementations
 
-const init = async (deployedVersion = "") => {
+const init = async (environment, deployedVersion = "") => {
   console.log("Initializing contracts and variables..");
 
-  signer = (await ethers.getSigners())[0];
+  const {
+    versionsFileName,
+    assetsFileName,
+    namesFileName,
+    assetGuardsFileName,
+    contractGuardsFileName,
+  } = await getEnvironmentFiles(environment);
+
+  const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury } = await getEnvironmentContracts(
+    environment,
+  );
+
+  const versions = require(versionsFileName);
+  let version;
+  const signer = (await ethers.getSigners())[0];
   if (!deployedVersion) {
     version = await getTag();
   } else {
@@ -87,6 +87,7 @@ const init = async (deployedVersion = "") => {
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
+    versions,
     version,
     signer,
     protocolDao,
@@ -94,6 +95,7 @@ const init = async (deployedVersion = "") => {
     contracts,
     contractsArray,
     proxyAdmin,
+    proxyAdminOwner,
     poolFactoryProxy,
     poolFactory,
     assetHandlerProxy,
@@ -103,6 +105,58 @@ const init = async (deployedVersion = "") => {
     poolLogic,
     poolManagerLogic,
   };
+};
+
+const getEnvironmentFiles = async (environment) => {
+  let versions, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
+
+  switch (environment) {
+    case "prod":
+      versionsFileName = "../../../publish/polygon/versions.json";
+      // CSV
+      assetsFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
+      namesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
+      assetGuardsFileName = "./config/prod/dHEDGE Governance Asset Guards - Polygon.csv";
+      contractGuardsFileName = "./config/prod/dHEDGE Governance Contract Guards - Polygon.csv";
+      break;
+
+    case "staging":
+      versionsFileName = "../../../publish/polygon/staging-versions.json";
+      // CSV
+      assetsFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
+      namesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";
+      assetGuardsFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
+      contractGuardsFileName = "./config/staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
+      break;
+
+    default:
+      throw "Invalid environment input. Should be 'prod' or 'staging'.";
+  }
+  return { versionsFileName, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName };
+};
+
+const getEnvironmentContracts = async (environment) => {
+  let protocolDao, proxyAdminAddress, protocolTreasury;
+
+  switch (environment) {
+    case "prod":
+      proxyAdminOwner = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+      proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
+      protocolDao = proxyAdminOwner;
+      protocolTreasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
+      break;
+
+    case "staging":
+      proxyAdminOwner = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+      proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
+      protocolDao = "0x51150F973c2b0537642f5AE8911A49567598808f";
+      protocolTreasury = "0x51150F973c2b0537642f5AE8911A49567598808f";
+      break;
+
+    default:
+      throw "Invalid environment input. Should be 'prod' or 'staging'.";
+  }
+  return { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury };
 };
 
 module.exports = { init };

@@ -1,4 +1,5 @@
 task("checkConfig", "Check deployed contracts")
+  .addOptionalParam("environment", "staging or prod", "prod", types.string)
   .addOptionalParam("ownership", "check ownership", false, types.boolean)
   .addOptionalParam("factory", "check factory", false, types.boolean)
   .addOptionalParam("assets", "check assets", false, types.boolean)
@@ -12,7 +13,8 @@ task("checkConfig", "Check deployed contracts")
     const checkAssets = require("./checkConfigAssets");
     const checkBytecode = require("./checkConfigBytecode");
 
-    const initializeData = await initialize.init("v2.4.0"); // TODO: remove "v2.4.0" once latest release version is deployed
+    const environment = taskArgs.environment;
+    const initializeData = await initialize.init(environment, "v2.4.0"); // TODO: remove "v2.4.0" once latest release version is deployed
 
     // Checks ownable contracts are owned by Protocol DAO
     if (taskArgs.ownership) await checkOwnership.main(initializeData);

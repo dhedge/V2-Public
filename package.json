@@ -39,6 +39,12 @@
     "check:polygon:assets": "npx hardhat checkConfig --assets true --network polygon",
     "check:polygon:bytecode": "npx hardhat checkConfig --bytecode true --network polygon",
     "check:polygon:all": "npx hardhat checkConfig --ownership true --factory true --governance true --assets true --network polygon",
+    "check:staging:ownership": "npx hardhat checkConfig --environment staging --ownership true --network polygon",
+    "check:staging:factory": "npx hardhat checkConfig --environment staging --factory true --network polygon",
+    "check:staging:governance": "npx hardhat checkConfig --environment staging --governance true --network polygon",
+    "check:staging:assets": "npx hardhat checkConfig --environment staging --assets true --network polygon",
+    "check:staging:bytecode": "npx hardhat checkConfig --environment staging --bytecode true --network polygon",
+    "check:staging:all": "npx hardhat checkConfig --environment staging --ownership true --factory true --governance true --assets true --network polygon",
     "doc:gen": "solidity-docgen --solc-module solc-0.7 -t templates",
     "prepare": "husky install"
   },
