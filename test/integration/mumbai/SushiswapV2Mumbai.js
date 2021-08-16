@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame } = require("../../TestHelpers");
+const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -67,7 +67,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
     erc20Guard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     uniswapV2RouterGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
@@ -342,7 +342,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       0,
@@ -353,7 +353,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),

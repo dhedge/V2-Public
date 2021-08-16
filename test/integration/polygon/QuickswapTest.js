@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32, getAmountOut, getAmountIn } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -83,7 +83,7 @@ describe("Quickswap V2 Test", function () {
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(quickswapFactory);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     await uniswapV2RouterGuard.deployed();
 
     quickLPAssetGuard = await ERC20Guard.deploy();
@@ -415,7 +415,7 @@ describe("Quickswap V2 Test", function () {
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
       dstAmount,
-      ethers.constants.MaxUint256,
+      await getAmountIn(quickswapRouter, dstAmount, [usdc, usdt]),
       [usdc, usdt],
       poolLogicProxy.address,
       0,
@@ -426,7 +426,7 @@ describe("Quickswap V2 Test", function () {
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
       dstAmount,
-      ethers.constants.MaxUint256,
+      await getAmountIn(quickswapRouter, dstAmount, [usdc, usdt]),
       [usdc, usdt],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
@@ -515,7 +515,7 @@ describe("Quickswap V2 Test", function () {
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(quickswapRouter, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       0,
@@ -526,7 +526,7 @@ describe("Quickswap V2 Test", function () {
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(quickswapRouter, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
