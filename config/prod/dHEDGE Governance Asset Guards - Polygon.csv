@@ -1,0 +1,3 @@
+AssetType,GuardName,GuardAddress,Description
+0,ERC20Guard,0x3Cf903B98755CBf2174fDBD2e1027e538745A918,Chainlink direct USD price feed with 8 decimals
+2,SushiLPAssetGuard,0xF291D94C6DE82D67655170dFE90D16204a4b4EBf,Sushi LP tokens
