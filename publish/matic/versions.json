@@ -190,7 +190,7 @@
       "SushiLPAssetGuard": "0x2ada4bb6b2e06681e110be339affa1a1fcd9c9b9"
     }
   },
-  "v2.4.0": {
+  "v2.4.1": {
     "network": {
       "name": "matic",
       "chainId": 137,

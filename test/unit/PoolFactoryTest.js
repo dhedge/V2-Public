@@ -3,11 +3,13 @@ const { ethers, upgrades } = require("hardhat");
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
+const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
+const externalInvalidToken = "0x7cea675598da73f859696b483c05a4f135b2092e"; //random address
 
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame } = require("../TestHelpers");
+const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32 } = require("../TestHelpers");
 
 let logicOwner, manager, dao, investor, user1, user2;
 let poolFactory,
@@ -20,7 +22,7 @@ let poolFactory,
   fundAddress;
 let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
 let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard, sushiMiniChefV2Guard; // contract guards
-let erc20Guard, sushiLPAssetGuard; // asset guards
+let erc20Guard, sushiLPAssetGuard, openAssetGuard; // asset guards
 let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
 let susd, seth, slink;
 let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
@@ -233,12 +235,22 @@ describe("PoolFactory", function () {
     sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory(
+      "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
+    );
+    openAssetGuard = await OpenAssetGuard.deploy([externalValidToken]); // initialise with random external token
+    openAssetGuard.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
+    await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+
+    const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
+    console.log("openAssetGuardSetting:", openAssetGuardSetting);
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
@@ -773,27 +785,24 @@ describe("PoolFactory", function () {
     ).to.be.revertedWith("only manager or trader or public function");
   });
 
-  it("Should fail with invalid destination", async () => {
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction(poolManagerLogicProxy.address, "0x00000000"),
-    ).to.be.revertedWith("invalid destination");
-  });
-
   it("Should exec transaction", async () => {
     let poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
     let exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.on("Exchange", (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
+      synthetixGuard.on(
+        "ExchangeFrom",
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress: managerLogicAddress,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -839,6 +848,14 @@ describe("PoolFactory", function () {
       "unsupported spender approval",
     );
 
+    // should be able to approve valid external token (OpenAssetGuard)
+    await poolLogicProxy.connect(manager).execTransaction(externalValidToken, approveABI);
+
+    // shouldn't be able to approve invalid external token (OpenAssetGuard)
+    await expect(poolLogicProxy.connect(manager).execTransaction(externalInvalidToken, approveABI)).to.be.revertedWith(
+      "invalid destination",
+    );
+
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, (100e18).toString()]);
     await susdAsset.givenCalldataReturnBool(approveABI, true);
     await poolLogicProxy.connect(manager).execTransaction(susd, approveABI);
@@ -847,7 +864,7 @@ describe("PoolFactory", function () {
   it("should be able to swap tokens on Uniswap v2", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -897,28 +914,6 @@ describe("PoolFactory", function () {
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [slink, seth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [susd, user1.address, seth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
       [susd, seth, slink],
       poolLogicProxy.address,
       0,
@@ -959,7 +954,7 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -999,14 +994,6 @@ describe("PoolFactory", function () {
       "non-zero address is required",
     );
 
-    // fail to swap direct asset to asset because unsupported source asset
-    badExactInputSingleParams.tokenIn = slink;
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [badExactInputSingleParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-    badExactInputSingleParams.tokenIn = susd;
-
     // fail to swap direct asset to asset because unsupported destination asset
     badExactInputSingleParams.tokenOut = slink;
     swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [badExactInputSingleParams]);
@@ -1036,7 +1023,7 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("Exchange", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -1082,19 +1069,6 @@ describe("PoolFactory", function () {
     let swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapABI)).to.be.revertedWith(
       "non-zero address is required",
-    );
-
-    // fail to swap direct asset to asset because unsupported source asset
-    badExactInputParams.path =
-      "0x" +
-      slink.substring(2) + // unsupported asset
-      "000bb8" +
-      susd.substring(2) +
-      "000bb8" +
-      seth.substring(2);
-    swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
     );
 
     // // TODO: add invalid path asset check if enabled in the Uniswap V3 swap guard
@@ -1144,9 +1118,6 @@ describe("PoolFactory", function () {
     expect(daoFees[0]).to.be.equal(10);
     expect(daoFees[1]).to.be.equal(100);
 
-    await poolFactory.transferOwnership(dao.address);
-    expect(await poolFactory.owner()).to.be.equal(dao.address);
-
     await assetHandler.setChainlinkTimeout(9000000);
 
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
@@ -1183,8 +1154,8 @@ describe("PoolFactory", function () {
   it("should be able to pause deposit, exchange/execute and withdraw", async function () {
     let poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
-    await expect(poolFactory.pause()).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).pause();
+    await expect(poolFactory.connect(manager).pause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.pause();
     expect(await poolFactory.isPaused()).to.be.true;
 
     await expect(
@@ -1208,8 +1179,8 @@ describe("PoolFactory", function () {
       "contracts paused",
     );
 
-    await expect(poolFactory.unpause()).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).unpause();
+    await expect(poolFactory.connect(manager).unpause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.unpause();
     expect(await poolFactory.isPaused()).to.be.false;
 
     await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.not.be.revertedWith("contracts paused");
@@ -1847,8 +1818,10 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
-    await expect(poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).setLogic(TESTNET_DAO, TESTNET_DAO);
+    await expect(poolFactory.connect(manager).setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
     expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
@@ -1856,6 +1829,6 @@ describe("PoolFactory", function () {
     let poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(TESTNET_DAO);
 
-    await poolFactory.connect(dao).setLogic(poolLogic.address, poolManagerLogic.address);
+    await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
   });
 });

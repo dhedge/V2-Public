@@ -115,6 +115,10 @@ describe("Polygon Mainnet Test", function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+    openAssetGuard = await OpenAssetGuard.deploy([]);
+    await openAssetGuard.deployed();
+
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
     uniswapV2RouterGuard.deployed();
@@ -155,6 +159,7 @@ describe("Polygon Mainnet Test", function () {
       [toBytes32("swapRouter"), sushiswapV2Router],
       [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
       [toBytes32("weth"), weth],
+      [toBytes32("openAssetGuard"), openAssetGuard.address],
     ]);
   });
 
@@ -731,7 +736,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, swapRateABI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("invalid transaction");
 
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [amdai, 1]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
@@ -765,7 +770,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("invalid transaction");
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [amdai, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(

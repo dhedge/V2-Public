@@ -311,17 +311,20 @@ describe("Synthetix Test", function () {
 
   it("should be able to swap tokens on synthetix.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.on("Exchange", (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
+      synthetixGuard.on(
+        "ExchangeFrom",
+        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+          event.removeListener();
 
-        resolve({
-          managerLogicAddress: managerLogicAddress,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
+          resolve({
+            managerLogicAddress: managerLogicAddress,
+            sourceAsset: sourceAsset,
+            sourceAmount: sourceAmount,
+            destinationAsset: destinationAsset,
+            time: time,
+          });
+        },
+      );
 
       setTimeout(() => {
         reject(new Error("timeout"));
@@ -331,7 +334,7 @@ describe("Synthetix Test", function () {
     const sourceKey = susdKey;
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
-    const daoAddress = await poolFactory.getDaoAddress();
+    const daoAddress = await poolFactory.daoAddress();
     const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
     const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
@@ -348,23 +351,8 @@ describe("Synthetix Test", function () {
       poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
     ).to.be.revertedWith("non-zero address is required");
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(susd_price_feed, swapABI)).to.be.revertedWith(
-      "invalid destination",
-    );
-
     await expect(poolLogicProxy.connect(manager).execTransaction(synthetix.address, "0xaaaaaaaa")).to.be.revertedWith(
       "invalid transaction",
-    );
-
-    swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
-      slinkKey,
-      sourceAmount,
-      destinationKey,
-      daoAddress,
-      trackingCode,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
     );
 
     swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [

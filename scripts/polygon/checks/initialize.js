@@ -112,7 +112,7 @@ const getEnvironmentFiles = async (environment) => {
 
   switch (environment) {
     case "prod":
-      versionsFileName = "../../../publish/polygon/versions.json";
+      versionsFileName = "../../../publish/matic/versions.json";
       // CSV
       assetsFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
       namesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
@@ -121,7 +121,7 @@ const getEnvironmentFiles = async (environment) => {
       break;
 
     case "staging":
-      versionsFileName = "../../../publish/polygon/staging-versions.json";
+      versionsFileName = "../../../publish/matic/staging-versions.json";
       // CSV
       assetsFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
       namesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";

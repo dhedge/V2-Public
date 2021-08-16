@@ -328,7 +328,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   it("should be able to swap tokens on uniswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -373,28 +373,6 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(usdc, swapABI)).to.be.revertedWith(
       "invalid transaction",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [weth, usdt],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [usdc, user.address, usdt],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
     );
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
@@ -754,7 +732,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   it("should be able to swap tokens back on uniswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 

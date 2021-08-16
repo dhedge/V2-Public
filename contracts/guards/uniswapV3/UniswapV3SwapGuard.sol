@@ -86,9 +86,6 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       // srcAsset -> while loop(path assets) -> dstAsset
       // TODO: consider a better way of doing this
 
-      // check that source asset is supported
-      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
-
       address asset;
 
       // loop through path assets
@@ -115,7 +112,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
     } else if (
@@ -126,13 +123,11 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
       uint256 srcAmount = uint256(getInput(data, 5));
 
-      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
-
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
     }
