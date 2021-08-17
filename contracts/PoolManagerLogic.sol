@@ -55,8 +55,6 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 /// @notice Logic implmentation for pool manager
 contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
-
-
   modifier onlyPoolLogic() {
     require(msg.sender == poolLogic, "only pool logic");
     _;
@@ -176,7 +174,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     emit AssetAdded(poolLogic, manager, asset, isDeposit);
   }
 
-
   function addAssetBalance(address asset, uint256 amount) external override onlyPoolLogic {
     internalBalances[asset] = internalBalances[asset] + amount;
   }
@@ -185,12 +182,12 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     internalBalances[asset] = internalBalances[asset] - amount;
   }
 
-  function hasDirectDeposit() external view override returns (bool){
+  function hasDirectDeposit() external view override returns (bool) {
     uint256 assetCount = supportedAssets.length;
     for (uint8 i = 0; i < assetCount; i++) {
-        if (assetBalance(supportedAssets[i].asset) < assetBalanceExternal(supportedAssets[i].asset)) {
-          return true;
-        }
+      if (assetBalance(supportedAssets[i].asset) < assetBalanceExternal(supportedAssets[i].asset)) {
+        return true;
+      }
     }
     return false;
   }
@@ -217,7 +214,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     }
     return directDeposits;
   }
-
 
   function updateInternalBalances() external override onlyPoolLogic {
     uint256 assetCount = supportedAssets.length;
@@ -281,7 +277,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return internalBalances[asset];
   }
 
-    /// @notice Get asset balance including any staked balance in external contracts
+  /// @notice Get asset balance including any staked balance in external contracts
   /// @return balance of the asset
   function assetBalanceExternal(address asset) public view returns (uint256 balance) {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);

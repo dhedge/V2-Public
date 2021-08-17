@@ -57,7 +57,6 @@ interface IPoolManagerLogic {
 
   function getManagerFee() external view returns (uint256, uint256);
 
-
   function addAssetBalance(address asset, uint256 amount) external;
 
   function subtractAssetBalance(address asset, uint256 amount) external;
@@ -67,5 +66,4 @@ interface IPoolManagerLogic {
   function getDirectDeposits() external returns (SharedStructs.DirectDeposit[] memory);
 
   function updateInternalBalances() external;
-
 }

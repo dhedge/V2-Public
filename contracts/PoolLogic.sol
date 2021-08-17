@@ -136,7 +136,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   mapping(address => uint256) public lastDeposit;
 
-
   address public poolManagerLogic;
 
   modifier onlyPrivate() {
@@ -385,7 +384,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
-    require(!IPoolManagerLogic(poolManagerLogic).hasDirectDeposit(), "Direct deposits detected. Please call claimDirectDeposits() :)");
+    require(
+      !IPoolManagerLogic(poolManagerLogic).hasDirectDeposit(),
+      "Direct deposits detected. Please call claimDirectDeposits() :)"
+    );
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 

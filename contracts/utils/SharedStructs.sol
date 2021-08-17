@@ -39,7 +39,6 @@ pragma solidity 0.7.6;
  * @title A library for Shared Structs.
  */
 library SharedStructs {
-
   struct DirectDeposit {
     address asset;
     uint256 amount;
