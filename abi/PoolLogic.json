@@ -382,6 +382,13 @@
   },
   {
     "inputs": [],
+    "name": "claimDirectDeposits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "creationTime",
     "outputs": [
       {

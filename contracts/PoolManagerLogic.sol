@@ -47,6 +47,7 @@ import "./interfaces/IHasOwnable.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./Managed.sol";
+import "./utils/SharedStructs.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -54,6 +55,12 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 /// @notice Logic implmentation for pool manager
 contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
+
+
+  modifier onlyPoolLogic() {
+    require(msg.sender == poolLogic, "only pool logic");
+    _;
+  }
   using SafeMathUpgradeable for uint256;
   using AddressUpgradeable for address;
 
@@ -72,6 +79,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   Asset[] public supportedAssets;
   mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
+
+  mapping(address => uint256) public internalBalances;
 
   // Fee increase announcement
   uint256 public announcedFeeIncreaseNumerator;
@@ -167,12 +176,62 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     emit AssetAdded(poolLogic, manager, asset, isDeposit);
   }
 
+
+  function addAssetBalance(address asset, uint256 amount) external override onlyPoolLogic {
+    internalBalances[asset] = internalBalances[asset] + amount;
+  }
+
+  function subtractAssetBalance(address asset, uint256 amount) external override onlyPoolLogic {
+    internalBalances[asset] = internalBalances[asset] - amount;
+  }
+
+  function hasDirectDeposit() external view override returns (bool){
+    uint256 assetCount = supportedAssets.length;
+    for (uint8 i = 0; i < assetCount; i++) {
+        if (assetBalance(supportedAssets[i].asset) < assetBalanceExternal(supportedAssets[i].asset)) {
+          return true;
+        }
+    }
+    return false;
+  }
+
+  function getDirectDeposits() external view override returns (SharedStructs.DirectDeposit[] memory) {
+    uint256 assetCount = supportedAssets.length;
+    SharedStructs.DirectDeposit[] memory directDeposits = new SharedStructs.DirectDeposit[](assetCount);
+    uint8 index = 0;
+    for (uint8 i = 0; i < assetCount; i++) {
+      uint256 internalBalance = assetBalance(supportedAssets[i].asset);
+      uint256 externalBalance = assetBalanceExternal(supportedAssets[i].asset);
+      if (internalBalance < externalBalance) {
+        directDeposits[index] = SharedStructs.DirectDeposit({
+          asset: supportedAssets[i].asset,
+          amount: externalBalance - internalBalance
+        });
+        index++;
+      }
+    }
+
+    uint256 reduceLength = assetCount.sub(index);
+    assembly {
+      mstore(directDeposits, sub(mload(directDeposits), reduceLength))
+    }
+    return directDeposits;
+  }
+
+
+  function updateInternalBalances() external override onlyPoolLogic {
+    uint256 assetCount = supportedAssets.length;
+    for (uint8 i = 0; i < assetCount; i++) {
+      internalBalances[supportedAssets[i].asset] = assetBalanceExternal(supportedAssets[i].asset);
+    }
+  }
+
   /// @notice Remove asset from the pool
   /// @dev use asset address to remove from supportedAssets
   /// @param asset asset address
   function _removeAsset(address asset) internal {
     require(isSupportedAsset(asset), "asset not supported");
-
+    // We might change this to assetBalanceExternal so no funds get locked in the contract
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
 
     uint256 length = supportedAssets.length;
@@ -219,6 +278,12 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Get asset balance including any staked balance in external contracts
   /// @return balance of the asset
   function assetBalance(address asset) public view returns (uint256 balance) {
+    return internalBalances[asset];
+  }
+
+    /// @notice Get asset balance including any staked balance in external contracts
+  /// @return balance of the asset
+  function assetBalanceExternal(address asset) public view returns (uint256 balance) {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     balance = IAssetGuard(guard).getBalance(poolLogic, asset);
   }

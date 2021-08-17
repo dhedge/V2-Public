@@ -1,4 +1,3 @@
-//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -31,41 +30,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 // SPDX-License-Identifier: MIT
-import "../utils/SharedStructs.sol";
 
-// Temp change to the line below because getDirectDeposits returns DirectDeposit
-// Can change the return type here to something more basic later
-pragma experimental ABIEncoderV2;
-pragma solidity ^0.7.6;
+// import "./BytesLib.sol";
 
-interface IPoolManagerLogic {
-  function poolLogic() external view returns (address);
+pragma solidity 0.7.6;
 
-  function isDepositAsset(address asset) external view returns (bool);
+/**
+ * @title A library for Shared Structs.
+ */
+library SharedStructs {
 
-  function validateAsset(address asset) external view returns (bool);
-
-  function assetValue(address asset) external view returns (uint256);
-
-  function assetValue(address asset, uint256 amount) external view returns (uint256);
-
-  function factory() external view returns (address);
-
-  function setPoolLogic(address fundAddress) external returns (bool);
-
-  function totalFundValue() external view returns (uint256);
-
-  function getManagerFee() external view returns (uint256, uint256);
-
-
-  function addAssetBalance(address asset, uint256 amount) external;
-
-  function subtractAssetBalance(address asset, uint256 amount) external;
-
-  function hasDirectDeposit() external view returns (bool);
-
-  function getDirectDeposits() external returns (SharedStructs.DirectDeposit[] memory);
-
-  function updateInternalBalances() external;
-
+  struct DirectDeposit {
+    address asset;
+    uint256 amount;
+  }
 }

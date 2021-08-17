@@ -66,6 +66,7 @@ import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 import "./utils/AddressHelper.sol";
+import "./utils/SharedStructs.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -134,6 +135,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   uint256 public tokenPriceAtLastFeeMint;
 
   mapping(address => uint256) public lastDeposit;
+
 
   address public poolManagerLogic;
 
@@ -224,7 +226,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 totalSupplyBefore = totalSupply();
 
     require(IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
-
+    IPoolManagerLogic(poolManagerLogic).addAssetBalance(_asset, _amount);
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
     if (totalSupplyBefore > 0) {
@@ -280,7 +282,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       if (portionOfAssetBalance > 0) {
         require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
-        IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
+        bool result = IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
+        if (result) {
+          IPoolManagerLogic(poolManagerLogic).subtractAssetBalance(asset, portionOfAssetBalance);
+        }
       }
 
       if (externalWithdrawProcessed || portionOfAssetBalance > 0) {
@@ -364,6 +369,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return (withdrawAsset, withdrawBalance, externalWithdrawProcessed);
   }
 
+  // Anyone can claim direct deposits incentivising folks not to do it.
+  function claimDirectDeposits() external nonReentrant whenNotPaused {
+    SharedStructs.DirectDeposit[] memory directDeposits = IPoolManagerLogic(poolManagerLogic).getDirectDeposits();
+    uint256 assetCount = directDeposits.length;
+    for (uint8 i = 0; i < assetCount; i++) {
+      IERC20Upgradeable(directDeposits[i].asset).transfer(msg.sender, directDeposits[i].amount);
+    }
+  }
+
   /// @notice Function to let pool talk to other protocol
   /// @dev execute transaction for the pool
   /// @param to The destination address for pool to talk to
@@ -371,7 +385,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
-
+    require(!IPoolManagerLogic(poolManagerLogic).hasDirectDeposit(), "Direct deposits detected. Please call claimDirectDeposits() :)");
+    // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 
     if (IHasAssetInfo(factory).isValidAsset(to)) {
@@ -385,6 +400,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     success = to.tryAssemblyCall(data);
     require(success, "failed to execute the call");
+
+    // We must now update our internal balances to whatever the result of this tx is
+    IPoolManagerLogic(poolManagerLogic).updateInternalBalances();
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }

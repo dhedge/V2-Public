@@ -39,6 +39,11 @@ pragma solidity 0.7.6;
  * @title A library for Address utils.
  */
 library AddressHelper {
+
+  struct DirectDeposit {
+    address asset;
+    uint256 amount;
+  }
   /**
    * @notice try a contract call via assembly
    * @param to the contract address
