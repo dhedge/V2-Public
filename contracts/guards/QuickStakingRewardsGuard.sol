@@ -55,12 +55,6 @@ contract QuickStakingRewardsGuard is TxDataUtils, IGuard {
   event Unstake(address fundAddress, address asset, address stakingContract, uint256 amount, uint256 time);
   event Claim(address fundAddress, address stakingContract, uint256 time);
 
-  address public rewardToken; // QUICK token
-
-  constructor(address _rewardToken) {
-    rewardToken = _rewardToken;
-  }
-
   /// @notice Transaction guard for Sushi MiniChefV2
   /// @dev It supports stake, withdraw, getReward functionalities
   /// @param _poolManagerLogic the pool manager logic
@@ -87,10 +81,8 @@ contract QuickStakingRewardsGuard is TxDataUtils, IGuard {
     if (method == bytes4(keccak256("stake(uint256)"))) {
       uint256 amount = uint256(getInput(data, 0)); // Stake token amount.
       address stakingToken = IStakingRewards(to).stakingToken();
-      address rewardsToken = IStakingRewards(to).rewardsToken();
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(stakingToken), "unsupported staking asset");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardsToken), "enable reward token");
 
       emit Stake(poolLogic, stakingToken, to, amount, block.timestamp);
 
@@ -105,9 +97,6 @@ contract QuickStakingRewardsGuard is TxDataUtils, IGuard {
 
       txType = 6; // `Unstake` type
     } else if (method == bytes4(keccak256("getReward()"))) {
-      address rewardsToken = IStakingRewards(to).rewardsToken();
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardsToken), "enable reward token");
-
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 7; // `Claim` type
