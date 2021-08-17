@@ -10,4 +10,27 @@ const getTag = async () => {
   return result.stdout.trim();
 };
 
-module.exports = { getTag };
+const isSameBytecode = (creationBytecode, runtimeBytecode) => {
+  const bytecodeB = runtimeBytecode.substring(39);
+  const bytecodeSnippet = bytecodeB.substring(0, 100);
+  const indexOfSnippet = creationBytecode.indexOf(bytecodeSnippet);
+
+  if (indexOfSnippet < 0) return false;
+  const bytecodeA = creationBytecode.substring(indexOfSnippet);
+  if (bytecodeA.length !== bytecodeB.length) return false;
+
+  // Ignore the bytecode metadata https://docs.soliditylang.org/en/v0.7.6/metadata.html
+  const metadataString = "a264"; // Note: this string might change in future compiler versions
+  if (
+    bytecodeA.substring(0, bytecodeA.indexOf(metadataString)) !==
+    bytecodeB.substring(0, bytecodeB.indexOf(metadataString))
+  )
+    return false;
+
+  return true;
+};
+
+/// Converts a string into a hex representation of bytes32
+const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
+
+module.exports = { getTag, isSameBytecode, toBytes32 };

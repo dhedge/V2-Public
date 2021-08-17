@@ -77,11 +77,11 @@ contract OpenAssetGuard is IGuard, TxDataUtils, Ownable {
       bool // isPublic
     )
   {
+    require(isValidAsset[to], "invalid destination");
+
     bytes4 method = getMethod(data);
 
     if (method == bytes4(keccak256("approve(address,uint256)"))) {
-      require(isValidAsset[to], "invalid asset");
-
       address spender = convert32toAddress(getInput(data, 0));
       uint256 amount = uint256(getInput(data, 1));
 

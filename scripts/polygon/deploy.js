@@ -40,11 +40,11 @@ const sushiLPUsdcWethPoolId = 1;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-const prodVersionFile = "./publish/polygon/versions.json";
-const stagingVersionFile = "./publish/polygon/staging-versions.json";
+const prodVersionFile = "./publish/matic/versions.json";
+const stagingVersionFile = "./publish/matic/staging-versions.json";
 
-const prodFileName = "./dHEDGE Assets list - Polygon.csv";
-const stagingFileName = "./dHEDGE Assets list - Polygon Staging.csv";
+const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
+const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 
 const deploy = async (env) => {
   const ethers = hre.ethers;

@@ -860,7 +860,7 @@ describe("PoolFactory", function () {
 
     // shouldn't be able to approve invalid external token (OpenAssetGuard)
     await expect(poolLogicProxy.connect(manager).execTransaction(externalInvalidToken, approveABI)).to.be.revertedWith(
-      "invalid asset",
+      "invalid destination",
     );
 
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, (100e18).toString()]);
@@ -1131,9 +1131,6 @@ describe("PoolFactory", function () {
     expect(daoFees[0]).to.be.equal(10);
     expect(daoFees[1]).to.be.equal(100);
 
-    await poolFactory.transferOwnership(dao.address);
-    expect(await poolFactory.owner()).to.be.equal(dao.address);
-
     await assetHandler.setChainlinkTimeout(9000000);
 
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
@@ -1170,8 +1167,8 @@ describe("PoolFactory", function () {
   it("should be able to pause deposit, exchange/execute and withdraw", async function () {
     let poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
-    await expect(poolFactory.pause()).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).pause();
+    await expect(poolFactory.connect(manager).pause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.pause();
     expect(await poolFactory.isPaused()).to.be.true;
 
     await expect(
@@ -1195,8 +1192,8 @@ describe("PoolFactory", function () {
       "contracts paused",
     );
 
-    await expect(poolFactory.unpause()).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).unpause();
+    await expect(poolFactory.connect(manager).unpause()).to.be.revertedWith("caller is not the owner");
+    await poolFactory.unpause();
     expect(await poolFactory.isPaused()).to.be.false;
 
     await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.not.be.revertedWith("contracts paused");
@@ -1834,8 +1831,10 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
-    await expect(poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith("caller is not the owner");
-    await poolFactory.connect(dao).setLogic(TESTNET_DAO, TESTNET_DAO);
+    await expect(poolFactory.connect(manager).setLogic(TESTNET_DAO, TESTNET_DAO)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+    await poolFactory.setLogic(TESTNET_DAO, TESTNET_DAO);
 
     let poolManagerLogicAddress = await poolFactory.getLogic(1);
     expect(poolManagerLogicAddress).to.equal(TESTNET_DAO);
@@ -1843,6 +1842,6 @@ describe("PoolFactory", function () {
     let poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(TESTNET_DAO);
 
-    await poolFactory.connect(dao).setLogic(poolLogic.address, poolManagerLogic.address);
+    await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
   });
 });

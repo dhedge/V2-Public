@@ -750,7 +750,9 @@ describe("Quickswap V2 Test", function () {
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [dai, depositAmount]);
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(dai, approveABI)).to.be.revertedWith("invalid asset");
+    await expect(poolLogicProxy.connect(manager).execTransaction(dai, approveABI)).to.be.revertedWith(
+      "invalid destination",
+    );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(wmatic, approveABI)).to.be.revertedWith(
       "unsupported spender approval",
