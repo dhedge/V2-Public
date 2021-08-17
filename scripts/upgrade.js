@@ -58,7 +58,7 @@ task("upgrade", "Upgrade proxy contracts")
       }
     }
 
-    safeSdk = await Safe.default.create({
+    const safeSdk = await Safe.default.create({
       ethAdapter,
       safeAddress: safeAddress,
       contractNetworks
@@ -144,10 +144,14 @@ task("upgrade", "Upgrade proxy contracts")
       const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactory);
       console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
-      await hre.run("verify:verify", {
-        address: newPoolFactoryLogic,
-        contract: "contracts/PoolFactory.sol:PoolFactory",
-      });
+      try{
+        await hre.run("verify:verify", {
+          address: newPoolFactoryLogic,
+          contract: "contracts/PoolFactory.sol:PoolFactory",
+        });
+      }catch(err){
+        console.log("Error: ", err);
+      }
 
       const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
       await proposeTx(proxyAdminAddress, upgradeABI);
@@ -158,10 +162,14 @@ task("upgrade", "Upgrade proxy contracts")
       const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
       console.log("assetHandler logic deployed to: ", assetHandler);
 
-      await hre.run("verify:verify", {
-        address: assetHandler,
-        contract: "contracts/assets/AssetHandler.sol:AssetHandler",
-      });
+      try{
+        await hre.run("verify:verify", {
+          address: assetHandler,
+          contract: "contracts/assets/AssetHandler.sol:AssetHandler",
+        });
+      }catch(err){
+        console.log("Error: ", err);
+      }
 
       const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAssetHandler, assetHandler]);
       await proposeTx(proxyAdminAddress, upgradeABI);

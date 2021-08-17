@@ -28,6 +28,7 @@
     "upgrade:mumbai:poolManagerLogic": "npx hardhat upgrade --pool-manager-logic true --network mumbai",
     "upgrade:mumbai:all": "npx hardhat upgrade --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --network mumbai",
     "upgrade:polygon:poolFactory": "npx hardhat upgrade --pool-factory true --network polygon",
+    "upgrade:polygon:poolFactory:production": "npx hardhat upgrade --pool-factory true --network polygon --production true",
     "upgrade:polygon:assetHandler": "npx hardhat upgrade --asset-handler true --network polygon",
     "upgrade:polygon:poolLogic": "npx hardhat upgrade --pool-logic true --network polygon",
     "upgrade:polygon:poolManagerLogic": "npx hardhat upgrade --pool-manager-logic true --network polygon",
