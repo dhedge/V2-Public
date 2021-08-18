@@ -441,6 +441,11 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   ) internal view returns (MultiTransaction[] memory transactions) {
     (address[] memory collateralAssets, uint256[] memory amounts) = _calculateCollateralAssets(pool, portion);
 
+    // We have 4 transactions for each collateral asset.
+    // 1. Withdraw collateral asset from aave
+    // 2. Approve collateral asset for swap router
+    // 3. Swap collateral asset to WETH
+    // 4. Approve collateral asset for swap router (zero amount)
     uint256 length = collateralAssets.length.mul(4);
     transactions = new MultiTransaction[](length);
 
@@ -512,6 +517,10 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     uint256[] memory repayAmounts,
     uint256[] memory premiums
   ) internal view returns (MultiTransaction[] memory transactions) {
+    // 1. Approve WETH for swap router (maximum approve)
+    // 2. For each repay asset -> swap WETH to repay asset
+    // 3. For each repay asset -> approve repay asset for aave lending pool (for flashloan repay)
+    // 4. Approve WETH for swap router (zero amount)
     uint256 length = repayAssets.length.mul(2).add(2);
     transactions = new MultiTransaction[](length);
 
