@@ -527,7 +527,7 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(60).div(100));
       const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
-      console.log(usdcBalanceAfter.toString(), usdcBalanceBefore.toString())
+      console.log(usdcBalanceAfter.toString(), usdcBalanceBefore.toString());
       checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((20e6).toString()));
     });
   });
