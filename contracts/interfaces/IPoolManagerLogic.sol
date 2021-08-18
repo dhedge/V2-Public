@@ -31,11 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
 // SPDX-License-Identifier: MIT
-import "../utils/SharedStructs.sol";
 
-// Temp change to the line below because getDirectDeposits returns DirectDeposit
-// Can change the return type here to something more basic later
-pragma experimental ABIEncoderV2;
 pragma solidity ^0.7.6;
 
 interface IPoolManagerLogic {
@@ -57,13 +53,15 @@ interface IPoolManagerLogic {
 
   function getManagerFee() external view returns (uint256, uint256);
 
+
   function addAssetBalance(address asset, uint256 amount) external;
 
   function subtractAssetBalance(address asset, uint256 amount) external;
 
   function hasDirectDeposit() external view returns (bool);
 
-  function getDirectDeposits() external returns (SharedStructs.DirectDeposit[] memory);
-
   function updateInternalBalances() external;
+
+  function getDirectDepositFactor() external view returns (uint256);
+
 }

@@ -75,27 +75,15 @@
   },
   {
     "inputs": [],
-    "name": "getDirectDeposits",
+    "name": "getDirectDepositFactor",
     "outputs": [
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "asset",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "amount",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct SharedStructs.DirectDeposit[]",
+        "internalType": "uint256",
         "name": "",
-        "type": "tuple[]"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {

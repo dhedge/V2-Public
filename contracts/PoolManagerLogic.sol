@@ -47,7 +47,6 @@ import "./interfaces/IHasOwnable.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./Managed.sol";
-import "./utils/SharedStructs.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -55,12 +54,19 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 /// @notice Logic implmentation for pool manager
 contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
+  using SafeMathUpgradeable for uint256;
+  using AddressUpgradeable for address;
+
+    struct DirectDeposit {
+    address asset;
+    uint256 amount;
+  }
+
   modifier onlyPoolLogic() {
     require(msg.sender == poolLogic, "only pool logic");
     _;
   }
-  using SafeMathUpgradeable for uint256;
-  using AddressUpgradeable for address;
+
 
   event AssetAdded(address indexed fundAddress, address manager, address asset, bool isDeposit);
   event AssetRemoved(address fundAddress, address manager, address asset);
@@ -195,15 +201,15 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return false;
   }
 
-  function getDirectDeposits() external view override returns (SharedStructs.DirectDeposit[] memory) {
+  function getDirectDeposits() internal view returns (DirectDeposit[] memory) {
     uint256 assetCount = supportedAssets.length;
-    SharedStructs.DirectDeposit[] memory directDeposits = new SharedStructs.DirectDeposit[](assetCount);
+    DirectDeposit[] memory directDeposits = new DirectDeposit[](assetCount);
     uint8 index = 0;
     for (uint8 i = 0; i < assetCount; i++) {
       uint256 internalBalance = assetBalance(supportedAssets[i].asset);
       uint256 externalBalance = assetBalanceExternal(supportedAssets[i].asset);
       if (internalBalance < externalBalance) {
-        directDeposits[index] = SharedStructs.DirectDeposit({
+        directDeposits[index] = DirectDeposit({
           asset: supportedAssets[i].asset,
           amount: externalBalance - internalBalance
         });
@@ -219,6 +225,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   function updateInternalBalances() external override onlyPoolLogic {
+    _updateInternalBalances();
+  }
+
+  function _updateInternalBalances() internal {
     uint256 assetCount = supportedAssets.length;
     for (uint8 i = 0; i < assetCount; i++) {
       internalBalances[supportedAssets[i].asset] = assetBalanceExternal(supportedAssets[i].asset);
@@ -226,10 +236,16 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
 
+
   // We acknoledge direct deposits and distribute them to all pool holders
-  function directDepositReclaimation() external nonReentrant whenNotPaused {
-    SharedStructs.DirectDeposit[] memory directDeposits = IPoolManagerLogic(poolManagerLogic).getDirectDeposits();
+  // Might need to be marked as non-reentrant
+  function directDepositReclaimation() public {
+    DirectDeposit[] memory directDeposits = getDirectDeposits();
     uint256 assetCount = directDeposits.length;
+    if (assetCount == 0) {
+      return;
+    }
+
     uint256 newValue = 0;
     for (uint8 i = 0; i < assetCount; i++) {
       newValue = newValue + assetValue(directDeposits[i].asset, directDeposits[i].amount);
@@ -237,9 +253,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     // How much value has been added relative to the existing funds
     uint256 newValuePercent = newValue / totalFundValue();
-    directDepositFactor = directDepositFactor * newValuePercent;
-    // once we have recorded the direct deposit value change we can reset our internal balances
-    updateInternalBalances();
+    directDepositFactor = directDepositFactor * (10**18 + newValuePercent);
+    // once we have recorded the direct deposit value change we can reset our internal
+    _updateInternalBalances();
   }
 
   /// @notice Remove asset from the pool
@@ -365,7 +381,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Return the total fund value of the pool
   /// @dev Calculate the total fund value from the supported assets
   /// @return value in USD
-  function totalFundValue() external view override returns (uint256) {
+  function totalFundValue() public view override returns (uint256) {
     uint256 total = 0;
     uint256 assetCount = supportedAssets.length;
 

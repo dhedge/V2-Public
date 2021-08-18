@@ -66,7 +66,6 @@ import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 import "./utils/AddressHelper.sol";
-import "./utils/SharedStructs.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -381,7 +380,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(to != address(0), "non-zero address is required");
     require(
       !IPoolManagerLogic(poolManagerLogic).hasDirectDeposit(),
-      "Direct deposits detected. Please call claimDirectDeposits() :)"
+      "Direct deposits detected. Please call PoolManagerLogic.directDepositReclaimation()"
     );
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
