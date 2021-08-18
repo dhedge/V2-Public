@@ -79,6 +79,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
 
   mapping(address => uint256) public internalBalances;
+  uint256 public directDepositFactor;
+
 
   // Fee increase announcement
   uint256 public announcedFeeIncreaseNumerator;
@@ -108,6 +110,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     factory = _factory;
     poolLogic = _poolLogic;
     managerFeeNumerator = _managerFeeNumerator;
+    directDepositFactor = 10**18;
     _changeAssets(_supportedAssets, new address[](0));
   }
 
@@ -222,6 +225,23 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     }
   }
 
+
+  // We acknoledge direct deposits and distribute them to all pool holders
+  function directDepositReclaimation() external nonReentrant whenNotPaused {
+    SharedStructs.DirectDeposit[] memory directDeposits = IPoolManagerLogic(poolManagerLogic).getDirectDeposits();
+    uint256 assetCount = directDeposits.length;
+    uint256 newValue = 0;
+    for (uint8 i = 0; i < assetCount; i++) {
+      newValue = newValue + assetValue(directDeposits[i].asset, directDeposits[i].amount);
+    }
+
+    // How much value has been added relative to the existing funds
+    uint256 newValuePercent = newValue / totalFundValue();
+    directDepositFactor = directDepositFactor * newValuePercent;
+    // once we have recorded the direct deposit value change we can reset our internal balances
+    updateInternalBalances();
+  }
+
   /// @notice Remove asset from the pool
   /// @dev use asset address to remove from supportedAssets
   /// @param asset asset address
@@ -250,6 +270,12 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function getSupportedAssets() external view override returns (Asset[] memory) {
     return supportedAssets;
   }
+
+
+  function getDirectDepositFactor() external view override returns (uint256) {
+    return directDepositFactor;
+  }
+
 
   /// @notice Get all the deposit assets
   /// @return Return array of deposit assets' addresses

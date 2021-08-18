@@ -252,6 +252,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     );
   }
 
+  function balanceOf(address account) public view virtual override returns (uint256) {
+    return super.balanceOf(account) * IPoolManagerLogic(poolManagerLogic).getDirectDepositFactor();
+  }
+
   /// @notice Withdraw assets based on the fund token amount
   /// @param _fundTokenAmount the fund token amount
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
@@ -368,15 +372,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     return (withdrawAsset, withdrawBalance, externalWithdrawProcessed);
   }
 
-  // Anyone can claim direct deposits incentivising folks not to do it.
-  function claimDirectDeposits() external nonReentrant whenNotPaused {
-    SharedStructs.DirectDeposit[] memory directDeposits = IPoolManagerLogic(poolManagerLogic).getDirectDeposits();
-    uint256 assetCount = directDeposits.length;
-    for (uint8 i = 0; i < assetCount; i++) {
-      IERC20Upgradeable(directDeposits[i].asset).transfer(msg.sender, directDeposits[i].amount);
-    }
-  }
-
   /// @notice Function to let pool talk to other protocol
   /// @dev execute transaction for the pool
   /// @param to The destination address for pool to talk to
@@ -449,6 +444,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       managerFeeNumerator,
       managerFeeDenominator
     );
+  }
+
+  function totalSupply() public view virtual override returns (uint256) {
+    return super.totalSupply() * IPoolManagerLogic(poolManagerLogic).getDirectDepositFactor();
   }
 
   /// @notice Get price of the asset
