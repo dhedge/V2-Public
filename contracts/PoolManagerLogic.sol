@@ -57,7 +57,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   using SafeMathUpgradeable for uint256;
   using AddressUpgradeable for address;
 
-    struct DirectDeposit {
+  struct DirectDeposit {
     address asset;
     uint256 amount;
   }
@@ -66,7 +66,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     require(msg.sender == poolLogic, "only pool logic");
     _;
   }
-
 
   event AssetAdded(address indexed fundAddress, address manager, address asset, bool isDeposit);
   event AssetRemoved(address fundAddress, address manager, address asset);
@@ -86,7 +85,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   mapping(address => uint256) public internalBalances;
   uint256 public directDepositFactor;
-
 
   // Fee increase announcement
   uint256 public announcedFeeIncreaseNumerator;
@@ -235,8 +233,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     }
   }
 
-
-
   // We acknoledge direct deposits and distribute them to all pool holders
   // Might need to be marked as non-reentrant
   function directDepositReclaimation() public {
@@ -287,11 +283,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return supportedAssets;
   }
 
-
   function getDirectDepositFactor() external view override returns (uint256) {
     return directDepositFactor;
   }
-
 
   /// @notice Get all the deposit assets
   /// @return Return array of deposit assets' addresses
