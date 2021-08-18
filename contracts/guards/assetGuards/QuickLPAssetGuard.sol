@@ -42,7 +42,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Quick LP token asset guard
-/// @dev Asset type = 2
+/// @dev Asset type = 5
 contract QuickLPAssetGuard is ERC20Guard, Ownable {
   using SafeMathUpgradeable for uint256;
 
