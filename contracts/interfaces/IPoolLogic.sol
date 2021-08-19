@@ -44,5 +44,4 @@ interface IPoolLogic {
   function availableManagerFee() external view returns (uint256 fee);
 
   function tokenPrice() external view returns (uint256 price);
-
 }

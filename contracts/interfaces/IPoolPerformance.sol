@@ -35,10 +35,17 @@
 pragma solidity ^0.7.6;
 
 interface IPoolPerformance {
+  function addAssetBalance(
+    address poolAddress,
+    address asset,
+    uint256 amount
+  ) external;
 
-  function addAssetBalance(address poolAddress, address asset, uint256 amount) external;
-
-  function subtractAssetBalance(address poolAddress, address asset, uint256 amount) external;
+  function subtractAssetBalance(
+    address poolAddress,
+    address asset,
+    uint256 amount
+  ) external;
 
   function hasDirectDeposit(address poolAddress) external view returns (bool);
 

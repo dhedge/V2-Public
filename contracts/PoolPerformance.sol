@@ -32,7 +32,6 @@
 
 // SPDX-License-Identifier: BUSL-1.1
 
-
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
@@ -63,13 +62,21 @@ contract PoolPerformance is PausableUpgradeable {
     __Pausable_init();
   }
 
-  function addAssetBalance(address poolAddress, address asset, uint256 amount) external {
+  function addAssetBalance(
+    address poolAddress,
+    address asset,
+    uint256 amount
+  ) external {
     // Should we check poolAddress is one of our pools?
     require(msg.sender == poolAddress, "only pool");
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
   }
 
-  function subtractAssetBalance(address poolAddress, address asset, uint256 amount) external {
+  function subtractAssetBalance(
+    address poolAddress,
+    address asset,
+    uint256 amount
+  ) external {
     // Should we check poolAddress is one of our pools?
     require(msg.sender == poolAddress, "only pool");
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] - amount;
@@ -82,7 +89,10 @@ contract PoolPerformance is PausableUpgradeable {
 
     for (uint8 i = 0; i < assetCount; i++) {
       // Again not super keen on this circular reference from poolAddress to manager to poolAddress
-      if (internalBalancesMap[poolAddress][supportedAssets[i].asset] < IPoolManagerLogic(poolManagerAddress).assetBalance(supportedAssets[i].asset)) {
+      if (
+        internalBalancesMap[poolAddress][supportedAssets[i].asset] <
+        IPoolManagerLogic(poolManagerAddress).assetBalance(supportedAssets[i].asset)
+      ) {
         return true;
       }
     }
@@ -108,7 +118,9 @@ contract PoolPerformance is PausableUpgradeable {
 
     for (uint8 i = 0; i < assetCount; i++) {
       // The call here is a bit cicular, because assetBalance gets the balance for the poolAddress not sure I like this.
-      internalBalancesMap[poolAddress][supportedAssets[i].asset] = IPoolManagerLogic(poolManagerAddress).assetBalance(supportedAssets[i].asset);
+      internalBalancesMap[poolAddress][supportedAssets[i].asset] = IPoolManagerLogic(poolManagerAddress).assetBalance(
+        supportedAssets[i].asset
+      );
     }
   }
 
@@ -141,12 +153,13 @@ contract PoolPerformance is PausableUpgradeable {
     for (uint8 i = 0; i < assetCount; i++) {
       address assetAddress = supportedAssets[i].asset;
       uint256 amount = internalBalancesMap[poolAddress][assetAddress];
-      valueWithoutDirectDeposits = valueWithoutDirectDeposits + IPoolManagerLogic(poolManagerAddress)
-        .assetValue(assetAddress, amount);
+      valueWithoutDirectDeposits =
+        valueWithoutDirectDeposits +
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
     }
 
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      iDirectDepositFactorMap[poolAddress] = 10 ** 18;
+      iDirectDepositFactorMap[poolAddress] = 10**18;
     }
 
     uint256 totalFundValue = IPoolManagerLogic(poolManagerAddress).totalFundValue();
@@ -155,9 +168,10 @@ contract PoolPerformance is PausableUpgradeable {
     // totalFundValue = 100, PreviousIDirectDepositFactor = 0.9, AdditionalIDirectDepositFactor = 0.7
     // newDirectDepositFactor = (100 * 0.9 * 0.7) / 100 = 0.63 (ie. 0.37 i.e 37% of the funds value is front direct deposits)
     // We need to combine the previous directDepositFactor and the additional directDepositFactor
-    iDirectDepositFactorMap[poolAddress] = (totalFundValue * iDirectDepositFactorMap[poolAddress] * additionalIDirectDepositFactor) / totalFundValue;
+    iDirectDepositFactorMap[poolAddress] =
+      (totalFundValue * iDirectDepositFactorMap[poolAddress] * additionalIDirectDepositFactor) /
+      totalFundValue;
     // once we have recorded the direct deposit value change we can reset our internalBalances
     _updateInternalBalances(poolAddress);
   }
-
 }
