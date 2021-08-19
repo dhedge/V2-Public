@@ -57,11 +57,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   using SafeMathUpgradeable for uint256;
   using AddressUpgradeable for address;
 
-  struct DirectDeposit {
-    address asset;
-    uint256 amount;
-  }
-
   event AssetAdded(address indexed fundAddress, address manager, address asset, bool isDeposit);
   event AssetRemoved(address fundAddress, address manager, address asset);
 
@@ -177,7 +172,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param asset asset address
   function _removeAsset(address asset) internal {
     require(isSupportedAsset(asset), "asset not supported");
-    // We might change this to assetBalanceExternal so no funds get locked in the contract
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
 
     uint256 length = supportedAssets.length;
@@ -283,7 +277,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Return the total fund value of the pool
   /// @dev Calculate the total fund value from the supported assets
   /// @return value in USD
-  function totalFundValue() public view override returns (uint256) {
+  function totalFundValue() external view override returns (uint256) {
     uint256 total = 0;
     uint256 assetCount = supportedAssets.length;
 

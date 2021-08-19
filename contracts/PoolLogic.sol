@@ -380,7 +380,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(to != address(0), "non-zero address is required");
     require(
       !IPoolPerformance(poolPerformance).hasDirectDeposit(address(this)),
-      "Direct deposits detected. Please call PoolManagerLogic.directDepositReclaimation()"
+      "Direct deposits detected. Please call PoolPerformance.recordDirectDepositValue()"
     );
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
