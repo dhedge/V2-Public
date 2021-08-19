@@ -9,7 +9,7 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
 
-const proposeTx = async(hre, oldAddress, implementation) => {
+const proposeTx = async(hre, safeSdk, oldAddress, implementation) => {
   const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
   const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
   const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAddress, implementation]);
@@ -38,6 +38,7 @@ task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("assetHandler", "upgrade assetHandler", false, types.boolean)
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
   .addOptionalParam("poolManagerLogic", "upgrade poolManagerLogic", false, types.boolean)
+  .addOptionalParam("production", "production environment", false, types.boolean)
   .setAction(async taskArgs => {
     const provider = ethers.provider;
     const owner1 = provider.getSigner(0);
@@ -51,7 +52,6 @@ task("upgrade", "Upgrade proxy contracts")
       }
     }
 
-    // I'm having Safe.create is not a function issue
     const safeSdk = await Safe.default.create({
       ethAdapter,
       safeAddress: safeAddress,
@@ -60,12 +60,13 @@ task("upgrade", "Upgrade proxy contracts")
 
     owner1Address = await owner1.getAddress();
 
-    let network = await ethers.provider.getNetwork();
+    const network = await ethers.provider.getNetwork();
     console.log("network:", network);
 
-    let networks = hre.config.networks;
+    const networks = hre.config.networks;
     networkNames = Object.keys(networks);
-    let versions = require(`../publish/${network.name}/versions.json`);
+    const versionFile = taskArgs.production ? "versions" : "staging-versions"
+    const versions = require(`../publish/${network.name}/${versionFile}.json`);
     let newTag = await getTag();
     let oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
     console.log(`oldTag: ${oldTag}`);
@@ -85,12 +86,16 @@ task("upgrade", "Upgrade proxy contracts")
       const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactory);
       console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
-      await hre.run("verify:verify", {
-        address: newPoolFactoryLogic,
-        contract: "contracts/PoolFactory.sol:PoolFactory",
-      });
+      try{
+        await hre.run("verify:verify", {
+          address: newPoolFactoryLogic,
+          contract: "contracts/PoolFactory.sol:PoolFactory",
+        });
+      }catch(err){
+        console.log("Error: ", err);
+      }
 
-      proposeTx(hre, poolFactoryProxy, newPoolFactoryLogic);
+      await proposeTx(hre, safeSdk, poolFactoryProxy, newPoolFactoryLogic);
     }
     if(taskArgs.assetHandler){
       let oldAssetHandler = contracts.AssetHandlerProxy;
@@ -98,12 +103,16 @@ task("upgrade", "Upgrade proxy contracts")
       const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
       console.log("assetHandler logic deployed to: ", assetHandler);
 
-      await hre.run("verify:verify", {
-        address: assetHandler,
-        contract: "contracts/assets/AssetHandler.sol:AssetHandler",
-      });
+      try{
+        await hre.run("verify:verify", {
+          address: assetHandler,
+          contract: "contracts/assets/AssetHandler.sol:AssetHandler",
+        });
+      }catch(err){
+        console.log("Error: ", err);
+      }
 
-      proposeTx(hre, oldAssetHandler, assetHandler);
+      await proposeTx(hre, safeSdk, oldAssetHandler, assetHandler);
     }
     if(taskArgs.poolLogic){
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -137,7 +146,7 @@ task("upgrade", "Upgrade proxy contracts")
     const data = JSON.stringify(versions, null, 2);
     console.log(data);
 
-    fs.writeFileSync(`./publish/${network.name}/versions.json`, data);
+    fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
   });
 
 module.exports = {};
