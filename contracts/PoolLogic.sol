@@ -223,7 +223,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     uint256 totalSupplyBefore = totalSupply();
 
-    require(IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+    _asset.tryAssemblyCall(
+      abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
+    );
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -280,7 +282,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       if (portionOfAssetBalance > 0) {
         require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
-        IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
+        asset.tryAssemblyCall(
+          abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, portionOfAssetBalance)
+        );
       }
 
       if (externalWithdrawProcessed || portionOfAssetBalance > 0) {
@@ -609,7 +613,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       "invalid lending pool"
     );
 
-    (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
+    (uint256[] memory interestRateModes, uint256 portion, address weth) =
+      abi.decode(params, (uint256[], uint256, address));
 
     IAssetGuard.MultiTransaction[] memory transactions =
       IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).flashloanProcessing(
@@ -621,10 +626,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         interestRateModes
       );
 
+    uint256 wethBalanceBefore = IERC20Upgradeable(weth).balanceOf(address(this));
+
     for (uint256 i = 0; i < transactions.length; i++) {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
       require(success, "failed to process flashloan");
     }
+
+    // WETH balance shouldn't be less than before
+    require(wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)), "failed to repay flashloan");
   }
 
   uint256[50] private __gap;
