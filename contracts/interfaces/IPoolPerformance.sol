@@ -32,17 +32,19 @@
 //
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.6;
+pragma solidity ^0.7.6;
 
-interface IPoolLogic {
-  function factory() external view returns (address);
+interface IPoolPerformance {
 
-  function poolManagerLogic() external view returns (address);
+  function addAssetBalance(address poolAddress, address asset, uint256 amount) external;
 
-  function setPoolManagerLogic(address _poolManagerLogic) external returns (bool);
+  function subtractAssetBalance(address poolAddress, address asset, uint256 amount) external;
 
-  function availableManagerFee() external view returns (uint256 fee);
+  function hasDirectDeposit(address poolAddress) external view returns (bool);
 
-  function tokenPrice() external view returns (uint256 price);
+  function updateInternalBalances(address poolAddress, uint16 txType) external;
 
+  // We record the direct deposit value and subtract it from the token price later to get performance
+  // Might need to be marked as non-reentrant
+  function recordDirectDepositValue(address poolAddress) external;
 }

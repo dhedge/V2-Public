@@ -58,6 +58,7 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
+import "./interfaces/IPoolPerformance.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IHasDaoInfo.sol";
@@ -136,6 +137,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   mapping(address => uint256) public lastDeposit;
 
   address public poolManagerLogic;
+
+  address public poolPerformance;
 
   modifier onlyPrivate() {
     require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
@@ -224,7 +227,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 totalSupplyBefore = totalSupply();
 
     require(IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
-    IPoolManagerLogic(poolManagerLogic).addAssetBalance(_asset, _amount);
+    IPoolPerformance(poolPerformance).addAssetBalance(address(this), _asset, _amount);
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
     if (totalSupplyBefore > 0) {
@@ -251,9 +254,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     );
   }
 
-  function balanceOf(address account) public view virtual override returns (uint256) {
-    return super.balanceOf(account) * IPoolManagerLogic(poolManagerLogic).getDirectDepositFactor();
-  }
 
   /// @notice Withdraw assets based on the fund token amount
   /// @param _fundTokenAmount the fund token amount
@@ -286,7 +286,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         // Ignoring return value for transfer as want to transfer no matter what happened
         bool result = IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
         if (result) {
-          IPoolManagerLogic(poolManagerLogic).subtractAssetBalance(asset, portionOfAssetBalance);
+          // Not sure if we should be doing this or taking a full snapshot via IPoolPerformance.updateInternalBalances
+          IPoolPerformance(poolPerformance).subtractAssetBalance(address(this), asset, portionOfAssetBalance);
         }
       }
 
@@ -379,7 +380,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
     require(
-      !IPoolManagerLogic(poolManagerLogic).hasDirectDeposit(),
+      !IPoolPerformance(poolPerformance).hasDirectDeposit(address(this)),
       "Direct deposits detected. Please call PoolManagerLogic.directDepositReclaimation()"
     );
     // ^^ once we are past this check we know the external balances are legit.
@@ -398,7 +399,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(success, "failed to execute the call");
 
     // We must now update our internal balances to whatever the result of this tx is
-    IPoolManagerLogic(poolManagerLogic).updateInternalBalances();
+    IPoolPerformance(poolManagerLogic).updateInternalBalances(address(this), txType);
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
@@ -443,10 +444,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       managerFeeNumerator,
       managerFeeDenominator
     );
-  }
-
-  function totalSupply() public view virtual override returns (uint256) {
-    return super.totalSupply() * IPoolManagerLogic(poolManagerLogic).getDirectDepositFactor();
   }
 
   /// @notice Get price of the asset

@@ -45,6 +45,8 @@ interface IPoolManagerLogic {
 
   function assetValue(address asset, uint256 amount) external view returns (uint256);
 
+  function assetBalance(address asset) external view returns (uint256 balance);
+
   function factory() external view returns (address);
 
   function setPoolLogic(address fundAddress) external returns (bool);
@@ -53,13 +55,4 @@ interface IPoolManagerLogic {
 
   function getManagerFee() external view returns (uint256, uint256);
 
-  function addAssetBalance(address asset, uint256 amount) external;
-
-  function subtractAssetBalance(address asset, uint256 amount) external;
-
-  function hasDirectDeposit() external view returns (bool);
-
-  function updateInternalBalances() external;
-
-  function getDirectDepositFactor() external view returns (uint256);
 }
