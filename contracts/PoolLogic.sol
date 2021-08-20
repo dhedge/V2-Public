@@ -359,8 +359,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
       if (withdrawAsset != address(0)) {
         // calculated the balance change after withdraw process.
-        withdrawBalance = withdrawBalance.add(IERC20Upgradeable(withdrawAsset).balanceOf(address(this))).sub(
-          assetBalanceBefore
+        // here it will also revert if the WETH balance has been decreased during the aave flashloan logic
+        withdrawBalance = withdrawBalance.add(
+          IERC20Upgradeable(withdrawAsset).balanceOf(address(this)).sub(assetBalanceBefore)
         );
       }
     }
@@ -613,8 +614,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       "invalid lending pool"
     );
 
-    (uint256[] memory interestRateModes, uint256 portion, address weth) =
-      abi.decode(params, (uint256[], uint256, address));
+    (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
 
     IAssetGuard.MultiTransaction[] memory transactions =
       IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).flashloanProcessing(
@@ -626,15 +626,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         interestRateModes
       );
 
-    uint256 wethBalanceBefore = IERC20Upgradeable(weth).balanceOf(address(this));
-
     for (uint256 i = 0; i < transactions.length; i++) {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
       require(success, "failed to process flashloan");
     }
-
-    // WETH balance shouldn't be less than before
-    require(wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)), "failed to repay flashloan");
   }
 
   uint256[50] private __gap;

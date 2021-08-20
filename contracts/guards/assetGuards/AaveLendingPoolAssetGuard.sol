@@ -137,7 +137,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       withdrawAsset = IHasGuardInfo(factory).getAddress("weth");
       // This adds a transaction that will initiate the flashloan flow from aave,
       // Aave will callback the higher level PoolLogic.executeOperation
-      transactions = _prepareFlashLoan(pool, portion, withdrawAsset, borrowAssets, borrowAmounts, interestRateModes);
+      transactions = _prepareFlashLoan(pool, portion, borrowAssets, borrowAmounts, interestRateModes);
       return (withdrawAsset, 0, transactions);
     } else {
       transactions = _withdrawAndTransfer(pool, to, portion);
@@ -148,7 +148,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
   /// @notice Prepare flashlan transaction data
   /// @param pool the PoolLogic address
-  /// @param withdrawAsset the withdraw asset to be used in flashloan processing
   /// @param borrowAssets the borrowed assets list
   /// @param borrowAmounts the borrowed amount per each asset
   /// @param interestRateModes the interest rate mode per each asset
@@ -157,7 +156,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   function _prepareFlashLoan(
     address pool,
     uint256 portion,
-    address withdrawAsset,
     address[] memory borrowAssets,
     uint256[] memory borrowAmounts,
     uint256[] memory interestRateModes
@@ -166,7 +164,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
     transactions[0].to = aaveLendingPool;
 
-    bytes memory params = abi.encode(interestRateModes, portion, withdrawAsset);
+    bytes memory params = abi.encode(interestRateModes, portion);
     uint256[] memory modes = new uint256[](borrowAssets.length);
     transactions[0].txData = abi.encodeWithSelector(
       bytes4(keccak256("flashLoan(address,address[],uint256[],uint256[],address,bytes,uint16)")),
