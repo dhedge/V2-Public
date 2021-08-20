@@ -120,6 +120,18 @@ task("upgrade", "Upgrade proxy contracts")
               aggregator: sushiLPAggregator.address,
             });
             break;
+          case "3":
+            // Deploy USDPriceAggregator
+            const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+            usdPriceAggregator = await USDPriceAggregator.deploy();
+            console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
+            assetHandlerAssets.push({
+              name: csvAsset["Asset Name"],
+              asset: csvAsset.Address,
+              assetType: assetType,
+              aggregator: usdPriceAggregator.address,
+            });
+            break;
           default:
             console.log(`Adding new asset: ${csvAsset["Asset Name"]}`);
             assetHandlerAssets.push({
