@@ -449,6 +449,12 @@
           "asset": "0x396e655c309676caf0acf4607a868e0cded876db",
           "assetType": "2",
           "aggregator": "0x5D3Ff64f93Bc2577653206607B80108C7Bc90837"
+        },
+        {
+          "name": "Aave Lending Pool",
+          "asset": "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
+          "assetType": "3",
+          "aggregator": "0x7A6B761836012842d304C7e4d836F226e2b52eA9"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
