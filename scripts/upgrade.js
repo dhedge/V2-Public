@@ -119,7 +119,7 @@ task("upgrade", "Upgrade proxy contracts")
                 name: csvAsset["Asset Name"],
                 asset: csvAsset.Address,
                 assetType: assetType,
-                aggregator: sushiLPAggregator.Address,
+                aggregator: sushiLPAggregator.address,
               });
               break;
             case "3":
@@ -131,7 +131,7 @@ task("upgrade", "Upgrade proxy contracts")
                 name: csvAsset["Asset Name"],
                 asset: csvAsset.Address,
                 assetType: assetType,
-                aggregator: usdPriceAggregator.Address,
+                aggregator: usdPriceAggregator.address,
               });
               break;
             default:
