@@ -10,6 +10,8 @@ Synthetix,SNX,crypto,0x50b728d8d964fd00c2d0aad81718b71311fef68a,4,18,https://pol
 Aave,AAVE,crypto,0xd6df932a45c0f255f85145f286ea0b292b21c90b,0,18,https://polygonscan.com/address/0xd6df932a45c0f255f85145f286ea0b292b21c90b,0x72484B12719E23115761D5DA1646945632979bB6
 Sushi,SUSHI,crypto,0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a,0,18,https://polygonscan.com/address/0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a,0x49B0c695039243BBfEb8EcD054EB70061fd54aa0
 CRV,CRV,crypto,0x172370d5cd63279efa6d502dab29171933a610af,4,18,https://polygonscan.com/token/0x172370d5cd63279efa6d502dab29171933a610af,0x336584C8E6Dc19637A5b36206B1c79923111b405
+Frax Share,FXS,crypto,0x3e121107f6f22da4911079845a470757af4e1a1b,0,18,https://polygonscan.com/address/0x3e121107f6f22da4911079845a470757af4e1a1b,0x6C0fe985D3cAcbCdE428b84fc9431792694d0f51
+Frax USD,FRAX,currency,0x3e121107f6f22da4911079845a470757af4e1a1b,0,18,https://polygonscan.com/address/0x3e121107f6f22da4911079845a470757af4e1a1b,0x00DBeB1e45485d53DF7C2F0dF1Aa0b6Dc30311d3
 Sushi LP USDC-DAI,SLP,sushiLpToken,0xcd578f016888b57f1b1e3f887f392f0159e26747,2,18,https://polygonscan.com/address/0xcd578f016888b57f1b1e3f887f392f0159e26747,
 Sushi LP USDC-USDT,SLP,sushiLpToken,0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001,2,18,https://polygonscan.com/address/0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001,
 Sushi LP WETH-DAI,SLP,sushiLpToken,0x6ff62bfb8c12109e8000935a6de54dad83a4f39f,2,18,https://polygonscan.com/address/0x6ff62bfb8c12109e8000935a6de54dad83a4f39f,
@@ -22,3 +24,5 @@ Sushi LP WMATIC-WETH,SLP,sushiLpToken,0xc4e595acdd7d12fec385e5da5d43160e8a0bac0e
 Sushi LP WETH-AAVE,SLP,sushiLpToken,0x2813d43463c374a680f235c428fb1d7f08de0b69,2,18,https://polygonscan.com/address/0x2813d43463c374a680f235c428fb1d7f08de0b69,
 Sushi LP WETH-CRV,SLP,sushiLpToken,0x396e655c309676caf0acf4607a868e0cded876db,2,18,https://polygonscan.com/address/0x396e655c309676caf0acf4607a868e0cded876db,
 Aave Lending Pool,Lend/Borrow,aaveLending,0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf,3,18,https://polygonscan.com/address/0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf,0x7A6B761836012842d304C7e4d836F226e2b52eA9,,
+Sushi LP FXS-FRAX,SLP,sushiLpToken,0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca,2,18,https://polygonscan.com/address/0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca
+Sushi LP FRAX-USDC,SLP,sushiLpToken,0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0,2,18,https://polygonscan.com/address/0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0
