@@ -43,6 +43,7 @@ task("upgrade", "Upgrade proxy contracts")
   .addOptionalParam("assetHandler", "upgrade assetHandler", false, types.boolean)
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
   .addOptionalParam("poolManagerLogic", "upgrade poolManagerLogic", false, types.boolean)
+  .addOptionalParam("assets", "deploy new assets", false, types.boolean)
   .addOptionalParam("production", "production environment", false, types.boolean)
   .setAction(async (taskArgs) => {
     // Initialize the Safe SDK
@@ -73,83 +74,86 @@ task("upgrade", "Upgrade proxy contracts")
     const networks = hre.config.networks;
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versions = require(`../publish/${network.name}/${versionFile}.json`);
-    let newTag = await getTag();
-    let oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
+    const newTag = await getTag();
+    const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
     console.log(`oldTag: ${oldTag}`);
     console.log(`newTag: ${newTag}`);
-    if (newTag == oldTag) throw "Error: No new version to upgrade";
+    if (!taskArgs.assets && newTag == oldTag) throw "Error: No new version to upgrade";
 
     // Init contracts data
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
     const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
 
-    let contracts = versions[oldTag].contracts;
+    const contracts = versions[oldTag].contracts;
     versions[newTag] = new Object();
     versions[newTag].contracts = { ...contracts };
     versions[newTag].network = network;
     versions[newTag].date = new Date().toUTCString();
     let setLogic = false;
 
-    // look up to check if csvAsset is in the current versions
-    let assetHandlerAssets = [];
-    const fileName = taskArgs.production ? prodFileName : stagingFileName;
-    const csvAssets = await csv().fromFile(fileName);
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    for (const csvAsset of csvAssets) {
-      let foundInVersions = false;
-      for (const asset of contracts.Assets) {
-        if (csvAsset["Asset Name"] === asset.name) {
-          console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
-          foundInVersions = true;
-          break;
+    if (taskArgs.assets) {
+      // look up to check if csvAsset is in the current versions
+      let assetHandlerAssets = [];
+      const fileName = taskArgs.production ? prodFileName : stagingFileName;
+      const csvAssets = await csv().fromFile(fileName);
+      const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+      for (const csvAsset of csvAssets) {
+        let foundInVersions = false;
+        for (const asset of contracts.Assets) {
+          if (csvAsset["Asset Name"] === asset.name) {
+            console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
+            foundInVersions = true;
+            break;
+          }
+        }
+        if (!foundInVersions) {
+          const assetType = csvAsset.AssetType;
+          switch (assetType) {
+            case "2":
+              // Deploy Sushi LP Aggregator
+              console.log("Deploying ", csvAsset["Asset Name"]);
+              const sushiLPAggregator = await SushiLPAggregator.deploy(csvAsset.Address, contracts.PoolFactoryProxy);
+              await sushiLPAggregator.deployed();
+              console.log(`${csvAsset["Asset Name"]} SushiLPAggregator deployed at `, sushiLPAggregator.address);
+              assetHandlerAssets.push({
+                name: csvAsset["Asset Name"],
+                asset: csvAsset.Address,
+                assetType: assetType,
+                aggregator: sushiLPAggregator.address,
+              });
+              break;
+            case "3":
+              // Deploy USDPriceAggregator
+              const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+              usdPriceAggregator = await USDPriceAggregator.deploy();
+              console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
+              assetHandlerAssets.push({
+                name: csvAsset["Asset Name"],
+                asset: csvAsset.Address,
+                assetType: assetType,
+                aggregator: usdPriceAggregator.address,
+              });
+              break;
+            default:
+              console.log(`Adding new asset: ${csvAsset["Asset Name"]}`);
+              assetHandlerAssets.push({
+                name: csvAsset["Asset Name"],
+                asset: csvAsset.Address,
+                assetType: assetType,
+                aggregator: csvAsset["Chainlink Price Feed"],
+              });
+          }
         }
       }
-      if (!foundInVersions) {
-        const assetType = csvAsset.AssetType;
-        switch (assetType) {
-          case "2":
-            // Deploy Sushi LP Aggregator
-            console.log("Deploying ", csvAsset["Asset Name"]);
-            const sushiLPAggregator = await SushiLPAggregator.deploy(csvAsset.Address, contracts.PoolFactoryProxy);
-            await sushiLPAggregator.deployed();
-            console.log(`${csvAsset["Asset Name"]} SushiLPAggregator deployed at `, sushiLPAggregator.address);
-            assetHandlerAssets.push({
-              name: csvAsset["Asset Name"],
-              asset: csvAsset.Address,
-              assetType: assetType,
-              aggregator: sushiLPAggregator.address,
-            });
-            break;
-          case "3":
-            // Deploy USDPriceAggregator
-            const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-            usdPriceAggregator = await USDPriceAggregator.deploy();
-            console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
-            assetHandlerAssets.push({
-              name: csvAsset["Asset Name"],
-              asset: csvAsset.Address,
-              assetType: assetType,
-              aggregator: usdPriceAggregator.address,
-            });
-            break;
-          default:
-            console.log(`Adding new asset: ${csvAsset["Asset Name"]}`);
-            assetHandlerAssets.push({
-              name: csvAsset["Asset Name"],
-              asset: csvAsset.Address,
-              assetType: assetType,
-              aggregator: csvAsset["Chainlink Price Feed"],
-            });
-        }
+
+      const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
+      const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
+      const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
+
+      if (assetHandlerAssets.length > 0) {
+        await proposeTx(contracts.AssetHandlerProxy, addAssetsABI);
+        versions[newTag].contracts.Assets = [...versions[newTag].contracts.Assets, ...assetHandlerAssets];
       }
-    }
-
-    // const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
-    // const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
-    // const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
-
-    if (assetHandlerAssets.length > 0) {
-      await proposeTx(contracts.AssetHandlerProxy, addAssetsABI);
     }
     if (taskArgs.poolFactory) {
       let poolFactoryProxy = contracts.PoolFactoryProxy;
