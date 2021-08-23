@@ -360,9 +360,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       if (withdrawAsset != address(0)) {
         // calculated the balance change after withdraw process.
         // here it will also revert if the WETH balance has been decreased during the aave flashloan logic
-        withdrawBalance = withdrawBalance.add(
-          IERC20Upgradeable(withdrawAsset).balanceOf(address(this)).sub(assetBalanceBefore)
-        );
+        uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+        require(assetBalanceAfter >= assetBalanceBefore, "too high slippage");
+
+        withdrawBalance = withdrawBalance.add(assetBalanceAfter.sub(assetBalanceBefore));
       }
     }
 
