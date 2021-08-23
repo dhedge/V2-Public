@@ -59,7 +59,7 @@ task("upgrade", "Upgrade proxy contracts")
       },
     };
 
-    const safeSdk = await Safe.default.create({
+    safeSdk = await Safe.default.create({
       ethAdapter,
       safeAddress: safeAddress,
       contractNetworks,
@@ -73,7 +73,7 @@ task("upgrade", "Upgrade proxy contracts")
     // Init tag
     const networks = hre.config.networks;
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
-    let versions = require(`../publish/${network.name}/${versionFile}.json`);
+    const versions = require(`../publish/${network.name}/${versionFile}.json`);
     let newTag = await getTag();
     let oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
     console.log(`oldTag: ${oldTag}`);
@@ -198,10 +198,14 @@ task("upgrade", "Upgrade proxy contracts")
       versions[newTag].contracts.PoolLogic = poolLogic;
       setLogic = true;
 
-      await hre.run("verify:verify", {
-        address: poolLogic,
-        contract: "contracts/PoolLogic.sol:PoolLogic",
-      });
+      try {
+        await hre.run("verify:verify", {
+          address: poolLogic,
+          contract: "contracts/PoolLogic.sol:PoolLogic",
+        });
+      } catch (err) {
+        console.log("Error: ", err);
+      }
     }
     if (taskArgs.poolManagerLogic) {
       let oldPooManagerLogicProxy = contracts.PoolManagerLogicProxy;
@@ -211,10 +215,14 @@ task("upgrade", "Upgrade proxy contracts")
       versions[newTag].contracts.PoolManagerLogic = poolManagerLogic;
       setLogic = true;
 
-      await hre.run("verify:verify", {
-        address: poolManagerLogic,
-        contract: "contracts/PoolManagerLogic.sol:PoolManagerLogic",
-      });
+      try {
+        await hre.run("verify:verify", {
+          address: poolManagerLogic,
+          contract: "contracts/PoolManagerLogic.sol:PoolManagerLogic",
+        });
+      } catch (err) {
+        console.log("Error: ", err);
+      }
     }
     if (setLogic) {
       const PoolFactory = await hre.artifacts.readArtifact("PoolFactory");

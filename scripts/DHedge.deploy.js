@@ -1,9 +1,9 @@
 const { getTag } = require("./Helpers");
 
-const hre = require('hardhat')
+const hre = require("hardhat");
 // Place holder addresses
-const KOVAN_ADDRESS_RESOLVER = '0xb08b62e1cdfd37eCCd69A9ACe67322CCF801b3A6';
-const TESTNET_DAO = '0xab0c25f17e993F90CaAaec06514A2cc28DEC340b';
+const KOVAN_ADDRESS_RESOLVER = "0xb08b62e1cdfd37eCCd69A9ACe67322CCF801b3A6";
+const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
 const synthetixContract = "0x35725C94f3B1aB6BbD533c0B6Df525537d422c5F";
 
@@ -21,91 +21,81 @@ const ProxysLINK = "0xe2B26511C64FE18Acc0BE8EA7c888cDFcacD846E";
 const ProxysBTC = "0x23F608ACc41bd7BCC617a01a9202214EE305439a";
 const ProxyERC20sUSD = "0xaA5068dC2B3AADE533d3e52C6eeaadC6a8154c57";
 
-async function main () {
-  const ethers = hre.ethers
-  const l2ethers = hre.l2ethers
+async function main() {
+  const ethers = hre.ethers;
+  const l2ethers = hre.l2ethers;
 
-  let network = await l2ethers.provider.getNetwork()
-  console.log('network:', network)
+  let network = await l2ethers.provider.getNetwork();
+  console.log("network:", network);
 
-  const signer = (await l2ethers.getSigners())[0]
-  console.log('signer address: ', await signer.getAddress())
+  const signer = (await l2ethers.getSigners())[0];
+  console.log("signer address: ", await signer.getAddress());
 
   // const ERC20Asset = await ethers.getContractFactory('ERC20Asset');
   // const sUSD = await ERC20Asset.deploy("sUSD", "SUSD");
   // console.log("sUSD deployed at ", sUSD.address);
 
-  const AssetHandlerLogic = await l2ethers.getContractFactory('AssetHandler');
+  const AssetHandlerLogic = await l2ethers.getContractFactory("AssetHandler");
   const assetHandlerLogic = await AssetHandlerLogic.deploy();
   console.log("AssetHandler deployed at ", assetHandlerLogic.address);
 
   // Deploy PoolLogic
-  const PoolLogic = await l2ethers.getContractFactory('PoolLogic')
-  const poolLogic = await PoolLogic.deploy()
-  await poolLogic.deployed()
-  console.log('poolLogic deployed to:', poolLogic.address)
-  console.log(
-    'deployed bytecode:',
-    await ethers.provider.getCode(poolLogic.address)
-  )
-  console.log('tokenPriceAtLastFeeMint:', await poolLogic.tokenPriceAtLastFeeMint())
+  const PoolLogic = await l2ethers.getContractFactory("PoolLogic");
+  const poolLogic = await PoolLogic.deploy();
+  await poolLogic.deployed();
+  console.log("poolLogic deployed to:", poolLogic.address);
+  console.log("deployed bytecode:", await ethers.provider.getCode(poolLogic.address));
+  console.log("tokenPriceAtLastFeeMint:", await poolLogic.tokenPriceAtLastFeeMint());
 
   // Deploy PoolManagerLogic
-  const PoolManagerLogic = await l2ethers.getContractFactory('PoolManagerLogic')
-  const poolManagerLogic = await PoolManagerLogic.deploy()
-  await poolManagerLogic.deployed()
-  console.log('PoolManagerLogic deployed to:', poolManagerLogic.address)
-  console.log(
-    'deployed bytecode:',
-    await ethers.provider.getCode(poolManagerLogic.address)
-  )
-  console.log('numberOfSupportedAssets:', await poolManagerLogic.numberOfSupportedAssets())
+  const PoolManagerLogic = await l2ethers.getContractFactory("PoolManagerLogic");
+  const poolManagerLogic = await PoolManagerLogic.deploy();
+  await poolManagerLogic.deployed();
+  console.log("PoolManagerLogic deployed to:", poolManagerLogic.address);
+  console.log("deployed bytecode:", await ethers.provider.getCode(poolManagerLogic.address));
+  console.log("numberOfSupportedAssets:", await poolManagerLogic.numberOfSupportedAssets());
 
   // Deploy PoolFactoryLogic
-  const PoolFactoryLogic = await l2ethers.getContractFactory('PoolFactory')
-  const poolFactoryLogic = await PoolFactoryLogic.deploy()
-  await poolFactoryLogic.deployed()
-  console.log('poolFactoryLogic deployed to:', poolFactoryLogic.address)
-  console.log(
-    'deployed bytecode:',
-    await ethers.provider.getCode(poolFactoryLogic.address)
-  )
+  const PoolFactoryLogic = await l2ethers.getContractFactory("PoolFactory");
+  const poolFactoryLogic = await PoolFactoryLogic.deploy();
+  await poolFactoryLogic.deployed();
+  console.log("poolFactoryLogic deployed to:", poolFactoryLogic.address);
+  console.log("deployed bytecode:", await ethers.provider.getCode(poolFactoryLogic.address));
 
   // Deploy ProxyAdmin
-  const ProxyAdmin = await l2ethers.getContractFactory('ProxyAdmin')
-  const proxyAdmin = await ProxyAdmin.deploy()
-  await proxyAdmin.deployed()
+  const ProxyAdmin = await l2ethers.getContractFactory("ProxyAdmin");
+  const proxyAdmin = await ProxyAdmin.deploy();
+  await proxyAdmin.deployed();
 
-  console.log('ProxyAdmin deployed to:', proxyAdmin.address)
-  console.log(
-    'deployed bytecode:',
-    await ethers.provider.getCode(proxyAdmin.address)
-  )
+  console.log("ProxyAdmin deployed to:", proxyAdmin.address);
+  console.log("deployed bytecode:", await ethers.provider.getCode(proxyAdmin.address));
 
-  console.log('ProxyAdmin owner:', await proxyAdmin.owner())
+  console.log("ProxyAdmin owner:", await proxyAdmin.owner());
 
   // Deploy AssetHandlerProxy
-  const AssetHandlerProxy = await l2ethers.getContractFactory('OZProxy');
-  const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, '0x');
+  const AssetHandlerProxy = await l2ethers.getContractFactory("OZProxy");
+  const assetHandlerProxy = await AssetHandlerProxy.deploy(assetHandlerLogic.address, proxyAdmin.address, "0x");
   await assetHandlerProxy.deployed();
   console.log("AssetHandlerProxy deployed at ", assetHandlerProxy.address);
 
   const assetHandler = await AssetHandlerLogic.attach(assetHandlerProxy.address);
 
   // Deploy poolFactory Proxy
-  const PoolFactoryProxy = await l2ethers.getContractFactory('OZProxy')
-  const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x")
-  await poolFactoryProxy.deployed()
+  const PoolFactoryProxy = await l2ethers.getContractFactory("OZProxy");
+  const poolFactoryProxy = await PoolFactoryProxy.deploy(poolFactoryLogic.address, proxyAdmin.address, "0x");
+  await poolFactoryProxy.deployed();
 
-  console.log('poolFactoryProxy deployed to:', poolFactoryProxy.address)
-  console.log(
-    'deployed bytecode:',
-    await ethers.provider.getCode(poolFactoryProxy.address)
-  )
+  console.log("poolFactoryProxy deployed to:", poolFactoryProxy.address);
+  console.log("deployed bytecode:", await ethers.provider.getCode(poolFactoryProxy.address));
 
-  const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address)
-  tx = await poolFactory.initialize(poolLogic.address, poolManagerLogic.address, assetHandlerProxy.address, signer.address);
-  console.log("tx: ", tx.hash)
+  const poolFactory = await PoolFactoryLogic.attach(poolFactoryProxy.address);
+  tx = await poolFactory.initialize(
+    poolLogic.address,
+    poolManagerLogic.address,
+    assetHandlerProxy.address,
+    signer.address,
+  );
+  console.log("tx: ", tx.hash);
 
   // Initialize Asset Price Consumer
   // const assetsusd = { asset: ProxyERC20sUSD, assetType: 1, aggregator: eth_price_feed };
@@ -139,35 +129,34 @@ async function main () {
 
   let versions = require("../publish/mumbai/versions.json");
   versions[tag] = {
-    "tag": tag,
-    "network": network,
-    "date": new Date(),
-    "contracts": {
+    tag: tag,
+    network: network,
+    date: new Date(),
+    contracts: {
       "ETH-Aggregator": eth_price_feed,
       "LINK-Aggregator": link_price_feed,
-      "ProxyAdmin": proxyAdmin.address,
-      "PoolFactoryProxy": poolFactory.address,
-      "PoolLogic": poolLogic.address,
-      "PoolManagerLogic": poolManagerLogic.address,
-      "AssetHandlerProxy": assetHandlerProxy.address,
-      "ERC20Guard": erc20Guard.address,
-      "synthetixGuard": synthetixGuard.address,
-    }
-  }
+      ProxyAdmin: proxyAdmin.address,
+      PoolFactoryProxy: poolFactory.address,
+      PoolLogic: poolLogic.address,
+      PoolManagerLogic: poolManagerLogic.address,
+      AssetHandlerProxy: assetHandlerProxy.address,
+      ERC20Guard: erc20Guard.address,
+      synthetixGuard: synthetixGuard.address,
+    },
+  };
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
-  console.log(data)
-  fs = require('fs');
-  fs.writeFileSync('publish/ovm/kovan/versions.json', data, function (err) {
+  console.log(data);
+  fs = require("fs");
+  fs.writeFileSync("publish/ovm/kovan/versions.json", data, function (err) {
     if (err) return console.log(err);
   });
-
 }
 
 main()
   .then(() => process.exit(0))
-  .catch(error => {
-    console.error(error)
-    process.exit(1)
-  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

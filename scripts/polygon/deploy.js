@@ -90,14 +90,9 @@ async function main() {
   await poolFactory.deployed();
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
-  const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [
-    poolFactory.address,
-    false,
-    "NA",
-    "NA",
-  ]);
+  const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [poolFactory.address, false, "NA", "NA"]);
   console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
-  let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage)
+  let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage);
   poolLogicAddress = ethers.utils.hexValue(poolLogicAddress);
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -107,12 +102,10 @@ async function main() {
     "NA",
     poolLogicAddress,
     "1000",
-    [
-      [wmatic, true],
-    ],
+    [[wmatic, true]],
   ]);
   console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
-  let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage)
+  let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage);
   poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddress);
 
   fileName = "./dHEDGE Assets list - Polygon.csv";
