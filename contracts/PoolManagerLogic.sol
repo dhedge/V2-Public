@@ -100,7 +100,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     factory = _factory;
     poolLogic = _poolLogic;
-    managerFeeNumerator = _managerFeeNumerator;
+    _setManagerFeeNumerator(_managerFeeNumerator);
     _changeAssets(_supportedAssets, new address[](0));
   }
 

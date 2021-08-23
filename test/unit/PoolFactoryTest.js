@@ -383,7 +383,7 @@ describe("PoolFactory", function () {
           [seth, false],
         ],
       ),
-    ).to.be.revertedWith("Implementation init failed"); // at least one deposit asset
+    ).to.be.revertedWith("at least one deposit asset"); // at least one deposit asset
 
     await poolFactory.createFund(
       false,

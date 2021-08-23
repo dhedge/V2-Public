@@ -182,8 +182,6 @@ contract PoolFactory is
     IHasSupportedAsset.Asset[] memory _supportedAssets
   ) external returns (address fund) {
     require(!paused(), "contracts paused");
-    require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
-    require(_managerFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
 
     bytes memory poolLogicData =
       abi.encodeWithSignature(
