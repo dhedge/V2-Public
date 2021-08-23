@@ -350,7 +350,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
       for (uint256 i = 0; i < txCount; i++) {
         externalWithdrawProcessed = transactions[i].to.tryAssemblyCall(transactions[i].txData);
-        require(externalWithdrawProcessed, "failed to withdraw tokens");
       }
 
       if (withdrawAsset != address(0)) {
@@ -384,7 +383,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
 
     success = to.tryAssemblyCall(data);
-    require(success, "failed to execute the call");
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
@@ -623,7 +621,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     for (uint256 i = 0; i < transactions.length; i++) {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
-      require(success, "failed to process flashloan");
     }
   }
 
