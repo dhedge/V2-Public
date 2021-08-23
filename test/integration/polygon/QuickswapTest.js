@@ -24,10 +24,15 @@ const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
+
 const quickLpUsdcWeth = "0x853Ee4b2A13f8a742d64C8F088bE7bA2131f670d";
+const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
+const quickLpUsdcUsdt = "0x2cF7252e74036d1Da831d11089D326296e64a728";
+const quickLpUsdcUsdtStakingRewards = "0x251d9837a13F38F3Fe629ce2304fa00710176222";
 
 describe("Quickswap V2 Test", function () {
-  let WMatic, WETH, USDC, USDT, QuickLPUSDCWETH;
+  let WMatic, WETH, USDC, USDT, QuickLPUSDCWETH, QUICK;
   let quickLPAggregator;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
@@ -86,12 +91,18 @@ describe("Quickswap V2 Test", function () {
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     await uniswapV2RouterGuard.deployed();
 
-    quickLPAssetGuard = await ERC20Guard.deploy();
+    const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
+    quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy(); // set slippage 2% for testing
+    await quickStakingRewardsGuard.deployed();
+
+    const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
+    quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
     await quickLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(5, quickLPAssetGuard.address);
     await governance.setContractGuard(quickswapRouter, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(quickLpUsdcWethStakingRewards, quickStakingRewardsGuard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
   });
 
@@ -103,6 +114,7 @@ describe("Quickswap V2 Test", function () {
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
     WETH = await ethers.getContractAt(IERC20.abi, weth);
     WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
+    QUICK = await ethers.getContractAt(IERC20.abi, quick);
     QuickLPUSDCWETH = await ethers.getContractAt(IERC20.abi, quickLpUsdcWeth);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
@@ -642,7 +654,7 @@ describe("Quickswap V2 Test", function () {
   it("should be able to remove liquidity on quickswap.", async () => {
     const tokenA = usdc;
     const tokenB = weth;
-    const liquidity = await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address);
+    const liquidity = ethers.BigNumber.from(await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address)).div(2);
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
 
@@ -722,7 +734,7 @@ describe("Quickswap V2 Test", function () {
 
     await poolLogicProxy.connect(manager).execTransaction(quickswapRouter, removeLiquidityAbi);
 
-    expect(await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address)).to.be.equal(0);
+    checkAlmostSame(await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address), liquidity);
     expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.gt(usdcBalanceBefore);
     expect(await WETH.balanceOf(poolLogicProxy.address)).to.be.gt(wethBalanceBefore);
     checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
@@ -788,5 +800,56 @@ describe("Quickswap V2 Test", function () {
 
     const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
     expect(wethBalanceAfter).gt(wethBalanceBefore);
+  });
+
+  it("should be able to stake lp(USDC/WETH) on quickswap.", async () => {
+    const liquidity = await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address);
+
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
+    const iERC20 = new ethers.utils.Interface(IERC20.abi);
+    let approveABI = iERC20.encodeFunctionData("approve", [quickLpUsdcWethStakingRewards, liquidity]);
+    await poolLogicProxy.connect(manager).execTransaction(quickLpUsdcWeth, approveABI);
+
+    const IStakingRewards = await hre.artifacts.readArtifact("IStakingRewards");
+    const iStakingRewards = new ethers.utils.Interface(IStakingRewards.abi);
+    let stakeABI = iStakingRewards.encodeFunctionData("stake", [liquidity]);
+
+    const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+    expect(liquidity).to.gt(0);
+
+    await poolLogicProxy.connect(manager).execTransaction(quickLpUsdcWethStakingRewards, stakeABI);
+
+    expect(await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address)).to.equal(0);
+    checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+  });
+
+  it("should be able to claim rewards from quickswap.", async () => {
+    const IStakingRewards = await hre.artifacts.readArtifact("IStakingRewards");
+    const iStakingRewards = new ethers.utils.Interface(IStakingRewards.abi);
+    let claimABI = iStakingRewards.encodeFunctionData("getReward", []);
+
+    const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+    expect(await QUICK.balanceOf(poolLogicProxy.address)).to.equal(0);
+
+    await poolLogicProxy.connect(manager).execTransaction(quickLpUsdcWethStakingRewards, claimABI);
+
+    expect(await QUICK.balanceOf(poolLogicProxy.address)).to.gt(0);
+    checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+  });
+
+  it("should be able to withdraw lp(USDC/WETH) on quickswap.", async () => {
+    const liquidity = await poolManagerLogicProxy.assetBalance(quickLpUsdcWeth);
+    const IStakingRewards = await hre.artifacts.readArtifact("IStakingRewards");
+    const iStakingRewards = new ethers.utils.Interface(IStakingRewards.abi);
+    let withdrawABI = iStakingRewards.encodeFunctionData("withdraw", [liquidity]);
+
+    const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+    expect(await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address)).to.equal(0);
+    expect(liquidity).to.gt(0);
+
+    await poolLogicProxy.connect(manager).execTransaction(quickLpUsdcWethStakingRewards, withdrawABI);
+
+    expect(await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address)).to.equal(liquidity);
+    checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
   });
 });
