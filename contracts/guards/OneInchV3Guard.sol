@@ -40,14 +40,13 @@ import "../utils/TxDataUtils.sol";
 import "../interfaces/guards/IGuard.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/IManaged.sol";
+import "../interfaces/oneInch/IAggregationRouterV3.sol";
 
-/// @notice Transaction guard for UniswapV2Router
-/// @dev This will be used for sushiswap as well since Sushi uses the same interface.
-contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
+/// @notice Transaction guard for OneInchV3Router
+contract OneInchV3Guard is TxDataUtils, IGuard, Ownable {
   using SafeMathUpgradeable for uint256;
 
-  /// @notice Transaction guard for Uniswap V2
+  /// @notice Transaction guard for OneInchV3
   /// @dev It supports swap functionalities
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
