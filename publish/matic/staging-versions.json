@@ -464,7 +464,7 @@
         },
         {
           "name": "Frax USD",
-          "asset": "0x3e121107f6f22da4911079845a470757af4e1a1b",
+          "asset": "0x104592a158490a9228070e0a8e5343b499e125d0",
           "assetType": "0",
           "aggregator": "0x00DBeB1e45485d53DF7C2F0dF1Aa0b6Dc30311d3"
         },
@@ -503,6 +503,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 23 Aug 2021 05:19:10 GMT"
+    "date": "Mon, 23 Aug 2021 05:34:48 GMT"
   }
 }
