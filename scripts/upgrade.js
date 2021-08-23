@@ -74,11 +74,11 @@ task("upgrade", "Upgrade proxy contracts")
     const networks = hre.config.networks;
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versions = require(`../publish/${network.name}/${versionFile}.json`);
-    let newTag = await getTag();
-    let oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
+    const newTag = await getTag();
+    const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
     console.log(`oldTag: ${oldTag}`);
     console.log(`newTag: ${newTag}`);
-    if (newTag == oldTag) throw "Error: No new version to upgrade";
+    if (!taskArgs.assets && newTag == oldTag) throw "Error: No new version to upgrade";
 
     // Init contracts data
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
