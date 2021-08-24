@@ -37,14 +37,16 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../utils/TxDataUtils.sol";
+import "../utils/SlippageChecker.sol";
 import "../interfaces/guards/IGuard.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/oneInch/IAggregationRouterV3.sol";
 
 /// @notice Transaction guard for OneInchV3Router
-contract OneInchV3Guard is TxDataUtils, IGuard, Ownable {
-  using SafeMathUpgradeable for uint256;
+contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
+  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
+    SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
+  {}
 
   /// @notice Transaction guard for OneInchV3
   /// @dev It supports swap functionalities
@@ -74,8 +76,11 @@ contract OneInchV3Guard is TxDataUtils, IGuard, Ownable {
       address srcAsset = convert32toAddress(getInput(data, 3));
       address dstAsset = convert32toAddress(getInput(data, 4));
       uint256 srcAmount = uint256(getInput(data, 7));
+      uint256 amountOutMin = uint256(getInput(data, 8));
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
@@ -84,9 +89,12 @@ contract OneInchV3Guard is TxDataUtils, IGuard, Ownable {
       // 1inch's `unoswap` method
       address srcAsset = convert32toAddress(getInput(data, 0));
       uint256 srcAmount = uint256(getInput(data, 1));
+      uint256 amountOutMin = uint256(getInput(data, 2));
       address dstAsset = convert32toAddress(getArrayLast(data, 3));
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
     }

@@ -234,7 +234,7 @@ describe("PoolFactory", function () {
     sushiMiniChefV2Guard.deployed();
 
     const OneInchV3Guard = await ethers.getContractFactory("contracts/guards/OneInchV3Guard.sol:OneInchV3Guard");
-    oneInchV3Guard = await OneInchV3Guard.deploy();
+    oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
     oneInchV3Guard.deployed();
 
     // Deploy asset guards
@@ -1142,7 +1142,6 @@ describe("PoolFactory", function () {
   });
 
   it("Should execute 1inch swap exchange", async () => {
-    console.log(slink, slink.toLowerCase().slice(2, slink.length));
     const exchangeCallData =
       "0x7c02520000000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd200000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000180000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee000000000000000000000000" +
       slink.toLowerCase().slice(2, slink.length) +
