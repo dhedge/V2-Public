@@ -10,4 +10,17 @@ const getTag = async () => {
   return result.stdout.trim();
 };
 
-module.exports = { getTag };
+const hasDuplicates = async (array, key) => {
+  const valueArr = array.map(function (item) {
+    return item[key];
+  });
+
+  const isDuplicate = valueArr.some(function (item, idx) {
+    if (!item) return false;
+    return valueArr.indexOf(item) != idx;
+  });
+
+  return isDuplicate;
+};
+
+module.exports = { getTag, hasDuplicates };

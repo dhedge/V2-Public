@@ -1,6 +1,6 @@
 const fs = require("fs");
 const csv = require("csvtojson");
-const { getTag } = require("./Helpers");
+const { getTag, hasDuplicates } = require("./Helpers");
 const Safe = require("@gnosis.pm/safe-core-sdk");
 const { EthersAdapter } = require("@gnosis.pm/safe-core-sdk");
 const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
@@ -96,6 +96,12 @@ task("upgrade", "Upgrade proxy contracts")
       let assetHandlerAssets = [];
       const fileName = taskArgs.production ? prodFileName : stagingFileName;
       const csvAssets = await csv().fromFile(fileName);
+
+      // Check for any accidental duplicate addresses or price feeds in the CSV
+      if (await hasDuplicates(csvAssets, "Address")) throw "Duplicate 'Address' field found in assets CSV";
+      if (await hasDuplicates(csvAssets, "Chainlink Price Feed"))
+        throw "Duplicate 'Chainlink Price Feed' field found in assets CSV";
+
       const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
       for (const csvAsset of csvAssets) {
         let foundInVersions = false;
