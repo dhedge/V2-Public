@@ -80,6 +80,15 @@ contract OneInchV3Guard is TxDataUtils, IGuard, Ownable {
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
+    } else if (method == 0x2e95b6c8) {
+      // 1inch's `unoswap` method
+      address srcAsset = convert32toAddress(getInput(data, 0));
+      uint256 srcAmount = uint256(getInput(data, 1));
+      address dstAsset = convert32toAddress(getArrayLast(data, 3));
+
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
     }
 
     return (txType, false);
