@@ -103,12 +103,7 @@ const deploy = async (env) => {
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
   const fileName = env === "staging" ? stagingFileName : prodFileName;
-  const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [
-    poolFactory.address,
-    false,
-    "NA",
-    "NA",
-  ]);
+  const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [poolFactory.address, false, "NA", "NA"]);
   console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
   let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage);
   poolLogicAddress = ethers.utils.hexValue(poolLogicAddress);
@@ -253,10 +248,10 @@ const deploy = async (env) => {
       asset: aaveLendingPool,
       assetType: 3,
       aggregator: usdPriceAggregator.address,
-    }
+    };
     await assetHandler.addAssets(lendingPoolAsset);
   }
-  
+
   // DAO Settings
   await poolFactory.setDAOAddress(uberPool);
   await poolFactory.transferOwnership(protocolDao);
