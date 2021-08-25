@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, toBytes32, getAmountOut } = require("../../TestHelpers");
+const { checkAlmostSame, approxEq, toBytes32, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -30,6 +30,9 @@ const amusdc = "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F";
 const amusdt = "0x60D55F02A771d515e077c9C2403a1ef324885CeC";
 const amdai = "0x27f8d03b3a2196956ed754badc28d73be8830a6e";
 
+const variableDebtUsdt = "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3";
+const variableDebtWeth = "0xeDe17e9d79fc6f9fF9250D9EEfbdB88Cc18038b5";
+
 const variableDebtDai = "0x75c4d1Fb84429023170086f06E682DcbBF537b7d";
 
 const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
@@ -45,18 +48,24 @@ const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
 const sushiLPUsdcWethPoolId = 1;
 
 describe("Polygon Mainnet Test", function () {
-  let WMatic, WETH, USDC, USDT, DAI, SushiLPUSDCWETH, SUSHI, AMUSDC, AMWETH;
+  let WMatic, WETH, USDC, USDT, DAI, SushiLPUSDCWETH, SUSHI, AMUSDC, AMWETH, VariableUSDT, VariableWETH;
   let sushiLPAggregator, usdPriceAggregator, sushiMiniChefV2Guard;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
-  let IERC20, iERC20;
+  let IERC20, iERC20, ILendingPool, iLendingPool, IUniswapV2Router, iSushiswapV2Router;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
     IERC20 = await hre.artifacts.readArtifact("IERC20");
     iERC20 = new ethers.utils.Interface(IERC20.abi);
+
+    ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+    iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+
+    IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+    iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
@@ -175,6 +184,8 @@ describe("Polygon Mainnet Test", function () {
     SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushiLpUsdcWeth);
     AMUSDC = await ethers.getContractAt(IERC20.abi, amusdc);
     AMWETH = await ethers.getContractAt(IERC20.abi, amweth);
+    VariableUSDT = await ethers.getContractAt(IERC20.abi, variableDebtUsdt);
+    VariableWETH = await ethers.getContractAt(IERC20.abi, variableDebtWeth);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
     balance = await WMATIC.balanceOf(logicOwner.address);
@@ -388,8 +399,6 @@ describe("Polygon Mainnet Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
 
     const sourceAmount = (50e6).toString();
-    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
 
     const swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
@@ -410,8 +419,6 @@ describe("Polygon Mainnet Test", function () {
 
       const amount = (100e6).toString();
 
-      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
-      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
       const depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, amount, poolLogicProxy.address, 0]);
 
       // add supported assets
@@ -440,13 +447,11 @@ describe("Polygon Mainnet Test", function () {
     });
 
     it("Should be able to deposit weth and receive amweth", async () => {
-      // Pool balance: 50 USDC, 50 USDT, $50 in WETH
-      // Aave balance: 100 amUSDC, 50 debtUSDT
+      // Pool balance: 100 USDC, $50 in WETH
+      // Aave balance: 100 amUSDC
 
-      const amount = await WETH.balanceOf(poolLogicProxy.address);
+      const amount = (await WETH.balanceOf(poolLogicProxy.address)).div(2); // half of WETH balance ($25)
 
-      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
-      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
       const depositABI = iLendingPool.encodeFunctionData("deposit", [weth, amount, poolLogicProxy.address, 0]);
 
       // add supported assets
@@ -461,7 +466,6 @@ describe("Polygon Mainnet Test", function () {
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
-      expect(wethBalanceBefore).to.be.equal(amount);
       expect(amwethBalanceBefore).to.be.equal(0);
 
       // deposit
@@ -469,19 +473,17 @@ describe("Polygon Mainnet Test", function () {
 
       const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
       const amwethBalanceAfter = await AMWETH.balanceOf(poolLogicProxy.address);
-      expect(wethBalanceAfter).to.be.equal(0);
+      checkAlmostSame(wethBalanceAfter, amount);
       checkAlmostSame(amwethBalanceAfter, amount);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
 
     it("Should be able to borrow USDT", async () => {
-      // Pool balance: 50 USDC
-      // Aave balance: 100 amUSDC, $50 in amWETH
+      // Pool balance: 50 USDC, $25 in WETH
+      // Aave balance: 100 amUSDC, $25 in amWETH
 
       const amount = (50e6).toString();
 
-      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
-      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
       const borrowABI = iLendingPool.encodeFunctionData("borrow", [usdt, amount, 2, 0, poolLogicProxy.address]);
 
       await poolManagerLogicProxy.connect(manager).changeAssets([[usdt, false]], []);
@@ -502,8 +504,8 @@ describe("Polygon Mainnet Test", function () {
     });
 
     it("should be able to withdraw", async function () {
-      // Pool balance: 50 USDC, 50 USDT
-      // Aave balance: 100 amUSDC, 50 debtUSDT, $50 in amWETH
+      // Pool balance: 50 USDC, $25 in WETH, 50 USDT
+      // Aave balance: 100 amUSDC, $25 in amWETH, 50 debtUSDT
 
       // enable weth to check withdraw process
       await poolManagerLogicProxy.connect(manager).changeAssets([[weth, false]], []);
@@ -512,6 +514,7 @@ describe("Polygon Mainnet Test", function () {
       let withdrawAmount = units(80);
 
       const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
+      const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(logicOwner.address));
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
       checkAlmostSame(totalFundValueBefore, units(200));
@@ -527,8 +530,128 @@ describe("Polygon Mainnet Test", function () {
 
       checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(60).div(100));
       const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
+      const usdtBalanceAfter = ethers.BigNumber.from(await USDT.balanceOf(logicOwner.address));
       console.log(usdcBalanceAfter.toString(), usdcBalanceBefore.toString());
       checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((20e6).toString()));
+      checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add((20e6).toString()));
+    });
+
+    it("Should be able to borrow more USDT", async () => {
+      // Pool balance: 30 USDC, $15 in WETH, 30 USDT
+      // Aave balance: 60 amUSDC, $15 in amWETH, 30 debtUSDT
+
+      const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
+      const amwethBalanceBefore = await AMWETH.balanceOf(poolLogicProxy.address);
+      const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+      const usdtBalanceBefore = await USDT.balanceOf(poolLogicProxy.address);
+
+      const amount = (10e6).toString();
+
+      const borrowABI = iLendingPool.encodeFunctionData("borrow", [usdt, amount, 2, 0, poolLogicProxy.address]);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      // borrow
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI);
+
+      const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
+
+      checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(amount));
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
+
+    it("Should be able to repay USDT", async () => {
+      // Pool balance: 30 USDC, $15 in WETH, 40 USDT
+      // Aave balance: 60 amUSDC, $15 in amWETH, 40 debtUSDT
+
+      // Swap some USDC for more USDT first to be able to pay back the loan
+      const sourceAmount = (10e6).toString();
+
+      // First approve USDC
+      let approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, sourceAmount]);
+      await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+
+      const swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+        sourceAmount,
+        await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, usdt]),
+        [usdc, usdt],
+        poolLogicProxy.address,
+        Math.floor(Date.now() / 1000 + 100000000),
+      ]);
+      await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI);
+
+      const debtUsdtBefore = await VariableUSDT.balanceOf(poolLogicProxy.address);
+      const usdtBalanceBefore = await USDT.balanceOf(poolLogicProxy.address);
+      expect(debtUsdtBefore).to.be.gt(0);
+      expect(usdtBalanceBefore).to.be.gt(debtUsdtBefore);
+
+      const amount = units(10000); // max / full repayment
+      const repayABI = iLendingPool.encodeFunctionData("repay", [usdt, amount, 2, poolLogicProxy.address]);
+
+      // approve usdt
+      approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
+      await poolLogicProxy.connect(manager).execTransaction(usdt, approveABI);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      // repay
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI);
+
+      const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
+
+      expect(approxEq(usdtBalanceAfter, 10e6, 0.01));
+
+      const debtUsdtAfter = await VariableUSDT.balanceOf(poolLogicProxy.address);
+      expect(debtUsdtAfter).to.be.equal(0);
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
+
+    it("Should be able to borrow WETH", async () => {
+      // Pool balance: 20 USDC, $15 in WETH, 10 USDT
+      // Aave balance: 60 amUSDC, $15 in amWETH
+
+      const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
+
+      const amount = (1e14).toString(); // small amount of WETH to borrow
+
+      const borrowABI = iLendingPool.encodeFunctionData("borrow", [weth, amount, 2, 0, poolLogicProxy.address]);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      // borrow
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI);
+
+      const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
+      expect(wethBalanceAfter).to.be.gt(wethBalanceBefore);
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
+
+    it("Should be able to repay WETH", async () => {
+      // Pool balance: 30 USDC, $15 in WETH + some borrowed WETH, 40 USDT
+      // Aave balance: 60 amUSDC, $15 in amWETH, some debtWETH
+
+      const debtWethBefore = await VariableWETH.balanceOf(poolLogicProxy.address);
+      expect(debtWethBefore).to.be.gt(0);
+
+      const amount = units(10000); // max / full repayment
+
+      let repayABI = iLendingPool.encodeFunctionData("repay", [weth, amount, 2, poolLogicProxy.address]);
+
+      // approve weth
+      approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
+      await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      // repay
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI);
+
+      const debtWethAfter = await VariableWETH.balanceOf(poolLogicProxy.address);
+      expect(debtWethAfter).to.be.equal(0);
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
   });
 });
