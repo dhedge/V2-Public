@@ -57,7 +57,7 @@ interface IAssetGuard {
       MultiTransaction[] memory transactions
     );
 
-  function getBalance(address pool, address asset) external view returns (uint256);
+  function getBalance(address pool, address asset) external view returns (uint256 balance);
 
   function getPrincipalBalances(
     address pool,

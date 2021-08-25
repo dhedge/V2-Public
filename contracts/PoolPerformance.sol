@@ -63,7 +63,7 @@ contract PoolPerformance is OwnableUpgradeable {
   function initialize() external initializer {
     __Ownable_init();
   }
-  
+
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
@@ -149,11 +149,10 @@ contract PoolPerformance is OwnableUpgradeable {
   function recordDirectDepositValue(address poolAddress) public {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
-    uint256 assetCount = supportedAssets.length;
 
     uint256 valueWithoutDirectDeposits = 0;
 
-    for (uint8 i = 0; i < assetCount; i++) {
+    for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
       uint256 amount = internalBalancesMap[poolAddress][assetAddress];
 
@@ -170,13 +169,9 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     uint256 totalFundValue = IPoolManagerLogic(poolManagerAddress).totalFundValue();
-    // Calculate what portion of the value is not from directDeposits (i.e %90 i.e 0.9)
-    uint256 additionalIDirectDepositFactor = (totalFundValue - valueWithoutDirectDeposits) / totalFundValue;
-    // totalFundValue = 100, PreviousIDirectDepositFactor = 0.9, AdditionalIDirectDepositFactor = 0.7
-    // newDirectDepositFactor = (100 * 0.9 * 0.7) / 100 = 0.63 (ie. 0.37 i.e 37% of the funds value is front direct deposits)
-    // We need to combine the previous directDepositFactor and the additional directDepositFactor
-    iDirectDepositFactorMap[poolAddress] =
-      (totalFundValue * iDirectDepositFactorMap[poolAddress] * additionalIDirectDepositFactor) /
+    // Combine the new factor with the oldfactor
+    iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress] =
+      (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) /
       totalFundValue;
     // once we have recorded the direct deposit value change we can reset our internalBalances
     _updateInternalBalances(poolAddress);
