@@ -223,7 +223,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     uint256 totalSupplyBefore = totalSupply();
 
-    require(IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+    _asset.tryAssemblyCall(
+      abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
+    );
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -274,13 +276,18 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint16 index = 0;
 
     for (uint256 i = 0; i < assetCount; i++) {
-      (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) =
-        _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
+      (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
+        _supportedAssets[i].asset,
+        msg.sender,
+        portion
+      );
 
       if (portionOfAssetBalance > 0) {
         require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
-        IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
+        asset.tryAssemblyCall(
+          abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, portionOfAssetBalance)
+        );
       }
 
       if (externalWithdrawProcessed || portionOfAssetBalance > 0) {
@@ -338,8 +345,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
 
-    (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransaction[] memory transactions) =
-      IAssetGuard(guard).withdrawProcessing(address(this), asset, portion, to);
+    (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransaction[] memory transactions) = IAssetGuard(
+      guard
+    ).withdrawProcessing(address(this), asset, portion, to);
 
     uint256 txCount = transactions.length;
     if (txCount > 0) {
@@ -350,14 +358,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
       for (uint256 i = 0; i < txCount; i++) {
         externalWithdrawProcessed = transactions[i].to.tryAssemblyCall(transactions[i].txData);
-        require(externalWithdrawProcessed, "failed to withdraw tokens");
       }
 
       if (withdrawAsset != address(0)) {
         // calculated the balance change after withdraw process.
-        withdrawBalance = withdrawBalance.add(IERC20Upgradeable(withdrawAsset).balanceOf(address(this))).sub(
-          assetBalanceBefore
-        );
+        // here it will also revert if the WETH balance has been decreased during the aave flashloan logic
+        uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+        require(assetBalanceAfter >= assetBalanceBefore, "too high slippage");
+
+        withdrawBalance = withdrawBalance.add(assetBalanceAfter.sub(assetBalanceBefore));
       }
     }
 
@@ -384,7 +393,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
 
     success = to.tryAssemblyCall(data);
-    require(success, "failed to execute the call");
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
@@ -509,8 +517,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 managerFeeDenominator;
     (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
 
-    uint256 available =
-      _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
+    uint256 available = _availableManagerFee(
+      fundValue,
+      tokenSupply,
+      tokenPriceAtLastFeeMint,
+      managerFeeNumerator,
+      managerFeeDenominator
+    );
 
     // Ignore dust when minting performance fees
     if (available < 10000) return fundValue;
@@ -611,19 +624,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
 
-    IAssetGuard.MultiTransaction[] memory transactions =
-      IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).flashloanProcessing(
-        address(this),
-        portion,
-        assets,
-        amounts,
-        premiums,
-        interestRateModes
-      );
+    IAssetGuard.MultiTransaction[] memory transactions = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard)
+      .flashloanProcessing(address(this), portion, assets, amounts, premiums, interestRateModes);
 
     for (uint256 i = 0; i < transactions.length; i++) {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
-      require(success, "failed to process flashloan");
     }
   }
 

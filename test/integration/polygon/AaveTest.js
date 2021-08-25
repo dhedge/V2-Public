@@ -736,7 +736,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, swapRateABI),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("invalid destination");
 
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [amdai, 1]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
@@ -770,7 +770,7 @@ describe("Polygon Mainnet Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("invalid destination");
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [amdai, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
