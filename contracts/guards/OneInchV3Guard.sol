@@ -94,7 +94,7 @@ contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
 
       address dstAsset = srcAsset;
       uint256 poolLength = getArrayLength(data, 3); // length of the routing addresses
-      for (uint8 i = 0 ; i < poolLength ; i ++) {
+      for (uint8 i = 0; i < poolLength; i++) {
         address pool = convert32toAddress(getArrayIndex(data, 3, i));
         address token0 = IUniswapV2Pair(pool).token0();
         address token1 = IUniswapV2Pair(pool).token1();
