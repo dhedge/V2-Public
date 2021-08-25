@@ -39,6 +39,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../utils/TxDataUtils.sol";
 import "../utils/SlippageChecker.sol";
 import "../interfaces/guards/IGuard.sol";
+import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 
@@ -85,18 +86,34 @@ contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-    } else if (method == 0x2e95b6c8) {
+    } else if (method == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
       // 1inch's `unoswap` method
       address srcAsset = convert32toAddress(getInput(data, 0));
       uint256 srcAmount = uint256(getInput(data, 1));
       uint256 amountOutMin = uint256(getInput(data, 2));
-      address dstAsset = convert32toAddress(getArrayLast(data, 3));
+
+      address dstAsset = srcAsset;
+      uint256 poolLength = getArrayLength(data, 3); // length of the routing addresses
+      for (uint8 i = 0 ; i < poolLength ; i ++) {
+        address pool = convert32toAddress(getArrayIndex(data, 3, i));
+        address token0 = IUniswapV2Pair(pool).token0();
+        address token1 = IUniswapV2Pair(pool).token1();
+        if (dstAsset == token0) {
+          dstAsset = token1;
+        } else if (dstAsset == token1) {
+          dstAsset = token0;
+        } else {
+          require(false, "invalid path");
+        }
+      }
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
+
+      txType = 2; // 'Exchange' type
     }
 
     return (txType, false);
