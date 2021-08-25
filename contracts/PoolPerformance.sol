@@ -52,7 +52,6 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
-  address poolFactory;
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
   // Im keeping the `DirectDeposit`Factor naming for now, for continuity,
   // I will rename if we decide to adopt these changes
@@ -61,11 +60,10 @@ contract PoolPerformance is OwnableUpgradeable {
   mapping(address => uint256) public iDirectDepositFactorMap;
 
   /// @notice initialisation for the contract
-  function initialize(address poolFactoryAddress) external initializer {
-    poolFactory = poolFactoryAddress;
+  function initialize() external initializer {
     __Ownable_init();
   }
-
+  
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
