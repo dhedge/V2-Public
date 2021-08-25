@@ -38,16 +38,16 @@ pragma solidity ^0.7.6;
 pragma experimental ABIEncoderV2;
 
 interface IPoolPerformance {
-
   function addAssetBalance(address asset, uint256 amount) external;
 
   function hasDirectDeposit(address poolAddress) external view returns (bool);
 
   function updateInternalBalances() external;
 
-  function getBalancesSnapshot(address poolAddress,
-    IHasSupportedAsset.Asset[] memory supportedAssets
-  ) external view returns (uint256[] memory supportedAssetAmounts);
+  function getBalancesSnapshot(address poolAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
+    external
+    view
+    returns (uint256[] memory supportedAssetAmounts);
 
   function updatedInternalBalancesByDiff(
     IHasSupportedAsset.Asset[] memory supportedAssets,

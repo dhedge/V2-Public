@@ -77,24 +77,25 @@ contract PoolPerformance is OwnableUpgradeable {
 
     uint256[] memory supportedAssetAmounts = getBalancesSnapshot(poolAddress, supportedAssets);
     for (uint8 i = 0; i < supportedAssets.length; i++) {
-
-      if (
-        internalBalancesMap[poolAddress][supportedAssets[i].asset] < supportedAssetAmounts[i]
-      ) {
+      if (internalBalancesMap[poolAddress][supportedAssets[i].asset] < supportedAssetAmounts[i]) {
         return true;
       }
     }
     return false;
   }
 
-  function getBalancesSnapshot(address poolAddress, IHasSupportedAsset.Asset[] memory supportedAssets) public view returns (uint256[] memory supportedAssetAmounts) {
+  function getBalancesSnapshot(address poolAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
+    public
+    view
+    returns (uint256[] memory supportedAssetAmounts)
+  {
     supportedAssetAmounts = new uint256[](supportedAssets.length);
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address guard = IHasGuardInfo(poolFactory).getAssetGuard(supportedAssets[i].asset);
       // Need to check here that the guard exists and that it has getPrincipalBalances?
-      (uint256 amount, uint256[] memory sAamounts) = IAssetGuard(guard)
-        .getPrincipalBalances(poolAddress, supportedAssets[i].asset, supportedAssets);
+      (uint256 amount, uint256[] memory sAamounts) =
+        IAssetGuard(guard).getPrincipalBalances(poolAddress, supportedAssets[i].asset, supportedAssets);
 
       supportedAssetAmounts[i] = supportedAssetAmounts[i] + amount;
 
@@ -114,7 +115,8 @@ contract PoolPerformance is OwnableUpgradeable {
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       assetChange = beforeSupportedAssetAmounts[i] - afterSupportedAssetAmounts[i];
       internalBalancesMap[poolAddress][supportedAssets[i].asset] =
-        internalBalancesMap[poolAddress][supportedAssets[i].asset] - assetChange;
+        internalBalancesMap[poolAddress][supportedAssets[i].asset] -
+        assetChange;
     }
   }
 

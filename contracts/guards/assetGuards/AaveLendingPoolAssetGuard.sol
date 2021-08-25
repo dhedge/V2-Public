@@ -285,13 +285,11 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   /// @param pool the PoolLogic address
   /// @return assetAmount 0 not used
   /// @return supportedAssetAmounts the principal asset balance per each collateral asset
-  function getPrincipalBalances(address pool, address, IHasSupportedAsset.Asset[] memory supportedAssets)
-    external
-    view
-    virtual
-    override
-    returns (uint256 assetAmount, uint256[] memory supportedAssetAmounts)
-  {
+  function getPrincipalBalances(
+    address pool,
+    address,
+    IHasSupportedAsset.Asset[] memory supportedAssets
+  ) external view virtual override returns (uint256 assetAmount, uint256[] memory supportedAssetAmounts) {
     uint256 length = supportedAssets.length;
     supportedAssetAmounts = new uint256[](length);
 
@@ -306,7 +304,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
     // We rely on the order of supportedAssetAmounts upstream so we don't remove empty records
   }
-
 
   /// @notice Calculates DebtToken balances
   /// @param pool the PoolLogic address

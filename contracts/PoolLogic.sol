@@ -275,7 +275,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    uint256[] memory supportedAssetAmountsSnapshotBefore = IPoolPerformance(poolManagerLogic).getBalancesSnapshot(address(this), _supportedAssets);
+    uint256[] memory supportedAssetAmountsSnapshotBefore =
+      IPoolPerformance(poolManagerLogic).getBalancesSnapshot(address(this), _supportedAssets);
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) =
@@ -297,13 +298,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
-
     IPoolPerformance(poolManagerLogic).updatedInternalBalancesByDiff(
       _supportedAssets,
       supportedAssetAmountsSnapshotBefore,
       IPoolPerformance(poolManagerLogic).getBalancesSnapshot(address(this), _supportedAssets)
     );
-
 
     // Reduce length for withdrawnAssets to remove the empty items
     uint256 reduceLength = _supportedAssets.length.sub(index);
@@ -383,10 +382,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
-    require(
-      !IPoolPerformance(poolPerformance).hasDirectDeposit(address(this)),
-      "Airdrop detected. Claim airdrop."
-    );
+    require(!IPoolPerformance(poolPerformance).hasDirectDeposit(address(this)), "Airdrop detected. Claim airdrop.");
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 
