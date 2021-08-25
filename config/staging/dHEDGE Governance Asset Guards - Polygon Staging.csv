@@ -1,0 +1,5 @@
+AssetType,GuardName,GuardAddress,Description
+0,ERC20Guard,0x3Cf903B98755CBf2174fDBD2e1027e538745A918,Chainlink direct USD price feed with 8 decimals
+2,SushiLPAssetGuard,0xF291D94C6DE82D67655170dFE90D16204a4b4EBf,Sushi LP tokens
+3,AaveLendingPoolAssetGuard,0x4eda65fD78adC4447B827e292fd996fDF2AF3E24,Aave Lending Pool
+4,LendingEnabledAssetGuard,0xCb1687Cac48733BA7F04fD7d461A375D4Ab46F26,Enabled for lending or borrowing

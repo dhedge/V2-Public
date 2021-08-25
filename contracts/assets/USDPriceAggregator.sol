@@ -14,7 +14,7 @@ import "../interfaces/IERC20Extended.sol"; // includes decimals()
  */
 contract USDPriceAggregator is IAggregatorV3Interface {
   /**
-   * @dev Get the latest round data. Should be the same format as chainlink aggregator.
+   * @notice Get the latest round data. Should be the same format as chainlink aggregator.
    * @return roundId The round ID.
    * @return answer The price - the latest round data of USD (price decimal: 8)
    * @return startedAt Timestamp of when the round started.

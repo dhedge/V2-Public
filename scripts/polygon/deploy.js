@@ -2,11 +2,18 @@ const hre = require("hardhat");
 const fs = require("fs");
 const { getTag } = require("../Helpers");
 const csv = require("csvtojson");
+const { toBytes32 } = require("../../test/TestHelpers");
 
 // Place holder addresses
 const KOVAN_ADDRESS_RESOLVER = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 
+// Polygon addresses
+const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+const uberPool = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
+const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
+
+// sushiswap
 const sushiswapV2Factory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
@@ -15,7 +22,6 @@ const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
 const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
 const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
-const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
 
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
 const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
@@ -35,7 +41,13 @@ const sushiLPUsdcWethPoolId = 1;
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
 
-async function main() {
+const prodVersionFile = "./publish/matic/versions.json";
+const stagingVersionFile = "./publish/matic/staging-versions.json";
+
+const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
+const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
+
+const deploy = async (env) => {
   const ethers = hre.ethers;
   const provider = ethers.provider;
   const upgrades = hre.upgrades;
@@ -90,6 +102,7 @@ async function main() {
   await poolFactory.deployed();
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
+  const fileName = env === "staging" ? stagingFileName : prodFileName;
   const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [poolFactory.address, false, "NA", "NA"]);
   console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
   let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage);
@@ -108,11 +121,9 @@ async function main() {
   let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage);
   poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddress);
 
-  fileName = "./dHEDGE Assets list - Polygon.csv";
-
   const assets = await csv().fromFile(fileName);
 
-  const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+  const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
   let assetHandlerInitAssets = [];
   for (let i = 0; i < assets.length; i++) {
     const asset = assets[i];
@@ -121,9 +132,9 @@ async function main() {
       case "2":
         // Deploy Sushi LP Aggregator
         console.log("Deploying ", asset["Asset Name"]);
-        const sushiLPAggregator = await SushiLPAggregator.deploy(asset.Address, poolFactory.address);
+        const sushiLPAggregator = await UniV2LPAggregator.deploy(asset.Address, poolFactory.address);
         await sushiLPAggregator.deployed();
-        console.log(`${asset["Asset Name"]} SushiLPAggregator deployed at `, sushiLPAggregator.address);
+        console.log(`${asset["Asset Name"]} UniV2LPAggregator deployed at `, sushiLPAggregator.address);
         assetHandlerInitAssets.push({
           name: asset["Asset Name"],
           asset: asset.Address,
@@ -148,7 +159,7 @@ async function main() {
   console.log("ERC20Guard deployed at ", erc20Guard.address);
 
   const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-  const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
+  const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
   await uniswapV2RouterGuard.deployed();
   console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
 
@@ -168,7 +179,7 @@ async function main() {
   await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
 
   let tag = await getTag();
-  let versions = require("../../publish/polygon/versions.json");
+  let versions = new Object();
   versions[tag] = {
     network: network,
     date: new Date().toUTCString(),
@@ -237,10 +248,10 @@ async function main() {
       asset: aaveLendingPool,
       assetType: 3,
       aggregator: usdPriceAggregator.address,
-    }
+    };
     await assetHandler.addAssets(lendingPoolAsset);
   }
-  
+
   // DAO Settings
   await poolFactory.setDAOAddress(uberPool);
   await poolFactory.transferOwnership(protocolDao);
@@ -252,12 +263,8 @@ async function main() {
   const data = JSON.stringify(versions, null, 2);
   console.log(data);
 
-  fs.writeFileSync("./publish/polygon/versions.json", data);
-}
+  versionFile = env === "prod" ? productionVersionFile : stagingVersionFile;
+  fs.writeFileSync(versionFile, data);
+};
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+module.exports = { deploy };

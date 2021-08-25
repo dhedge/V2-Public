@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame } = require("../../TestHelpers");
+const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -25,7 +25,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic, assetHandler;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
-  let uniswapV2RouterGuard, sushiswapGuard;
+  let uniswapV2RouterGuard;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -63,8 +63,8 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     ]);
     await poolFactory.deployed();
 
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLpAggregator = await SushiLPAggregator.deploy(sushi_usdc_usdt, poolFactory);
+    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+    sushiLpAggregator = await UniV2LPAggregator.deploy(sushi_usdc_usdt, poolFactory.address);
     sushiLpAggregator.deployed();
     const assetSushiUsdcUsdt = { asset: sushi_usdc_usdt, assetType: 2, aggregator: sushiLpAggregator.address };
     await assetHandler.addAssets([assetSushiUsdcUsdt]);
@@ -74,15 +74,13 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     erc20Guard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(uniswapV2Factory);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     uniswapV2RouterGuard.deployed();
 
-    sushiswapGuard = await UniswapV2RouterGuard.deploy(sushiswapFactory);
-    sushiswapGuard.deployed();
-
     await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(2, erc20Guard.address); // as normal erc20 token
     await governance.setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(sushiswapRouter, sushiswapGuard.address);
+    await governance.setContractGuard(sushiswapRouter, uniswapV2RouterGuard.address);
   });
 
   it("Should be able to get WETH", async function () {
@@ -327,7 +325,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   it("should be able to swap tokens on uniswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -377,28 +375,6 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [weth, usdt],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [usdc, user.address, usdt],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
-    );
-
-    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
       [usdc, usdt, weth],
       poolLogicProxy.address,
       0,
@@ -420,18 +396,18 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(uniswapV2Router, sourceAmount, [usdc, usdt]),
       [usdc, usdt],
       poolLogicProxy.address,
       0,
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router, swapABI)).to.be.revertedWith(
-      "failed to execute the call",
+      "UniswapV2Router: EXPIRED",
     );
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(uniswapV2Router, sourceAmount, [usdc, usdt]),
       [usdc, usdt],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
@@ -448,7 +424,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
   it("should be able to add liquidity on sushiswap.", async () => {
     let addLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on(
+      uniswapV2RouterGuard.on(
         "AddLiquidity",
         (
           managerLogicAddress,
@@ -577,7 +553,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       0,
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapRouter, addLiquidityAbi)).to.be.revertedWith(
-      "failed to execute the call",
+      "revert UniswapV2Router: EXPIRED",
     );
 
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
@@ -615,7 +591,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
   it("should be able to remove liquidity on sushiswap.", async () => {
     let removeLiquidityEvent = new Promise((resolve, reject) => {
-      sushiswapGuard.on(
+      uniswapV2RouterGuard.on(
         "RemoveLiquidity",
         (managerLogicAddress, tokenA, tokenB, pair, liquidity, amountAMin, amountBMin, time, event) => {
           event.removeListener();
@@ -718,7 +694,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     ]);
     await expect(
       poolLogicProxy.connect(manager).execTransaction(sushiswapRouter, removeLiquidityAbi),
-    ).to.be.revertedWith("failed to execute the call");
+    ).to.be.revertedWith("UniswapV2Router: EXPIRED");
 
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
@@ -753,7 +729,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
   it("should be able to swap tokens back on uniswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -782,7 +758,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
     const swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(uniswapV2Router, sourceAmount, [usdt, usdc]),
       [usdt, usdc],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),

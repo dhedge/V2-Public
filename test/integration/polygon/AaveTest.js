@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -106,8 +106,8 @@ describe("Polygon Mainnet Test", function () {
     await poolFactory.deployed();
 
     // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
+    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
     const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     await assetHandler.addAssets([assetSushiLPWethUsdc]);
 
@@ -115,8 +115,12 @@ describe("Polygon Mainnet Test", function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+    openAssetGuard = await OpenAssetGuard.deploy([]);
+    await openAssetGuard.deployed();
+
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
@@ -155,6 +159,7 @@ describe("Polygon Mainnet Test", function () {
       [toBytes32("swapRouter"), sushiswapV2Router],
       [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
       [toBytes32("weth"), weth],
+      [toBytes32("openAssetGuard"), openAssetGuard.address],
     ]);
   });
 
@@ -404,7 +409,7 @@ describe("Polygon Mainnet Test", function () {
 
     const swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
@@ -457,7 +462,7 @@ describe("Polygon Mainnet Test", function () {
       );
 
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "SafeERC20: low-level call failed",
       );
 
       // approve usdc
@@ -544,9 +549,7 @@ describe("Polygon Mainnet Test", function () {
       );
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [weth, true]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith(
-        "failed to execute the call",
-      );
+      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith("19");
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdc, false]);
       await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi);
@@ -673,7 +676,7 @@ describe("Polygon Mainnet Test", function () {
       );
 
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "SafeERC20: low-level call failed",
       );
 
       // approve dai
@@ -742,21 +745,21 @@ describe("Polygon Mainnet Test", function () {
 
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [usdc, 1]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "17",
       );
 
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [dai, 1]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "17",
       );
 
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [dai, 2]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
-        "failed to execute the call",
+        "12",
       );
     });
 
-    it("should be able to swap borrow rate mode", async function () {
+    it("should be able to rebalance stable borrow rate", async function () {
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
       let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
@@ -781,12 +784,12 @@ describe("Polygon Mainnet Test", function () {
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
-        "failed to execute the call",
+        "22",
       );
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [dai, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
-        "failed to execute the call",
+        "22",
       );
     });
 

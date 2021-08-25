@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame } = require("../../TestHelpers");
+const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -73,8 +73,8 @@ describe("Sushiswap V2 Test", function () {
     await poolFactory.deployed();
 
     // Deploy Sushi LP Aggregator
-    const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
-    sushiLPAggregator = await SushiLPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
+    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
     const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     await assetHandler.addAssets([assetSushiLPWethUsdc]);
 
@@ -83,7 +83,7 @@ describe("Sushiswap V2 Test", function () {
     erc20Guard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(sushiswapV2Factory);
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
@@ -352,7 +352,7 @@ describe("Sushiswap V2 Test", function () {
   it("should be able to swap tokens on sushiswap.", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
-        "Exchange",
+        "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
 
@@ -400,28 +400,6 @@ describe("Sushiswap V2 Test", function () {
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdt, weth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
-      "unsupported source asset",
-    );
-
-    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
-      [usdc, user.address, weth],
-      poolLogicProxy.address,
-      0,
-    ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
-      "invalid routing asset",
-    );
-
-    swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
-      sourceAmount,
-      0,
       [usdc, weth, usdt],
       poolLogicProxy.address,
       0,
@@ -443,18 +421,18 @@ describe("Sushiswap V2 Test", function () {
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       0,
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
-      "failed to execute the call",
+      "UniswapV2Router: EXPIRED",
     );
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      0,
+      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
       [usdc, weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
@@ -635,6 +613,20 @@ describe("Sushiswap V2 Test", function () {
         "recipient is not pool",
       );
 
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
+        "enable rewardA token",
+      );
+
+      // enable SUSHI token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken, false]], []);
+
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
+        "enable rewardB token",
+      );
+
+      // enable WMATIC token in pool
+      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
       let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
@@ -722,20 +714,6 @@ describe("Sushiswap V2 Test", function () {
       });
 
       const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPUsdcWethPoolId, poolLogicProxy.address]);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, harvestAbi)).to.be.revertedWith(
-        "enable reward token",
-      );
-
-      // enable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken, false]], []);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, harvestAbi)).to.be.revertedWith(
-        "enable reward token",
-      );
-
-      // enable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
 
       // attempt to harvest with manager as recipient
       const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
@@ -905,7 +883,7 @@ describe("Sushiswap V2 Test", function () {
       checkAlmostSame(totalFundValue, expectedFundValue.toString());
 
       // Withdraw all
-      const withdrawAmount = units(100);
+      const withdrawAmount = units(10);
       const investorFundBalance = await poolLogicProxy.balanceOf(logicOwner.address);
 
       const sushiBalanceBefore = await SUSHI.balanceOf(logicOwner.address);

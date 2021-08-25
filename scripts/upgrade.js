@@ -9,8 +9,8 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
-const prodFileName = "./dHEDGE Assets list - Polygon.csv";
-const stagingFileName = "./dHEDGE Assets list - Polygon Staging.csv";
+const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
+const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 let nonce, safeSdk;
 
 const proposeTx = async (to, data) => {
@@ -102,7 +102,7 @@ task("upgrade", "Upgrade proxy contracts")
       if (await hasDuplicates(csvAssets, "Chainlink Price Feed"))
         throw "Duplicate 'Chainlink Price Feed' field found in assets CSV";
 
-      const SushiLPAggregator = await ethers.getContractFactory("SushiLPAggregator");
+      const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
       for (const csvAsset of csvAssets) {
         let foundInVersions = false;
         for (const asset of contracts.Assets) {
