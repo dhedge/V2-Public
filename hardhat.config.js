@@ -11,6 +11,7 @@ require("@nomiclabs/hardhat-etherscan");
 
 require("./scripts/upgrade.js");
 require("./scripts/polygon/checks/checkConfig");
+require("@nomiclabs/hardhat-etherscan");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

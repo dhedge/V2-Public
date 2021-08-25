@@ -39,6 +39,7 @@ const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
 const sushiLPUsdcWethPoolId = 1;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
 
 const prodVersionFile = "./publish/matic/versions.json";
 const stagingVersionFile = "./publish/matic/staging-versions.json";
@@ -48,6 +49,7 @@ const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.c
 
 const deploy = async (env) => {
   const ethers = hre.ethers;
+  const provider = ethers.provider;
   const upgrades = hre.upgrades;
 
   let network = await ethers.provider.getNetwork();
@@ -68,14 +70,12 @@ const deploy = async (env) => {
   console.log("governance deployed to:", governance.address);
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
-  poolLogic = await PoolLogic.deploy();
-  await poolLogic.deployed();
-  console.log("poolLogic deployed at ", poolLogic.address);
+  const poolLogic = await PoolLogic.deploy();
+  console.log("PoolLogic deployed at ", poolLogic.address);
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-  poolManagerLogic = await PoolManagerLogic.deploy();
-  await poolManagerLogic.deployed();
-  console.log("poolManagerLogic deployed at ", poolManagerLogic.address);
+  const poolManagerLogic = await PoolManagerLogic.deploy();
+  console.log("PoolManagerLogic deployed at ", poolManagerLogic.address);
 
   // Initialize Asset Price Consumer
   // const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
@@ -103,6 +103,24 @@ const deploy = async (env) => {
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
   const fileName = env === "staging" ? stagingFileName : prodFileName;
+  const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [poolFactory.address, false, "NA", "NA"]);
+  console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
+  let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage);
+  poolLogicAddress = ethers.utils.hexValue(poolLogicAddress);
+
+  const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+  const poolManagerLogicProxy = await upgrades.deployProxy(PoolManagerLogic, [
+    poolFactory.address,
+    manager.address,
+    "NA",
+    poolLogicAddress,
+    "1000",
+    [[wmatic, true]],
+  ]);
+  console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
+  let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage);
+  poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddress);
+
   const assets = await csv().fromFile(fileName);
 
   const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
@@ -169,8 +187,10 @@ const deploy = async (env) => {
       Assets: assetHandlerInitAssets,
       Governance: governance.address,
       PoolFactoryProxy: poolFactory.address,
-      PoolLogic: poolLogic.address,
-      PoolManagerLogic: poolManagerLogic.address,
+      PoolLogicProxy: poolLogicProxy.address,
+      PoolLogic: poolLogicAddress,
+      PoolManagerLogicProxy: poolManagerLogicProxy.address,
+      PoolManagerLogic: poolManagerLogicAddress,
       AssetHandlerProxy: assetHandler.address,
       ERC20Guard: erc20Guard.address,
       UniswapV2RouterGuard: uniswapV2RouterGuard.address,
@@ -219,13 +239,25 @@ const deploy = async (env) => {
     };
 
     versions[tag].contracts = { ...versions[tag].contracts, ...aaveContracts };
-  } else {
-    // DAO Settings
-    await poolFactory.setDAOAddress(uberPool);
-    await poolFactory.transferOwnership(protocolDao);
-    await governance.transferOwnership(protocolDao);
-    await assetHandler.transferOwnership(protocolDao);
+
+    const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+    usdPriceAggregator = await USDPriceAggregator.deploy();
+    console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
+    const lendingPoolAsset = {
+      name: "Lending Pool",
+      asset: aaveLendingPool,
+      assetType: 3,
+      aggregator: usdPriceAggregator.address,
+    };
+    await assetHandler.addAssets(lendingPoolAsset);
   }
+
+  // DAO Settings
+  await poolFactory.setDAOAddress(uberPool);
+  await poolFactory.transferOwnership(protocolDao);
+  await governance.transferOwnership(protocolDao);
+  await assetHandler.transferOwnership(protocolDao);
+  await sushiLPAssetGuard.transferOwnership(protocolDao);
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
