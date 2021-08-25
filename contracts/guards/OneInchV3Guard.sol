@@ -76,10 +76,13 @@ contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
       // 1inch's `swap` method
       address srcAsset = convert32toAddress(getInput(data, 3));
       address dstAsset = convert32toAddress(getInput(data, 4));
+      address toAddress = convert32toAddress(getInput(data, 6));
       uint256 srcAmount = uint256(getInput(data, 7));
       uint256 amountOutMin = uint256(getInput(data, 8));
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
       _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
