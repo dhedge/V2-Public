@@ -143,7 +143,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       _addAsset(_addAssets[i]);
     }
 
-    require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
+    require(supportedAssets.length <= IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
 
     require(getDepositAssets().length >= 1, "at least one deposit asset");
   }
