@@ -110,7 +110,7 @@ const deploy = async (env) => {
     "NA",
   ]);
   console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
-  let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage)
+  let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage);
   poolLogicAddress = ethers.utils.hexValue(poolLogicAddress);
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -120,12 +120,10 @@ const deploy = async (env) => {
     "NA",
     poolLogicAddress,
     "1000",
-    [
-      [wmatic, true],
-    ],
+    [[wmatic, true]],
   ]);
   console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
-  let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage)
+  let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage);
   poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddress);
 
   const assets = await csv().fromFile(fileName);
