@@ -31,6 +31,8 @@ const checkAlmostSame = (a, b) => {
   expect(ethers.BigNumber.from(a).lte(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
 };
 
+const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
+
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
@@ -52,6 +54,7 @@ module.exports = {
   updateChainlinkAggregators,
   currentBlockTimestamp,
   checkAlmostSame,
+  approxEq,
   toBytes32,
   getAmountOut,
   getAmountIn,

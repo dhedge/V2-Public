@@ -90,6 +90,7 @@ module.exports = {
       "UniswapV2RouterGuard",
       "UniswapV3SwapGuard",
       "SushiMiniChefV2Guard",
+      'QuickStakingRewardsGuard',
       "Managed",
     ],
     spacing: 2,

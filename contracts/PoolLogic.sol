@@ -223,7 +223,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     uint256 totalSupplyBefore = totalSupply();
 
-    require(IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
+    _asset.tryAssemblyCall(
+      abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
+    );
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -280,7 +282,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       if (portionOfAssetBalance > 0) {
         require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
-        IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
+        asset.tryAssemblyCall(
+          abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, portionOfAssetBalance)
+        );
       }
 
       if (externalWithdrawProcessed || portionOfAssetBalance > 0) {
@@ -350,14 +354,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
       for (uint256 i = 0; i < txCount; i++) {
         externalWithdrawProcessed = transactions[i].to.tryAssemblyCall(transactions[i].txData);
-        require(externalWithdrawProcessed, "failed to withdraw tokens");
       }
 
       if (withdrawAsset != address(0)) {
         // calculated the balance change after withdraw process.
-        withdrawBalance = withdrawBalance.add(IERC20Upgradeable(withdrawAsset).balanceOf(address(this))).sub(
-          assetBalanceBefore
-        );
+        // here it will also revert if the WETH balance has been decreased during the aave flashloan logic
+        uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
+        require(assetBalanceAfter >= assetBalanceBefore, "too high slippage");
+
+        withdrawBalance = withdrawBalance.add(assetBalanceAfter.sub(assetBalanceBefore));
       }
     }
 
@@ -384,7 +389,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
 
     success = to.tryAssemblyCall(data);
-    require(success, "failed to execute the call");
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
@@ -623,7 +627,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     for (uint256 i = 0; i < transactions.length; i++) {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
-      require(success, "failed to process flashloan");
     }
   }
 

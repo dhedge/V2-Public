@@ -383,7 +383,7 @@ describe("PoolFactory", function () {
           [seth, false],
         ],
       ),
-    ).to.be.revertedWith("Implementation init failed"); // at least one deposit asset
+    ).to.be.revertedWith("at least one deposit asset"); // at least one deposit asset
 
     await poolFactory.createFund(
       false,
@@ -692,6 +692,60 @@ describe("PoolFactory", function () {
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
     numberOfDepositAssets = depositAssets.length;
     expect(numberOfDepositAssets).to.be.equal(1);
+
+    // Can add asset to maximum
+    // Initialize Asset Price Consumer
+    await assetHandler.addAssets([
+      {
+        asset: susdAsset.address,
+        aggregator: susdAsset.address,
+        assetType: 0,
+      },
+      {
+        asset: sethAsset.address,
+        aggregator: sethAsset.address,
+        assetType: 0,
+      },
+      {
+        asset: slinkAsset.address,
+        aggregator: slinkAsset.address,
+        assetType: 0,
+      },
+      {
+        asset: usd_price_feed.address,
+        aggregator: usd_price_feed.address,
+        assetType: 0,
+      },
+      {
+        asset: eth_price_feed.address,
+        aggregator: eth_price_feed.address,
+        assetType: 0,
+      },
+    ]);
+    await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets([[susdAsset.address, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets([[sethAsset.address, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets([[slinkAsset.address, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets([[sushiToken.address, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets([[wmaticToken.address, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets([[usd_price_feed.address, false]], []);
+
+    supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
+    numberOfSupportedAssets = supportedAssets.length;
+    expect(numberOfSupportedAssets).to.eq(10);
+
+    await expect(poolManagerLogicManagerProxy.changeAssets([[eth_price_feed.address, false]], [])).to.be.revertedWith(
+      "maximum assets reached",
+    );
+
+    // Can remove asset back to before
+    await poolManagerLogicManagerProxy.changeAssets([], [sushiLPLinkWeth]);
+    await poolManagerLogicManagerProxy.changeAssets([], [susdAsset.address]);
+    await poolManagerLogicManagerProxy.changeAssets([], [sethAsset.address]);
+    await poolManagerLogicManagerProxy.changeAssets([], [slinkAsset.address]);
+    await poolManagerLogicManagerProxy.changeAssets([], [sushiToken.address]);
+    await poolManagerLogicManagerProxy.changeAssets([], [wmaticToken.address]);
+    await poolManagerLogicManagerProxy.changeAssets([], [usd_price_feed.address]);
 
     // Can not remove persist asset
     await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith("only manager or trader");

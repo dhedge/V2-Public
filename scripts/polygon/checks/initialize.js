@@ -154,7 +154,7 @@ const getEnvironmentContracts = async (environment) => {
     case "staging":
       proxyAdminOwner = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
       proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
-      protocolDao = "0x51150F973c2b0537642f5AE8911A49567598808f";
+      protocolDao = proxyAdminOwner;
       protocolTreasury = "0x51150F973c2b0537642f5AE8911A49567598808f";
       break;
 
