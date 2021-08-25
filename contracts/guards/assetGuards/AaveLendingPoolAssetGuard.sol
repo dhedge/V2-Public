@@ -43,6 +43,7 @@ import "../../interfaces/aave/ILendingPool.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
 import "../../interfaces/IHasAssetInfo.sol";
+import "../../interfaces/AToken.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
@@ -279,6 +280,33 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       mstore(amounts, sub(mload(amounts), reduceLength))
     }
   }
+
+  /// @notice Gets AToken principle balances for directDepositDetection
+  /// @param pool the PoolLogic address
+  /// @return assetAmount 0 not used
+  /// @return supportedAssetAmounts the principal asset balance per each collateral asset
+  function getPrincipalBalances(address pool, address, IHasSupportedAsset.Asset[] memory supportedAssets)
+    external
+    view
+    virtual
+    override
+    returns (uint256 assetAmount, uint256[] memory supportedAssetAmounts)
+  {
+    uint256 length = supportedAssets.length;
+    supportedAssetAmounts = new uint256[](length);
+
+    address aToken;
+    for (uint256 i = 0; i < length; i++) {
+      (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
+        supportedAssets[i].asset
+      );
+      if (aToken != address(0)) {
+        supportedAssetAmounts[i] = AToken(aToken).scaledBalanceOf(pool);
+      }
+    }
+    // We rely on the order of supportedAssetAmounts upstream so we don't remove empty records
+  }
+
 
   /// @notice Calculates DebtToken balances
   /// @param pool the PoolLogic address

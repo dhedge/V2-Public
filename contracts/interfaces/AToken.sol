@@ -32,28 +32,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import "./IHasSupportedAsset.sol";
+pragma solidity 0.7.6;
 
-pragma solidity ^0.7.6;
-pragma experimental ABIEncoderV2;
-
-interface IPoolPerformance {
-
-  function addAssetBalance(address asset, uint256 amount) external;
-
-  function hasDirectDeposit(address poolAddress) external view returns (bool);
-
-  function updateInternalBalances() external;
-
-  function getBalancesSnapshot(address poolAddress,
-    IHasSupportedAsset.Asset[] memory supportedAssets
-  ) external view returns (uint256[] memory supportedAssetAmounts);
-
-  function updatedInternalBalancesByDiff(
-    IHasSupportedAsset.Asset[] memory supportedAssets,
-    uint256[] memory beforeSupportedAssetAmounts,
-    uint256[] memory afterSupportedAssetAmounts
-  ) external;
-
-  function recordDirectDepositValue(address poolAddress) external;
+// Not sure what to name this guy, or if this is right location for it
+interface AToken {
+  function scaledBalanceOf(address user) external view returns (uint256);
 }

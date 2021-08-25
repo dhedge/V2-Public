@@ -42,6 +42,7 @@ import "../../interfaces/guards/IAssetGuard.sol";
 import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 
@@ -130,6 +131,20 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   function getBalance(address pool, address asset) public view virtual override returns (uint256 balance) {
     // The base ERC20 guard has no externally staked tokens
     balance = IERC20(asset).balanceOf(pool);
+  }
+
+  /// @notice Gets principle balance for given asset
+  /// @param pool address of the pool
+  /// @param asset address of the asset
+  /// @return principleAssetAmount the balance of the asset
+  function getPrincipalBalances(address pool, address asset, IHasSupportedAsset.Asset[] memory)
+    external
+    view
+    virtual
+    override
+    returns (uint256 principleAssetAmount, uint256[] memory supportedAssetAmounts)
+  {
+    principleAssetAmount = getBalance(pool, asset);
   }
 
   /// @notice Returns the decimal of the managed asset

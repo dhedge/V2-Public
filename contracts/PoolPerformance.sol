@@ -39,16 +39,20 @@ import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
+import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IERC20Extended.sol";
+import "./interfaces/guards/IAssetGuard.sol";
 
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 /// @notice Logic implementation for tracking pool performance
-contract PoolPerformance is PausableUpgradeable {
+contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
+  address poolFactory;
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
   // Im keeping the `DirectDeposit`Factor naming for now, for continuity,
   // I will rename if we decide to adopt these changes
@@ -56,42 +60,26 @@ contract PoolPerformance is PausableUpgradeable {
   // It decreases the tokenPrice by directDeposit amounts
   mapping(address => uint256) public iDirectDepositFactorMap;
 
-  // Not sure about the visibility of this one
-  // Other
-  function initialize() external initializer {
-    __Pausable_init();
+  /// @notice initialisation for the contract
+  function initialize(address poolFactoryAddress) external initializer {
+    poolFactory = poolFactoryAddress;
+    __Ownable_init();
   }
 
-  function addAssetBalance(
-    address poolAddress,
-    address asset,
-    uint256 amount
-  ) external {
-    // Should we check poolAddress is one of our pools?
-    require(msg.sender == poolAddress, "only pool");
+  function addAssetBalance(address asset, uint256 amount) external {
+    address poolAddress = msg.sender;
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
-  }
-
-  function subtractAssetBalance(
-    address poolAddress,
-    address asset,
-    uint256 amount
-  ) external {
-    // Should we check poolAddress is one of our pools?
-    require(msg.sender == poolAddress, "only pool");
-    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] - amount;
   }
 
   function hasDirectDeposit(address poolAddress) external view returns (bool) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
-    uint256 assetCount = supportedAssets.length;
 
-    for (uint8 i = 0; i < assetCount; i++) {
-      // Again not super keen on this circular reference from poolAddress to manager to poolAddress
+    uint256[] memory supportedAssetAmounts = getBalancesSnapshot(poolAddress, supportedAssets);
+    for (uint8 i = 0; i < supportedAssets.length; i++) {
+
       if (
-        internalBalancesMap[poolAddress][supportedAssets[i].asset] <
-        IPoolManagerLogic(poolManagerAddress).assetBalance(supportedAssets[i].asset)
+        internalBalancesMap[poolAddress][supportedAssets[i].asset] < supportedAssetAmounts[i]
       ) {
         return true;
       }
@@ -99,28 +87,47 @@ contract PoolPerformance is PausableUpgradeable {
     return false;
   }
 
-  function updateInternalBalances(address poolAddress, uint16 txType) external {
-    require(msg.sender == poolAddress, "only pool");
-    // Lecky suggested that we store a list of txTypes that require us to update the balances
-    // This is a smart optimisation but have not implemented it yet for brevity.
+  function getBalancesSnapshot(address poolAddress, IHasSupportedAsset.Asset[] memory supportedAssets) public view returns (uint256[] memory supportedAssetAmounts) {
+    supportedAssetAmounts = new uint256[](supportedAssets.length);
 
-    // check txType requires updating balances
+    for (uint8 i = 0; i < supportedAssets.length; i++) {
+      address guard = IHasGuardInfo(poolFactory).getAssetGuard(supportedAssets[i].asset);
+      // Need to check here that the guard exists and that it has getPrincipalBalances?
+      (uint256 amount, uint256[] memory sAamounts) = IAssetGuard(guard)
+        .getPrincipalBalances(poolAddress, supportedAssets[i].asset, supportedAssets);
 
-    _updateInternalBalances(poolAddress);
+      supportedAssetAmounts[i] = supportedAssetAmounts[i] + amount;
+
+      for (uint8 y = 0; i < sAamounts.length; y++) {
+        supportedAssetAmounts[y] = supportedAssetAmounts[y] + sAamounts[y];
+      }
+    }
+  }
+
+  function updatedInternalBalancesByDiff(
+    IHasSupportedAsset.Asset[] memory supportedAssets,
+    uint256[] memory beforeSupportedAssetAmounts,
+    uint256[] memory afterSupportedAssetAmounts
+  ) external {
+    address poolAddress = msg.sender;
+    uint256 assetChange;
+    for (uint8 i = 0; i < supportedAssets.length; i++) {
+      assetChange = beforeSupportedAssetAmounts[i] - afterSupportedAssetAmounts[i];
+      internalBalancesMap[poolAddress][supportedAssets[i].asset] =
+        internalBalancesMap[poolAddress][supportedAssets[i].asset] - assetChange;
+    }
+  }
+
+  function updateInternalBalances() external {
+    _updateInternalBalances(msg.sender);
   }
 
   function _updateInternalBalances(address poolAddress) internal {
-    // Should this be pausible?
-    //require(!paused(), "contracts paused");
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
-    uint256 assetCount = supportedAssets.length;
-
-    for (uint8 i = 0; i < assetCount; i++) {
-      // The call here is a bit cicular, because assetBalance gets the balance for the poolAddress not sure I like this.
-      internalBalancesMap[poolAddress][supportedAssets[i].asset] = IPoolManagerLogic(poolManagerAddress).assetBalance(
-        supportedAssets[i].asset
-      );
+    uint256[] memory supportedAssetAmountsSnapshot = getBalancesSnapshot(poolAddress, supportedAssets);
+    for (uint8 i = 0; i < supportedAssets.length; i++) {
+      internalBalancesMap[poolAddress][supportedAssets[i].asset] = supportedAssetAmountsSnapshot[i];
     }
   }
 
@@ -139,11 +146,7 @@ contract PoolPerformance is PausableUpgradeable {
   }
 
   // We record the direct deposit value and subtract it from the token price later to get performance
-  // Might need to be marked as non-reentrant
   function recordDirectDepositValue(address poolAddress) public {
-    // Should we check poolAddress is one of our pools?
-    require(msg.sender == poolAddress, "only pool");
-
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     uint256 assetCount = supportedAssets.length;
@@ -153,6 +156,10 @@ contract PoolPerformance is PausableUpgradeable {
     for (uint8 i = 0; i < assetCount; i++) {
       address assetAddress = supportedAssets[i].asset;
       uint256 amount = internalBalancesMap[poolAddress][assetAddress];
+
+      // One thing to note here is that the impact of the direct deposits is variable
+      // and is impacted by when this function is called and the price of the
+      // direct deposited asset at the time not when the deposit happens
       valueWithoutDirectDeposits =
         valueWithoutDirectDeposits +
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);

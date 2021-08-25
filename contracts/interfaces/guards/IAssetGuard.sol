@@ -35,6 +35,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import "../IHasSupportedAsset.sol";
+
 interface IAssetGuard {
   struct MultiTransaction {
     address to;
@@ -55,7 +57,12 @@ interface IAssetGuard {
       MultiTransaction[] memory transactions
     );
 
-  function getBalance(address pool, address asset) external view returns (uint256 balance);
+  function getBalance(address pool, address asset) external view returns (uint256);
+
+  function getPrincipalBalances(address pool, address, IHasSupportedAsset.Asset[] memory supportedAssets)
+    external
+    view
+    returns (uint256 assetAmount, uint256[] memory depositAssetAmounts);
 
   function getDecimals(address asset) external view returns (uint256 decimals);
 

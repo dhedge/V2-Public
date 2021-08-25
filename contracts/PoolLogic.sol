@@ -227,7 +227,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 totalSupplyBefore = totalSupply();
 
     require(IERC20Upgradeable(_asset).transferFrom(msg.sender, address(this), _amount), "token transfer failed");
-    IPoolPerformance(poolPerformance).addAssetBalance(address(this), _asset, _amount);
+    IPoolPerformance(poolPerformance).addAssetBalance(_asset, _amount);
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
     if (totalSupplyBefore > 0) {
@@ -272,22 +272,19 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // TODO: Combining into one line to fix stack too deep,
     //       need to refactor some variables into struct in order to have more variables
     IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
-    uint256 assetCount = _supportedAssets.length;
-    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
+    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    for (uint256 i = 0; i < assetCount; i++) {
+    uint256[] memory supportedAssetAmountsSnapshotBefore = IPoolPerformance(poolManagerLogic).getBalancesSnapshot(address(this), _supportedAssets);
+
+    for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) =
         _withdrawProcessing(_supportedAssets[i].asset, msg.sender, portion);
 
       if (portionOfAssetBalance > 0) {
         require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
-        bool result = IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
-        if (result) {
-          // Not sure if we should be doing this or taking a full snapshot via IPoolPerformance.updateInternalBalances
-          IPoolPerformance(poolPerformance).subtractAssetBalance(address(this), asset, portionOfAssetBalance);
-        }
+        IERC20Upgradeable(asset).transfer(msg.sender, portionOfAssetBalance);
       }
 
       if (externalWithdrawProcessed || portionOfAssetBalance > 0) {
@@ -300,8 +297,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
+
+    IPoolPerformance(poolManagerLogic).updatedInternalBalancesByDiff(
+      _supportedAssets,
+      supportedAssetAmountsSnapshotBefore,
+      IPoolPerformance(poolManagerLogic).getBalancesSnapshot(address(this), _supportedAssets)
+    );
+
+
     // Reduce length for withdrawnAssets to remove the empty items
-    uint256 reduceLength = assetCount.sub(index);
+    uint256 reduceLength = _supportedAssets.length.sub(index);
     assembly {
       mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
     }
@@ -380,7 +385,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(to != address(0), "non-zero address is required");
     require(
       !IPoolPerformance(poolPerformance).hasDirectDeposit(address(this)),
-      "Direct deposits detected. Please call PoolPerformance.recordDirectDepositValue()"
+      "Airdrop detected. Claim airdrop."
     );
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
@@ -398,7 +403,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(success, "failed to execute the call");
 
     // We must now update our internal balances to whatever the result of this tx is
-    IPoolPerformance(poolManagerLogic).updateInternalBalances(address(this), txType);
+    IPoolPerformance(poolManagerLogic).updateInternalBalances();
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
