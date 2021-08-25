@@ -693,19 +693,35 @@ describe("PoolFactory", function () {
     numberOfDepositAssets = depositAssets.length;
     expect(numberOfDepositAssets).to.be.equal(1);
 
-    // Can add asset to maximum 
+    // Can add asset to maximum
     // Initialize Asset Price Consumer
-    await assetHandler.addAssets([{
-      asset: susdAsset.address, aggregator: susdAsset.address, assetType: 0
-    }, {
-      asset: sethAsset.address, aggregator: sethAsset.address, assetType: 0
-    }, {
-      asset: slinkAsset.address, aggregator: slinkAsset.address, assetType: 0
-    }, {
-      asset: usd_price_feed.address, aggregator: usd_price_feed.address, assetType: 0
-    }, {
-      asset: eth_price_feed.address, aggregator: eth_price_feed.address, assetType: 0
-    }]);
+    await assetHandler.addAssets([
+      {
+        asset: susdAsset.address,
+        aggregator: susdAsset.address,
+        assetType: 0,
+      },
+      {
+        asset: sethAsset.address,
+        aggregator: sethAsset.address,
+        assetType: 0,
+      },
+      {
+        asset: slinkAsset.address,
+        aggregator: slinkAsset.address,
+        assetType: 0,
+      },
+      {
+        asset: usd_price_feed.address,
+        aggregator: usd_price_feed.address,
+        assetType: 0,
+      },
+      {
+        asset: eth_price_feed.address,
+        aggregator: eth_price_feed.address,
+        assetType: 0,
+      },
+    ]);
     await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
     await poolManagerLogicManagerProxy.changeAssets([[susdAsset.address, false]], []);
     await poolManagerLogicManagerProxy.changeAssets([[sethAsset.address, false]], []);
@@ -718,9 +734,11 @@ describe("PoolFactory", function () {
     numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(10);
 
-    await expect(poolManagerLogicManagerProxy.changeAssets([[eth_price_feed.address, false]], [])).to.be.revertedWith("maximum assets reached");
+    await expect(poolManagerLogicManagerProxy.changeAssets([[eth_price_feed.address, false]], [])).to.be.revertedWith(
+      "maximum assets reached",
+    );
 
-    // Can remove asset back to before 
+    // Can remove asset back to before
     await poolManagerLogicManagerProxy.changeAssets([], [sushiLPLinkWeth]);
     await poolManagerLogicManagerProxy.changeAssets([], [susdAsset.address]);
     await poolManagerLogicManagerProxy.changeAssets([], [sethAsset.address]);
