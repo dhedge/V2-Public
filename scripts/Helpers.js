@@ -43,7 +43,18 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
   return true;
 };
 
+const tryVerify = async (hre, address, path) => {
+  try {
+    await hre.run("verify:verify", {
+      address: address,
+      contract: path,
+    });
+  } catch (err) {
+    console.log("Error: ", err);
+  }
+}
+
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-module.exports = { getTag, hasDuplicates, isSameBytecode, toBytes32 };
+module.exports = { tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32 };
