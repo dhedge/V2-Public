@@ -12,7 +12,6 @@ const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
 const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
-const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
