@@ -238,12 +238,19 @@ task("upgrade", "Upgrade contracts")
       console.log("AaveLendingPoolAssetGuard deployed at ", aaveLendingPoolAssetGuard.address);
       versions[newTag].contracts.AaveLendingPoolAssetGuard = aaveLendingPoolAssetGuard.address;
 
-      tryVerify(hre, aaveLendingPoolAssetGuard.address, "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol:AaveLendingPoolAssetGuard");
+      tryVerify(
+        hre,
+        aaveLendingPoolAssetGuard.address,
+        "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol:AaveLendingPoolAssetGuard",
+      );
 
-      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [3, aaveLendingPoolAssetGuard.address]);
+      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
+        3,
+        aaveLendingPoolAssetGuard.address,
+      ]);
       await proposeTx(contracts.Governance, setAssetGuardABI);
     }
-    if(taskArgs.sushiLPAssetGuard) {
+    if (taskArgs.sushiLPAssetGuard) {
       const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
       const sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
       await sushiLPAssetGuard.deployed();
@@ -256,7 +263,7 @@ task("upgrade", "Upgrade contracts")
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, sushiLPAssetGuard.address]);
       await proposeTx(contracts.Governance, setAssetGuardABI);
     }
-    if(taskArgs.uniswapV2RouterGuard) {
+    if (taskArgs.uniswapV2RouterGuard) {
       const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
       const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(10, 100); // set slippage 10%
       await uniswapV2RouterGuard.deployed();
@@ -266,10 +273,13 @@ task("upgrade", "Upgrade contracts")
       tryVerify(hre, uniswapV2RouterGuard.address, "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard");
 
       await uniswapV2RouterGuard.transferOwnership(protocolDao);
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [sushiswapV2Router, uniswapV2RouterGuard.address]);
+      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        sushiswapV2Router,
+        uniswapV2RouterGuard.address,
+      ]);
       await proposeTx(contracts.Governance, setContractGuardABI);
     }
-    if(taskArgs.openAssetGuard) {
+    if (taskArgs.openAssetGuard) {
       const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
       const openAssetGuard = await OpenAssetGuard.deploy([]);
       await openAssetGuard.deployed();
@@ -279,10 +289,13 @@ task("upgrade", "Upgrade contracts")
       tryVerify(hre, openAssetGuard.address, "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard");
 
       await openAssetGuard.transferOwnership(protocolDao);
-      const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [ethers.utils.formatBytes32String("openAssetGuard"), openAssetGuard.address]);
+      const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [
+        ethers.utils.formatBytes32String("openAssetGuard"),
+        openAssetGuard.address,
+      ]);
       await proposeTx(contracts.Governance, setAddressesABI);
     }
-    if(taskArgs.quickLPAssetGuard) {
+    if (taskArgs.quickLPAssetGuard) {
       const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
       const quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
       await quickLPAssetGuard.deployed();
@@ -295,19 +308,26 @@ task("upgrade", "Upgrade contracts")
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [5, quickLPAssetGuard.address]);
       await proposeTx(contracts.Governance, setAssetGuardABI);
     }
-    if(taskArgs.quickStakingRewardsGuard) {
+    if (taskArgs.quickStakingRewardsGuard) {
       const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
       const quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy();
       await quickStakingRewardsGuard.deployed();
       console.log("quickStakingRewardsGuard deployed at ", quickStakingRewardsGuard.address);
       versions[newTag].contracts.QuickStakingRewardsGuard = quickStakingRewardsGuard.address;
 
-      tryVerify(hre, quickStakingRewardsGuard.address, "contracts/guards/QuickStakingRewardsGuard.sol:QuickStakingRewardsGuard");
+      tryVerify(
+        hre,
+        quickStakingRewardsGuard.address,
+        "contracts/guards/QuickStakingRewardsGuard.sol:QuickStakingRewardsGuard",
+      );
 
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [quickLpUsdcWethStakingRewards, QuickStakingRewardsGuard.address]);
+      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        quickLpUsdcWethStakingRewards,
+        QuickStakingRewardsGuard.address,
+      ]);
       await proposeTx(contracts.Governance, setContractGuardABI);
     }
-    if(taskArgs.sushiMiniChefV2Guard){
+    if (taskArgs.sushiMiniChefV2Guard) {
       const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
       const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
       await sushiMiniChefV2Guard.deployed();
@@ -316,7 +336,10 @@ task("upgrade", "Upgrade contracts")
 
       tryVerify(hre, sushiMiniChefV2Guard.address, "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard");
 
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [sushiMiniChefV2, sushiMiniChefV2Guard.address]);
+      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        sushiMiniChefV2,
+        sushiMiniChefV2Guard.address,
+      ]);
       await proposeTx(contracts.Governance, setContractGuardABI);
     }
 

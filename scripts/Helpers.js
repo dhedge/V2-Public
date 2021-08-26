@@ -52,7 +52,7 @@ const tryVerify = async (hre, address, path) => {
   } catch (err) {
     console.log("Error: ", err);
   }
-}
+};
 
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
