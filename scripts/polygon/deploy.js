@@ -47,6 +47,9 @@ const stagingVersionFile = "./publish/matic/staging-versions.json";
 const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 
+const stagingExternalAssetFileName = "./config/staging/dHEDGE Assets list - Polygon External Staging.csv";
+const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon External.csv";
+
 const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
 
@@ -176,8 +179,11 @@ const deploy = async (env) => {
   await sushiLPAssetGuard.deployed();
   console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
 
+  const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
+  const csvAssets = await csv().fromFile(fileName);
+  const addresses = csvAssets.map((asset) => asset.Address);
   const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
-  const openAssetGuard = await OpenAssetGuard.deploy([]);
+  const openAssetGuard = await OpenAssetGuard.deploy([addresses]);
   await openAssetGuard.deployed();
   console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
 
