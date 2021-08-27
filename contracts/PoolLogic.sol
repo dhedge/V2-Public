@@ -281,7 +281,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // we cannot integrate this snapshotting into the loop below.
     // If we knew specifically that the withdrawProcessing only withdraw the current asset in the loop
     // We could integrate the snapshot before and after into the loop below
-    uint256[] memory supportedAssetAmountsSnapshotBefore =
+    uint256[] memory supportedAssetBalancesSnapshotBefore =
       IPoolPerformance(poolPerformance).getBalancesSnapshot(poolManagerLogic, _supportedAssets);
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
@@ -306,7 +306,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     IPoolPerformance(poolPerformance).updatedInternalBalancesByDiff(
       _supportedAssets,
-      supportedAssetAmountsSnapshotBefore,
+      supportedAssetBalancesSnapshotBefore,
       IPoolPerformance(poolPerformance).getBalancesSnapshot(poolManagerLogic, _supportedAssets)
     );
 

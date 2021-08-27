@@ -47,12 +47,12 @@ interface IPoolPerformance {
   function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
     external
     view
-    returns (uint256[] memory supportedAssetAmounts);
+    returns (uint256[] memory supportedAssetBalances);
 
   function updatedInternalBalancesByDiff(
     IHasSupportedAsset.Asset[] memory supportedAssets,
-    uint256[] memory beforeSupportedAssetAmounts,
-    uint256[] memory afterSupportedAssetAmounts
+    uint256[] memory beforeSupportedAssetBalances,
+    uint256[] memory afterSupportedAssetBalances
   ) external;
 
   function recordDirectDepositValue(address poolAddress) external;

@@ -214,13 +214,13 @@ contract PoolPerformance is OwnableUpgradeable {
 
   function updatedInternalBalancesByDiff(
     IHasSupportedAsset.Asset[] memory supportedAssets,
-    uint256[] memory beforeSupportedAssetAmounts,
-    uint256[] memory afterSupportedAssetAmounts
+    uint256[] memory beforeSupportedAssetBalances,
+    uint256[] memory afterSupportedAssetBalances
   ) external {
     address poolAddress = msg.sender;
     uint256 assetChange;
     for (uint8 i = 0; i < supportedAssets.length; i++) {
-      assetChange = beforeSupportedAssetAmounts[i] - afterSupportedAssetAmounts[i];
+      assetChange = beforeSupportedAssetBalances[i] - afterSupportedAssetBalances[i];
       internalBalancesMap[poolAddress][supportedAssets[i].asset] =
         internalBalancesMap[poolAddress][supportedAssets[i].asset] -
         assetChange;
