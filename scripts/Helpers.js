@@ -1,6 +1,8 @@
 const util = require("util");
 const { exec } = require("child_process");
 const execProm = util.promisify(exec);
+const stringify = require("csv-stringify");
+const fs = require("fs");
 
 const getTag = async () => {
   try {
@@ -54,7 +56,21 @@ const tryVerify = async (hre, address, path) => {
   }
 };
 
+const writeCsv = (data, fileName) => {
+  stringify(data, { header: true }, (err, output) => {
+    if (err) {
+      console.log(err);
+    }
+    fs.writeFile(fileName, output, (err) => {
+      if (err) {
+        console.log(err);
+      }
+      console.log(`${fileName} updated.`);
+    });
+  });
+};
+
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-module.exports = { tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32 };
+module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32 };

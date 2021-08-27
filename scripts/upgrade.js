@@ -1,6 +1,6 @@
 const fs = require("fs");
 const csv = require("csvtojson");
-const { getTag, hasDuplicates, tryVerify } = require("./Helpers");
+const { writeCsv, getTag, hasDuplicates, tryVerify } = require("./Helpers");
 const Safe = require("@gnosis.pm/safe-core-sdk");
 const { EthersAdapter } = require("@gnosis.pm/safe-core-sdk");
 const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
@@ -9,8 +9,18 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
-const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
-const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
+
+// File Names
+const prodAssetFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
+const stagingAssetFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
+const stagingAssetGuardFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
+const prodAssetGuardFileName = "./config/prod/dHEDGE Governance Asset Guards - Polygon.csv";
+const stagingContractGuardFileName = "./config/staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
+const prodContractGuardFileName = "./config/prod/dHEDGE Governance Contract Guards - Polygon.csv";
+const stagingGovernanceNamesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";
+const prodGovernanceNamesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
+
+// Addresses
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
@@ -110,10 +120,25 @@ task("upgrade", "Upgrade contracts")
     const Governance = await hre.artifacts.readArtifact("Governance");
     const governanceABI = new ethers.utils.Interface(Governance.abi);
 
+    // Asset Guard
+    const assetGuardfileName = taskArgs.production ? prodAssetGuardFileName : stagingAssetGuardFileName;
+    const csvAssetGuards = await csv().fromFile(assetGuardfileName);
+    let newAssetGuards = new Array();
+
+    // Contract Guard
+    const contractGuardfileName = taskArgs.production ? prodContractGuardFileName : stagingContractGuardFileName;
+    const csvContractGuards = await csv().fromFile(contractGuardfileName);
+    let newContractGuards = new Array();
+
+    // Governance names
+    const governanceNamesfileName = taskArgs.production ? prodGovernanceNamesFileName : stagingGovernanceNamesFileName;
+    const csvGovernanceNames = await csv().fromFile(governanceNamesfileName);
+    let newGovernanceNames = new Array();
+
     if (taskArgs.assets) {
       // look up to check if csvAsset is in the current versions
       let assetHandlerAssets = [];
-      const fileName = taskArgs.production ? prodFileName : stagingFileName;
+      const fileName = taskArgs.production ? prodAssetFileName : stagingAssetFileName;
       const csvAssets = await csv().fromFile(fileName);
 
       // Check for any accidental duplicate addresses or price feeds in the CSV
@@ -248,6 +273,12 @@ task("upgrade", "Upgrade contracts")
         aaveLendingPoolAssetGuard.address,
       ]);
       await proposeTx(contracts.Governance, setAssetGuardABI);
+      newAssetGuards.push({
+        AssetType: 3,
+        GuardName: "AaveLendingPoolAssetGuard",
+        GuardAddress: aaveLendingPoolAssetGuard.address,
+        Description: "Aave Lending Pool",
+      });
     }
     if (taskArgs.sushiLPAssetGuard) {
       const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
@@ -261,6 +292,12 @@ task("upgrade", "Upgrade contracts")
       await sushiLPAssetGuard.transferOwnership(protocolDao);
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, sushiLPAssetGuard.address]);
       await proposeTx(contracts.Governance, setAssetGuardABI);
+      newAssetGuards.push({
+        AssetType: 2,
+        GuardName: "SushiLPAssetGuard",
+        GuardAddress: sushiLPAssetGuard.address,
+        Description: "Sushi LP tokens",
+      });
     }
     if (taskArgs.uniswapV2RouterGuard) {
       const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
@@ -277,6 +314,12 @@ task("upgrade", "Upgrade contracts")
         uniswapV2RouterGuard.address,
       ]);
       await proposeTx(contracts.Governance, setContractGuardABI);
+      newContractGuards.push({
+        ContractAddress: sushiswapV2Router,
+        GuardName: "UniswapV2RouterGuard",
+        GuardAddress: uniswapV2RouterGuard.address,
+        Description: "Sushi V2 router",
+      });
     }
     if (taskArgs.openAssetGuard) {
       const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
@@ -293,6 +336,10 @@ task("upgrade", "Upgrade contracts")
         openAssetGuard.address,
       ]);
       await proposeTx(contracts.Governance, setAddressesABI);
+      newGovernanceNames.push({
+        Name: "openAssetGuard",
+        Destination: openAssetGuard.address,
+      });
     }
     if (taskArgs.quickLPAssetGuard) {
       const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
@@ -306,6 +353,12 @@ task("upgrade", "Upgrade contracts")
       await quickLPAssetGuard.transferOwnership(protocolDao);
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [5, quickLPAssetGuard.address]);
       await proposeTx(contracts.Governance, setAssetGuardABI);
+      newAssetGuards.push({
+        AssetType: 5,
+        GuardName: "QuickLPAssetGuard",
+        GuardAddress: quickLPAssetGuard.address,
+        Description: "Quick LP tokens",
+      });
     }
     if (taskArgs.quickStakingRewardsGuard) {
       const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
@@ -322,9 +375,15 @@ task("upgrade", "Upgrade contracts")
 
       const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
         quickLpUsdcWethStakingRewards,
-        QuickStakingRewardsGuard.address,
+        quickStakingRewardsGuard.address,
       ]);
       await proposeTx(contracts.Governance, setContractGuardABI);
+      newContractGuards.push({
+        ContractAddress: quickLpUsdcWethStakingRewards,
+        GuardName: "QuickStakingRewardsGuard",
+        GuardAddress: quickStakingRewardsGuard.address,
+        Description: "Quick Staking Reward",
+      });
     }
     if (taskArgs.sushiMiniChefV2Guard) {
       const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
@@ -340,13 +399,67 @@ task("upgrade", "Upgrade contracts")
         sushiMiniChefV2Guard.address,
       ]);
       await proposeTx(contracts.Governance, setContractGuardABI);
+      newContractGuards.push({
+        ContractAddress: sushiMiniChefV2,
+        GuardName: "SushiMiniChefV2Guard",
+        GuardAddress: sushiMiniChefV2Guard.address,
+        Description: "Sushi rewards contract",
+      });
     }
 
     // convert JSON object to string
     const data = JSON.stringify(versions, null, 2);
     console.log(data);
 
+    // write to version file
     fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
+
+    for (const newAssetGuard of newAssetGuards) {
+      let replaced = false;
+      for (const csvAssetGuard of csvAssetGuards) {
+        if (newAssetGuard.GuardName == csvAssetGuard.GuardName) {
+          csvAssetGuard.GuardAddress = newAssetGuard.GuardAddress;
+          csvAssetGuard.AssetType = newAssetGuard.AssetType;
+          csvAssetGuard.Description = newAssetGuard.Description;
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced) {
+        csvAssetGuards.push(newAssetGuard);
+      }
+    }
+    for (const newContractGuard of newContractGuards) {
+      let replaced = false;
+      for (const csvContractGuard of csvContractGuards) {
+        if (newContractGuard.GuardName == csvContractGuard.GuardName) {
+          csvContractGuard.ContractAddress = newContractGuard.ContractAddress;
+          csvContractGuard.GuardAddress = newContractGuard.GuardAddress;
+          csvContractGuard.Description = newContractGuard.Description;
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced) {
+        csvAssetGuards.push(newContractGuard);
+      }
+    }
+    for (const newGovernanceName of newGovernanceNames) {
+      let replaced = false;
+      for (const csvGovernanceName of csvGovernanceNames) {
+        if (newGovernanceName.Name == csvGovernanceName.Name) {
+          csvGovernanceName.Destination = newGovernanceName.Destination;
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced) {
+        csvAssetGuards.push(newGovernanceName);
+      }
+    }
+    writeCsv(csvAssetGuards, assetGuardfileName);
+    writeCsv(csvContractGuards, contractGuardfileName);
+    writeCsv(csvGovernanceNames, governanceNamesfileName);
   });
 
 module.exports = {};
