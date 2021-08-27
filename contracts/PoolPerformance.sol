@@ -253,7 +253,7 @@ contract PoolPerformance is OwnableUpgradeable {
 
     uint256 totalFundValue = IPoolManagerLogic(poolManagerAddress).totalFundValue();
     // Combine the new factor with the oldfactor
-    iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress] =
+    iDirectDepositFactorMap[poolAddress] =
       (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) /
       totalFundValue;
   }
