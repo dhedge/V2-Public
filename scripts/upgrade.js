@@ -11,14 +11,16 @@ const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
 
 // File Names
-const prodAssetFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingAssetFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
+const prodAssetFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingAssetGuardFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
 const prodAssetGuardFileName = "./config/prod/dHEDGE Governance Asset Guards - Polygon.csv";
 const stagingContractGuardFileName = "./config/staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
 const prodContractGuardFileName = "./config/prod/dHEDGE Governance Contract Guards - Polygon.csv";
 const stagingGovernanceNamesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";
 const prodGovernanceNamesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
+const stagingExternalAssetFileName = "./config/staging/dHEDGE Assets list - Polygon External Staging.csv";
+const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon External.csv";
 
 // Addresses
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
@@ -26,8 +28,8 @@ const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
-const sushiToken = "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a";
-const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
+let sushiToken;
+let wmatic;
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 let nonce, safeSdk;
 
@@ -150,6 +152,8 @@ task("upgrade", "Upgrade contracts")
       for (const csvAsset of csvAssets) {
         let foundInVersions = false;
         for (const asset of contracts.Assets) {
+          if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
+          if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
           if (csvAsset["Asset Name"] === asset.name) {
             console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
             foundInVersions = true;
@@ -322,8 +326,11 @@ task("upgrade", "Upgrade contracts")
       });
     }
     if (taskArgs.openAssetGuard) {
+      const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
+      const csvAssets = await csv().fromFile(fileName);
+      const addresses = csvAssets.map(asset => asset.Address);
+      const openAssetGuard = await OpenAssetGuard.deploy(addresses);
       const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
-      const openAssetGuard = await OpenAssetGuard.deploy([]);
       await openAssetGuard.deployed();
       console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
       versions[newTag].contracts.OpenAssetGuard = openAssetGuard.address;
