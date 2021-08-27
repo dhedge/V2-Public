@@ -96,9 +96,7 @@ contract PoolPerformance is OwnableUpgradeable {
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
       // Otherwise managers can direct desposit dai.
       if (supportsAave) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
-          assetAddress
-        );
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
           newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
@@ -113,11 +111,11 @@ contract PoolPerformance is OwnableUpgradeable {
     return false;
   }
 
-  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets, bool supportsAave)
-    external
-    view
-    returns (uint256[] memory supportedAssetBalances)
-  {
+  function getBalancesSnapshot(
+    address poolManagerAddress,
+    IHasSupportedAsset.Asset[] memory supportedAssets,
+    bool supportsAave
+  ) external view returns (uint256[] memory supportedAssetBalances) {
     address poolAddress = msg.sender;
     supportedAssetBalances = new uint256[](supportedAssets.length);
     address aToken;
@@ -133,9 +131,7 @@ contract PoolPerformance is OwnableUpgradeable {
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
       // Otherwise managers can direct desposit dai.
       if (supportsAave) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
-          assetAddress
-        );
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
           newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
@@ -161,7 +157,6 @@ contract PoolPerformance is OwnableUpgradeable {
     }
   }
 
-
   function updateInternalBalances() external {
     _updateInternalBalances(msg.sender);
   }
@@ -185,9 +180,7 @@ contract PoolPerformance is OwnableUpgradeable {
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
       // Otherwise managers can direct desposit dai.
       if (supportsAave) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
-          assetAddress
-        );
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
           newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
@@ -212,13 +205,11 @@ contract PoolPerformance is OwnableUpgradeable {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
-
   // We record the direct deposit value and subtract it from the token price later to get performance
   function recordDirectDepositValue(address poolAddress) public {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
-
 
     uint256 valueWithoutDirectDeposits = 0;
 
