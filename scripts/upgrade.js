@@ -25,6 +25,7 @@ const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon Ex
 // Addresses
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
+const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
 const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
@@ -313,7 +314,7 @@ task("upgrade", "Upgrade contracts")
       tryVerify(hre, uniswapV2RouterGuard.address, "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard");
 
       await uniswapV2RouterGuard.transferOwnership(protocolDao);
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+      let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
         sushiswapV2Router,
         uniswapV2RouterGuard.address,
       ]);
@@ -323,6 +324,18 @@ task("upgrade", "Upgrade contracts")
         GuardName: "UniswapV2RouterGuard",
         GuardAddress: uniswapV2RouterGuard.address,
         Description: "Sushi V2 router",
+      });
+
+      setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        quickswapRouter,
+        uniswapV2RouterGuard.address,
+      ]);
+      await proposeTx(contracts.Governance, setContractGuardABI);
+      newContractGuards.push({
+        ContractAddress: quickswapRouter,
+        GuardName: "UniswapV2RouterGuard",
+        GuardAddress: uniswapV2RouterGuard.address,
+        Description: "Quickswap V2 router",
       });
     }
     if (taskArgs.openAssetGuard) {
