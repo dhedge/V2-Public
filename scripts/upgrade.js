@@ -328,7 +328,7 @@ task("upgrade", "Upgrade contracts")
     if (taskArgs.openAssetGuard) {
       const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
       const csvAssets = await csv().fromFile(fileName);
-      const addresses = csvAssets.map(asset => asset.Address);
+      const addresses = csvAssets.map((asset) => asset.Address);
       const openAssetGuard = await OpenAssetGuard.deploy(addresses);
       const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
       await openAssetGuard.deployed();
