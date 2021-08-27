@@ -275,8 +275,14 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
+    // @lecky
+    // We don't know which assets the withdraw processing actually transfers out of the pool at each point in the loop
+    // So therefore we need to take a full snapshot before any withdraws happen, this means
+    // we cannot integrate this snapshotting into the loop below.
+    // If we knew specifically that the withdrawProcessing only withdraw the current asset in the loop
+    // We could integrate the snapshot before and after into the loop below
     uint256[] memory supportedAssetAmountsSnapshotBefore =
-      IPoolPerformance(poolManagerLogic).getBalancesSnapshot(address(this), _supportedAssets);
+      IPoolPerformance(poolPerformance).getBalancesSnapshot(poolManagerLogic, _supportedAssets);
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) =
@@ -298,10 +304,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
-    IPoolPerformance(poolManagerLogic).updatedInternalBalancesByDiff(
+    IPoolPerformance(poolPerformance).updatedInternalBalancesByDiff(
       _supportedAssets,
       supportedAssetAmountsSnapshotBefore,
-      IPoolPerformance(poolManagerLogic).getBalancesSnapshot(address(this), _supportedAssets)
+      IPoolPerformance(poolPerformance).getBalancesSnapshot(poolManagerLogic, _supportedAssets)
     );
 
     // Reduce length for withdrawnAssets to remove the empty items
@@ -399,7 +405,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(success, "failed to execute the call");
 
     // We must now update our internal balances to whatever the result of this tx is
-    IPoolPerformance(poolManagerLogic).updateInternalBalances();
+    IPoolPerformance(poolPerformance).updateInternalBalances();
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }

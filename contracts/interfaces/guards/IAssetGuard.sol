@@ -59,12 +59,6 @@ interface IAssetGuard {
 
   function getBalance(address pool, address asset) external view returns (uint256 balance);
 
-  function getPrincipalBalances(
-    address pool,
-    address,
-    IHasSupportedAsset.Asset[] memory supportedAssets
-  ) external view returns (uint256 assetAmount, uint256[] memory depositAssetAmounts);
-
   function getDecimals(address asset) external view returns (uint256 decimals);
 
   function removeAssetCheck(address poolLogic, address asset) external view;

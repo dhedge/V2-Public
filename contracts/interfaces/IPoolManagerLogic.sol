@@ -45,6 +45,8 @@ interface IPoolManagerLogic {
 
   function assetValue(address asset, uint256 amount) external view returns (uint256);
 
+  function assetBalance(address asset) external view returns (uint256 balance);
+
   function factory() external view returns (address);
 
   function setPoolLogic(address fundAddress) external returns (bool);

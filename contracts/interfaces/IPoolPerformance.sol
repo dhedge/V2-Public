@@ -44,7 +44,7 @@ interface IPoolPerformance {
 
   function updateInternalBalances() external;
 
-  function getBalancesSnapshot(address poolAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
+  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
     external
     view
     returns (uint256[] memory supportedAssetAmounts);

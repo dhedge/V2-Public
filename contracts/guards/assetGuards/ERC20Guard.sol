@@ -133,18 +133,6 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     balance = IERC20(asset).balanceOf(pool);
   }
 
-  /// @notice Gets principle balance for given asset
-  /// @param pool address of the pool
-  /// @param asset address of the asset
-  /// @return principleAssetAmount the balance of the asset
-  function getPrincipalBalances(
-    address pool,
-    address asset,
-    IHasSupportedAsset.Asset[] memory
-  ) external view virtual override returns (uint256 principleAssetAmount, uint256[] memory supportedAssetAmounts) {
-    principleAssetAmount = getBalance(pool, asset);
-  }
-
   /// @notice Returns the decimal of the managed asset
   /// @param asset Address of the managed asset
   /// @return decimals The decimal of given asset

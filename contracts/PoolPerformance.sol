@@ -44,6 +44,9 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IERC20Extended.sol";
 import "./interfaces/guards/IAssetGuard.sol";
+import "./interfaces/aave/IAaveProtocolDataProvider.sol";
+import "./interfaces/aave/ILendingPoolAddressesProvider.sol";
+import "./interfaces/aave/IAToken.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
@@ -59,9 +62,15 @@ contract PoolPerformance is OwnableUpgradeable {
   // It decreases the tokenPrice by directDeposit amounts
   mapping(address => uint256) public iDirectDepositFactorMap;
 
+  IAaveProtocolDataProvider public aaveProtocolDataProvider;
+  address public aaveLendingPool;
+
   /// @notice initialisation for the contract
-  function initialize() external initializer {
+  function initialize(address _aaveProtocolDataProvider) external initializer {
     __Ownable_init();
+
+    aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
+    aaveLendingPool = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER()).getLendingPool();
   }
 
   function addAssetBalance(address asset, uint256 amount) external {
@@ -72,34 +81,68 @@ contract PoolPerformance is OwnableUpgradeable {
   function hasDirectDeposit(address poolAddress) external view returns (bool) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
+    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
 
-    uint256[] memory supportedAssetAmounts = getBalancesSnapshot(poolAddress, supportedAssets);
+    address aToken;
+
     for (uint8 i = 0; i < supportedAssets.length; i++) {
-      if (internalBalancesMap[poolAddress][supportedAssets[i].asset] < supportedAssetAmounts[i]) {
+      address assetAddress = supportedAssets[i].asset;
+      if (assetAddress != aaveLendingPool) {
+        continue;
+      }
+
+      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
+      // Otherwise managers can direct desposit dai.
+      if (supportsAave) {
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
+          assetAddress
+        );
+
+        if (aToken != address(0)) {
+          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+        }
+      }
+
+      if (internalBalancesMap[poolAddress][assetAddress] < newBalance) {
         return true;
       }
     }
+
     return false;
   }
 
-  function getBalancesSnapshot(address poolAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
-    public
+  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets, bool supportsAave)
+    external
     view
-    returns (uint256[] memory supportedAssetAmounts)
+    returns (uint256[] memory supportedAssetBalances)
   {
-    supportedAssetAmounts = new uint256[](supportedAssets.length);
+    address poolAddress = msg.sender;
+    supportedAssetBalances = new uint256[](supportedAssets.length);
+    address aToken;
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
-      address guard = IHasGuardInfo(poolFactory).getAssetGuard(supportedAssets[i].asset);
-      // Need to check here that the guard exists and that it has getPrincipalBalances?
-      (uint256 amount, uint256[] memory sAamounts) =
-        IAssetGuard(guard).getPrincipalBalances(poolAddress, supportedAssets[i].asset, supportedAssets);
-
-      supportedAssetAmounts[i] = supportedAssetAmounts[i] + amount;
-
-      for (uint8 y = 0; i < sAamounts.length; y++) {
-        supportedAssetAmounts[y] = supportedAssetAmounts[y] + sAamounts[y];
+      address assetAddress = supportedAssets[i].asset;
+      if (assetAddress != aaveLendingPool) {
+        continue;
       }
+
+      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
+      // Otherwise managers can direct desposit dai.
+      if (supportsAave) {
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
+          assetAddress
+        );
+
+        if (aToken != address(0)) {
+          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+        }
+      }
+
+      supportedAssetBalances[i] = newBalance;
     }
   }
 
@@ -118,6 +161,7 @@ contract PoolPerformance is OwnableUpgradeable {
     }
   }
 
+
   function updateInternalBalances() external {
     _updateInternalBalances(msg.sender);
   }
@@ -125,9 +169,32 @@ contract PoolPerformance is OwnableUpgradeable {
   function _updateInternalBalances(address poolAddress) internal {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
-    uint256[] memory supportedAssetAmountsSnapshot = getBalancesSnapshot(poolAddress, supportedAssets);
+    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
+
+    address aToken;
+
     for (uint8 i = 0; i < supportedAssets.length; i++) {
-      internalBalancesMap[poolAddress][supportedAssets[i].asset] = supportedAssetAmountsSnapshot[i];
+      address assetAddress = supportedAssets[i].asset;
+
+      if (assetAddress != aaveLendingPool) {
+        continue;
+      }
+
+      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
+      // Otherwise managers can direct desposit dai.
+      if (supportsAave) {
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
+          assetAddress
+        );
+
+        if (aToken != address(0)) {
+          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+        }
+      }
+
+      internalBalancesMap[poolAddress][assetAddress] = newBalance;
     }
   }
 
@@ -145,23 +212,48 @@ contract PoolPerformance is OwnableUpgradeable {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
+
   // We record the direct deposit value and subtract it from the token price later to get performance
   function recordDirectDepositValue(address poolAddress) public {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
+    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
+
 
     uint256 valueWithoutDirectDeposits = 0;
 
+    address aToken;
+
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      uint256 amount = internalBalancesMap[poolAddress][assetAddress];
+      if (assetAddress != aaveLendingPool) {
+        continue;
+      }
 
       // One thing to note here is that the impact of the direct deposits is variable
       // and is impacted by when this function is called and the price of the
       // direct deposited asset at the time not when the deposit happens
+      uint256 amount = internalBalancesMap[poolAddress][assetAddress];
       valueWithoutDirectDeposits =
         valueWithoutDirectDeposits +
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
+
+      // Once we record the internal value of the asset without direct deposits, we then update the internal balance to save on loops
+      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
+      // Otherwise managers can direct desposit dai.
+      if (supportsAave) {
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
+          supportedAssets[i].asset
+        );
+
+        if (aToken != address(0)) {
+          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+        }
+      }
+
+      internalBalancesMap[poolAddress][assetAddress] = newBalance;
     }
 
     if (iDirectDepositFactorMap[poolAddress] == 0) {
@@ -173,7 +265,5 @@ contract PoolPerformance is OwnableUpgradeable {
     iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress] =
       (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) /
       totalFundValue;
-    // once we have recorded the direct deposit value change we can reset our internalBalances
-    _updateInternalBalances(poolAddress);
   }
 }
