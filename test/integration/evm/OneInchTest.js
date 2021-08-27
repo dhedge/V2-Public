@@ -1,7 +1,8 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
+const axios = require("axios");
+const { checkAlmostSame, getAmountOut, units } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
@@ -15,13 +16,14 @@ const sushiswapFactory = "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac";
 const weth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 const usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const usdt = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+const dai = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 const eth_price_feed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
 const usdt_price_feed = "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D";
 const usdc_price_feed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-const sushiLpUsdcUsdt = "0xD86A120a06255Df8D4e2248aB04d4267E23aDfaA";
-const sushiLpDaiUsdt = "0x055CEDfe14BCE33F985C41d9A1934B7654611AAC";
+const LpUsdcUsdt = "0x3041CbD36888bECc7bbCBc0045E3B1f144466f5f";
+const LpDaiUsdt = "0x055CEDfe14BCE33F985C41d9A1934B7654611AAC";
 
 describe("OneInch V3 Test", function () {
   let WETH, USDC, USDT, UniswapRouter;
@@ -93,12 +95,14 @@ describe("OneInch V3 Test", function () {
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     UniswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, uniswapV2Router);
+
+    const amount = units(100, 18);
     // deposit ETH -> WETH
-    await WETH.deposit({ value: (5e18).toString() });
+    await WETH.deposit({ value: amount });
     // WETH -> USDT
-    await WETH.approve(uniswapV2Router, (5e18).toString());
+    await WETH.approve(uniswapV2Router, amount);
     await UniswapRouter.swapExactTokensForTokens(
-      (5e18).toString(),
+      amount,
       0,
       [weth, usdc],
       logicOwner.address,
@@ -269,25 +273,27 @@ describe("OneInch V3 Test", function () {
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
-    await expect(poolLogicProxy.deposit(usdt, (100e6).toString())).to.be.revertedWith("invalid deposit asset");
+    const amount = units(200000, 6);
+    await expect(poolLogicProxy.deposit(usdt, amount)).to.be.revertedWith("invalid deposit asset");
 
-    await USDC.approve(poolLogicProxy.address, (100e6).toString());
-    await poolLogicProxy.deposit(usdc, (100e6).toString());
+    await USDC.approve(poolLogicProxy.address, amount);
+    await poolLogicProxy.deposit(usdc, amount);
     let event = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
-    checkAlmostSame(event.valueDeposited, (100e18).toString());
-    checkAlmostSame(event.fundTokensReceived, (100e18).toString());
-    checkAlmostSame(event.totalInvestorFundTokens, (100e18).toString());
-    checkAlmostSame(event.fundValue, (100e18).toString());
-    checkAlmostSame(event.totalSupply, (100e18).toString());
+    checkAlmostSame(event.valueDeposited, units(200000, 18));
+    checkAlmostSame(event.fundTokensReceived, units(200000, 18));
+    checkAlmostSame(event.totalInvestorFundTokens, units(200000, 18));
+    checkAlmostSame(event.fundValue, units(200000, 18));
+    checkAlmostSame(event.totalSupply, units(200000, 18));
   });
 
   it("Should be able to approve", async () => {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [usdc, (100e6).toString()]);
+    const amount = units(200000, 6);
+    let approveABI = iERC20.encodeFunctionData("approve", [usdc, amount]);
     await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
@@ -296,68 +302,134 @@ describe("OneInch V3 Test", function () {
       "unsupported spender approval",
     );
 
-    approveABI = iERC20.encodeFunctionData("approve", [oneInchV3Router, (100e6).toString()]);
+    approveABI = iERC20.encodeFunctionData("approve", [oneInchV3Router, amount]);
     await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
   });
 
   it("should be able to swap tokens on oneInch - unoswap.", async () => {
     const srcAsset = usdc;
-    const srcAmount = (10e6).toString();
+    const dstAsset = usdt;
+    const srcAmount = units(1000, 6);
+    const fromAddress = poolLogicProxy.address;
+    const toAddress = poolLogicProxy.address;
+    const referrerAddress = "";
+
     const IAggregationRouterV3 = await hre.artifacts.readArtifact("IAggregationRouterV3");
     const iAggregationRouterV3 = new ethers.utils.Interface(IAggregationRouterV3.abi);
 
-    let unoswapABI = iAggregationRouterV3.encodeFunctionData("unoswap", [
+    let swapTx = iAggregationRouterV3.encodeFunctionData("unoswap", [
       srcAsset,
       srcAmount,
       ethers.BigNumber.from(await getAmountOut(sushiswapRouter, srcAmount, [usdc, usdt]))
         .mul(95)
         .div(100),
-      // 0xD86A120a06255Df8D4e2248aB04d4267E23aDfaA
-      ["0x80000000000000003b6d0340" + sushiLpDaiUsdt.slice(2, sushiLpDaiUsdt.length)],
+      ["0x80000000000000003b6d0340" + LpDaiUsdt.slice(2, LpDaiUsdt.length)],
     ]);
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, unoswapABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx)).to.be.revertedWith(
       "invalid path",
     );
 
-    console.log(
-      ethers.BigNumber.from(await getAmountOut(sushiswapRouter, srcAmount, [usdc, usdt]))
-        .mul(95)
-        .div(100)
-        .toString(),
-    );
-    unoswapABI = iAggregationRouterV3.encodeFunctionData("unoswap", [
+    swapTx = await getOneInchSwapTransaction({
       srcAsset,
+      dstAsset,
       srcAmount,
-      ethers.BigNumber.from(await getAmountOut(sushiswapRouter, srcAmount, [usdc, usdt]))
-        .mul(95)
-        .div(100),
-      // 0xD86A120a06255Df8D4e2248aB04d4267E23aDfaA
-      ["0x80000000000000003b6d0340" + sushiLpUsdcUsdt.slice(2, sushiLpUsdcUsdt.length)],
-    ]);
+      fromAddress,
+      toAddress,
+      referrerAddress,
+    });
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, unoswapABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx)).to.be.revertedWith(
       "unsupported destination asset",
     );
 
     await poolManagerLogicProxy.connect(manager).changeAssets([[usdt, false]], []);
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, unoswapABI)).to.be.revertedWith(
+    await oneInchV3Guard.setSlippageLimit(1, 1000); // 50%
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx)).to.be.revertedWith(
       "slippage limit exceed",
     );
 
-    await oneInchV3Guard.setSlippageLimit(10, 100); // 10%
+    await oneInchV3Guard.setSlippageLimit(10, 100); // 50%
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
 
-    await poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, unoswapABI);
+    await poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx);
 
     const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
-    console.log(usdcBalanceAfter.toString(), usdcBalanceBefore.toString());
-    // checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(srcAmount));
-    console.log(usdtBalanceAfter.toString(), usdtBalanceBefore.toString());
-    // checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(srcAmount));
+    checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(srcAmount));
+    checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(srcAmount));
+  });
+
+  it("should be able to swap tokens on oneInch - swap.", async () => {
+    const srcAsset = usdc;
+    const dstAsset = usdt;
+    const srcAmount = units(199000, 6);
+    const fromAddress = poolLogicProxy.address;
+    const toAddress = poolLogicProxy.address;
+    const referrerAddress = "";
+
+    /**
+     * Example Swap Transaction USDT -> USDC
+     * 0x7c02520000000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd200000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000180000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4800000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd20000000000000000000000004f6d9fd7e4ce9a64b1d3e62c6fa9cf186b5e8c3d00000000000000000000000000000000000000000000000000000002540be400000000000000000000000000000000000000000000000000000000024e07705c00000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000016080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000064eb5625d9000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec700000000000000000000000040bbde0ec6f177c4a67360d0f0969cfc464b0bb400000000000000000000000000000000000000000000000000000002540be4000000000000000000000000000000000000000000000000000000000080000000000000000000000040bbde0ec6f177c4a67360d0f0969cfc464b0bb40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000044404a1f8a00000000000000000000000000000000000000000000000000000002540be4000000000000000000000000004f6d9fd7e4ce9a64b1d3e62c6fa9cf186b5e8c3d00000000000000000000000000000000000000000000000000000000
+     * Example Swap Transaction USDC -> USDT
+     * 0x7c02520000000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd200000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000180000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec700000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd20000000000000000000000004f6d9fd7e4ce9a64b1d3e62c6fa9cf186b5e8c3d000000000000000000000000000000000000000000000000000000046c7cfe000000000000000000000000000000000000000000000000000000000460e6d94800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000016080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000064eb5625d9000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4800000000000000000000000040bbde0ec6f177c4a67360d0f0969cfc464b0bb4000000000000000000000000000000000000000000000000000000046c7cfe000000000000000000000000000000000000000000000000000000000080000000000000000000000040bbde0ec6f177c4a67360d0f0969cfc464b0bb400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000448999541a000000000000000000000000000000000000000000000000000000046c7cfe000000000000000000000000004f6d9fd7e4ce9a64b1d3e62c6fa9cf186b5e8c3d00000000000000000000000000000000000000000000000000000000
+     */
+    let swapTx = await getOneInchSwapTransaction({
+      srcAsset,
+      dstAsset: dai,
+      srcAmount,
+      fromAddress,
+      toAddress,
+      referrerAddress,
+    });
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx)).to.be.revertedWith(
+      "unsupported destination asset",
+    );
+
+    swapTx = await getOneInchSwapTransaction({
+      srcAsset,
+      dstAsset,
+      srcAmount,
+      fromAddress,
+      toAddress: ZERO_ADDRESS,
+      referrerAddress,
+    });
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx)).to.be.revertedWith(
+      "recipient is not pool",
+    );
+
+    swapTx = await getOneInchSwapTransaction({
+      srcAsset,
+      dstAsset,
+      srcAmount,
+      fromAddress,
+      toAddress,
+      referrerAddress,
+    });
+
+    const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
+    const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+
+    await poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx);
+
+    const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
+    const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+    checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(srcAmount));
+    checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(srcAmount));
   });
 });
+
+const getOneInchSwapTransaction = async (params) => {
+  const { srcAsset, dstAsset, srcAmount, fromAddress, toAddress, referrerAddress } = params;
+  const apiUrl = `https://api.1inch.exchange/v3.0/1/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
+  const response = await axios.get(apiUrl);
+  const calldata = response.data.tx.data;
+
+  return calldata;
+};

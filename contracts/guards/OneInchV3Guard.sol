@@ -72,8 +72,9 @@ contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
 
     bytes4 method = getMethod(data);
 
-    if (method == 0x7c025200) {
-      // 1inch's `swap` method
+    if (
+      method == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"))
+    ) {
       address srcAsset = convert32toAddress(getInput(data, 3));
       address dstAsset = convert32toAddress(getInput(data, 4));
       address toAddress = convert32toAddress(getInput(data, 6));
@@ -90,13 +91,12 @@ contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
 
       txType = 2; // 'Exchange' type
     } else if (method == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
-      // 1inch's `unoswap` method
       address srcAsset = convert32toAddress(getInput(data, 0));
       uint256 srcAmount = uint256(getInput(data, 1));
       uint256 amountOutMin = uint256(getInput(data, 2));
 
       address dstAsset = srcAsset;
-      uint256 poolLength = getArrayLength(data, 3); // length of the routing addresses
+      uint256 poolLength = getArrayLength(data, 3);
       for (uint8 i = 0; i < poolLength; i++) {
         address pool = convert32toAddress(getArrayIndex(data, 3, i));
         address token0 = IUniswapV2Pair(pool).token0();
