@@ -73,6 +73,78 @@ contract PoolPerformance is OwnableUpgradeable {
     aaveLendingPool = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER()).getLendingPool();
   }
 
+  function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
+    return tokenPrice(poolAddress) * iDirectDepositFactorMap[poolAddress];
+  }
+
+  function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
+    uint256 currentTokenPrice = tokenPrice(poolAddress);
+    uint256 feePerToken = IPoolLogic(poolAddress).availableManagerFee() / IERC20Extended(poolAddress).totalSupply();
+    return (currentTokenPrice - feePerToken) * iDirectDepositFactorMap[poolAddress];
+  }
+
+  function tokenPrice(address poolAddress) public view returns (uint256) {
+    return IPoolLogic(poolAddress).tokenPrice();
+  }
+
+  // We record the direct deposit value and subtract it from the token price later to get performance
+  function recordDirectDepositValue(address poolAddress) public {
+    address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
+    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
+    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
+
+    uint256 valueWithoutDirectDeposits = 0;
+
+    address aToken;
+
+    for (uint8 i = 0; i < supportedAssets.length; i++) {
+      address assetAddress = supportedAssets[i].asset;
+      if (assetAddress != aaveLendingPool) {
+        continue;
+      }
+
+      // One thing to note here is that the impact of the direct deposits is variable
+      // and is impacted by when this function is called and the price of the
+      // direct deposited asset at the time not when the deposit happens
+      uint256 amount = internalBalancesMap[poolAddress][assetAddress];
+      valueWithoutDirectDeposits =
+        valueWithoutDirectDeposits +
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
+
+      // Once we record the internal value of the asset without direct deposits, we then update the internal balance to save on loops
+      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
+      // Otherwise managers can direct desposit adai.
+      if (supportsAave) {
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
+          supportedAssets[i].asset
+        );
+
+        if (aToken != address(0)) {
+          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+        }
+      }
+
+      internalBalancesMap[poolAddress][assetAddress] = newBalance;
+    }
+
+    if (iDirectDepositFactorMap[poolAddress] == 0) {
+      iDirectDepositFactorMap[poolAddress] = 10**18;
+    }
+
+    uint256 totalFundValue = IPoolManagerLogic(poolManagerAddress).totalFundValue();
+    // Combine the new factor with the oldfactor
+    // ogDirectDeposit factor = 0.9
+    // valueWithoutDirectDeposits = 70
+    // totalFundValue = 100
+    //  = 0.9 * 70 / 100
+    // = 0.63 (37% of value is from direct deposits for that pool)
+    iDirectDepositFactorMap[poolAddress] =
+      (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) /
+      totalFundValue;
+  }
+
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
@@ -189,72 +261,5 @@ contract PoolPerformance is OwnableUpgradeable {
 
       internalBalancesMap[poolAddress][assetAddress] = newBalance;
     }
-  }
-
-  function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress) * iDirectDepositFactorMap[poolAddress];
-  }
-
-  function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
-    uint256 currentTokenPrice = tokenPrice(poolAddress);
-    uint256 feePerToken = IPoolLogic(poolAddress).availableManagerFee() / IERC20Extended(poolAddress).totalSupply();
-    return (currentTokenPrice - feePerToken) * iDirectDepositFactorMap[poolAddress];
-  }
-
-  function tokenPrice(address poolAddress) public view returns (uint256) {
-    return IPoolLogic(poolAddress).tokenPrice();
-  }
-
-  // We record the direct deposit value and subtract it from the token price later to get performance
-  function recordDirectDepositValue(address poolAddress) public {
-    address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
-    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
-    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
-
-    uint256 valueWithoutDirectDeposits = 0;
-
-    address aToken;
-
-    for (uint8 i = 0; i < supportedAssets.length; i++) {
-      address assetAddress = supportedAssets[i].asset;
-      if (assetAddress != aaveLendingPool) {
-        continue;
-      }
-
-      // One thing to note here is that the impact of the direct deposits is variable
-      // and is impacted by when this function is called and the price of the
-      // direct deposited asset at the time not when the deposit happens
-      uint256 amount = internalBalancesMap[poolAddress][assetAddress];
-      valueWithoutDirectDeposits =
-        valueWithoutDirectDeposits +
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
-
-      // Once we record the internal value of the asset without direct deposits, we then update the internal balance to save on loops
-      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
-
-      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
-      // Otherwise managers can direct desposit adai.
-      if (supportsAave) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
-          supportedAssets[i].asset
-        );
-
-        if (aToken != address(0)) {
-          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
-        }
-      }
-
-      internalBalancesMap[poolAddress][assetAddress] = newBalance;
-    }
-
-    if (iDirectDepositFactorMap[poolAddress] == 0) {
-      iDirectDepositFactorMap[poolAddress] = 10**18;
-    }
-
-    uint256 totalFundValue = IPoolManagerLogic(poolManagerAddress).totalFundValue();
-    // Combine the new factor with the oldfactor
-    iDirectDepositFactorMap[poolAddress] =
-      (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) /
-      totalFundValue;
   }
 }
