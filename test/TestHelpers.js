@@ -50,6 +50,10 @@ const getAmountIn = async (routerAddress, amountOut, path) => {
   return amountsIn[0];
 };
 
+const units = (amount, decimal = 18) => {
+  return ethers.BigNumber.from(amount.toString()).mul(ethers.BigNumber.from(10).pow(decimal));
+};
+
 module.exports = {
   updateChainlinkAggregators,
   currentBlockTimestamp,
@@ -58,4 +62,5 @@ module.exports = {
   toBytes32,
   getAmountOut,
   getAmountIn,
+  units,
 };
