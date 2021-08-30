@@ -138,6 +138,12 @@ task("upgrade", "Upgrade contracts")
     const csvGovernanceNames = await csv().fromFile(governanceNamesfileName);
     let newGovernanceNames = new Array();
 
+    // Pause Pool Factory
+    let poolFactoryProxy = contracts.PoolFactoryProxy;
+    const PoolFactory = await ethers.getContractFactory("PoolFactory");
+    const pauseABI = proxyAdmin.encodeFunctionData("pause", []);
+    await proposeTx(poolFactoryProxy, pauseABI);
+
     if (taskArgs.assets) {
       // look up to check if csvAsset is in the current versions
       let assetHandlerAssets = [];
@@ -211,7 +217,6 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.poolFactory) {
-      let poolFactoryProxy = contracts.PoolFactoryProxy;
       const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactory);
       console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
@@ -426,6 +431,10 @@ task("upgrade", "Upgrade contracts")
         Description: "Sushi rewards contract",
       });
     }
+
+    // Unpause Pool Factory
+    const unpauseABI = proxyAdmin.encodeFunctionData("unpause", []);
+    await proposeTx(poolFactoryProxy, unpauseABI);
 
     // convert JSON object to string
     const data = JSON.stringify(versions, null, 2);
