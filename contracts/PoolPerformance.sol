@@ -168,7 +168,8 @@ contract PoolPerformance is OwnableUpgradeable {
     //  = 0.9 * 70 / 100
     // = 0.63 (37% of value is from direct deposits for that pool)
     iDirectDepositFactorMap[poolAddress] =
-      (iDirectDepositFactorMap[poolAddress] * valueWithDirectDeposits) / valueWithDirectDeposits;
+      (iDirectDepositFactorMap[poolAddress] * valueWithDirectDeposits) /
+      valueWithDirectDeposits;
   }
 
   function addAssetBalance(address asset, uint256 amount) external {
