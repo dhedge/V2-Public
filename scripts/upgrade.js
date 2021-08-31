@@ -109,7 +109,6 @@ task("upgrade", "Upgrade contracts")
     console.log("network:", network);
 
     // Init tag
-    const networks = hre.config.networks;
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versions = require(`../publish/${network.name}/${versionFile}.json`);
     const newTag = await getTag();

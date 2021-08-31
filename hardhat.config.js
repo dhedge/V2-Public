@@ -93,6 +93,7 @@ module.exports = {
       "SushiMiniChefV2Guard",
       "QuickStakingRewardsGuard",
       "Managed",
+      "Governance",
     ],
     spacing: 2,
   },
