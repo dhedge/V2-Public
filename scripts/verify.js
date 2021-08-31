@@ -18,11 +18,13 @@ async function main() {
   const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
 
   if (contracts.Governance) {
-    tryVerify(hre, contracts.Governance, "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard", []);
+    tryVerify(hre, contracts.Governance, "contracts/Governance.sol:Governance", []);
   }
   if (contracts.PoolFactoryProxy) {
     const implementation = await provider.getStorageAt(contracts.PoolFactoryProxy, implementationStorage);
-    tryVerify(hre, ethers.utils.hexValue(implementation), "contracts/PoolFactory.sol:PoolFactory", []);
+    const address = ethers.utils.hexValue(implementation);
+    console.log("PoolFactory: ", address);
+    tryVerify(hre, address, "contracts/PoolFactory.sol:PoolFactory", []);
   }
   if (contracts.PoolLogic) {
     tryVerify(hre, contracts.PoolLogic, "contracts/PoolLogic.sol:PoolLogic", []);
@@ -32,7 +34,9 @@ async function main() {
   }
   if (contracts.AssetHandlerProxy) {
     const implementation = await provider.getStorageAt(contracts.AssetHandlerProxy, implementationStorage);
-    tryVerify(hre, ethers.utils.hexValue(implementation), "contracts/assets/AssetHandler.sol:AssetHandler", []);
+    const address = ethers.utils.hexValue(implementation);
+    console.log("AssetHandler: ", address);
+    tryVerify(hre, address, "contracts/assets/AssetHandler.sol:AssetHandler", []);
   }
   if (contracts.OpenAssetGuard) {
     const fileName = env == "production" ? prodExternalAssetFileName : stagingExternalAssetFileName;
