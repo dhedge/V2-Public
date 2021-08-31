@@ -74,17 +74,46 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress) * iDirectDepositFactorMap[poolAddress];
+    return tokenPrice(poolAddress) * directDepositFactor(poolAddress);
   }
 
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
+    // This can be massively optimized by calculating the tokenPrice here by fetching the prerequisites (tokenSupply, totalFundValue)
+    // Then sharing those values with availableManagerFee and directDepositFactor.
+    // Reusing those functions as they exist for now for simplicity
     uint256 currentTokenPrice = tokenPrice(poolAddress);
     uint256 feePerToken = IPoolLogic(poolAddress).availableManagerFee() / IERC20Extended(poolAddress).totalSupply();
-    return (currentTokenPrice - feePerToken) * iDirectDepositFactorMap[poolAddress];
+    return (currentTokenPrice - feePerToken) * directDepositFactor(poolAddress);
   }
 
   function tokenPrice(address poolAddress) public view returns (uint256) {
     return IPoolLogic(poolAddress).tokenPrice();
+  }
+
+  function directDepositFactor(address poolAddress) internal view returns (uint256) {
+    address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
+    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
+
+    uint256 valueWithoutDirectDeposits = 0;
+
+    for (uint8 i = 0; i < supportedAssets.length; i++) {
+      address assetAddress = supportedAssets[i].asset;
+      if (assetAddress != aaveLendingPool) {
+        continue;
+      }
+
+      valueWithoutDirectDeposits =
+        valueWithoutDirectDeposits +
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]);
+    }
+
+    uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
+
+    if (iDirectDepositFactorMap[poolAddress] == 0) {
+      return valueWithoutDirectDeposits / valueWithDirectDeposits;
+    } else {
+      return (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) / valueWithDirectDeposits;
+    }
   }
 
   // We record the direct deposit value and subtract it from the token price later to get performance
@@ -131,7 +160,7 @@ contract PoolPerformance is OwnableUpgradeable {
       iDirectDepositFactorMap[poolAddress] = 10**18;
     }
 
-    uint256 totalFundValue = IPoolManagerLogic(poolManagerAddress).totalFundValue();
+    uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
     // Combine the new factor with the oldfactor
     // ogDirectDeposit factor = 0.9
     // valueWithoutDirectDeposits = 70
@@ -139,7 +168,7 @@ contract PoolPerformance is OwnableUpgradeable {
     //  = 0.9 * 70 / 100
     // = 0.63 (37% of value is from direct deposits for that pool)
     iDirectDepositFactorMap[poolAddress] =
-      (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) /
+      (iDirectDepositFactorMap[poolAddress] * valueWithDirectDeposits) /
       totalFundValue;
   }
 
