@@ -1,6 +1,8 @@
 const util = require("util");
 const { exec } = require("child_process");
 const execProm = util.promisify(exec);
+const stringify = require("csv-stringify");
+const fs = require("fs");
 
 const getTag = async () => {
   try {
@@ -10,4 +12,66 @@ const getTag = async () => {
   return result.stdout.trim();
 };
 
-module.exports = { getTag };
+const hasDuplicates = async (array, key) => {
+  const valueArr = array.map(function (item) {
+    return item[key];
+  });
+
+  const isDuplicate = valueArr.some(function (item, idx) {
+    if (!item) return false;
+    return valueArr.indexOf(item) != idx;
+  });
+
+  return isDuplicate;
+};
+
+const isSameBytecode = (creationBytecode, runtimeBytecode) => {
+  const bytecodeB = runtimeBytecode.substring(39);
+  const bytecodeSnippet = bytecodeB.substring(0, 100);
+  const indexOfSnippet = creationBytecode.indexOf(bytecodeSnippet);
+
+  if (indexOfSnippet < 0) return false;
+  const bytecodeA = creationBytecode.substring(indexOfSnippet);
+  if (bytecodeA.length !== bytecodeB.length) return false;
+
+  // Ignore the bytecode metadata https://docs.soliditylang.org/en/v0.7.6/metadata.html
+  const metadataString = "a264"; // Note: this string might change in future compiler versions
+  if (
+    bytecodeA.substring(0, bytecodeA.indexOf(metadataString)) !==
+    bytecodeB.substring(0, bytecodeB.indexOf(metadataString))
+  )
+    return false;
+
+  return true;
+};
+
+const tryVerify = async (hre, address, path, constructorArguments) => {
+  try {
+    await hre.run("verify:verify", {
+      address: address,
+      contract: path,
+      constructorArguments: constructorArguments,
+    });
+  } catch (err) {
+    console.log("Error: ", err);
+  }
+};
+
+const writeCsv = (data, fileName) => {
+  stringify(data, { header: true }, (err, output) => {
+    if (err) {
+      console.log(err);
+    }
+    fs.writeFile(fileName, output, (err) => {
+      if (err) {
+        console.log(err);
+      }
+      console.log(`${fileName} updated.`);
+    });
+  });
+};
+
+/// Converts a string into a hex representation of bytes32
+const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
+
+module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32 };
