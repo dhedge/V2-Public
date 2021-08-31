@@ -127,11 +127,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       MultiTransaction[] memory transactions
     )
   {
-    (
-      address[] memory borrowAssets,
-      uint256[] memory borrowAmounts,
-      uint256[] memory interestRateModes
-    ) = _calculateBorrowAssets(pool, portion);
+    (address[] memory borrowAssets, uint256[] memory borrowAmounts, uint256[] memory interestRateModes) =
+      _calculateBorrowAssets(pool, portion);
 
     if (borrowAssets.length > 0) {
       address factory = IPoolLogic(pool).factory();
@@ -230,8 +227,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       uint256 decimals
     )
   {
-    (address aToken, address stableDebtToken, address variableDebtToken) = aaveProtocolDataProvider
-      .getReserveTokensAddresses(asset);
+    (address aToken, address stableDebtToken, address variableDebtToken) =
+      aaveProtocolDataProvider.getReserveTokensAddresses(asset);
     if (aToken != address(0)) {
       collateralBalance = IERC20(aToken).balanceOf(pool);
       debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
@@ -365,21 +362,11 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
     address weth = IHasGuardInfo(factory).getAddress("weth");
 
-    MultiTransaction[] memory aaveRepayTransactions = _repayAaveTransactions(
-      pool,
-      repayAssets,
-      repayAmounts,
-      interestRateModes
-    );
+    MultiTransaction[] memory aaveRepayTransactions =
+      _repayAaveTransactions(pool, repayAssets, repayAmounts, interestRateModes);
     MultiTransaction[] memory aaveWithdrawTransactions = _withdrawAaveTransactions(pool, portion, swapRouter, weth);
-    MultiTransaction[] memory flashloanWithdrawTransactions = _repayFlashloanTransactions(
-      pool,
-      swapRouter,
-      weth,
-      repayAssets,
-      repayAmounts,
-      premiums
-    );
+    MultiTransaction[] memory flashloanWithdrawTransactions =
+      _repayFlashloanTransactions(pool, swapRouter, weth, repayAssets, repayAmounts, premiums);
 
     transactions = new MultiTransaction[](
       aaveRepayTransactions.length + aaveWithdrawTransactions.length + flashloanWithdrawTransactions.length

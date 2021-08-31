@@ -334,12 +334,10 @@ task("upgrade", "Upgrade contracts")
       console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
       versions[newTag].contracts.UniswapV2RouterGuard = uniswapV2RouterGuard.address;
 
-      tryVerify(
-        hre,
-        uniswapV2RouterGuard.address,
-        "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
-        [10, 100],
-      );
+      tryVerify(hre, uniswapV2RouterGuard.address, "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard", [
+        10,
+        100,
+      ]);
 
       await uniswapV2RouterGuard.transferOwnership(protocolDao);
       let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [

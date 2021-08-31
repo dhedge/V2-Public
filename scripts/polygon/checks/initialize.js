@@ -13,8 +13,13 @@ let poolFactoryAddress, assetHandlerAddress; // proxy implementations
 const init = async (environment, deployedVersion = "") => {
   console.log("Initializing contracts and variables..");
 
-  const { versionsFileName, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName } =
-    await getEnvironmentFiles(environment);
+  const {
+    versionsFileName,
+    assetsFileName,
+    namesFileName,
+    assetGuardsFileName,
+    contractGuardsFileName,
+  } = await getEnvironmentFiles(environment);
 
   const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury } = await getEnvironmentContracts(
     environment,
