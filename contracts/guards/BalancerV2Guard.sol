@@ -33,6 +33,8 @@
 
 pragma solidity 0.7.6;
 
+import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
+
 import "../utils/TxDataUtils.sol";
 import "../utils/SlippageChecker.sol";
 import "../interfaces/guards/IGuard.sol";
@@ -42,6 +44,8 @@ import "../interfaces/balancer/IBalancerV2Vault.sol";
 
 /// @notice Transaction guard for Balancer V2 Vault
 contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
+  using SignedSafeMathUpgradeable for int256;
+
   constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
     SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
   {}
@@ -101,6 +105,52 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         address toAddress = convert32toAddress(getInput(data, 3));
         uint256 dstAmount = uint256(getArrayIndex(data, 0, 4));
         uint256 amountInMax = uint256(getInput(data, 5));
+
+        require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+        require(poolManagerLogic.poolLogic() == fromAddress, "sender is not pool");
+        require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
+
+        _checkSlippageLimit(srcAsset, dstAsset, amountInMax, dstAmount, address(poolManagerLogic));
+
+        emit ExchangeTo(poolManagerLogic.poolLogic(), srcAsset, dstAsset, uint256(dstAmount), block.timestamp);
+
+        txType = 2; // 'Exchange' type
+      }
+    } else if (
+      method ==
+      bytes4(
+        keccak256(
+          "batchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool),int256[],uint256)"
+        )
+      )
+    ) {
+      uint256 swapkind = uint256(getInput(data, 0));
+      if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_IN)) {
+        address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0));
+        address dstAsset = convert32toAddress(getArrayLast(data, 2));
+        address fromAddress = convert32toAddress(getInput(data, 3));
+        address toAddress = convert32toAddress(getInput(data, 5));
+        uint256 srcAmount = uint256(int256(getArrayIndex(data, 7, 0)));
+        uint256 amountOutMin = uint256(int256(0).sub(int256(getArrayLast(data, 7))));
+
+        require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+        require(poolManagerLogic.poolLogic() == fromAddress, "sender is not pool");
+        require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
+
+        _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
+
+        emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
+
+        txType = 2; // 'Exchange' type
+      } else if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_OUT)) {
+        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 2));
+        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 3));
+        address fromAddress = convert32toAddress(getInput(data, 1));
+        address toAddress = convert32toAddress(getInput(data, 3));
+        uint256 dstAmount = uint256(int256(0).sub(int256(getArrayLast(data, 7))));
+        uint256 amountInMax = uint256(int256(getArrayIndex(data, 7, 0)));
 
         require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 

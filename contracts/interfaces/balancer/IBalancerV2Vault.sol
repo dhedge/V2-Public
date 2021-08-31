@@ -24,10 +24,27 @@ interface IBalancerV2Vault {
     bool toInternalBalance;
   }
 
+  struct BatchSwapStep {
+    bytes32 poolId;
+    uint256 assetInIndex;
+    uint256 assetOutIndex;
+    uint256 amount;
+    bytes userData;
+  }
+
   function swap(
     SingleSwap memory singleSwap,
     FundManagement memory funds,
     uint256 limit,
     uint256 deadline
   ) external payable returns (uint256 amountCalculated);
+
+  function batchSwap(
+    SwapKind kind,
+    BatchSwapStep[] memory swaps,
+    address[] memory assets,
+    FundManagement memory funds,
+    int256[] memory limits,
+    uint256 deadline
+  ) external payable returns (int256[] memory);
 }
