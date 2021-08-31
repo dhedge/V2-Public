@@ -44,14 +44,14 @@ describe("Quickswap V2 Test", function () {
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
     const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
+    const governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
-    PoolLogic = await ethers.getContractFactory("PoolLogic");
-    poolLogic = await PoolLogic.deploy();
+    const PoolLogic = await ethers.getContractFactory("PoolLogic");
+    const poolLogic = await PoolLogic.deploy();
 
-    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    poolManagerLogic = await PoolManagerLogic.deploy();
+    const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+    const poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
@@ -59,12 +59,12 @@ describe("Quickswap V2 Test", function () {
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
+    const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
 
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
+    const PoolFactory = await ethers.getContractFactory("PoolFactory");
+    const poolFactory = await upgrades.deployProxy(PoolFactory, [
       poolLogic.address,
       poolManagerLogic.address,
       assetHandler.address,
@@ -75,28 +75,28 @@ describe("Quickswap V2 Test", function () {
 
     // Deploy Quick LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
-    quickLPAggregator = await UniV2LPAggregator.deploy(quickLpUsdcWeth, poolFactory.address);
+    const quickLPAggregator = await UniV2LPAggregator.deploy(quickLpUsdcWeth, poolFactory.address);
     const assetQuickLPWethUsdc = { asset: quickLpUsdcWeth, assetType: 5, aggregator: quickLPAggregator.address };
     await assetHandler.addAssets([assetQuickLPWethUsdc]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-    erc20Guard = await ERC20Guard.deploy();
+    const erc20Guard = await ERC20Guard.deploy();
     await erc20Guard.deployed();
 
     const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
-    openAssetGuard = await OpenAssetGuard.deploy([wmatic, quick]);
+    const openAssetGuard = await OpenAssetGuard.deploy([wmatic, quick]);
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
+    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     await uniswapV2RouterGuard.deployed();
 
     const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
-    quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy(); // set slippage 2% for testing
+    const quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy();
     await quickStakingRewardsGuard.deployed();
 
     const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
-    quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
+    const quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
     await quickLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);

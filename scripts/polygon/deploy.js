@@ -47,6 +47,12 @@ const stagingVersionFile = "./publish/matic/staging-versions.json";
 const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 
+const stagingExternalAssetFileName = "./config/staging/dHEDGE Assets list - Polygon External Staging.csv";
+const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon External.csv";
+
+const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
+const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
+
 const deploy = async (env) => {
   const ethers = hre.ethers;
   const provider = ethers.provider;
@@ -66,7 +72,7 @@ const deploy = async (env) => {
   console.log("dao address: ", dao.address);
 
   const Governance = await ethers.getContractFactory("Governance");
-  let governance = await Governance.deploy();
+  const governance = await Governance.deploy();
   console.log("governance deployed to:", governance.address);
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -92,7 +98,7 @@ const deploy = async (env) => {
   console.log("AssetHandler deployed at ", assetHandler.address);
 
   const PoolFactory = await ethers.getContractFactory("PoolFactory");
-  poolFactory = await upgrades.deployProxy(PoolFactory, [
+  const poolFactory = await upgrades.deployProxy(PoolFactory, [
     poolLogic.address,
     poolManagerLogic.address,
     assetHandler.address,
@@ -169,14 +175,34 @@ const deploy = async (env) => {
   console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
 
   const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-  sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
+  const sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
   await sushiLPAssetGuard.deployed();
   console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
 
+  const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
+  const csvAssets = await csv().fromFile(fileName);
+  const addresses = csvAssets.map((asset) => asset.Address);
+  const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+  const openAssetGuard = await OpenAssetGuard.deploy([addresses]);
+  await openAssetGuard.deployed();
+  console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
+
+  const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
+  const quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
+  await quickLPAssetGuard.deployed();
+  console.log("quickLPAssetGuard deployed at ", quickLPAssetGuard.address);
+
+  const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
+  quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy();
+  await quickStakingRewardsGuard.deployed();
+  console.log("quickStakingRewardsGuard deployed at ", quickStakingRewardsGuard.address);
+
   await governance.setAssetGuard(0, erc20Guard.address);
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);
+  await governance.setAssetGuard(5, quickLPAssetGuard.address);
   await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
+  await governance.setContractGuard(quickLpUsdcWethStakingRewards, quickStakingRewardsGuard.address);
 
   let tag = await getTag();
   let versions = new Object();
@@ -196,6 +222,7 @@ const deploy = async (env) => {
       UniswapV2RouterGuard: uniswapV2RouterGuard.address,
       SushiMiniChefV2Guard: sushiMiniChefV2Guard.address,
       SushiLPAssetGuard: sushiLPAssetGuard.address,
+      OpenAssetGuard: openAssetGuard.address,
     },
   };
 
@@ -229,6 +256,7 @@ const deploy = async (env) => {
       [toBytes32("swapRouter"), sushiswapV2Router],
       [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
       [toBytes32("weth"), weth],
+      [toBytes32("openAssetGuard"), openAssetGuard.address],
     ]);
 
     aaveContracts = {
@@ -258,6 +286,9 @@ const deploy = async (env) => {
   await governance.transferOwnership(protocolDao);
   await assetHandler.transferOwnership(protocolDao);
   await sushiLPAssetGuard.transferOwnership(protocolDao);
+  await uniswapV2RouterGuard.transferOwnership(protocolDao);
+  await openAssetGuard.transferOwnership(protocolDao);
+  await quickLPAssetGuard.transferOwnership(protocolDao);
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);
