@@ -32,9 +32,11 @@ const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98
 let sushiToken;
 let wmatic;
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
-let nonce, safeSdk;
+let nonce,
+  safeSdk,
+  nonceLog = new Array();
 
-const proposeTx = async (to, data) => {
+const proposeTx = async (to, data, message) => {
   const transaction = {
     to: to,
     value: "0",
@@ -42,7 +44,13 @@ const proposeTx = async (to, data) => {
     nonce: nonce,
   };
 
+  nonceLog.push({
+    nonce: nonce,
+    message: message,
+  });
+
   console.log("Proposing transaction: ", transaction);
+  console.log(`Nonce ${nonce}: ${message}`);
 
   nonce += 1;
 
@@ -73,6 +81,8 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("quickLPAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
   .addOptionalParam("quickStakingRewardsGuard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
+  .addOptionalParam("pause", "pause contract", false, types.boolean)
+  .addOptionalParam("unpause", "unpause contract", false, types.boolean)
   .setAction(async (taskArgs) => {
     // Initialize the Safe SDK
     const provider = ethers.provider;
@@ -140,10 +150,13 @@ task("upgrade", "Upgrade contracts")
 
     // Pause Pool Factory
     let poolFactoryProxy = contracts.PoolFactoryProxy;
-    const PoolFactory = await ethers.getContractFactory("PoolFactory");
-    const pauseABI = proxyAdmin.encodeFunctionData("pause", []);
-    await proposeTx(poolFactoryProxy, pauseABI);
+    const PoolFactory = await hre.artifacts.readArtifact("PoolFactory");
+    const PoolFactoryABI = new ethers.utils.Interface(PoolFactory.abi);
 
+    if (taskArgs.pause) {
+      const pauseABI = PoolFactoryABI.encodeFunctionData("pause", []);
+      await proposeTx(poolFactoryProxy, pauseABI, "Pause Pool Factory");
+    }
     if (taskArgs.assets) {
       // look up to check if csvAsset is in the current versions
       let assetHandlerAssets = [];
@@ -212,18 +225,19 @@ task("upgrade", "Upgrade contracts")
       const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
 
       if (assetHandlerAssets.length > 0) {
-        await proposeTx(contracts.AssetHandlerProxy, addAssetsABI);
+        await proposeTx(contracts.AssetHandlerProxy, addAssetsABI, "Update assets in Asset Handler");
         versions[newTag].contracts.Assets = [...versions[newTag].contracts.Assets, ...assetHandlerAssets];
       }
     }
     if (taskArgs.poolFactory) {
-      const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactory);
+      const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
+      const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
       console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
-      tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory");
+      tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
 
       const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
-      await proposeTx(proxyAdminAddress, upgradeABI);
+      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory");
     }
     if (taskArgs.assetHandler) {
       let oldAssetHandler = contracts.AssetHandlerProxy;
@@ -231,10 +245,10 @@ task("upgrade", "Upgrade contracts")
       const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
       console.log("assetHandler logic deployed to: ", assetHandler);
 
-      tryVerify(hre, assetHandler, "contracts/assets/AssetHandler.sol:AssetHandler");
+      tryVerify(hre, assetHandler, "contracts/assets/AssetHandler.sol:AssetHandler", []);
 
       const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAssetHandler, assetHandler]);
-      await proposeTx(proxyAdminAddress, upgradeABI);
+      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Asset Handler");
     }
     if (taskArgs.poolLogic) {
       let oldPooLogicProxy = contracts.PoolLogicProxy;
@@ -244,7 +258,7 @@ task("upgrade", "Upgrade contracts")
       versions[newTag].contracts.PoolLogic = poolLogic;
       setLogic = true;
 
-      tryVerify(hre, poolLogic, "contracts/PoolLogic.sol:PoolLogic");
+      tryVerify(hre, poolLogic, "contracts/PoolLogic.sol:PoolLogic", []);
     }
     if (taskArgs.poolManagerLogic) {
       let oldPooManagerLogicProxy = contracts.PoolManagerLogicProxy;
@@ -254,16 +268,14 @@ task("upgrade", "Upgrade contracts")
       versions[newTag].contracts.PoolManagerLogic = poolManagerLogic;
       setLogic = true;
 
-      tryVerify(hre, poolManagerLogic, "contracts/PoolManagerLogic.sol:PoolManagerLogic");
+      tryVerify(hre, poolManagerLogic, "contracts/PoolManagerLogic.sol:PoolManagerLogic", []);
     }
     if (setLogic) {
-      const PoolFactory = await hre.artifacts.readArtifact("PoolFactory");
-      const poolFactory = new ethers.utils.Interface(PoolFactory.abi);
-      const setLogicABI = poolFactory.encodeFunctionData("setLogic", [
+      const setLogicABI = PoolFactoryABI.encodeFunctionData("setLogic", [
         versions[newTag].contracts.PoolLogic,
         versions[newTag].contracts.PoolManagerLogic,
       ]);
-      await proposeTx(contracts.PoolFactoryProxy, setLogicABI);
+      await proposeTx(contracts.PoolFactoryProxy, setLogicABI, "Set logic for poolLogic and poolManagerLogic");
     }
     if (taskArgs.aaveLendingPoolAssetGuard) {
       const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
@@ -276,13 +288,14 @@ task("upgrade", "Upgrade contracts")
         hre,
         aaveLendingPoolAssetGuard.address,
         "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol:AaveLendingPoolAssetGuard",
+        [aaveProtocolDataProvider],
       );
 
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
         3,
         aaveLendingPoolAssetGuard.address,
       ]);
-      await proposeTx(contracts.Governance, setAssetGuardABI);
+      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for aaveLendingPoolAssetGuard");
       newAssetGuards.push({
         AssetType: 3,
         GuardName: "AaveLendingPoolAssetGuard",
@@ -297,11 +310,16 @@ task("upgrade", "Upgrade contracts")
       console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
       versions[newTag].contracts.SushiLPAssetGuard = sushiLPAssetGuard.address;
 
-      tryVerify(hre, sushiLPAssetGuard.address, "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard");
+      tryVerify(
+        hre,
+        sushiLPAssetGuard.address,
+        "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
+        [sushiMiniChefV2],
+      );
 
       await sushiLPAssetGuard.transferOwnership(protocolDao);
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, sushiLPAssetGuard.address]);
-      await proposeTx(contracts.Governance, setAssetGuardABI);
+      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for SushiLPAssetGuard");
       newAssetGuards.push({
         AssetType: 2,
         GuardName: "SushiLPAssetGuard",
@@ -316,14 +334,19 @@ task("upgrade", "Upgrade contracts")
       console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
       versions[newTag].contracts.UniswapV2RouterGuard = uniswapV2RouterGuard.address;
 
-      tryVerify(hre, uniswapV2RouterGuard.address, "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard");
+      tryVerify(
+        hre,
+        uniswapV2RouterGuard.address,
+        "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
+        [10, 100],
+      );
 
       await uniswapV2RouterGuard.transferOwnership(protocolDao);
       let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
         sushiswapV2Router,
         uniswapV2RouterGuard.address,
       ]);
-      await proposeTx(contracts.Governance, setContractGuardABI);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for sushiswapV2Router");
       newContractGuards.push({
         ContractAddress: sushiswapV2Router,
         GuardName: "UniswapV2RouterGuard",
@@ -335,7 +358,7 @@ task("upgrade", "Upgrade contracts")
         quickswapRouter,
         uniswapV2RouterGuard.address,
       ]);
-      await proposeTx(contracts.Governance, setContractGuardABI);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for quickswapRouter");
       newContractGuards.push({
         ContractAddress: quickswapRouter,
         GuardName: "UniswapV2RouterGuard",
@@ -346,21 +369,26 @@ task("upgrade", "Upgrade contracts")
     if (taskArgs.openAssetGuard) {
       const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
       const csvAssets = await csv().fromFile(fileName);
-      const addresses = csvAssets.map((asset) => asset.Address);
-      const openAssetGuard = await OpenAssetGuard.deploy(addresses);
+      let addresses = csvAssets.map((asset) => asset.Address);
       const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+      const openAssetGuard = await OpenAssetGuard.deploy(addresses);
       await openAssetGuard.deployed();
       console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
       versions[newTag].contracts.OpenAssetGuard = openAssetGuard.address;
+      addresses = typeof addresses === "string" ? [addresses] : addresses;
 
-      tryVerify(hre, openAssetGuard.address, "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard");
+      tryVerify(
+        hre,
+        openAssetGuard.address,
+        "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
+        addresses,
+      );
 
       await openAssetGuard.transferOwnership(protocolDao);
       const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [
-        ethers.utils.formatBytes32String("openAssetGuard"),
-        openAssetGuard.address,
+        [[ethers.utils.formatBytes32String("openAssetGuard"), openAssetGuard.address]],
       ]);
-      await proposeTx(contracts.Governance, setAddressesABI);
+      await proposeTx(contracts.Governance, setAddressesABI, "setAddresses for openAssetGuard");
       newGovernanceNames.push({
         Name: "openAssetGuard",
         Destination: openAssetGuard.address,
@@ -373,11 +401,16 @@ task("upgrade", "Upgrade contracts")
       console.log("quickLPAssetGuard deployed at ", quickLPAssetGuard.address);
       versions[newTag].contracts.QuickLPAssetGuard = quickLPAssetGuard.address;
 
-      tryVerify(hre, quickLPAssetGuard.address, "contracts/guards/assetGuards/QuickLPAssetGuard.sol:QuickLPAssetGuard");
+      tryVerify(
+        hre,
+        quickLPAssetGuard.address,
+        "contracts/guards/assetGuards/QuickLPAssetGuard.sol:QuickLPAssetGuard",
+        [quickStakingRewardsFactory],
+      );
 
       await quickLPAssetGuard.transferOwnership(protocolDao);
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [5, quickLPAssetGuard.address]);
-      await proposeTx(contracts.Governance, setAssetGuardABI);
+      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for quickLPAssetGuard");
       newAssetGuards.push({
         AssetType: 5,
         GuardName: "QuickLPAssetGuard",
@@ -396,13 +429,14 @@ task("upgrade", "Upgrade contracts")
         hre,
         quickStakingRewardsGuard.address,
         "contracts/guards/QuickStakingRewardsGuard.sol:QuickStakingRewardsGuard",
+        [],
       );
 
       const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
         quickLpUsdcWethStakingRewards,
         quickStakingRewardsGuard.address,
       ]);
-      await proposeTx(contracts.Governance, setContractGuardABI);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for QuickStakingRewardsGuard");
       newContractGuards.push({
         ContractAddress: quickLpUsdcWethStakingRewards,
         GuardName: "QuickStakingRewardsGuard",
@@ -417,13 +451,16 @@ task("upgrade", "Upgrade contracts")
       console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
       versions[newTag].contracts.SushiMiniChefV2Guard = sushiMiniChefV2Guard.address;
 
-      tryVerify(hre, sushiMiniChefV2Guard.address, "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard");
+      tryVerify(hre, sushiMiniChefV2Guard.address, "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard", [
+        sushiToken,
+        wmatic,
+      ]);
 
       const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
         sushiMiniChefV2,
         sushiMiniChefV2Guard.address,
       ]);
-      await proposeTx(contracts.Governance, setContractGuardABI);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for sushiMiniChefV2Guard");
       newContractGuards.push({
         ContractAddress: sushiMiniChefV2,
         GuardName: "SushiMiniChefV2Guard",
@@ -431,10 +468,11 @@ task("upgrade", "Upgrade contracts")
         Description: "Sushi rewards contract",
       });
     }
-
-    // Unpause Pool Factory
-    const unpauseABI = proxyAdmin.encodeFunctionData("unpause", []);
-    await proposeTx(poolFactoryProxy, unpauseABI);
+    if (taskArgs.unpause) {
+      // Unpause Pool Factory
+      const unpauseABI = PoolFactoryABI.encodeFunctionData("unpause", []);
+      await proposeTx(poolFactoryProxy, unpauseABI, "Unpause pool Factory");
+    }
 
     // convert JSON object to string
     const data = JSON.stringify(versions, null, 2);
@@ -489,6 +527,8 @@ task("upgrade", "Upgrade contracts")
     writeCsv(csvAssetGuards, assetGuardfileName);
     writeCsv(csvContractGuards, contractGuardfileName);
     writeCsv(csvGovernanceNames, governanceNamesfileName);
+
+    console.log(nonceLog);
   });
 
 module.exports = {};

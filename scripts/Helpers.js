@@ -45,11 +45,12 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
   return true;
 };
 
-const tryVerify = async (hre, address, path) => {
+const tryVerify = async (hre, address, path, constructorArguments) => {
   try {
     await hre.run("verify:verify", {
       address: address,
       contract: path,
+      constructorArguments: constructorArguments,
     });
   } catch (err) {
     console.log("Error: ", err);
