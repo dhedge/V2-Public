@@ -1,6 +1,8 @@
 const util = require("util");
 const { exec } = require("child_process");
 const execProm = util.promisify(exec);
+const stringify = require("csv-stringify");
+const fs = require("fs");
 
 const getTag = async () => {
   try {
@@ -8,6 +10,19 @@ const getTag = async () => {
   } catch {}
   let result = await execProm("git tag | sort -V | tail -1");
   return result.stdout.trim();
+};
+
+const hasDuplicates = async (array, key) => {
+  const valueArr = array.map(function (item) {
+    return item[key];
+  });
+
+  const isDuplicate = valueArr.some(function (item, idx) {
+    if (!item) return false;
+    return valueArr.indexOf(item) != idx;
+  });
+
+  return isDuplicate;
 };
 
 const isSameBytecode = (creationBytecode, runtimeBytecode) => {
@@ -30,7 +45,33 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
   return true;
 };
 
+const tryVerify = async (hre, address, path, constructorArguments) => {
+  try {
+    await hre.run("verify:verify", {
+      address: address,
+      contract: path,
+      constructorArguments: constructorArguments,
+    });
+  } catch (err) {
+    console.log("Error: ", err);
+  }
+};
+
+const writeCsv = (data, fileName) => {
+  stringify(data, { header: true }, (err, output) => {
+    if (err) {
+      console.log(err);
+    }
+    fs.writeFile(fileName, output, (err) => {
+      if (err) {
+        console.log(err);
+      }
+      console.log(`${fileName} updated.`);
+    });
+  });
+};
+
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-module.exports = { getTag, isSameBytecode, toBytes32 };
+module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32 };

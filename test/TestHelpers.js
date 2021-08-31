@@ -31,6 +31,8 @@ const checkAlmostSame = (a, b) => {
   expect(ethers.BigNumber.from(a).lte(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
 };
 
+const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
+
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
@@ -48,11 +50,17 @@ const getAmountIn = async (routerAddress, amountOut, path) => {
   return amountsIn[0];
 };
 
+const units = (amount, decimal = 18) => {
+  return ethers.BigNumber.from(amount.toString()).mul(ethers.BigNumber.from(10).pow(decimal));
+};
+
 module.exports = {
   updateChainlinkAggregators,
   currentBlockTimestamp,
   checkAlmostSame,
+  approxEq,
   toBytes32,
   getAmountOut,
   getAmountIn,
+  units,
 };

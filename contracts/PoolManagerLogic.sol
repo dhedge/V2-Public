@@ -100,7 +100,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     factory = _factory;
     poolLogic = _poolLogic;
-    managerFeeNumerator = _managerFeeNumerator;
+    _setManagerFeeNumerator(_managerFeeNumerator);
     _changeAssets(_supportedAssets, new address[](0));
   }
 
@@ -143,7 +143,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       _addAsset(_addAssets[i]);
     }
 
-    require(supportedAssets.length < IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
+    require(supportedAssets.length <= IHasAssetInfo(factory).getMaximumSupportedAssetCount(), "maximum assets reached");
 
     require(getDepositAssets().length >= 1, "at least one deposit asset");
   }

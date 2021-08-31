@@ -11,6 +11,7 @@ require("@nomiclabs/hardhat-etherscan");
 
 require("./scripts/upgrade.js");
 require("./scripts/polygon/checks/checkConfig");
+require("@nomiclabs/hardhat-etherscan");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -43,6 +44,7 @@ module.exports = {
         ? process.env.POLYGON_RPC
         : "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_POLYGON_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 10e9,
     },
     mumbai: {
       chainId: 80001,
@@ -89,6 +91,7 @@ module.exports = {
       "UniswapV2RouterGuard",
       "UniswapV3SwapGuard",
       "SushiMiniChefV2Guard",
+      "QuickStakingRewardsGuard",
       "Managed",
     ],
     spacing: 2,

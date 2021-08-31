@@ -33,25 +33,17 @@
 
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
 import "../utils/TxDataUtils.sol";
+import "../utils/SlippageChecker.sol";
 import "../interfaces/guards/IGuard.sol";
 import "../interfaces/uniswapv2/IUniswapV2Factory.sol";
 import "../interfaces/uniswapv2/IUniswapV2Router.sol";
-import "../interfaces/IERC20Extended.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/IHasAssetInfo.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
 
 /// @notice Transaction guard for UniswapV2Router
 /// @dev This will be used for sushiswap as well since Sushi uses the same interface.
-contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
-  using SafeMathUpgradeable for uint256;
-
+contract UniswapV2RouterGuard is TxDataUtils, SlippageChecker, IGuard {
   event ExchangeTo(address fundAddress, address sourceAsset, address dstAsset, uint256 dstAmount, uint256 time);
   event AddLiquidity(
     address fundAddress,
@@ -76,13 +68,9 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
     uint256 time
   );
 
-  uint256 public slippageLimitNumerator;
-  uint256 public slippageLimitDenominator;
-
-  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) Ownable() {
-    slippageLimitNumerator = _slippageLimitNumerator;
-    slippageLimitDenominator = _slippageLimitDenominator;
-  }
+  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
+    SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
+  {}
 
   /// @notice Transaction guard for Uniswap V2
   /// @dev It supports exchange, addLiquidity and removeLiquidity functionalities
@@ -206,43 +194,5 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard, Ownable {
     }
 
     return (txType, false);
-  }
-
-  /// @notice Update slippage limit numerator/denominator
-  /// @param _slippageLimitNumerator slippage limit numerator - slippage limit would be numerator/denominator
-  /// @param _slippageLimitDenominator slippage limit denominiator - slippage limit would be numerator/denominator
-  function setSlippageLimit(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator) external onlyOwner {
-    slippageLimitNumerator = _slippageLimitNumerator;
-    slippageLimitDenominator = _slippageLimitDenominator;
-  }
-
-  /// @notice Check slippage limit when swap tokens
-  /// @param srcAsset the source asset address
-  /// @param srcAmount the destination asset address
-  /// @param srcAmount the source asset amount
-  /// @param dstAmount the destination asset amount
-  /// @param poolManagerLogic the pool manager logic address
-  function _checkSlippageLimit(
-    address srcAsset,
-    address dstAsset,
-    uint256 srcAmount,
-    uint256 dstAmount,
-    address poolManagerLogic
-  ) internal view {
-    if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(srcAsset)) {
-      uint256 srcDecimals = IERC20Extended(srcAsset).decimals();
-      uint256 dstDecimals = IERC20Extended(dstAsset).decimals();
-      address poolFactory = IPoolManagerLogic(poolManagerLogic).factory();
-      uint256 srcPrice = IHasAssetInfo(poolFactory).getAssetPrice(srcAsset);
-      uint256 dstPrice = IHasAssetInfo(poolFactory).getAssetPrice(dstAsset);
-
-      srcAmount = srcAmount.mul(srcPrice).div(10**srcDecimals); // to USD amount
-      dstAmount = dstAmount.mul(dstPrice).div(10**dstDecimals); // to USD amount
-
-      require(
-        dstAmount.mul(slippageLimitDenominator).div(srcAmount) >= slippageLimitDenominator.sub(slippageLimitNumerator),
-        "slippage limit exceed"
-      );
-    }
   }
 }
