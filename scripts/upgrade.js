@@ -29,12 +29,11 @@ const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
 const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
-let sushiToken;
-let wmatic;
+const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
+const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
+let sushiToken, wmatic;
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
-let nonce,
-  safeSdk,
-  nonceLog = new Array();
+let nonce, safeSdk, nonceLog = new Array();
 
 const proposeTx = async (to, data, message) => {
   const transaction = {
@@ -63,8 +62,7 @@ const proposeTx = async (to, data, message) => {
   // console.log("approveTxResponse", approveTxResponse);
   console.log("safeTransaction: ", safeTransaction);
 
-  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
-  console.log("ProposeTx: ", proposeTx);
+  await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
 };
 
 task("upgrade", "Upgrade contracts")
@@ -72,15 +70,19 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("assetHandler", "upgrade assetHandler", false, types.boolean)
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
   .addOptionalParam("poolManagerLogic", "upgrade poolManagerLogic", false, types.boolean)
-  .addOptionalParam("assets", "deploy new assets", false, types.boolean)
+  .addOptionalParam("assets", "deploy new assets", true, types.boolean)
   .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("aaveLendingPoolAssetGuard", "upgrade aaveLendingPoolAssetGuard", false, types.boolean)
   .addOptionalParam("sushiLPAssetGuard", "upgrade sushiLPAssetGuard", false, types.boolean)
+  .addOptionalParam("erc20Guard", "upgrade erc20Guard", false, types.boolean)
+  .addOptionalParam("lendingEnabledAssetGuard", "upgrade LendingEnabledAssetGuard", false, types.boolean)
   .addOptionalParam("uniswapV2RouterGuard", "upgrade uniswapV2RouterGuard", false, types.boolean)
   .addOptionalParam("openAssetGuard", "upgrade openAssetGuard", false, types.boolean)
   .addOptionalParam("quickLPAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
   .addOptionalParam("quickStakingRewardsGuard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
+  .addOptionalParam("aaveIncentivesControllerGuard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
+  .addOptionalParam("aaveLendingPoolGuard", "upgrade AaveLendingPoolGuard", false, types.boolean)
   .addOptionalParam("pause", "pause contract", false, types.boolean)
   .addOptionalParam("unpause", "unpause contract", false, types.boolean)
   .setAction(async (taskArgs) => {
@@ -327,6 +329,53 @@ task("upgrade", "Upgrade contracts")
         Description: "Sushi LP tokens",
       });
     }
+    if (taskArgs.erc20Guard) {
+      const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+      const erc20Guard = await ERC20Guard.deploy();
+      await erc20Guard.deployed();
+      console.log("ERC20Guard deployed at ", erc20Guard.address);
+      versions[newTag].contracts.ERC20Guard = erc20Guard.address;
+
+      tryVerify(
+        hre,
+        erc20Guard.address,
+        "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard",
+        [],
+      );
+
+      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [0, erc20Guard.address]);
+      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for ERC20Guard");
+      newAssetGuards.push({
+        AssetType: 0,
+        GuardName: "ERC20Guard",
+        GuardAddress: erc20Guard.address,
+        Description: "ERC20 tokens",
+      });
+    }
+    if (taskArgs.lendingEnabledAssetGuard) {
+      const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+      const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
+      await lendingEnabledAssetGuard.deployed();
+      console.log("LendingEnabledAssetGuard deployed at ", lendingEnabledAssetGuard.address);
+
+      versions[newTag].contracts.LendingEnabledAssetGuard = lendingEnabledAssetGuard.address;
+
+      tryVerify(
+        hre,
+        lendingEnabledAssetGuard.address,
+        "contracts/guards/assetGuards/LendingEnabledAssetGuard.sol:LendingEnabledAssetGuard",
+        [],
+      );
+
+      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [4, lendingEnabledAssetGuard.address]);
+      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for LendingEnabledAssetGuard");
+      newAssetGuards.push({
+        AssetType: 4,
+        GuardName: "LendingEnabledAssetGuard",
+        GuardAddress: lendingEnabledAssetGuard.address,
+        Description: "Lending Enabled Asset tokens",
+      });
+    }
     if (taskArgs.uniswapV2RouterGuard) {
       const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
       const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(10, 100); // set slippage 10%
@@ -464,6 +513,59 @@ task("upgrade", "Upgrade contracts")
         Description: "Sushi rewards contract",
       });
     }
+    if (taskArgs.aaveIncentivesControllerGuard) {
+      const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
+      console.log("wmatic: ", wmatic);
+      const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
+      await aaveIncentivesControllerGuard.deployed();
+      console.log("AaveIncentivesControllerGuard deployed at ", aaveIncentivesControllerGuard.address);
+      versions[newTag].contracts.AaveIncentivesControllerGuard = aaveIncentivesControllerGuard.address;
+
+      tryVerify(
+        hre,
+        aaveIncentivesControllerGuard.address,
+        "contracts/guards/AaveIncentivesControllerGuard.sol:AaveIncentivesControllerGuard",
+        [wmatic],
+      );
+
+      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        aaveIncentivesController,
+        aaveIncentivesControllerGuard.address,
+      ]);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for AaveIncentivesControllerGuard");
+      newContractGuards.push({
+        ContractAddress: aaveIncentivesController,
+        GuardName: "AaveIncentivesControllerGuard",
+        GuardAddress: aaveIncentivesControllerGuard.address,
+        Description: "Aave Incentives Controller contract",
+      });
+    }
+    if (taskArgs.aaveLendingPoolGuard) {
+      const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+      const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+      await aaveLendingPoolGuard.deployed();
+      console.log("AaveLendingPoolGuard deployed at ", aaveLendingPoolGuard.address);
+      versions[newTag].contracts.AaveLendingPoolGuard = aaveLendingPoolGuard.address;
+
+      tryVerify(
+        hre,
+        aaveLendingPoolGuard.address,
+        "contracts/guards/AaveLendingPoolGuard.sol:AaveLendingPoolGuard",
+        [],
+      );
+
+      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        aaveLendingPool,
+        aaveLendingPoolGuard.address,
+      ]);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for aaveLendingPoolGuard");
+      newContractGuards.push({
+        ContractAddress: aaveLendingPool,
+        GuardName: "AaveLendingPoolGuard",
+        GuardAddress: aaveLendingPoolGuard.address,
+        Description: "Aave Lending Pool contract",
+      });
+    }
     if (taskArgs.unpause) {
       // Unpause Pool Factory
       const unpauseABI = PoolFactoryABI.encodeFunctionData("unpause", []);
@@ -477,52 +579,40 @@ task("upgrade", "Upgrade contracts")
     // write to version file
     fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
 
+    versions[newTag].contracts = { ...contracts };
+    let newCsvAssetGuards = new Array();
+    let newCsvContractGuards = new Array();
+    let newCsvGovernanceNames = new Array();
     for (const newAssetGuard of newAssetGuards) {
-      let replaced = false;
       for (const csvAssetGuard of csvAssetGuards) {
         if (newAssetGuard.GuardName == csvAssetGuard.GuardName) {
-          csvAssetGuard.GuardAddress = newAssetGuard.GuardAddress;
-          csvAssetGuard.AssetType = newAssetGuard.AssetType;
-          csvAssetGuard.Description = newAssetGuard.Description;
-          replaced = true;
-          break;
+          newCsvAssetGuards.push(newAssetGuard);
+        }else{
+          newCsvAssetGuards.push(csvAssetGuard);
         }
-      }
-      if (!replaced) {
-        csvAssetGuards.push(newAssetGuard);
       }
     }
     for (const newContractGuard of newContractGuards) {
-      let replaced = false;
       for (const csvContractGuard of csvContractGuards) {
         if (newContractGuard.GuardName == csvContractGuard.GuardName) {
-          csvContractGuard.ContractAddress = newContractGuard.ContractAddress;
-          csvContractGuard.GuardAddress = newContractGuard.GuardAddress;
-          csvContractGuard.Description = newContractGuard.Description;
-          replaced = true;
-          break;
+          newCsvContractGuards.push(newContractGuard);
+        }else{
+          newCsvContractGuards.push(csvContractGuard);
         }
-      }
-      if (!replaced) {
-        csvAssetGuards.push(newContractGuard);
       }
     }
     for (const newGovernanceName of newGovernanceNames) {
-      let replaced = false;
       for (const csvGovernanceName of csvGovernanceNames) {
         if (newGovernanceName.Name == csvGovernanceName.Name) {
-          csvGovernanceName.Destination = newGovernanceName.Destination;
-          replaced = true;
-          break;
+          newCsvGovernanceNames.push(newGovernanceName);
+        }else{
+          newCsvGovernanceNames.push(csvGovernanceName);
         }
       }
-      if (!replaced) {
-        csvAssetGuards.push(newGovernanceName);
-      }
     }
-    writeCsv(csvAssetGuards, assetGuardfileName);
-    writeCsv(csvContractGuards, contractGuardfileName);
-    writeCsv(csvGovernanceNames, governanceNamesfileName);
+    writeCsv(newCsvAssetGuards, assetGuardfileName);
+    writeCsv(newCsvContractGuards, contractGuardfileName);
+    writeCsv(newCsvGovernanceNames, governanceNamesfileName);
 
     console.log(nonceLog);
   });
