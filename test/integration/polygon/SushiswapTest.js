@@ -44,6 +44,9 @@ describe("Sushiswap V2 Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance")
+    const poolPerformance = await PoolPerformance.deploy();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -69,6 +72,7 @@ describe("Sushiswap V2 Test", function () {
       assetHandler.address,
       dao.address,
       governance.address,
+      poolPerformance.address,
     ]);
     await poolFactory.deployed();
 

@@ -60,6 +60,7 @@ import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IPoolPerformance.sol";
 import "./interfaces/IHasSupportedAsset.sol";
+import "./interfaces/IHasPoolPerformance.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IManaged.sol";
@@ -137,8 +138,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   mapping(address => uint256) public lastDeposit;
 
   address public poolManagerLogic;
-
-  address public poolPerformance;
 
   modifier onlyPrivate() {
     require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
@@ -230,7 +229,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
     );
 
-    IPoolPerformance(poolPerformance).addAssetBalance(_asset, _amount);
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).addAssetBalance(_asset, _amount);
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -285,12 +284,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // we cannot integrate this snapshotting into the loop below.
     // If we knew specifically that the withdrawProcessing only withdraw the current asset in the loop
     // We could integrate the snapshot before and after into the loop below
-    uint256[] memory supportedAssetBalancesSnapshotBefore = IPoolPerformance(poolPerformance).getBalancesSnapshot(
+    uint256[] memory supportedAssetBalancesSnapshotBefore = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).getBalancesSnapshot(
       poolManagerLogic,
       _supportedAssets
     );
 
-    for (uint256 i = 0; i < assetCount; i++) {
+    for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
         _supportedAssets[i].asset,
         msg.sender,
@@ -315,10 +314,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
-    IPoolPerformance(poolPerformance).updatedInternalBalancesByDiff(
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updatedInternalBalancesByDiff(
       _supportedAssets,
       supportedAssetBalancesSnapshotBefore,
-      IPoolPerformance(poolPerformance).getBalancesSnapshot(poolManagerLogic, _supportedAssets)
+      IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).getBalancesSnapshot(poolManagerLogic, _supportedAssets)
     );
 
     // Reduce length for withdrawnAssets to remove the empty items
@@ -401,7 +400,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
-    require(!IPoolPerformance(poolPerformance).hasDirectDeposit(address(this)), "Airdrop detected. Claim airdrop.");
+    require(!IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).hasDirectDeposit(address(this)), "Airdrop detected. Claim airdrop.");
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 
@@ -417,7 +416,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     success = to.tryAssemblyCall(data);
 
     // We must now update our internal balances to whatever the result of this tx is
-    IPoolPerformance(poolPerformance).updateInternalBalances();
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updateInternalBalances();
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }

@@ -212,11 +212,11 @@ contract PoolPerformance is OwnableUpgradeable {
 
   function getBalancesSnapshot(
     address poolManagerAddress,
-    IHasSupportedAsset.Asset[] memory supportedAssets,
-    bool supportsAave
+    IHasSupportedAsset.Asset[] memory supportedAssets
   ) external view returns (uint256[] memory supportedAssetBalances) {
     address poolAddress = msg.sender;
     supportedAssetBalances = new uint256[](supportedAssets.length);
+    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
     address aToken;
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {

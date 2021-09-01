@@ -201,6 +201,19 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "poolPerformanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "PoolPerformanceAddressSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "proxy",
         "type": "address"
       }
@@ -707,6 +720,11 @@
         "internalType": "address",
         "name": "_governanceAddress",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_poolPerformanceAddress",
+        "type": "address"
       }
     ],
     "name": "initialize",
@@ -819,6 +837,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "poolPerformanceAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -999,6 +1030,19 @@
       }
     ],
     "name": "setMaximumSupportedAssetCount",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_poolPerformanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setPoolPerformanceAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
