@@ -54,8 +54,9 @@ contract LendingEnabledAssetGuard is ERC20Guard {
     address factory = IPoolManagerLogic(pool).factory();
     address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
 
-    (address aToken, address stableDebtToken, address variableDebtToken) =
-      IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(asset);
+    (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
+      aaveProtocolDataProvider
+    ).getReserveTokensAddresses(asset);
 
     // Allowing some dust
     if (stableDebtToken != address(0))

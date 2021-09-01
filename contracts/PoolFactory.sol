@@ -183,27 +183,25 @@ contract PoolFactory is
   ) external returns (address fund) {
     require(!paused(), "contracts paused");
 
-    bytes memory poolLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,bool,string,string)",
-        address(this),
-        _privatePool,
-        _fundName,
-        _fundSymbol
-      );
+    bytes memory poolLogicData = abi.encodeWithSignature(
+      "initialize(address,bool,string,string)",
+      address(this),
+      _privatePool,
+      _fundName,
+      _fundSymbol
+    );
 
     fund = deploy(poolLogicData, 2);
 
-    bytes memory managerLogicData =
-      abi.encodeWithSignature(
-        "initialize(address,address,string,address,uint256,(address,bool)[])",
-        address(this),
-        _manager,
-        _managerName,
-        fund,
-        _managerFeeNumerator,
-        _supportedAssets
-      );
+    bytes memory managerLogicData = abi.encodeWithSignature(
+      "initialize(address,address,string,address,uint256,(address,bool)[])",
+      address(this),
+      _manager,
+      _managerName,
+      fund,
+      _managerFeeNumerator,
+      _supportedAssets
+    );
 
     address managerLogic = deploy(managerLogicData, 1);
     // Ignore return value as want it to continue regardless
