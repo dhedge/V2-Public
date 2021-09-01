@@ -42,12 +42,9 @@ task("verify", "Verify contracts")
       const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
       const csvAssets = await csv().fromFile(fileName);
       let addresses = csvAssets.map((asset) => asset.Address);
-      tryVerify(
-        hre,
-        contracts.OpenAssetGuard,
-        "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
-        [ addresses ],
-      );
+      tryVerify(hre, contracts.OpenAssetGuard, "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard", [
+        addresses,
+      ]);
     }
   });
 

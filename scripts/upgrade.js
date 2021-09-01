@@ -375,12 +375,9 @@ task("upgrade", "Upgrade contracts")
       console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
       versions[newTag].contracts.OpenAssetGuard = openAssetGuard.address;
 
-      tryVerify(
-        hre,
-        openAssetGuard.address,
-        "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
-        [ addresses ],
-      );
+      tryVerify(hre, openAssetGuard.address, "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard", [
+        addresses,
+      ]);
 
       await openAssetGuard.transferOwnership(protocolDao);
       const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [
