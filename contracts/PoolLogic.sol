@@ -284,10 +284,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // we cannot integrate this snapshotting into the loop below.
     // If we knew specifically that the withdrawProcessing only withdraw the current asset in the loop
     // We could integrate the snapshot before and after into the loop below
-    uint256[] memory supportedAssetBalancesSnapshotBefore = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).getBalancesSnapshot(
-      poolManagerLogic,
-      _supportedAssets
-    );
+    uint256[] memory supportedAssetBalancesSnapshotBefore = IPoolPerformance(
+      IHasPoolPerformance(factory).poolPerformanceAddress()
+    ).getBalancesSnapshot(poolManagerLogic, _supportedAssets);
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
@@ -317,7 +316,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updatedInternalBalancesByDiff(
       _supportedAssets,
       supportedAssetBalancesSnapshotBefore,
-      IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).getBalancesSnapshot(poolManagerLogic, _supportedAssets)
+      IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).getBalancesSnapshot(
+        poolManagerLogic,
+        _supportedAssets
+      )
     );
 
     // Reduce length for withdrawnAssets to remove the empty items
@@ -400,7 +402,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
-    require(!IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).hasDirectDeposit(address(this)), "Airdrop detected. Claim airdrop.");
+    require(
+      !IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).hasDirectDeposit(address(this)),
+      "Airdrop detected. Claim airdrop."
+    );
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 
