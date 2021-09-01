@@ -21,6 +21,7 @@ const main = async (initializeData) => {
   const names = Object.keys(contracts);
   for (const name of names) {
     if (name.includes("AssetGuard") || name == "ERC20Guard") {
+      if (name == "OpenAssetGuard") continue; // OpenAssetGuard is not on the asset guard list
       let guardFound = false;
 
       for (const csvAssetGuard of csvAssetGuards) {
