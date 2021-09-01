@@ -33,7 +33,9 @@ const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
 const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
 let sushiToken, wmatic;
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
-let nonce, safeSdk, nonceLog = new Array();
+let nonce,
+  safeSdk,
+  nonceLog = new Array();
 
 const proposeTx = async (to, data, message) => {
   const transaction = {
@@ -336,12 +338,7 @@ task("upgrade", "Upgrade contracts")
       console.log("ERC20Guard deployed at ", erc20Guard.address);
       versions[newTag].contracts.ERC20Guard = erc20Guard.address;
 
-      tryVerify(
-        hre,
-        erc20Guard.address,
-        "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard",
-        [],
-      );
+      tryVerify(hre, erc20Guard.address, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
 
       const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [0, erc20Guard.address]);
       await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for ERC20Guard");
@@ -587,7 +584,7 @@ task("upgrade", "Upgrade contracts")
       for (const csvAssetGuard of csvAssetGuards) {
         if (newAssetGuard.GuardName == csvAssetGuard.GuardName) {
           newCsvAssetGuards.push(newAssetGuard);
-        }else{
+        } else {
           newCsvAssetGuards.push(csvAssetGuard);
         }
       }
@@ -596,7 +593,7 @@ task("upgrade", "Upgrade contracts")
       for (const csvContractGuard of csvContractGuards) {
         if (newContractGuard.GuardName == csvContractGuard.GuardName) {
           newCsvContractGuards.push(newContractGuard);
-        }else{
+        } else {
           newCsvContractGuards.push(csvContractGuard);
         }
       }
@@ -605,7 +602,7 @@ task("upgrade", "Upgrade contracts")
       for (const csvGovernanceName of csvGovernanceNames) {
         if (newGovernanceName.Name == csvGovernanceName.Name) {
           newCsvGovernanceNames.push(newGovernanceName);
-        }else{
+        } else {
           newCsvGovernanceNames.push(csvGovernanceName);
         }
       }
