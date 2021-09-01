@@ -115,7 +115,8 @@ task("upgrade", "Upgrade contracts")
     const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
     console.log(`oldTag: ${oldTag}`);
     console.log(`newTag: ${newTag}`);
-    if (!taskArgs.assets && newTag == oldTag) throw "Error: No new version to upgrade";
+    const checkNewVersion = !taskArgs.assets && !taskArgs.pause && !taskArgs.unpause;
+    if (checkNewVersion && newTag == oldTag) throw "Error: No new version to upgrade";
 
     // Init contracts data
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
