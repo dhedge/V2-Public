@@ -74,7 +74,7 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress) * directDepositFactor(poolAddress);
+    return (tokenPrice(poolAddress) * directDepositFactor(poolAddress)) / 100;
   }
 
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
@@ -83,14 +83,14 @@ contract PoolPerformance is OwnableUpgradeable {
     // Reusing those functions as they exist for now for simplicity
     uint256 currentTokenPrice = tokenPrice(poolAddress);
     uint256 feePerToken = IPoolLogic(poolAddress).availableManagerFee() / IERC20Extended(poolAddress).totalSupply();
-    return (currentTokenPrice - feePerToken) * directDepositFactor(poolAddress);
+    return ((currentTokenPrice - feePerToken) * directDepositFactor(poolAddress)) / 100;
   }
 
   function tokenPrice(address poolAddress) public view returns (uint256) {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
-  function directDepositFactor(address poolAddress) internal view returns (uint256) {
+  function directDepositFactor(address poolAddress) public view returns (uint256) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
 
@@ -98,7 +98,7 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      if (assetAddress != aaveLendingPool) {
+      if (assetAddress == aaveLendingPool) {
         continue;
       }
 
@@ -108,11 +108,10 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
-
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      return valueWithoutDirectDeposits / valueWithDirectDeposits;
+      return valueWithoutDirectDeposits.mul(100).div(valueWithDirectDeposits);
     } else {
-      return (iDirectDepositFactorMap[poolAddress] * valueWithoutDirectDeposits) / valueWithDirectDeposits;
+      return iDirectDepositFactorMap[poolAddress].mul(100).mul(valueWithoutDirectDeposits).div(valueWithDirectDeposits);
     }
   }
 
@@ -128,7 +127,7 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      if (assetAddress != aaveLendingPool) {
+      if (assetAddress == aaveLendingPool) {
         continue;
       }
 
@@ -156,20 +155,21 @@ contract PoolPerformance is OwnableUpgradeable {
       internalBalancesMap[poolAddress][assetAddress] = newBalance;
     }
 
-    if (iDirectDepositFactorMap[poolAddress] == 0) {
-      iDirectDepositFactorMap[poolAddress] = 10**18;
-    }
-
     uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
     // Combine the new factor with the oldfactor
     // ogDirectDeposit factor = 0.9
     // valueWithoutDirectDeposits = 70
     // totalFundValue = 100
     //  = 0.9 * 70 / 100
-    // = 0.63 (37% of value is from direct deposits for that pool)
-    iDirectDepositFactorMap[poolAddress] =
-      (iDirectDepositFactorMap[poolAddress] * valueWithDirectDeposits) /
-      valueWithDirectDeposits;
+    // = 0.63 (37% of value is from direct deposits for that pool
+    if (iDirectDepositFactorMap[poolAddress] == 0) {
+      iDirectDepositFactorMap[poolAddress] = valueWithoutDirectDeposits.mul(100).div(valueWithDirectDeposits);
+    } else {
+      // might not need the mull here
+      iDirectDepositFactorMap[poolAddress] =
+        iDirectDepositFactorMap[poolAddress].mul(valueWithoutDirectDeposits.mul(100).div(valueWithDirectDeposits));
+
+    }
   }
 
   function addAssetBalance(address asset, uint256 amount) external {
@@ -186,7 +186,7 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      if (assetAddress != aaveLendingPool) {
+      if (assetAddress == aaveLendingPool) {
         continue;
       }
 
@@ -222,7 +222,7 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      if (assetAddress != aaveLendingPool) {
+      if (assetAddress == aaveLendingPool) {
         continue;
       }
 
@@ -271,7 +271,7 @@ contract PoolPerformance is OwnableUpgradeable {
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
 
-      if (assetAddress != aaveLendingPool) {
+      if (assetAddress == aaveLendingPool) {
         continue;
       }
 

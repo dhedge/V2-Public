@@ -1,15 +1,12 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
-const sushiswapV2Factory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
-const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 
 // For mainnet
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
@@ -23,17 +20,20 @@ const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
 const sushi_price_feed = "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0";
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
 const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
-const sushiLPUsdcWethPoolId = 1;
 
-describe("Sushiswap V2 Test", function () {
+describe("PoolPerformance", function () {
   let WMatic, WETH, USDC, USDT, SushiLPUSDCWETH, SUSHI;
   let sushiLPAggregator, sushiMiniChefV2Guard;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
-  let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+  let poolFactory,
+    poolLogic,
+    poolManagerLogic,
+    poolLogicProxy,
+    poolPerformanceProxy,
+    poolManagerLogicProxy,
+    fundAddress;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -46,6 +46,7 @@ describe("Sushiswap V2 Test", function () {
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
     const poolPerformance = await PoolPerformance.deploy();
+    poolPerformanceProxy = await PoolPerformance.attach(poolPerformance.address);
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
@@ -76,32 +77,32 @@ describe("Sushiswap V2 Test", function () {
     ]);
     await poolFactory.deployed();
 
-    // Deploy Sushi LP Aggregator
-    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
-    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
-    const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    await assetHandler.addAssets([assetSushiLPWethUsdc]);
+    // // Deploy Sushi LP Aggregator
+    // const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+    // sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
+    // const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    // await assetHandler.addAssets([assetSushiLPWethUsdc]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
-    uniswapV2RouterGuard.deployed();
+    // const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+    // uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
+    // uniswapV2RouterGuard.deployed();
 
-    const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
-    sushiMiniChefV2Guard.deployed();
+    // const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
+    // sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+    // sushiMiniChefV2Guard.deployed();
 
-    const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
-    sushiLPAssetGuard.deployed();
+    // const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
+    // sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
+    // sushiLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setAssetGuard(2, sushiLPAssetGuard.address);
-    await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
+    // await governance.setAssetGuard(2, sushiLPAssetGuard.address);
+    // await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
+    // await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
   });
 
   it("Should be able to get USDC", async function () {
@@ -145,10 +146,7 @@ describe("Sushiswap V2 Test", function () {
       "Test Fund",
       "DHTF",
       new ethers.BigNumber.from("5000"),
-      [
-        [usdc, true],
-        [weth, true],
-      ],
+      [[usdc, true]],
     );
 
     const funds = await poolFactory.getDeployedFunds();
@@ -156,11 +154,27 @@ describe("Sushiswap V2 Test", function () {
   });
 
   it("should be able to deposit", async function () {
-    await USDC.approve(poolLogicProxy.address, (200e6).toString());
-    await poolLogicProxy.deposit(usdc, (200e6).toString());
+    await USDC.approve(poolLogicProxy.address, (100e6).toString());
+    // Deposit $1 conventional way
+    await poolLogicProxy.deposit(usdc, (100e6).toString());
+    // Check tokenPriceAdjustForPerformance() should be $1
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal((1e18).toString());
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      (1e18).toString(),
+    );
+    // Check hasDirectDeposit() == FALSE
+    expect(await poolPerformanceProxy.hasDirectDeposit(poolLogicProxy.address)).to.equal(false);
 
+    // Deposit $1 directly
+    await USDC.transfer(poolLogicProxy.address, (100e6).toString());
+    // expect((await poolPerformanceProxy.directDepositFactor2(poolLogicProxy.address)).toString()).to.equal(5e17);
+    // Check TokenPrice() should be $2
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal((2e18).toString());
+    // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor 0.5)
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      (1e18).toString(),
+    );
   });
-
 
   describe("Only Standard ERC20", () => {
     // Create Fund, no management fee, enable usdc
@@ -176,13 +190,9 @@ describe("Sushiswap V2 Test", function () {
     // Deposit $1 conventional way
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor 0.5)
     it("tokenPriceAdjustForPerformance", async () => {
-
-
-
       // // Check tokenPriceAdjustForPerformance() should be $1
       // let tokenPriceAdjustedForPerformance = await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogic.address);
       // await expect(tokenPriceAdjustedForPerformance).to.equal((1e18).toString())
-
     });
 
     // Create Fund, with 20% management fee, enable usdc
