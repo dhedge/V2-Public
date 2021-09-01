@@ -374,13 +374,12 @@ task("upgrade", "Upgrade contracts")
       await openAssetGuard.deployed();
       console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
       versions[newTag].contracts.OpenAssetGuard = openAssetGuard.address;
-      addresses = typeof addresses === "string" ? [addresses] : addresses;
 
       tryVerify(
         hre,
         openAssetGuard.address,
         "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
-        addresses,
+        [ addresses ],
       );
 
       await openAssetGuard.transferOwnership(protocolDao);
