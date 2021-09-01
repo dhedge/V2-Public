@@ -577,39 +577,52 @@ task("upgrade", "Upgrade contracts")
     fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
 
     versions[newTag].contracts = { ...contracts };
-    let newCsvAssetGuards = new Array();
-    let newCsvContractGuards = new Array();
-    let newCsvGovernanceNames = new Array();
     for (const newAssetGuard of newAssetGuards) {
+      let replaced = false;
       for (const csvAssetGuard of csvAssetGuards) {
         if (newAssetGuard.GuardName == csvAssetGuard.GuardName) {
-          newCsvAssetGuards.push(newAssetGuard);
-        } else {
-          newCsvAssetGuards.push(csvAssetGuard);
+          csvAssetGuard.AssetType = newAssetGuard.AssetType;
+          csvAssetGuard.GuardAddress = newAssetGuard.GuardAddress;
+          csvAssetGuard.Description = newAssetGuard.Description;
+          replaced = true;
+          break;
         }
+      }
+      if (!replaced) {
+        csvAssetGuards.push(newAssetGuard);
       }
     }
     for (const newContractGuard of newContractGuards) {
+      let replaced = false;
       for (const csvContractGuard of csvContractGuards) {
         if (newContractGuard.GuardName == csvContractGuard.GuardName) {
-          newCsvContractGuards.push(newContractGuard);
-        } else {
-          newCsvContractGuards.push(csvContractGuard);
+          csvContractGuard.ContractAddress = newContractGuard.ContractAddress;
+          csvContractGuard.GuardAddress = newContractGuard.GuardAddress;
+          csvContractGuard.Description = newContractGuard.Description;
+          replaced = true;
+          break;
         }
+      }
+      if (!replaced) {
+        csvContractGuards.push(newContractGuard);
       }
     }
     for (const newGovernanceName of newGovernanceNames) {
+      let replaced = false;
       for (const csvGovernanceName of csvGovernanceNames) {
         if (newGovernanceName.Name == csvGovernanceName.Name) {
-          newCsvGovernanceNames.push(newGovernanceName);
-        } else {
-          newCsvGovernanceNames.push(csvGovernanceName);
+          csvGovernanceName.Destination = newGovernanceName.Destination;
+          replaced = true;
+          break;
         }
       }
+      if (!replaced) {
+        csvGovernanceNames.push(newGovernanceName);
+      }
     }
-    writeCsv(newCsvAssetGuards, assetGuardfileName);
-    writeCsv(newCsvContractGuards, contractGuardfileName);
-    writeCsv(newCsvGovernanceNames, governanceNamesfileName);
+    if(csvAssetGuards.length > 0) writeCsv(csvAssetGuards, assetGuardfileName);
+    if(csvContractGuards.length > 0) writeCsv(csvContractGuards, contractGuardfileName);
+    if(csvGovernanceNames.length > 0) writeCsv(csvGovernanceNames, governanceNamesfileName);
 
     console.log(nonceLog);
   });

@@ -678,14 +678,14 @@
       "PoolManagerLogic": "0x3dB16dBf76b5edFF977A0b2F5e6f412238748B7b",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
-      "ERC20Guard": "0x192c34027B3442B377BCb844Dd8ee323A0d1dE28",
+      "ERC20Guard": "0x24f6BE264E30c6eddafd4E3e45c8770423a8208f",
       "UniswapV2RouterGuard": "0x92F1458714B8a705b79DCa54B69A9c13Da90fB46",
       "SushiMiniChefV2Guard": "0x58F4B1E5194f92C3818EDD7bB27b078BebdD0f27",
       "SushiLPAssetGuard": "0x2F16bb563d31ebC61Ad6aC9Fb3edD6eAF89132d9",
       "AaveLendingPoolAssetGuard": "0x04354481A56Eb72484ff23D538a0DF21D16cE644",
-      "AaveLendingPoolGuard": "0x1ACD11415d1f73A84a5Ea2f3516308272909A41d",
-      "LendingEnabledAssetGuard": "0x458c1E1C626455DEAeF8c585f6B65B2367e76dc7",
-      "AaveIncentivesControllerGuard": "0xc1E99a59Db11fcd0dE7CcdafaDF476Ab890338d3",
+      "AaveLendingPoolGuard": "0x5Ea7ffE8699DF0b7eFb8d2523a57F0C9F97D7BA2",
+      "LendingEnabledAssetGuard": "0x275937Ef9264FF482b0Ae68d46A94D3F6203c3D9",
+      "AaveIncentivesControllerGuard": "0xeE315011c5709360e5006835ECC033AebdD3F0da",
       "OpenAssetGuard": "0x9fDEfe827Df93B5b99536c8BA25D4A570b74f416",
       "QuickLPAssetGuard": "0x018338bFd3FdB1915d823a77248F43dE00B54BB7",
       "QuickStakingRewardsGuard": "0x9519BD5868f8D66DE1Db3bd6e9Ae917b1Ffa886D"
@@ -696,6 +696,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Wed, 01 Sep 2021 16:15:25 GMT"
+    "date": "Wed, 01 Sep 2021 17:30:23 GMT"
   }
 }
