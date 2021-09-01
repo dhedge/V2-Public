@@ -620,9 +620,9 @@ task("upgrade", "Upgrade contracts")
         csvGovernanceNames.push(newGovernanceName);
       }
     }
-    if(csvAssetGuards.length > 0) writeCsv(csvAssetGuards, assetGuardfileName);
-    if(csvContractGuards.length > 0) writeCsv(csvContractGuards, contractGuardfileName);
-    if(csvGovernanceNames.length > 0) writeCsv(csvGovernanceNames, governanceNamesfileName);
+    if (csvAssetGuards.length > 0) writeCsv(csvAssetGuards, assetGuardfileName);
+    if (csvContractGuards.length > 0) writeCsv(csvContractGuards, contractGuardfileName);
+    if (csvGovernanceNames.length > 0) writeCsv(csvGovernanceNames, governanceNamesfileName);
 
     console.log(nonceLog);
   });
