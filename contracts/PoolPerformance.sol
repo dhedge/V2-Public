@@ -55,6 +55,8 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
+  uint256 private constant DENOMINATOR = 1000;
+
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
   // Im keeping the `DirectDeposit`Factor naming for now, for continuity,
   // I will rename if we decide to adopt these changes
@@ -74,7 +76,7 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return (tokenPrice(poolAddress) * directDepositFactor(poolAddress)) / 100;
+    return (tokenPrice(poolAddress) * directDepositFactor(poolAddress)) / DENOMINATOR;
   }
 
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
@@ -82,8 +84,38 @@ contract PoolPerformance is OwnableUpgradeable {
     // Then sharing those values with availableManagerFee and directDepositFactor.
     // Reusing those functions as they exist for now for simplicity
     uint256 currentTokenPrice = tokenPrice(poolAddress);
-    uint256 feePerToken = IPoolLogic(poolAddress).availableManagerFee() / IERC20Extended(poolAddress).totalSupply();
-    return ((currentTokenPrice - feePerToken) * directDepositFactor(poolAddress)) / 100;
+    uint256 dhptFeePerToken = IPoolLogic(poolAddress).availableManagerFee().mul(10**18).div(
+      IERC20Extended(poolAddress).totalSupply()
+    );
+    uint256 valueOfFeePerToken = currentTokenPrice * dhptFeePerToken;
+    return
+      currentTokenPrice.mul(10**18).sub(valueOfFeePerToken).mul(directDepositFactor(poolAddress)).div(DENOMINATOR).div(
+        10**18
+      );
+  }
+
+  function tokenPriceAdjustedForManagerFee(address poolAddress) public view returns (uint256) {
+    // This can be massively optimized by calculating the tokenPrice here by fetching the prerequisites (tokenSupply, totalFundValue)
+    // Then sharing those values with availableManagerFee and directDepositFactor.
+    // Reusing those functions as they exist for now for simplicity
+    uint256 currentTokenPrice = tokenPrice(poolAddress);
+    uint256 dhptFeePerToken = IPoolLogic(poolAddress).availableManagerFee().mul(10**18).div(
+      IERC20Extended(poolAddress).totalSupply()
+    );
+    uint256 valueOfFeePerToken = currentTokenPrice * dhptFeePerToken;
+    return
+      currentTokenPrice.mul(10**18).sub(valueOfFeePerToken).div(
+        10**18
+      );
+  }
+
+
+  function fee(address poolAddress) public view returns (uint256) {
+    uint256 currentTokenPrice = tokenPrice(poolAddress);
+    uint256 dhptFeePerToken = IPoolLogic(poolAddress).availableManagerFee().mul(10**18).div(
+      IERC20Extended(poolAddress).totalSupply()
+    );
+    uint256 valueOfFeePerToken = currentTokenPrice * dhptFeePerToken;
   }
 
   function tokenPrice(address poolAddress) public view returns (uint256) {
@@ -109,9 +141,9 @@ contract PoolPerformance is OwnableUpgradeable {
 
     uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      return valueWithoutDirectDeposits.mul(100).div(valueWithDirectDeposits);
+      return valueWithoutDirectDeposits.mul(DENOMINATOR).div(valueWithDirectDeposits);
     } else {
-      return iDirectDepositFactorMap[poolAddress].mul(100).mul(valueWithoutDirectDeposits).div(valueWithDirectDeposits);
+      return iDirectDepositFactorMap[poolAddress].mul(valueWithoutDirectDeposits).div(valueWithDirectDeposits);
     }
   }
 
@@ -163,12 +195,12 @@ contract PoolPerformance is OwnableUpgradeable {
     //  = 0.9 * 70 / 100
     // = 0.63 (37% of value is from direct deposits for that pool
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      iDirectDepositFactorMap[poolAddress] = valueWithoutDirectDeposits.mul(100).div(valueWithDirectDeposits);
+      iDirectDepositFactorMap[poolAddress] = valueWithoutDirectDeposits.mul(DENOMINATOR).div(valueWithDirectDeposits);
     } else {
-      // might not need the mull here
-      iDirectDepositFactorMap[poolAddress] =
-        iDirectDepositFactorMap[poolAddress].mul(valueWithoutDirectDeposits.mul(100).div(valueWithDirectDeposits));
-
+      // might not need the mul here
+      iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress].mul(
+        valueWithoutDirectDeposits.mul(DENOMINATOR).div(valueWithDirectDeposits)
+      );
     }
   }
 

@@ -89,13 +89,8 @@
         "type": "address"
       }
     ],
-    "name": "directDepositFactor2",
+    "name": "fee",
     "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
       {
         "internalType": "uint256",
         "name": "",
@@ -258,6 +253,25 @@
       }
     ],
     "name": "tokenPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "poolAddress",
+        "type": "address"
+      }
+    ],
+    "name": "tokenPriceAdjustedForManagerFee",
     "outputs": [
       {
         "internalType": "uint256",
