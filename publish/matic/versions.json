@@ -478,6 +478,30 @@
           "asset": "0x396e655c309676caf0acf4607a868e0cded876db",
           "assetType": "2",
           "aggregator": "0xcc37315085087a0c324d32494eC8E36a1DFE4bFC"
+        },
+        {
+          "name": "Frax Share",
+          "asset": "0x3e121107f6f22da4911079845a470757af4e1a1b",
+          "assetType": "0",
+          "aggregator": "0x6C0fe985D3cAcbCdE428b84fc9431792694d0f51"
+        },
+        {
+          "name": "Frax USD",
+          "asset": "0x104592a158490a9228070e0a8e5343b499e125d0",
+          "assetType": "0",
+          "aggregator": "0x00DBeB1e45485d53DF7C2F0dF1Aa0b6Dc30311d3"
+        },
+        {
+          "name": "Sushi LP FXS-FRAX",
+          "asset": "0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca",
+          "assetType": "2",
+          "aggregator": "0x98461A379168a4860C7D511d9ef117a98e3029ed"
+        },
+        {
+          "name": "Sushi LP FRAX-USDC",
+          "asset": "0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0",
+          "assetType": "2",
+          "aggregator": "0xC3e468ebE1a19E36A6D22aBfa290b5BaeC61aCE5"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
@@ -496,6 +520,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Thu, 12 Aug 2021 15:42:33 GMT"
+    "date": "Thu, 02 Sep 2021 04:56:49 GMT"
   }
 }
