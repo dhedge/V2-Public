@@ -31,6 +31,7 @@ const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
 const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
 const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
+const oneInchV3Router = "0x11111112542D85B3EF69AE05771c2dCCff4fAa26";
 let sushiToken, wmatic;
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 let nonce,
@@ -85,6 +86,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
   .addOptionalParam("aaveIncentivesControllerGuard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
   .addOptionalParam("aaveLendingPoolGuard", "upgrade AaveLendingPoolGuard", false, types.boolean)
+  .addOptionalParam("oneInchV3Guard", "upgrade oneInchV3Guard", false, types.boolean)
   .addOptionalParam("pause", "pause contract", false, types.boolean)
   .addOptionalParam("unpause", "unpause contract", false, types.boolean)
   .setAction(async (taskArgs) => {
@@ -119,8 +121,9 @@ task("upgrade", "Upgrade contracts")
     const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
     console.log(`oldTag: ${oldTag}`);
     console.log(`newTag: ${newTag}`);
-    const checkNewVersion = !taskArgs.assets && !taskArgs.pause && !taskArgs.unpause;
-    if (checkNewVersion && newTag == oldTag) throw "Error: No new version to upgrade";
+    // Comment this out as assets is default to true and it's always comes with pause/unpause true
+    // const checkNewVersion = !taskArgs.assets && !taskArgs.pause && !taskArgs.unpause;
+    // if (checkNewVersion && newTag == oldTag) throw "Error: No new version to upgrade";
 
     // Init contracts data
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
@@ -563,6 +566,32 @@ task("upgrade", "Upgrade contracts")
         GuardName: "AaveLendingPoolGuard",
         GuardAddress: aaveLendingPoolGuard.address,
         Description: "Aave Lending Pool contract",
+      });
+    }
+    if (taskArgs.oneInchV3Guard) {
+      const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
+      oneInchV3Guard = await OneInchV3Guard.deploy(10, 100); // set slippage 10%
+      await oneInchV3Guard.deployed();
+      console.log("oneInchV3Guard deployed at ", oneInchV3Guard.address);
+      versions[newTag].contracts.OneInchV3Guard = oneInchV3Guard.address;
+
+      await tryVerify(
+        hre,
+        oneInchV3Guard.address,
+        "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard",
+        [10, 100],
+      );
+
+      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        oneInchV3Router,
+        oneInchV3Guard.address,
+      ]);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for aaveLendingPoolGuard");
+      newContractGuards.push({
+        ContractAddress: oneInchV3Router,
+        GuardName: "OneInchV3Guard",
+        GuardAddress: oneInchV3Guard.address,
+        Description: "OneInch V3 Router",
       });
     }
     if (taskArgs.unpause) {
