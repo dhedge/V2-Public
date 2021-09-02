@@ -73,19 +73,14 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
     bytes4 method = getMethod(data);
 
-    if (
-      method ==
-      bytes4(
-        keccak256("swap((bytes32,uint8,address,address,uint256,bytes,(address,bool,address,bool),uint256,uint256))")
-      )
-    ) {
-      uint256 swapkind = uint256(getArrayIndex(data, 0, 1));
+    if (method == IBalancerV2Vault.swap.selector) {
+      uint256 swapkind = uint256(getArrayIndex(data, 0, 0));
       if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_IN)) {
-        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 2));
-        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 3));
+        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 1));
+        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 2));
         address fromAddress = convert32toAddress(getInput(data, 1));
         address toAddress = convert32toAddress(getInput(data, 3));
-        uint256 srcAmount = uint256(getArrayIndex(data, 0, 4));
+        uint256 srcAmount = uint256(getArrayIndex(data, 0, 3));
         uint256 amountOutMin = uint256(getInput(data, 5));
 
         require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
@@ -99,11 +94,11 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
         txType = 2; // 'Exchange' type
       } else if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_OUT)) {
-        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 2));
-        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 3));
+        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 1));
+        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 2));
         address fromAddress = convert32toAddress(getInput(data, 1));
         address toAddress = convert32toAddress(getInput(data, 3));
-        uint256 dstAmount = uint256(getArrayIndex(data, 0, 4));
+        uint256 dstAmount = uint256(getArrayIndex(data, 0, 3));
         uint256 amountInMax = uint256(getInput(data, 5));
 
         require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
@@ -117,14 +112,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
         txType = 2; // 'Exchange' type
       }
-    } else if (
-      method ==
-      bytes4(
-        keccak256(
-          "batchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool),int256[],uint256)"
-        )
-      )
-    ) {
+    } else if (method == IBalancerV2Vault.batchSwap.selector) {
       uint256 swapkind = uint256(getInput(data, 0));
       if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_IN)) {
         address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0));
@@ -145,12 +133,12 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
         txType = 2; // 'Exchange' type
       } else if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_OUT)) {
-        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 2));
-        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 3));
-        address fromAddress = convert32toAddress(getInput(data, 1));
-        address toAddress = convert32toAddress(getInput(data, 3));
-        uint256 dstAmount = uint256(int256(0).sub(int256(getArrayLast(data, 7))));
+        address srcAsset = convert32toAddress(getArrayIndex(data, 2, 0));
+        address dstAsset = convert32toAddress(getArrayLast(data, 2));
+        address fromAddress = convert32toAddress(getInput(data, 3));
+        address toAddress = convert32toAddress(getInput(data, 5));
         uint256 amountInMax = uint256(int256(getArrayIndex(data, 7, 0)));
+        uint256 dstAmount = uint256(int256(0).sub(int256(getArrayLast(data, 7))));
 
         require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
