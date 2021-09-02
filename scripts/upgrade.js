@@ -575,12 +575,7 @@ task("upgrade", "Upgrade contracts")
       console.log("oneInchV3Guard deployed at ", oneInchV3Guard.address);
       versions[newTag].contracts.OneInchV3Guard = oneInchV3Guard.address;
 
-      await tryVerify(
-        hre,
-        oneInchV3Guard.address,
-        "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard",
-        [10, 100],
-      );
+      await tryVerify(hre, oneInchV3Guard.address, "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard", [10, 100]);
 
       const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
         oneInchV3Router,
