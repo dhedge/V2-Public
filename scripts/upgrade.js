@@ -493,10 +493,12 @@ task("upgrade", "Upgrade contracts")
       console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
       versions[newTag].contracts.SushiMiniChefV2Guard = sushiMiniChefV2Guard.address;
 
-      await tryVerify(hre, sushiMiniChefV2Guard.address, "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard", [
-        sushiToken,
-        wmatic,
-      ]);
+      await tryVerify(
+        hre,
+        sushiMiniChefV2Guard.address,
+        "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
+        [sushiToken, wmatic],
+      );
 
       const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
         sushiMiniChefV2,
