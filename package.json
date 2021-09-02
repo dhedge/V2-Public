@@ -10,7 +10,7 @@
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.js\" \"scripts/**/*.js\"",
     "fork:evm": "hardhat node --fork $(grep ALCHEMY_EVM_URL .env | cut -d '=' -f2)$(grep ALCHEMY_EVM_KEY .env | cut -d '=' -f2)",
-    "fork:polygon": "hardhat node --fork https://polygon-mainnet.g.alchemy.com/v2/A3M0JAvgIKhV8-omwHGwt4BBbfX4_YrT",
+    "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/v1/$(grep MATIC_KEY .env | cut -d '=' -f2)",
     "test:unit": "hardhat test test/unit/*.js --network hardhat",
     "test:inte:ovm": "hardhat test test/integration/ovm/*.js",
