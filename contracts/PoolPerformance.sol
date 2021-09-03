@@ -55,7 +55,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
-  uint256 private constant DENOMINATOR = 1000;
+  uint256 private constant DENOMINATOR = 10**18;
 
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
   // Im keeping the `DirectDeposit`Factor naming for now, for continuity,
@@ -76,46 +76,27 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return (tokenPrice(poolAddress) * directDepositFactor(poolAddress)) / DENOMINATOR;
+    return tokenPrice(poolAddress).mul(directDepositFactor(poolAddress)).div(DENOMINATOR);
   }
 
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
     // This can be massively optimized by calculating the tokenPrice here by fetching the prerequisites (tokenSupply, totalFundValue)
     // Then sharing those values with availableManagerFee and directDepositFactor.
     // Reusing those functions as they exist for now for simplicity
-    uint256 currentTokenPrice = tokenPrice(poolAddress);
-    uint256 dhptFeePerToken = IPoolLogic(poolAddress).availableManagerFee().mul(10**18).div(
-      IERC20Extended(poolAddress).totalSupply()
-    );
-    uint256 valueOfFeePerToken = currentTokenPrice * dhptFeePerToken;
-    return
-      currentTokenPrice.mul(10**18).sub(valueOfFeePerToken).mul(directDepositFactor(poolAddress)).div(DENOMINATOR).div(
-        10**18
-      );
+
+    return tokenPriceAdjustedForManagerFee(poolAddress).mul(directDepositFactor(poolAddress)).div(DENOMINATOR);
   }
 
   function tokenPriceAdjustedForManagerFee(address poolAddress) public view returns (uint256) {
-    // This can be massively optimized by calculating the tokenPrice here by fetching the prerequisites (tokenSupply, totalFundValue)
-    // Then sharing those values with availableManagerFee and directDepositFactor.
-    // Reusing those functions as they exist for now for simplicity
     uint256 currentTokenPrice = tokenPrice(poolAddress);
-    uint256 dhptFeePerToken = IPoolLogic(poolAddress).availableManagerFee().mul(10**18).div(
-      IERC20Extended(poolAddress).totalSupply()
-    );
-    uint256 valueOfFeePerToken = currentTokenPrice * dhptFeePerToken;
     return
-      currentTokenPrice.mul(10**18).sub(valueOfFeePerToken).div(
-        10**18
+      currentTokenPrice.mul(IERC20Extended(poolAddress).totalSupply()).div(
+        IERC20Extended(poolAddress).totalSupply() + IPoolLogic(poolAddress).availableManagerFee()
       );
   }
 
-
   function fee(address poolAddress) public view returns (uint256) {
-    uint256 currentTokenPrice = tokenPrice(poolAddress);
-    uint256 dhptFeePerToken = IPoolLogic(poolAddress).availableManagerFee().mul(10**18).div(
-      IERC20Extended(poolAddress).totalSupply()
-    );
-    uint256 valueOfFeePerToken = currentTokenPrice * dhptFeePerToken;
+    return IPoolLogic(poolAddress).availableManagerFee();
   }
 
   function tokenPrice(address poolAddress) public view returns (uint256) {
@@ -138,6 +119,7 @@ contract PoolPerformance is OwnableUpgradeable {
         valueWithoutDirectDeposits +
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]);
     }
+
 
     uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
     if (iDirectDepositFactorMap[poolAddress] == 0) {
@@ -188,6 +170,11 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
+
+    if (valueWithoutDirectDeposits == valueWithDirectDeposits) {
+      return;
+    }
+
     // Combine the new factor with the oldfactor
     // ogDirectDeposit factor = 0.9
     // valueWithoutDirectDeposits = 70

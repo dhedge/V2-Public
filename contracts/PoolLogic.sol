@@ -219,6 +219,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   {
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
 
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordDirectDepositValue(address(this));
+
     lastDeposit[msg.sender] = block.timestamp;
 
     uint256 fundValue = _mintManagerFee();

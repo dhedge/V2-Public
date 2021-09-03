@@ -336,7 +336,6 @@ describe("Sushiswap V2 Test", function () {
     checkAlmostSame(event.fundValue, units(200));
     checkAlmostSame(event.totalSupply, units(200));
   });
-
   it("Should be able to approve", async () => {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
