@@ -163,9 +163,13 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       uint256 i = supportedAssets.length;
       supportedAssets.push(_asset);
       assetPosition[asset] = i.add(1); // adjusting the index because the map stores 1-based
-      for(i;
-        i > 0 && IHasAssetInfo(factory).getAssetType(supportedAssets[i.sub(1)].asset) < IHasAssetInfo(factory).getAssetType(supportedAssets[i].asset);
-        i--) {
+      for (
+        i;
+        i > 0 &&
+          IHasAssetInfo(factory).getAssetType(supportedAssets[i.sub(1)].asset) <
+          IHasAssetInfo(factory).getAssetType(supportedAssets[i].asset);
+        i--
+      ) {
         Asset memory temp = supportedAssets[i];
         supportedAssets[i] = supportedAssets[i.sub(1)];
         assetPosition[supportedAssets[i].asset] = i.add(1);
@@ -187,7 +191,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
     uint256 length = supportedAssets.length;
-    for(uint256 i = index; length > 1 && i < length.sub(1); i++) {
+    for (uint256 i = index; length > 1 && i < length.sub(1); i++) {
       Asset memory temp = supportedAssets[i];
       supportedAssets[i] = supportedAssets[i.add(1)];
       assetPosition[supportedAssets[i].asset] = i.add(1);

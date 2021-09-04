@@ -728,7 +728,7 @@ describe("PoolFactory", function () {
         aggregator: eth_price_feed.address,
         assetType: 0,
       },
-    ]
+    ];
     console.log("assets: ", assets);
     await assetHandler.addAssets(assets);
     await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
@@ -743,7 +743,7 @@ describe("PoolFactory", function () {
     numberOfSupportedAssets = supportedAssets.length;
     console.log("supportedAssets before: ", supportedAssets);
     let assetPosition;
-    for(supportedAsset of supportedAssets) {
+    for (supportedAsset of supportedAssets) {
       assetPosition = await poolManagerLogicManagerProxy.assetPosition(supportedAsset.asset);
       console.log("assetPosition : ", assetPosition.toString());
     }
