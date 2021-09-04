@@ -702,16 +702,16 @@ describe("PoolFactory", function () {
 
     // Can add asset to maximum
     // Initialize Asset Price Consumer
-    await assetHandler.addAssets([
+    const assets = [
       {
         asset: susdAsset.address,
         aggregator: susdAsset.address,
-        assetType: 0,
+        assetType: 2,
       },
       {
         asset: sethAsset.address,
         aggregator: sethAsset.address,
-        assetType: 0,
+        assetType: 2,
       },
       {
         asset: slinkAsset.address,
@@ -721,14 +721,16 @@ describe("PoolFactory", function () {
       {
         asset: usd_price_feed.address,
         aggregator: usd_price_feed.address,
-        assetType: 0,
+        assetType: 2,
       },
       {
         asset: eth_price_feed.address,
         aggregator: eth_price_feed.address,
         assetType: 0,
       },
-    ]);
+    ]
+    console.log("assets: ", assets);
+    await assetHandler.addAssets(assets);
     await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
     await poolManagerLogicManagerProxy.changeAssets([[susdAsset.address, false]], []);
     await poolManagerLogicManagerProxy.changeAssets([[sethAsset.address, false]], []);
@@ -739,7 +741,19 @@ describe("PoolFactory", function () {
 
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
+    console.log("supportedAssets before: ", supportedAssets);
+    let assetPosition;
+    for(supportedAsset of supportedAssets) {
+      assetPosition = await poolManagerLogicManagerProxy.assetPosition(supportedAsset.asset);
+      console.log("assetPosition : ", assetPosition.toString());
+    }
     expect(numberOfSupportedAssets).to.eq(10);
+
+    // Check assets ordering
+    expect(supportedAssets[1][0]).to.equal(susdAsset.address);
+    expect(supportedAssets[2][0]).to.equal(sethAsset.address);
+    expect(supportedAssets[3][0]).to.equal(usd_price_feed.address);
+    expect(supportedAssets[7][0]).to.equal(slinkAsset.address);
 
     await expect(poolManagerLogicManagerProxy.changeAssets([[eth_price_feed.address, false]], [])).to.be.revertedWith(
       "maximum assets reached",
@@ -753,6 +767,11 @@ describe("PoolFactory", function () {
     await poolManagerLogicManagerProxy.changeAssets([], [sushiToken.address]);
     await poolManagerLogicManagerProxy.changeAssets([], [wmaticToken.address]);
     await poolManagerLogicManagerProxy.changeAssets([], [usd_price_feed.address]);
+    supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
+    numberOfSupportedAssets = supportedAssets.length;
+    console.log("numberOfSupportedAssets : ", numberOfSupportedAssets);
+    console.log("supportedAssets after: ", supportedAssets);
+    expect(numberOfSupportedAssets).to.eq(3);
 
     // Can not remove persist asset
     await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith("only manager or trader");
@@ -1845,8 +1864,6 @@ describe("PoolFactory", function () {
       const eventWithdrawal = await withdrawalEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
-      const fractionWithdrawn = withdrawAmount / totalSupply;
-      const expectedWithdrawAmount = amountLPStaked * fractionWithdrawn;
       const expectedFundValueAfter = totalFundValue.sub(valueWithdrawn);
 
       expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
@@ -1857,8 +1874,8 @@ describe("PoolFactory", function () {
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
       expect(eventWithdrawal.totalSupply).to.equal((totalSupply - withdrawAmount).toString());
 
-      let withdrawSUSD = eventWithdrawal.withdrawnAssets[0];
-      let withdrawLP = eventWithdrawal.withdrawnAssets[1];
+      let withdrawSUSD = eventWithdrawal.withdrawnAssets[1];
+      let withdrawLP = eventWithdrawal.withdrawnAssets[0];
       expect(withdrawSUSD[0]).to.equal(susd);
       expect(withdrawSUSD[2]).to.equal(false);
       expect(withdrawLP[0]).to.equal(sushiLPLinkWeth);

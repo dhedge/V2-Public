@@ -160,8 +160,18 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       uint256 index = assetPosition[asset].sub(1);
       supportedAssets[index].isDeposit = isDeposit;
     } else {
-      supportedAssets.push(Asset(asset, isDeposit));
-      assetPosition[asset] = supportedAssets.length;
+      uint256 i = supportedAssets.length;
+      supportedAssets.push(_asset);
+      assetPosition[asset] = i.add(1); // adjusting the index because the map stores 1-based
+      for(i;
+        i > 0 && IHasAssetInfo(factory).getAssetType(supportedAssets[i.sub(1)].asset) < IHasAssetInfo(factory).getAssetType(supportedAssets[i].asset);
+        i--) {
+        Asset memory temp = supportedAssets[i];
+        supportedAssets[i] = supportedAssets[i.sub(1)];
+        assetPosition[supportedAssets[i].asset] = i.add(1);
+        supportedAssets[i.sub(1)] = temp;
+        assetPosition[supportedAssets[i.sub(1)].asset] = i;
+      }
     }
 
     emit AssetAdded(poolLogic, manager, asset, isDeposit);
@@ -175,16 +185,17 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
 
-    uint256 length = supportedAssets.length;
-    Asset memory lastAsset = supportedAssets[length.sub(1)];
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
+    uint256 length = supportedAssets.length;
+    for(uint256 i = index; length > 1 && i < length.sub(1); i++) {
+      Asset memory temp = supportedAssets[i];
+      supportedAssets[i] = supportedAssets[i.add(1)];
+      assetPosition[supportedAssets[i].asset] = i.add(1);
+      supportedAssets[i.add(1)] = temp;
+      assetPosition[supportedAssets[i.add(1)].asset] = i.add(2);
+    }
 
-    // overwrite the asset to be removed with the last supported asset
-    supportedAssets[index] = lastAsset;
-    assetPosition[lastAsset.asset] = index.add(1); // adjusting the index to be 1-based
-    assetPosition[asset] = 0; // update the map
-
-    // delete the last supported asset and resize the array
+    assetPosition[supportedAssets[length.sub(1)].asset] = 0;
     supportedAssets.pop();
 
     emit AssetRemoved(poolLogic, manager, asset);
