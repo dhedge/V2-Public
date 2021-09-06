@@ -133,8 +133,6 @@ contract PoolFactory is
   uint256 public override maximumManagerFeeNumeratorChange;
   uint256 public override managerFeeNumeratorChangeDelay;
 
-  address public override poolPerformanceAddress;
-
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
@@ -146,8 +144,7 @@ contract PoolFactory is
     address _managerLogic,
     address assetHandler,
     address _daoAddress,
-    address _governanceAddress,
-    address _poolPerformanceAddress
+    address _governanceAddress
   ) external initializer {
     __ProxyFactory_init(_poolLogic, _managerLogic);
     __Pausable_init();
@@ -155,8 +152,6 @@ contract PoolFactory is
     _setAssetHandler(assetHandler);
 
     _setDAOAddress(_daoAddress);
-
-    _setPoolPerformanceAddress(_poolPerformanceAddress);
 
     _setGovernanceAddress(_governanceAddress);
 
@@ -607,4 +602,5 @@ contract PoolFactory is
   }
 
   uint256[50] private __gap;
+  address public override poolPerformanceAddress;
 }

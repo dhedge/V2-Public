@@ -720,11 +720,6 @@
         "internalType": "address",
         "name": "_governanceAddress",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_poolPerformanceAddress",
-        "type": "address"
       }
     ],
     "name": "initialize",

@@ -164,6 +164,9 @@ describe("PoolFactory", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await PoolPerformance.deploy();
+
     PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
     poolLogicV24 = await PoolLogicV24.deploy();
     PoolLogic = await ethers.getContractFactory("PoolLogic");
