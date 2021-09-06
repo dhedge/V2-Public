@@ -1,7 +1,7 @@
 const util = require("util");
 const { exec } = require("child_process");
 const execProm = util.promisify(exec);
-const stringify = require("csv-stringify");
+const stringify = require("csv-stringify/lib/sync");
 const fs = require("fs");
 
 const getTag = async () => {
@@ -58,16 +58,12 @@ const tryVerify = async (hre, address, path, constructorArguments) => {
 };
 
 const writeCsv = (data, fileName) => {
-  stringify(data, { header: true }, (err, output) => {
+  const output = stringify(data, { header: true });
+  fs.writeFileSync(fileName, output, (err) => {
     if (err) {
       console.log(err);
     }
-    fs.writeFile(fileName, output, (err) => {
-      if (err) {
-        console.log(err);
-      }
-      console.log(`${fileName} updated.`);
-    });
+    console.log(`${fileName} updated.`);
   });
 };
 

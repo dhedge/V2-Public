@@ -10,6 +10,7 @@ require("@openzeppelin/hardhat-upgrades");
 require("@nomiclabs/hardhat-etherscan");
 
 require("./scripts/upgrade.js");
+require("./scripts/verify.js");
 require("./scripts/polygon/checks/checkConfig");
 require("@nomiclabs/hardhat-etherscan");
 
@@ -93,6 +94,7 @@ module.exports = {
       "SushiMiniChefV2Guard",
       "QuickStakingRewardsGuard",
       "Managed",
+      "Governance",
     ],
     spacing: 2,
   },
