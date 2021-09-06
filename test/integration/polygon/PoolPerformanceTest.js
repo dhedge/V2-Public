@@ -1,8 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const { solidity } = require("ethereum-waffle");
-
-const { BigNumber } = ethers;
+const { checkAlmostSame, toBytes32, getAmountOut } = require("../../TestHelpers");
 
 use(solidity);
 
@@ -23,7 +22,7 @@ describe("PoolPerformance", function () {
   let USDC;
   let logicOwner, manager, dao;
   let PoolLogic;
-  let poolFactory, poolLogicProxy, poolPerformanceProxy;
+  let assetHandler, governance, poolFactory, poolLogicProxy, poolPerformanceProxy;
 
   beforeEach(async function () {
     [logicOwner, manager, dao] = await ethers.getSigners();
@@ -31,7 +30,7 @@ describe("PoolPerformance", function () {
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
     const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
+    governance = await Governance.deploy();
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
     const poolPerformance = await PoolPerformance.deploy();
@@ -312,7 +311,6 @@ describe("PoolPerformance", function () {
       // We have 10 in the pool
       // Direct deposit $2
       const checkTokenValue = async () => {
-        console.log(">>>>>>>>>>", (await poolPerformanceProxy.fee(poolLogicProxy.address)).toString());
         expect(await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.equal(
           // dollar18Cents
           "1180327868852459016",
@@ -320,7 +318,8 @@ describe("PoolPerformance", function () {
 
         expect(
           (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-          // ninetyEightCents
+          // dollar18Cents subtract 20c
+          // nintetyEight cents
         ).to.equal("980327868852459016");
       };
 
@@ -343,7 +342,7 @@ describe("PoolPerformance", function () {
   });
 
   describe("Aave aERC20", () => {
-    // Create Fund, no management fee, enable usdc, aaveLending Pool
+    // Create Fund, no management fee, enable usdc + aaveLending Pool
     // Deposit $1 conventional way
     // Check tokenPriceAdjustForPerformance() should be $1
     // Check hasDirectDeposit() == FALSE
@@ -354,7 +353,190 @@ describe("PoolPerformance", function () {
     // Call recordDirectDepositValue
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
     // Deposit $1 conventional way
-    // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
-    it("tokenPriceAdjustForPerformance", () => {});
+    const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
+    const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
+    const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
+    const amusdc = "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F";
+    let AMUSDC, iERC20;
+    beforeEach(async function () {
+      const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+      const usdPriceAggregator = await USDPriceAggregator.deploy();
+      const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
+
+      const IERC20 = await hre.artifacts.readArtifact("IERC20");
+      iERC20 = new ethers.utils.Interface(IERC20.abi);
+      AMUSDC = await ethers.getContractAt(IERC20.abi, amusdc);
+
+      const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+      const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
+      aaveLendingPoolAssetGuard.deployed();
+
+      const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+      const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+      aaveLendingPoolGuard.deployed();
+
+      const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+      const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
+      lendingEnabledAssetGuard.deployed();
+
+      const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
+      const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
+      aaveIncentivesControllerGuard.deployed();
+
+      await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
+      await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
+      await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
+      await governance.setContractGuard(aaveIncentivesController, aaveIncentivesControllerGuard.address);
+
+      const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+      const openAssetGuard = await OpenAssetGuard.deploy([]);
+      await openAssetGuard.deployed();
+
+      await governance.setAddresses([
+        // [toBytes32("swapRouter"), sushiswapV2Router],
+        [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
+        [toBytes32("openAssetGuard"), openAssetGuard.address],
+      ]);
+      await assetHandler.addAssets([assetLendingPool]);
+    });
+
+    // In this test we simply check that depositing into aave doesn't affect our PoolPerf figures
+    // Create the fund we're going to use for testing
+    // Deposit $1 conventional way
+    // Check tokenPriceAdjustForPerformance() should be $1
+    // Approve usdc transfer to AAVE
+    // Check before balances of usdc and amusdc
+    // Deposit usdc to aave
+    // Check after balances of usdc and amusdc
+    // Check PoolPerformance Figures remain the same
+    it("tokenPriceAdjustForPerformance no direct deposit", async () => {
+      const usdcAmount = (100e6).toString();
+      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [usdc, true],
+        [aaveLendingPool, false],
+      ]);
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, usdcAmount);
+      await poolLogicProxy.deposit(usdc, usdcAmount);
+
+      // Check tokenPriceAdjustForPerformance() should be $1
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+
+      // approve usdc
+      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, usdcAmount]);
+      await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+
+      const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+      const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
+
+      expect(usdcBalanceBefore).to.be.equal(usdcAmount);
+      expect(amusdcBalanceBefore).to.be.equal(0);
+
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+
+      // deposit
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, usdcAmount, poolLogicProxy.address, 0]);
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+
+      const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+      const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
+      expect(usdcBalanceAfter).to.be.equal((0).toString());
+      checkAlmostSame(amusdcBalanceAfter, 100e6);
+
+      // We check that depositing into AAVE doesn't affect any of our poolPerformance figures
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+      expect(
+        (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+      ).to.equal(oneDollar.toString());
+    });
+
+    // In this test we make sure directDeposits of aTokens are accounted for by PoolPerformance
+    // Create the fund we're going to use for testing
+    // Deposit $1 conventional way
+    // Check tokenPriceAdjustForPerformance() should be $1
+    // Approve usdc transfer to AAVE
+    // Check before balances of usdc and amusdc
+    // Deposit usdc to aave
+    // Check after balances of usdc and amusdc
+    // Direct deposit amUSDC to Pool
+    // check that the directDeposit of amUSDC is accounted for by PoolPerformance
+    it("tokenPriceAdjustForPerformance with direct deposit", async () => {
+      const usdcAmount = (100e6).toString();
+      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [usdc, true],
+        [aaveLendingPool, false],
+      ]);
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, usdcAmount);
+      await poolLogicProxy.deposit(usdc, usdcAmount);
+
+      // Check tokenPriceAdjustForPerformance() should be $1
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+
+      // approve usdc
+      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, usdcAmount]);
+      await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+
+      const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+      const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
+
+      expect(usdcBalanceBefore).to.be.equal(usdcAmount);
+      expect(amusdcBalanceBefore).to.be.equal(0);
+
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+
+      // deposit
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, usdcAmount, poolLogicProxy.address, 0]);
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+
+      expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal((0).toString());
+      checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 100e6);
+
+      // Here we are taking some of the logicOwners usdc and depositing it directly into the aave Pool as amUSDC
+      await USDC.approve(aaveLendingPool, usdcAmount);
+      const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
+      await AaveLendingPool.deposit(usdc, usdcAmount, poolLogicProxy.address, 0);
+
+      checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 200e6);
+
+      // We check that the directDeposit of amUSDC is accounted for by PoolPerformance
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
+
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+      expect(
+        (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+      ).to.equal(oneDollar.toString());
+    });
   });
 });

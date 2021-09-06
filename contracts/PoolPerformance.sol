@@ -116,11 +116,17 @@ contract PoolPerformance is OwnableUpgradeable {
 
     uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      return valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply());
+      return
+        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(
+          IERC20Extended(poolAddress).totalSupply()
+        );
     } else {
-      return iDirectDepositFactorMap[poolAddress].add(
-        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
-      );
+      return
+        iDirectDepositFactorMap[poolAddress].add(
+          valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(
+            IERC20Extended(poolAddress).totalSupply()
+          )
+        );
     }
   }
 
@@ -170,12 +176,16 @@ contract PoolPerformance is OwnableUpgradeable {
       return;
     }
 
-
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      iDirectDepositFactorMap[poolAddress] = valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply());
+      iDirectDepositFactorMap[poolAddress] = valueWithDirectDeposits
+        .mul(10**18)
+        .sub(valueWithoutDirectDeposits.mul(10**18))
+        .div(IERC20Extended(poolAddress).totalSupply());
     } else {
       iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress].add(
-        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
+        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(
+          IERC20Extended(poolAddress).totalSupply()
+        )
       );
     }
   }
