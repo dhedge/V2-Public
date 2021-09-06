@@ -223,7 +223,8 @@ describe("PoolPerformance", function () {
       // Check hasDirectDeposit() == FALSE
       expect(await poolPerformanceProxy.hasDirectDeposit(poolLogicProxy.address)).to.equal(false);
       // DollarSixty
-      // You might be thinking you expect this to be $1.50 not $1.60 but..
+      // You might be thinking you expect this to be $1.50 not $1.60 because
+      // There is $1 of performance and 50% performance fee and so manager fee should be worth 50c but
       // we mint the manager fee in a novel way, that's not exactly performance fee.
       // The mints manager fee mints 0.25 tokens (a value of 50% of the current performance value)
       // Which means before the mint there is 1 token and after mint there is 1.25 tokens and $2 value

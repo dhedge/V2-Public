@@ -47,6 +47,9 @@ describe("Quickswap V2 Test", function () {
     const governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await PoolPerformance.deploy();
+
     const PoolLogic = await ethers.getContractFactory("PoolLogic");
     const poolLogic = await PoolLogic.deploy();
 
@@ -70,6 +73,7 @@ describe("Quickswap V2 Test", function () {
       assetHandler.address,
       dao.address,
       governance.address,
+      poolPerformance.address,
     ]);
     await poolFactory.deployed();
 
