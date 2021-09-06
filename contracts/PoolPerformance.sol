@@ -55,8 +55,6 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
-  uint256 private constant DENOMINATOR = 10**18;
-
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
   // Im keeping the `DirectDeposit`Factor naming for now, for continuity,
   // I will rename if we decide to adopt these changes
@@ -76,15 +74,11 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress).mul(directDepositFactor(poolAddress)).div(DENOMINATOR);
+    return tokenPrice(poolAddress).sub(directDepositFactor(poolAddress));
   }
 
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
-    // This can be massively optimized by calculating the tokenPrice here by fetching the prerequisites (tokenSupply, totalFundValue)
-    // Then sharing those values with availableManagerFee and directDepositFactor.
-    // Reusing those functions as they exist for now for simplicity
-
-    return tokenPriceAdjustedForManagerFee(poolAddress).mul(directDepositFactor(poolAddress)).div(DENOMINATOR);
+    return tokenPriceAdjustedForManagerFee(poolAddress).sub(directDepositFactor(poolAddress));
   }
 
   function tokenPriceAdjustedForManagerFee(address poolAddress) public view returns (uint256) {
@@ -120,12 +114,13 @@ contract PoolPerformance is OwnableUpgradeable {
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]);
     }
 
-
     uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      return valueWithoutDirectDeposits.mul(DENOMINATOR).div(valueWithDirectDeposits);
+      return valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply());
     } else {
-      return iDirectDepositFactorMap[poolAddress].mul(valueWithoutDirectDeposits).div(valueWithDirectDeposits);
+      return iDirectDepositFactorMap[poolAddress].add(
+        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
+      );
     }
   }
 
@@ -175,18 +170,12 @@ contract PoolPerformance is OwnableUpgradeable {
       return;
     }
 
-    // Combine the new factor with the oldfactor
-    // ogDirectDeposit factor = 0.9
-    // valueWithoutDirectDeposits = 70
-    // totalFundValue = 100
-    //  = 0.9 * 70 / 100
-    // = 0.63 (37% of value is from direct deposits for that pool
+
     if (iDirectDepositFactorMap[poolAddress] == 0) {
-      iDirectDepositFactorMap[poolAddress] = valueWithoutDirectDeposits.mul(DENOMINATOR).div(valueWithDirectDeposits);
+      iDirectDepositFactorMap[poolAddress] = valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply());
     } else {
-      // might not need the mul here
-      iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress].mul(
-        valueWithoutDirectDeposits.mul(DENOMINATOR).div(valueWithDirectDeposits)
+      iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress].add(
+        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
       );
     }
   }
