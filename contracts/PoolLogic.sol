@@ -404,10 +404,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
-    require(
-      !IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).hasDirectDeposit(address(this)),
-      "Airdrop detected. Claim airdrop."
-    );
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordDirectDepositValue(address(this));
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 
