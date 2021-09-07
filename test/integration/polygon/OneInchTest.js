@@ -65,9 +65,10 @@ describe("OneInch V3 Test", function () {
       assetHandler.address,
       dao.address,
       governance.address,
-      poolPerformance.address,
     ]);
     await poolFactory.deployed();
+
+    poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();

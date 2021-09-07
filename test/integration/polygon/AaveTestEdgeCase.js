@@ -114,9 +114,10 @@ describe("Polygon Mainnet Test", function () {
       assetHandler.address,
       dao.address,
       governance.address,
-      poolPerformance.address,
     ]);
     await poolFactory.deployed();
+
+    poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     // Deploy Sushi LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
