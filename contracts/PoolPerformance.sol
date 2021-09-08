@@ -123,9 +123,9 @@ contract PoolPerformance is OwnableUpgradeable {
 
       untrackedValue = untrackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
 
-      trackedValue =
-        trackedValue.add(
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]));
+      trackedValue = trackedValue.add(
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress])
+      );
     }
 
     if (untrackedValuePerTokenMap[poolAddress] == 0) {
