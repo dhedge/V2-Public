@@ -104,10 +104,17 @@ contract SushiLPAssetGuard is ERC20Guard, Ownable {
     if (stakedBalance > 0) {
       uint256 withdrawAmount = stakedBalance.mul(portion).div(10**18);
       if (withdrawAmount > 0) {
-        transactions = new MultiTransaction[](1);
+        // First harvest rewards to the pool, then withdraw
+        transactions = new MultiTransaction[](2);
         transactions[0].to = sushiStaking;
         transactions[0].txData = abi.encodeWithSelector(
-          bytes4(keccak256("withdrawAndHarvest(uint256,uint256,address)")),
+          bytes4(keccak256("harvest(uint256,address)")),
+          sushiPoolId,
+          pool
+        );
+        transactions[1].to = sushiStaking;
+        transactions[1].txData = abi.encodeWithSelector(
+          bytes4(keccak256("withdraw(uint256,uint256,address)")),
           sushiPoolId,
           withdrawAmount,
           to

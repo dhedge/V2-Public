@@ -2,6 +2,7 @@
 pragma solidity 0.7.6;
 
 import "./BaseUpgradeabilityProxy.sol";
+import "../utils/AddressHelper.sol";
 
 /**
  * @title InitializableUpgradeabilityProxy
@@ -9,6 +10,8 @@ import "./BaseUpgradeabilityProxy.sol";
  * implementation and init data.
  */
 contract InitializableUpgradeabilityProxy is BaseUpgradeabilityProxy {
+  using AddressHelper for address;
+
   /**
    * @dev Contract initializer.
    * @param _factory Address of the factory containing the implementation.
@@ -27,8 +30,7 @@ contract InitializableUpgradeabilityProxy is BaseUpgradeabilityProxy {
     _setImplementation(_factory);
     _setProxyType(_proxyType);
     if (_data.length > 0) {
-      (bool success, ) = _implementation().delegatecall(_data);
-      require(success, "Implementation init failed");
+      _implementation().tryAssemblyDelegateCall(_data);
     }
   }
 }

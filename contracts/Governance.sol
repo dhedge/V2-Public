@@ -72,6 +72,9 @@ contract Governance is IGovernance, Ownable {
     _setContractGuard(extContract, guardAddress);
   }
 
+  /// @notice Set contract guard internal call
+  /// @param extContract The third party contract to integrate
+  /// @param guardAddress The protections for manager third party contract interaction
   function _setContractGuard(address extContract, address guardAddress) internal {
     require(extContract != address(0), "Invalid extContract address");
     require(guardAddress != address(0), "Invalid guardAddress");
@@ -89,6 +92,9 @@ contract Governance is IGovernance, Ownable {
     _setAssetGuard(assetType, guardAddress);
   }
 
+  /// @notice Set asset guard internal call
+  /// @param assetType Asset type as defined in Asset Handler
+  /// @param guardAddress The asset guard address that allows manager interaction
   function _setAssetGuard(uint16 assetType, address guardAddress) internal {
     require(guardAddress != address(0), "Invalid guardAddress");
 

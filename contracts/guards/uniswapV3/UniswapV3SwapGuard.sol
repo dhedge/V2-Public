@@ -47,7 +47,12 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;
   using SafeMathUpgradeable for uint256;
 
-  // transaction guard for Uniswap Swap Router
+  /// @notice Transaction guard for UniswavpV3SwapGuard
+  /// @dev Parses the manager transaction data to ensure transaction is valid
+  /// @param _poolManagerLogic Pool address
+  /// @param data Transaction call data attempt by manager
+  /// @return txType transaction type described in PoolLogic
+  /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
     address, // to
@@ -56,7 +61,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint16 txType // transaction type
+      uint16 txType, // transaction type
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
@@ -79,9 +85,6 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       // check that all swap path assets are supported
       // srcAsset -> while loop(path assets) -> dstAsset
       // TODO: consider a better way of doing this
-
-      // check that source asset is supported
-      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
 
       address asset;
 
@@ -109,13 +112,10 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-      return txType;
-    }
-
-    if (
+    } else if (
       method == bytes4(keccak256("exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"))
     ) {
       address srcAsset = convert32toAddress(getInput(data, 0));
@@ -123,16 +123,15 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
       uint256 srcAmount = uint256(getInput(data, 5));
 
-      require(poolManagerLogicAssets.isSupportedAsset(srcAsset), "unsupported source asset");
-
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == toAddress, "recipient is not pool");
 
-      emit Exchange(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
-      txType = 2;
-      return txType; // 'Exchange' type
+      txType = 2; // 'Exchange' type
     }
+
+    return (txType, false);
   }
 }

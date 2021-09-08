@@ -34,21 +34,27 @@
 
 pragma solidity 0.7.6;
 
+import "./interfaces/IManaged.sol";
+
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-contract Managed {
+/// @notice Role manage contract
+contract Managed is IManaged {
   using SafeMathUpgradeable for uint256;
 
   event ManagerUpdated(address newManager, string newManagerName);
 
-  address public manager;
-  string public managerName;
+  address public override manager;
+  string public override managerName;
 
   address[] private _memberList;
   mapping(address => uint256) private _memberPosition;
 
   address private _trader;
 
+  /// @notice Initialize of the managed contract
+  /// @param newManager The address of the new manager
+  /// @param newManagerName The name of the new manager
   function initialize(address newManager, string memory newManagerName) internal {
     require(newManager != address(0), "Invalid manager");
     manager = newManager;
@@ -65,21 +71,31 @@ contract Managed {
     _;
   }
 
-  function isMemberAllowed(address member) public view returns (bool) {
+  /// @notice Return boolean if the address is a member of the list
+  /// @param member The address of the member
+  /// @return Ture if the address is a member of the list, false otherwise
+  function isMemberAllowed(address member) public view override returns (bool) {
     return _memberPosition[member] != 0;
   }
 
-  function getMembers() external view returns (address[] memory) {
-    return _memberList;
+  /// @notice Get a list of members
+  /// @return members Array of member addresses
+  function getMembers() external view returns (address[] memory members) {
+    members = _memberList;
   }
 
-  function changeManager(address newManager, string memory newManagerName) public onlyManager {
+  /// @notice change the manager address
+  /// @param newManager The address of the new manager
+  /// @param newManagerName The name of the new manager
+  function changeManager(address newManager, string memory newManagerName) external onlyManager {
     require(newManager != address(0), "Invalid manager");
     manager = newManager;
     managerName = newManagerName;
     emit ManagerUpdated(newManager, newManagerName);
   }
 
+  /// @notice add a list of members
+  /// @param members Array of member addresses
   function addMembers(address[] memory members) external onlyManager {
     for (uint256 i = 0; i < members.length; i++) {
       if (isMemberAllowed(members[i])) continue;
@@ -88,6 +104,8 @@ contract Managed {
     }
   }
 
+  /// @notice remove a list of members
+  /// @param members Array of member addresses
   function removeMembers(address[] memory members) external onlyManager {
     for (uint256 i = 0; i < members.length; i++) {
       if (!isMemberAllowed(members[i])) continue;
@@ -96,40 +114,55 @@ contract Managed {
     }
   }
 
+  /// @notice add a member
+  /// @param member The address of the member
   function addMember(address member) external onlyManager {
     if (isMemberAllowed(member)) return;
 
     _addMember(member);
   }
 
+  /// @notice remove a member
+  /// @param member The address of the member
   function removeMember(address member) external onlyManager {
     if (!isMemberAllowed(member)) return;
 
     _removeMember(member);
   }
 
-  function trader() external view returns (address) {
+  /// @notice Return the address of the trader
+  /// @return Address of the trader
+  function trader() external view override returns (address) {
     return _trader;
   }
 
+  /// @notice Set the address of the trader
+  /// @param newTrader The address of the new trader
   function setTrader(address newTrader) external onlyManager {
     require(newTrader != address(0), "Invalid trader");
     _trader = newTrader;
   }
 
+  /// @notice Remove the trader
   function removeTrader() external onlyManager {
     _trader = address(0);
   }
 
-  function numberOfMembers() external view returns (uint256) {
-    return _memberList.length;
+  /// @notice Return the number of members
+  /// @return _numberOfMembers The number of members
+  function numberOfMembers() external view returns (uint256 _numberOfMembers) {
+    _numberOfMembers = _memberList.length;
   }
 
+  /// @notice Add member internal call
+  /// @param member The address of the member
   function _addMember(address member) internal {
     _memberList.push(member);
     _memberPosition[member] = _memberList.length;
   }
 
+  /// @notice Remove member internal call
+  /// @param member The address of the member
   function _removeMember(address member) internal {
     uint256 length = _memberList.length;
     uint256 index = _memberPosition[member].sub(1);

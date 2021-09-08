@@ -365,7 +365,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "fund",
         "type": "address"
       }
     ],
@@ -451,7 +451,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "extContract",
+        "name": "extAsset",
         "type": "address"
       }
     ],
@@ -491,7 +491,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "price",
         "type": "uint256"
       }
     ],
@@ -510,7 +510,7 @@
     "outputs": [
       {
         "internalType": "uint16",
-        "name": "",
+        "name": "assetType",
         "type": "uint16"
       }
     ],
@@ -592,7 +592,7 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "",
+        "name": "investedPools",
         "type": "address[]"
       }
     ],
@@ -630,7 +630,7 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "",
+        "name": "managedPools",
         "type": "address[]"
       }
     ],
