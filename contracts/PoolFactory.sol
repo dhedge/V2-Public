@@ -437,11 +437,11 @@ contract PoolFactory is
    * @param data Calldata for the target address.
    * @param targetVersion set target version after call
    */
-  function _upgradePool(
+  function upgradePool(
     address pool,
     bytes calldata data,
     uint256 targetVersion
-  ) internal {
+  ) public onlyOwner {
     require(pool != address(0), "target-invalid");
     require(data.length > 0, "data-invalid");
 
@@ -472,7 +472,7 @@ contract PoolFactory is
 
       if (poolVersion[pool] != sourceVersion) continue;
 
-      _upgradePool(pool, data, targetVersion);
+      upgradePool(pool, data, targetVersion);
     }
   }
 

@@ -86,7 +86,6 @@ task("upgrade", "Upgrade contracts")
   .setAction(async (taskArgs) => {
     // Initialize the Safe SDK
     const provider = ethers.provider;
-    const owner1 = provider.getSigner(0);
     const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
     const chainId = await ethAdapter.getChainId();
     const hre = require("hardhat");
@@ -103,13 +102,11 @@ task("upgrade", "Upgrade contracts")
       contractNetworks,
     });
     nonce = await safeSdk.getNonce();
-    const owner1Address = await owner1.getAddress();
 
     const network = await ethers.provider.getNetwork();
     console.log("network:", network);
 
     // Init tag
-    const networks = hre.config.networks;
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versions = require(`../publish/${network.name}/${versionFile}.json`);
     const newTag = await getTag();
@@ -148,7 +145,7 @@ task("upgrade", "Upgrade contracts")
     const csvGovernanceNames = await csv().fromFile(governanceNamesfileName);
     let newGovernanceNames = new Array();
 
-    // Pause Pool Factory
+    // Pool Factory
     let poolFactoryProxy = contracts.PoolFactoryProxy;
     const PoolFactory = await hre.artifacts.readArtifact("PoolFactory");
     const PoolFactoryABI = new ethers.utils.Interface(PoolFactory.abi);
