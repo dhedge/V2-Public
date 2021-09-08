@@ -42,7 +42,7 @@ interface IPoolPerformance {
 
   function hasUntrackedBalances(address poolAddress) external view returns (bool);
 
-  function updateInternalBalances() external;
+  function updateTrackedBalances() external;
 
   function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
     external

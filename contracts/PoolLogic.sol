@@ -280,11 +280,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    // We don't know which assets the withdraw processing actually transfers out of the pool at each point in the loop
-    // So therefore we need to take a full snapshot before any withdraws happen, this means
-    // we cannot integrate this snapshotting into the loop below.
-    // If we knew specifically that the withdrawProcessing only withdraw the current asset in the loop
-    // We could integrate the snapshot before and after into the loop below
+    // We don't know which assets the withdraw processing actually transfers out, so we take before and after snapshots
+    // From this we can determine the change.
     uint256[] memory supportedAssetBalancesSnapshotBefore = IPoolPerformance(
       IHasPoolPerformance(factory).poolPerformanceAddress()
     ).getBalancesSnapshot(poolManagerLogic, _supportedAssets);
@@ -419,7 +416,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     success = to.tryAssemblyCall(data);
 
     // We must now update our internal balances to whatever the result of this tx is
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updateInternalBalances();
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updateTrackedBalances();
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }

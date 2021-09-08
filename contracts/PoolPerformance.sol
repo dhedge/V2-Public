@@ -55,7 +55,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
-  mapping(address => mapping(address => uint256)) public internalBalancesMap;
+  mapping(address => mapping(address => uint256)) public trackedBalancesMap;
 
   // Stores the value per token attributed to non performance based increases.
   mapping(address => uint256) public untrackedValuePerTokenMap;
@@ -124,7 +124,7 @@ contract PoolPerformance is OwnableUpgradeable {
       untrackedValue = untrackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
 
       trackedValue = trackedValue.add(
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress])
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, trackedBalancesMap[poolAddress][assetAddress])
       );
     }
 
@@ -163,7 +163,7 @@ contract PoolPerformance is OwnableUpgradeable {
       // One thing to note here is that the impact of the untracked value is variable
       // and is impacted by when this function is called and the price of the
       // untracked asset at the time.
-      uint256 amount = internalBalancesMap[poolAddress][assetAddress];
+      uint256 amount = trackedBalancesMap[poolAddress][assetAddress];
       trackedValue = trackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount));
 
       // Once we record the current value of the tracked asset, we then update the tracked balance to equal the external balance
@@ -179,7 +179,7 @@ contract PoolPerformance is OwnableUpgradeable {
         }
       }
 
-      internalBalancesMap[poolAddress][assetAddress] = newBalance;
+      trackedBalancesMap[poolAddress][assetAddress] = newBalance;
     }
 
     if (trackedValue == untrackedValue) {
@@ -203,7 +203,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param amount The amount of the asset
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
-    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(amount);
+    trackedBalancesMap[poolAddress][asset] = trackedBalancesMap[poolAddress][asset].add(amount);
   }
 
   /// @notice Checks to see if the external balances of a pool are greater than the tracked balances
@@ -235,7 +235,7 @@ contract PoolPerformance is OwnableUpgradeable {
         }
       }
 
-      if (internalBalancesMap[poolAddress][assetAddress] < newBalance) {
+      if (trackedBalancesMap[poolAddress][assetAddress] < newBalance) {
         return true;
       }
     }
@@ -294,22 +294,22 @@ contract PoolPerformance is OwnableUpgradeable {
     uint256 assetChange;
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       assetChange = beforeSupportedAssetBalances[i].sub(afterSupportedAssetBalances[i]);
-      internalBalancesMap[poolAddress][supportedAssets[i].asset] =
-        internalBalancesMap[poolAddress][supportedAssets[i].asset] -
+      trackedBalancesMap[poolAddress][supportedAssets[i].asset] =
+        trackedBalancesMap[poolAddress][supportedAssets[i].asset] -
         assetChange;
     }
   }
 
   /// @notice Resets the tracked balances to equal the external balances
   /// @dev Used to update the tracked balances after a manager executes a transaction/s should only be called by the pool
-  function updateInternalBalances() external {
-    _updateInternalBalances(msg.sender);
+  function updateTrackedBalances() external {
+    _updateTrackedBalances(msg.sender);
   }
 
   /// @notice Resets the tracked balances to equal the external balances
   /// @dev Used to update the tracked balances after a manager executes a transaction/s
   /// @param poolAddress The address of the pool we're updating the balances of
-  function _updateInternalBalances(address poolAddress) internal {
+  function _updateTrackedBalances(address poolAddress) internal {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
@@ -335,7 +335,7 @@ contract PoolPerformance is OwnableUpgradeable {
         }
       }
 
-      internalBalancesMap[poolAddress][assetAddress] = newBalance;
+      trackedBalancesMap[poolAddress][assetAddress] = newBalance;
     }
   }
 }

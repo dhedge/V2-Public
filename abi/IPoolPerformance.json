@@ -87,7 +87,7 @@
   },
   {
     "inputs": [],
-    "name": "updateInternalBalances",
+    "name": "updateTrackedBalances",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
