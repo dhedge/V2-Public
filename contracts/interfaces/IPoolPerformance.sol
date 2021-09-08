@@ -40,7 +40,7 @@ pragma experimental ABIEncoderV2;
 interface IPoolPerformance {
   function addAssetBalance(address asset, uint256 amount) external;
 
-  function hasDirectDeposit(address poolAddress) external view returns (bool);
+  function hasUntrackedBalances(address poolAddress) external view returns (bool);
 
   function updateInternalBalances() external;
 
@@ -55,5 +55,5 @@ interface IPoolPerformance {
     uint256[] memory afterSupportedAssetBalances
   ) external;
 
-  function recordDirectDepositValue(address poolAddress) external;
+  function recordUntrackedValue(address poolAddress) external;
 }

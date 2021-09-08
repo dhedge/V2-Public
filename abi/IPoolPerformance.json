@@ -61,7 +61,7 @@
         "type": "address"
       }
     ],
-    "name": "hasDirectDeposit",
+    "name": "hasUntrackedBalances",
     "outputs": [
       {
         "internalType": "bool",
@@ -80,7 +80,7 @@
         "type": "address"
       }
     ],
-    "name": "recordDirectDepositValue",
+    "name": "recordUntrackedValue",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -66,44 +66,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "poolAddress",
-        "type": "address"
-      }
-    ],
-    "name": "directDepositFactor",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "poolAddress",
-        "type": "address"
-      }
-    ],
-    "name": "fee",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "poolManagerAddress",
         "type": "address"
       },
@@ -144,31 +106,12 @@
         "type": "address"
       }
     ],
-    "name": "hasDirectDeposit",
+    "name": "hasUntrackedBalances",
     "outputs": [
       {
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "iDirectDepositFactorMap",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -232,7 +175,7 @@
         "type": "address"
       }
     ],
-    "name": "recordDirectDepositValue",
+    "name": "recordUntrackedValue",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -331,6 +274,25 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "untrackedValuePerTokenMap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

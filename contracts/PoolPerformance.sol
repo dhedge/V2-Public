@@ -56,11 +56,9 @@ contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
-  // Im keeping the `DirectDeposit`Factor naming for now, for continuity,
-  // I will rename if we decide to adopt these changes
-  // iDirectDepositFactor is the inverse of DirectDepositFactor in my other branches
-  // It decreases the tokenPrice by directDeposit amounts
-  mapping(address => uint256) public iDirectDepositFactorMap;
+
+  // Stores the value per token attributed to non performance based increases.
+  mapping(address => uint256) public untrackedValuePerTokenMap;
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   address public aaveLendingPool;
@@ -73,14 +71,24 @@ contract PoolPerformance is OwnableUpgradeable {
     aaveLendingPool = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER()).getLendingPool();
   }
 
+  /// @notice returns the realtime value of a pool token adjusted for any untracked value
+  /// @param poolAddress The address of the pool
+  /// @return the value per token that only includes the increase in value of the underlying pool assets
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress).sub(directDepositFactor(poolAddress));
+    return tokenPrice(poolAddress).sub(untrackedValuePerToken(poolAddress));
   }
 
+  /// @notice returns the realtime value of a pool token adjusted for any untracked value and manager fee
+  /// @param poolAddress The address of the pool
+  /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
-    return tokenPriceAdjustedForManagerFee(poolAddress).sub(directDepositFactor(poolAddress));
+    return tokenPriceAdjustedForManagerFee(poolAddress).sub(untrackedValuePerToken(poolAddress));
   }
 
+  /// @notice returns the realtime value of a pool tokens underlying value, sans any manager fee
+  /// @dev this is the value per token the owner receives on withdraw.
+  /// @param poolAddress The address of the pool
+  /// @return the value per token, sans manager fee, received by the user on withdraw.
   function tokenPriceAdjustedForManagerFee(address poolAddress) public view returns (uint256) {
     uint256 currentTokenPrice = tokenPrice(poolAddress);
     return
@@ -89,19 +97,24 @@ contract PoolPerformance is OwnableUpgradeable {
       );
   }
 
-  function fee(address poolAddress) public view returns (uint256) {
-    return IPoolLogic(poolAddress).availableManagerFee();
-  }
-
+  /// @notice returns the realtime value of a pool tokens underlying value
+  /// @dev this value does not include any reductions for unpaid manager fees that maybe saught on withdraw
+  /// @param poolAddress The address of the pool
+  /// @return the value per token of all the underlying pool assets.
   function tokenPrice(address poolAddress) public view returns (uint256) {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
-  function directDepositFactor(address poolAddress) public view returns (uint256) {
+
+  /// @notice a view function that returns the realtime + recorded difference between tracked and untracked value of a token
+  /// @param poolAddress The address of the pool
+  /// @return the value per token of airdrops and other untracked value
+  function untrackedValuePerToken(address poolAddress) internal view returns (uint256) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
 
-    uint256 valueWithoutDirectDeposits = 0;
+    uint256 trackedValue = 0;
+    uint256 untrackedValue = 0;
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
@@ -109,34 +122,39 @@ contract PoolPerformance is OwnableUpgradeable {
         continue;
       }
 
-      valueWithoutDirectDeposits =
-        valueWithoutDirectDeposits +
+      untrackedValue = untrackedValue + IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress);
+
+      trackedValue =
+        trackedValue +
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]);
     }
 
-    uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
-    if (iDirectDepositFactorMap[poolAddress] == 0) {
+
+    if (untrackedValuePerTokenMap[poolAddress] == 0) {
       return
-        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(
+        untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
           IERC20Extended(poolAddress).totalSupply()
         );
     } else {
       return
-        iDirectDepositFactorMap[poolAddress].add(
-          valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(
+        untrackedValuePerTokenMap[poolAddress].add(
+          untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
             IERC20Extended(poolAddress).totalSupply()
           )
         );
     }
   }
 
-  // We record the direct deposit value and subtract it from the token price later to get performance
-  function recordDirectDepositValue(address poolAddress) public {
+  /// @notice Records the difference in value between the tracked balances and the external balances of a pool
+  /// @dev The value recorded is per token, it resets the tracked balances to equal external balances once recorded.
+  /// @param poolAddress The address of the pool
+  function recordUntrackedValue(address poolAddress) public {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
 
-    uint256 valueWithoutDirectDeposits = 0;
+    uint256 trackedValue = 0;
+    uint256 untrackedValue = 0;
 
     address aToken;
 
@@ -145,20 +163,23 @@ contract PoolPerformance is OwnableUpgradeable {
       if (assetAddress == aaveLendingPool) {
         continue;
       }
+      // This is the same as what IPoolManagerLogic.totalFundValue() does.
+      // We integrate it into this loop for performance
+      untrackedValue = untrackedValue + IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress);
 
-      // One thing to note here is that the impact of the direct deposits is variable
+      // One thing to note here is that the impact of the untracked value is variable
       // and is impacted by when this function is called and the price of the
-      // direct deposited asset at the time not when the deposit happens
+      // untracked asset at the time.
       uint256 amount = internalBalancesMap[poolAddress][assetAddress];
-      valueWithoutDirectDeposits =
-        valueWithoutDirectDeposits +
+      trackedValue =
+        trackedValue +
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
 
-      // Once we record the internal value of the asset without direct deposits, we then update the internal balance to save on loops
+      // Once we record the current value of the tracked asset, we then update the tracked balance to equal the external balance
       uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
-      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
-      // Otherwise managers can direct desposit adai.
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
+      // i.e dai === aDai.
       if (supportsAave) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
@@ -170,32 +191,40 @@ contract PoolPerformance is OwnableUpgradeable {
       internalBalancesMap[poolAddress][assetAddress] = newBalance;
     }
 
-    uint256 valueWithDirectDeposits = IPoolManagerLogic(poolManagerAddress).totalFundValue();
-
-    if (valueWithoutDirectDeposits == valueWithDirectDeposits) {
+    if (trackedValue == untrackedValue) {
       return;
     }
 
-    if (iDirectDepositFactorMap[poolAddress] == 0) {
-      iDirectDepositFactorMap[poolAddress] = valueWithDirectDeposits
+    if (untrackedValuePerTokenMap[poolAddress] == 0) {
+      untrackedValuePerTokenMap[poolAddress] = untrackedValue
         .mul(10**18)
-        .sub(valueWithoutDirectDeposits.mul(10**18))
+        .sub(trackedValue.mul(10**18))
         .div(IERC20Extended(poolAddress).totalSupply());
     } else {
-      iDirectDepositFactorMap[poolAddress] = iDirectDepositFactorMap[poolAddress].add(
-        valueWithDirectDeposits.mul(10**18).sub(valueWithoutDirectDeposits.mul(10**18)).div(
+      untrackedValuePerTokenMap[poolAddress] = untrackedValuePerTokenMap[poolAddress].add(
+        untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
           IERC20Extended(poolAddress).totalSupply()
         )
       );
     }
   }
 
+
+  /// @notice Increase the tracked balanace of the given asset
+  /// @dev Used for including new deposits in the tracked balance
+  /// @param asset The address of the asset
+  /// @param amount The amount of the asset
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
   }
 
-  function hasDirectDeposit(address poolAddress) external view returns (bool) {
+
+  /// @notice Checks to see if the external balances of a pool are greater than the tracked balances
+  /// @dev Only currently used in tests, Originally used to stop pool actions before recording air drops.
+  /// @param poolAddress The address of the pool
+  /// @return true if the pool has untracked balances
+  function hasUntrackedBalances(address poolAddress) public view returns (bool) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
@@ -210,8 +239,8 @@ contract PoolPerformance is OwnableUpgradeable {
 
       uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
-      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
-      // Otherwise managers can direct desposit adai.
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
+      // i.e dai === aDai.
       if (supportsAave) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
@@ -228,6 +257,12 @@ contract PoolPerformance is OwnableUpgradeable {
     return false;
   }
 
+
+  /// @notice Takes a snapshot of a pools external balances
+  /// @dev The parameters could be simplified to only the poolAddress but we pass the following for performance
+  /// @param poolManagerAddress The address of the poolManager for the pool that we want to snapshot
+  /// @param supportedAssets The supportedAssets of the pool that we want to snapshot
+  /// @return supportedAssetBalances a list of balances of the supported assets passed in, in order
   function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
     external
     view
@@ -246,8 +281,8 @@ contract PoolPerformance is OwnableUpgradeable {
 
       uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
-      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
-      // Otherwise managers can direct desposit dai.
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
+      // i.e dai === aDai.
       if (supportsAave) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
@@ -260,6 +295,11 @@ contract PoolPerformance is OwnableUpgradeable {
     }
   }
 
+  /// @notice Takes two snapshots created from getBalancesSnapshot and update the internal balances based on the difference
+  /// @dev We use this to determine the change of a pools balance by any transaction we don't know the specific outcome of
+  /// @param supportedAssets A list of the pools supportedAssets (passed in for performance)
+  /// @param beforeSupportedAssetBalances List of balances of the supported assets (in order)
+  /// @param afterSupportedAssetBalances List of balances of the supported assets (in order)
   function updatedInternalBalancesByDiff(
     IHasSupportedAsset.Asset[] memory supportedAssets,
     uint256[] memory beforeSupportedAssetBalances,
@@ -275,10 +315,16 @@ contract PoolPerformance is OwnableUpgradeable {
     }
   }
 
+
+  /// @notice Resets the tracked balances to equal the external balances
+  /// @dev Used to update the tracked balances after a manager executes a transaction/s should only be called by the pool
   function updateInternalBalances() external {
     _updateInternalBalances(msg.sender);
   }
 
+  /// @notice Resets the tracked balances to equal the external balances
+  /// @dev Used to update the tracked balances after a manager executes a transaction/s
+  /// @param poolAddress The address of the pool we're updating the balances of
   function _updateInternalBalances(address poolAddress) internal {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
@@ -295,8 +341,8 @@ contract PoolPerformance is OwnableUpgradeable {
 
       uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
-      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must add that to our balance
-      // Otherwise managers can direct desposit adai.
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
+      // i.e dai === aDai.
       if (supportsAave) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
