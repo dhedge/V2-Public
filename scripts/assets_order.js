@@ -7,7 +7,7 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
 require("dotenv").config();
-const NODE_ENV = process.env.NODE_ENV
+const NODE_ENV = process.env.NODE_ENV;
 
 let nonce,
   safeSdk,
@@ -90,9 +90,11 @@ const main = async (NODE_ENV) => {
   const poolFactoryContract = await PoolFactoryContract.attach(poolFactoryProxy);
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-  let supportedAssets = [], poolLogic, poolManagerLogic;
+  let supportedAssets = [],
+    poolLogic,
+    poolManagerLogic;
   const deployedFunds = await poolFactoryContract.getDeployedFunds();
-  for(fund of deployedFunds){
+  for (fund of deployedFunds) {
     console.log("fund: ", fund);
     poolLogic = await PoolLogic.attach(fund);
     poolManagerLogicAddress = await poolLogic.poolManagerLogic();
@@ -102,14 +104,16 @@ const main = async (NODE_ENV) => {
 
     const PoolManagerLogicArtifact = await hre.artifacts.readArtifact("PoolManagerLogic");
     const PoolManagerLogicABI = new ethers.utils.Interface(PoolManagerLogicArtifact.abi);
-    const changeAssetsABI = PoolManagerLogicABI.encodeFunctionData(
-      "changeAssets",
-      [supportedAssets, supportedAssets.map((supportedAsset) => {return supportedAsset[0]})]
-    );
+    const changeAssetsABI = PoolManagerLogicABI.encodeFunctionData("changeAssets", [
+      supportedAssets,
+      supportedAssets.map((supportedAsset) => {
+        return supportedAsset[0];
+      }),
+    ]);
     const upgradePoolABI = PoolFactoryABI.encodeFunctionData("upgradePool", [fund, changeAssetsABI, "290"]);
     await proposeTx(poolFactoryProxy, upgradePoolABI, "Pool Factory Upgrade Pool");
   }
-}
+};
 
 main(NODE_ENV)
   .then(() => process.exit(0))
