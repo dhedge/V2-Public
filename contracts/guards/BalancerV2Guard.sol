@@ -163,11 +163,29 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
       (bytes32 poolId, address sender, address recipient, IBalancerV2Vault.JoinPoolRequest memory joinPoolRequest) = abi
         .decode(getParams(data), (bytes32, address, address, IBalancerV2Vault.JoinPoolRequest));
 
-      uint256 assetLength = joinPoolRequest.assets.length;
-      for (uint256 i = 0; i < assetLength; i++) {
-        if (joinPoolRequest.maxAmountsIn[i] > 0) {
-          require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[i]), "unsupported asset");
+      IBalancerV2Vault.JoinKind kind = abi.decode(joinPoolRequest.userData, (IBalancerV2Vault.JoinKind));
+
+      if (kind == IBalancerV2Vault.JoinKind.INIT || kind == IBalancerV2Vault.JoinKind.ALL_TOKENS_IN_FOR_EXACT_BPT_OUT) {
+        uint256 assetLength = joinPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          if (joinPoolRequest.maxAmountsIn[i] > 0) {
+            require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[i]), "unsupported asset");
+          }
         }
+      } else if (kind == IBalancerV2Vault.JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT) {
+        (, uint256[] memory amountsIn, ) = abi.decode(
+          joinPoolRequest.userData,
+          (IBalancerV2Vault.JoinKind, uint256[], uint256)
+        );
+        uint256 assetLength = joinPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          if (amountsIn[i] > 0) {
+            require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[i]), "unsupported asset");
+          }
+        }
+      } else if (kind == IBalancerV2Vault.JoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT) {
+        (, , uint256 tokenIndex) = abi.decode(joinPoolRequest.userData, (IBalancerV2Vault.JoinKind, uint256, uint256));
+        require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[tokenIndex]), "unsupported asset");
       }
 
       // disable for now
@@ -186,13 +204,31 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
       txType = 16; // `Join Pool` type
     } else if (method == IBalancerV2Vault.exitPool.selector) {
-      (bytes32 poolId, address sender, address recipient, IBalancerV2Vault.ExitPoolRequest memory joinPoolRequest) = abi
+      (bytes32 poolId, address sender, address recipient, IBalancerV2Vault.ExitPoolRequest memory exitPoolRequest) = abi
         .decode(getParams(data), (bytes32, address, address, IBalancerV2Vault.ExitPoolRequest));
 
-      uint256 assetLength = joinPoolRequest.assets.length;
-      for (uint256 i = 0; i < assetLength; i++) {
-        if (joinPoolRequest.minAmountsOut[i] > 0) {
-          require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[i]), "unsupported asset");
+      IBalancerV2Vault.ExitKind kind = abi.decode(exitPoolRequest.userData, (IBalancerV2Vault.ExitKind));
+
+      if (kind == IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT) {
+        (, , uint256 tokenIndex) = abi.decode(exitPoolRequest.userData, (IBalancerV2Vault.ExitKind, uint256, uint256));
+
+        require(poolManagerLogicAssets.isSupportedAsset(exitPoolRequest.assets[tokenIndex]), "unsupported asset");
+      } else if (kind == IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT) {
+        uint256 assetLength = exitPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          require(poolManagerLogicAssets.isSupportedAsset(exitPoolRequest.assets[i]), "unsupported asset");
+        }
+      } else if (kind == IBalancerV2Vault.ExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT) {
+        (, uint256[] memory amountsOut, ) = abi.decode(
+          exitPoolRequest.userData,
+          (IBalancerV2Vault.ExitKind, uint256[], uint256)
+        );
+
+        uint256 assetLength = exitPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          if (amountsOut[i] > 0) {
+            require(poolManagerLogicAssets.isSupportedAsset(exitPoolRequest.assets[i]), "unsupported asset");
+          }
         }
       }
 
@@ -205,8 +241,8 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
       emit ExitPool(
         poolManagerLogic.poolLogic(),
         poolId,
-        joinPoolRequest.assets,
-        joinPoolRequest.minAmountsOut,
+        exitPoolRequest.assets,
+        exitPoolRequest.minAmountsOut,
         block.timestamp
       );
 

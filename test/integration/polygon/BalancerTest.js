@@ -582,7 +582,7 @@ describe("Balancer V2 Test", function () {
       [
         assets,
         [amount, 0, amount, amount],
-        ethers.utils.defaultAbiCoder.encode(["uint256", "uint256[]", "uint256"], [1, maxAmountsIn, 1]),
+        ethers.utils.defaultAbiCoder.encode(["uint256", "uint256[]", "uint256"], [1, [amount, 0, amount, amount], 1]),
         false,
       ],
     ]);
@@ -671,18 +671,69 @@ describe("Balancer V2 Test", function () {
         assets,
         minAmountsOut,
         ethers.utils.defaultAbiCoder.encode(
-          ["uint256", "uint256"],
-          [1, await BALANCERLP.balanceOf(poolLogicProxy.address)],
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 2],
         ),
         false,
       ],
     ]);
 
-    // const IERC20 = await hre.artifacts.readArtifact("IERC20");
-    // const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    // let approveABI = iERC20.encodeFunctionData("approve", [balancerV2Vault, amount]);
-    // await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
-    // await poolLogicProxy.connect(manager).execTransaction(usdt, approveABI);
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx)).to.be.revertedWith(
+      "unsupported asset",
+    );
+
+    exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      dai,
+      recipient,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+        ),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx)).to.be.revertedWith(
+      "sender is not pool",
+    );
+
+    exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      sender,
+      dai,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+        ),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx)).to.be.revertedWith(
+      "recipient is not pool",
+    );
+
+    exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      sender,
+      recipient,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+        ),
+        false,
+      ],
+    ]);
 
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
@@ -691,13 +742,7 @@ describe("Balancer V2 Test", function () {
 
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
-    console.log(usdcBalanceAfter.toString(), usdcBalanceBefore.add(amount).toString());
-    console.log(usdtBalanceAfter.toString(), usdtBalanceBefore.add(amount).toString());
-    checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(amount));
-    checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(amount));
+    checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(amount.mul(2)));
+    expect(usdtBalanceAfter).to.be.equal(usdtBalanceBefore);
   });
 });
-195997433;
-195555251;
-3997437;
-3524883;
