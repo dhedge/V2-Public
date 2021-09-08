@@ -93,7 +93,7 @@ contract PoolPerformance is OwnableUpgradeable {
     uint256 currentTokenPrice = tokenPrice(poolAddress);
     return
       currentTokenPrice.mul(IERC20Extended(poolAddress).totalSupply()).div(
-        IERC20Extended(poolAddress).totalSupply() + IPoolLogic(poolAddress).availableManagerFee()
+        IERC20Extended(poolAddress).totalSupply().add(IPoolLogic(poolAddress).availableManagerFee())
       );
   }
 
@@ -121,19 +121,19 @@ contract PoolPerformance is OwnableUpgradeable {
         continue;
       }
 
-      untrackedValue = untrackedValue + IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress);
+      untrackedValue = untrackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
 
       trackedValue =
-        trackedValue +
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]);
+        trackedValue.add(
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]));
     }
 
     if (untrackedValuePerTokenMap[poolAddress] == 0) {
-      return untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply());
+      return untrackedValue.sub(trackedValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply());
     } else {
       return
         untrackedValuePerTokenMap[poolAddress].add(
-          untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
+          untrackedValue.sub(trackedValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
         );
     }
   }
@@ -158,13 +158,13 @@ contract PoolPerformance is OwnableUpgradeable {
       }
       // This is the same as what IPoolManagerLogic.totalFundValue() does.
       // We integrate it into this loop for performance
-      untrackedValue = untrackedValue + IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress);
+      untrackedValue = untrackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
 
       // One thing to note here is that the impact of the untracked value is variable
       // and is impacted by when this function is called and the price of the
       // untracked asset at the time.
       uint256 amount = internalBalancesMap[poolAddress][assetAddress];
-      trackedValue = trackedValue + IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
+      trackedValue = trackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount));
 
       // Once we record the current value of the tracked asset, we then update the tracked balance to equal the external balance
       uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
@@ -175,7 +175,7 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
@@ -187,12 +187,12 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     if (untrackedValuePerTokenMap[poolAddress] == 0) {
-      untrackedValuePerTokenMap[poolAddress] = untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
+      untrackedValuePerTokenMap[poolAddress] = untrackedValue.sub(trackedValue).mul(10**18).div(
         IERC20Extended(poolAddress).totalSupply()
       );
     } else {
       untrackedValuePerTokenMap[poolAddress] = untrackedValuePerTokenMap[poolAddress].add(
-        untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
+        untrackedValue.sub(trackedValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
       );
     }
   }
@@ -203,7 +203,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param amount The amount of the asset
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
-    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
+    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(amount);
   }
 
   /// @notice Checks to see if the external balances of a pool are greater than the tracked balances
@@ -231,7 +231,7 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
@@ -272,7 +272,7 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
@@ -293,7 +293,7 @@ contract PoolPerformance is OwnableUpgradeable {
     address poolAddress = msg.sender;
     uint256 assetChange;
     for (uint8 i = 0; i < supportedAssets.length; i++) {
-      assetChange = beforeSupportedAssetBalances[i] - afterSupportedAssetBalances[i];
+      assetChange = beforeSupportedAssetBalances[i].sub(afterSupportedAssetBalances[i]);
       internalBalancesMap[poolAddress][supportedAssets[i].asset] =
         internalBalancesMap[poolAddress][supportedAssets[i].asset] -
         assetChange;
@@ -331,7 +331,7 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance + IAToken(aToken).scaledBalanceOf(poolAddress);
+          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
