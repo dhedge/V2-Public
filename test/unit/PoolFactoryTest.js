@@ -836,8 +836,7 @@ describe("PoolFactory", function () {
     expect(managerFeeDenominator.toString()).to.equal("10000");
   });
 
-  // Synthetix transaction guard
-  it("Only manager or trader can execute transaction", async () => {
+  beforeEach(async () => {
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
     const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
@@ -854,7 +853,14 @@ describe("PoolFactory", function () {
         [0, 200000000000, 0, current, 0],
       ),
     ); // $2000
+    // await link_price_feed.givenCalldataReturn(
+    //   latestRoundDataABI,
+    //   ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 3500000000, 0, current, 0]),
+    // ); // $35
+  });
 
+  // Synthetix transaction guard
+  it("Only manager or trader can execute transaction", async () => {
     const sourceKey = susdKey;
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
