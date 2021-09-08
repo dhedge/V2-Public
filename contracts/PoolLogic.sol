@@ -280,7 +280,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    // @lecky
     // We don't know which assets the withdraw processing actually transfers out of the pool at each point in the loop
     // So therefore we need to take a full snapshot before any withdraws happen, this means
     // we cannot integrate this snapshotting into the loop below.

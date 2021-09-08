@@ -105,7 +105,6 @@ contract PoolPerformance is OwnableUpgradeable {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
-
   /// @notice a view function that returns the realtime + recorded difference between tracked and untracked value of a token
   /// @param poolAddress The address of the pool
   /// @return the value per token of airdrops and other untracked value
@@ -129,18 +128,12 @@ contract PoolPerformance is OwnableUpgradeable {
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]);
     }
 
-
     if (untrackedValuePerTokenMap[poolAddress] == 0) {
-      return
-        untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
-          IERC20Extended(poolAddress).totalSupply()
-        );
+      return untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply());
     } else {
       return
         untrackedValuePerTokenMap[poolAddress].add(
-          untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
-            IERC20Extended(poolAddress).totalSupply()
-          )
+          untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
         );
     }
   }
@@ -171,9 +164,7 @@ contract PoolPerformance is OwnableUpgradeable {
       // and is impacted by when this function is called and the price of the
       // untracked asset at the time.
       uint256 amount = internalBalancesMap[poolAddress][assetAddress];
-      trackedValue =
-        trackedValue +
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
+      trackedValue = trackedValue + IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount);
 
       // Once we record the current value of the tracked asset, we then update the tracked balance to equal the external balance
       uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
@@ -196,19 +187,15 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     if (untrackedValuePerTokenMap[poolAddress] == 0) {
-      untrackedValuePerTokenMap[poolAddress] = untrackedValue
-        .mul(10**18)
-        .sub(trackedValue.mul(10**18))
-        .div(IERC20Extended(poolAddress).totalSupply());
+      untrackedValuePerTokenMap[poolAddress] = untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
+        IERC20Extended(poolAddress).totalSupply()
+      );
     } else {
       untrackedValuePerTokenMap[poolAddress] = untrackedValuePerTokenMap[poolAddress].add(
-        untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(
-          IERC20Extended(poolAddress).totalSupply()
-        )
+        untrackedValue.mul(10**18).sub(trackedValue.mul(10**18)).div(IERC20Extended(poolAddress).totalSupply())
       );
     }
   }
-
 
   /// @notice Increase the tracked balanace of the given asset
   /// @dev Used for including new deposits in the tracked balance
@@ -218,7 +205,6 @@ contract PoolPerformance is OwnableUpgradeable {
     address poolAddress = msg.sender;
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset] + amount;
   }
-
 
   /// @notice Checks to see if the external balances of a pool are greater than the tracked balances
   /// @dev Only currently used in tests, Originally used to stop pool actions before recording air drops.
@@ -256,7 +242,6 @@ contract PoolPerformance is OwnableUpgradeable {
 
     return false;
   }
-
 
   /// @notice Takes a snapshot of a pools external balances
   /// @dev The parameters could be simplified to only the poolAddress but we pass the following for performance
@@ -314,7 +299,6 @@ contract PoolPerformance is OwnableUpgradeable {
         assetChange;
     }
   }
-
 
   /// @notice Resets the tracked balances to equal the external balances
   /// @dev Used to update the tracked balances after a manager executes a transaction/s should only be called by the pool
