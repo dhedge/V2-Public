@@ -684,7 +684,9 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to manage assets", async function () {
-    await expect(poolManagerLogicProxy.changeAssets([[slink, false]], [])).to.be.revertedWith("only manager or factory");
+    await expect(poolManagerLogicProxy.changeAssets([[slink, false]], [])).to.be.revertedWith(
+      "only manager or factory",
+    );
 
     let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
     let poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
