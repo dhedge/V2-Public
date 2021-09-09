@@ -471,9 +471,9 @@ describe("PoolFactory", function () {
       twoDollar.toString(),
     );
 
-    // The token price is now $4 and $3 of that is profit in the eyes of the contract, the manager is owed .375 tokens roughly $1.5 at the current token price
+    // The token price is now $4 and $3 of that is profit in the eyes of the contract, the manager is owed .375 tokens roughly $1.5 (50% of profit) at the current token price
     // This means after minting manager fee there would be 1.375 tokens owning $4
-    // $4 / 1.375 = $2.919708029
+    // $4 / 1.375 = $2.919708029 (1 token value)
     const twoDollarNinety = ethers.BigNumber.from(BigInt((fourDollar / 1.375) * 1));
     expect(
       (await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString(),

@@ -94,12 +94,12 @@ describe("PoolPerformance", function () {
     // Create Fund, no management fee, enable usdc
     // Deposit $1 conventional way
     // Check tokenPriceAdjustForPerformance() should be $1
-    // Check hasUntrackedBalances() == FALSE
+    // Check hasExternalBalances() == FALSE
     // Deposit $1 directly
-    // Check hasUntrackedBalances() == TRUE
+    // Check hasExternalBalances() == TRUE
     // Check TokenPrice() should be $2
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
-    // Call recordUntrackedValue
+    // Call recordExternalValue
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
     // Deposit $1 conventional way
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
@@ -119,8 +119,8 @@ describe("PoolPerformance", function () {
       expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
-      // Check hasUntrackedBalances() == FALSE
-      expect(await poolPerformanceProxy.hasUntrackedBalances(poolLogicProxy.address)).to.equal(false);
+      // Check hasExternalBalances() == FALSE
+      expect(await poolPerformanceProxy.hasExternalBalances(poolLogicProxy.address)).to.equal(false);
       // Deposit $1 directly
       await USDC.transfer(poolLogicProxy.address, (100e6).toString());
       // Check TokenPrice() should be $2
@@ -129,8 +129,8 @@ describe("PoolPerformance", function () {
       expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
-      // Call recordUntrackedValue
-      await poolPerformanceProxy.recordUntrackedValue(poolLogicProxy.address);
+      // Call recordExternalValue
+      await poolPerformanceProxy.recordExternalValue(poolLogicProxy.address);
       // Check TokenPrice() should be $2
       expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
       // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
@@ -152,7 +152,7 @@ describe("PoolPerformance", function () {
     // Create Fund, no management fee, enable usdc
     // Deposit $1 conventional way
     // Check tokenPriceAdjustForPerformance() should be $1
-    // Check hasUntrackedBalances() == FALSE
+    // Check hasExternalBalances() == FALSE
     // Deposit $1 directly
     // Deposit $1 conventional way
     // Check Price
@@ -221,8 +221,8 @@ describe("PoolPerformance", function () {
       expect(
         (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
       ).to.equal(oneDollar.toString());
-      // Check hasUntrackedBalances() == FALSE
-      expect(await poolPerformanceProxy.hasUntrackedBalances(poolLogicProxy.address)).to.equal(false);
+      // Check hasExternalBalances() == FALSE
+      expect(await poolPerformanceProxy.hasExternalBalances(poolLogicProxy.address)).to.equal(false);
       // DollarSixty
       // You might be thinking you expect this to be $1.50 not $1.60 because
       // There is $1 of performance and 50% performance fee and so manager fee should be worth 50c but
@@ -246,8 +246,8 @@ describe("PoolPerformance", function () {
       // The direct deposit should be detected.
       expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
       await checkTokenValue();
-      // Call recordUntrackedValue
-      await poolPerformanceProxy.recordUntrackedValue(poolLogicProxy.address);
+      // Call recordExternalValue
+      await poolPerformanceProxy.recordExternalValue(poolLogicProxy.address);
       // This should have no affect on tokenPricesAdjustedForFee
       await checkTokenValue();
       // We mint the manager fee
@@ -292,8 +292,8 @@ describe("PoolPerformance", function () {
       expect(
         (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
       ).to.equal(oneDollar.toString());
-      // Check hasUntrackedBalances() == FALSE
-      expect(await poolPerformanceProxy.hasUntrackedBalances(poolLogicProxy.address)).to.equal(false);
+      // Check hasExternalBalances() == FALSE
+      expect(await poolPerformanceProxy.hasExternalBalances(poolLogicProxy.address)).to.equal(false);
 
       // Deposit $2 directly
       // This means the fee should be around
@@ -347,12 +347,12 @@ describe("PoolPerformance", function () {
     // Create Fund, no management fee, enable usdc + aaveLending Pool
     // Deposit $1 conventional way
     // Check tokenPriceAdjustForPerformance() should be $1
-    // Check hasUntrackedBalances() == FALSE
+    // Check hasExternalBalances() == FALSE
     // Deposit aUSDC $1 directly
-    // Check hasUntrackedBalances() == TRUE
+    // Check hasExternalBalances() == TRUE
     // Check TokenPrice() should be $2
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
-    // Call recordUntrackedValue
+    // Call recordExternalValue
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
     // Deposit $1 conventional way
     const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";

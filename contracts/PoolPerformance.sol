@@ -55,10 +55,10 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 contract PoolPerformance is OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
-  mapping(address => mapping(address => uint256)) public trackedBalancesMap;
+  mapping(address => mapping(address => uint256)) public internalBalancesMap;
 
   // Stores the value per token attributed to non performance based increases.
-  mapping(address => uint256) public untrackedValuePerTokenMap;
+  mapping(address => uint256) public externalValuePerTokenMap;
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   address public aaveLendingPool;
@@ -71,18 +71,18 @@ contract PoolPerformance is OwnableUpgradeable {
     aaveLendingPool = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER()).getLendingPool();
   }
 
-  /// @notice returns the realtime value of a pool token adjusted for any untracked value
+  /// @notice returns the realtime value of a pool token adjusted for any external value
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress).sub(untrackedValuePerToken(poolAddress));
+    return tokenPrice(poolAddress).sub(externalValuePerToken(poolAddress));
   }
 
-  /// @notice returns the realtime value of a pool token adjusted for any untracked value and manager fee
+  /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
-    return tokenPriceAdjustedForManagerFee(poolAddress).sub(untrackedValuePerToken(poolAddress));
+    return tokenPriceAdjustedForManagerFee(poolAddress).sub(externalValuePerToken(poolAddress));
   }
 
   /// @notice returns the realtime value of a pool tokens underlying value, sans any manager fee
@@ -105,15 +105,15 @@ contract PoolPerformance is OwnableUpgradeable {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
-  /// @notice a view function that returns the realtime + recorded difference between tracked and untracked value of a token
+  /// @notice a view function that returns the realtime + recorded difference between internal and external value of a token
   /// @param poolAddress The address of the pool
-  /// @return the value per token of airdrops and other untracked value
-  function untrackedValuePerToken(address poolAddress) internal view returns (uint256) {
+  /// @return the value per token of airdrops and other external value
+  function externalValuePerToken(address poolAddress) internal view returns (uint256) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
 
-    uint256 trackedValue = 0;
-    uint256 untrackedValue = 0;
+    uint256 internalValue = 0;
+    uint256 externalValue = 0;
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
@@ -121,33 +121,33 @@ contract PoolPerformance is OwnableUpgradeable {
         continue;
       }
 
-      untrackedValue = untrackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
+      externalValue = externalValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
 
-      trackedValue = trackedValue.add(
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, trackedBalancesMap[poolAddress][assetAddress])
+      internalValue = internalValue.add(
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress])
       );
     }
 
-    if (untrackedValuePerTokenMap[poolAddress] == 0) {
-      return untrackedValue.sub(trackedValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply());
+    if (externalValuePerTokenMap[poolAddress] == 0) {
+      return externalValue.sub(internalValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply());
     } else {
       return
-        untrackedValuePerTokenMap[poolAddress].add(
-          untrackedValue.sub(trackedValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
+        externalValuePerTokenMap[poolAddress].add(
+          externalValue.sub(internalValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
         );
     }
   }
 
-  /// @notice Records the difference in value between the tracked balances and the external balances of a pool
-  /// @dev The value recorded is per token, it resets the tracked balances to equal external balances once recorded.
+  /// @notice Records the difference in value between the internal balances and the external balances of a pool
+  /// @dev The value recorded is per token, it resets the internal balances to equal external balances once recorded.
   /// @param poolAddress The address of the pool
-  function recordUntrackedValue(address poolAddress) public {
+  function recordExternalValue(address poolAddress) public {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
 
-    uint256 trackedValue = 0;
-    uint256 untrackedValue = 0;
+    uint256 internalValue = 0;
+    uint256 externalValue = 0;
 
     address aToken;
 
@@ -156,18 +156,16 @@ contract PoolPerformance is OwnableUpgradeable {
       if (assetAddress == aaveLendingPool) {
         continue;
       }
-      // This is the same as what IPoolManagerLogic.totalFundValue() does.
-      // We integrate it into this loop for performance
-      untrackedValue = untrackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
+      // This is the same as what IPoolManagerLogic.totalFundValue().
+      externalValue = externalValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
 
-      // One thing to note here is that the impact of the untracked value is variable
+      // One thing to note here is that the impact of the external value is variable
       // and is impacted by when this function is called and the price of the
-      // untracked asset at the time.
-      uint256 amount = trackedBalancesMap[poolAddress][assetAddress];
-      trackedValue = trackedValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, amount));
+      // external asset at the time.
+      internalValue = internalValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]));
 
-      // Once we record the current value of the tracked asset, we then update the tracked balance to equal the external balance
-      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+      // Once we record the current value of the internal asset, we then update the internal balance to equal the external balance
+      uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
@@ -175,42 +173,44 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
+          externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
-      trackedBalancesMap[poolAddress][assetAddress] = newBalance;
+      internalBalancesMap[poolAddress][assetAddress] = externalBalance;
     }
 
-    if (trackedValue == untrackedValue) {
+
+    // In most cases this will be true and when it is there is not externalValue to record so we exit early
+    if (internalValue == externalValue) {
       return;
     }
 
-    if (untrackedValuePerTokenMap[poolAddress] == 0) {
-      untrackedValuePerTokenMap[poolAddress] = untrackedValue.sub(trackedValue).mul(10**18).div(
+    if (externalValuePerTokenMap[poolAddress] == 0) {
+      externalValuePerTokenMap[poolAddress] = externalValue.sub(internalValue).mul(10**18).div(
         IERC20Extended(poolAddress).totalSupply()
       );
     } else {
-      untrackedValuePerTokenMap[poolAddress] = untrackedValuePerTokenMap[poolAddress].add(
-        untrackedValue.sub(trackedValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
+      externalValuePerTokenMap[poolAddress] = externalValuePerTokenMap[poolAddress].add(
+        externalValue.sub(internalValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
       );
     }
   }
 
-  /// @notice Increase the tracked balanace of the given asset
-  /// @dev Used for including new deposits in the tracked balance
+  /// @notice Increase the internal balanace of the given asset
+  /// @dev Used for including new deposits in the internal balance
   /// @param asset The address of the asset
   /// @param amount The amount of the asset
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
-    trackedBalancesMap[poolAddress][asset] = trackedBalancesMap[poolAddress][asset].add(amount);
+    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(amount);
   }
 
-  /// @notice Checks to see if the external balances of a pool are greater than the tracked balances
+  /// @notice Checks to see if the external balances of a pool are greater than the internal balances
   /// @dev Only currently used in tests, Originally used to stop pool actions before recording air drops.
   /// @param poolAddress The address of the pool
-  /// @return true if the pool has untracked balances
-  function hasUntrackedBalances(address poolAddress) public view returns (bool) {
+  /// @return true if the pool has external balances
+  function hasExternalBalances(address poolAddress) public view returns (bool) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
@@ -223,7 +223,7 @@ contract PoolPerformance is OwnableUpgradeable {
         continue;
       }
 
-      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+      uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
@@ -231,11 +231,11 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
+          externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
-      if (trackedBalancesMap[poolAddress][assetAddress] < newBalance) {
+      if (internalBalancesMap[poolAddress][assetAddress] < externalBalance) {
         return true;
       }
     }
@@ -264,7 +264,7 @@ contract PoolPerformance is OwnableUpgradeable {
         continue;
       }
 
-      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+      uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
@@ -272,11 +272,11 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
+          externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
-      supportedAssetBalances[i] = newBalance;
+      supportedAssetBalances[i] = externalBalance;
     }
   }
 
@@ -294,22 +294,22 @@ contract PoolPerformance is OwnableUpgradeable {
     uint256 assetChange;
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       assetChange = beforeSupportedAssetBalances[i].sub(afterSupportedAssetBalances[i]);
-      trackedBalancesMap[poolAddress][supportedAssets[i].asset] =
-        trackedBalancesMap[poolAddress][supportedAssets[i].asset] -
+      internalBalancesMap[poolAddress][supportedAssets[i].asset] =
+        internalBalancesMap[poolAddress][supportedAssets[i].asset] -
         assetChange;
     }
   }
 
-  /// @notice Resets the tracked balances to equal the external balances
-  /// @dev Used to update the tracked balances after a manager executes a transaction/s should only be called by the pool
-  function updateTrackedBalances() external {
-    _updateTrackedBalances(msg.sender);
+  /// @notice Resets the internal balances to equal the external balances
+  /// @dev Used to update the internal balances after a manager executes a transaction/s should only be called by the pool
+  function updateInternalBalances() external {
+    _updateInternalBalances(msg.sender);
   }
 
-  /// @notice Resets the tracked balances to equal the external balances
-  /// @dev Used to update the tracked balances after a manager executes a transaction/s
+  /// @notice Resets the internal balances to equal the external balances
+  /// @dev Used to update the internal balances after a manager executes a transaction/s
   /// @param poolAddress The address of the pool we're updating the balances of
-  function _updateTrackedBalances(address poolAddress) internal {
+  function _updateInternalBalances(address poolAddress) internal {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
@@ -323,7 +323,7 @@ contract PoolPerformance is OwnableUpgradeable {
         continue;
       }
 
-      uint256 newBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+      uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
 
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
@@ -331,11 +331,11 @@ contract PoolPerformance is OwnableUpgradeable {
         (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
-          newBalance = newBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
+          externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
 
-      trackedBalancesMap[poolAddress][assetAddress] = newBalance;
+      internalBalancesMap[poolAddress][assetAddress] = externalBalance;
     }
   }
 }
