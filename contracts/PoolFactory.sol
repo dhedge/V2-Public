@@ -444,7 +444,7 @@ contract PoolFactory is
   ) internal {
     require(pool != address(0), "target-invalid");
     require(data.length > 0, "data-invalid");
-    require(poolVersion[pool] < targetVersion, "already upgraded" );
+    require(poolVersion[pool] < targetVersion, "already upgraded");
 
     pool.tryAssemblyDelegateCall(data);
 

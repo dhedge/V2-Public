@@ -98,11 +98,13 @@ const proposeTx = async (to, data, message) => {
     },
   };
 
-  safeSdk = safeSdk ? safeSdk : await Safe.default.create({
-    ethAdapter,
-    safeAddress: safeAddress,
-    contractNetworks,
-  });
+  safeSdk = safeSdk
+    ? safeSdk
+    : await Safe.default.create({
+        ethAdapter,
+        safeAddress: safeAddress,
+        contractNetworks,
+      });
   nonce = nonce ? nonce : await safeSdk.getNonce();
 
   const transaction = {

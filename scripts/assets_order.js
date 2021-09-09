@@ -52,7 +52,10 @@ const main = async (NODE_ENV) => {
     ]);
     datas.push(changeAssetsABI);
   }
-  const upgradePoolBatchABI = PoolFactoryABI.encodeFunctionData("upgradePoolBatch(uint256, uint256, uint256, bytes[])", [0, deployedFunds.length - 1, "290", datas]);
+  const upgradePoolBatchABI = PoolFactoryABI.encodeFunctionData(
+    "upgradePoolBatch(uint256, uint256, uint256, bytes[])",
+    [0, deployedFunds.length - 1, "290", datas],
+  );
   await proposeTx(poolFactoryProxy, upgradePoolBatchABI, "Pool Factory Batch Upgrade Pool");
 };
 
