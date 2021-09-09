@@ -281,24 +281,6 @@ describe("PoolFactory", function () {
 
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
-    await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
-
-    console.log("Passed poolLogic Init!");
-
-    await poolManagerLogic.initialize(
-      poolFactory.address,
-      manager.address,
-      "Barren Wuffet",
-      poolLogic.address,
-      "1000",
-      [
-        [susd, true],
-        [seth, true],
-      ],
-    );
-
-    console.log("Passed poolManagerLogic Init!");
-
     console.log("Creating Fund...");
 
     await poolFactory.createFund(
