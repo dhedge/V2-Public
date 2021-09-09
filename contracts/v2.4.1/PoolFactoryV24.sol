@@ -579,5 +579,8 @@ contract PoolFactoryV24 is
     }
   }
 
-  uint256[50] private __gap;
+  // Hack: New variable added by JHM since initial deployment because of
+  // https://forum.openzeppelin.com/t/storage-layout-upgrade-with-hardhat-upgrades/14567/3
+  address public poolPerformanceAddress;
+  uint256[49] private __gap;
 }

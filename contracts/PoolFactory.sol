@@ -133,6 +133,9 @@ contract PoolFactory is
   uint256 public override maximumManagerFeeNumeratorChange;
   uint256 public override managerFeeNumeratorChangeDelay;
 
+  // Added after initial deployment
+  address public override poolPerformanceAddress;
+
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
@@ -601,6 +604,5 @@ contract PoolFactory is
     }
   }
 
-  uint256[50] private __gap;
-  address public override poolPerformanceAddress;
+  uint256[49] private __gap;
 }
