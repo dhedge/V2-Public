@@ -295,10 +295,6 @@ describe("PoolFactory", function () {
         [susd, true],
       ],
     );
-
-    const funds = await poolFactory.getDeployedFunds();
-    expect(funds[0]).not.to.be.undefined;
-    poolLogicProxy = await PoolLogic.attach(funds[0]);
   });
 
   // manager starts pool with $1
@@ -310,6 +306,21 @@ describe("PoolFactory", function () {
   // now token price returns 0?
   // No token price returns $1 and tokenPriceAdjustedForPerformance returns $0.5
   it("Ermin scenario 1", async function () {
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    const funds = await poolFactory.getDeployedFunds();
+    expect(funds[0]).not.to.be.undefined;
+    poolLogicProxy = await PoolLogic.attach(funds[0]);
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
       poolLogicProxy.address,
@@ -328,6 +339,13 @@ describe("PoolFactory", function () {
       oneDollar.toString(),
     );
 
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.equal(oneDollar.toString());
+
     const twoDollar = 2e18;
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (200e18).toString());
 
@@ -336,11 +354,20 @@ describe("PoolFactory", function () {
       oneDollar.toString(),
     );
 
+    const oneDollarSixty = 16e17;
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollarSixty.toString(),
+    );
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.equal((oneDollarSixty - oneDollar).toString());
+
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
     const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
+    // Halve the usd price
     await usd_price_feed.givenCalldataReturn(
       latestRoundDataABI,
       ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 50000000, 0, current, 0]),
@@ -350,6 +377,13 @@ describe("PoolFactory", function () {
     expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       (oneDollar / 2).toString(),
     );
+    // There is no manager fee because there is no performance because usdc price fell to $.50
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      await poolPerformanceProxy.tokenPrice(poolLogicProxy.address),
+    );
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.equal(await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address));
   });
 
   // manager starts pool with $1
@@ -361,6 +395,21 @@ describe("PoolFactory", function () {
   // now token price returns 3? (ie 200% gain)
   // No token price returns $4 (double the underlying value) and tokenPriceAdjustedForPerformance returns $2 (double the deposited value)
   it("Ermin scenario 2", async function () {
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    const funds = await poolFactory.getDeployedFunds();
+    expect(funds[0]).not.to.be.undefined;
+    poolLogicProxy = await PoolLogic.attach(funds[0]);
     let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
       poolLogicProxy.address,
@@ -379,6 +428,13 @@ describe("PoolFactory", function () {
       oneDollar.toString(),
     );
 
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.equal(oneDollar.toString());
+
     const twoDollar = 2e18;
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (200e18).toString());
 
@@ -387,21 +443,45 @@ describe("PoolFactory", function () {
       oneDollar.toString(),
     );
 
+    const oneDollarSixty = 16e17;
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollarSixty.toString(),
+    );
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.equal((oneDollarSixty - oneDollar).toString());
+
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
     const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
+    // Double the usd price
     await usd_price_feed.givenCalldataReturn(
       latestRoundDataABI,
       ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 200000000, 0, current, 0]),
     ); // $2
 
-    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
-      (twoDollar * 2).toString(),
-    );
+    const fourDollar = 4e18;
+    // Token price is now $4
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(fourDollar.toString());
+
+    // Token price adjusted for down for the direct deposit value (now $2) is $2
     expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-      (oneDollar * 2).toString(),
+      twoDollar.toString(),
     );
+
+    // The token price is now $4 and $3 of that is profit in the eyes of the contract, the manager is owed .375 tokens roughly $1.5 at the current token price
+    // This means after minting manager fee there would be 1.375 tokens owning $4
+    // $4 / 1.375 = $2.919708029
+    const twoDollarNinety = ethers.BigNumber.from(BigInt((fourDollar / 1.375) * 1));
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString(),
+    ).to.be.closeTo(twoDollarNinety, 100);
+
+    // $2.90 - minus the direct deposit of $2 = $.90
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollarNinety - twoDollar)), 100);
   });
 });
