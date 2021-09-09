@@ -1,72 +1,11 @@
-const Safe = require("@gnosis.pm/safe-core-sdk");
-const { EthersAdapter } = require("@gnosis.pm/safe-core-sdk");
-const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
-const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
-const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
-// https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
-const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
-const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
+const { proposeTx } = require("./Helpers");
 require("dotenv").config();
 const NODE_ENV = process.env.NODE_ENV;
 
-let nonce,
-  safeSdk,
-  nonceLog = new Array();
-
-const proposeTx = async (to, data, message) => {
-  const transaction = {
-    to: to,
-    value: "0",
-    data: data,
-    nonce: nonce,
-  };
-
-  nonceLog.push({
-    nonce: nonce,
-    message: message,
-  });
-
-  console.log("Proposing transaction: ", transaction);
-  console.log(`Nonce ${nonce}: ${message}`);
-
-  nonce += 1;
-
-  const safeTransaction = await safeSdk.createTransaction(...[transaction]);
-  // off-chain sign
-  const txHash = await safeSdk.getTransactionHash(safeTransaction);
-  const signature = await safeSdk.signTransactionHash(txHash);
-  // on-chain sign
-  // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
-  // console.log("approveTxResponse", approveTxResponse);
-  console.log("safeTransaction: ", safeTransaction);
-
-  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
-  console.log("ProposeTx: ", proposeTx);
-};
-
 const main = async (NODE_ENV) => {
-  // Initialize the Safe SDK
-  const provider = ethers.provider;
-  const owner1 = provider.getSigner(0);
-  const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
-  const chainId = await ethAdapter.getChainId();
-  const hre = require("hardhat");
-  const contractNetworks = {
-    [chainId]: {
-      multiSendAddress: multiSendAddress,
-    },
-  };
-
-  safeSdk = await Safe.default.create({
-    ethAdapter,
-    safeAddress: safeAddress,
-    contractNetworks,
-  });
-  nonce = await safeSdk.getNonce();
-  const owner1Address = await owner1.getAddress();
-
   const network = await ethers.provider.getNetwork();
   console.log("network:", network);
+  const hre = require("hardhat");
 
   // Init tag
   const versionFile = NODE_ENV == "production" ? "versions" : "staging-versions";
@@ -92,7 +31,8 @@ const main = async (NODE_ENV) => {
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
   let supportedAssets = [],
     poolLogic,
-    poolManagerLogic;
+    poolManagerLogic,
+    datas = [];
   const deployedFunds = await poolFactoryContract.getDeployedFunds();
   for (fund of deployedFunds) {
     console.log("fund: ", fund);
@@ -110,9 +50,10 @@ const main = async (NODE_ENV) => {
         return supportedAsset[0];
       }),
     ]);
-    const upgradePoolABI = PoolFactoryABI.encodeFunctionData("upgradePool", [fund, changeAssetsABI, "290"]);
-    await proposeTx(poolFactoryProxy, upgradePoolABI, "Pool Factory Upgrade Pool");
+    datas.push(changeAssetsABI);
   }
+  const upgradePoolBatchABI = PoolFactoryABI.encodeFunctionData("upgradePoolBatch(uint256, uint256, uint256, bytes[])", [0, deployedFunds.length - 1, "290", datas]);
+  await proposeTx(poolFactoryProxy, upgradePoolBatchABI, "Pool Factory Batch Upgrade Pool");
 };
 
 main(NODE_ENV)

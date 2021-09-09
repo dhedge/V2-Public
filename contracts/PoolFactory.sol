@@ -437,13 +437,14 @@ contract PoolFactory is
    * @param data Calldata for the target address.
    * @param targetVersion set target version after call
    */
-  function upgradePool(
+  function _upgradePool(
     address pool,
     bytes calldata data,
     uint256 targetVersion
-  ) public onlyOwner {
+  ) internal {
     require(pool != address(0), "target-invalid");
     require(data.length > 0, "data-invalid");
+    require(poolVersion[pool] < targetVersion, "already upgraded" );
 
     pool.tryAssemblyDelegateCall(data);
 
@@ -455,13 +456,11 @@ contract PoolFactory is
   /// @notice Upgrade pools in batch
   /// @param startIndex The start index of the pool upgrade
   /// @param endIndex The end index of the pool upgrade
-  /// @param sourceVersion The source version of the pool upgrade
   /// @param targetVersion The target version of the pool upgrade
   /// @param data The calldata for the target address
   function upgradePoolBatch(
     uint256 startIndex,
     uint256 endIndex,
-    uint256 sourceVersion,
     uint256 targetVersion,
     bytes calldata data
   ) external onlyOwner {
@@ -470,9 +469,34 @@ contract PoolFactory is
     for (uint256 i = startIndex; i <= endIndex; i++) {
       address pool = deployedFunds[i];
 
-      if (poolVersion[pool] != sourceVersion) continue;
+      if (pool == address(0)) continue;
+      if (poolVersion[pool] >= targetVersion) continue;
 
-      upgradePool(pool, data, targetVersion);
+      _upgradePool(pool, data, targetVersion);
+    }
+  }
+
+  /// @notice Upgrade pools in batch with array of data
+  /// @param startIndex The start index of the pool upgrade
+  /// @param endIndex The end index of the pool upgrade
+  /// @param targetVersion The target version of the pool upgrade
+  /// @param data Array of calldata for the target address
+  function upgradePoolBatch(
+    uint256 startIndex,
+    uint256 endIndex,
+    uint256 targetVersion,
+    bytes[] calldata data
+  ) external onlyOwner {
+    require(startIndex <= endIndex && endIndex < deployedFunds.length, "invalid bounds");
+    require(data.length == endIndex.sub(startIndex).add(1), "data not metch index");
+
+    for (uint256 i = startIndex; i <= endIndex; i++) {
+      address pool = deployedFunds[i];
+
+      if (pool == address(0)) continue;
+      if (poolVersion[pool] >= targetVersion) continue;
+
+      _upgradePool(pool, data[i.sub(startIndex)], targetVersion);
     }
   }
 

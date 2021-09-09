@@ -1039,22 +1039,27 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "pool",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "startIndex",
+        "type": "uint256"
       },
       {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
+        "internalType": "uint256",
+        "name": "endIndex",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
         "name": "targetVersion",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "data",
+        "type": "bytes[]"
       }
     ],
-    "name": "upgradePool",
+    "name": "upgradePoolBatch",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1069,11 +1074,6 @@
       {
         "internalType": "uint256",
         "name": "endIndex",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "sourceVersion",
         "type": "uint256"
       },
       {
