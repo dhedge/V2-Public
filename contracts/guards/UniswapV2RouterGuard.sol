@@ -44,7 +44,6 @@ import "../interfaces/IHasSupportedAsset.sol";
 /// @notice Transaction guard for UniswapV2Router
 /// @dev This will be used for sushiswap as well since Sushi uses the same interface.
 contract UniswapV2RouterGuard is TxDataUtils, SlippageChecker, IGuard {
-  event ExchangeTo(address fundAddress, address sourceAsset, address dstAsset, uint256 dstAmount, uint256 time);
   event AddLiquidity(
     address fundAddress,
     address tokenA,
