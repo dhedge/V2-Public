@@ -502,7 +502,7 @@ describe("PoolPerformance", function () {
     // Check after balances of usdc and amusdc
     // Direct deposit amUSDC to Pool
     // check that the directDeposit of amUSDC is accounted for by PoolPerformance
-    it.only("tokenPriceAdjustForPerformance with direct deposit", async () => {
+    it("tokenPriceAdjustForPerformance with direct deposit", async () => {
       const usdcAmount = (100e6).toString();
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
@@ -540,7 +540,6 @@ describe("PoolPerformance", function () {
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, usdcAmount, poolLogicProxy.address, 0]);
       await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
-      const scaledBalanceAfterManagerTx = await AMUSDC.scaledBalanceOf(poolLogicProxy.address);
 
       expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal((0).toString());
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 100e6);
@@ -549,11 +548,7 @@ describe("PoolPerformance", function () {
       await USDC.approve(aaveLendingPool, usdcAmount);
       const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
       await AaveLendingPool.deposit(usdc, usdcAmount, poolLogicProxy.address, 0);
-      const scaledBalanceAfterDirectDeposit = await AMUSDC.scaledBalanceOf(poolLogicProxy.address);
 
-      // 1e10 here because usdc decimals
-      const amUSDCDirectDeposited = (scaledBalanceAfterDirectDeposit - scaledBalanceAfterManagerTx) * 1e10;
-      console.log("amUSDCDirectDeposited", amUSDCDirectDeposited);
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 200e6);
 
       // We check that the directDeposit of amUSDC is accounted for by PoolPerformance
@@ -621,7 +616,6 @@ describe("PoolPerformance", function () {
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [weth, halfBalanceOfWeth, poolLogicProxy.address, 0]);
       await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
-      const scaledBalanceAfterManagerTx = await AMWETH.scaledBalanceOf(poolLogicProxy.address);
 
       const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
       const amWethBalanceAfter = await AMWETH.balanceOf(poolLogicProxy.address);
@@ -633,9 +627,6 @@ describe("PoolPerformance", function () {
       await WETH.approve(aaveLendingPool, halfBalanceOfWeth);
       const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
       await AaveLendingPool.deposit(weth, halfBalanceOfWeth, poolLogicProxy.address, 0);
-      const scaledBalanceAfterDirectDeposit = await AMWETH.scaledBalanceOf(poolLogicProxy.address);
-
-      const scaledBalanceOfWethDeposited = scaledBalanceAfterDirectDeposit - scaledBalanceAfterManagerTx;
 
       // All the logicOwners weth is now aWETH half deposited normally, half direct deposited
       checkAlmostSame(await AMWETH.balanceOf(poolLogicProxy.address), balanceOfWeth);
@@ -651,13 +642,6 @@ describe("PoolPerformance", function () {
         ethers.BigNumber.from(BigInt(twoDollar)),
         1e9,
       );
-
-      // when we deposit weth directly as amWeth the scaledBalance is less than the deposit amount
-      // (scaledBalanceOfDirecDepositWeth * wethValueInUsdc) / totalSupply;
-      const directDepositValuePerToken =
-        (scaledBalanceOfWethDeposited * (await poolFactory.getAssetPrice(weth))) / (await poolLogicProxy.totalSupply());
-
-      // console.log("directDepositValuePerToken", directDepositValuePerToken);
 
       expect(await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         ethers.BigNumber.from(BigInt(twoDollar / 2)),

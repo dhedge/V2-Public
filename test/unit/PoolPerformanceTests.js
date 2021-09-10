@@ -1,10 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 
 // Place holder addresses
-const KOVAN_ADDRESS_RESOLVER = "0x242a3DF52c375bEe81b1c668741D7c63aF68FDD2";
-const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
 const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
-const externalInvalidToken = "0x7cea675598da73f859696b483c05a4f135b2092e"; //random address
 
 const { expect } = require("chai");
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -154,7 +151,6 @@ describe("PoolFactory", function () {
 
     const Governance = await ethers.getContractFactory("Governance");
     let governance = await Governance.deploy();
-    console.log("governance deployed to:", governance.address);
 
     const mockAaveProtocolDataProvider = await MockContract.deploy();
     const mockAaveLendingPool = await MockContract.deploy();
@@ -188,7 +184,6 @@ describe("PoolFactory", function () {
     AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
-    console.log("assetHandler deployed to:", assetHandler.address);
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
     poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [
@@ -198,7 +193,6 @@ describe("PoolFactory", function () {
       dao.address,
       governance.address,
     ]);
-    console.log("poolFactory upgraded to: ", poolFactory.address);
 
     poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
@@ -261,12 +255,7 @@ describe("PoolFactory", function () {
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
 
-    const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
-    console.log("openAssetGuardSetting:", openAssetGuardSetting);
-
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
-
-    console.log("Creating Fund...");
 
     await poolFactory.createFund(
       false,
@@ -288,9 +277,8 @@ describe("PoolFactory", function () {
   // from here,
   // scenario 1:
   // pool goes down 50% in value (performance drop)
-  // now token price returns 0?
-  // No token price returns $1 and tokenPriceAdjustedForPerformance returns $0.5
-  it("Ermin scenario 1", async function () {
+  // Token price returns $1 and tokenPriceAdjustedForPerformance returns $0.5
+  it("Scenario 1 - direct deposit equal to aum, 50% drop in asset value", async function () {
     await poolFactory.createFund(
       false,
       manager.address,
@@ -319,7 +307,6 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
-    console.log(">>>>>>>>", (await poolPerformanceProxy.externalValuePerToken(poolLogicProxy.address)).toString());
     expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
     expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
@@ -376,13 +363,13 @@ describe("PoolFactory", function () {
 
   // manager starts pool with $1
   // then direct deposits $1
-  // directDepositFactor = $1
+  // directDepositFactor = 0.5
   // from here,
   // scenario 2:
   // pool goes up 100% in value (performance gain)
   // now token price returns 3? (ie 200% gain)
   // No token price returns $4 (double the underlying value) and tokenPriceAdjustedForPerformance returns $2 (double the deposited value)
-  it("Ermin scenario 2", async function () {
+  it("Scenario 2 - direct deposit equal to aum, 100% increase in asset value", async function () {
     await poolFactory.createFund(
       false,
       manager.address,
@@ -467,7 +454,7 @@ describe("PoolFactory", function () {
       (await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString(),
     ).to.be.closeTo(twoDollarNinety, 100);
 
-    // $2.90 - minus the direct deposit of $2 = $.90
+    // $2.90 / 2
     expect(
       (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
     ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollarNinety / 2)), 100);
@@ -475,13 +462,13 @@ describe("PoolFactory", function () {
 
   // manager starts pool with $1
   // then direct deposits $10
-  // directDepositFactor = $10
+  // externalValueFactor = 1/10 === 0.1
   // from here,
   // scenario 2:
   // pool goes up 100% in value (performance gain)
   // now token price returns 3? (ie 200% gain)
   // No token price returns $4 (double the underlying value) and tokenPriceAdjustedForPerformance returns $2 (double the deposited value)
-  it("Ermin scenario 3", async function () {
+  it("Scenario 3 - small aum, large deposit, 100% increase in asset value", async function () {
     await poolFactory.createFund(
       false,
       manager.address,
@@ -626,5 +613,30 @@ describe("PoolFactory", function () {
     expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       twoDollar.toString(),
     );
+  });
+
+  it("resetExternalValue only callable by owner", async function () {
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+
+    const funds = await poolFactory.getDeployedFunds();
+    expect(funds[0]).not.to.be.undefined;
+    poolLogicProxy = await PoolLogic.attach(funds[0]);
+
+    await poolPerformanceProxy.setExternalValue(poolLogicProxy.address, (10 ** 18).toString());
+
+    await expect(
+      poolPerformanceProxy.connect(manager).setExternalValue(poolLogicProxy.address, (10 ** 18).toString()),
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 });
