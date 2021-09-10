@@ -7,7 +7,6 @@ use(chaiAlmost());
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
-const quickswapFactory = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
 const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
 
 // For mainnet
@@ -17,25 +16,19 @@ const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 const usdt = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
 const quick = "0x831753DD7087CaC61aB5644b308642cc1c33Dc13";
 const dai = "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063";
-const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
 const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
 const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
 
 const quickLpUsdcWeth = "0x853Ee4b2A13f8a742d64C8F088bE7bA2131f670d";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
-const quickLpUsdcUsdt = "0x2cF7252e74036d1Da831d11089D326296e64a728";
-const quickLpUsdcUsdtStakingRewards = "0x251d9837a13F38F3Fe629ce2304fa00710176222";
 
 describe("Quickswap V2 Test", function () {
-  let WMatic, WETH, USDC, USDT, QuickLPUSDCWETH, QUICK;
-  let quickLPAggregator;
+  let WMatic, WETH, USDC,QuickLPUSDCWETH, QUICK;
   let logicOwner, manager, dao, user;
-  let PoolFactory, PoolLogic, PoolManagerLogic;
+  let PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
 
   before(async function () {
