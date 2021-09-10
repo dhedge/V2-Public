@@ -258,7 +258,7 @@ describe("PoolPerformance", function () {
         expect(
           (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
           // sixty cents
-        ).to.equal((expectedTokenPriceAdjustedForManagerFee - 1e18).toString());
+        ).to.equal((expectedTokenPriceAdjustedForManagerFee / 2).toString());
       };
       // Deposit $1 directly
       await USDC.transfer(poolLogicProxy.address, (100e6).toString());
@@ -341,7 +341,7 @@ describe("PoolPerformance", function () {
           (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
           // dollar18Cents subtract 20c
           // nintetyEight cents
-        ).to.equal("980327868852459016");
+        ).to.equal("983606557377049179");
       };
 
       await checkTokenValue();
@@ -502,7 +502,7 @@ describe("PoolPerformance", function () {
     // Check after balances of usdc and amusdc
     // Direct deposit amUSDC to Pool
     // check that the directDeposit of amUSDC is accounted for by PoolPerformance
-    it("tokenPriceAdjustForPerformance with direct deposit", async () => {
+    it.only("tokenPriceAdjustForPerformance with direct deposit", async () => {
       const usdcAmount = (100e6).toString();
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
@@ -553,7 +553,7 @@ describe("PoolPerformance", function () {
 
       // 1e10 here because usdc decimals
       const amUSDCDirectDeposited = (scaledBalanceAfterDirectDeposit - scaledBalanceAfterManagerTx) * 1e10;
-
+      console.log("amUSDCDirectDeposited", amUSDCDirectDeposited);
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 200e6);
 
       // We check that the directDeposit of amUSDC is accounted for by PoolPerformance
@@ -563,11 +563,11 @@ describe("PoolPerformance", function () {
       );
 
       expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        (twoDollar - amUSDCDirectDeposited).toString(),
+        (twoDollar / 2).toString(),
       );
       expect(
         (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal((twoDollar - amUSDCDirectDeposited).toString());
+      ).to.equal((twoDollar / 2).toString());
     });
 
     // In this test we make sure directDeposits of aTokens are accounted for by PoolPerformance using WETH
@@ -660,13 +660,13 @@ describe("PoolPerformance", function () {
       // console.log("directDepositValuePerToken", directDepositValuePerToken);
 
       expect(await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar - directDepositValuePerToken)),
+        ethers.BigNumber.from(BigInt(twoDollar / 2)),
         1e9,
       );
 
       expect(
         await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address),
-      ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollar - directDepositValuePerToken)), 1e9);
+      ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollar / 2)), 1e9);
     });
   });
 });

@@ -66,7 +66,6 @@ contract PoolPerformance is OwnableUpgradeable {
 
   uint256 constant DENOMINATOR = 10**18;
 
-
   /// @notice initialisation for the contract
   function initialize(address _aaveProtocolDataProvider) external initializer {
     __Ownable_init();
@@ -154,7 +153,10 @@ contract PoolPerformance is OwnableUpgradeable {
     if (externalValueFactorMap[poolAddress] == 0) {
       return DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue))));
     } else {
-      return externalValueFactorMap[poolAddress].mul(DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue))))).div(DENOMINATOR);
+      return
+        externalValueFactorMap[poolAddress]
+          .mul(DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue)))))
+          .div(DENOMINATOR);
     }
   }
 
@@ -208,11 +210,14 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     if (externalValueFactorMap[poolAddress] == 0) {
-      externalValueFactorMap[poolAddress] = DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue))));
+      externalValueFactorMap[poolAddress] = DENOMINATOR.sub(
+        (DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue)))
+      );
     } else {
-      externalValueFactorMap[poolAddress] = externalValueFactorMap[poolAddress].mul(DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue)))));
+      externalValueFactorMap[poolAddress] = externalValueFactorMap[poolAddress].mul(
+        DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue))))
+      ).div(DENOMINATOR);
     }
-
   }
 
   /// @notice Increase the internal balanace of the given asset
