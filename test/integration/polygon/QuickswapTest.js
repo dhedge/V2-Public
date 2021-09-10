@@ -26,7 +26,7 @@ const quickLpUsdcWeth = "0x853Ee4b2A13f8a742d64C8F088bE7bA2131f670d";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
 
 describe("Quickswap V2 Test", function () {
-  let WMatic, WETH, USDC,QuickLPUSDCWETH, QUICK;
+  let WMatic, WETH, USDC, QuickLPUSDCWETH, QUICK;
   let logicOwner, manager, dao, user;
   let PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;

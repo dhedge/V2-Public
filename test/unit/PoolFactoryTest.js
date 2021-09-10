@@ -158,13 +158,13 @@ describe("PoolFactory", function () {
     const IAaveProtocolDataProvider = await hre.artifacts.readArtifact("IAaveProtocolDataProvider");
     const iAaveProtocolDataProvider = new ethers.utils.Interface(IAaveProtocolDataProvider.abi);
     const ADDRESSES_PROVIDERABI = iAaveProtocolDataProvider.encodeFunctionData("ADDRESSES_PROVIDER", []);
-    await aaveProtocolDataProvider.givenCalldataReturnAddress(ADDRESSES_PROVIDERABI, aaveProtocolDataProvider.address)
+    await aaveProtocolDataProvider.givenCalldataReturnAddress(ADDRESSES_PROVIDERABI, aaveProtocolDataProvider.address);
 
     // mock ILendingPoolAddressesProvider
     const ILendingPoolAddressesProvider = await hre.artifacts.readArtifact("ILendingPoolAddressesProvider");
     const iLendingPoolAddressesProvider = new ethers.utils.Interface(ILendingPoolAddressesProvider.abi);
     const getLendingPoolABI = iLendingPoolAddressesProvider.encodeFunctionData("getLendingPool", []);
-    await aaveProtocolDataProvider.givenCalldataReturnAddress(getLendingPoolABI, aaveProtocolDataProvider.address)
+    await aaveProtocolDataProvider.givenCalldataReturnAddress(getLendingPoolABI, aaveProtocolDataProvider.address);
 
     IERC20 = await hre.artifacts.readArtifact("ERC20Upgradeable");
     iERC20 = new ethers.utils.Interface(IERC20.abi);
@@ -212,7 +212,17 @@ describe("PoolFactory", function () {
     const assetDai = { asset: dai.address, assetType: 4, aggregator: usd_price_feed.address }; // Lending enabled
     const assetUsdc = { asset: usdc.address, assetType: 4, aggregator: usd_price_feed.address }; // Lending enabled
     const assetSeth = { asset: sethAsset.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
-    const assetHandlerInitAssets = [assetSusdProxy, assetSethProxy, assetSlinkProxy, assetSushi, assetWmatic, assetLendingPool, assetDai, assetUsdc, assetSeth];
+    const assetHandlerInitAssets = [
+      assetSusdProxy,
+      assetSethProxy,
+      assetSlinkProxy,
+      assetSushi,
+      assetWmatic,
+      assetLendingPool,
+      assetDai,
+      assetUsdc,
+      assetSeth,
+    ];
 
     // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     // await assetHandler.deployed();
@@ -877,7 +887,6 @@ describe("PoolFactory", function () {
       "only manager",
     );
   });
-
 
   it("should be able to manage fees", async function () {
     //Can't set manager fee if not manager or if fee too high
