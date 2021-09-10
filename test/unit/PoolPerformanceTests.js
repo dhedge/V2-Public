@@ -32,19 +32,11 @@ let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
 let sushiLPAggregator; // local aggregators
 let usd_price_feed, eth_price_feed, link_price_feed; // integrating aggregators
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
 
 const susdKey = "0x7355534400000000000000000000000000000000000000000000000000000000";
 const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000000";
 const slinkKey = "0x734c494e4b000000000000000000000000000000000000000000000000000000";
-
-const FIVE_TOKENS = "5000000000000000000";
-const TEN_TOKENS = "10000000000000000000";
-const TWENTY_TOKENS = "20000000000000000000";
-const ONE_HUNDRED_TOKENS = "100000000000000000000";
-
-const POOL_STORAGE_VERSION = "99999";
 
 describe("PoolFactory", function () {
   beforeEach(async function () {
@@ -164,17 +156,24 @@ describe("PoolFactory", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const mockAaveProtocolDataProvider = await MockContract.deploy();
+    const mockAaveLendingPool = await MockContract.deploy();
+
+    const IAaveProtocolDataProvider = await hre.artifacts.readArtifact(
+      "contracts/interfaces/aave/IAaveProtocolDataProvider.sol:IAaveProtocolDataProvider",
+    );
+    const iAaveProtocolDataProvider = new ethers.utils.Interface(IAaveProtocolDataProvider.abi);
+    const addressProviderABI = iAaveProtocolDataProvider.encodeFunctionData("ADDRESSES_PROVIDER", []);
+    await mockAaveProtocolDataProvider.givenCalldataReturnAddress(addressProviderABI, mockAaveLendingPool.address);
+
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
     const poolPerformance = await PoolPerformance.deploy();
     poolPerformanceProxy = await PoolPerformance.attach(poolPerformance.address);
+    poolPerformanceProxy.initialize(mockAaveProtocolDataProvider.address);
 
-    // PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
-    // poolLogicV24 = await PoolLogicV24.deploy();
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
-    // PoolManagerLogicV24 = await ethers.getContractFactory("PoolManagerLogicV24");
-    // poolManagerLogicV24 = await PoolManagerLogicV24.deploy();
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
@@ -186,24 +185,10 @@ describe("PoolFactory", function () {
     const assetWmatic = { asset: wmaticToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic];
 
-    // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
-    // await assetHandler.deployed();
     AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
-
-    // const PoolFactoryLogicV24 = await ethers.getContractFactory("PoolFactoryV24");
-    // poolFactoryV24 = await upgrades.deployProxy(PoolFactoryLogicV24, [
-    //   poolLogicV24.address,
-    //   poolManagerLogicV24.address,
-    //   assetHandler.address,
-    //   dao.address,
-    //   governance.address,
-    // ]);
-
-    // await poolFactoryV24.deployed();
-    // console.log("poolFactoryV24 deployed to:", poolFactoryV24.address);
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
     poolFactory = await upgrades.deployProxy(PoolFactoryLogic, [
@@ -367,6 +352,8 @@ describe("PoolFactory", function () {
     const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
+    // await poolPerformanceProxy.recordExternalValue(poolLogicProxy.address);
+
     // Halve the usd price
     await usd_price_feed.givenCalldataReturn(
       latestRoundDataABI,
@@ -483,5 +470,159 @@ describe("PoolFactory", function () {
     expect(
       (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
     ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollarNinety - twoDollar)), 100);
+  });
+
+  // manager starts pool with $1
+  // then direct deposits $10
+  // directDepositFactor = $10
+  // from here,
+  // scenario 2:
+  // pool goes up 100% in value (performance gain)
+  // now token price returns 3? (ie 200% gain)
+  // No token price returns $4 (double the underlying value) and tokenPriceAdjustedForPerformance returns $2 (double the deposited value)
+  it("Ermin scenario 3", async function () {
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    const funds = await poolFactory.getDeployedFunds();
+    expect(funds[0]).not.to.be.undefined;
+    poolLogicProxy = await PoolLogic.attach(funds[0]);
+    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+      investor.address,
+      poolLogicProxy.address,
+      (100e18).toString(),
+    ]);
+    await susdProxy.givenMethodReturnBool(transferFromABI, true);
+
+    await poolLogicProxy.deposit(susd, (100e18).toString());
+
+    const oneDollar = 1e18;
+    const twoDollar = 2e18;
+    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
+
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.equal(oneDollar.toString());
+
+    const tenDollars = 10e18;
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, ethers.BigNumber.from(BigInt(100e18)).mul(10));
+
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(tenDollars.toString());
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+
+    // await poolPerformanceProxy.recordExternalValue(poolLogicProxy.address);
+
+    const current = (await ethers.provider.getBlock()).timestamp;
+    const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
+    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
+
+    // Double the usd price
+    await usd_price_feed.givenCalldataReturn(
+      latestRoundDataABI,
+      ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 200000000, 0, current, 0]),
+    ); // $2
+
+    const twentyDollars = 20e18;
+    // Token price is now $4
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
+      twentyDollars.toString(),
+    );
+
+    // Token price adjusted for down for the direct deposit value (now $2) is $2
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      twoDollar.toString(),
+    );
+
+    // The token price is now $20 and $19 of that is profit in the eyes of the contract, the manager is owed 0.475 tokens roughly $9.50 (50% of profit) at the current token price
+    // This means after minting manager fee there would be 1.475 tokens owning $9.50
+    // $20 / 1.475 = $13.559322034 (1 token value)
+    const thirteenFiftyFive = ethers.BigNumber.from(BigInt((twentyDollars / 1.475) * 1));
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString(),
+    ).to.be.closeTo(thirteenFiftyFive, 10000);
+
+    // $13.55 - minus the direct deposit value of $18 == error
+    await expect(
+      poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address),
+    ).to.be.revertedWith("SafeMath: subtraction overflow");
+  });
+
+  it("resetExternalValue", async function () {
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+
+    const funds = await poolFactory.getDeployedFunds();
+    expect(funds[0]).not.to.be.undefined;
+    poolLogicProxy = await PoolLogic.attach(funds[0]);
+    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+      investor.address,
+      poolLogicProxy.address,
+      (100e18).toString(),
+    ]);
+    await susdProxy.givenMethodReturnBool(transferFromABI, true);
+
+    await poolLogicProxy.deposit(susd, (100e18).toString());
+
+    const oneDollar = 1e18;
+    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
+
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+
+    const twoDollar = 2e18;
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, (200e18).toString());
+
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+
+    await poolPerformanceProxy.recordExternalValue(poolLogicProxy.address);
+
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
+
+    await poolPerformanceProxy.setExternalValue(poolLogicProxy.address, 0);
+
+    expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+    expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      twoDollar.toString(),
+    );
   });
 });

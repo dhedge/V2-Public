@@ -9,9 +9,14 @@ const units = (value) => ethers.utils.parseUnits(value.toString());
 
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 
+const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
+
 // For mainnet
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
 const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
+
+const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
 const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
 const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 
@@ -19,7 +24,7 @@ const oneDollar = 1e18;
 const twoDollar = 2e18;
 
 describe("PoolPerformance", function () {
-  let USDC;
+  let USDC, WETH;
   let logicOwner, manager, dao;
   let PoolLogic;
   let assetHandler, governance, poolFactory, poolLogicProxy, poolPerformanceProxy;
@@ -36,6 +41,8 @@ describe("PoolPerformance", function () {
     const poolPerformance = await PoolPerformance.deploy();
     poolPerformanceProxy = await PoolPerformance.attach(poolPerformance.address);
 
+    await poolPerformanceProxy.initialize(aaveProtocolDataProvider);
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     const poolLogic = await PoolLogic.deploy();
 
@@ -44,8 +51,9 @@ describe("PoolPerformance", function () {
 
     // Initialize Asset Price Consumer
     const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
+    const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-    const assetHandlerInitAssets = [assetWmatic, assetUsdc];
+    const assetHandlerInitAssets = [assetWmatic, assetUsdc, assetWeth];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
@@ -74,16 +82,27 @@ describe("PoolPerformance", function () {
     const WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
+    WETH = await ethers.getContractAt(IERC20.abi, weth);
 
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
-    await WMatic.deposit({ value: units(500) });
+    await WMatic.deposit({ value: units(1000) });
 
-    await WMatic.approve(sushiswapV2Router, units(500));
+    // Get USDC
+    await WMatic.approve(sushiswapV2Router, units(1000));
     await sushiswapRouter.swapExactTokensForTokens(
       units(500),
       0,
       [wmatic, usdc],
+      logicOwner.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    );
+
+    // Get Weth for AAVE Tests
+    await sushiswapRouter.swapExactTokensForTokens(
+      units(500),
+      0,
+      [wmatic, weth],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -359,7 +378,8 @@ describe("PoolPerformance", function () {
     const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
     const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
     const amusdc = "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F";
-    let AMUSDC, iERC20;
+    const amweth = "0x28424507fefb6f7f8E9D3860F56504E4e5f5f390";
+    let AMUSDC, AMWETH, iERC20;
     beforeEach(async function () {
       const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
       const usdPriceAggregator = await USDPriceAggregator.deploy();
@@ -367,7 +387,11 @@ describe("PoolPerformance", function () {
 
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       iERC20 = new ethers.utils.Interface(IERC20.abi);
-      AMUSDC = await ethers.getContractAt(IERC20.abi, amusdc);
+
+      const IAToken = await hre.artifacts.readArtifact("IAToken");
+
+      AMUSDC = await ethers.getContractAt(IAToken.abi, amusdc);
+      AMWETH = await ethers.getContractAt(IAToken.abi, amweth);
 
       const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
       const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
@@ -516,6 +540,7 @@ describe("PoolPerformance", function () {
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, usdcAmount, poolLogicProxy.address, 0]);
       await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+      const scaledBalanceAfterManagerTx = await AMUSDC.scaledBalanceOf(poolLogicProxy.address);
 
       expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal((0).toString());
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 100e6);
@@ -524,6 +549,10 @@ describe("PoolPerformance", function () {
       await USDC.approve(aaveLendingPool, usdcAmount);
       const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
       await AaveLendingPool.deposit(usdc, usdcAmount, poolLogicProxy.address, 0);
+      const scaledBalanceAfterDirectDeposit = await AMUSDC.scaledBalanceOf(poolLogicProxy.address);
+
+      // 1e10 here because usdc decimals
+      const amUSDCDirectDeposited = (scaledBalanceAfterDirectDeposit - scaledBalanceAfterManagerTx) * 1e10;
 
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 200e6);
 
@@ -534,11 +563,110 @@ describe("PoolPerformance", function () {
       );
 
       expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+        (twoDollar - amUSDCDirectDeposited).toString(),
       );
       expect(
         (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal(oneDollar.toString());
+      ).to.equal((twoDollar - amUSDCDirectDeposited).toString());
+    });
+
+    // In this test we make sure directDeposits of aTokens are accounted for by PoolPerformance using WETH
+    // Create the fund we're going to use for testing
+    // Deposit x Weth conventional way
+    // Check tokenPriceAdjustForPerformance() should be $1
+    // Approve weth transfer to AAVE
+    // Check before balances of weth and amweth
+    // Deposit weth to aave
+    // Check after balances of weth and amweth
+    // Direct deposit amweth to Pool
+    // check that the directDeposit of amWeth is accounted for by PoolPerformance
+    it("tokenPriceAdjustForPerformance with direct deposit (WETH)", async () => {
+      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [weth, true],
+        [aaveLendingPool, false],
+      ]);
+
+      const balanceOfWeth = await WETH.balanceOf(logicOwner.address);
+      const halfBalanceOfWeth = balanceOfWeth.div(2);
+
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+      // Deposit $1 conventional way
+      await WETH.approve(poolLogicProxy.address, halfBalanceOfWeth);
+      await poolLogicProxy.deposit(weth, halfBalanceOfWeth);
+
+      // Check tokenPriceAdjustForPerformance() should be $1
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+
+      // approve usdc
+      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, halfBalanceOfWeth]);
+      await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
+
+      const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
+      const amWethBalanceBefore = await AMWETH.balanceOf(poolLogicProxy.address);
+
+      expect(wethBalanceBefore).to.be.equal(halfBalanceOfWeth);
+      expect(amWethBalanceBefore).to.be.equal(0);
+
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+
+      // deposit
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [weth, halfBalanceOfWeth, poolLogicProxy.address, 0]);
+      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+      const scaledBalanceAfterManagerTx = await AMWETH.scaledBalanceOf(poolLogicProxy.address);
+
+      const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
+      const amWethBalanceAfter = await AMWETH.balanceOf(poolLogicProxy.address);
+
+      expect(wethBalanceAfter).to.be.equal(0);
+      checkAlmostSame(amWethBalanceAfter, halfBalanceOfWeth);
+
+      // Here we are taking some of the logicOwners weth and depositing it directly into the aave Pool as amWETH
+      await WETH.approve(aaveLendingPool, halfBalanceOfWeth);
+      const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
+      await AaveLendingPool.deposit(weth, halfBalanceOfWeth, poolLogicProxy.address, 0);
+      const scaledBalanceAfterDirectDeposit = await AMWETH.scaledBalanceOf(poolLogicProxy.address);
+
+      const scaledBalanceOfWethDeposited = scaledBalanceAfterDirectDeposit - scaledBalanceAfterManagerTx;
+
+      // All the logicOwners weth is now aWETH half deposited normally, half direct deposited
+      checkAlmostSame(await AMWETH.balanceOf(poolLogicProxy.address), balanceOfWeth);
+
+      // We check that the directDeposit of amWeth is accounted for by PoolPerformance
+      // We've double the amount of underlying assets so the price should be nearly double
+      expect(await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
+        ethers.BigNumber.from(BigInt(twoDollar)),
+        1e9,
+      );
+
+      expect(await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        ethers.BigNumber.from(BigInt(twoDollar)),
+        1e9,
+      );
+
+      // when we deposit weth directly as amWeth the scaledBalance is less than the deposit amount
+      // (scaledBalanceOfDirecDepositWeth * wethValueInUsdc) / totalSupply;
+      const directDepositValuePerToken =
+        (scaledBalanceOfWethDeposited * (await poolFactory.getAssetPrice(weth))) / (await poolLogicProxy.totalSupply());
+
+      // console.log("directDepositValuePerToken", directDepositValuePerToken);
+
+      expect(await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
+        ethers.BigNumber.from(BigInt(twoDollar - directDepositValuePerToken)),
+        1e9,
+      );
+
+      expect(
+        await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address),
+      ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollar - directDepositValuePerToken)), 1e9);
     });
   });
 });

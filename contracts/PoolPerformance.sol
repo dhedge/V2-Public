@@ -45,6 +45,7 @@ import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IERC20Extended.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/aave/IAaveProtocolDataProvider.sol";
+import "./interfaces/aave/ILendingPool.sol";
 import "./interfaces/aave/ILendingPoolAddressesProvider.sol";
 import "./interfaces/aave/IAToken.sol";
 
@@ -62,6 +63,10 @@ contract PoolPerformance is OwnableUpgradeable {
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   address public aaveLendingPool;
+
+  // For Aave decimal calculation
+  uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+  uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
 
   /// @notice initialisation for the contract
   function initialize(address _aaveProtocolDataProvider) external initializer {
@@ -108,12 +113,14 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @notice a view function that returns the realtime + recorded difference between internal and external value of a token
   /// @param poolAddress The address of the pool
   /// @return the value per token of airdrops and other external value
-  function externalValuePerToken(address poolAddress) internal view returns (uint256) {
+  function externalValuePerToken(address poolAddress) public view returns (uint256) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
 
     uint256 internalValue = 0;
     uint256 externalValue = 0;
+
+    address aToken;
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
@@ -121,7 +128,24 @@ contract PoolPerformance is OwnableUpgradeable {
         continue;
       }
 
-      externalValue = externalValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress));
+      uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
+      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
+      // i.e dai === aDai.
+      if (IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool)) {
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
+
+        if (aToken != address(0)) {
+          externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
+        }
+      }
+
+      externalValue = externalValue.add(
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, externalBalance)
+      );
+      // if supportsAAVE
+      // Get normal balance
+      // get aToken scaledBalance
+      // combine and get assetValue
 
       internalValue = internalValue.add(
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress])
@@ -162,7 +186,9 @@ contract PoolPerformance is OwnableUpgradeable {
       // One thing to note here is that the impact of the external value is variable
       // and is impacted by when this function is called and the price of the
       // external asset at the time.
-      internalValue = internalValue.add(IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress]));
+      internalValue = internalValue.add(
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress])
+      );
 
       // Once we record the current value of the internal asset, we then update the internal balance to equal the external balance
       uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
@@ -180,8 +206,7 @@ contract PoolPerformance is OwnableUpgradeable {
       internalBalancesMap[poolAddress][assetAddress] = externalBalance;
     }
 
-
-    // In most cases this will be true and when it is there is not externalValue to record so we exit early
+    // In most cases this will be true, and when it is, there is no externalValue to record so we exit early
     if (internalValue == externalValue) {
       return;
     }
@@ -337,5 +362,9 @@ contract PoolPerformance is OwnableUpgradeable {
 
       internalBalancesMap[poolAddress][assetAddress] = externalBalance;
     }
+  }
+
+  function setExternalValue(address poolAddress, uint256 value) public onlyOwner {
+    externalValuePerTokenMap[poolAddress] = value;
   }
 }

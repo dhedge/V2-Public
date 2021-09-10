@@ -16,6 +16,8 @@ interface IERC20Extended {
 
   function balanceOf(address owner) external view returns (uint256);
 
+  function scaledBalanceOf(address user) external view returns (uint256);
+
   function allowance(address owner, address spender) external view returns (uint256);
 
   // Mutative functions
