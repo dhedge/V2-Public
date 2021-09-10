@@ -66,11 +66,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "poolAddress",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "externalValuePerToken",
+    "name": "externalValueFactorMap",
     "outputs": [
       {
         "internalType": "uint256",
@@ -85,11 +85,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "poolAddress",
         "type": "address"
       }
     ],
-    "name": "externalValuePerTokenMap",
+    "name": "externalValuePerToken",
     "outputs": [
       {
         "internalType": "uint256",

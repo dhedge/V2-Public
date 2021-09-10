@@ -59,14 +59,13 @@ contract PoolPerformance is OwnableUpgradeable {
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
 
   // Stores the value per token attributed to non performance based increases.
-  mapping(address => uint256) public externalValuePerTokenMap;
+  mapping(address => uint256) public externalValueFactorMap;
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   address public aaveLendingPool;
 
-  // For Aave decimal calculation
-  uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
-  uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
+  uint256 constant DENOMINATOR = 10**18;
+
 
   /// @notice initialisation for the contract
   function initialize(address _aaveProtocolDataProvider) external initializer {
@@ -80,14 +79,14 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets
   function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress).sub(externalValuePerToken(poolAddress));
+    return tokenPrice(poolAddress).mul(externalValuePerToken(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
-    return tokenPriceAdjustedForManagerFee(poolAddress).sub(externalValuePerToken(poolAddress));
+    return tokenPriceAdjustedForManagerFee(poolAddress).mul(externalValuePerToken(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool tokens underlying value, sans any manager fee
@@ -152,13 +151,10 @@ contract PoolPerformance is OwnableUpgradeable {
       );
     }
 
-    if (externalValuePerTokenMap[poolAddress] == 0) {
-      return externalValue.sub(internalValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply());
+    if (externalValueFactorMap[poolAddress] == 0) {
+      return DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue))));
     } else {
-      return
-        externalValuePerTokenMap[poolAddress].add(
-          externalValue.sub(internalValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
-        );
+      return externalValueFactorMap[poolAddress].mul(DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue))))).div(DENOMINATOR);
     }
   }
 
@@ -211,15 +207,12 @@ contract PoolPerformance is OwnableUpgradeable {
       return;
     }
 
-    if (externalValuePerTokenMap[poolAddress] == 0) {
-      externalValuePerTokenMap[poolAddress] = externalValue.sub(internalValue).mul(10**18).div(
-        IERC20Extended(poolAddress).totalSupply()
-      );
+    if (externalValueFactorMap[poolAddress] == 0) {
+      externalValueFactorMap[poolAddress] = DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue))));
     } else {
-      externalValuePerTokenMap[poolAddress] = externalValuePerTokenMap[poolAddress].add(
-        externalValue.sub(internalValue).mul(10**18).div(IERC20Extended(poolAddress).totalSupply())
-      );
+      externalValueFactorMap[poolAddress] = externalValueFactorMap[poolAddress].mul(DENOMINATOR.sub((DENOMINATOR.sub(internalValue.mul(DENOMINATOR).div(externalValue)))));
     }
+
   }
 
   /// @notice Increase the internal balanace of the given asset
@@ -365,6 +358,6 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   function setExternalValue(address poolAddress, uint256 value) public onlyOwner {
-    externalValuePerTokenMap[poolAddress] = value;
+    externalValueFactorMap[poolAddress] = value;
   }
 }

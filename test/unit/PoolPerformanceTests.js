@@ -319,6 +319,7 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
+    console.log(">>>>>>>>", (await poolPerformanceProxy.externalValuePerToken(poolLogicProxy.address)).toString());
     expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
     expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
@@ -345,7 +346,7 @@ describe("PoolFactory", function () {
     );
     expect(
       (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-    ).to.equal((oneDollarSixty - oneDollar).toString());
+    ).to.equal((oneDollarSixty / 2).toString());
 
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
@@ -436,7 +437,7 @@ describe("PoolFactory", function () {
     );
     expect(
       (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-    ).to.equal((oneDollarSixty - oneDollar).toString());
+    ).to.equal((oneDollarSixty / 2).toString());
 
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
@@ -469,7 +470,7 @@ describe("PoolFactory", function () {
     // $2.90 - minus the direct deposit of $2 = $.90
     expect(
       (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-    ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollarNinety - twoDollar)), 100);
+    ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollarNinety / 2)), 100);
   });
 
   // manager starts pool with $1
@@ -563,9 +564,10 @@ describe("PoolFactory", function () {
     ).to.be.closeTo(thirteenFiftyFive, 10000);
 
     // $13.55 - minus the direct deposit value of $18 == error
-    await expect(
-      poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address),
-    ).to.be.revertedWith("SafeMath: subtraction overflow");
+    const tenth = thirteenFiftyFive.div(10);
+    expect(
+      (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+    ).to.be.closeTo(tenth, 10000);
   });
 
   it("resetExternalValue", async function () {
@@ -618,7 +620,7 @@ describe("PoolFactory", function () {
       oneDollar.toString(),
     );
 
-    await poolPerformanceProxy.setExternalValue(poolLogicProxy.address, 0);
+    await poolPerformanceProxy.setExternalValue(poolLogicProxy.address, (10 ** 18).toString());
 
     expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
     expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
