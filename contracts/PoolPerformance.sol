@@ -65,7 +65,6 @@ contract PoolPerformance is OwnableUpgradeable {
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   address public aaveLendingPool;
 
-
   /// @notice initialisation for the contract
   function initialize(address _aaveProtocolDataProvider) external initializer {
     __Ownable_init();
