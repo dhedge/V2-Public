@@ -1,39 +1,24 @@
 const { ethers, upgrades } = require("hardhat");
 
-// Place holder addresses
-const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
-
 const { expect } = require("chai");
-const abiCoder = ethers.utils.defaultAbiCoder;
 
-const { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32 } = require("../TestHelpers");
+const { updateChainlinkAggregators } = require("../TestHelpers");
 
-let logicOwner, manager, dao, investor, user1, user2;
-let poolFactory,
-  PoolLogic,
-  PoolManagerLogic,
-  poolLogic,
-  poolManagerLogic,
-  poolLogicProxy,
-  poolManagerLogicProxy,
-  poolPerformanceProxy,
-  fundAddress;
+let logicOwner, manager, dao, investor;
+let poolFactory, PoolLogic, poolLogicProxy, poolPerformanceProxy;
 
-let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
-let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard, sushiMiniChefV2Guard; // contract guards
-let erc20Guard, sushiLPAssetGuard, openAssetGuard; // asset guards
-let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
-let susd, seth, slink;
-let oneInchRouter;
-let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
-let sushiLPAggregator; // local aggregators
+let IERC20, iERC20;
+let synthetixGuard; // contract guards
+let erc20Guard; // asset guards
+let addressResolver, synthetix; // integrating contracts
+let susd, seth;
+let susdAsset, susdProxy, sethAsset, sethProxy;
 let usd_price_feed, eth_price_feed, link_price_feed; // integrating aggregators
 
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
 
 const susdKey = "0x7355534400000000000000000000000000000000000000000000000000000000";
 const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000000";
-const slinkKey = "0x734c494e4b000000000000000000000000000000000000000000000000000000";
 
 describe("PoolFactory", function () {
   beforeEach(async function () {
@@ -42,29 +27,15 @@ describe("PoolFactory", function () {
     const MockContract = await ethers.getContractFactory("MockContract");
     addressResolver = await MockContract.deploy();
     synthetix = await MockContract.deploy();
-    uniswapV2Router = await MockContract.deploy();
-    uniswapV3Router = await MockContract.deploy();
-    sushiMiniChefV2 = await MockContract.deploy();
     susdAsset = await MockContract.deploy();
     susdProxy = await MockContract.deploy();
     sethAsset = await MockContract.deploy();
     sethProxy = await MockContract.deploy();
-    slinkAsset = await MockContract.deploy();
-    slinkProxy = await MockContract.deploy();
-    sushiLPLinkWethAsset = await MockContract.deploy();
     usd_price_feed = await MockContract.deploy();
     eth_price_feed = await MockContract.deploy();
     link_price_feed = await MockContract.deploy();
-    uniswapV2Factory = await MockContract.deploy();
-    sushiToken = await MockContract.deploy();
-    wmaticToken = await MockContract.deploy();
-    oneInchRouter = await MockContract.deploy();
     susd = susdProxy.address;
     seth = sethProxy.address;
-    slink = slinkProxy.address;
-    sushiLPLinkWeth = sushiLPLinkWethAsset.address;
-    sushiLPLinkWethPoolId = 0; // set Sushi LP staking contract Pool Id
-    badtoken = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB";
 
     // mock IAddressResolver
     const IAddressResolver = await hre.artifacts.readArtifact(
@@ -74,33 +45,6 @@ describe("PoolFactory", function () {
     let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
-    const IUniswapV2Router = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv2/IUniswapV2Router.sol:IUniswapV2Router",
-    );
-    const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
-    let factoryABI = iUniswapV2Router.encodeFunctionData("factory", []);
-    await uniswapV2Router.givenCalldataReturnAddress(factoryABI, uniswapV2Factory.address);
-
-    // mock Sushi LINK-WETH LP
-    const IUniswapV2Pair = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv2/IUniswapV2Pair.sol:IUniswapV2Pair",
-    );
-    const iUniswapV2Pair = new ethers.utils.Interface(IUniswapV2Pair.abi);
-    const token0Abi = iUniswapV2Pair.encodeFunctionData("token0", []);
-    await sushiLPLinkWethAsset.givenCalldataReturnAddress(token0Abi, slink);
-    const token1Abi = iUniswapV2Pair.encodeFunctionData("token1", []);
-    await sushiLPLinkWethAsset.givenCalldataReturnAddress(token1Abi, seth);
-    const totalSupply = iUniswapV2Pair.encodeFunctionData("totalSupply", []);
-    await sushiLPLinkWethAsset.givenCalldataReturnUint(totalSupply, "81244364124268806526393");
-    const getReserves = iUniswapV2Pair.encodeFunctionData("getReserves", []);
-    await sushiLPLinkWethAsset.givenCalldataReturn(
-      getReserves,
-      abiCoder.encode(
-        ["uint112", "uint112", "uint32"],
-        ["1158679007401429485290646", "11024994840258089037095", await currentBlockTimestamp()],
-      ),
-    );
-
     // mock ISynthetix
     const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
@@ -108,15 +52,11 @@ describe("PoolFactory", function () {
     await synthetix.givenCalldataReturnAddress(synthsABI, susdAsset.address);
     synthsABI = iSynthetix.encodeFunctionData("synths", [sethKey]);
     await synthetix.givenCalldataReturnAddress(synthsABI, sethAsset.address);
-    synthsABI = iSynthetix.encodeFunctionData("synths", [slinkKey]);
-    await synthetix.givenCalldataReturnAddress(synthsABI, slinkAsset.address);
 
     let synthsByAddressABI = iSynthetix.encodeFunctionData("synthsByAddress", [susdAsset.address]);
     await synthetix.givenCalldataReturn(synthsByAddressABI, susdKey);
     synthsByAddressABI = iSynthetix.encodeFunctionData("synthsByAddress", [sethAsset.address]);
     await synthetix.givenCalldataReturn(synthsByAddressABI, sethKey);
-    synthsByAddressABI = iSynthetix.encodeFunctionData("synthsByAddress", [slinkAsset.address]);
-    await synthetix.givenCalldataReturn(synthsByAddressABI, slinkKey);
 
     // mock ISynth
     const ISynth = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynth.sol:ISynth");
@@ -124,7 +64,6 @@ describe("PoolFactory", function () {
     const proxyABI = iSynth.encodeFunctionData("proxy", []);
     await susdAsset.givenCalldataReturnAddress(proxyABI, susdProxy.address);
     await sethAsset.givenCalldataReturnAddress(proxyABI, sethProxy.address);
-    await slinkAsset.givenCalldataReturnAddress(proxyABI, slinkProxy.address);
 
     // mock ISynthAddressProxy
     const ISynthAddressProxy = await hre.artifacts.readArtifact(
@@ -134,20 +73,12 @@ describe("PoolFactory", function () {
     const targetABI = iSynthAddressProxy.encodeFunctionData("target", []);
     await susdProxy.givenCalldataReturnAddress(targetABI, susdAsset.address);
     await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
-    await slinkProxy.givenCalldataReturnAddress(targetABI, slinkAsset.address);
 
     IERC20 = await hre.artifacts.readArtifact("ERC20Upgradeable");
     iERC20 = new ethers.utils.Interface(IERC20.abi);
     let decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
     await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
-    await slinkProxy.givenCalldataReturnUint(decimalsABI, "18");
-    await sushiLPLinkWethAsset.givenCalldataReturnUint(decimalsABI, "18");
-    await sushiToken.givenCalldataReturnUint(decimalsABI, "18");
-    await wmaticToken.givenCalldataReturnUint(decimalsABI, "18");
-
-    // Aggregators
-    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
     const Governance = await ethers.getContractFactory("Governance");
     let governance = await Governance.deploy();
@@ -168,18 +99,15 @@ describe("PoolFactory", function () {
     poolPerformanceProxy.initialize(mockAaveProtocolDataProvider.address);
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
-    poolLogic = await PoolLogic.deploy();
+    const poolLogic = await PoolLogic.deploy();
 
-    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    poolManagerLogic = await PoolManagerLogic.deploy();
+    const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+    const poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
     const assetSusd = { asset: susd, assetType: 0, aggregator: usd_price_feed.address };
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
-    const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed.address };
-    const assetSushi = { asset: sushiToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
-    const assetWmatic = { asset: wmaticToken.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
-    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink, assetSushi, assetWmatic];
+    const assetHandlerInitAssets = [assetSusd, assetSeth];
 
     AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
@@ -196,79 +124,20 @@ describe("PoolFactory", function () {
 
     poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
-    // Deploy Sushi LP Aggregator
-    const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
-    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLPLinkWeth, poolFactory.address);
-    const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
-    await assetHandler.addAssets([assetSushiLPLinkWeth]);
-
     // Deploy contract guards
     const SynthetixGuard = await ethers.getContractFactory("contracts/guards/SynthetixGuard.sol:SynthetixGuard");
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
-
-    const UniswapV2RouterGuard = await ethers.getContractFactory(
-      "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
-    );
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
-    uniswapV2RouterGuard.deployed();
-
-    const UniswapV3SwapGuard = await ethers.getContractFactory(
-      "contracts/guards/uniswapV3/UniswapV3SwapGuard.sol:UniswapV3SwapGuard",
-    );
-    uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
-    uniswapV3SwapGuard.deployed();
-
-    const SushiMiniChefV2Guard = await ethers.getContractFactory(
-      "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
-    );
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken.address, wmaticToken.address);
-    sushiMiniChefV2Guard.deployed();
-
-    const OneInchV3Guard = await ethers.getContractFactory("contracts/guards/OneInchV3Guard.sol:OneInchV3Guard");
-    oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
-    oneInchV3Guard.deployed();
 
     // Deploy asset guards
     const ERC20Guard = await ethers.getContractFactory("contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const SushiLPAssetGuard = await ethers.getContractFactory(
-      "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
-    );
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
-    sushiLPAssetGuard.deployed();
-
-    const OpenAssetGuard = await ethers.getContractFactory(
-      "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
-    );
-    openAssetGuard = await OpenAssetGuard.deploy([externalValidToken]); // initialise with random external token
-    openAssetGuard.deployed();
-
     await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
-    await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
-    await governance.setContractGuard(oneInchRouter.address, oneInchV3Guard.address);
-    await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
-    await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
 
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
-
-    await poolFactory.createFund(
-      false,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [seth, false],
-        [susd, true],
-      ],
-    );
   });
 
   // manager starts pool with $1

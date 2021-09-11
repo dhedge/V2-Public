@@ -154,13 +154,15 @@ contract PoolPerformance is OwnableUpgradeable {
       return internalValue.mul(DENOMINATOR).div(externalValue);
     } else {
       return
-        externalValueFactorMap[poolAddress]
-          .mul(internalValue.mul(DENOMINATOR).div(externalValue))
-          .div(DENOMINATOR);
+        externalValueFactorMap[poolAddress].mul(internalValue.mul(DENOMINATOR).div(externalValue)).div(DENOMINATOR);
     }
   }
 
-  function externalValuePerToken2(address poolAddress) public view returns (uint256 internalValue, uint256 externalValue) {
+  function externalValuePerToken2(address poolAddress)
+    public
+    view
+    returns (uint256 internalValue, uint256 externalValue)
+  {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
 
@@ -199,7 +201,7 @@ contract PoolPerformance is OwnableUpgradeable {
     if (externalValueFactorMap[poolAddress] == 0) {
       return (internalValue, externalValue);
     } else {
-        return (internalValue, externalValue);
+      return (internalValue, externalValue);
     }
   }
 

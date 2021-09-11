@@ -502,7 +502,7 @@ describe("PoolPerformance", function () {
     // Check after balances of usdc and amusdc
     // Direct deposit amUSDC to Pool
     // check that the directDeposit of amUSDC is accounted for by PoolPerformance
-    it("tokenPriceAdjustForPerformance with direct deposit", async () => {
+    it.only("tokenPriceAdjustForPerformance with direct deposit", async () => {
       const usdcAmount = (100e6).toString();
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
@@ -552,17 +552,22 @@ describe("PoolPerformance", function () {
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 200e6);
 
       // We check that the directDeposit of amUSDC is accounted for by PoolPerformance
-      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
-      expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
-        twoDollar.toString(),
+      expect((await poolPerformanceProxy.tokenPrice(poolLogicProxy.address)).toString()).closeTo(
+        ethers.BigNumber.from(BigInt(twoDollar)),
+        1e9,
+      );
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).closeTo(
+        ethers.BigNumber.from(BigInt(twoDollar)),
+        1e9,
       );
 
-      expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        (twoDollar / 2).toString(),
+      expect((await poolPerformanceProxy.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).closeTo(
+        ethers.BigNumber.from(BigInt(twoDollar / 2)),
+        1e9,
       );
       expect(
         (await poolPerformanceProxy.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal((twoDollar / 2).toString());
+      ).closeTo(ethers.BigNumber.from(BigInt(twoDollar / 2)), 1e9);
     });
 
     // In this test we make sure directDeposits of aTokens are accounted for by PoolPerformance using WETH
