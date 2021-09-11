@@ -58,13 +58,13 @@ contract PoolPerformance is OwnableUpgradeable {
 
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
 
-  // Stores the value per token attributed to non performance based increases.
-  mapping(address => uint256) public externalValueFactorMap;
+  uint256 public constant DENOMINATOR = 10**18;
+  // Stores the internal value ratio numerator
+  mapping(address => uint256) public internalValueFactorMap;
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   address public aaveLendingPool;
 
-  uint256 constant DENOMINATOR = 10**18;
 
   /// @notice initialisation for the contract
   function initialize(address _aaveProtocolDataProvider) external initializer {
@@ -150,58 +150,11 @@ contract PoolPerformance is OwnableUpgradeable {
       );
     }
 
-    if (externalValueFactorMap[poolAddress] == 0) {
+    if (internalValueFactorMap[poolAddress] == 0) {
       return internalValue.mul(DENOMINATOR).div(externalValue);
     } else {
       return
-        externalValueFactorMap[poolAddress].mul(internalValue.mul(DENOMINATOR).div(externalValue)).div(DENOMINATOR);
-    }
-  }
-
-  function externalValuePerToken2(address poolAddress)
-    public
-    view
-    returns (uint256 internalValue, uint256 externalValue)
-  {
-    address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
-    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
-
-    address aToken;
-
-    for (uint8 i = 0; i < supportedAssets.length; i++) {
-      address assetAddress = supportedAssets[i].asset;
-      if (assetAddress == aaveLendingPool) {
-        continue;
-      }
-
-      uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
-      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
-      // i.e dai === aDai.
-      if (IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool)) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
-
-        if (aToken != address(0)) {
-          externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
-        }
-      }
-
-      externalValue = externalValue.add(
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, externalBalance)
-      );
-      // if supportsAAVE
-      // Get normal balance
-      // get aToken scaledBalance
-      // combine and get assetValue
-
-      internalValue = internalValue.add(
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress])
-      );
-    }
-
-    if (externalValueFactorMap[poolAddress] == 0) {
-      return (internalValue, externalValue);
-    } else {
-      return (internalValue, externalValue);
+        internalValueFactorMap[poolAddress].mul(internalValue.mul(DENOMINATOR).div(externalValue)).div(DENOMINATOR);
     }
   }
 
@@ -254,10 +207,10 @@ contract PoolPerformance is OwnableUpgradeable {
       return;
     }
 
-    if (externalValueFactorMap[poolAddress] == 0) {
-      externalValueFactorMap[poolAddress] = internalValue.mul(DENOMINATOR).div(externalValue);
+    if (internalValueFactorMap[poolAddress] == 0) {
+      internalValueFactorMap[poolAddress] = internalValue.mul(DENOMINATOR).div(externalValue);
     } else {
-      externalValueFactorMap[poolAddress] = externalValueFactorMap[poolAddress]
+      internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress]
         .mul(internalValue.mul(DENOMINATOR).div(externalValue))
         .div(DENOMINATOR);
     }
@@ -406,6 +359,6 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   function setExternalValue(address poolAddress, uint256 value) public onlyOwner {
-    externalValueFactorMap[poolAddress] = value;
+    internalValueFactorMap[poolAddress] = value;
   }
 }

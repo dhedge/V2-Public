@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const { solidity } = require("ethereum-waffle");
-const { checkAlmostSame, toBytes32, getAmountOut } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
 
 use(solidity);
 

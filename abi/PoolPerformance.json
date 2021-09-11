@@ -20,6 +20,19 @@
   },
   {
     "inputs": [],
+    "name": "DENOMINATOR",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "aaveLendingPool",
     "outputs": [
       {
@@ -66,25 +79,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "externalValueFactorMap",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "poolAddress",
         "type": "address"
       }
@@ -94,30 +88,6 @@
       {
         "internalType": "uint256",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "poolAddress",
-        "type": "address"
-      }
-    ],
-    "name": "externalValuePerToken2",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "internalValue",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "externalValue",
         "type": "uint256"
       }
     ],
@@ -206,6 +176,25 @@
       }
     ],
     "name": "internalBalancesMap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "internalValueFactorMap",
     "outputs": [
       {
         "internalType": "uint256",
