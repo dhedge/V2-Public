@@ -209,8 +209,6 @@ describe("PoolFactory", function () {
     const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
-    // await poolPerformanceProxy.recordExternalValue(poolLogicProxy.address);
-
     // Halve the usd price
     await usd_price_feed.givenCalldataReturn(
       latestRoundDataABI,
