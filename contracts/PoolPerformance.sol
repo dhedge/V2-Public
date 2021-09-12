@@ -139,10 +139,6 @@ contract PoolPerformance is OwnableUpgradeable {
       externalValue = externalValue.add(
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, externalBalance)
       );
-      // if supportsAAVE
-      // Get normal balance
-      // get aToken scaledBalance
-      // combine and get assetValue
 
       internalValue = internalValue.add(
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, internalBalancesMap[poolAddress][assetAddress])
