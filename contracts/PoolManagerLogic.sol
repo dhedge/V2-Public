@@ -79,7 +79,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public managerFeeNumerator;
 
   modifier onlyManagerOrTradeOrFactory() {
-    require(msg.sender == manager || msg.sender == trader || msg.sender == factory, "only manager or trader or factory");
+    require(
+      msg.sender == manager || msg.sender == trader || msg.sender == factory,
+      "only manager or trader or factory"
+    );
     _;
   }
 
