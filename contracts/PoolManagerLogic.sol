@@ -163,11 +163,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       uint256 i = supportedAssets.length;
       supportedAssets.push(_asset);
       assetPosition[asset] = i.add(1); // adjusting the index because the map stores 1-based
+      uint16 assetType = IHasAssetInfo(factory).getAssetType(asset);
       for (
         i;
-        i > 0 &&
-          IHasAssetInfo(factory).getAssetType(supportedAssets[i.sub(1)].asset) <
-          IHasAssetInfo(factory).getAssetType(supportedAssets[i].asset);
+        i > 0 && IHasAssetInfo(factory).getAssetType(supportedAssets[i.sub(1)].asset) < assetType;
         i--
       ) {
         Asset memory temp = supportedAssets[i];
