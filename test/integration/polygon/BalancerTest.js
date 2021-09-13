@@ -1,5 +1,6 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
+const Decimal = require("decimal.js");
 const chaiAlmost = require("chai-almost");
 const axios = require("axios");
 const { checkAlmostSame, toBytes32, getAmountOut, getAmountIn, units } = require("../../TestHelpers");
@@ -20,12 +21,25 @@ const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
 const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
 const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
+const dai_price_feed = "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D";
 
 const quickLpUsdcUsdt = "0x2cf7252e74036d1da831d11089d326296e64a728";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const balancer_pool = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42";
+const balancer_pool_info = {
+  pool: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+  poolId: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012",
+  tokens: [
+    "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+    "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+    "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+    "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+  ],
+  decimals: [6, 18, 18, 6],
+  weights: [0.25, 0.25, 0.25, 0.25],
+};
 /*
 1. 0x0297e37f1873d2dab4487aa67cd56b58e2f27875, 0x0297e37f1873d2dab4487aa67cd56b58e2f27875000100000000000000000002 - WMATIC, USDC, WETH, BALANCER
 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270,0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174,0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619,0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3
@@ -38,6 +52,47 @@ describe("Balancer V2 Test", function () {
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+
+  const deployBalancerV2LpAggregator = async (info) => {
+    const ether = "1000000000000000000";
+    const divisor = info.weights.reduce((acc, w, i) => {
+      if (i == 0) {
+        return new Decimal(w).pow(w);
+      }
+      return acc.mul(new Decimal(w).pow(w));
+    }, new Decimal("0"));
+
+    const K = new Decimal(ether).div(divisor).toFixed(0);
+
+    let matrix = [];
+    for (let i = 1; i <= 20; i++) {
+      const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
+      for (let j = 0; j < info.weights.length; j++) {
+        elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+      }
+      matrix.push(elements);
+    }
+
+    const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
+    return await BalancerV2LPAggregator.deploy(
+      poolFactory.address,
+      balancerV2Vault,
+      balancer_pool,
+      info.tokens,
+      info.decimals,
+      info.weights.map((w) =>
+        ethers.BigNumber.from(10)
+          .pow(10)
+          .mul(w * 100000000),
+      ),
+      [
+        "50000000000000000", // 0.05
+        K,
+        "100000000",
+        matrix,
+      ],
+    );
+  };
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -58,7 +113,9 @@ describe("Balancer V2 Test", function () {
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
+    const assetDai = { asset: dai, assetType: 0, aggregator: dai_price_feed };
+    const assetMiMatic = { asset: miMatic, assetType: 0, aggregator: dai_price_feed };
+    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetDai, assetMiMatic];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
@@ -73,6 +130,12 @@ describe("Balancer V2 Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+
+    // Deploy Balancer LP Aggregator
+    balancerV2Aggregator = await deployBalancerV2LpAggregator(balancer_pool_info);
+
+    const balancerLpAsset = { asset: balancer_pool, assetType: 6, aggregator: balancerV2Aggregator.address };
+    await assetHandler.addAssets([balancerLpAsset]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
@@ -91,6 +154,7 @@ describe("Balancer V2 Test", function () {
     balancerV2Guard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
     await governance.setContractGuard(quickswapRouter, uniswapV2RouterGuard.address);
     await governance.setContractGuard(balancerV2Vault, balancerV2Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
@@ -410,6 +474,7 @@ describe("Balancer V2 Test", function () {
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
     await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, swapTx);
 
@@ -417,6 +482,9 @@ describe("Balancer V2 Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     expect(usdcBalanceAfter).to.equal(usdcBalanceBefore.sub(amount));
     checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(amount));
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
 
   it("should be able to swap tokens on balancer - swap exactOutput.", async () => {
@@ -485,6 +553,7 @@ describe("Balancer V2 Test", function () {
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
     await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, swapTx);
 
@@ -492,6 +561,9 @@ describe("Balancer V2 Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(amount));
     expect(usdtBalanceAfter).to.equal(usdtBalanceBefore.add(amount));
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
 
   it("should be able to swap tokens on balancer - batchSwap exactInput.", async () => {
@@ -520,6 +592,7 @@ describe("Balancer V2 Test", function () {
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
     await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, swapTx);
 
@@ -527,6 +600,9 @@ describe("Balancer V2 Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     expect(usdcBalanceAfter).to.equal(usdcBalanceBefore.sub(amount));
     checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(amount));
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
 
   it("should be able to swap tokens on balancer - batchSwap exactOutput.", async () => {
@@ -555,6 +631,7 @@ describe("Balancer V2 Test", function () {
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
     await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, swapTx);
 
@@ -562,9 +639,14 @@ describe("Balancer V2 Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(amount));
     expect(usdtBalanceAfter).to.equal(usdtBalanceBefore.add(amount));
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
 
   it("should be able to join pool on balancer.", async () => {
+    await poolManagerLogicProxy.connect(manager).changeAssets([[balancer_pool, false]], []);
+
     const poolId = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012";
     const sender = poolLogicProxy.address;
     const recipient = poolLogicProxy.address;
@@ -643,6 +725,7 @@ describe("Balancer V2 Test", function () {
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
     await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, joinTx);
 
@@ -650,6 +733,9 @@ describe("Balancer V2 Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     expect(usdcBalanceAfter).to.equal(usdcBalanceBefore.sub(amount));
     expect(usdtBalanceAfter).to.equal(usdtBalanceBefore.sub(amount));
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
 
   it("should be able to exit pool on balancer.", async () => {
@@ -737,6 +823,7 @@ describe("Balancer V2 Test", function () {
 
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
     await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx);
 
@@ -744,5 +831,8 @@ describe("Balancer V2 Test", function () {
     const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
     checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(amount.mul(2)));
     expect(usdtBalanceAfter).to.be.equal(usdtBalanceBefore);
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
 });

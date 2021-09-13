@@ -88,4 +88,13 @@ interface IBalancerV2Vault {
     address payable recipient,
     ExitPoolRequest memory request
   ) external;
+
+  function getPoolTokens(bytes32 poolId)
+    external
+    view
+    returns (
+      address[] memory tokens,
+      uint256[] memory balances,
+      uint256 lastChangeBlock
+    );
 }
