@@ -191,7 +191,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
     uint256 length = supportedAssets.length;
-    for (uint256 i = index; length > 1 && i < length.sub(1); i++) {
+    for (uint256 i = index; i.add(1) < length; i++) {
       Asset memory temp = supportedAssets[i];
       supportedAssets[i] = supportedAssets[i.add(1)];
       assetPosition[supportedAssets[i].asset] = i.add(1);
