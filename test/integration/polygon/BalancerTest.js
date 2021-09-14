@@ -2,7 +2,6 @@ const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const Decimal = require("decimal.js");
 const chaiAlmost = require("chai-almost");
-const axios = require("axios");
 const { checkAlmostSame, toBytes32, getAmountOut, getAmountIn, units } = require("../../TestHelpers");
 
 use(chaiAlmost());
@@ -16,19 +15,17 @@ const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
 const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 const usdt = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
 const dai = "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063";
+const balancer = "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3";
 const miMatic = "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1";
 const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
 const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
 const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
 const dai_price_feed = "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D";
+const balancer_price_feed = "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66";
 
-const quickLpUsdcUsdt = "0x2cf7252e74036d1da831d11089d326296e64a728";
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-const balancer_pool = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42";
-const balancer_pool_info = {
+// balancer stable pool with USDC, DAI, miMatic, USDT
+const balancer_stable_pool_info = {
   pool: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
   poolId: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012",
   tokens: [
@@ -40,6 +37,15 @@ const balancer_pool_info = {
   decimals: [6, 18, 18, 6],
   weights: [0.25, 0.25, 0.25, 0.25],
 };
+
+// balancer weighted pool with WETH, BALANCER
+const balancer80_weth20_pool_info = {
+  pool: "0x7EB878107Af0440F9E776f999CE053D277c8Aca8",
+  poolId: "0x7eb878107af0440f9e776f999ce053d277c8aca800020000000000000000002f",
+  tokens: ["0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3"],
+  decimals: [18, 18],
+  weights: [0.2, 0.8],
+};
 /*
 1. 0x0297e37f1873d2dab4487aa67cd56b58e2f27875, 0x0297e37f1873d2dab4487aa67cd56b58e2f27875000100000000000000000002 - WMATIC, USDC, WETH, BALANCER
 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270,0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174,0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619,0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3
@@ -48,8 +54,8 @@ const balancer_pool_info = {
 */
 
 describe("Balancer V2 Test", function () {
-  let WMatic, WETH, USDC, USDT, BALANCERLP;
-  let logicOwner, manager, dao, user;
+  let WMatic, WETH, USDC, USDT, BALANCERLP_STABLE, BALANCER, BALANCERLP_WETH_BALANCER;
+  let logicOwner, manager, dao;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
 
@@ -77,7 +83,7 @@ describe("Balancer V2 Test", function () {
     return await BalancerV2LPAggregator.deploy(
       poolFactory.address,
       balancerV2Vault,
-      balancer_pool,
+      info.pool,
       info.tokens,
       info.decimals,
       info.weights.map((w) =>
@@ -86,10 +92,10 @@ describe("Balancer V2 Test", function () {
           .mul(w * 100000000),
       ),
       [
-        "50000000000000000", // 0.05
+        "50000000000000000", // maxPriceDeviation: 0.05
         K,
-        "100000000",
-        matrix,
+        "100000000", // powerPrecision
+        matrix, // approximationMatrix
       ],
     );
   };
@@ -110,12 +116,22 @@ describe("Balancer V2 Test", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
+    const assetWMatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
     const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
     const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
     const assetDai = { asset: dai, assetType: 0, aggregator: dai_price_feed };
+    const assetBalancer = { asset: balancer, assetType: 0, aggregator: balancer_price_feed };
     const assetMiMatic = { asset: miMatic, assetType: 0, aggregator: dai_price_feed };
-    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc, assetDai, assetMiMatic];
+    const assetHandlerInitAssets = [
+      assetWMatic,
+      assetWeth,
+      assetUsdt,
+      assetUsdc,
+      assetDai,
+      assetBalancer,
+      assetMiMatic,
+    ];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
@@ -132,10 +148,21 @@ describe("Balancer V2 Test", function () {
     await poolFactory.deployed();
 
     // Deploy Balancer LP Aggregator
-    balancerV2Aggregator = await deployBalancerV2LpAggregator(balancer_pool_info);
-
-    const balancerLpAsset = { asset: balancer_pool, assetType: 6, aggregator: balancerV2Aggregator.address };
+    const balancerV2Aggregator = await deployBalancerV2LpAggregator(balancer_stable_pool_info);
+    const balancerLpAsset = {
+      asset: balancer_stable_pool_info.pool,
+      assetType: 6,
+      aggregator: balancerV2Aggregator.address,
+    };
     await assetHandler.addAssets([balancerLpAsset]);
+
+    const balancerV2AggregatorWethBalancer = await deployBalancerV2LpAggregator(balancer80_weth20_pool_info);
+    const balancerLpAssetWethBalancer = {
+      asset: balancer80_weth20_pool_info.pool,
+      assetType: 6,
+      aggregator: balancerV2AggregatorWethBalancer.address,
+    };
+    await assetHandler.addAssets([balancerLpAssetWethBalancer]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
@@ -168,7 +195,9 @@ describe("Balancer V2 Test", function () {
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
     WETH = await ethers.getContractAt(IERC20.abi, weth);
     WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
-    BALANCERLP = await ethers.getContractAt(IERC20.abi, balancer_pool);
+    BALANCER = await ethers.getContractAt(IERC20.abi, balancer);
+    BALANCERLP_STABLE = await ethers.getContractAt(IERC20.abi, balancer_stable_pool_info.pool);
+    BALANCERLP_WETH_BALANCER = await ethers.getContractAt(IERC20.abi, balancer80_weth20_pool_info.pool);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
     balance = await WMATIC.balanceOf(logicOwner.address);
@@ -176,7 +205,7 @@ describe("Balancer V2 Test", function () {
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const QuickSwapRouter = await ethers.getContractAt(IUniswapV2Router.abi, quickswapRouter);
     // deposit Matic -> WMatic
-    await WMatic.deposit({ value: units(500) });
+    await WMatic.deposit({ value: units(1000) });
     balance = await WMATIC.balanceOf(logicOwner.address);
     console.log("WMatic balance: ", balance.toString());
     // WMatic -> USDC
@@ -190,6 +219,17 @@ describe("Balancer V2 Test", function () {
     );
     balance = await USDC.balanceOf(logicOwner.address);
     console.log("USDC balance: ", balance.toString());
+    // WMatic -> WETH
+    await WMatic.approve(quickswapRouter, units(500));
+    await QuickSwapRouter.swapExactTokensForTokens(
+      units(500),
+      0,
+      [wmatic, weth],
+      logicOwner.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    );
+    balance = await WETH.balanceOf(logicOwner.address);
+    console.log("WETH balance: ", balance.toString());
   });
 
   it("Should be able to createFund", async function () {
@@ -271,6 +311,7 @@ describe("Balancer V2 Test", function () {
       [
         [usdc, true],
         [usdt, true],
+        [weth, true],
       ],
     );
 
@@ -305,9 +346,10 @@ describe("Balancer V2 Test", function () {
     //default assets are supported
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(2);
+    expect(numberOfSupportedAssets).to.eq(3);
     expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
     expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
 
     //Other assets are not supported
     expect(await poolManagerLogicProxy.isSupportedAsset(wmatic)).to.be.false;
@@ -396,7 +438,7 @@ describe("Balancer V2 Test", function () {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [usdc, (200e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(weth, approveABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancer, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
 
@@ -645,7 +687,7 @@ describe("Balancer V2 Test", function () {
   });
 
   it("should be able to join pool on balancer.", async () => {
-    await poolManagerLogicProxy.connect(manager).changeAssets([[balancer_pool, false]], []);
+    await poolManagerLogicProxy.connect(manager).changeAssets([[balancer_stable_pool_info.pool, false]], []);
 
     const poolId = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012";
     const sender = poolLogicProxy.address;
@@ -758,7 +800,7 @@ describe("Balancer V2 Test", function () {
         minAmountsOut,
         ethers.utils.defaultAbiCoder.encode(
           ["uint256", "uint256", "uint256"],
-          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 2],
+          [0, await BALANCERLP_STABLE.balanceOf(poolLogicProxy.address), 2],
         ),
         false,
       ],
@@ -777,7 +819,7 @@ describe("Balancer V2 Test", function () {
         minAmountsOut,
         ethers.utils.defaultAbiCoder.encode(
           ["uint256", "uint256", "uint256"],
-          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+          [0, await BALANCERLP_STABLE.balanceOf(poolLogicProxy.address), 0],
         ),
         false,
       ],
@@ -796,7 +838,7 @@ describe("Balancer V2 Test", function () {
         minAmountsOut,
         ethers.utils.defaultAbiCoder.encode(
           ["uint256", "uint256", "uint256"],
-          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+          [0, await BALANCERLP_STABLE.balanceOf(poolLogicProxy.address), 0],
         ),
         false,
       ],
@@ -815,7 +857,7 @@ describe("Balancer V2 Test", function () {
         minAmountsOut,
         ethers.utils.defaultAbiCoder.encode(
           ["uint256", "uint256", "uint256"],
-          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+          [0, await BALANCERLP_STABLE.balanceOf(poolLogicProxy.address), 0],
         ),
         false,
       ],
@@ -831,6 +873,106 @@ describe("Balancer V2 Test", function () {
     const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
     checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(amount.mul(2)));
     expect(usdtBalanceAfter).to.be.equal(usdtBalanceBefore);
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
+  });
+
+  it("should be able to join weth-bal pool on balancer.", async () => {
+    // Deposit 0.1 WETH
+    await poolManagerLogicProxy.connect(manager).changeAssets([[weth, true]], []);
+    await WETH.approve(poolLogicProxy.address, units(1).div(10));
+    await poolLogicProxy.deposit(weth, units(1).div(10));
+
+    await poolManagerLogicProxy.connect(manager).changeAssets([[balancer80_weth20_pool_info.pool, false]], []);
+
+    const poolId = balancer80_weth20_pool_info.poolId;
+    const sender = poolLogicProxy.address;
+    const recipient = poolLogicProxy.address;
+    const assets = balancer80_weth20_pool_info.tokens;
+    const amount = units(1).div(10);
+    const maxAmountsIn = [amount, 0];
+
+    const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
+    const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault.abi);
+
+    const joinTx = iBalancerV2Vault.encodeFunctionData("joinPool", [
+      poolId,
+      sender,
+      recipient,
+      [
+        assets,
+        maxAmountsIn,
+        ethers.utils.defaultAbiCoder.encode(["uint256", "uint256", "uint256"], [2, units(1), 0]),
+        false,
+      ],
+    ]);
+
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
+    const iERC20 = new ethers.utils.Interface(IERC20.abi);
+    let approveABI = iERC20.encodeFunctionData("approve", [balancerV2Vault, amount]);
+    await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
+
+    const lpBalanceBefore = ethers.BigNumber.from(await BALANCERLP_WETH_BALANCER.balanceOf(poolLogicProxy.address));
+    const wethBalanceBefore = ethers.BigNumber.from(await WETH.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+
+    await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, joinTx);
+
+    const lpBalanceAfter = ethers.BigNumber.from(await BALANCERLP_WETH_BALANCER.balanceOf(poolLogicProxy.address));
+    expect(lpBalanceAfter).to.gt(lpBalanceBefore);
+
+    const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
+    expect(wethBalanceAfter).to.lt(wethBalanceBefore);
+
+    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
+  });
+
+  it("should be able to exit weth-bal pool on balancer.", async () => {
+    const poolId = balancer80_weth20_pool_info.poolId;
+    const sender = poolLogicProxy.address;
+    const recipient = poolLogicProxy.address;
+    const assets = balancer80_weth20_pool_info.tokens;
+    const minAmountsOut = [0, 0];
+
+    const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
+    const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault.abi);
+
+    const exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      sender,
+      recipient,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256"],
+          [1, await BALANCERLP_WETH_BALANCER.balanceOf(poolLogicProxy.address)],
+        ),
+        false,
+      ],
+    ]);
+
+    const lpBalanceBefore = ethers.BigNumber.from(await BALANCERLP_WETH_BALANCER.balanceOf(poolLogicProxy.address));
+    const wethBalanceBefore = ethers.BigNumber.from(await WETH.balanceOf(poolLogicProxy.address));
+    const balancerBalanceBefore = ethers.BigNumber.from(await BALANCER.balanceOf(poolLogicProxy.address));
+    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx)).to.be.revertedWith(
+      "unsupported asset",
+    );
+
+    await poolManagerLogicProxy.connect(manager).changeAssets([[balancer, true]], []);
+    await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx);
+
+    const lpBalanceAfter = ethers.BigNumber.from(await BALANCERLP_WETH_BALANCER.balanceOf(poolLogicProxy.address));
+    expect(lpBalanceAfter).to.lt(lpBalanceBefore);
+
+    const wethBalanceAfter = ethers.BigNumber.from(await WETH.balanceOf(poolLogicProxy.address));
+    const balancerBalanceAfter = ethers.BigNumber.from(await BALANCER.balanceOf(poolLogicProxy.address));
+    expect(wethBalanceAfter).to.gt(wethBalanceBefore);
+    expect(balancerBalanceAfter).to.gt(balancerBalanceBefore);
 
     const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
     checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
