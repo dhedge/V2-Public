@@ -33,6 +33,27 @@ const main = async (NODE_ENV) => {
     poolLogic,
     poolManagerLogic,
     datas = [];
+
+  // Governance
+  const Governance = await hre.artifacts.readArtifact("Governance");
+  const governanceABI = new ethers.utils.Interface(Governance.abi);
+
+  // Set LendingEnabledAssetGuard assetType to 2
+  let LendingEnabledAssetGuard = contracts.LendingEnabledAssetGuard;
+  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
+    2,
+    LendingEnabledAssetGuard,
+  ]);
+  await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for LendingEnabledAssetGuard");
+
+  // Set SushiLPAssetGuard assetType to 4
+  let SushiLPAssetGuard = contracts.SushiLPAssetGuard;
+  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
+    4,
+    SushiLPAssetGuard,
+  ]);
+  await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for SushiLPAssetGuard");
+
   const deployedFunds = await poolFactoryContract.getDeployedFunds();
   for (fund of deployedFunds) {
     console.log("fund: ", fund);
