@@ -8,7 +8,6 @@ use(chaiAlmost());
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
 // sushiswap
-const sushiswapV2Factory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 
@@ -25,7 +24,6 @@ const usdt = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
 const dai = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063";
 const sushiToken = "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a";
 
-const amweth = "0x28424507fefb6f7f8E9D3860F56504E4e5f5f390";
 const amusdc = "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F";
 const amusdt = "0x60D55F02A771d515e077c9C2403a1ef324885CeC";
 const amdai = "0x27f8d03b3a2196956ed754badc28d73be8830a6e";
@@ -42,12 +40,11 @@ const sushi_price_feed = "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
-const sushiLPUsdcWethPoolId = 1;
 
 describe("Polygon Mainnet Test", function () {
-  let WMatic, WETH, USDC, USDT, DAI, SushiLPUSDCWETH, SUSHI, AMUSDC;
+  let WMatic, USDC, DAI, AMUSDC;
   let sushiLPAggregator, usdPriceAggregator, sushiMiniChefV2Guard;
-  let logicOwner, manager, dao, user;
+  let logicOwner, manager, dao;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
   let IERC20, iERC20;

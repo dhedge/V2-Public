@@ -7,7 +7,6 @@ use(chaiAlmost());
 
 const units = (value) => ethers.utils.parseUnits(value.toString());
 
-const sushiswapV2Factory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 
@@ -22,8 +21,6 @@ const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
 const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
 const sushi_price_feed = "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0";
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
 const sushiLPUsdcWethPoolId = 1;

@@ -51,9 +51,9 @@ describe("Synthetix Test", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
-    const assetSusd = { asset: susd, assetType: 0, aggregator: susd_price_feed };
-    const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed };
-    const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed };
+    const assetSusd = { asset: susd, assetType: 1, aggregator: susd_price_feed };
+    const assetSeth = { asset: seth, assetType: 1, aggregator: eth_price_feed };
+    const assetSlink = { asset: slink, assetType: 1, aggregator: link_price_feed };
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
@@ -93,6 +93,7 @@ describe("Synthetix Test", function () {
     uniswapV2RouterGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(1, erc20Guard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
   });
