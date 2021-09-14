@@ -40,18 +40,12 @@ const main = async (NODE_ENV) => {
 
   // Set LendingEnabledAssetGuard assetType to 2
   let LendingEnabledAssetGuard = contracts.LendingEnabledAssetGuard;
-  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
-    2,
-    LendingEnabledAssetGuard,
-  ]);
+  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, LendingEnabledAssetGuard]);
   await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for LendingEnabledAssetGuard");
 
   // Set SushiLPAssetGuard assetType to 4
   let SushiLPAssetGuard = contracts.SushiLPAssetGuard;
-  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
-    4,
-    SushiLPAssetGuard,
-  ]);
+  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [4, SushiLPAssetGuard]);
   await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for SushiLPAssetGuard");
 
   const deployedFunds = await poolFactoryContract.getDeployedFunds();
