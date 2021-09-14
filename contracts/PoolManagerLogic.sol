@@ -78,10 +78,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public announcedFeeIncreaseTimestamp;
   uint256 public managerFeeNumerator;
 
-  modifier onlyManagerOrTradeOrFactory() {
+  modifier onlyManagerOrTraderOrFactory() {
     require(
       msg.sender == manager || msg.sender == trader || msg.sender == factory,
-      "only manager or trader or factory"
+      "only manager, trader or factory"
     );
     _;
   }
@@ -137,7 +137,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param _removeAssets array of asset addresses to remove
   function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets)
     external
-    onlyManagerOrTradeOrFactory
+    onlyManagerOrTraderOrFactory
   {
     _changeAssets(_addAssets, _removeAssets);
   }
@@ -413,5 +413,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return true;
   }
 
-  uint256[51] private __gap;
+  uint256[50] private __gap;
+  address public withdrawAsset;
 }
