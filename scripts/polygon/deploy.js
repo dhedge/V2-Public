@@ -83,12 +83,9 @@ const deploy = async (env) => {
   const poolManagerLogic = await PoolManagerLogic.deploy();
   console.log("PoolManagerLogic deployed at ", poolManagerLogic.address);
 
-  // @lecky should I be using deploy proxy here?
   const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-  const poolPerformance = await PoolPerformance.deploy();
-  const poolPerformanceProxy = await PoolPerformance.attach(poolPerformance.address);
-
-  await poolPerformanceProxy.initialize(aaveProtocolDataProvider);
+  const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+  await poolPerformance.deployed();
 
   // Initialize Asset Price Consumer
   // const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
