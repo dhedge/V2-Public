@@ -257,63 +257,6 @@ contract PoolPerformance is OwnableUpgradeable {
     return false;
   }
 
-  /// @notice Takes a snapshot of a pools external balances
-  /// @dev The parameters could be simplified to only the poolAddress but we pass the following for performance
-  /// @param poolManagerAddress The address of the poolManager for the pool that we want to snapshot
-  /// @param supportedAssets The supportedAssets of the pool that we want to snapshot
-  /// @return supportedAssetBalances a list of balances of the supported assets passed in, in order
-  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
-    external
-    view
-    returns (uint256[] memory supportedAssetBalances)
-  {
-    address poolAddress = msg.sender;
-    supportedAssetBalances = new uint256[](supportedAssets.length);
-    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
-    address aToken;
-
-    for (uint8 i = 0; i < supportedAssets.length; i++) {
-      address assetAddress = supportedAssets[i].asset;
-      if (assetAddress == aaveLendingPool) {
-        continue;
-      }
-
-      uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
-
-      // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
-      // i.e dai === aDai.
-      if (supportsAave) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
-
-        if (aToken != address(0)) {
-          externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
-        }
-      }
-
-      supportedAssetBalances[i] = externalBalance;
-    }
-  }
-
-  /// @notice Takes two snapshots created from getBalancesSnapshot and update the internal balances based on the difference
-  /// @dev We use this to determine the change of a pools balance by any transaction we don't know the specific outcome of
-  /// @param supportedAssets A list of the pools supportedAssets (passed in for performance)
-  /// @param beforeSupportedAssetBalances List of balances of the supported assets (in order)
-  /// @param afterSupportedAssetBalances List of balances of the supported assets (in order)
-  function updatedInternalBalancesByDiff(
-    IHasSupportedAsset.Asset[] memory supportedAssets,
-    uint256[] memory beforeSupportedAssetBalances,
-    uint256[] memory afterSupportedAssetBalances
-  ) external {
-    address poolAddress = msg.sender;
-    uint256 assetChange;
-    for (uint8 i = 0; i < supportedAssets.length; i++) {
-      assetChange = beforeSupportedAssetBalances[i].sub(afterSupportedAssetBalances[i]);
-      internalBalancesMap[poolAddress][supportedAssets[i].asset] =
-        internalBalancesMap[poolAddress][supportedAssets[i].asset] -
-        assetChange;
-    }
-  }
-
   /// @notice Resets the internal balances to equal the external balances
   /// @dev Used to update the internal balances after a manager executes a transaction/s should only be called by the pool
   function updateInternalBalances() external {

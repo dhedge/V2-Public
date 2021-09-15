@@ -250,7 +250,7 @@ describe("PoolFactory", function () {
     poolFactory = await upgrades.upgradeProxy(poolFactoryV24.address, PoolFactoryLogic);
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
-    poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     // Deploy Sushi LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");

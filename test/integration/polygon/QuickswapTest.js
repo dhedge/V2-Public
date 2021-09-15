@@ -69,7 +69,7 @@ describe("Quickswap V2 Test", function () {
     ]);
     await poolFactory.deployed();
 
-    poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     // Deploy Quick LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");

@@ -280,11 +280,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    // We don't know which assets the withdraw processing actually transfers out, so we take before and after snapshots
-    // From this we can determine the change.
-    uint256[] memory supportedAssetBalancesSnapshotBefore = IPoolPerformance(
-      IHasPoolPerformance(factory).poolPerformanceAddress()
-    ).getBalancesSnapshot(poolManagerLogic, _supportedAssets);
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
@@ -311,14 +307,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updatedInternalBalancesByDiff(
-      _supportedAssets,
-      supportedAssetBalancesSnapshotBefore,
-      IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).getBalancesSnapshot(
-        poolManagerLogic,
-        _supportedAssets
-      )
-    );
+    // We must now update our internal balances to whatever the result of the withdraw
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updateInternalBalances();
+
 
     // Reduce length for withdrawnAssets to remove the empty items
     uint256 reduceLength = _supportedAssets.length.sub(index);

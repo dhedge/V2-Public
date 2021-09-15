@@ -63,9 +63,9 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       assetHandler.address,
       dao.address,
       governance.address,
-      poolPerformance.address,
     ]);
     await poolFactory.deployed();
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
     sushiLpAggregator = await UniV2LPAggregator.deploy(sushi_usdc_usdt, poolFactory.address);

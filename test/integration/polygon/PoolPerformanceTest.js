@@ -69,7 +69,7 @@ describe("PoolPerformance", function () {
     ]);
     await poolFactory.deployed();
 
-    poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();

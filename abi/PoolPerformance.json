@@ -98,42 +98,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "poolManagerAddress",
-        "type": "address"
-      },
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "asset",
-            "type": "address"
-          },
-          {
-            "internalType": "bool",
-            "name": "isDeposit",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct IHasSupportedAsset.Asset[]",
-        "name": "supportedAssets",
-        "type": "tuple[]"
-      }
-    ],
-    "name": "getBalancesSnapshot",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "supportedAssetBalances",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "poolAddress",
         "type": "address"
       }
@@ -348,41 +312,6 @@
   {
     "inputs": [],
     "name": "updateInternalBalances",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "asset",
-            "type": "address"
-          },
-          {
-            "internalType": "bool",
-            "name": "isDeposit",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct IHasSupportedAsset.Asset[]",
-        "name": "supportedAssets",
-        "type": "tuple[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "beforeSupportedAssetBalances",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "afterSupportedAssetBalances",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "updatedInternalBalancesByDiff",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

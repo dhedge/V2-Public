@@ -67,9 +67,9 @@ describe("Synthetix Test", function () {
       assetHandler.address,
       dao.address,
       governance.address,
-      poolPerformance.address,
     ]);
     await poolFactory.deployed();
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
     addressResolver = await ethers.getContractAt(IAddressResolver.abi, addressResolverAddress);

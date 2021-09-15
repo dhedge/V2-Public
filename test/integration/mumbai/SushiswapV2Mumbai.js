@@ -59,10 +59,10 @@ describe("Sushiswap V2 Test Mumbai", function () {
       assetHandler.address,
       dao.address,
       governance.address,
-      poolPerformance.address,
     ]);
     await poolFactory.deployed();
 
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
     //set higher timeout value for testnet
     await assetHandler.setChainlinkTimeout(10000000);
 

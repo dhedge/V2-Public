@@ -82,9 +82,11 @@ describe("Aave Test", function () {
       assetHandler.address,
       dao.address,
       governance.address,
-      poolPerformance.address,
     ]);
     await poolFactory.deployed();
+
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();

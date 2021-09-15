@@ -122,7 +122,7 @@ describe("PoolFactory", function () {
       governance.address,
     ]);
 
-    poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     // Deploy contract guards
     const SynthetixGuard = await ethers.getContractFactory("contracts/guards/SynthetixGuard.sol:SynthetixGuard");
