@@ -123,7 +123,7 @@ task("upgrade", "Upgrade contracts")
     console.log(`newTag: ${newTag}`);
     // Comment this out as assets is default to true and it's always comes with pause/unpause true
     // const checkNewVersion = !taskArgs.assets && !taskArgs.pause && !taskArgs.unpause;
-    // if (checkNewVersion && newTag == oldTag) throw "Error: No new version to upgrade";
+    // if (checkNewVersion && newTag == oldTag) throw "Error: No new version to upgrade"; // comment out as we could deploy and overrite the current version
 
     // Init contracts data
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
@@ -581,7 +581,7 @@ task("upgrade", "Upgrade contracts")
         oneInchV3Router,
         oneInchV3Guard.address,
       ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for aaveLendingPoolGuard");
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for oneInchV3Guard");
       newContractGuards.push({
         ContractAddress: oneInchV3Router,
         GuardName: "OneInchV3Guard",

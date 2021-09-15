@@ -693,18 +693,18 @@
       "PoolManagerLogic": "0x3dB16dBf76b5edFF977A0b2F5e6f412238748B7b",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
-      "ERC20Guard": "0x65A1C0bE1151aEAcddc698e5dAcC4ed3c566744F",
-      "UniswapV2RouterGuard": "0x57663Bd78947Ec6e171297A138075CE5993A1F1A",
-      "SushiMiniChefV2Guard": "0x76876cf3D89c1d220424946316B1A5E582A4dE71",
-      "SushiLPAssetGuard": "0xEE594cA1901c027dAc06c421F5360205a95C8750",
+      "ERC20Guard": "0x8e79573f9Eb904eE9e6DAB5ee03d597e8F20714F",
+      "UniswapV2RouterGuard": "0x6250d39CaDcA6b04303614b73DD0352A9e7530f1",
+      "SushiMiniChefV2Guard": "0x5c565503a411172418f162f27361DA850fC927d0",
+      "SushiLPAssetGuard": "0x2C4a88224269d030560CC06a0Bc8457E4C1aA93e",
       "AaveLendingPoolAssetGuard": "0xAcCc87bcF4d6dCDD9c4CEF1c8Eecd2205d7030A7",
-      "LendingEnabledAssetGuard": "0x84e9b6a52c48320Aa3f18A04f622db9C89a32Ee9",
-      "OpenAssetGuard": "0x439573588D81Df06Ee1b1fd7268c611648F190b7",
-      "QuickLPAssetGuard": "0x109582f9df59E5013DaCCFbaD290dd9a0D414bab",
-      "QuickStakingRewardsGuard": "0xc2E971fD114de37BdDF4194add36FacA3ad4fDE2",
+      "LendingEnabledAssetGuard": "0x89833397D0F634c7f73fD5dE72B80441Bafe240E",
+      "OpenAssetGuard": "0x1f3EA9df09774B2376819269106Ec9D67135bb4A",
+      "QuickLPAssetGuard": "0x8fFdd6C2eb438fB2D98D5f0a990f52E3FF88d946",
+      "QuickStakingRewardsGuard": "0x28Fbf6a46a48A08123e71A3Ab98e76347C44ECE6",
       "AaveIncentivesControllerGuard": "0x4D58d4a589Acd620b6AA12fb32EA482ca63BeC14",
       "AaveLendingPoolGuard": "0x52D3c63b5A47f7C0b9B85f78f3599625186336f4",
-      "OneInchV3Guard": "0x87DB485196F1094a2Dc22dAa3EB732496eAf68C7"
+      "OneInchV3Guard": "0x3EeeeB2D025C999ca46c93abbfEbe310fB65c578"
     },
     "network": {
       "name": "matic",
@@ -712,6 +712,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Fri, 10 Sep 2021 06:15:05 GMT"
+    "date": "Wed, 15 Sep 2021 05:47:55 GMT"
   }
 }
