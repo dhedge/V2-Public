@@ -72,11 +72,19 @@ const main = async (NODE_ENV) => {
   console.log("allSupportedAssets: ", allSupportedAssets);
   console.log("datas: ", datas);
 
-  for (let i = 0; i <= deployedFunds.length - 50; i += 50) {
+  for (let i = 0; i <= deployedFunds.length - 1; i += 50) {
+    let params;
+    if (i % 50 === 0) {
+      // Runds for 50 funds and slice is excluding last element
+      params = [i, i + 49, "290", datas.slice(i, i + 50)];
+    } else {
+      // Runds for the rest funds funds and slice is excluding last element
+      params = [i, deployedFunds.length - 1, "290", datas.slice(i, deployedFunds.length)];
+    }
     const upgradePoolBatchABI = PoolFactoryABI.encodeFunctionData(
       "upgradePoolBatch(uint256, uint256, uint256, bytes[])",
       // [0, deployedFunds.length - 1, "290", datas], // Runs for all funds
-      [i, i + 49, "290", datas.slice(i, i + 49)], // Runs for 50 funds
+      params,
     );
     await proposeTx(poolFactoryProxy, upgradePoolBatchABI, "Pool Factory Batch Upgrade Pool");
   }
