@@ -32,7 +32,8 @@ const main = async (NODE_ENV) => {
   let supportedAssets = [],
     poolLogic,
     poolManagerLogic,
-    datas = [];
+    datas = [],
+    allSupportedAssets = [];
 
   // Governance
   const Governance = await hre.artifacts.readArtifact("Governance");
@@ -56,6 +57,7 @@ const main = async (NODE_ENV) => {
     poolManagerLogic = await PoolManagerLogic.attach(poolManagerLogicAddress);
     supportedAssets = await poolManagerLogic.getSupportedAssets();
     console.log("supportedAssets: ", supportedAssets);
+    allSupportedAssets.push(supportedAssets);
 
     const PoolManagerLogicArtifact = await hre.artifacts.readArtifact("PoolManagerLogic");
     const PoolManagerLogicABI = new ethers.utils.Interface(PoolManagerLogicArtifact.abi);
@@ -67,12 +69,17 @@ const main = async (NODE_ENV) => {
     ]);
     datas.push(changeAssetsABI);
   }
-  const upgradePoolBatchABI = PoolFactoryABI.encodeFunctionData(
-    "upgradePoolBatch(uint256, uint256, uint256, bytes[])",
-    // [0, deployedFunds.length - 1, "290", datas], // Runs for all funds
-    [0, 9, "290", datas.slice(0, 9)], // Runs for first 10 funds
-  );
-  await proposeTx(poolFactoryProxy, upgradePoolBatchABI, "Pool Factory Batch Upgrade Pool");
+  console.log("allSupportedAssets: ", allSupportedAssets);
+  console.log("datas: ", datas);
+
+  for (let i = 0; i <= deployedFunds.length - 50; i += 50) {
+    const upgradePoolBatchABI = PoolFactoryABI.encodeFunctionData(
+      "upgradePoolBatch(uint256, uint256, uint256, bytes[])",
+      // [0, deployedFunds.length - 1, "290", datas], // Runs for all funds
+      [i, i + 49, "290", datas.slice(i, i + 49)], // Runs for 50 funds
+    );
+    await proposeTx(poolFactoryProxy, upgradePoolBatchABI, "Pool Factory Batch Upgrade Pool");
+  }
 };
 
 main(NODE_ENV)
