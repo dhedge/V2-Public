@@ -51,7 +51,7 @@ const stagingVersionFile = "./publish/matic/staging-versions.json";
 const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 
-const prodBalancerConfig = require("../../config/prod/dHEDGE Asset list - Polygon Balancer LP Staging.json");
+const prodBalancerConfig = require("../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
 const stagingBalancerConfig = require("../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
 
 const stagingExternalAssetFileName = "./config/staging/dHEDGE Assets list - Polygon External Staging.csv";
