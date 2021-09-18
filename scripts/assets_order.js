@@ -41,12 +41,12 @@ const main = async (NODE_ENV) => {
 
   // Set LendingEnabledAssetGuard assetType to 2
   let LendingEnabledAssetGuard = contracts.LendingEnabledAssetGuard;
-  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, LendingEnabledAssetGuard]);
+  let setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, LendingEnabledAssetGuard]);
   await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for LendingEnabledAssetGuard");
 
   // Set SushiLPAssetGuard assetType to 4
   let SushiLPAssetGuard = contracts.SushiLPAssetGuard;
-  const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [4, SushiLPAssetGuard]);
+  setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [4, SushiLPAssetGuard]);
   await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for SushiLPAssetGuard");
 
   const deployedFunds = await poolFactoryContract.getDeployedFunds();
@@ -74,7 +74,7 @@ const main = async (NODE_ENV) => {
 
   for (let i = 0; i <= deployedFunds.length - 1; i += 50) {
     let params;
-    if (i % 50 === 0) {
+    if (i + 50 <= deployedFunds.length) {
       // Runds for 50 funds and slice is excluding last element
       params = [i, i + 49, "290", datas.slice(i, i + 50)];
     } else {
