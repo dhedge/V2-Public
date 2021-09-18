@@ -410,6 +410,5 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return true;
   }
 
-  uint256[50] private __gap;
-  address public withdrawAsset;
+  uint256[51] private __gap;
 }
