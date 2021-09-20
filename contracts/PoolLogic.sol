@@ -186,7 +186,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   ) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
 
-    require(getExitRemainingCooldown(from) == 0, "cooldown active");
+    if (from != address(0) && to != address(0)) {
+      require(getExitRemainingCooldown(from) == 0, "cooldown active");
+    }
   }
 
   /// @notice Set the pool privacy
@@ -258,15 +260,35 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
-    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
+    //calculate the exit fee and transfer to the DAO in pool tokens
+    uint256 exitFeeNumerator;
+    uint256 exitFeeDenominator;
+
+    if (getExitRemainingCooldown(msg.sender) > 0) {
+      (exitFeeNumerator, exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+    } else {
+      exitFeeNumerator = 0;
+      exitFeeDenominator = 1;
+    }
+
+    uint256 daoExitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+
+    // require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
     uint256 fundValue = _mintManagerFee();
 
     //calculate the proportion
+    _fundTokenAmount = _fundTokenAmount.sub(daoExitFee);
     uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
 
-    //first return funded tokens
-    _burn(msg.sender, _fundTokenAmount);
+    // first return funded tokens
+    _burn(msg.sender, _fundTokenAmount.add(daoExitFee));
+
+    // transfer fee
+    if (daoExitFee > 0) {
+      address daoAddress = IHasDaoInfo(factory).daoAddress();
+      _mint(daoAddress, daoExitFee);
+    }
 
     // TODO: Combining into one line to fix stack too deep,
     //       need to refactor some variables into struct in order to have more variables
@@ -274,7 +296,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 assetCount = _supportedAssets.length;
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
     uint16 index = 0;
-
     for (uint256 i = 0; i < assetCount; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
         _supportedAssets[i].asset,
@@ -419,12 +440,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       uint256,
       bool,
       uint256,
+      uint256,
+      uint256,
       uint256
     )
   {
-    uint256 managerFeeNumerator;
-    uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
     return (
       name(),
@@ -435,7 +457,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       creationTime,
       privatePool,
       managerFeeNumerator,
-      managerFeeDenominator
+      managerFeeDenominator,
+      exitFeeNumerator,
+      exitFeeDenominator
     );
   }
 

@@ -81,6 +81,8 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     await governance.setAssetGuard(2, erc20Guard.address); // as normal erc20 token
     await governance.setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiswapRouter, uniswapV2RouterGuard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get WETH", async function () {
@@ -810,8 +812,6 @@ describe("Sushiswap/Uniswap V2 Test", function () {
 
     // Withdraw 50%
     let withdrawAmount = 50e18;
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount.toString())).to.be.revertedWith("cooldown active");
 
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
 

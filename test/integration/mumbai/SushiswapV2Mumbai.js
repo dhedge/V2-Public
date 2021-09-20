@@ -72,6 +72,8 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to createFund", async function () {
@@ -407,8 +409,6 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     // Withdraw 50%
     let withdrawAmount = units(5);
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
 
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
 

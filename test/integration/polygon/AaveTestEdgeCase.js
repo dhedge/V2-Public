@@ -170,6 +170,8 @@ describe("Polygon Mainnet Test", function () {
       [toBytes32("weth"), weth],
       [toBytes32("openAssetGuard"), openAssetGuard.address],
     ]);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {

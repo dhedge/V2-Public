@@ -85,6 +85,8 @@ describe("OneInch V3 Test", function () {
     await governance.setContractGuard(uniswapV2Router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushiswapRouter, uniswapV2RouterGuard.address);
     await governance.setContractGuard(oneInchV3Router, oneInchV3Guard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {
