@@ -280,7 +280,6 @@ task("upgrade", "Upgrade contracts")
     }
 
     if (taskArgs.poolPerformance) {
-      // This will be undefined the first time it's called because we have not deployed it?
       let oldPoolPerformance = contracts.PoolPerformance;
       const PoolPerformance = await ethers.getContractFactory("PoolPoolPerformance");
       const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
@@ -288,6 +287,9 @@ task("upgrade", "Upgrade contracts")
       versions[newTag].contracts.PoolPerformance = poolPerformance;
 
       tryVerify(hre, poolPerformance, "contracts/PoolPerformance.sol:PoolPerformance", []);
+
+      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldPoolPerformance, poolPerformance]);
+      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Performance");
     }
 
     if (taskArgs.aaveLendingPoolAssetGuard) {

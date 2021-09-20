@@ -290,6 +290,7 @@ const deploy = async (env) => {
   await poolFactory.setDAOAddress(uberPool);
   await poolFactory.transferOwnership(protocolDao);
   await governance.transferOwnership(protocolDao);
+  await poolPerformance.transferOwnership(protocolDao);
   await assetHandler.transferOwnership(protocolDao);
   await sushiLPAssetGuard.transferOwnership(protocolDao);
   await uniswapV2RouterGuard.transferOwnership(protocolDao);
