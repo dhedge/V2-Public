@@ -34,7 +34,7 @@
 
 import "./IHasSupportedAsset.sol";
 
-pragma solidity ^0.7.6;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 interface IPoolPerformance {
