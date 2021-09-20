@@ -15,6 +15,7 @@ const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
 const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 const usdt = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
 const dai = "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063";
+const miMatic = "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1";
 const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
 const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
 const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
@@ -24,8 +25,16 @@ const quickLpUsdcUsdt = "0x2cf7252e74036d1da831d11089d326296e64a728";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+const balancer_pool = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42";
+/*
+1. 0x0297e37f1873d2dab4487aa67cd56b58e2f27875, 0x0297e37f1873d2dab4487aa67cd56b58e2f27875000100000000000000000002 - WMATIC, USDC, WETH, BALANCER
+0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270,0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174,0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619,0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3
+2. 0x06df3b2bbb68adc8b0e302443692037ed9f91b42, 0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012 - USDC, DAI, miMatic, USDT
+0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174,0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063,0xa3Fa99A148fA48D14Ed51d610c367C61876997F1,0xc2132D05D31c914a87C6611C10748AEb04B58e8F
+*/
+
 describe("Balancer V2 Test", function () {
-  let WMatic, WETH, USDC, USDT;
+  let WMatic, WETH, USDC, USDT, BALANCERLP;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
@@ -97,6 +106,7 @@ describe("Balancer V2 Test", function () {
     USDC = await ethers.getContractAt(IERC20.abi, usdc);
     WETH = await ethers.getContractAt(IERC20.abi, weth);
     WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
+    BALANCERLP = await ethers.getContractAt(IERC20.abi, balancer_pool);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
     balance = await WMATIC.balanceOf(logicOwner.address);
@@ -554,5 +564,187 @@ describe("Balancer V2 Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(amount));
     expect(usdtBalanceAfter).to.equal(usdtBalanceBefore.add(amount));
+  });
+
+  it("should be able to join pool on balancer.", async () => {
+    const poolId = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012";
+    const sender = poolLogicProxy.address;
+    const recipient = poolLogicProxy.address;
+    const assets = [usdc, dai, miMatic, usdt];
+    const amount = units(1, 6);
+    const maxAmountsIn = [amount, 0, 0, amount];
+
+    const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
+    const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault.abi);
+
+    let joinTx = iBalancerV2Vault.encodeFunctionData("joinPool", [
+      poolId,
+      sender,
+      recipient,
+      [
+        assets,
+        [amount, 0, amount, amount],
+        ethers.utils.defaultAbiCoder.encode(["uint256", "uint256[]", "uint256"], [1, [amount, 0, amount, amount], 1]),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, joinTx)).to.be.revertedWith(
+      "unsupported asset",
+    );
+
+    joinTx = iBalancerV2Vault.encodeFunctionData("joinPool", [
+      poolId,
+      dai,
+      recipient,
+      [
+        assets,
+        maxAmountsIn,
+        ethers.utils.defaultAbiCoder.encode(["uint256", "uint256[]", "uint256"], [1, maxAmountsIn, 1]),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, joinTx)).to.be.revertedWith(
+      "sender is not pool",
+    );
+
+    joinTx = iBalancerV2Vault.encodeFunctionData("joinPool", [
+      poolId,
+      sender,
+      dai,
+      [
+        assets,
+        maxAmountsIn,
+        ethers.utils.defaultAbiCoder.encode(["uint256", "uint256[]", "uint256"], [1, maxAmountsIn, 1]),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, joinTx)).to.be.revertedWith(
+      "recipient is not pool",
+    );
+
+    joinTx = iBalancerV2Vault.encodeFunctionData("joinPool", [
+      poolId,
+      sender,
+      recipient,
+      [
+        assets,
+        maxAmountsIn,
+        ethers.utils.defaultAbiCoder.encode(["uint256", "uint256[]", "uint256"], [1, maxAmountsIn, 1]),
+        false,
+      ],
+    ]);
+
+    const IERC20 = await hre.artifacts.readArtifact("IERC20");
+    const iERC20 = new ethers.utils.Interface(IERC20.abi);
+    let approveABI = iERC20.encodeFunctionData("approve", [balancerV2Vault, amount]);
+    await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+    await poolLogicProxy.connect(manager).execTransaction(usdt, approveABI);
+
+    const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
+    const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+
+    await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, joinTx);
+
+    const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
+    const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+    expect(usdcBalanceAfter).to.equal(usdcBalanceBefore.sub(amount));
+    expect(usdtBalanceAfter).to.equal(usdtBalanceBefore.sub(amount));
+  });
+
+  it("should be able to exit pool on balancer.", async () => {
+    const poolId = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012";
+    const sender = poolLogicProxy.address;
+    const recipient = poolLogicProxy.address;
+    const assets = [usdc, dai, miMatic, usdt];
+    const amount = units(1, 6);
+    const minAmountsOut = [0, 0, 0, 0];
+
+    const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
+    const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault.abi);
+
+    let exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      sender,
+      recipient,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 2],
+        ),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx)).to.be.revertedWith(
+      "unsupported asset",
+    );
+
+    exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      dai,
+      recipient,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+        ),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx)).to.be.revertedWith(
+      "sender is not pool",
+    );
+
+    exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      sender,
+      dai,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+        ),
+        false,
+      ],
+    ]);
+
+    await expect(poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx)).to.be.revertedWith(
+      "recipient is not pool",
+    );
+
+    exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [
+      poolId,
+      sender,
+      recipient,
+      [
+        assets,
+        minAmountsOut,
+        ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "uint256", "uint256"],
+          [0, await BALANCERLP.balanceOf(poolLogicProxy.address), 0],
+        ),
+        false,
+      ],
+    ]);
+
+    const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
+    const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
+
+    await poolLogicProxy.connect(manager).execTransaction(balancerV2Vault, exitTx);
+
+    const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+    const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
+    checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(amount.mul(2)));
+    expect(usdtBalanceAfter).to.be.equal(usdtBalanceBefore);
   });
 });
