@@ -10,6 +10,9 @@ const units = (value) => ethers.utils.parseUnits(value.toString());
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 
+// aave
+const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
+
 // For mainnet
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
 const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
@@ -42,7 +45,8 @@ describe("Sushiswap V2 Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await PoolPerformance.deploy();
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
