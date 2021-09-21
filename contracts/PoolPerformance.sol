@@ -156,7 +156,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @notice Records the difference in value between the internal balances and the external balances of a pool
   /// @dev The value recorded is per token, it resets the internal balances to equal external balances once recorded.
   /// @param poolAddress The address of the pool
-  function recordExternalValue(address poolAddress) public {
+  function recordExternalValue(address poolAddress) external {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);

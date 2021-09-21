@@ -221,8 +221,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   {
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
 
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
-
     lastDeposit[msg.sender] = block.timestamp;
 
     uint256 fundValue = _mintManagerFee();
@@ -282,7 +280,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+    poolPerformance.recordExternalValue(address(this));
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
@@ -310,7 +309,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     // We must now update our internal balances to whatever the result of the withdraw
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updateInternalBalances();
+    poolPerformance.updateInternalBalances();
 
     // Reduce length for withdrawnAssets to remove the empty items
     uint256 reduceLength = _supportedAssets.length.sub(index);
@@ -392,7 +391,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean for success or fail transaction
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
+
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+    poolPerformance.recordExternalValue(address(this));
     // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 
@@ -408,7 +409,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     success = to.tryAssemblyCall(data);
 
     // We must now update our internal balances to whatever the result of this tx is
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updateInternalBalances();
+    poolPerformance.updateInternalBalances();
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
@@ -520,13 +521,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   /// @notice Mint the manager fee of the pool
   function mintManagerFee() external whenNotPaused {
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
     _mintManagerFee();
   }
 
   /// @notice Get mint manager fee of the pool internal call
   /// @return fundValue The total fund value of the pool
   function _mintManagerFee() internal returns (uint256 fundValue) {
+    // This has to run on deposit
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
+
     fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
