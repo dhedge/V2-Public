@@ -1,16 +1,12 @@
 const fs = require("fs");
 const csv = require("csvtojson");
-const { writeCsv, getTag, hasDuplicates, tryVerify } = require("./Helpers");
-const Safe = require("@gnosis.pm/safe-core-sdk");
-const { EthersAdapter } = require("@gnosis.pm/safe-core-sdk");
-const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
+const { writeCsv, getTag, hasDuplicates, tryVerify, proposeTx } = require("./Helpers");
+const Decimal = require("decimal.js");
 const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
-const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
-// https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
-const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
-const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
 
 // File Names
+const stagingBalancerConfig = require("../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
+const prodBalancerConfig = require("../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
 const stagingAssetFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 const prodAssetFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingAssetGuardFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
@@ -23,6 +19,7 @@ const stagingExternalAssetFileName = "./config/staging/dHEDGE Assets list - Poly
 const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon External.csv";
 
 // Addresses
+const balancerV2Vault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
@@ -32,39 +29,46 @@ const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98
 let sushiToken;
 let wmatic;
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
-let nonce,
-  safeSdk,
-  nonceLog = new Array();
 
-const proposeTx = async (to, data, message) => {
-  const transaction = {
-    to: to,
-    value: "0",
-    data: data,
-    nonce: nonce,
-  };
+const deployBalancerV2LpAggregator = async (factory, info) => {
+  const ether = "1000000000000000000";
+  const divisor = info.weights.reduce((acc, w, i) => {
+    if (i == 0) {
+      return new Decimal(w).pow(w);
+    }
+    return acc.mul(new Decimal(w).pow(w));
+  }, new Decimal("0"));
 
-  nonceLog.push({
-    nonce: nonce,
-    message: message,
-  });
+  const K = new Decimal(ether).div(divisor).toFixed(0);
 
-  console.log("Proposing transaction: ", transaction);
-  console.log(`Nonce ${nonce}: ${message}`);
+  let matrix = [];
+  for (let i = 1; i <= 20; i++) {
+    const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
+    for (let j = 0; j < info.weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+    }
+    matrix.push(elements);
+  }
 
-  nonce += 1;
-
-  const safeTransaction = await safeSdk.createTransaction(...[transaction]);
-  // off-chain sign
-  const txHash = await safeSdk.getTransactionHash(safeTransaction);
-  const signature = await safeSdk.signTransactionHash(txHash);
-  // on-chain sign
-  // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
-  // console.log("approveTxResponse", approveTxResponse);
-  console.log("safeTransaction: ", safeTransaction);
-
-  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
-  console.log("ProposeTx: ", proposeTx);
+  const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
+  return await BalancerV2LPAggregator.deploy(
+    factory,
+    balancerV2Vault,
+    info.pool,
+    info.tokens,
+    info.decimals,
+    info.weights.map((w) =>
+      ethers.BigNumber.from(10)
+        .pow(10)
+        .mul(w * 100000000),
+    ),
+    [
+      "50000000000000000", // maxPriceDeviation: 0.05
+      K,
+      "100000000", // powerPrecision
+      matrix, // approximationMatrix
+    ],
+  );
 };
 
 task("upgrade", "Upgrade contracts")
@@ -80,37 +84,17 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("uniswapV2RouterGuard", "upgrade uniswapV2RouterGuard", false, types.boolean)
   .addOptionalParam("openAssetGuard", "upgrade openAssetGuard", false, types.boolean)
   .addOptionalParam("quickLPAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
+  .addOptionalParam("balancerv2guard", "upgrade balancerV2Guard", false, types.boolean)
   .addOptionalParam("quickStakingRewardsGuard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
   .addOptionalParam("pause", "pause contract", false, types.boolean)
   .addOptionalParam("unpause", "unpause contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    // Initialize the Safe SDK
-    const provider = ethers.provider;
-    const owner1 = provider.getSigner(0);
-    const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
-    const chainId = await ethAdapter.getChainId();
-    const hre = require("hardhat");
-
-    const contractNetworks = {
-      [chainId]: {
-        multiSendAddress: multiSendAddress,
-      },
-    };
-
-    safeSdk = await Safe.default.create({
-      ethAdapter,
-      safeAddress: safeAddress,
-      contractNetworks,
-    });
-    nonce = await safeSdk.getNonce();
-    const owner1Address = await owner1.getAddress();
-
     const network = await ethers.provider.getNetwork();
     console.log("network:", network);
+    const hre = require("hardhat");
 
     // Init tag
-    const networks = hre.config.networks;
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versions = require(`../publish/${network.name}/${versionFile}.json`);
     const newTag = await getTag();
@@ -149,7 +133,7 @@ task("upgrade", "Upgrade contracts")
     const csvGovernanceNames = await csv().fromFile(governanceNamesfileName);
     let newGovernanceNames = new Array();
 
-    // Pause Pool Factory
+    // Pool Factory
     let poolFactoryProxy = contracts.PoolFactoryProxy;
     const PoolFactory = await hre.artifacts.readArtifact("PoolFactory");
     const PoolFactoryABI = new ethers.utils.Interface(PoolFactory.abi);
@@ -218,6 +202,31 @@ task("upgrade", "Upgrade contracts")
                 aggregator: csvAsset["Chainlink Price Feed"],
               });
           }
+        }
+      }
+
+      const balancerLps = taskArgs.production ? prodBalancerConfig : stagingBalancerConfig;
+      for (const balancerLp of balancerLps) {
+        let foundInVersions = false;
+        for (const asset of contracts.Assets) {
+          if (balancerLp.name === asset.name) {
+            console.log(`${balancerLp.name} is already in the current contracts.Assets`);
+            foundInVersions = true;
+            break;
+          }
+        }
+        if (!foundInVersions) {
+          // Deploy Balancer LP Aggregator
+          console.log("Deploying ", balancerLp.name);
+          const balancerV2Aggregator = await deployBalancerV2LpAggregator(contracts.PoolFactoryProxy, balancerLp.data);
+          await balancerV2Aggregator.deployed();
+          console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at `, balancerV2Aggregator.address);
+          assetHandlerAssets.push({
+            name: balancerLp.name,
+            asset: balancerLp.data.pool,
+            assetType: 6,
+            aggregator: balancerV2Aggregator.address,
+          });
         }
       }
 
@@ -379,6 +388,28 @@ task("upgrade", "Upgrade contracts")
         GuardName: "UniswapV2RouterGuard",
         GuardAddress: uniswapV2RouterGuard.address,
         Description: "Quickswap V2 router",
+      });
+    }
+    if (taskArgs.balancerv2guard) {
+      const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
+      const balancerV2Guard = await BalancerV2Guard.deploy(10, 100); // set slippage 10%
+      await balancerV2Guard.deployed();
+      console.log("BalancerV2Guard deployed at ", balancerV2Guard.address);
+      versions[newTag].contracts.UniswapV2RouterGuard = balancerV2Guard.address;
+
+      tryVerify(hre, balancerV2Guard.address, "contracts/guards/BalancerV2Guard.sol:BalancerV2Guard", [10, 100]);
+
+      await balancerV2Guard.transferOwnership(protocolDao);
+      let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+        balancerV2Vault,
+        balancerV2Guard.address,
+      ]);
+      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for balancerV2Vault");
+      newContractGuards.push({
+        ContractAddress: balancerV2Vault,
+        GuardName: "BalancerV2Guard",
+        GuardAddress: balancerV2Guard.address,
+        Description: "Balancer V2 Guard",
       });
     }
     if (taskArgs.openAssetGuard) {
