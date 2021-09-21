@@ -83,6 +83,10 @@ const deploy = async (env) => {
   const poolManagerLogic = await PoolManagerLogic.deploy();
   console.log("PoolManagerLogic deployed at ", poolManagerLogic.address);
 
+  const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+  const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+  await poolPerformance.deployed();
+
   // Initialize Asset Price Consumer
   // const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
   // const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
@@ -107,6 +111,8 @@ const deploy = async (env) => {
   ]);
   await poolFactory.deployed();
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
+
+  await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
   const fileName = env === "staging" ? stagingFileName : prodFileName;
   const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [poolFactory.address, false, "NA", "NA"]);
@@ -284,6 +290,7 @@ const deploy = async (env) => {
   await poolFactory.setDAOAddress(uberPool);
   await poolFactory.transferOwnership(protocolDao);
   await governance.transferOwnership(protocolDao);
+  await poolPerformance.transferOwnership(protocolDao);
   await assetHandler.transferOwnership(protocolDao);
   await sushiLPAssetGuard.transferOwnership(protocolDao);
   await uniswapV2RouterGuard.transferOwnership(protocolDao);
