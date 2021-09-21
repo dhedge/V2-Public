@@ -813,7 +813,7 @@ describe("PoolFactory", function () {
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
     expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
-    expect(event.fundTokensWithdrawn).to.equal(valueWithdrawn.toString());
+    expect(event.fundTokensWithdrawn).to.equal((50e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
     expect(event.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
     expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());

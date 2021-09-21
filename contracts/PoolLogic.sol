@@ -262,31 +262,22 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
-    //calculate the exit fee and transfer to the DAO in pool tokens
-    uint256 exitFeeNumerator;
-    uint256 exitFeeDenominator;
-
+    // calculate the exit fee
+    uint256 daoExitFee;
     if (getExitRemainingCooldown(msg.sender) > 0) {
-      (exitFeeNumerator, exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-    } else {
-      exitFeeNumerator = 0;
-      exitFeeDenominator = 1;
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      daoExitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
     }
-
-    uint256 daoExitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-
-    // require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
     uint256 fundValue = _mintManagerFee();
 
-    //calculate the proportion
-    _fundTokenAmount = _fundTokenAmount.sub(daoExitFee);
-    uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
+    // calculate the proportion
+    uint256 portion = _fundTokenAmount.sub(daoExitFee).mul(10**18).div(totalSupply());
 
     // first return funded tokens
-    _burn(msg.sender, _fundTokenAmount.add(daoExitFee));
+    _burn(msg.sender, _fundTokenAmount);
 
-    // transfer fee
+    // transfer exit fee
     if (daoExitFee > 0) {
       address daoAddress = IHasDaoInfo(factory).daoAddress();
       _mint(daoAddress, daoExitFee);
