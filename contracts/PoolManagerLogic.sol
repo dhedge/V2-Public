@@ -78,6 +78,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public announcedFeeIncreaseTimestamp;
   uint256 public managerFeeNumerator;
 
+  modifier onlyManagerOrTraderOrFactory() {
+    require(msg.sender == manager || msg.sender == trader || msg.sender == factory, "only manager, trader or factory");
+    _;
+  }
+
   /// @notice initialize the pool manager
   /// @param _factory address of the factory
   /// @param _manager address of the manager
@@ -127,7 +132,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Change assets of the pool
   /// @param _addAssets array of assets to add
   /// @param _removeAssets array of asset addresses to remove
-  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets) external onlyManagerOrTrader {
+  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets)
+    external
+    onlyManagerOrTraderOrFactory
+  {
     _changeAssets(_addAssets, _removeAssets);
   }
 

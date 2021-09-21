@@ -50,7 +50,7 @@ contract Managed is IManaged {
   address[] private _memberList;
   mapping(address => uint256) private _memberPosition;
 
-  address private _trader;
+  address public override trader;
 
   /// @notice Initialize of the managed contract
   /// @param newManager The address of the new manager
@@ -67,7 +67,7 @@ contract Managed is IManaged {
   }
 
   modifier onlyManagerOrTrader() {
-    require(msg.sender == manager || msg.sender == _trader, "only manager or trader");
+    require(msg.sender == manager || msg.sender == trader, "only manager or trader");
     _;
   }
 
@@ -130,22 +130,16 @@ contract Managed is IManaged {
     _removeMember(member);
   }
 
-  /// @notice Return the address of the trader
-  /// @return Address of the trader
-  function trader() external view override returns (address) {
-    return _trader;
-  }
-
   /// @notice Set the address of the trader
   /// @param newTrader The address of the new trader
   function setTrader(address newTrader) external onlyManager {
     require(newTrader != address(0), "Invalid trader");
-    _trader = newTrader;
+    trader = newTrader;
   }
 
   /// @notice Remove the trader
   function removeTrader() external onlyManager {
-    _trader = address(0);
+    trader = address(0);
   }
 
   /// @notice Return the number of members
