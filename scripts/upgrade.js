@@ -283,7 +283,7 @@ task("upgrade", "Upgrade contracts")
       let oldPoolPerformance = contracts.PoolPerformance;
       const PoolPerformance = await ethers.getContractFactory("PoolPoolPerformance");
       const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
-      console.log("poolLogic deployed to: ", poolPerformance);
+      console.log("poolPerformance deployed to: ", poolPerformance);
       versions[newTag].contracts.PoolPerformance = poolPerformance;
 
       tryVerify(hre, poolPerformance, "contracts/PoolPerformance.sol:PoolPerformance", []);
