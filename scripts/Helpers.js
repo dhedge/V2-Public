@@ -3,6 +3,17 @@ const { exec } = require("child_process");
 const execProm = util.promisify(exec);
 const stringify = require("csv-stringify");
 const fs = require("fs");
+const Safe = require("@gnosis.pm/safe-core-sdk");
+const { EthersAdapter } = require("@gnosis.pm/safe-core-sdk");
+const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
+const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+// https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
+const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
+const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
+let nonce,
+  safeSdk,
+  chainId,
+  nonceLog = new Array();
 
 const getTag = async () => {
   try {
@@ -74,4 +85,56 @@ const writeCsv = (data, fileName) => {
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32 };
+const proposeTx = async (to, data, message) => {
+  // Initialize the Safe SDK
+  const provider = ethers.provider;
+  const owner1 = provider.getSigner(0);
+  const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
+  chainId = chainId ? chainId : await ethAdapter.getChainId();
+
+  const contractNetworks = {
+    [chainId]: {
+      multiSendAddress: multiSendAddress,
+    },
+  };
+
+  safeSdk = safeSdk
+    ? safeSdk
+    : await Safe.default.create({
+        ethAdapter,
+        safeAddress: safeAddress,
+        contractNetworks,
+      });
+  nonce = nonce ? nonce : await safeSdk.getNonce();
+
+  const transaction = {
+    to: to,
+    value: "0",
+    data: data,
+    nonce: nonce,
+  };
+
+  nonceLog.push({
+    nonce: nonce,
+    message: message,
+  });
+
+  console.log("Proposing transaction: ", transaction);
+  console.log(`Nonce ${nonce}: ${message}`);
+
+  nonce += 1;
+
+  const safeTransaction = await safeSdk.createTransaction(...[transaction]);
+  // off-chain sign
+  const txHash = await safeSdk.getTransactionHash(safeTransaction);
+  const signature = await safeSdk.signTransactionHash(txHash);
+  // on-chain sign
+  // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
+  // console.log("approveTxResponse", approveTxResponse);
+  console.log("safeTransaction: ", safeTransaction);
+
+  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
+  console.log("ProposeTx: ", proposeTx);
+};
+
+module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32, proposeTx };
