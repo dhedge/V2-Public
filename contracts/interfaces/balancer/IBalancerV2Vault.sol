@@ -59,6 +59,8 @@ interface IBalancerV2Vault {
     bool toInternalBalance;
   }
 
+  function getPool(bytes32 poolId) external view returns (address pool);
+
   function swap(
     SingleSwap memory singleSwap,
     FundManagement memory funds,
@@ -88,4 +90,13 @@ interface IBalancerV2Vault {
     address payable recipient,
     ExitPoolRequest memory request
   ) external;
+
+  function getPoolTokens(bytes32 poolId)
+    external
+    view
+    returns (
+      address[] memory tokens,
+      uint256[] memory balances,
+      uint256 lastChangeBlock
+    );
 }

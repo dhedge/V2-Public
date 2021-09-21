@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const fs = require("fs");
 const { getTag } = require("../Helpers");
+const Decimal = require("decimal.js");
 const csv = require("csvtojson");
 const { toBytes32 } = require("../../test/TestHelpers");
 
@@ -22,6 +23,9 @@ const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
 const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
 const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
+
+// balancer
+const balancerV2Vault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
 
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
 const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
@@ -47,11 +51,55 @@ const stagingVersionFile = "./publish/matic/staging-versions.json";
 const prodFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 
+const prodBalancerConfig = require("../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
+const stagingBalancerConfig = require("../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
+
 const stagingExternalAssetFileName = "./config/staging/dHEDGE Assets list - Polygon External Staging.csv";
 const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon External.csv";
 
 const quickStakingRewardsFactory = "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f";
 const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98b";
+
+const deployBalancerV2LpAggregator = async (factory, info) => {
+  const ether = "1000000000000000000";
+  const divisor = info.weights.reduce((acc, w, i) => {
+    if (i == 0) {
+      return new Decimal(w).pow(w);
+    }
+    return acc.mul(new Decimal(w).pow(w));
+  }, new Decimal("0"));
+
+  const K = new Decimal(ether).div(divisor).toFixed(0);
+
+  let matrix = [];
+  for (let i = 1; i <= 20; i++) {
+    const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
+    for (let j = 0; j < info.weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+    }
+    matrix.push(elements);
+  }
+
+  const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
+  return await BalancerV2LPAggregator.deploy(
+    factory,
+    balancerV2Vault,
+    info.pool,
+    info.tokens,
+    info.decimals,
+    info.weights.map((w) =>
+      ethers.BigNumber.from(10)
+        .pow(10)
+        .mul(w * 100000000),
+    ),
+    [
+      "50000000000000000", // maxPriceDeviation: 0.05
+      K,
+      "100000000", // powerPrecision
+      matrix, // approximationMatrix
+    ],
+  );
+};
 
 const deploy = async (env) => {
   const ethers = hre.ethers;
@@ -108,26 +156,12 @@ const deploy = async (env) => {
   await poolFactory.deployed();
   console.log("PoolFactoryProxy deployed at ", poolFactory.address);
 
-  const fileName = env === "staging" ? stagingFileName : prodFileName;
   const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [poolFactory.address, false, "NA", "NA"]);
   console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
   let poolLogicAddress = await provider.getStorageAt(poolLogicProxy.address, implementationStorage);
   poolLogicAddress = ethers.utils.hexValue(poolLogicAddress);
 
-  const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-  const poolManagerLogicProxy = await upgrades.deployProxy(PoolManagerLogic, [
-    poolFactory.address,
-    manager.address,
-    "NA",
-    poolLogicAddress,
-    "1000",
-    [[wmatic, true]],
-  ]);
-  console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
-  let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage);
-  poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddress);
-
-  const assets = await csv().fromFile(fileName);
+  const assets = await csv().fromFile(env === "staging" ? stagingFileName : prodFileName);
 
   const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
   let assetHandlerInitAssets = [];
@@ -157,7 +191,37 @@ const deploy = async (env) => {
         });
     }
   }
+
+  const balancerLps = env === "staging" ? stagingBalancerConfig : prodBalancerConfig;
+  for (let i = 0; i < balancerLps.length; i++) {
+    const balancerLp = balancerLps[i];
+
+    // Deploy Balancer LP Aggregator
+    console.log("Deploying ", balancerLp.name);
+    const balancerV2Aggregator = await deployBalancerV2LpAggregator(poolFactory.address, balancerLp.data);
+    await balancerV2Aggregator.deployed();
+    console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at `, balancerV2Aggregator.address);
+    assetHandlerInitAssets.push({
+      name: balancerLp.name,
+      asset: balancerLp.data.pool,
+      assetType: 6,
+      aggregator: balancerV2Aggregator.address,
+    });
+  }
+
   await assetHandler.addAssets(assetHandlerInitAssets);
+
+  const poolManagerLogicProxy = await upgrades.deployProxy(PoolManagerLogic, [
+    poolFactory.address,
+    manager.address,
+    "NA",
+    poolLogicAddress,
+    "1000",
+    [[wmatic, true]],
+  ]);
+  console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
+  let poolManagerLogicAddress = await provider.getStorageAt(poolManagerLogicProxy.address, implementationStorage);
+  poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddress);
 
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
@@ -179,11 +243,10 @@ const deploy = async (env) => {
   await sushiLPAssetGuard.deployed();
   console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
 
-  const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
-  const csvAssets = await csv().fromFile(fileName);
+  const csvAssets = await csv().fromFile(env === "staging" ? stagingExternalAssetFileName : prodExternalAssetFileName);
   const addresses = csvAssets.map((asset) => asset.Address);
   const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
-  const openAssetGuard = await OpenAssetGuard.deploy([addresses]);
+  const openAssetGuard = await OpenAssetGuard.deploy([...addresses]);
   await openAssetGuard.deployed();
   console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
 
@@ -197,12 +260,17 @@ const deploy = async (env) => {
   await quickStakingRewardsGuard.deployed();
   console.log("quickStakingRewardsGuard deployed at ", quickStakingRewardsGuard.address);
 
+  const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
+  balancerV2Guard = await BalancerV2Guard.deploy(2, 100); // set slippage 2%
+  await balancerV2Guard.deployed();
+
   await governance.setAssetGuard(0, erc20Guard.address);
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);
   await governance.setAssetGuard(5, quickLPAssetGuard.address);
   await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
   await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
   await governance.setContractGuard(quickLpUsdcWethStakingRewards, quickStakingRewardsGuard.address);
+  await governance.setContractGuard(balancerV2Vault, balancerV2Guard.address);
 
   let tag = await getTag();
   let versions = new Object();
@@ -223,6 +291,8 @@ const deploy = async (env) => {
       SushiMiniChefV2Guard: sushiMiniChefV2Guard.address,
       SushiLPAssetGuard: sushiLPAssetGuard.address,
       OpenAssetGuard: openAssetGuard.address,
+      quickStakingRewardsGuard: quickStakingRewardsGuard.address,
+      balancerV2Guard: balancerV2Guard.address,
     },
   };
 
@@ -277,7 +347,7 @@ const deploy = async (env) => {
       assetType: 3,
       aggregator: usdPriceAggregator.address,
     };
-    await assetHandler.addAssets(lendingPoolAsset);
+    await assetHandler.addAssets([lendingPoolAsset]);
   }
 
   // DAO Settings

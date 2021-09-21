@@ -63,7 +63,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address, // to
+    address to,
     bytes calldata data
   )
     external
@@ -162,6 +162,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
     } else if (method == IBalancerV2Vault.joinPool.selector) {
       (bytes32 poolId, address sender, address recipient, IBalancerV2Vault.JoinPoolRequest memory joinPoolRequest) = abi
         .decode(getParams(data), (bytes32, address, address, IBalancerV2Vault.JoinPoolRequest));
+      address pool = IBalancerV2Vault(to).getPool(poolId);
 
       IBalancerV2Vault.JoinKind kind = abi.decode(joinPoolRequest.userData, (IBalancerV2Vault.JoinKind));
 
@@ -188,9 +189,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[tokenIndex]), "unsupported asset");
       }
 
-      // disable for now
-      // require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
-
+      require(poolManagerLogicAssets.isSupportedAsset(pool), "unsupported lp asset");
       require(poolManagerLogic.poolLogic() == sender, "sender is not pool");
       require(poolManagerLogic.poolLogic() == recipient, "recipient is not pool");
 
@@ -206,6 +205,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
     } else if (method == IBalancerV2Vault.exitPool.selector) {
       (bytes32 poolId, address sender, address recipient, IBalancerV2Vault.ExitPoolRequest memory exitPoolRequest) = abi
         .decode(getParams(data), (bytes32, address, address, IBalancerV2Vault.ExitPoolRequest));
+      address pool = IBalancerV2Vault(to).getPool(poolId);
 
       IBalancerV2Vault.ExitKind kind = abi.decode(exitPoolRequest.userData, (IBalancerV2Vault.ExitKind));
 
@@ -232,9 +232,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         }
       }
 
-      // disable for now
-      // require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
-
+      require(poolManagerLogicAssets.isSupportedAsset(pool), "unsupported lp asset");
       require(poolManagerLogic.poolLogic() == sender, "sender is not pool");
       require(poolManagerLogic.poolLogic() == recipient, "recipient is not pool");
 
