@@ -46,6 +46,8 @@
 // 13. Repay: Aave repay tokens
 // 14. SwapBorrowRateMode: Aave change borrow rate mode (stable/variable)
 // 15. RebalanceStableBorrowRate: Aave rebalance stable borrow rate
+// 16. JoinPool: Balancer join pool
+// 17. ExitPool: Balancer exit pool
 
 // SPDX-License-Identifier: BUSL-1.1
 
