@@ -310,7 +310,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // We must now update our internal balances to whatever the result of the withdraw
     IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).updateInternalBalances();
 
-
     // Reduce length for withdrawnAssets to remove the empty items
     uint256 reduceLength = _supportedAssets.length.sub(index);
     assembly {
