@@ -60,7 +60,9 @@ import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
+import "./interfaces/IPoolPerformance.sol";
 import "./interfaces/IHasSupportedAsset.sol";
+import "./interfaces/IHasPoolPerformance.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IManaged.sol";
@@ -229,6 +231,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
     );
 
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).addAssetBalance(_asset, _amount);
+
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
     if (totalSupplyBefore > 0) {
@@ -273,11 +277,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // TODO: Combining into one line to fix stack too deep,
     //       need to refactor some variables into struct in order to have more variables
     IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
-    uint256 assetCount = _supportedAssets.length;
-    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](assetCount);
+    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    for (uint256 i = 0; i < assetCount; i++) {
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+    poolPerformance.recordExternalValue(address(this));
+
+    for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
         _supportedAssets[i].asset,
         msg.sender,
@@ -302,8 +308,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
+    // We must now update our internal balances to whatever the result of the withdraw
+    poolPerformance.updateInternalBalances();
+
     // Reduce length for withdrawnAssets to remove the empty items
-    uint256 reduceLength = assetCount.sub(index);
+    uint256 reduceLength = _supportedAssets.length.sub(index);
     assembly {
       mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
     }
@@ -383,6 +392,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function execTransaction(address to, bytes memory data) external nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
 
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+    poolPerformance.recordExternalValue(address(this));
+    // ^^ once we are past this check we know the external balances are legit.
     address guard = IHasGuardInfo(factory).getGuard(to);
 
     if (IHasAssetInfo(factory).isValidAsset(to)) {
@@ -395,6 +407,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
 
     success = to.tryAssemblyCall(data);
+
+    // We must now update our internal balances to whatever the result of this tx is
+    poolPerformance.updateInternalBalances();
 
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
@@ -512,6 +527,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @notice Get mint manager fee of the pool internal call
   /// @return fundValue The total fund value of the pool
   function _mintManagerFee() internal returns (uint256 fundValue) {
+    // This has to run on deposit
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
+
     fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 

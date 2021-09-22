@@ -80,6 +80,7 @@ module.exports = {
     clear: true,
     flat: true,
     only: [
+      "PoolPerformance",
       "PoolFactory",
       "PoolLogic",
       "PoolManagerLogic",

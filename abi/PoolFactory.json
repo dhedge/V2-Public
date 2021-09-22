@@ -201,6 +201,19 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "poolPerformanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "PoolPerformanceAddressSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "proxy",
         "type": "address"
       }
@@ -826,6 +839,19 @@
   },
   {
     "inputs": [],
+    "name": "poolPerformanceAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "poolStorageVersion",
     "outputs": [
       {
@@ -999,6 +1025,19 @@
       }
     ],
     "name": "setMaximumSupportedAssetCount",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_poolPerformanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setPoolPerformanceAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

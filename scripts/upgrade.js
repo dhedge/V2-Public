@@ -76,6 +76,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("assetHandler", "upgrade assetHandler", false, types.boolean)
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
   .addOptionalParam("poolManagerLogic", "upgrade poolManagerLogic", false, types.boolean)
+  .addOptionalParam("poolPerformance", "upgrade poolPerformance", false, types.boolean)
   .addOptionalParam("assets", "deploy new assets", false, types.boolean)
   .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("aaveLendingPoolAssetGuard", "upgrade aaveLendingPoolAssetGuard", false, types.boolean)
@@ -286,6 +287,20 @@ task("upgrade", "Upgrade contracts")
       ]);
       await proposeTx(contracts.PoolFactoryProxy, setLogicABI, "Set logic for poolLogic and poolManagerLogic");
     }
+
+    if (taskArgs.poolPerformance) {
+      let oldPoolPerformance = contracts.PoolPerformance;
+      const PoolPerformance = await ethers.getContractFactory("PoolPoolPerformance");
+      const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
+      console.log("poolPerformance deployed to: ", poolPerformance);
+      versions[newTag].contracts.PoolPerformance = poolPerformance;
+
+      tryVerify(hre, poolPerformance, "contracts/PoolPerformance.sol:PoolPerformance", []);
+
+      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldPoolPerformance, poolPerformance]);
+      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Performance");
+    }
+
     if (taskArgs.aaveLendingPoolAssetGuard) {
       const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
       const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);

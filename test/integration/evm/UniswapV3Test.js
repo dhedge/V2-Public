@@ -5,6 +5,9 @@ const { checkAlmostSame } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
+// aave
+const aaveProtocolDataProvider = "0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d";
+
 const uniswapV3Factory = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
 const uniswapV3Router = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
 
@@ -34,6 +37,10 @@ describe("Uniswap V3 Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    await poolPerformance.deployed();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -60,6 +67,8 @@ describe("Uniswap V3 Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();

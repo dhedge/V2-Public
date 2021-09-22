@@ -52,6 +52,10 @@ describe("Aave Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    await poolPerformance.deployed();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -81,6 +85,9 @@ describe("Aave Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
