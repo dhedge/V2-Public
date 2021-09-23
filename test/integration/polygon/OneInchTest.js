@@ -2,33 +2,13 @@ const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 const axios = require("axios");
-const { checkAlmostSame, toBytes32, getAmountOut, getAmountIn, units } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32, units } = require("../../TestHelpers");
+const { ZERO_ADDRESS, aave, oneinch, quickswap, assets, price_feeds } = require("../polygon-data");
 
 use(chaiAlmost());
 
-const oneInchV3Router = "0x11111112542D85B3EF69AE05771c2dCCff4fAa26";
-const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
-
-// aave
-const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
-
-// For mainnet
-const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
-const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
-const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-const usdt = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
-const dai = "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063";
-const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
-const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
-const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
-const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
-
-const quickLpUsdcUsdt = "0x2cf7252e74036d1da831d11089d326296e64a728";
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
 describe("OneInch V3 Test", function () {
-  let WMatic, WETH, USDC, USDT;
+  let WMatic, USDC, USDT;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
   let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
@@ -43,7 +23,7 @@ describe("OneInch V3 Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -53,9 +33,9 @@ describe("OneInch V3 Test", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
-    const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-    const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-    const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
+    const assetWeth = { asset: assets.weth, assetType: 0, aggregator: price_feeds.eth };
+    const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
+    const assetUsdc = { asset: assets.usdc, assetType: 0, aggregator: price_feeds.usdc };
     const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
@@ -79,7 +59,7 @@ describe("OneInch V3 Test", function () {
     await erc20Guard.deployed();
 
     const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
-    openAssetGuard = await OpenAssetGuard.deploy([wmatic]);
+    openAssetGuard = await OpenAssetGuard.deploy([assets.wmatic]);
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
@@ -91,35 +71,35 @@ describe("OneInch V3 Test", function () {
     oneInchV3Guard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setContractGuard(quickswapRouter, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(oneInchV3Router, oneInchV3Guard.address);
+    await governance.setContractGuard(quickswap.router, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
   });
 
   it("Should be able to get USDC", async function () {
     const IWETH = await hre.artifacts.readArtifact("IWETH");
-    WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
+    WMatic = await ethers.getContractAt(IWETH.abi, assets.wmatic);
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
-    USDT = await ethers.getContractAt(IERC20.abi, usdt);
-    USDC = await ethers.getContractAt(IERC20.abi, usdc);
-    WETH = await ethers.getContractAt(IERC20.abi, weth);
-    WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
+    USDT = await ethers.getContractAt(IERC20.abi, assets.usdt);
+    USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
+    WETH = await ethers.getContractAt(IERC20.abi, assets.weth);
+    WMATIC = await ethers.getContractAt(IERC20.abi, assets.wmatic);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
     balance = await WMATIC.balanceOf(logicOwner.address);
     console.log("WMatic balance: ", balance.toString());
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    const QuickSwapRouter = await ethers.getContractAt(IUniswapV2Router.abi, quickswapRouter);
+    const QuickSwapRouter = await ethers.getContractAt(IUniswapV2Router.abi, quickswap.router);
     // deposit Matic -> WMatic
     await WMatic.deposit({ value: units(500) });
     balance = await WMATIC.balanceOf(logicOwner.address);
     console.log("WMatic balance: ", balance.toString());
     // WMatic -> USDC
-    await WMatic.approve(quickswapRouter, units(500));
+    await WMatic.approve(quickswap.router, units(500));
     await QuickSwapRouter.swapExactTokensForTokens(
       units(500),
       0,
-      [wmatic, usdc],
+      [assets.wmatic, assets.usdc],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -139,8 +119,8 @@ describe("OneInch V3 Test", function () {
       poolLogic.address,
       "1000",
       [
-        [usdc, true],
-        [weth, true],
+        [assets.usdc, true],
+        [assets.weth, true],
       ],
     );
 
@@ -190,8 +170,8 @@ describe("OneInch V3 Test", function () {
         "DHTF",
         new ethers.BigNumber.from("6000"),
         [
-          [usdc, true],
-          [weth, true],
+          [assets.usdc, true],
+          [assets.weth, true],
         ],
       ),
     ).to.be.revertedWith("invalid manager fee");
@@ -204,8 +184,8 @@ describe("OneInch V3 Test", function () {
       "DHTF",
       new ethers.BigNumber.from("5000"),
       [
-        [usdc, true],
-        [usdt, true],
+        [assets.usdc, true],
+        [assets.usdt, true],
       ],
     );
 
@@ -241,11 +221,11 @@ describe("OneInch V3 Test", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdc)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdt)).to.be.true;
 
     //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(wmatic)).to.be.false;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.wmatic)).to.be.false;
   });
 
   it("should be able to deposit", async function () {
@@ -290,32 +270,32 @@ describe("OneInch V3 Test", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     console.log("supportedAsset: ", supportedAssets);
 
-    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", eth_price_feed);
+    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", price_feeds.eth);
     let ethPrice = await chainlinkEth.latestRoundData();
     console.log("eth price: ", ethPrice[1].toString());
     console.log("updatedAt: ", ethPrice[3].toString());
 
-    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", usdc_price_feed);
+    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", price_feeds.usdc);
     let usdcPrice = await chainlinkUsdc.latestRoundData();
     console.log("usdc price: ", usdcPrice[1].toString());
     console.log("updatedAt: ", usdcPrice[3].toString());
 
     // Revert on second time
-    let assetBalance = await poolManagerLogicProxy.assetBalance(usdc);
+    let assetBalance = await poolManagerLogicProxy.assetBalance(assets.usdc);
     console.log("assetBalance: ", assetBalance.toString());
 
     // Revert on second time
-    let assetValue = await poolManagerLogicProxy["assetValue(address)"](usdc);
+    let assetValue = await poolManagerLogicProxy["assetValue(address)"](assets.usdc);
     console.log("assetValue: ", assetValue.toString());
 
     // Revert on second time
     totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
-    await expect(poolLogicProxy.deposit(wmatic, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
+    await expect(poolLogicProxy.deposit(assets.wmatic, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
 
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
-    await poolLogicProxy.deposit(usdc, (200e6).toString());
+    await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
     let event = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
@@ -330,22 +310,22 @@ describe("OneInch V3 Test", function () {
   it("Should be able to approve", async () => {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [usdc, (200e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(weth, approveABI)).to.be.revertedWith(
+    let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(usdc, approveABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
       "unsupported spender approval",
     );
 
-    approveABI = iERC20.encodeFunctionData("approve", [oneInchV3Router, (200e6).toString()]);
-    await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+    approveABI = iERC20.encodeFunctionData("approve", [oneinch.v3Router, (200e6).toString()]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
   });
 
   it("should be able to swap tokens on oneInch - swap.", async () => {
-    const srcAsset = usdc;
-    const dstAsset = usdt;
+    const srcAsset = assets.usdc;
+    const dstAsset = assets.usdt;
     const srcAmount = units(1, 6);
     const fromAddress = poolLogicProxy.address;
     const toAddress = poolLogicProxy.address;
@@ -359,14 +339,14 @@ describe("OneInch V3 Test", function () {
      */
     let swapTx = await getOneInchSwapTransaction({
       srcAsset,
-      dstAsset: dai,
+      dstAsset: assets.dai,
       srcAmount,
       fromAddress,
       toAddress,
       referrerAddress,
     });
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
       "unsupported destination asset",
     );
 
@@ -379,7 +359,7 @@ describe("OneInch V3 Test", function () {
       referrerAddress,
     });
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
       "recipient is not pool",
     );
 
@@ -395,7 +375,7 @@ describe("OneInch V3 Test", function () {
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
 
-    await poolLogicProxy.connect(manager).execTransaction(oneInchV3Router, swapTx);
+    await poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx);
 
     const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);

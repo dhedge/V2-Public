@@ -1,45 +1,10 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, toBytes32, getAmountOut } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32, getAmountOut, units } = require("../../TestHelpers");
+const { ZERO_ADDRESS, sushi, aave, assets, price_feeds } = require("../polygon-data");
 
 use(chaiAlmost());
-
-const units = (value) => ethers.utils.parseUnits(value.toString());
-
-// sushiswap
-const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
-const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
-
-// aave
-const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
-const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
-const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
-
-// For mainnet
-const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
-const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
-const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-const usdt = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
-const dai = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063";
-const sushiToken = "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a";
-
-const amusdc = "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F";
-const amusdt = "0x60D55F02A771d515e077c9C2403a1ef324885CeC";
-const amdai = "0x27f8d03b3a2196956ed754badc28d73be8830a6e";
-
-const variableDebtDai = "0x75c4d1Fb84429023170086f06E682DcbBF537b7d";
-
-const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
-const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
-const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
-const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
-const dai_price_feed = "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D";
-const sushi_price_feed = "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0";
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
 
 describe("Polygon Mainnet Test", function () {
   let WMatic, USDC, DAI, AMUSDC;
@@ -62,7 +27,7 @@ describe("Polygon Mainnet Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -75,13 +40,13 @@ describe("Polygon Mainnet Test", function () {
     const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
     usdPriceAggregator = await USDPriceAggregator.deploy();
     // Initialize Asset Price Consumer
-    const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
-    const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-    const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-    const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
-    const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
-    const assetDai = { asset: dai, assetType: 4, aggregator: dai_price_feed }; // Lending enabled
-    const assetUsdc = { asset: usdc, assetType: 4, aggregator: usdc_price_feed }; // Lending enabled
+    const assetWmatic = { asset: assets.wmatic, assetType: 0, aggregator: price_feeds.matic };
+    const assetWeth = { asset: assets.weth, assetType: 0, aggregator: price_feeds.eth };
+    const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
+    const assetSushi = { asset: assets.sushi, assetType: 0, aggregator: price_feeds.sushi };
+    const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
+    const assetDai = { asset: assets.dai, assetType: 4, aggregator: price_feeds.dai }; // Lending enabled
+    const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
     const assetHandlerInitAssets = [
       assetWmatic,
       assetWeth,
@@ -110,8 +75,12 @@ describe("Polygon Mainnet Test", function () {
 
     // Deploy Sushi LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
-    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
-    const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    sushiLPAggregator = await UniV2LPAggregator.deploy(sushi.pools.usdc_weth.address, poolFactory.address);
+    const assetSushiLPWethUsdc = {
+      asset: sushi.pools.usdc_weth.address,
+      assetType: 2,
+      aggregator: sushiLPAggregator.address,
+    };
     await assetHandler.addAssets([assetSushiLPWethUsdc]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
@@ -127,15 +96,15 @@ describe("Polygon Mainnet Test", function () {
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(assets.sushi, assets.wmatic);
     sushiMiniChefV2Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushi.minichef); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aave.protocolDataProvider);
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
@@ -147,52 +116,52 @@ describe("Polygon Mainnet Test", function () {
     lendingEnabledAssetGuard.deployed();
 
     const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
-    const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
+    const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(assets.wmatic);
     aaveIncentivesControllerGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
     await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
-    await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
-    await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
-    await governance.setContractGuard(aaveIncentivesController, aaveIncentivesControllerGuard.address);
+    await governance.setContractGuard(sushi.router, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(sushi.minichef, sushiMiniChefV2Guard.address);
+    await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuard.address);
+    await governance.setContractGuard(aave.incentivesController, aaveIncentivesControllerGuard.address);
     await governance.setAddresses([
-      [toBytes32("swapRouter"), sushiswapV2Router],
-      [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
-      [toBytes32("weth"), weth],
+      [toBytes32("swapRouter"), sushi.router],
+      [toBytes32("aaveProtocolDataProvider"), aave.protocolDataProvider],
+      [toBytes32("weth"), assets.weth],
       [toBytes32("openAssetGuard"), openAssetGuard.address],
     ]);
   });
 
   it("Should be able to get USDC", async function () {
     const IWETH = await hre.artifacts.readArtifact("IWETH");
-    WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
-    USDT = await ethers.getContractAt(IERC20.abi, usdt);
-    DAI = await ethers.getContractAt(IERC20.abi, dai);
-    USDC = await ethers.getContractAt(IERC20.abi, usdc);
-    WETH = await ethers.getContractAt(IERC20.abi, weth);
-    WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
-    SUSHI = await ethers.getContractAt(IERC20.abi, sushiToken);
-    SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushiLpUsdcWeth);
-    AMUSDC = await ethers.getContractAt(IERC20.abi, amusdc);
+    WMatic = await ethers.getContractAt(IWETH.abi, assets.wmatic);
+    USDT = await ethers.getContractAt(IERC20.abi, assets.usdt);
+    DAI = await ethers.getContractAt(IERC20.abi, assets.dai);
+    USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
+    WETH = await ethers.getContractAt(IERC20.abi, assets.weth);
+    WMATIC = await ethers.getContractAt(IERC20.abi, assets.wmatic);
+    SUSHI = await ethers.getContractAt(IERC20.abi, assets.sushi);
+    SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushi.pools.usdc_weth.address);
+    AMUSDC = await ethers.getContractAt(IERC20.abi, aave.aTokens.usdc);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
     balance = await WMATIC.balanceOf(logicOwner.address);
     console.log("WMatic balance: ", balance.toString());
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
+    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
     // deposit Matic -> WMatic
     await WMatic.deposit({ value: units(500) });
     balance = await WMATIC.balanceOf(logicOwner.address);
     console.log("WMatic balance: ", balance.toString());
     // WMatic -> USDC
-    await WMatic.approve(sushiswapV2Router, units(500));
+    await WMatic.approve(sushi.router, units(500));
     await sushiswapRouter.swapExactTokensForTokens(
       units(500),
       0,
-      [wmatic, usdc],
+      [assets.wmatic, assets.usdc],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -212,8 +181,8 @@ describe("Polygon Mainnet Test", function () {
       poolLogic.address,
       "1000",
       [
-        [usdc, true],
-        [weth, true],
+        [assets.usdc, true],
+        [assets.weth, true],
       ],
     );
 
@@ -263,8 +232,8 @@ describe("Polygon Mainnet Test", function () {
         "DHTF",
         new ethers.BigNumber.from("6000"),
         [
-          [usdc, true],
-          [weth, true],
+          [assets.usdc, true],
+          [assets.weth, true],
         ],
       ),
     ).to.be.revertedWith("invalid manager fee");
@@ -277,8 +246,8 @@ describe("Polygon Mainnet Test", function () {
       "DHTF",
       new ethers.BigNumber.from("5000"),
       [
-        [usdc, true],
-        [weth, true],
+        [assets.usdc, true],
+        [assets.weth, true],
       ],
     );
 
@@ -314,11 +283,11 @@ describe("Polygon Mainnet Test", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdc)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.weth)).to.be.true;
 
     //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.false;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdt)).to.be.false;
   });
 
   it("should be able to deposit", async function () {
@@ -363,32 +332,32 @@ describe("Polygon Mainnet Test", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     console.log("supportedAsset: ", supportedAssets);
 
-    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", eth_price_feed);
+    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", price_feeds.eth);
     let ethPrice = await chainlinkEth.latestRoundData();
     console.log("eth price: ", ethPrice[1].toString());
     console.log("updatedAt: ", ethPrice[3].toString());
 
-    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", usdc_price_feed);
+    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", price_feeds.usdc);
     let usdcPrice = await chainlinkUsdc.latestRoundData();
     console.log("usdc price: ", usdcPrice[1].toString());
     console.log("updatedAt: ", usdcPrice[3].toString());
 
     // Revert on second time
-    let assetBalance = await poolManagerLogicProxy.assetBalance(usdc);
+    let assetBalance = await poolManagerLogicProxy.assetBalance(assets.usdc);
     console.log("assetBalance: ", assetBalance.toString());
 
     // Revert on second time
-    let assetValue = await poolManagerLogicProxy["assetValue(address)"](usdc);
+    let assetValue = await poolManagerLogicProxy["assetValue(address)"](assets.usdc);
     console.log("assetValue: ", assetValue.toString());
 
     // Revert on second time
     totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
-    await expect(poolLogicProxy.deposit(usdt, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
+    await expect(poolLogicProxy.deposit(assets.usdt, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
 
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
-    await poolLogicProxy.deposit(usdc, (200e6).toString());
+    await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
     let event = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
@@ -403,8 +372,8 @@ describe("Polygon Mainnet Test", function () {
     // Pool balance: 200 USDC
 
     // First approve USDC
-    approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (200e6).toString()]);
-    await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+    approveABI = iERC20.encodeFunctionData("approve", [sushi.router, (200e6).toString()]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const sourceAmount = (20e6).toString();
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
@@ -412,13 +381,13 @@ describe("Polygon Mainnet Test", function () {
 
     const swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
-      [usdc, weth],
+      await getAmountOut(sushi.router, sourceAmount, [assets.usdc, assets.weth]),
+      [assets.usdc, assets.weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
     ]);
 
-    await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI);
+    await poolLogicProxy.connect(manager).execTransaction(sushi.router, swapABI);
 
     expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal(180e6);
   });
@@ -431,7 +400,7 @@ describe("Polygon Mainnet Test", function () {
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, amount, poolLogicProxy.address, 0]);
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, depositABI)).to.be.revertedWith(
         "non-zero address is required",
@@ -441,36 +410,36 @@ describe("Polygon Mainnet Test", function () {
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, depositABI),
       ).to.be.revertedWith("invalid destination");
 
-      depositABI = iLendingPool.encodeFunctionData("deposit", [amusdt, amount, poolLogicProxy.address, 0]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
+      depositABI = iLendingPool.encodeFunctionData("deposit", [aave.aTokens.usdt, amount, poolLogicProxy.address, 0]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
         "asset not enabled in pool",
       );
 
       // add supported assets
-      await poolManagerLogicProxy.connect(manager).changeAssets([[aaveLendingPool, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[aave.lendingPool, false]], []);
 
-      depositABI = iLendingPool.encodeFunctionData("deposit", [amusdt, amount, poolLogicProxy.address, 0]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
+      depositABI = iLendingPool.encodeFunctionData("deposit", [aave.aTokens.usdt, amount, poolLogicProxy.address, 0]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
         "unsupported deposit asset",
       );
 
-      depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, amount, usdc, 0]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
+      depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, assets.usdc, 0]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
         "recipient is not pool",
       );
 
-      depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, amount, poolLogicProxy.address, 0]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(usdc, depositABI)).to.be.revertedWith(
+      depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, depositABI)).to.be.revertedWith(
         "invalid transaction",
       );
 
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI)).to.be.revertedWith(
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
         "SafeERC20: low-level call failed",
       );
 
-      // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
-      await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+      // approve .usdc
+      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -481,7 +450,7 @@ describe("Polygon Mainnet Test", function () {
       expect(amusdcBalanceBefore).to.be.equal(0);
 
       // deposit
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -497,7 +466,7 @@ describe("Polygon Mainnet Test", function () {
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
-      let withdrawABI = iLendingPool.encodeFunctionData("withdraw", [usdc, amount, poolLogicProxy.address]);
+      let withdrawABI = iLendingPool.encodeFunctionData("withdraw", [assets.usdc, amount, poolLogicProxy.address]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, withdrawABI)).to.be.revertedWith(
         "non-zero address is required",
@@ -507,17 +476,17 @@ describe("Polygon Mainnet Test", function () {
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, withdrawABI),
       ).to.be.revertedWith("invalid destination");
 
-      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [amusdt, amount, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
+      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [aave.aTokens.usdt, amount, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, withdrawABI)).to.be.revertedWith(
         "unsupported withdraw asset",
       );
-      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [usdc, amount, usdc]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI)).to.be.revertedWith(
+      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [assets.usdc, amount, assets.usdc]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, withdrawABI)).to.be.revertedWith(
         "recipient is not pool",
       );
 
-      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [usdc, amount, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(usdc, withdrawABI)).to.be.revertedWith(
+      withdrawABI = iLendingPool.encodeFunctionData("withdraw", [assets.usdc, amount, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, withdrawABI)).to.be.revertedWith(
         "invalid transaction",
       );
 
@@ -527,7 +496,7 @@ describe("Polygon Mainnet Test", function () {
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
       // withdraw
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, withdrawABI);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, withdrawABI);
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -542,25 +511,25 @@ describe("Polygon Mainnet Test", function () {
       // Aave balance: 50 amUSDC
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
-      const lendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
+      const lendingPool = await ethers.getContractAt(ILendingPool.abi, aave.lendingPool);
 
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
-      let abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdt, true]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith(
+      let abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.usdt, true]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi)).to.be.revertedWith(
         "unsupported asset",
       );
 
-      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [weth, true]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi)).to.be.revertedWith("19");
+      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.weth, true]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi)).to.be.revertedWith("19");
 
-      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdc, false]);
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi);
+      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.usdc, false]);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi);
 
       const userConfigBefore = await lendingPool.getUserConfiguration(poolLogicProxy.address);
 
-      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [usdc, true]);
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, abi);
+      abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.usdc, true]);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi);
 
       const userConfigAfter = await lendingPool.getUserConfiguration(poolLogicProxy.address);
       expect(userConfigBefore).to.be.not.equal(userConfigAfter);
@@ -598,7 +567,7 @@ describe("Polygon Mainnet Test", function () {
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
-      let borrowABI = iLendingPool.encodeFunctionData("borrow", [dai, amount, 2, 0, poolLogicProxy.address]);
+      let borrowABI = iLendingPool.encodeFunctionData("borrow", [assets.dai, amount, 2, 0, poolLogicProxy.address]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, borrowABI)).to.be.revertedWith(
         "non-zero address is required",
@@ -608,20 +577,20 @@ describe("Polygon Mainnet Test", function () {
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
       ).to.be.revertedWith("invalid destination");
 
-      borrowABI = iLendingPool.encodeFunctionData("borrow", [amdai, amount, 2, 0, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+      borrowABI = iLendingPool.encodeFunctionData("borrow", [aave.aTokens.dai, amount, 2, 0, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI)).to.be.revertedWith(
         "unsupported borrow asset",
       );
 
-      await poolManagerLogicProxy.connect(manager).changeAssets([[dai, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[assets.dai, false]], []);
 
-      borrowABI = iLendingPool.encodeFunctionData("borrow", [dai, amount, 2, 0, usdc]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+      borrowABI = iLendingPool.encodeFunctionData("borrow", [assets.dai, amount, 2, 0, assets.usdc]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI)).to.be.revertedWith(
         "recipient is not pool",
       );
 
-      borrowABI = iLendingPool.encodeFunctionData("borrow", [dai, amount, 2, 0, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(dai, borrowABI)).to.be.revertedWith(
+      borrowABI = iLendingPool.encodeFunctionData("borrow", [assets.dai, amount, 2, 0, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(assets.dai, borrowABI)).to.be.revertedWith(
         "invalid transaction",
       );
 
@@ -632,10 +601,10 @@ describe("Polygon Mainnet Test", function () {
       expect(daiBalanceBefore).to.be.equal(0);
 
       // borrow
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
 
-      borrowABI = iLendingPool.encodeFunctionData("borrow", [usdc, amount, 2, 0, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, borrowABI)).to.be.revertedWith(
+      borrowABI = iLendingPool.encodeFunctionData("borrow", [assets.usdc, amount, 2, 0, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI)).to.be.revertedWith(
         "borrowing asset exists",
       );
 
@@ -653,7 +622,7 @@ describe("Polygon Mainnet Test", function () {
 
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
-      let repayABI = iLendingPool.encodeFunctionData("repay", [dai, amount, 2, poolLogicProxy.address]);
+      let repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, repayABI)).to.be.revertedWith(
         "non-zero address is required",
@@ -663,28 +632,28 @@ describe("Polygon Mainnet Test", function () {
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, repayABI),
       ).to.be.revertedWith("invalid destination");
 
-      repayABI = iLendingPool.encodeFunctionData("repay", [amdai, amount, 2, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI)).to.be.revertedWith(
+      repayABI = iLendingPool.encodeFunctionData("repay", [aave.aTokens.dai, amount, 2, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI)).to.be.revertedWith(
         "unsupported repay asset",
       );
 
-      repayABI = iLendingPool.encodeFunctionData("repay", [dai, amount, 2, usdc]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI)).to.be.revertedWith(
+      repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, assets.usdc]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI)).to.be.revertedWith(
         "recipient is not pool",
       );
 
-      repayABI = iLendingPool.encodeFunctionData("repay", [dai, amount, 2, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(dai, repayABI)).to.be.revertedWith(
+      repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(assets.dai, repayABI)).to.be.revertedWith(
         "invalid transaction",
       );
 
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI)).to.be.revertedWith(
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI)).to.be.revertedWith(
         "SafeERC20: low-level call failed",
       );
 
       // approve dai
-      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
-      await poolLogicProxy.connect(manager).execTransaction(dai, approveABI);
+      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.dai, approveABI);
 
       const daiBalanceBefore = await DAI.balanceOf(poolLogicProxy.address);
       expect(daiBalanceBefore).to.be.equal(units(25));
@@ -692,7 +661,7 @@ describe("Polygon Mainnet Test", function () {
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
       // repay
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI);
 
       const daiBalanceAfter = await DAI.balanceOf(poolLogicProxy.address);
       expect(daiBalanceAfter).to.be.equal(units(15));
@@ -705,7 +674,7 @@ describe("Polygon Mainnet Test", function () {
       // Aave balance: 40 amUSDC, 15 debtDAI
 
       // enable weth to check withdraw process
-      await poolManagerLogicProxy.connect(manager).changeAssets([[weth, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[assets.weth, false]], []);
 
       // Withdraw 10%
       let withdrawAmount = units(16);
@@ -716,8 +685,8 @@ describe("Polygon Mainnet Test", function () {
       checkAlmostSame(totalFundValueBefore, units(160));
 
       // Unapprove WETH in Sushiswap to test conditional approval logic
-      approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (0).toString()]);
-      await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
+      approveABI = iERC20.encodeFunctionData("approve", [sushi.router, (0).toString()]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
       await poolLogicProxy.withdraw(withdrawAmount);
 
@@ -731,7 +700,7 @@ describe("Polygon Mainnet Test", function () {
     it("should be able to swap borrow rate mode", async function () {
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
-      let swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [usdc, 1]);
+      let swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.usdc, 1]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapRateABI)).to.be.revertedWith(
         "non-zero address is required",
@@ -741,23 +710,23 @@ describe("Polygon Mainnet Test", function () {
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, swapRateABI),
       ).to.be.revertedWith("invalid destination");
 
-      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [amdai, 1]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
+      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [aave.aTokens.dai, 1]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
         "unsupported asset",
       );
 
-      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [usdc, 1]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
+      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.usdc, 1]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
         "17",
       );
 
-      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [dai, 1]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
+      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.dai, 1]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
         "17",
       );
 
-      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [dai, 2]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, swapRateABI)).to.be.revertedWith(
+      swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.dai, 2]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
         "12",
       );
     });
@@ -765,7 +734,10 @@ describe("Polygon Mainnet Test", function () {
     it("should be able to rebalance stable borrow rate", async function () {
       const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
-      let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
+      let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
+        assets.usdc,
+        poolLogicProxy.address,
+      ]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, rebalanceAPI)).to.be.revertedWith(
         "non-zero address is required",
@@ -775,23 +747,29 @@ describe("Polygon Mainnet Test", function () {
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
       ).to.be.revertedWith("invalid destination");
 
-      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [amdai, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
+        aave.aTokens.dai,
+        poolLogicProxy.address,
+      ]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, rebalanceAPI)).to.be.revertedWith(
         "unsupported asset",
       );
 
-      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, weth]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [assets.usdc, assets.weth]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, rebalanceAPI)).to.be.revertedWith(
         "user is not pool",
       );
 
-      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [usdc, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
+        assets.usdc,
+        poolLogicProxy.address,
+      ]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, rebalanceAPI)).to.be.revertedWith(
         "22",
       );
 
-      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [dai, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, rebalanceAPI)).to.be.revertedWith(
+      rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [assets.dai, poolLogicProxy.address]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, rebalanceAPI)).to.be.revertedWith(
         "22",
       );
     });
@@ -799,25 +777,29 @@ describe("Polygon Mainnet Test", function () {
     it("should be able to claim matic rewards", async function () {
       const IAaveIncentivesController = await hre.artifacts.readArtifact("IAaveIncentivesController");
       const iAaveIncentivesController = new ethers.utils.Interface(IAaveIncentivesController.abi);
-      let claimRewardsAbi = iAaveIncentivesController.encodeFunctionData("claimRewards", [[variableDebtDai], 1, dai]);
+      let claimRewardsAbi = iAaveIncentivesController.encodeFunctionData("claimRewards", [
+        [aave.variableDebtTokens.dai],
+        1,
+        assets.dai,
+      ]);
 
-      const incentivesController = await ethers.getContractAt(IAaveIncentivesController.abi, aaveIncentivesController);
+      const incentivesController = await ethers.getContractAt(IAaveIncentivesController.abi, aave.incentivesController);
       const remainingRewardsBefore = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
       expect(remainingRewardsBefore).to.be.gt(0);
 
       await expect(
-        poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi),
+        poolLogicProxy.connect(manager).execTransaction(aave.incentivesController, claimRewardsAbi),
       ).to.be.revertedWith("unsupported reward asset");
 
       // add supported assets
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[assets.wmatic, false]], []);
 
       await expect(
-        poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi),
+        poolLogicProxy.connect(manager).execTransaction(aave.incentivesController, claimRewardsAbi),
       ).to.be.revertedWith("recipient is not pool");
 
       claimRewardsAbi = iAaveIncentivesController.encodeFunctionData("claimRewards", [
-        [variableDebtDai],
+        [aave.variableDebtTokens.dai],
         remainingRewardsBefore,
         poolLogicProxy.address,
       ]);
@@ -825,7 +807,7 @@ describe("Polygon Mainnet Test", function () {
       const wmaticBalanceBefore = ethers.BigNumber.from(await WMatic.balanceOf(poolLogicProxy.address));
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
-      await poolLogicProxy.connect(manager).execTransaction(aaveIncentivesController, claimRewardsAbi);
+      await poolLogicProxy.connect(manager).execTransaction(aave.incentivesController, claimRewardsAbi);
 
       const remainingRewardsAfter = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
       expect(remainingRewardsAfter).to.lt(remainingRewardsBefore);
@@ -836,10 +818,10 @@ describe("Polygon Mainnet Test", function () {
     });
 
     it("should fail to remove asset", async () => {
-      expect(poolManagerLogicProxy.changeAssets([], [dai])).to.revertedWith("repay Aave debt first");
-      expect(poolManagerLogicProxy.changeAssets([], [usdc])).to.revertedWith("withdraw Aave collateral first");
-      expect(poolManagerLogicProxy.changeAssets([], [aaveLendingPool])).to.revertedWith("clear your position first");
-      expect(poolManagerLogicProxy.changeAssets([], [weth])).to.revertedWith("clear your position first");
+      expect(poolManagerLogicProxy.changeAssets([], [assets.dai])).to.revertedWith("repay Aave debt first");
+      expect(poolManagerLogicProxy.changeAssets([], [assets.usdc])).to.revertedWith("withdraw Aave collateral first");
+      expect(poolManagerLogicProxy.changeAssets([], [aave.lendingPool])).to.revertedWith("clear your position first");
+      expect(poolManagerLogicProxy.changeAssets([], [assets.weth])).to.revertedWith("clear your position first");
     });
   });
 });

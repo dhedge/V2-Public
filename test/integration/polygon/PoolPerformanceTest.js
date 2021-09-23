@@ -1,24 +1,10 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const { solidity } = require("ethereum-waffle");
-const { checkAlmostSame, toBytes32 } = require("../../TestHelpers");
+const { checkAlmostSame, toBytes32, units } = require("../../TestHelpers");
+const { sushi, aave, assets, price_feeds } = require("../polygon-data");
 
 use(solidity);
-
-const units = (value) => ethers.utils.parseUnits(value.toString());
-
-const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
-
-const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
-
-// For mainnet
-const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
-const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
-
-const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
-const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
-const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
 
 const oneDollar = 1e18;
 const twoDollar = 2e18;
@@ -38,7 +24,7 @@ describe("PoolPerformance", function () {
     governance = await Governance.deploy();
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -48,9 +34,9 @@ describe("PoolPerformance", function () {
     const poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
-    const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
-    const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-    const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
+    const assetWmatic = { asset: assets.wmatic, assetType: 0, aggregator: price_feeds.matic };
+    const assetWeth = { asset: assets.weth, assetType: 0, aggregator: price_feeds.eth };
+    const assetUsdc = { asset: assets.usdc, assetType: 0, aggregator: price_feeds.usdc };
     const assetHandlerInitAssets = [assetWmatic, assetUsdc, assetWeth];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
@@ -77,21 +63,21 @@ describe("PoolPerformance", function () {
 
     // Setup LogicOwner with some USDC
     const IWETH = await hre.artifacts.readArtifact("IWETH");
-    const WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
+    const WMatic = await ethers.getContractAt(IWETH.abi, assets.wmatic);
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
-    USDC = await ethers.getContractAt(IERC20.abi, usdc);
-    WETH = await ethers.getContractAt(IERC20.abi, weth);
+    USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
+    WETH = await ethers.getContractAt(IERC20.abi, assets.weth);
 
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
+    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
     await WMatic.deposit({ value: units(1000) });
 
     // Get USDC
-    await WMatic.approve(sushiswapV2Router, units(1000));
+    await WMatic.approve(sushi.router, units(1000));
     await sushiswapRouter.swapExactTokensForTokens(
       units(500),
       0,
-      [wmatic, usdc],
+      [assets.wmatic, assets.usdc],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -100,7 +86,7 @@ describe("PoolPerformance", function () {
     await sushiswapRouter.swapExactTokensForTokens(
       units(500),
       0,
-      [wmatic, weth],
+      [assets.wmatic, assets.weth],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -124,13 +110,13 @@ describe("PoolPerformance", function () {
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [usdc, true],
+        [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
-      await poolLogicProxy.deposit(usdc, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Check tokenPriceAdjustForPerformance() should be $1
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
@@ -156,7 +142,7 @@ describe("PoolPerformance", function () {
       );
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
-      await poolLogicProxy.deposit(usdc, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Check TokenPrice() should be $2
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
       // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
@@ -181,20 +167,20 @@ describe("PoolPerformance", function () {
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [usdc, true],
+        [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
-      await poolLogicProxy.deposit(usdc, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Deposit $1 directly
       await USDC.transfer(poolLogicProxy.address, (100e6).toString());
 
       // Deposit $1 conventional way
       // This will record the direct deposit factor
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
-      await poolLogicProxy.deposit(usdc, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
 
       // Check token price is $2
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
@@ -219,14 +205,14 @@ describe("PoolPerformance", function () {
     it("tokenPriceAdjustedForPerformanceAndManagerFee", async () => {
       const managerFee = new ethers.BigNumber.from("5000"); // 50%;
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [usdc, true],
+        [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
       const fund = funds[0];
       poolLogicProxy = await PoolLogic.attach(fund);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
-      await poolLogicProxy.deposit(usdc, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Check tokenPriceAdjustForPerformance() should be $1
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
@@ -281,7 +267,7 @@ describe("PoolPerformance", function () {
       await checkTokenValue();
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
-      await poolLogicProxy.deposit(usdc, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // This should have no affect on tokenPricesAdjustedForFee
       checkTokenValue();
     });
@@ -290,14 +276,14 @@ describe("PoolPerformance", function () {
       const oneDollarTwentyCents = 12e17;
       const managerFee = new ethers.BigNumber.from("1000"); // 10%;
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [usdc, true],
+        [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
       const fund = funds[0];
       poolLogicProxy = await PoolLogic.attach(fund);
       // Deposit $10 conventional way
       await USDC.approve(poolLogicProxy.address, (1000e6).toString());
-      await poolLogicProxy.deposit(usdc, (1000e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (1000e6).toString());
       // Check tokenPriceAdjustForPerformance() should be $1
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
@@ -372,27 +358,23 @@ describe("PoolPerformance", function () {
     // Call recordExternalValue
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
     // Deposit $1 conventional way
-    const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
-    const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
-    const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
-    const amusdc = "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F";
-    const amweth = "0x28424507fefb6f7f8E9D3860F56504E4e5f5f390";
+
     let AMUSDC, AMWETH, iERC20;
     beforeEach(async function () {
       const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
       const usdPriceAggregator = await USDPriceAggregator.deploy();
-      const assetLendingPool = { asset: aaveLendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
+      const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
 
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       iERC20 = new ethers.utils.Interface(IERC20.abi);
 
       const IAToken = await hre.artifacts.readArtifact("IAToken");
 
-      AMUSDC = await ethers.getContractAt(IAToken.abi, amusdc);
-      AMWETH = await ethers.getContractAt(IAToken.abi, amweth);
+      AMUSDC = await ethers.getContractAt(IAToken.abi, aave.aTokens.usdc);
+      AMWETH = await ethers.getContractAt(IAToken.abi, aave.aTokens.weth);
 
       const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-      const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
+      const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aave.protocolDataProvider);
       aaveLendingPoolAssetGuard.deployed();
 
       const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
@@ -404,21 +386,21 @@ describe("PoolPerformance", function () {
       lendingEnabledAssetGuard.deployed();
 
       const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
-      const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
+      const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(assets.wmatic);
       aaveIncentivesControllerGuard.deployed();
 
       await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
       await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
-      await governance.setContractGuard(aaveLendingPool, aaveLendingPoolGuard.address);
-      await governance.setContractGuard(aaveIncentivesController, aaveIncentivesControllerGuard.address);
+      await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuard.address);
+      await governance.setContractGuard(aave.incentivesController, aaveIncentivesControllerGuard.address);
 
       const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
       const openAssetGuard = await OpenAssetGuard.deploy([]);
       await openAssetGuard.deployed();
 
       await governance.setAddresses([
-        // [toBytes32("swapRouter"), sushiswapV2Router],
-        [toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider],
+        // [toBytes32("swapRouter"), sushi.router],
+        [toBytes32("aaveProtocolDataProvider"), aave.protocolDataProvider],
         [toBytes32("openAssetGuard"), openAssetGuard.address],
       ]);
       await assetHandler.addAssets([assetLendingPool]);
@@ -438,14 +420,14 @@ describe("PoolPerformance", function () {
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [usdc, true],
-        [aaveLendingPool, false],
+        [assets.usdc, true],
+        [aave.lendingPool, false],
       ]);
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, usdcAmount);
-      await poolLogicProxy.deposit(usdc, usdcAmount);
+      await poolLogicProxy.deposit(assets.usdc, usdcAmount);
 
       // Check tokenPriceAdjustForPerformance() should be $1
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
@@ -457,8 +439,8 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, usdcAmount]);
-      await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -469,8 +451,8 @@ describe("PoolPerformance", function () {
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, usdcAmount, poolLogicProxy.address, 0]);
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -505,14 +487,14 @@ describe("PoolPerformance", function () {
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [usdc, true],
-        [aaveLendingPool, false],
+        [assets.usdc, true],
+        [aave.lendingPool, false],
       ]);
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, usdcAmount);
-      await poolLogicProxy.deposit(usdc, usdcAmount);
+      await poolLogicProxy.deposit(assets.usdc, usdcAmount);
 
       // Check tokenPriceAdjustForPerformance() should be $1
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
@@ -524,8 +506,8 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, usdcAmount]);
-      await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -536,16 +518,16 @@ describe("PoolPerformance", function () {
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc, usdcAmount, poolLogicProxy.address, 0]);
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal((0).toString());
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 100e6);
 
       // Here we are taking some of the logicOwners usdc and depositing it directly into the aave Pool as amUSDC
-      await USDC.approve(aaveLendingPool, usdcAmount);
-      const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
-      await AaveLendingPool.deposit(usdc, usdcAmount, poolLogicProxy.address, 0);
+      await USDC.approve(aave.lendingPool, usdcAmount);
+      const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aave.lendingPool);
+      await AaveLendingPool.deposit(assets.usdc, usdcAmount, poolLogicProxy.address, 0);
 
       checkAlmostSame(await AMUSDC.balanceOf(poolLogicProxy.address), 200e6);
 
@@ -584,8 +566,8 @@ describe("PoolPerformance", function () {
       const managerFee = new ethers.BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [weth, true],
-        [aaveLendingPool, false],
+        [assets.weth, true],
+        [aave.lendingPool, false],
       ]);
 
       const balanceOfWeth = await WETH.balanceOf(logicOwner.address);
@@ -595,7 +577,7 @@ describe("PoolPerformance", function () {
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
       await WETH.approve(poolLogicProxy.address, halfBalanceOfWeth);
-      await poolLogicProxy.deposit(weth, halfBalanceOfWeth);
+      await poolLogicProxy.deposit(assets.weth, halfBalanceOfWeth);
 
       // Check tokenPriceAdjustForPerformance() should be $1
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
@@ -607,8 +589,8 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, halfBalanceOfWeth]);
-      await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
+      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, halfBalanceOfWeth]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
       const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
       const amWethBalanceBefore = await AMWETH.balanceOf(poolLogicProxy.address);
@@ -619,8 +601,13 @@ describe("PoolPerformance", function () {
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [weth, halfBalanceOfWeth, poolLogicProxy.address, 0]);
-      await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, depositABI);
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [
+        assets.weth,
+        halfBalanceOfWeth,
+        poolLogicProxy.address,
+        0,
+      ]);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
       const amWethBalanceAfter = await AMWETH.balanceOf(poolLogicProxy.address);
@@ -629,9 +616,9 @@ describe("PoolPerformance", function () {
       checkAlmostSame(amWethBalanceAfter, halfBalanceOfWeth);
 
       // Here we are taking some of the logicOwners weth and depositing it directly into the aave Pool as amWETH
-      await WETH.approve(aaveLendingPool, halfBalanceOfWeth);
-      const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aaveLendingPool);
-      await AaveLendingPool.deposit(weth, halfBalanceOfWeth, poolLogicProxy.address, 0);
+      await WETH.approve(aave.lendingPool, halfBalanceOfWeth);
+      const AaveLendingPool = await ethers.getContractAt(ILendingPool.abi, aave.lendingPool);
+      await AaveLendingPool.deposit(assets.weth, halfBalanceOfWeth, poolLogicProxy.address, 0);
 
       // All the logicOwners weth is now aWETH half deposited normally, half direct deposited
       checkAlmostSame(await AMWETH.balanceOf(poolLogicProxy.address), balanceOfWeth);
