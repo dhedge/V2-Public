@@ -189,7 +189,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param asset asset address
   function _removeAsset(address asset) internal {
     require(isSupportedAsset(asset), "asset not supported");
-
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
 
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
@@ -236,7 +235,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   /// @notice Get asset balance including any staked balance in external contracts
   /// @return balance of the asset
-  function assetBalance(address asset) public view returns (uint256 balance) {
+  function assetBalance(address asset) public view override returns (uint256 balance) {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     balance = IAssetGuard(guard).getBalance(poolLogic, asset);
   }

@@ -125,9 +125,6 @@ contract PoolFactoryV24 is
   uint256 public override maximumManagerFeeNumeratorChange;
   uint256 public override managerFeeNumeratorChangeDelay;
 
-  uint256 private _exitFeeNumerator;
-  uint256 private _exitFeeDenominator;
-
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
@@ -582,5 +579,12 @@ contract PoolFactoryV24 is
     }
   }
 
-  uint256[48] private __gap;
+  // Hack: New variable added by JHM since initial deployment because of
+  // https://forum.openzeppelin.com/t/storage-layout-upgrade-with-hardhat-upgrades/14567/3
+  address public poolPerformanceAddress;
+
+  uint256 private _exitFeeNumerator;
+  uint256 private _exitFeeDenominator;
+
+  uint256[47] private __gap;
 }

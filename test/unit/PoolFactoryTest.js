@@ -188,6 +188,9 @@ describe("PoolFactory", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await PoolPerformance.deploy();
+
     PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
     poolLogicV24 = await PoolLogicV24.deploy();
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -239,12 +242,15 @@ describe("PoolFactory", function () {
       dao.address,
       governance.address,
     ]);
+
     await poolFactoryV24.deployed();
     console.log("poolFactoryV24 deployed to:", poolFactoryV24.address);
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
     poolFactory = await upgrades.upgradeProxy(poolFactoryV24.address, PoolFactoryLogic);
     console.log("poolFactory upgraded to: ", poolFactory.address);
+
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     // Deploy Sushi LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
@@ -1060,6 +1066,29 @@ describe("PoolFactory", function () {
     expect(managerFeeDenominator.toString()).to.equal("10000");
   });
 
+  beforeEach(async () => {
+    const current = (await ethers.provider.getBlock()).timestamp;
+    const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
+    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
+
+    await usd_price_feed.givenCalldataReturn(
+      latestRoundDataABI,
+      ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 100000000, 0, current, 0]),
+    ); // $1
+    await eth_price_feed.givenCalldataReturn(
+      latestRoundDataABI,
+      ethers.utils.solidityPack(
+        ["uint256", "int256", "uint256", "uint256", "uint256"],
+        [0, 200000000000, 0, current, 0],
+      ),
+    ); // $2000
+    // await link_price_feed.givenCalldataReturn(
+    //   latestRoundDataABI,
+    //   ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 3500000000, 0, current, 0]),
+    // ); // $35
+  });
+
   // Synthetix transaction guard
   it("Only manager or trader can execute transaction", async () => {
     const sourceKey = susdKey;
@@ -1205,6 +1234,7 @@ describe("PoolFactory", function () {
       poolLogicProxy.address,
       0,
     ]);
+
     await expect(poolLogicProxy.connect(manager).execTransaction(susd, swapABI)).to.be.revertedWith(
       "invalid transaction",
     );
@@ -1216,6 +1246,7 @@ describe("PoolFactory", function () {
       poolLogicProxy.address,
       0,
     ]);
+
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
       "unsupported destination asset",
     );

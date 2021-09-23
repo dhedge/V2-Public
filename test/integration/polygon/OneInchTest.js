@@ -9,6 +9,9 @@ use(chaiAlmost());
 const oneInchV3Router = "0x11111112542D85B3EF69AE05771c2dCCff4fAa26";
 const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
 
+// aave
+const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
+
 // For mainnet
 const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
 const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
@@ -39,6 +42,10 @@ describe("OneInch V3 Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    await poolPerformance.deployed();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -64,6 +71,8 @@ describe("OneInch V3 Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     erc20Guard = await ERC20Guard.deploy();

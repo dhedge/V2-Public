@@ -34,6 +34,9 @@ describe("Sushiswap V2 Test Mumbai", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await PoolPerformance.deploy();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -59,6 +62,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
     ]);
     await poolFactory.deployed();
 
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
     //set higher timeout value for testnet
     await assetHandler.setChainlinkTimeout(10000000);
 

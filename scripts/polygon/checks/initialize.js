@@ -40,6 +40,13 @@ const init = async (environment, deployedVersion = "") => {
   const UniswapV2RouterGuard = await ethers.getContractFactory("ERC20Guard");
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
+  const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+  const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+  const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+  const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
+  const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+  const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
+  const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
 
   const contractsArray = [
     { contract: Governance, name: "Governance" },
@@ -50,7 +57,13 @@ const init = async (environment, deployedVersion = "") => {
     { contract: ERC20Guard, name: "ERC20Guard" },
     { contract: UniswapV2RouterGuard, name: "UniswapV2RouterGuard" },
     { contract: SushiMiniChefV2Guard, name: "SushiMiniChefV2Guard" },
-    { contract: SushiLPAssetGuard, name: "SushiLPAssetGuard" },
+    { contract: AaveLendingPoolAssetGuard, name: "AaveLendingPoolAssetGuard" },
+    { contract: AaveLendingPoolGuard, name: "AaveLendingPoolGuard" },
+    { contract: LendingEnabledAssetGuard, name: "LendingEnabledAssetGuard" },
+    { contract: AaveIncentivesControllerGuard, name: "AaveIncentivesControllerGuard" },
+    { contract: OpenAssetGuard, name: "OpenAssetGuard" },
+    { contract: QuickLPAssetGuard, name: "QuickLPAssetGuard" },
+    { contract: QuickStakingRewardsGuard, name: "QuickStakingRewardsGuard" },
   ];
 
   let contracts;

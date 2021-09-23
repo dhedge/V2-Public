@@ -32,34 +32,28 @@
 //
 // SPDX-License-Identifier: MIT
 
+import "./IHasSupportedAsset.sol";
+
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "../IHasSupportedAsset.sol";
+interface IPoolPerformance {
+  function addAssetBalance(address asset, uint256 amount) external;
 
-interface IAssetGuard {
-  struct MultiTransaction {
-    address to;
-    bytes txData;
-  }
+  function hasExternalBalances(address poolAddress) external view returns (bool);
 
-  function withdrawProcessing(
-    address pool,
-    address asset,
-    uint256 withdrawPortion,
-    address to
-  )
+  function updateInternalBalances() external;
+
+  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
     external
     view
-    returns (
-      address,
-      uint256,
-      MultiTransaction[] memory transactions
-    );
+    returns (uint256[] memory supportedAssetBalances);
 
-  function getBalance(address pool, address asset) external view returns (uint256 balance);
+  function updatedInternalBalancesByDiff(
+    IHasSupportedAsset.Asset[] memory supportedAssets,
+    uint256[] memory beforeSupportedAssetBalances,
+    uint256[] memory afterSupportedAssetBalances
+  ) external;
 
-  function getDecimals(address asset) external view returns (uint256 decimals);
-
-  function removeAssetCheck(address poolLogic, address asset) external view;
+  function recordExternalValue(address poolAddress) external;
 }

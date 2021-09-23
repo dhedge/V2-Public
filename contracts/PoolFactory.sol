@@ -45,6 +45,7 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
+import "./interfaces/IHasPoolPerformance.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IGovernance.sol";
 import "./interfaces/IManaged.sol";
@@ -63,7 +64,8 @@ contract PoolFactory is
   IHasFeeInfo,
   IHasAssetInfo,
   IHasGuardInfo,
-  IHasPausable
+  IHasPausable,
+  IHasPoolPerformance
 {
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
@@ -105,6 +107,8 @@ contract PoolFactory is
 
   event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
+  event PoolPerformanceAddressSet(address poolPerformanceAddress);
+
   address[] public deployedFunds;
 
   address public override daoAddress;
@@ -129,6 +133,8 @@ contract PoolFactory is
   uint256 public override maximumManagerFeeNumeratorChange;
   uint256 public override managerFeeNumeratorChangeDelay;
 
+  // Added after initial deployment
+  address public override poolPerformanceAddress;
   uint256 private _exitFeeNumerator;
   uint256 private _exitFeeDenominator;
 
@@ -226,6 +232,24 @@ contract PoolFactory is
       _managerFeeNumerator,
       _MANAGER_FEE_DENOMINATOR
     );
+  }
+
+  // Pool Performance (for tracking pool performance)
+
+  /// @notice Set the poolPerformance address
+  /// @param _poolPerformanceAddress The address of the DAO
+  function setPoolPerformanceAddress(address _poolPerformanceAddress) external onlyOwner {
+    _setPoolPerformanceAddress(_poolPerformanceAddress);
+  }
+
+  /// @notice Set the poolPerformance address internal call
+  /// @param _poolPerformanceAddress The address of the DAO
+  function _setPoolPerformanceAddress(address _poolPerformanceAddress) internal {
+    require(_poolPerformanceAddress != address(0), "Invalid poolPerformanceAddress");
+
+    poolPerformanceAddress = _poolPerformanceAddress;
+
+    emit PoolPerformanceAddressSet(_poolPerformanceAddress);
   }
 
   // DAO info (Uber Pool)
@@ -633,5 +657,5 @@ contract PoolFactory is
     }
   }
 
-  uint256[48] private __gap;
+  uint256[47] private __gap;
 }

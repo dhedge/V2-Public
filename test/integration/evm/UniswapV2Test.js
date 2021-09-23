@@ -5,6 +5,8 @@ const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
+const aaveProtocolDataProvider = "0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d";
+
 const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 const sushiswapRouter = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F";
@@ -36,6 +38,10 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+    await poolPerformance.deployed();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -62,6 +68,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
     sushiLpAggregator = await UniV2LPAggregator.deploy(sushi_usdc_usdt, poolFactory.address);
