@@ -190,6 +190,8 @@ describe("Balancer V2 Test", function () {
     await governance.setContractGuard(quickswapRouter, uniswapV2RouterGuard.address);
     await governance.setContractGuard(balancerV2Vault, balancerV2Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {

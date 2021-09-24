@@ -42,7 +42,7 @@ interface IHasFeeInfo {
 
   function managerFeeNumeratorChangeDelay() external view returns (uint256);
 
-  // Exit fee
-  // function getExitFee() external view returns (uint256, uint256);
+  function getExitFee() external view returns (uint256, uint256);
+
   function getExitCooldown() external view returns (uint256);
 }

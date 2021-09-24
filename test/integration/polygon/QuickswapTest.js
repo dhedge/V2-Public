@@ -32,7 +32,13 @@ describe("Quickswap V2 Test", function () {
   let WMatic, WETH, USDC, QuickLPUSDCWETH, QUICK;
   let logicOwner, manager, dao, user;
   let PoolLogic, PoolManagerLogic;
-  let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+  let poolFactory,
+    poolLogic,
+    poolManagerLogic,
+    poolLogicProxy,
+    poolManagerLogicProxy,
+    fundAddress,
+    uniswapV2RouterGuard;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -47,11 +53,11 @@ describe("Quickswap V2 Test", function () {
     const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
     await poolPerformance.deployed();
 
-    const PoolLogic = await ethers.getContractFactory("PoolLogic");
-    const poolLogic = await PoolLogic.deploy();
+    PoolLogic = await ethers.getContractFactory("PoolLogic");
+    poolLogic = await PoolLogic.deploy();
 
-    const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    const poolManagerLogic = await PoolManagerLogic.deploy();
+    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+    poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
     const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
@@ -64,7 +70,7 @@ describe("Quickswap V2 Test", function () {
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
 
     const PoolFactory = await ethers.getContractFactory("PoolFactory");
-    const poolFactory = await upgrades.deployProxy(PoolFactory, [
+    poolFactory = await upgrades.deployProxy(PoolFactory, [
       poolLogic.address,
       poolManagerLogic.address,
       assetHandler.address,
@@ -90,7 +96,7 @@ describe("Quickswap V2 Test", function () {
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
+    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     await uniswapV2RouterGuard.deployed();
 
     const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
@@ -106,6 +112,8 @@ describe("Quickswap V2 Test", function () {
     await governance.setContractGuard(quickswapRouter, uniswapV2RouterGuard.address);
     await governance.setContractGuard(quickLpUsdcWethStakingRewards, quickStakingRewardsGuard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {
@@ -594,8 +602,6 @@ describe("Quickswap V2 Test", function () {
 
     // Withdraw 50%
     let withdrawAmount = units(100);
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
 
     await poolFactory.setExitCooldown(0);
 

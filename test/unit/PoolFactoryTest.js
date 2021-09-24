@@ -322,6 +322,8 @@ describe("PoolFactory", function () {
 
     const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
     console.log("openAssetGuardSetting:", openAssetGuardSetting);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
@@ -806,32 +808,25 @@ describe("PoolFactory", function () {
     let totalSupply = await poolLogicProxy.totalSupply();
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
-    await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
-      "cooldown active",
-    );
-
-    // await poolFactory.setExitCooldown(0);
-    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
-
     await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
-    // let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
-    // let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
+    let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee();
+    let exitFee = ethers.BigNumber.from(withdrawAmount.toString()).mul(exitFeeNumerator).div(exitFeeDenominator);
 
     let event = await withdrawalEvent;
 
-    let fundTokensWithdrawn = withdrawAmount;
+    let fundTokensWithdrawn = ethers.BigNumber.from(withdrawAmount.toString()).sub(exitFee);
     let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
     expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
-    expect(event.fundTokensWithdrawn).to.equal(fundTokensWithdrawn.toString());
+    expect(event.fundTokensWithdrawn).to.equal((50e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
     expect(event.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
-    expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
+    expect(event.totalSupply).to.equal((100e18 - withdrawAmount).toString());
     let withdrawnAsset = event.withdrawnAssets[0];
     expect(withdrawnAsset[0]).to.equal(susd);
-    expect(withdrawnAsset[1].toString()).to.equal(withdrawAmount.toString());
+    expect(withdrawnAsset[1].toString()).to.equal(fundTokensWithdrawn.toString());
     expect(withdrawnAsset[2]).to.equal(false);
   });
 
@@ -1503,6 +1498,7 @@ describe("PoolFactory", function () {
 
     await assetHandler.setChainlinkTimeout(9000000);
 
+    const daoBalanceBefore = ethers.BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
     const tokenPricePreMint = await poolLogicProxy.tokenPrice();
@@ -1526,7 +1522,10 @@ describe("PoolFactory", function () {
     checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
     checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
 
-    checkAlmostSame(await poolLogicProxy.balanceOf(dao.address), availableFeePreMint.mul(daoFees[0]).div(daoFees[1]));
+    checkAlmostSame(
+      await poolLogicProxy.balanceOf(dao.address),
+      daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+    );
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
     expect(availableFeePostMint).to.be.eq("0");
@@ -2116,7 +2115,7 @@ describe("PoolFactory", function () {
       expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
       expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
-      expect(eventWithdrawal.totalSupply).to.equal((totalSupply - withdrawAmount).toString());
+      checkAlmostSame(eventWithdrawal.totalSupply, (totalSupply - withdrawAmount).toString());
 
       let withdrawSUSD = eventWithdrawal.withdrawnAssets[1];
       let withdrawLP = eventWithdrawal.withdrawnAssets[0];

@@ -190,7 +190,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   ) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
 
-    require(getExitRemainingCooldown(from) == 0, "cooldown active");
+    if (from != address(0) && to != address(0)) {
+      require(getExitRemainingCooldown(from) == 0, "cooldown active");
+    }
   }
 
   /// @notice Set the pool privacy
@@ -264,14 +266,19 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
-    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
+    // calculate the exit fee
+    uint256 exitFee;
+    if (getExitRemainingCooldown(msg.sender) > 0) {
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+    }
 
     uint256 fundValue = _mintManagerFee();
 
-    //calculate the proportion
-    uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
+    // calculate the proportion
+    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
 
-    //first return funded tokens
+    // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
     // TODO: Combining into one line to fix stack too deep,
@@ -436,12 +443,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       uint256,
       bool,
       uint256,
+      uint256,
+      uint256,
       uint256
     )
   {
-    uint256 managerFeeNumerator;
-    uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
     return (
       name(),
@@ -452,7 +460,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       creationTime,
       privatePool,
       managerFeeNumerator,
-      managerFeeDenominator
+      managerFeeDenominator,
+      exitFeeNumerator,
+      exitFeeDenominator
     );
   }
 

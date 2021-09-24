@@ -80,6 +80,8 @@ describe("Uniswap V3 Test", function () {
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setContractGuard(uniswapV3Router, uniswapV3SwapGuard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get WETH", async function () {

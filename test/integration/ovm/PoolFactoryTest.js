@@ -338,7 +338,7 @@ describe("PoolFactory", function () {
         await poolFactory.setExitCooldown(0);
         await poolLogicProxy.withdraw(withdrawAmount.toString())
         // let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee()
-        // let daoExitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
+        // let exitFee = withdrawAmount * exitFeeNumerator / exitFeeDenominator
         let event = await withdrawalEvent;
         let fundTokensWithdrawn = withdrawAmount
         let valueWithdrawn = fundTokensWithdrawn / totalSupply * totalFundValue
