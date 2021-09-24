@@ -267,16 +267,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
     // calculate the exit fee
-    uint256 daoExitFee;
+    uint256 exitFee;
     if (getExitRemainingCooldown(msg.sender) > 0) {
       (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-      daoExitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
     }
 
     uint256 fundValue = _mintManagerFee();
 
     // calculate the proportion
-    uint256 portion = _fundTokenAmount.sub(daoExitFee).mul(10**18).div(totalSupply());
+    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
 
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);

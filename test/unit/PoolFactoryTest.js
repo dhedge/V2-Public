@@ -811,11 +811,11 @@ describe("PoolFactory", function () {
     await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
     let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee();
-    let daoExitFee = ethers.BigNumber.from(withdrawAmount.toString()).mul(exitFeeNumerator).div(exitFeeDenominator);
+    let exitFee = ethers.BigNumber.from(withdrawAmount.toString()).mul(exitFeeNumerator).div(exitFeeDenominator);
 
     let event = await withdrawalEvent;
 
-    let fundTokensWithdrawn = ethers.BigNumber.from(withdrawAmount.toString()).sub(daoExitFee);
+    let fundTokensWithdrawn = ethers.BigNumber.from(withdrawAmount.toString()).sub(exitFee);
     let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
