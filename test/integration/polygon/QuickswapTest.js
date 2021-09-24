@@ -94,6 +94,8 @@ describe("Quickswap V2 Test", function () {
     await governance.setContractGuard(quickswap.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(quickswap.pools.usdc_weth.stakingRewards, quickStakingRewardsGuard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {
@@ -582,8 +584,6 @@ describe("Quickswap V2 Test", function () {
 
     // Withdraw 50%
     let withdrawAmount = units(100);
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
 
     await poolFactory.setExitCooldown(0);
 

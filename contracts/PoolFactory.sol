@@ -135,6 +135,8 @@ contract PoolFactory is
 
   // Added after initial deployment
   address public override poolPerformanceAddress;
+  uint256 private _exitFeeNumerator;
+  uint256 private _exitFeeDenominator;
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -161,6 +163,7 @@ contract PoolFactory is
     _setMaximumManagerFee(5000, 10000);
 
     _setDaoFee(10, 100); // 10%
+    _setExitFee(5, 1000); // 0.5%
     _setExitCooldown(1 days);
     setManagerFeeNumeratorChangeDelay(4 weeks);
     setMaximumManagerFeeNumeratorChange(1000);
@@ -309,6 +312,32 @@ contract PoolFactory is
   /// @return The denominator of the DAO fee
   function getDaoFee() external view override returns (uint256, uint256) {
     return (_daoFeeNumerator, _daoFeeDenominator);
+  }
+
+  /// @notice Set the Exit fee
+  /// @param numerator The numerator of the Exit fee
+  /// @param denominator The denominator of the Exit fee
+  function setExitFee(uint256 numerator, uint256 denominator) external onlyOwner {
+    _setExitFee(numerator, denominator);
+  }
+
+  /// @notice Set the Exit fee internal call
+  /// @param numerator The numerator of the Exit fee
+  /// @param denominator The denominator of the Exit fee
+  function _setExitFee(uint256 numerator, uint256 denominator) internal {
+    require(numerator <= denominator, "invalid fraction");
+
+    _exitFeeNumerator = numerator;
+    _exitFeeDenominator = denominator;
+
+    emit ExitFeeSet(numerator, denominator);
+  }
+
+  /// @notice Get the Exit fee
+  /// @return The numerator of the Exit fee
+  /// @return The denominator of the Exit fee
+  function getExitFee() external view override returns (uint256, uint256) {
+    return (_exitFeeNumerator, _exitFeeDenominator);
   }
 
   // Manager fees
@@ -628,5 +657,5 @@ contract PoolFactory is
     }
   }
 
-  uint256[49] private __gap;
+  uint256[47] private __gap;
 }

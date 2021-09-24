@@ -77,6 +77,8 @@ describe("Synthetix Test", function () {
     await governance.setAssetGuard(1, erc20Guard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get assets.susd", async function () {
@@ -408,8 +410,6 @@ describe("Synthetix Test", function () {
 
     // Withdraw 50%
     let withdrawAmount = 50e18;
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount.toString())).to.be.revertedWith("cooldown active");
 
     await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
     await ethers.provider.send("evm_mine", []);

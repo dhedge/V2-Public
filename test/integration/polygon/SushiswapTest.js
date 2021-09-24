@@ -86,6 +86,8 @@ describe("Sushiswap V2 Test", function () {
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setContractGuard(sushi.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushi.minichef, sushiMiniChefV2Guard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {
@@ -473,8 +475,6 @@ describe("Sushiswap V2 Test", function () {
 
     // Withdraw 50%
     let withdrawAmount = units(100);
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
 
     await poolFactory.setExitCooldown(0);
 
