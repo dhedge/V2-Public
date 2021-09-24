@@ -281,12 +281,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
-    // transfer exit fee
-    if (daoExitFee > 0) {
-      address daoAddress = IHasDaoInfo(factory).daoAddress();
-      _mint(daoAddress, daoExitFee);
-    }
-
     // TODO: Combining into one line to fix stack too deep,
     //       need to refactor some variables into struct in order to have more variables
     IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();

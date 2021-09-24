@@ -807,14 +807,11 @@ describe("PoolFactory", function () {
     let withdrawAmount = 50e18;
     let totalSupply = await poolLogicProxy.totalSupply();
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
-    let daoBalanceBefore = await poolLogicProxy.balanceOf(dao.address);
 
     await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
-    let daoBalanceAfter = await poolLogicProxy.balanceOf(dao.address);
     let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee();
     let daoExitFee = ethers.BigNumber.from(withdrawAmount.toString()).mul(exitFeeNumerator).div(exitFeeDenominator);
-    expect(daoBalanceAfter).to.be.equal(ethers.BigNumber.from(daoBalanceBefore).add(daoExitFee));
 
     let event = await withdrawalEvent;
 
@@ -826,7 +823,7 @@ describe("PoolFactory", function () {
     expect(event.fundTokensWithdrawn).to.equal((50e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
     expect(event.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
-    expect(event.totalSupply).to.equal((100e18 - fundTokensWithdrawn).toString());
+    expect(event.totalSupply).to.equal((100e18 - withdrawAmount).toString());
     let withdrawnAsset = event.withdrawnAssets[0];
     expect(withdrawnAsset[0]).to.equal(susd);
     expect(withdrawnAsset[1].toString()).to.equal(fundTokensWithdrawn.toString());
