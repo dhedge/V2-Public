@@ -56,4 +56,6 @@ interface IPoolPerformance {
   ) external;
 
   function recordExternalValue(address poolAddress) external;
+
+  function adjustInternalValueFactor(uint256 a, uint256 b) external;
 }

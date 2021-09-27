@@ -266,14 +266,20 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+
     // calculate the exit fee
+    uint256 fundValue = _mintManagerFee();
+
+    // // Needs to be called after mint manager fee
+    // uint256 currentSupply = totalSupply();
+
     uint256 exitFee;
-    if (getExitRemainingCooldown(msg.sender) > 0) {
+    if (getExitRemainingCooldown(msg.sender) > 0 && totalSupply() != _fundTokenAmount) {
       (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
       exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+      poolPerformance.adjustInternalValueFactor(exitFee, totalSupply());
     }
-
-    uint256 fundValue = _mintManagerFee();
 
     // calculate the proportion
     uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
@@ -287,7 +293,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
     poolPerformance.recordExternalValue(address(this));
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {

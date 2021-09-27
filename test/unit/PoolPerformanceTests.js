@@ -423,7 +423,7 @@ describe("PoolFactory", function () {
     ).to.be.closeTo(tenth, 10000);
   });
 
-  it("resetExternalValue", async function () {
+  it("resetInternalValue", async function () {
     await poolFactory.createFund(
       false,
       manager.address,
@@ -473,7 +473,7 @@ describe("PoolFactory", function () {
       oneDollar.toString(),
     );
 
-    await poolPerformance.setExternalValue(poolLogicProxy.address, (10 ** 18).toString());
+    await poolPerformance.setInternalValueFactor(poolLogicProxy.address, (10 ** 18).toString());
 
     expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
@@ -481,7 +481,7 @@ describe("PoolFactory", function () {
     );
   });
 
-  it("resetExternalValue only callable by owner", async function () {
+  it("resetInternalValue only callable by owner", async function () {
     await poolFactory.createFund(
       false,
       manager.address,
@@ -499,10 +499,29 @@ describe("PoolFactory", function () {
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
 
-    await poolPerformance.setExternalValue(poolLogicProxy.address, (10 ** 18).toString());
+    await poolPerformance.setInternalValueFactor(poolLogicProxy.address, (10 ** 18).toString());
 
     await expect(
-      poolPerformance.connect(manager).setExternalValue(poolLogicProxy.address, (10 ** 18).toString()),
+      poolPerformance.connect(manager).setInternalValueFactor(poolLogicProxy.address, (10 ** 18).toString()),
     ).to.be.revertedWith("Ownable: caller is not the owner");
+  });
+
+  it("adjustInternalValueFactor 10 percent small number", async function () {
+    expect(await poolPerformance.getInternalValueFactor(logicOwner.address)).to.equal(BigInt(10 ** 18));
+    await poolPerformance.adjustInternalValueFactor(10, 100); // 5%
+    const tenPercent = BigInt(10 ** 18) / BigInt(10);
+    expect(await poolPerformance.getInternalValueFactor(logicOwner.address)).to.equal(
+      ethers.BigNumber.from(BigInt(10 ** 18) - tenPercent),
+    );
+  });
+
+  it("adjustInternalValueFactor 5% of massive number", async function () {
+    expect(await poolPerformance.getInternalValueFactor(logicOwner.address)).to.equal(BigInt(10 ** 18));
+    const fivePercent = BigInt("100000000000000000000") / BigInt(20);
+    await poolPerformance.adjustInternalValueFactor(fivePercent, "100000000000000000000"); // 5%
+    const fivePercentOf = BigInt(10 ** 18) / BigInt(20);
+    expect(await poolPerformance.getInternalValueFactor(logicOwner.address)).to.equal(
+      ethers.BigNumber.from(BigInt(10 ** 18) - fivePercentOf),
+    );
   });
 });
