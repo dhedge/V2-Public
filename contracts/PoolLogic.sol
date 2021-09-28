@@ -661,8 +661,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
     }
 
-    // here it will also revert if the WETH balance has been decreased during the aave flashloan logic
-    require(wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)), "too high slippage");
+    // Liquidation of collateral not enough to pay off debt, flashloan repayment stealing pool's weth
+    require(
+      wethBalanceBefore == 0 || wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)),
+      "too high slippage"
+    );
   }
 
   uint256[50] private __gap;
