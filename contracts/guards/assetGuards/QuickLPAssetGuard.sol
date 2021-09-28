@@ -51,6 +51,7 @@ contract QuickLPAssetGuard is ERC20Guard, Ownable {
   /// @notice Initialise for the contract
   /// @param _stakingRewardsFactory Quickswap's staking rewards factory contract
   constructor(address _stakingRewardsFactory) Ownable() {
+    require(_stakingRewardsFactory != address(0), "_stakingRewardsFactory address cannot be 0");
     stakingRewardsFactory = IStakingRewardsFactory(_stakingRewardsFactory);
   }
 

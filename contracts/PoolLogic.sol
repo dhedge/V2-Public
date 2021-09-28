@@ -380,10 +380,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
       if (withdrawAsset != address(0)) {
         // calculated the balance change after withdraw process.
-        // here it will also revert if the WETH balance has been decreased during the aave flashloan logic
         uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
-        require(assetBalanceAfter >= assetBalanceBefore, "too high slippage");
-
         withdrawBalance = withdrawBalance.add(assetBalanceAfter.sub(assetBalanceBefore));
       }
     }
@@ -654,12 +651,21 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
 
+    address weth = IHasGuardInfo(factory).getAddress("weth");
+    uint256 wethBalanceBefore = IERC20Upgradeable(weth).balanceOf(address(this));
+
     IAssetGuard.MultiTransaction[] memory transactions = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard)
       .flashloanProcessing(address(this), portion, assets, amounts, premiums, interestRateModes);
 
     for (uint256 i = 0; i < transactions.length; i++) {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
     }
+
+    // Liquidation of collateral not enough to pay off debt, flashloan repayment stealing pool's weth
+    require(
+      wethBalanceBefore == 0 || wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)),
+      "too high slippage"
+    );
   }
 
   uint256[50] private __gap;

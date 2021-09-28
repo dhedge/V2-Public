@@ -113,7 +113,7 @@ describe("Aave Test", function () {
     balance = await WETH.balanceOf(logicOwner.address);
     console.log("WETH balance: ", balance.toString());
     // WETH -> USDC
-    await WETH.approve(sushiRouter, units(500));
+    await WETH.approve(sushi.router, units(500));
     await sushiRouter.swapExactTokensForTokens(
       units(500),
       0,
