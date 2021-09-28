@@ -47,6 +47,10 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
     uint256[] memory _weights,
     PriceDeviationParams memory _params
   ) {
+    require(_factory != address(0), "_factory address cannot be 0");
+    require(address(_vault) != address(0), "_vault address cannot be 0");
+    require(address(_pool) != address(0), "_pool address cannot be 0");
+
     uint256 length = _tokens.length;
     require(length == _decimals.length, "Invalid decimals length");
     require(length == _weights.length, "Invalid weights length");
