@@ -76,15 +76,15 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @notice returns the realtime value of a pool token adjusted for any external value
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets
-  function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress).mul(internalValueFactorPerToken(poolAddress)).div(DENOMINATOR);
+  function tokenPriceAdjustedForPerformance(address poolAddress) external view returns (uint256) {
+    return tokenPrice(poolAddress).mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
-  function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
-    return tokenPriceAdjustedForManagerFee(poolAddress).mul(internalValueFactorPerToken(poolAddress)).div(DENOMINATOR);
+  function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) external view returns (uint256) {
+    return tokenPriceAdjustedForManagerFee(poolAddress).mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool tokens underlying value, sans any manager fee
@@ -107,10 +107,21 @@ contract PoolPerformance is OwnableUpgradeable {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
+  /// @notice a view function that returns recorded difference between internal and external value of a token
+  /// @param poolAddress The address of the pool
+  /// @return the factor per token of airdrops and other external value raised by the denominator
+  function internalValueFactor(address poolAddress) external view returns (uint256) {
+    if (internalValueFactorMap[poolAddress] == 0) {
+      return DENOMINATOR;
+    } else {
+      return internalValueFactorMap[poolAddress];
+    }
+  }
+
   /// @notice a view function that returns the realtime + recorded difference between internal and external value of a token
   /// @param poolAddress The address of the pool
   /// @return the value per token of airdrops and other external value
-  function internalValueFactorPerToken(address poolAddress) public view returns (uint256) {
+  function realtimeInternalValueFactor(address poolAddress) public view returns (uint256) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
 
@@ -224,7 +235,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @dev Only currently used in tests, Originally used to stop pool actions before recording air drops.
   /// @param poolAddress The address of the pool
   /// @return true if the pool has external balances
-  function hasExternalBalances(address poolAddress) public view returns (bool) {
+  function hasExternalBalances(address poolAddress) external view returns (bool) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
@@ -255,6 +266,27 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     return false;
+  }
+
+  /// @notice Set the internal value factor of a pool
+  /// @dev Used for governance updates if pool is airdropped value
+  /// @param poolAddress The address of the pool
+  /// @param newInternalValueFactor 10 ** 18 is 100%;
+  function setInternalValueFactor(address poolAddress, uint256 newInternalValueFactor) public onlyOwner {
+    internalValueFactorMap[poolAddress] = newInternalValueFactor;
+  }
+
+  /// @notice adjusts the factor by the factor between a and b
+  /// @dev Used for including new deposits in the internal balance
+  /// @param a The amount of value being added relative to the totalAmount
+  /// @param b The total amount of value
+  function adjustInternalValueFactor(uint256 a, uint256 b) external {
+    address poolAddress = msg.sender;
+    if (internalValueFactorMap[poolAddress] == 0) {
+      internalValueFactorMap[poolAddress] = DENOMINATOR.mul(b.sub(a)).div(b);
+    } else {
+      internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress].mul(b.sub(a)).div(b);
+    }
   }
 
   /// @notice Resets the internal balances to equal the external balances
@@ -293,35 +325,6 @@ contract PoolPerformance is OwnableUpgradeable {
       }
 
       internalBalancesMap[poolAddress][assetAddress] = externalBalance;
-    }
-  }
-
-  /// @notice Set the internal value factor of a pool
-  /// @dev Used for governance updates if pool is airdropped value
-  /// @param poolAddress The address of the pool
-  /// @param internalValueFactor 10 ** 18 is 100%;
-  function setInternalValueFactor(address poolAddress, uint256 internalValueFactor) public onlyOwner {
-    internalValueFactorMap[poolAddress] = internalValueFactor;
-  }
-
-  function getInternalValueFactor(address poolAddress) public view returns (uint256) {
-    if (internalValueFactorMap[poolAddress] == 0) {
-      return DENOMINATOR;
-    } else {
-      return internalValueFactorMap[poolAddress];
-    }
-  }
-
-  /// @notice adjusts the factor by the factor between a and b
-  /// @dev Used for including new deposits in the internal balance
-  /// @param a The amount of value being added relative to the totalAmount
-  /// @param b The total amount of value
-  function adjustInternalValueFactor(uint256 a, uint256 b) external {
-    address poolAddress = msg.sender;
-    if (internalValueFactorMap[poolAddress] == 0) {
-      internalValueFactorMap[poolAddress] = DENOMINATOR.mul(b.sub(a)).div(b);
-    } else {
-      internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress].mul(b.sub(a)).div(b);
     }
   }
 }

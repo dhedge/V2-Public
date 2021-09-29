@@ -101,25 +101,6 @@
         "type": "address"
       }
     ],
-    "name": "getInternalValueFactor",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "poolAddress",
-        "type": "address"
-      }
-    ],
     "name": "hasExternalBalances",
     "outputs": [
       {
@@ -172,11 +153,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "poolAddress",
         "type": "address"
       }
     ],
-    "name": "internalValueFactorMap",
+    "name": "internalValueFactor",
     "outputs": [
       {
         "internalType": "uint256",
@@ -191,11 +172,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "poolAddress",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "internalValueFactorPerToken",
+    "name": "internalValueFactorMap",
     "outputs": [
       {
         "internalType": "uint256",
@@ -214,6 +195,25 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "poolAddress",
+        "type": "address"
+      }
+    ],
+    "name": "realtimeInternalValueFactor",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -248,7 +248,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "internalValueFactor",
+        "name": "newInternalValueFactor",
         "type": "uint256"
       }
     ],

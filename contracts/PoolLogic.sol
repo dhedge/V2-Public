@@ -271,14 +271,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // calculate the exit fee
     uint256 fundValue = _mintManagerFee();
 
-    // // Needs to be called after mint manager fee
-    // uint256 currentSupply = totalSupply();
-
     uint256 exitFee;
-    if (getExitRemainingCooldown(msg.sender) > 0 && totalSupply() != _fundTokenAmount) {
+    if (getExitRemainingCooldown(msg.sender) > 0) {
       (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
       exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-      poolPerformance.adjustInternalValueFactor(exitFee, totalSupply());
+      // 2.5 / 52.5
+      poolPerformance.adjustInternalValueFactor(exitFee, totalSupply().sub(_fundTokenAmount.sub(exitFee)));
     }
 
     // calculate the proportion
