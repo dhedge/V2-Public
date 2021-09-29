@@ -600,7 +600,10 @@ task("upgrade", "Upgrade contracts")
     console.log(data);
 
     // write to version file
-    fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
+    if (!taskArgs.unpause) {
+      // skip version file update if just unpausing
+      fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
+    }
 
     versions[newTag].contracts = { ...contracts };
     for (const newAssetGuard of newAssetGuards) {
