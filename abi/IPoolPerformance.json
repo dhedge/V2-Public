@@ -105,6 +105,13 @@
   },
   {
     "inputs": [],
+    "name": "resetInternalValueFactor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "updateInternalBalances",
     "outputs": [],
     "stateMutability": "nonpayable",

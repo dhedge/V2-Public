@@ -272,8 +272,15 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @dev Used for governance updates if pool is airdropped value
   /// @param poolAddress The address of the pool
   /// @param newInternalValueFactor 10 ** 18 is 100%;
-  function setInternalValueFactor(address poolAddress, uint256 newInternalValueFactor) public onlyOwner {
+  function setInternalValueFactor(address poolAddress, uint256 newInternalValueFactor) external onlyOwner {
     internalValueFactorMap[poolAddress] = newInternalValueFactor;
+  }
+
+  /// @notice resets the internal value factor of a pool
+  /// @dev Used if all a pools value is withdrawn
+  function resetInternalValueFactor() external {
+    address poolAddress = msg.sender;
+    internalValueFactorMap[poolAddress] = DENOMINATOR;
   }
 
   /// @notice adjusts the factor by the factor between a and b
