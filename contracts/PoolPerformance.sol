@@ -77,14 +77,22 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets
   function tokenPriceAdjustedForPerformance(address poolAddress) external view returns (uint256) {
-    return tokenPrice(poolAddress).mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
+    uint256 currentTokenPrice = tokenPrice(poolAddress);
+    if (currentTokenPrice == 0) {
+      return 0;
+    }
+    return currentTokenPrice.mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
   function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) external view returns (uint256) {
-    return tokenPriceAdjustedForManagerFee(poolAddress).mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
+    uint256 tknPriceAdjustedForManagerFee = tokenPriceAdjustedForManagerFee(poolAddress);
+    if (tknPriceAdjustedForManagerFee == 0) {
+      return 0;
+    }
+    return tknPriceAdjustedForManagerFee.mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool tokens underlying value, sans any manager fee
@@ -93,6 +101,9 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @return the value per token, sans manager fee, received by the user on withdraw.
   function tokenPriceAdjustedForManagerFee(address poolAddress) public view returns (uint256) {
     uint256 currentTokenPrice = tokenPrice(poolAddress);
+    if (currentTokenPrice == 0) {
+      return 0;
+    }
     return
       currentTokenPrice.mul(IERC20Extended(poolAddress).totalSupply()).div(
         IERC20Extended(poolAddress).totalSupply().add(IPoolLogic(poolAddress).availableManagerFee())
@@ -295,8 +306,6 @@ contract PoolPerformance is OwnableUpgradeable {
       internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress].mul(b).div(a.add(b));
     }
   }
-
-
 
   /// @notice Resets the internal balances to equal the external balances
   /// @dev Used to update the internal balances after a manager executes a transaction/s should only be called by the pool
