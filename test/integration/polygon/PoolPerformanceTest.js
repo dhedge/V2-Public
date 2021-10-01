@@ -285,7 +285,7 @@ describe("PoolPerformance", function () {
       await poolFactory.setExitFee(10, 100); // 10%
       const totalSupply = await poolLogicProxy.totalSupply();
       const tokenPrice = await poolLogicProxy.tokenPrice();
-
+      console.log(">>>>>>", totalSupply.toString());
       // 50% withdrawal
       const withdrawalAmount = totalSupply.div(2);
       const totalEarlyExitFee = tokenPrice.mul(withdrawalAmount).div(10);
@@ -301,6 +301,8 @@ describe("PoolPerformance", function () {
       // 50 * 0.1 = $5 fee
       // Left in pool $55
       // 50 Tokens TotalSupply left after withdraw
+      // 55/50 = 1.1
+      // 1 -> 1.05
 
       const tokenPriceAfter = await poolPerformance.tokenPrice(poolLogicProxy.address);
       expect(tokenPriceBefore).not.to.equal(tokenPriceAfter);
@@ -316,7 +318,7 @@ describe("PoolPerformance", function () {
     // Checks to make sure early exit PoolPerformance update is skipped if investor is withdrawing 100% of the pool.
     // we make a conventional deposit and immediately withdraw 50% of the issued tokens
     // we then check to make sure pool performance is adjusted down to compensate for the fee kept by the pool
-    it.only("early 100% withdrawal should skip adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
+    it.skip("early 100% withdrawal should skip adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
