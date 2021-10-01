@@ -272,7 +272,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 fundValue = _mintManagerFee();
 
     uint256 exitFee;
-    if (getExitRemainingCooldown(msg.sender) > 0) {
+    if (getExitRemainingCooldown(msg.sender) > 0 && totalSupply() != _fundTokenAmount) {
       (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
       exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
       // We need to adjust the performance down by the value of the exit fee distributed to remaining token holders
