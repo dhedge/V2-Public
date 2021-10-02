@@ -509,7 +509,7 @@ describe("PoolFactory", function () {
 
   it("adjustInternalValueFactor 10 percent small number", async function () {
     expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1));
-    await poolPerformance.adjustInternalValueFactor(10, 100); // 5%
+    await poolPerformance.adjustInternalValueFactor(10, 100); // 10%
     const tenPercent1e18 = units(1).div(10);
     expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1).sub(tenPercent1e18));
   });
@@ -525,10 +525,23 @@ describe("PoolFactory", function () {
   it("adjustInternalValueFactor 0.1% of massive number", async function () {
     expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1));
     const zeroPointOnePercent = units(100).div(1000);
-    await poolPerformance.adjustInternalValueFactor(zeroPointOnePercent, BigInt(100e18)); // 5%
+    await poolPerformance.adjustInternalValueFactor(zeroPointOnePercent, BigInt(100e18)); // 0.1%
     const zeroPointOnePercentOf1e18 = units(1).div(1000);
     expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(
       units(1).sub(zeroPointOnePercentOf1e18),
+    );
+  });
+
+  it("adjustInternalValueFactor 10 percent twice", async function () {
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1));
+    await poolPerformance.adjustInternalValueFactor(10, 100); // 10%
+    const tenPercent1e18 = units(1).div(10);
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1).sub(tenPercent1e18));
+    await poolPerformance.adjustInternalValueFactor(10, 100); // 10%
+    const ninePercent1e18 = units(90).div(1000);
+    //1 * 0.9 * 0.9 = 0.81
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(
+      units(1).sub(tenPercent1e18).sub(ninePercent1e18),
     );
   });
 });

@@ -296,14 +296,14 @@ contract PoolPerformance is OwnableUpgradeable {
 
   /// @notice adjusts the factor by the factor between a and b
   /// @dev Used for including new deposits in the internal balance
-  /// @param a The amount of value being added
+  /// @param a numerator
   /// @param b The amount its being allocated over
   function adjustInternalValueFactor(uint256 a, uint256 b) external {
     address poolAddress = msg.sender;
     if (internalValueFactorMap[poolAddress] == 0) {
-      internalValueFactorMap[poolAddress] = DENOMINATOR.mul(b).div(a.add(b));
+      internalValueFactorMap[poolAddress] = DENOMINATOR.mul(b.sub(a)).div(b);
     } else {
-      internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress].mul(b).div(a.add(b));
+      internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress].mul(b.sub(a)).div(b);
     }
   }
 
