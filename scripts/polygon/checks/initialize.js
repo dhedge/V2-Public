@@ -47,6 +47,7 @@ const init = async (environment, deployedVersion = "") => {
   const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
   const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
   const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
+  const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
 
   const contractsArray = [
     { contract: Governance, name: "Governance" },
@@ -64,6 +65,7 @@ const init = async (environment, deployedVersion = "") => {
     { contract: OpenAssetGuard, name: "OpenAssetGuard" },
     { contract: QuickLPAssetGuard, name: "QuickLPAssetGuard" },
     { contract: QuickStakingRewardsGuard, name: "QuickStakingRewardsGuard" },
+    { contract: OneInchV3Guard, name: "OneInchV3Guard" },
   ];
 
   let contracts;
@@ -89,8 +91,15 @@ const init = async (environment, deployedVersion = "") => {
 
   governance = Governance.attach(contracts.Governance);
   sushiLPAssetGuard = SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
+  quickLPAssetGuard = QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
   poolLogic = PoolLogic.attach(contracts.PoolLogic);
   poolManagerLogic = PoolManagerLogic.attach(contracts.PoolManagerLogic);
+  openAssetGuard = OpenAssetGuard.attach(contracts.OpenAssetGuard);
+  oneInchV3Guard = OpenAssetGuard.attach(contracts.OneInchV3Guard);
+
+  console.log("PoolFactory Implementation:", poolFactoryAddress);
+  console.log("PoolLogic Implementation:", contracts.PoolLogic);
+  console.log("PoolManagerLogic Implementation:", contracts.PoolManagerLogic);
 
   console.log("Initialization complete!");
   console.log("_________________________________________");
@@ -115,8 +124,11 @@ const init = async (environment, deployedVersion = "") => {
     assetHandler,
     governance,
     sushiLPAssetGuard,
+    quickLPAssetGuard,
     poolLogic,
     poolManagerLogic,
+    openAssetGuard,
+    oneInchV3Guard,
   };
 };
 
