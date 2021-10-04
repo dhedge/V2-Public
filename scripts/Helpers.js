@@ -81,7 +81,12 @@ const writeCsv = (data, fileName) => {
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-const proposeTx = async (to, data, message) => {
+const proposeTx = async (to, data, message, execute = false) => {
+  if (!execute) {
+    console.log("Will propose transaction:", message);
+    return;
+  }
+
   // Initialize the Safe SDK
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
@@ -133,4 +138,4 @@ const proposeTx = async (to, data, message) => {
   console.log("ProposeTx: ", proposeTx);
 };
 
-module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32, proposeTx };
+module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32, proposeTx, nonceLog };

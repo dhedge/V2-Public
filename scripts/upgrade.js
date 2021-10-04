@@ -1,6 +1,6 @@
 const fs = require("fs");
 const csv = require("csvtojson");
-const { writeCsv, getTag, hasDuplicates, tryVerify, proposeTx } = require("./Helpers");
+const { writeCsv, getTag, hasDuplicates, tryVerify, proposeTx, nonceLog } = require("./Helpers");
 const Decimal = require("decimal.js");
 const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
@@ -53,6 +53,7 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
   }
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
+
   return await BalancerV2LPAggregator.deploy(
     factory,
     balancerV2Vault,
@@ -74,6 +75,7 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
 };
 
 task("upgrade", "Upgrade contracts")
+  .addOptionalParam("execute", "propose transactions", false, types.boolean)
   .addOptionalParam("poolFactory", "upgrade poolFactory", false, types.boolean)
   .addOptionalParam("assetHandler", "upgrade assetHandler", false, types.boolean)
   .addOptionalParam("poolLogic", "upgrade poolLogic", false, types.boolean)
@@ -148,8 +150,12 @@ task("upgrade", "Upgrade contracts")
     const PoolFactoryABI = new ethers.utils.Interface(PoolFactory.abi);
 
     if (taskArgs.pause) {
-      const pauseABI = PoolFactoryABI.encodeFunctionData("pause", []);
-      await proposeTx(poolFactoryProxy, pauseABI, "Pause Pool Factory");
+      if (!taskArgs.execute) {
+        console.log("Will pause");
+      } else {
+        const pauseABI = PoolFactoryABI.encodeFunctionData("pause", []);
+        await proposeTx(poolFactoryProxy, pauseABI, "Pause Pool Factory", taskArgs.execute);
+      }
     }
     if (taskArgs.assets) {
       // look up to check if csvAsset is in the current versions
@@ -169,7 +175,7 @@ task("upgrade", "Upgrade contracts")
           if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
           if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
           if (csvAsset["Asset Name"] === asset.name) {
-            console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
+            // console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
             foundInVersions = true;
             break;
           }
@@ -178,6 +184,11 @@ task("upgrade", "Upgrade contracts")
           const assetType = csvAsset.AssetType;
           switch (assetType) {
             case "2":
+              if (!taskArgs.execute) {
+                console.log("Will deploy asset ", csvAsset["Asset Name"]);
+                break;
+              }
+
               // Deploy Sushi LP Aggregator
               console.log("Deploying ", csvAsset["Asset Name"]);
               const sushiLPAggregator = await SushiLPAggregator.deploy(csvAsset.Address, contracts.PoolFactoryProxy);
@@ -191,6 +202,11 @@ task("upgrade", "Upgrade contracts")
               });
               break;
             case "3":
+              if (!taskArgs.execute) {
+                console.log("Will deploy asset ", csvAsset["Asset Name"]);
+                break;
+              }
+
               // Deploy USDPriceAggregator
               const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
               usdPriceAggregator = await USDPriceAggregator.deploy();
@@ -203,7 +219,7 @@ task("upgrade", "Upgrade contracts")
               });
               break;
             default:
-              console.log(`Adding new asset: ${csvAsset["Asset Name"]}`);
+              console.log(`Adding new asset to AssetHandler: ${csvAsset["Asset Name"]}`);
               assetHandlerAssets.push({
                 name: csvAsset["Asset Name"],
                 asset: csvAsset.Address,
@@ -219,23 +235,30 @@ task("upgrade", "Upgrade contracts")
         let foundInVersions = false;
         for (const asset of contracts.Assets) {
           if (balancerLp.name === asset.name) {
-            console.log(`${balancerLp.name} is already in the current contracts.Assets`);
+            // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
             foundInVersions = true;
             break;
           }
         }
         if (!foundInVersions) {
-          // Deploy Balancer LP Aggregator
-          console.log("Deploying ", balancerLp.name);
-          const balancerV2Aggregator = await deployBalancerV2LpAggregator(contracts.PoolFactoryProxy, balancerLp.data);
-          await balancerV2Aggregator.deployed();
-          console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at `, balancerV2Aggregator.address);
-          assetHandlerAssets.push({
-            name: balancerLp.name,
-            asset: balancerLp.data.pool,
-            assetType: 6,
-            aggregator: balancerV2Aggregator.address,
-          });
+          if (!taskArgs.execute) {
+            console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
+          } else {
+            // Deploy Balancer LP Aggregator
+            console.log("Deploying ", balancerLp.name);
+            const balancerV2Aggregator = await deployBalancerV2LpAggregator(
+              contracts.PoolFactoryProxy,
+              balancerLp.data,
+            );
+            await balancerV2Aggregator.deployed();
+            console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at `, balancerV2Aggregator.address);
+            assetHandlerAssets.push({
+              name: balancerLp.name,
+              asset: balancerLp.data.pool,
+              assetType: 6,
+              aggregator: balancerV2Aggregator.address,
+            });
+          }
         }
       }
 
@@ -244,411 +267,559 @@ task("upgrade", "Upgrade contracts")
       const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
 
       if (assetHandlerAssets.length > 0) {
-        await proposeTx(contracts.AssetHandlerProxy, addAssetsABI, "Update assets in Asset Handler");
+        await proposeTx(contracts.AssetHandlerProxy, addAssetsABI, "Update assets in Asset Handler", taskArgs.execute);
         versions[newTag].contracts.Assets = [...versions[newTag].contracts.Assets, ...assetHandlerAssets];
       }
     }
     if (taskArgs.poolFactory) {
-      const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
-      const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
-      console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
+      if (!taskArgs.execute) {
+        console.log("Will upgrade PoolFactory");
+      } else {
+        const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
+        const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
+        console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
-      await tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
+        await tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
 
-      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
-      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory");
+        const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
+        await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory", taskArgs.execute);
+      }
     }
     if (taskArgs.assetHandler) {
-      let oldAssetHandler = contracts.AssetHandlerProxy;
-      const AssetHandler = await ethers.getContractFactory("AssetHandler");
-      const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
-      console.log("assetHandler logic deployed to: ", assetHandler);
+      if (!taskArgs.execute) {
+        console.log("Will upgrade AssetHandler");
+      } else {
+        let oldAssetHandler = contracts.AssetHandlerProxy;
+        const AssetHandler = await ethers.getContractFactory("AssetHandler");
+        const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
+        console.log("assetHandler logic deployed to: ", assetHandler);
 
-      await tryVerify(hre, assetHandler, "contracts/assets/AssetHandler.sol:AssetHandler", []);
+        await tryVerify(hre, assetHandler, "contracts/assets/AssetHandler.sol:AssetHandler", []);
 
-      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAssetHandler, assetHandler]);
-      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Asset Handler");
+        const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAssetHandler, assetHandler]);
+        await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Asset Handler", taskArgs.execute);
+      }
     }
     if (taskArgs.poolLogic) {
-      let oldPooLogicProxy = contracts.PoolLogicProxy;
-      const PoolLogic = await ethers.getContractFactory("PoolLogic");
-      const poolLogic = await upgrades.prepareUpgrade(oldPooLogicProxy, PoolLogic);
-      console.log("poolLogic deployed to: ", poolLogic);
-      versions[newTag].contracts.PoolLogic = poolLogic;
-      setLogic = true;
+      if (!taskArgs.execute) {
+        console.log("Will upgrade PoolLogic");
+      } else {
+        let oldPooLogicProxy = contracts.PoolLogicProxy;
+        const PoolLogic = await ethers.getContractFactory("PoolLogic");
+        const poolLogic = await upgrades.prepareUpgrade(oldPooLogicProxy, PoolLogic);
+        console.log("poolLogic deployed to: ", poolLogic);
+        versions[newTag].contracts.PoolLogic = poolLogic;
+        setLogic = true;
 
-      await tryVerify(hre, poolLogic, "contracts/PoolLogic.sol:PoolLogic", []);
+        await tryVerify(hre, poolLogic, "contracts/PoolLogic.sol:PoolLogic", []);
+      }
     }
     if (taskArgs.poolManagerLogic) {
-      let oldPooManagerLogicProxy = contracts.PoolManagerLogicProxy;
-      const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-      const poolManagerLogic = await upgrades.prepareUpgrade(oldPooManagerLogicProxy, PoolManagerLogic);
-      console.log("poolManagerLogic deployed to: ", poolManagerLogic);
-      versions[newTag].contracts.PoolManagerLogic = poolManagerLogic;
-      setLogic = true;
+      if (!taskArgs.execute) {
+        console.log("Will upgrade PoolManagerLogic");
+      } else {
+        let oldPooManagerLogicProxy = contracts.PoolManagerLogicProxy;
+        const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+        const poolManagerLogic = await upgrades.prepareUpgrade(oldPooManagerLogicProxy, PoolManagerLogic);
+        console.log("poolManagerLogic deployed to: ", poolManagerLogic);
+        versions[newTag].contracts.PoolManagerLogic = poolManagerLogic;
+        setLogic = true;
 
-      await tryVerify(hre, poolManagerLogic, "contracts/PoolManagerLogic.sol:PoolManagerLogic", []);
+        await tryVerify(hre, poolManagerLogic, "contracts/PoolManagerLogic.sol:PoolManagerLogic", []);
+      }
     }
     if (setLogic) {
       const setLogicABI = PoolFactoryABI.encodeFunctionData("setLogic", [
         versions[newTag].contracts.PoolLogic,
         versions[newTag].contracts.PoolManagerLogic,
       ]);
-      await proposeTx(contracts.PoolFactoryProxy, setLogicABI, "Set logic for poolLogic and poolManagerLogic");
+      await proposeTx(
+        contracts.PoolFactoryProxy,
+        setLogicABI,
+        "Set logic for poolLogic and poolManagerLogic",
+        taskArgs.execute,
+      );
     }
 
     if (taskArgs.poolPerformance) {
-      let oldPoolPerformance = contracts.PoolPerformance;
-      const PoolPerformance = await ethers.getContractFactory("PoolPoolPerformance");
-      const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
-      console.log("poolPerformance deployed to: ", poolPerformance);
-      versions[newTag].contracts.PoolPerformance = poolPerformance;
+      if (!taskArgs.execute) {
+        console.log("Will upgrade PoolPerformance");
+      } else {
+        let oldPoolPerformance = contracts.PoolPerformance;
+        const PoolPerformance = await ethers.getContractFactory("PoolPoolPerformance");
+        const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
+        console.log("poolPerformance deployed to: ", poolPerformance);
+        versions[newTag].contracts.PoolPerformance = poolPerformance;
 
-      tryVerify(hre, poolPerformance, "contracts/PoolPerformance.sol:PoolPerformance", []);
+        await tryVerify(hre, poolPerformance, "contracts/PoolPerformance.sol:PoolPerformance", []);
 
-      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldPoolPerformance, poolPerformance]);
-      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Performance");
+        const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldPoolPerformance, poolPerformance]);
+        await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Performance", taskArgs.execute);
+      }
     }
 
     if (taskArgs.aaveLendingPoolAssetGuard) {
-      const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-      const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
-      await aaveLendingPoolAssetGuard.deployed();
-      console.log("AaveLendingPoolAssetGuard deployed at ", aaveLendingPoolAssetGuard.address);
-      versions[newTag].contracts.AaveLendingPoolAssetGuard = aaveLendingPoolAssetGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy AaveLendingPoolAssetGuard");
+      } else {
+        const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+        const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
+        await aaveLendingPoolAssetGuard.deployed();
+        console.log("AaveLendingPoolAssetGuard deployed at ", aaveLendingPoolAssetGuard.address);
+        versions[newTag].contracts.AaveLendingPoolAssetGuard = aaveLendingPoolAssetGuard.address;
 
-      await tryVerify(
-        hre,
-        aaveLendingPoolAssetGuard.address,
-        "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol:AaveLendingPoolAssetGuard",
-        [aaveProtocolDataProvider],
-      );
+        await tryVerify(
+          hre,
+          aaveLendingPoolAssetGuard.address,
+          "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol:AaveLendingPoolAssetGuard",
+          [aaveProtocolDataProvider],
+        );
 
-      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
-        3,
-        aaveLendingPoolAssetGuard.address,
-      ]);
-      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for aaveLendingPoolAssetGuard");
-      newAssetGuards.push({
-        AssetType: 3,
-        GuardName: "AaveLendingPoolAssetGuard",
-        GuardAddress: aaveLendingPoolAssetGuard.address,
-        Description: "Aave Lending Pool",
-      });
+        const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
+          3,
+          aaveLendingPoolAssetGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setAssetGuardABI,
+          "setAssetGuard for aaveLendingPoolAssetGuard",
+          taskArgs.execute,
+        );
+        newAssetGuards.push({
+          AssetType: 3,
+          GuardName: "AaveLendingPoolAssetGuard",
+          GuardAddress: aaveLendingPoolAssetGuard.address,
+          Description: "Aave Lending Pool",
+        });
+      }
     }
     if (taskArgs.sushiLPAssetGuard) {
-      const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-      const sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
-      await sushiLPAssetGuard.deployed();
-      console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
-      versions[newTag].contracts.SushiLPAssetGuard = sushiLPAssetGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy SushiLPAssetGuard");
+      } else {
+        const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
+        const sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
+        await sushiLPAssetGuard.deployed();
+        console.log("SushiLPAssetGuard deployed at ", sushiLPAssetGuard.address);
+        versions[newTag].contracts.SushiLPAssetGuard = sushiLPAssetGuard.address;
 
-      await tryVerify(
-        hre,
-        sushiLPAssetGuard.address,
-        "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
-        [sushiMiniChefV2],
-      );
+        await tryVerify(
+          hre,
+          sushiLPAssetGuard.address,
+          "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
+          [sushiMiniChefV2],
+        );
 
-      await sushiLPAssetGuard.transferOwnership(protocolDao);
-      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, sushiLPAssetGuard.address]);
-      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for SushiLPAssetGuard");
-      newAssetGuards.push({
-        AssetType: 2,
-        GuardName: "SushiLPAssetGuard",
-        GuardAddress: sushiLPAssetGuard.address,
-        Description: "Sushi LP tokens",
-      });
+        await sushiLPAssetGuard.transferOwnership(protocolDao);
+        const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, sushiLPAssetGuard.address]);
+        await proposeTx(
+          contracts.Governance,
+          setAssetGuardABI,
+          "setAssetGuard for SushiLPAssetGuard",
+          taskArgs.execute,
+        );
+        newAssetGuards.push({
+          AssetType: 2,
+          GuardName: "SushiLPAssetGuard",
+          GuardAddress: sushiLPAssetGuard.address,
+          Description: "Sushi LP tokens",
+        });
+      }
     }
     if (taskArgs.erc20Guard) {
-      const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-      const erc20Guard = await ERC20Guard.deploy();
-      await erc20Guard.deployed();
-      console.log("ERC20Guard deployed at ", erc20Guard.address);
-      versions[newTag].contracts.ERC20Guard = erc20Guard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy ERC20Guard");
+      } else {
+        const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+        const erc20Guard = await ERC20Guard.deploy();
+        await erc20Guard.deployed();
+        console.log("ERC20Guard deployed at ", erc20Guard.address);
+        versions[newTag].contracts.ERC20Guard = erc20Guard.address;
 
-      await tryVerify(hre, erc20Guard.address, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
+        await tryVerify(hre, erc20Guard.address, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
 
-      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [0, erc20Guard.address]);
-      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for ERC20Guard");
-      newAssetGuards.push({
-        AssetType: 0,
-        GuardName: "ERC20Guard",
-        GuardAddress: erc20Guard.address,
-        Description: "ERC20 tokens",
-      });
+        const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [0, erc20Guard.address]);
+        await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for ERC20Guard", taskArgs.execute);
+        newAssetGuards.push({
+          AssetType: 0,
+          GuardName: "ERC20Guard",
+          GuardAddress: erc20Guard.address,
+          Description: "ERC20 tokens",
+        });
+      }
     }
     if (taskArgs.lendingEnabledAssetGuard) {
-      const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
-      const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
-      await lendingEnabledAssetGuard.deployed();
-      console.log("LendingEnabledAssetGuard deployed at ", lendingEnabledAssetGuard.address);
+      if (!taskArgs.execute) {
+        console.log("Will deploy LendingEnabledAssetGuard");
+      } else {
+        const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+        const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
+        await lendingEnabledAssetGuard.deployed();
+        console.log("LendingEnabledAssetGuard deployed at ", lendingEnabledAssetGuard.address);
 
-      versions[newTag].contracts.LendingEnabledAssetGuard = lendingEnabledAssetGuard.address;
+        versions[newTag].contracts.LendingEnabledAssetGuard = lendingEnabledAssetGuard.address;
 
-      await tryVerify(
-        hre,
-        lendingEnabledAssetGuard.address,
-        "contracts/guards/assetGuards/LendingEnabledAssetGuard.sol:LendingEnabledAssetGuard",
-        [],
-      );
+        await tryVerify(
+          hre,
+          lendingEnabledAssetGuard.address,
+          "contracts/guards/assetGuards/LendingEnabledAssetGuard.sol:LendingEnabledAssetGuard",
+          [],
+        );
 
-      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [4, lendingEnabledAssetGuard.address]);
-      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for LendingEnabledAssetGuard");
-      newAssetGuards.push({
-        AssetType: 4,
-        GuardName: "LendingEnabledAssetGuard",
-        GuardAddress: lendingEnabledAssetGuard.address,
-        Description: "Lending Enabled Asset tokens",
-      });
+        const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
+          4,
+          lendingEnabledAssetGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setAssetGuardABI,
+          "setAssetGuard for LendingEnabledAssetGuard",
+          taskArgs.execute,
+        );
+        newAssetGuards.push({
+          AssetType: 4,
+          GuardName: "LendingEnabledAssetGuard",
+          GuardAddress: lendingEnabledAssetGuard.address,
+          Description: "Lending Enabled Asset tokens",
+        });
+      }
     }
     if (taskArgs.uniswapV2RouterGuard) {
-      const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-      const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(10, 100); // set slippage 10%
-      await uniswapV2RouterGuard.deployed();
-      console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
-      versions[newTag].contracts.UniswapV2RouterGuard = uniswapV2RouterGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy UniswapV2RouterGuard");
+      } else {
+        const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+        const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(10, 100); // set slippage 10%
+        await uniswapV2RouterGuard.deployed();
+        console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
+        versions[newTag].contracts.UniswapV2RouterGuard = uniswapV2RouterGuard.address;
 
-      await tryVerify(
-        hre,
-        uniswapV2RouterGuard.address,
-        "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
-        [10, 100],
-      );
+        await tryVerify(
+          hre,
+          uniswapV2RouterGuard.address,
+          "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
+          [10, 100],
+        );
 
-      await uniswapV2RouterGuard.transferOwnership(protocolDao);
-      let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        sushiswapV2Router,
-        uniswapV2RouterGuard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for sushiswapV2Router");
-      newContractGuards.push({
-        ContractAddress: sushiswapV2Router,
-        GuardName: "UniswapV2RouterGuard",
-        GuardAddress: uniswapV2RouterGuard.address,
-        Description: "Sushi V2 router",
-      });
+        await uniswapV2RouterGuard.transferOwnership(protocolDao);
+        let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          sushiswapV2Router,
+          uniswapV2RouterGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for sushiswapV2Router",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: sushiswapV2Router,
+          GuardName: "UniswapV2RouterGuard",
+          GuardAddress: uniswapV2RouterGuard.address,
+          Description: "Sushi V2 router",
+        });
 
-      setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        quickswapRouter,
-        uniswapV2RouterGuard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for quickswapRouter");
-      newContractGuards.push({
-        ContractAddress: quickswapRouter,
-        GuardName: "UniswapV2RouterGuard",
-        GuardAddress: uniswapV2RouterGuard.address,
-        Description: "Quickswap V2 router",
-      });
+        setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          quickswapRouter,
+          uniswapV2RouterGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for quickswapRouter",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: quickswapRouter,
+          GuardName: "UniswapV2RouterGuard",
+          GuardAddress: uniswapV2RouterGuard.address,
+          Description: "Quickswap V2 router",
+        });
+      }
     }
     if (taskArgs.balancerv2guard) {
-      const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
-      const balancerV2Guard = await BalancerV2Guard.deploy(10, 100); // set slippage 10%
-      await balancerV2Guard.deployed();
-      console.log("BalancerV2Guard deployed at ", balancerV2Guard.address);
-      versions[newTag].contracts.UniswapV2RouterGuard = balancerV2Guard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy BalancerV2Guard");
+      } else {
+        const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
+        const balancerV2Guard = await BalancerV2Guard.deploy(10, 100); // set slippage 10%
+        await balancerV2Guard.deployed();
+        console.log("BalancerV2Guard deployed at ", balancerV2Guard.address);
+        versions[newTag].contracts.UniswapV2RouterGuard = balancerV2Guard.address;
 
-      tryVerify(hre, balancerV2Guard.address, "contracts/guards/BalancerV2Guard.sol:BalancerV2Guard", [10, 100]);
+        await tryVerify(
+          hre,
+          balancerV2Guard.address,
+          "contracts/guards/BalancerV2Guard.sol:BalancerV2Guard",
+          [10, 100],
+        );
 
-      await balancerV2Guard.transferOwnership(protocolDao);
-      let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        balancerV2Vault,
-        balancerV2Guard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for balancerV2Vault");
-      newContractGuards.push({
-        ContractAddress: balancerV2Vault,
-        GuardName: "BalancerV2Guard",
-        GuardAddress: balancerV2Guard.address,
-        Description: "Balancer V2 Guard",
-      });
+        await balancerV2Guard.transferOwnership(protocolDao);
+        let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          balancerV2Vault,
+          balancerV2Guard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for balancerV2Vault",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: balancerV2Vault,
+          GuardName: "BalancerV2Guard",
+          GuardAddress: balancerV2Guard.address,
+          Description: "Balancer V2 Guard",
+        });
+      }
     }
     if (taskArgs.openAssetGuard) {
-      const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
-      const csvAssets = await csv().fromFile(fileName);
-      let addresses = csvAssets.map((asset) => asset.Address);
-      const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
-      const openAssetGuard = await OpenAssetGuard.deploy(addresses);
-      await openAssetGuard.deployed();
-      console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
-      versions[newTag].contracts.OpenAssetGuard = openAssetGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy OpenAssetGuard");
+      } else {
+        const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
+        const csvAssets = await csv().fromFile(fileName);
+        let addresses = csvAssets.map((asset) => asset.Address);
+        const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+        const openAssetGuard = await OpenAssetGuard.deploy(addresses);
+        await openAssetGuard.deployed();
+        console.log("OpenAssetGuard deployed at ", openAssetGuard.address);
+        versions[newTag].contracts.OpenAssetGuard = openAssetGuard.address;
 
-      await tryVerify(hre, openAssetGuard.address, "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard", [
-        addresses,
-      ]);
+        await tryVerify(hre, openAssetGuard.address, "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard", [
+          addresses,
+        ]);
 
-      await openAssetGuard.transferOwnership(protocolDao);
-      const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [
-        [[ethers.utils.formatBytes32String("openAssetGuard"), openAssetGuard.address]],
-      ]);
-      await proposeTx(contracts.Governance, setAddressesABI, "setAddresses for openAssetGuard");
-      newGovernanceNames.push({
-        Name: "openAssetGuard",
-        Destination: openAssetGuard.address,
-      });
+        await openAssetGuard.transferOwnership(protocolDao);
+        const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [
+          [[ethers.utils.formatBytes32String("openAssetGuard"), openAssetGuard.address]],
+        ]);
+        await proposeTx(contracts.Governance, setAddressesABI, "setAddresses for openAssetGuard", taskArgs.execute);
+        newGovernanceNames.push({
+          Name: "openAssetGuard",
+          Destination: openAssetGuard.address,
+        });
+      }
     }
     if (taskArgs.quickLPAssetGuard) {
-      const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
-      const quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
-      await quickLPAssetGuard.deployed();
-      console.log("quickLPAssetGuard deployed at ", quickLPAssetGuard.address);
-      versions[newTag].contracts.QuickLPAssetGuard = quickLPAssetGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy QuickLpAssetGuard");
+      } else {
+        const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
+        const quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
+        await quickLPAssetGuard.deployed();
+        console.log("quickLPAssetGuard deployed at ", quickLPAssetGuard.address);
+        versions[newTag].contracts.QuickLPAssetGuard = quickLPAssetGuard.address;
 
-      await tryVerify(
-        hre,
-        quickLPAssetGuard.address,
-        "contracts/guards/assetGuards/QuickLPAssetGuard.sol:QuickLPAssetGuard",
-        [quickStakingRewardsFactory],
-      );
+        await tryVerify(
+          hre,
+          quickLPAssetGuard.address,
+          "contracts/guards/assetGuards/QuickLPAssetGuard.sol:QuickLPAssetGuard",
+          [quickStakingRewardsFactory],
+        );
 
-      await quickLPAssetGuard.transferOwnership(protocolDao);
-      const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [5, quickLPAssetGuard.address]);
-      await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for quickLPAssetGuard");
-      newAssetGuards.push({
-        AssetType: 5,
-        GuardName: "QuickLPAssetGuard",
-        GuardAddress: quickLPAssetGuard.address,
-        Description: "Quick LP tokens",
-      });
+        await quickLPAssetGuard.transferOwnership(protocolDao);
+        const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [5, quickLPAssetGuard.address]);
+        await proposeTx(
+          contracts.Governance,
+          setAssetGuardABI,
+          "setAssetGuard for quickLPAssetGuard",
+          taskArgs.execute,
+        );
+        newAssetGuards.push({
+          AssetType: 5,
+          GuardName: "QuickLPAssetGuard",
+          GuardAddress: quickLPAssetGuard.address,
+          Description: "Quick LP tokens",
+        });
+      }
     }
     if (taskArgs.quickStakingRewardsGuard) {
-      const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
-      const quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy();
-      await quickStakingRewardsGuard.deployed();
-      console.log("quickStakingRewardsGuard deployed at ", quickStakingRewardsGuard.address);
-      versions[newTag].contracts.QuickStakingRewardsGuard = quickStakingRewardsGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy QuickStakingRewardsGuard");
+      } else {
+        const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
+        const quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy();
+        await quickStakingRewardsGuard.deployed();
+        console.log("quickStakingRewardsGuard deployed at ", quickStakingRewardsGuard.address);
+        versions[newTag].contracts.QuickStakingRewardsGuard = quickStakingRewardsGuard.address;
 
-      await tryVerify(
-        hre,
-        quickStakingRewardsGuard.address,
-        "contracts/guards/QuickStakingRewardsGuard.sol:QuickStakingRewardsGuard",
-        [],
-      );
+        await tryVerify(
+          hre,
+          quickStakingRewardsGuard.address,
+          "contracts/guards/QuickStakingRewardsGuard.sol:QuickStakingRewardsGuard",
+          [],
+        );
 
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        quickLpUsdcWethStakingRewards,
-        quickStakingRewardsGuard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for QuickStakingRewardsGuard");
-      newContractGuards.push({
-        ContractAddress: quickLpUsdcWethStakingRewards,
-        GuardName: "QuickStakingRewardsGuard",
-        GuardAddress: quickStakingRewardsGuard.address,
-        Description: "Quick Staking Reward",
-      });
+        const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          quickLpUsdcWethStakingRewards,
+          quickStakingRewardsGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for QuickStakingRewardsGuard",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: quickLpUsdcWethStakingRewards,
+          GuardName: "QuickStakingRewardsGuard",
+          GuardAddress: quickStakingRewardsGuard.address,
+          Description: "Quick Staking Reward",
+        });
+      }
     }
     if (taskArgs.sushiMiniChefV2Guard) {
-      const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-      const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
-      await sushiMiniChefV2Guard.deployed();
-      console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
-      versions[newTag].contracts.SushiMiniChefV2Guard = sushiMiniChefV2Guard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy SushiMiniChefV2Guard");
+      } else {
+        const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
+        const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+        await sushiMiniChefV2Guard.deployed();
+        console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
+        versions[newTag].contracts.SushiMiniChefV2Guard = sushiMiniChefV2Guard.address;
 
-      await tryVerify(
-        hre,
-        sushiMiniChefV2Guard.address,
-        "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
-        [sushiToken, wmatic],
-      );
+        await tryVerify(
+          hre,
+          sushiMiniChefV2Guard.address,
+          "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
+          [sushiToken, wmatic],
+        );
 
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        sushiMiniChefV2,
-        sushiMiniChefV2Guard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for sushiMiniChefV2Guard");
-      newContractGuards.push({
-        ContractAddress: sushiMiniChefV2,
-        GuardName: "SushiMiniChefV2Guard",
-        GuardAddress: sushiMiniChefV2Guard.address,
-        Description: "Sushi rewards contract",
-      });
+        const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          sushiMiniChefV2,
+          sushiMiniChefV2Guard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for sushiMiniChefV2Guard",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: sushiMiniChefV2,
+          GuardName: "SushiMiniChefV2Guard",
+          GuardAddress: sushiMiniChefV2Guard.address,
+          Description: "Sushi rewards contract",
+        });
+      }
     }
     if (taskArgs.aaveIncentivesControllerGuard) {
-      const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
-      console.log("wmatic: ", wmatic);
-      const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
-      await aaveIncentivesControllerGuard.deployed();
-      console.log("AaveIncentivesControllerGuard deployed at ", aaveIncentivesControllerGuard.address);
-      versions[newTag].contracts.AaveIncentivesControllerGuard = aaveIncentivesControllerGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy AaveIncentivesControllerGuard");
+      } else {
+        const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
+        console.log("wmatic: ", wmatic);
+        const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
+        await aaveIncentivesControllerGuard.deployed();
+        console.log("AaveIncentivesControllerGuard deployed at ", aaveIncentivesControllerGuard.address);
+        versions[newTag].contracts.AaveIncentivesControllerGuard = aaveIncentivesControllerGuard.address;
 
-      await tryVerify(
-        hre,
-        aaveIncentivesControllerGuard.address,
-        "contracts/guards/AaveIncentivesControllerGuard.sol:AaveIncentivesControllerGuard",
-        [wmatic],
-      );
+        await tryVerify(
+          hre,
+          aaveIncentivesControllerGuard.address,
+          "contracts/guards/AaveIncentivesControllerGuard.sol:AaveIncentivesControllerGuard",
+          [wmatic],
+        );
 
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        aaveIncentivesController,
-        aaveIncentivesControllerGuard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for AaveIncentivesControllerGuard");
-      newContractGuards.push({
-        ContractAddress: aaveIncentivesController,
-        GuardName: "AaveIncentivesControllerGuard",
-        GuardAddress: aaveIncentivesControllerGuard.address,
-        Description: "Aave Incentives Controller contract",
-      });
+        const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          aaveIncentivesController,
+          aaveIncentivesControllerGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for AaveIncentivesControllerGuard",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: aaveIncentivesController,
+          GuardName: "AaveIncentivesControllerGuard",
+          GuardAddress: aaveIncentivesControllerGuard.address,
+          Description: "Aave Incentives Controller contract",
+        });
+      }
     }
     if (taskArgs.aaveLendingPoolGuard) {
-      const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-      const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
-      await aaveLendingPoolGuard.deployed();
-      console.log("AaveLendingPoolGuard deployed at ", aaveLendingPoolGuard.address);
-      versions[newTag].contracts.AaveLendingPoolGuard = aaveLendingPoolGuard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy AaveLendingPoolGuard");
+      } else {
+        const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+        const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+        await aaveLendingPoolGuard.deployed();
+        console.log("AaveLendingPoolGuard deployed at ", aaveLendingPoolGuard.address);
+        versions[newTag].contracts.AaveLendingPoolGuard = aaveLendingPoolGuard.address;
 
-      await tryVerify(
-        hre,
-        aaveLendingPoolGuard.address,
-        "contracts/guards/AaveLendingPoolGuard.sol:AaveLendingPoolGuard",
-        [],
-      );
+        await tryVerify(
+          hre,
+          aaveLendingPoolGuard.address,
+          "contracts/guards/AaveLendingPoolGuard.sol:AaveLendingPoolGuard",
+          [],
+        );
 
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        aaveLendingPool,
-        aaveLendingPoolGuard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for aaveLendingPoolGuard");
-      newContractGuards.push({
-        ContractAddress: aaveLendingPool,
-        GuardName: "AaveLendingPoolGuard",
-        GuardAddress: aaveLendingPoolGuard.address,
-        Description: "Aave Lending Pool contract",
-      });
+        const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          aaveLendingPool,
+          aaveLendingPoolGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for aaveLendingPoolGuard",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: aaveLendingPool,
+          GuardName: "AaveLendingPoolGuard",
+          GuardAddress: aaveLendingPoolGuard.address,
+          Description: "Aave Lending Pool contract",
+        });
+      }
     }
     if (taskArgs.oneInchV3Guard) {
-      const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
-      oneInchV3Guard = await OneInchV3Guard.deploy(10, 100); // set slippage 10%
-      await oneInchV3Guard.deployed();
-      console.log("oneInchV3Guard deployed at ", oneInchV3Guard.address);
-      versions[newTag].contracts.OneInchV3Guard = oneInchV3Guard.address;
+      if (!taskArgs.execute) {
+        console.log("Will deploy OneInchV2Guard");
+      } else {
+        const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
+        oneInchV3Guard = await OneInchV3Guard.deploy(10, 100); // set slippage 10%
+        await oneInchV3Guard.deployed();
+        console.log("oneInchV3Guard deployed at ", oneInchV3Guard.address);
+        versions[newTag].contracts.OneInchV3Guard = oneInchV3Guard.address;
 
-      await tryVerify(hre, oneInchV3Guard.address, "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard", [10, 100]);
+        await tryVerify(hre, oneInchV3Guard.address, "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard", [10, 100]);
 
-      const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-        oneInchV3Router,
-        oneInchV3Guard.address,
-      ]);
-      await proposeTx(contracts.Governance, setContractGuardABI, "setContractGuard for oneInchV3Guard");
-      newContractGuards.push({
-        ContractAddress: oneInchV3Router,
-        GuardName: "OneInchV3Guard",
-        GuardAddress: oneInchV3Guard.address,
-        Description: "OneInch V3 Router",
-      });
+        const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          oneInchV3Router,
+          oneInchV3Guard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for oneInchV3Guard",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: oneInchV3Router,
+          GuardName: "OneInchV3Guard",
+          GuardAddress: oneInchV3Guard.address,
+          Description: "OneInch V3 Router",
+        });
+      }
     }
     if (taskArgs.unpause) {
-      // Unpause Pool Factory
-      const unpauseABI = PoolFactoryABI.encodeFunctionData("unpause", []);
-      await proposeTx(poolFactoryProxy, unpauseABI, "Unpause pool Factory");
+      if (!taskArgs.execute) {
+        console.log("Will unpause");
+      } else {
+        // Unpause Pool Factory
+        const unpauseABI = PoolFactoryABI.encodeFunctionData("unpause", []);
+        await proposeTx(poolFactoryProxy, unpauseABI, "Unpause pool Factory", taskArgs.execute);
+      }
     }
 
     // convert JSON object to string
     const data = JSON.stringify(versions, null, 2);
-    console.log(data);
 
     // write to version file
-    if (!taskArgs.unpause) {
+    if (taskArgs.execute && !taskArgs.unpause) {
       // skip version file update if just unpausing
       fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
     }
@@ -701,7 +872,7 @@ task("upgrade", "Upgrade contracts")
     if (csvContractGuards.length > 0) writeCsv(csvContractGuards, contractGuardfileName);
     if (csvGovernanceNames.length > 0) writeCsv(csvGovernanceNames, governanceNamesfileName);
 
-    console.log(nonceLog);
+    if (taskArgs.execute) console.log(nonceLog);
   });
 
 module.exports = {};
