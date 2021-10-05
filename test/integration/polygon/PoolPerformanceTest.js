@@ -1,4 +1,5 @@
 const { ethers, upgrades } = require("hardhat");
+const { BigNumber } = ethers;
 const { expect, use } = require("chai");
 const { solidity } = require("ethereum-waffle");
 const { checkAlmostSame, toBytes32, units } = require("../../TestHelpers");
@@ -6,14 +7,14 @@ const { sushi, aave, assets, price_feeds } = require("../polygon-data");
 
 use(solidity);
 
-const oneDollar = 1e18;
-const twoDollar = 2e18;
+const oneDollar = units(1);
+const twoDollar = units(2);
 
 describe("PoolPerformance", function () {
-  let USDC, WETH;
+  let USDC, WETH, WMatic;
   let logicOwner, manager, dao;
   let PoolLogic;
-  let assetHandler, governance, poolFactory, poolLogicProxy, poolPerformance;
+  let assetHandler, governance, poolFactory, poolLogicProxy, poolPerformance, sushiswapRouter;
 
   beforeEach(async function () {
     [logicOwner, manager, dao] = await ethers.getSigners();
@@ -63,14 +64,14 @@ describe("PoolPerformance", function () {
 
     // Setup LogicOwner with some USDC
     const IWETH = await hre.artifacts.readArtifact("IWETH");
-    const WMatic = await ethers.getContractAt(IWETH.abi, assets.wmatic);
+    WMatic = await ethers.getContractAt(IWETH.abi, assets.wmatic);
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
     WETH = await ethers.getContractAt(IERC20.abi, assets.weth);
 
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
-    await WMatic.deposit({ value: units(1000) });
+    sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
+    await WMatic.deposit({ value: units(500) });
 
     // Get USDC
     await WMatic.approve(sushi.router, units(1000));
@@ -78,15 +79,6 @@ describe("PoolPerformance", function () {
       units(500),
       0,
       [assets.wmatic, assets.usdc],
-      logicOwner.address,
-      Math.floor(Date.now() / 1000 + 100000000),
-    );
-
-    // Get Weth for AAVE Tests
-    await sushiswapRouter.swapExactTokensForTokens(
-      units(500),
-      0,
-      [assets.wmatic, assets.weth],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -107,7 +99,7 @@ describe("PoolPerformance", function () {
     // Deposit $1 conventional way
     // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
     it("tokenPriceAdjustedForPerformance", async () => {
-      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
         [assets.usdc, true],
@@ -164,7 +156,7 @@ describe("PoolPerformance", function () {
     // Withdraw
     // Check Price
     it("withdrawal + tokenPriceAdjustForPerformance", async () => {
-      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
         [assets.usdc, true],
@@ -201,9 +193,173 @@ describe("PoolPerformance", function () {
       );
     });
 
+    // Checks to make sure PoolPerformance is updated on early withdraws
+    // we make a conventional deposit and immediately withdraw 10% of the issued tokens
+    // we then check to make sure pool performance is adjusted down to compensate for the fee kept by the pool
+    it("early 10% withdrawal with 0.5% fee adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
+      const managerFee = BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [assets.usdc, true],
+      ]);
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+
+      const tokenPriceBefore = await poolPerformance.tokenPrice(poolLogicProxy.address);
+      // Check token price is $1
+      expect(tokenPriceBefore.toString()).to.equal(oneDollar.toString());
+      // Check tokenPriceAdjustForPerformance == $1;
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      await poolFactory.setExitCooldown(6000000);
+      await poolFactory.setExitFee(5, 1000); // 0.5%
+      const totalSupply = await poolLogicProxy.totalSupply();
+      const totalValue = totalSupply.mul(await poolLogicProxy.tokenPrice());
+      // 10% withdrawal
+      const withdrawalAmount = totalSupply.div(10);
+      // early exit fee is 0.5% of the withdrawn amount
+      const totalEarlyExitFee = totalValue.div(10).div(200);
+      const tokensLeft = totalSupply.sub(withdrawalAmount);
+      const extraValuePerToken = totalEarlyExitFee.div(tokensLeft);
+
+      await poolLogicProxy.withdraw(withdrawalAmount.toString());
+
+      // $100 TotalValue
+      // 100 Tokens TotalSupply
+
+      // withdrawing 10% sans 0.5% fee
+      // $10 * 0.005 = $0.05 fee
+      // Left in pool $90 + 0.05 = 90.05
+      // 90 Tokens TotalSupply left after withdraw
+      // $90.05 / 90 = $1.000555556
+
+      const tokenPriceAfter = await poolPerformance.tokenPrice(poolLogicProxy.address);
+      expect(tokenPriceBefore).not.to.equal(tokenPriceAfter);
+      // Check token price has increased by the fee kept by the pool
+      expect(tokenPriceAfter.toString()).to.equal(oneDollar.add(extraValuePerToken));
+      // Make sure the performance of the token hasn't changed
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).closeTo(
+        oneDollar,
+        1,
+      );
+    });
+
+    // Checks to make sure PoolPerformance is updated on early withdraws
+    // we make a conventional deposit and immediately withdraw 50% of the issued tokens
+    // we then check to make sure pool performance is adjusted down to compensate for the fee kept by the pool
+    it("early 50% withdrawal with 10% fee adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
+      const managerFee = BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [assets.usdc, true],
+      ]);
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+
+      const tokenPriceBefore = await poolPerformance.tokenPrice(poolLogicProxy.address);
+      // Check token price is $1
+      expect(tokenPriceBefore.toString()).to.equal(oneDollar.toString());
+      // Check tokenPriceAdjustForPerformance == $1;
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      await poolFactory.setExitCooldown(6000000);
+      await poolFactory.setExitFee(10, 100); // 10%
+      const totalSupply = await poolLogicProxy.totalSupply();
+      const tokenPrice = await poolLogicProxy.tokenPrice();
+      // 50% withdrawal - div(2) is the same as * 0.5
+      const withdrawalAmount = totalSupply.div(2);
+      const totalEarlyExitFee = tokenPrice.mul(withdrawalAmount).div(10);
+      const tokensLeft = totalSupply.sub(withdrawalAmount);
+      const extraValuePerToken = totalEarlyExitFee.div(tokensLeft);
+
+      await poolLogicProxy.withdraw(withdrawalAmount.toString());
+
+      // $100 TotalValue
+      // 100 Tokens TotalSupply
+
+      // withdrawing half sans 10% fee
+      // 50 * 0.1 = $5 fee
+      // Left in pool $55
+      // 50 Tokens TotalSupply left after withdraw
+      // 55/50 = 1.1
+      // 1 -> 1.05
+
+      const tokenPriceAfter = await poolPerformance.tokenPrice(poolLogicProxy.address);
+      expect(tokenPriceBefore).not.to.equal(tokenPriceAfter);
+      // Check token price has increased by the fee kept by the pool
+      expect(tokenPriceAfter.toString()).to.equal(oneDollar.add(extraValuePerToken));
+      // Make sure the performance of the token hasn't changed
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).closeTo(
+        oneDollar,
+        1,
+      );
+    });
+
+    // Checks to make sure early exit PoolPerformance update is skipped if investor is withdrawing 100% of the pool.
+    // we make a conventional deposit and immediately withdraw 50% of the issued tokens
+    // we then check to make sure pool performance is adjusted down to compensate for the fee kept by the pool
+    it("early 100% withdrawal should skip adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
+      const managerFee = BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [assets.usdc, true],
+      ]);
+
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+
+      // Check token price is $1
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      // Check tokenPriceAdjustForPerformance == $1;
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      await poolFactory.setExitCooldown(6000000);
+      await poolFactory.setExitFee(10, 100); // 10%
+
+      // 100% withdrawal
+      const withdrawalAmount = await poolLogicProxy.totalSupply();
+
+      expect(await poolPerformance.realtimeInternalValueFactor(poolLogicProxy.address)).to.equal((1e18).toString());
+
+      await poolLogicProxy.withdraw(withdrawalAmount.toString());
+
+      // Check token price has increased by the fee kept by the pool
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal("0");
+      // // Make sure the performance of the token hasn't changed
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal("0");
+
+      // expect(await poolPerformance.realtimeInternalValueFactor(poolLogicProxy.address)).to.equal((1e18).toString());
+
+      // // We deposit again to make sure everything is reset
+      // await USDC.approve(poolLogicProxy.address, (100e6).toString());
+      // await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+
+      // // Check token price is $1
+      // expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      // // Check tokenPriceAdjustForPerformance == $1
+      // expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      //   oneDollar.toString(),
+      // );
+    });
+
     // In this test we test that the realtime fee + performance is calculated correctly
     it("tokenPriceAdjustedForPerformanceAndManagerFee", async () => {
-      const managerFee = new ethers.BigNumber.from("5000"); // 50%;
+      const managerFee = BigNumber.from("5000"); // 50%;
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
         [assets.usdc, true],
       ]);
@@ -274,7 +430,7 @@ describe("PoolPerformance", function () {
 
     it("tokenPriceAdjustedForPerformanceAndManagerFee with small manager fee, small deposit", async () => {
       const oneDollarTwentyCents = 12e17;
-      const managerFee = new ethers.BigNumber.from("1000"); // 10%;
+      const managerFee = BigNumber.from("1000"); // 10%;
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
         [assets.usdc, true],
       ]);
@@ -337,6 +493,7 @@ describe("PoolPerformance", function () {
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
         (await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString(),
       );
+
       // The tokenPriceAdjustedForPerformance should now be the same as adjustedForPerformanceAndManagerFee now fees are minted
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
@@ -417,7 +574,7 @@ describe("PoolPerformance", function () {
     // Check PoolPerformance Figures remain the same
     it("tokenPriceAdjustForPerformance no direct deposit", async () => {
       const usdcAmount = (100e6).toString();
-      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
         [assets.usdc, true],
@@ -484,7 +641,7 @@ describe("PoolPerformance", function () {
     // check that the directDeposit of amUSDC is accounted for by PoolPerformance
     it("tokenPriceAdjustForPerformance with direct deposit", async () => {
       const usdcAmount = (100e6).toString();
-      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
         [assets.usdc, true],
@@ -535,21 +692,21 @@ describe("PoolPerformance", function () {
       // We use closeTo here because every block we are getting crumbs as interest on our aAsset which
       // increases the price slightly
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar)),
+        BigNumber.from(BigInt(twoDollar)),
         1e10,
       );
       expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar)),
+        BigNumber.from(BigInt(twoDollar)),
         1e10,
       );
 
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar / 2)),
+        BigNumber.from(BigInt(twoDollar / 2)),
         1e10,
       );
       expect(
         (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).closeTo(ethers.BigNumber.from(BigInt(twoDollar / 2)), 1e10);
+      ).closeTo(BigNumber.from(BigInt(twoDollar / 2)), 1e10);
     });
 
     // In this test we make sure directDeposits of aTokens are accounted for by PoolPerformance using WETH
@@ -563,7 +720,17 @@ describe("PoolPerformance", function () {
     // Direct deposit amweth to Pool
     // check that the directDeposit of amWeth is accounted for by PoolPerformance
     it("tokenPriceAdjustForPerformance with direct deposit (WETH)", async () => {
-      const managerFee = new ethers.BigNumber.from("0"); // 0%;
+      await WMatic.deposit({ value: units(300) });
+      // Get Weth for AAVE Tests
+      await sushiswapRouter.swapExactTokensForTokens(
+        units(300),
+        0,
+        [assets.wmatic, assets.weth],
+        logicOwner.address,
+        Math.floor(Date.now() / 1000 + 100000000),
+      );
+
+      const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
       await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
         [assets.weth, true],
@@ -628,22 +795,22 @@ describe("PoolPerformance", function () {
       // We use closeTo here because every block we are getting crumbs as interest on our aAsset which
       // increases the price slightly
       expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar)),
+        BigNumber.from(BigInt(twoDollar)),
         1e9,
       );
 
       expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar)),
+        BigNumber.from(BigInt(twoDollar)),
         1e9,
       );
 
       expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar / 2)),
+        BigNumber.from(BigInt(twoDollar / 2)),
         1e9,
       );
 
       expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
-        ethers.BigNumber.from(BigInt(twoDollar / 2)),
+        BigNumber.from(BigInt(twoDollar / 2)),
         1e9,
       );
     });
