@@ -54,6 +54,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import "./interfaces/IERC20Extended.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
@@ -325,6 +326,57 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
+
+    emit Withdrawal(
+      address(this),
+      msg.sender,
+      valueWithdrawn,
+      _fundTokenAmount,
+      balanceOf(msg.sender),
+      fundValue.sub(valueWithdrawn),
+      totalSupply(),
+      withdrawnAssets,
+      block.timestamp
+    );
+  }
+
+  /// @notice Withdraw signle asset based on the fund token amountsss
+  /// @param _fundTokenAmount the fund token amount
+  /// @param _asset the withdraw asset address
+  function withdrawSingle(uint256 _fundTokenAmount, address _asset) external virtual nonReentrant whenNotPaused {
+    require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
+    require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+
+    // calculate the exit fee
+    uint256 exitFee;
+    if (getExitRemainingCooldown(msg.sender) > 0) {
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+    }
+
+    uint256 fundValue = _mintManagerFee();
+
+    // calculate the proportion
+    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
+
+    // first return funded tokens
+    _burn(msg.sender, _fundTokenAmount);
+
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+    poolPerformance.recordExternalValue(address(this));
+
+    uint256 valueWithdrawn = fundValue.mul(portion).div(10**18);
+    uint256 assetPrice = IHasAssetInfo(factory).getAssetPrice(_asset);
+    uint256 withdrawAmount = valueWithdrawn.mul(10**IERC20Extended(_asset).decimals()).div(assetPrice);
+
+    require(IERC20Upgradeable(_asset).balanceOf(address(this)) >= withdrawAmount, "insufficient asset amount");
+    _asset.tryAssemblyCall(abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, withdrawAmount));
+
+    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](1);
+    withdrawnAssets[0] = WithdrawnAsset({asset: _asset, amount: withdrawAmount, externalWithdrawProcessed: false});
+
+    // We must now update our internal balances to whatever the result of the withdraw
+    poolPerformance.updateInternalBalances();
 
     emit Withdrawal(
       address(this),
