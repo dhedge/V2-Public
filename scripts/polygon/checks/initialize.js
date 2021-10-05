@@ -13,14 +13,20 @@ let poolFactoryAddress, assetHandlerAddress; // proxy implementations
 const init = async (environment, deployedVersion = "") => {
   console.log("Initializing contracts and variables..");
 
-  const { versionsFileName, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName } =
-    await getEnvironmentFiles(environment);
+  const {
+    versionsFileName,
+    balancerLpsFileName,
+    assetsFileName,
+    namesFileName,
+    assetGuardsFileName,
+    contractGuardsFileName,
+  } = await getEnvironmentFiles(environment);
 
-  const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury } = await getEnvironmentContracts(
-    environment,
-  );
+  const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress } =
+    await getEnvironmentContracts(environment);
 
   const versions = require(versionsFileName);
+  const balancerLps = require(balancerLpsFileName);
   let version;
   const signer = (await ethers.getSigners())[0];
   if (!deployedVersion) {
@@ -97,6 +103,11 @@ const init = async (environment, deployedVersion = "") => {
   openAssetGuard = OpenAssetGuard.attach(contracts.OpenAssetGuard);
   oneInchV3Guard = OpenAssetGuard.attach(contracts.OneInchV3Guard);
 
+  const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
+  console.log("abi:", IBalancerV2Vault.abi);
+  console.log("balancerv2vaultaddress:", balancerV2VaultAddress);
+  const balancerV2Vault = await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress);
+
   console.log("PoolFactory Implementation:", poolFactoryAddress);
   console.log("PoolLogic Implementation:", contracts.PoolLogic);
   console.log("PoolManagerLogic Implementation:", contracts.PoolManagerLogic);
@@ -106,6 +117,8 @@ const init = async (environment, deployedVersion = "") => {
 
   return {
     assetsFileName,
+    balancerLps,
+    balancerV2Vault,
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
@@ -133,11 +146,12 @@ const init = async (environment, deployedVersion = "") => {
 };
 
 const getEnvironmentFiles = async (environment) => {
-  let versions, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
+  let versionsFileName, assetsFileName, balancerLpsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
 
   switch (environment) {
     case "prod":
       versionsFileName = "../../../publish/matic/versions.json";
+      balancerLpsFileName = "../../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json";
       // CSV
       assetsFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
       namesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
@@ -147,6 +161,7 @@ const getEnvironmentFiles = async (environment) => {
 
     case "staging":
       versionsFileName = "../../../publish/matic/staging-versions.json";
+      balancerLpsFileName = "../../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
       // CSV
       assetsFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
       namesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";
@@ -157,11 +172,19 @@ const getEnvironmentFiles = async (environment) => {
     default:
       throw "Invalid environment input. Should be 'prod' or 'staging'.";
   }
-  return { versionsFileName, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName };
+  return {
+    versionsFileName,
+    balancerLpsFileName,
+    assetsFileName,
+    namesFileName,
+    assetGuardsFileName,
+    contractGuardsFileName,
+  };
 };
 
 const getEnvironmentContracts = async (environment) => {
   let protocolDao, proxyAdminAddress, protocolTreasury;
+  const balancerV2VaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
 
   switch (environment) {
     case "prod":
@@ -181,7 +204,7 @@ const getEnvironmentContracts = async (environment) => {
     default:
       throw "Invalid environment input. Should be 'prod' or 'staging'.";
   }
-  return { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury };
+  return { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress };
 };
 
 module.exports = { init };
