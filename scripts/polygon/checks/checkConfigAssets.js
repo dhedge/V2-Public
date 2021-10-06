@@ -36,63 +36,7 @@ const main = async (initializeData) => {
       if (balancerLp.address === asset.asset) {
         foundInVersions = true;
         console.log("Checking", balancerLp.name);
-        const balancerLPAggregator = await assetHandlerProxy.priceAggregators(balancerLp.address);
-        const BalancerV2LPAggregator = await hre.artifacts.readArtifact("BalancerV2LPAggregator");
-        const aggregator = await ethers.getContractAt(BalancerV2LPAggregator.abi, balancerLPAggregator);
-        const poolTokens = (await balancerV2Vault.getPoolTokens(balancerLp.data.poolId))[0];
-
-        assert(
-          poolTokens.length === balancerLp.data.tokens.length,
-          `${balancerLp.name} pool tokens length mismatch with configuration.`,
-        );
-        // check Balancer LP token configuration
-        for (let i = 0; i < poolTokens.length; i++) {
-          assert(
-            poolTokens[i].toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
-            `${balancerLp.name} pool token address mismatch with configuration.`,
-          );
-          const aggregatorPoolToken = await aggregator.tokens(i);
-          assert(
-            aggregatorPoolToken.toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
-            `${balancerLp.name} pool token address mismatch with deployment.`,
-          );
-          // check token decimals
-          const IERC20 = await hre.artifacts.readArtifact("IERC20Extended");
-          const token = await ethers.getContractAt(IERC20.abi, poolTokens[i]);
-          const decimals = await token.decimals();
-          assert(
-            decimals === balancerLp.data.decimals[i],
-            `${balancerLp.name} pool token ${poolTokens[i]} decimals mismatch with configuration.`,
-          );
-          const aggregatorPoolDecimals = await aggregator.decimals(i);
-          assert(
-            aggregatorPoolDecimals === balancerLp.data.decimals[i],
-            `${balancerLp.name} pool token decimals mismatch with deployment.`,
-          );
-          // check token weight
-          const pool = await ethers.getContractAt(
-            [
-              {
-                inputs: [],
-                name: "getNormalizedWeights",
-                outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
-                stateMutability: "view",
-                type: "function",
-              },
-            ],
-            balancerLp.address,
-          );
-          const weights = await pool.getNormalizedWeights();
-          assert(
-            approxEq(weights[i] / 1e18, balancerLp.data.weights[i], 0.05),
-            `${balancerLp.name} pool token ${poolTokens[i]} weights mismatch with configuration.`,
-          );
-          const aggregatorPoolWeights = await aggregator.weights(i);
-          assert(
-            aggregatorPoolWeights / 1e18 === balancerLp.data.weights[i],
-            `${balancerLp.name} pool token weights mismatch with deployment.`,
-          );
-        }
+        await checkBalancerLpAsset(balancerLp, balancerV2Vault);
       }
     }
     assert(foundInVersions, `Couldn't find ${balancerLp.name} address in published versions.json list.`);
@@ -149,6 +93,72 @@ const main = async (initializeData) => {
 
   console.log("Asset checks complete!");
   console.log("_________________________________________");
+};
+
+const checkBalancerLpAsset = async (balancerLp, balancerV2Vault) => {
+  const balancerLPAggregator = await assetHandlerProxy.priceAggregators(balancerLp.address);
+  const BalancerV2LPAggregator = await hre.artifacts.readArtifact("BalancerV2LPAggregator");
+  const aggregator = await ethers.getContractAt(BalancerV2LPAggregator.abi, balancerLPAggregator);
+  const poolTokens = (await balancerV2Vault.getPoolTokens(balancerLp.data.poolId))[0];
+  const assetType = parseInt(await poolFactoryProxy.getAssetType(balancerLp.address));
+
+  // check Balancer LP asset type configuration
+  assert(assetType === balancerLp.assetType, `${balancerLp.name} deployed asset type mismatch with configuration.`);
+
+  // check Balancer LP token configuration
+  assert(
+    poolTokens.length === balancerLp.data.tokens.length,
+    `${balancerLp.name} pool tokens length mismatch with configuration.`,
+  );
+  for (let i = 0; i < poolTokens.length; i++) {
+    assert(
+      poolTokens[i].toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
+      `${balancerLp.name} pool token address mismatch with configuration.`,
+    );
+    const aggregatorPoolToken = await aggregator.tokens(i);
+    assert(
+      aggregatorPoolToken.toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
+      `${balancerLp.name} pool token address mismatch with deployment.`,
+    );
+
+    // check token decimals
+    const IERC20 = await hre.artifacts.readArtifact("IERC20Extended");
+    const token = await ethers.getContractAt(IERC20.abi, poolTokens[i]);
+    const decimals = await token.decimals();
+    assert(
+      decimals === balancerLp.data.decimals[i],
+      `${balancerLp.name} pool token ${poolTokens[i]} decimals mismatch with configuration.`,
+    );
+    const aggregatorPoolDecimals = await aggregator.decimals(i);
+    assert(
+      aggregatorPoolDecimals === balancerLp.data.decimals[i],
+      `${balancerLp.name} pool token decimals mismatch with deployment.`,
+    );
+
+    // check token weight
+    const pool = await ethers.getContractAt(
+      [
+        {
+          inputs: [],
+          name: "getNormalizedWeights",
+          outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+          stateMutability: "view",
+          type: "function",
+        },
+      ],
+      balancerLp.address,
+    );
+    const weights = await pool.getNormalizedWeights();
+    assert(
+      weights[i] / 1e18 === balancerLp.data.weights[i],
+      `${balancerLp.name} pool token ${poolTokens[i]} weights mismatch with configuration.`,
+    );
+    const aggregatorPoolWeights = await aggregator.weights(i);
+    assert(
+      aggregatorPoolWeights / 1e18 === balancerLp.data.weights[i],
+      `${balancerLp.name} pool token weights mismatch with deployment.`,
+    );
+  }
 };
 
 module.exports = { main };

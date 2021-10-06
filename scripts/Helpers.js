@@ -138,4 +138,38 @@ const proposeTx = async (to, data, message, execute = false) => {
   console.log("ProposeTx: ", proposeTx);
 };
 
-module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32, proposeTx, nonceLog };
+const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHandlerAssets) => {
+  for (const asset of contracts.Assets) {
+    if (balancerLp.name === asset.name) {
+      // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
+      const assetType = parseInt(await poolFactory.getAssetType(balancerLp.address));
+
+      if (assetType !== balancerLp.assetType) {
+        console.log(`${balancerLp.name} asset type update from ${assetType} to ${balancerLp.assetType}`);
+        assetHandlerAssets.push({
+          name: balancerLp.name,
+          asset: balancerLp.data.pool,
+          assetType: balancerLp.assetType,
+          aggregator: asset.aggregator,
+        });
+      }
+
+      const foundInVersions = true;
+      return foundInVersions;
+    }
+  }
+  const foundInVersions = false;
+  return foundInVersions;
+};
+
+module.exports = {
+  writeCsv,
+  tryVerify,
+  getTag,
+  hasDuplicates,
+  isSameBytecode,
+  toBytes32,
+  proposeTx,
+  nonceLog,
+  checkBalancerLpAsset,
+};

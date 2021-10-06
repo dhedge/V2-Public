@@ -104,8 +104,6 @@ const init = async (environment, deployedVersion = "") => {
   oneInchV3Guard = OpenAssetGuard.attach(contracts.OneInchV3Guard);
 
   const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
-  console.log("abi:", IBalancerV2Vault.abi);
-  console.log("balancerv2vaultaddress:", balancerV2VaultAddress);
   const balancerV2Vault = await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress);
 
   console.log("PoolFactory Implementation:", poolFactoryAddress);

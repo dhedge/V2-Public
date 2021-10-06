@@ -1,6 +1,6 @@
 const fs = require("fs");
 const csv = require("csvtojson");
-const { writeCsv, getTag, hasDuplicates, tryVerify, proposeTx, nonceLog } = require("./Helpers");
+const { writeCsv, getTag, hasDuplicates, tryVerify, proposeTx, nonceLog, checkBalancerLpAsset } = require("./Helpers");
 const Decimal = require("decimal.js");
 const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
@@ -124,6 +124,7 @@ task("upgrade", "Upgrade contracts")
     versions[newTag].network = network;
     versions[newTag].date = new Date().toUTCString();
     let setLogic = false;
+    let assetHandlerAssets = [];
 
     // Governance
     const Governance = await hre.artifacts.readArtifact("Governance");
@@ -148,6 +149,7 @@ task("upgrade", "Upgrade contracts")
     let poolFactoryProxy = contracts.PoolFactoryProxy;
     const PoolFactory = await hre.artifacts.readArtifact("PoolFactory");
     const PoolFactoryABI = new ethers.utils.Interface(PoolFactory.abi);
+    const poolFactory = await ethers.getContractAt(PoolFactoryABI, poolFactoryProxy);
 
     if (taskArgs.pause) {
       if (!taskArgs.execute) {
@@ -159,7 +161,6 @@ task("upgrade", "Upgrade contracts")
     }
     if (taskArgs.assets) {
       // look up to check if csvAsset is in the current versions
-      let assetHandlerAssets = [];
       const fileName = taskArgs.production ? prodAssetFileName : stagingAssetFileName;
       const csvAssets = await csv().fromFile(fileName);
 
@@ -232,14 +233,7 @@ task("upgrade", "Upgrade contracts")
 
       const balancerLps = taskArgs.production ? prodBalancerConfig : stagingBalancerConfig;
       for (const balancerLp of balancerLps) {
-        let foundInVersions = false;
-        for (const asset of contracts.Assets) {
-          if (balancerLp.name === asset.name) {
-            // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
-            foundInVersions = true;
-            break;
-          }
-        }
+        const foundInVersions = await checkBalancerLpAsset(balancerLp, contracts, poolFactory, assetHandlerAssets);
         if (!foundInVersions) {
           if (!taskArgs.execute) {
             console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
@@ -255,7 +249,7 @@ task("upgrade", "Upgrade contracts")
             assetHandlerAssets.push({
               name: balancerLp.name,
               asset: balancerLp.data.pool,
-              assetType: 6,
+              assetType: balancerLp.assetType,
               aggregator: balancerV2Aggregator.address,
             });
           }
