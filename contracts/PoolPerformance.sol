@@ -76,15 +76,23 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @notice returns the realtime value of a pool token adjusted for any external value
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets
-  function tokenPriceAdjustedForPerformance(address poolAddress) public view returns (uint256) {
-    return tokenPrice(poolAddress).mul(externalValuePerToken(poolAddress)).div(DENOMINATOR);
+  function tokenPriceAdjustedForPerformance(address poolAddress) external view returns (uint256) {
+    uint256 currentTokenPrice = tokenPrice(poolAddress);
+    if (currentTokenPrice == 0) {
+      return 0;
+    }
+    return currentTokenPrice.mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
   /// @param poolAddress The address of the pool
   /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
-  function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) public view returns (uint256) {
-    return tokenPriceAdjustedForManagerFee(poolAddress).mul(externalValuePerToken(poolAddress)).div(DENOMINATOR);
+  function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) external view returns (uint256) {
+    uint256 tknPriceAdjustedForManagerFee = tokenPriceAdjustedForManagerFee(poolAddress);
+    if (tknPriceAdjustedForManagerFee == 0) {
+      return 0;
+    }
+    return tknPriceAdjustedForManagerFee.mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
   }
 
   /// @notice returns the realtime value of a pool tokens underlying value, sans any manager fee
@@ -93,6 +101,9 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @return the value per token, sans manager fee, received by the user on withdraw.
   function tokenPriceAdjustedForManagerFee(address poolAddress) public view returns (uint256) {
     uint256 currentTokenPrice = tokenPrice(poolAddress);
+    if (currentTokenPrice == 0) {
+      return 0;
+    }
     return
       currentTokenPrice.mul(IERC20Extended(poolAddress).totalSupply()).div(
         IERC20Extended(poolAddress).totalSupply().add(IPoolLogic(poolAddress).availableManagerFee())
@@ -107,10 +118,21 @@ contract PoolPerformance is OwnableUpgradeable {
     return IPoolLogic(poolAddress).tokenPrice();
   }
 
+  /// @notice a view function that returns recorded difference between internal and external value of a token
+  /// @param poolAddress The address of the pool
+  /// @return the factor per token of airdrops and other external value raised by the denominator
+  function internalValueFactor(address poolAddress) external view returns (uint256) {
+    if (internalValueFactorMap[poolAddress] == 0) {
+      return DENOMINATOR;
+    } else {
+      return internalValueFactorMap[poolAddress];
+    }
+  }
+
   /// @notice a view function that returns the realtime + recorded difference between internal and external value of a token
   /// @param poolAddress The address of the pool
   /// @return the value per token of airdrops and other external value
-  function externalValuePerToken(address poolAddress) public view returns (uint256) {
+  function realtimeInternalValueFactor(address poolAddress) public view returns (uint256) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
 
@@ -224,7 +246,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @dev Only currently used in tests, Originally used to stop pool actions before recording air drops.
   /// @param poolAddress The address of the pool
   /// @return true if the pool has external balances
-  function hasExternalBalances(address poolAddress) public view returns (bool) {
+  function hasExternalBalances(address poolAddress) external view returns (bool) {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveLendingPool);
@@ -255,6 +277,34 @@ contract PoolPerformance is OwnableUpgradeable {
     }
 
     return false;
+  }
+
+  /// @notice Set the internal value factor of a pool
+  /// @dev Used for governance updates if pool is airdropped value
+  /// @param poolAddress The address of the pool
+  /// @param newInternalValueFactor 10 ** 18 is 100%;
+  function setInternalValueFactor(address poolAddress, uint256 newInternalValueFactor) external onlyOwner {
+    internalValueFactorMap[poolAddress] = newInternalValueFactor;
+  }
+
+  /// @notice resets the internal value factor of a pool
+  /// @dev Used if all a pools value is withdrawn
+  function resetInternalValueFactor() external {
+    address poolAddress = msg.sender;
+    internalValueFactorMap[poolAddress] = DENOMINATOR;
+  }
+
+  /// @notice adjusts the factor by the factor between a and b
+  /// @dev Used for including new deposits in the internal balance
+  /// @param a numerator
+  /// @param b The amount its being allocated over
+  function adjustInternalValueFactor(uint256 a, uint256 b) external {
+    address poolAddress = msg.sender;
+    if (internalValueFactorMap[poolAddress] == 0) {
+      internalValueFactorMap[poolAddress] = DENOMINATOR.mul(b.sub(a)).div(b);
+    } else {
+      internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress].mul(b.sub(a)).div(b);
+    }
   }
 
   /// @notice Resets the internal balances to equal the external balances
@@ -294,9 +344,5 @@ contract PoolPerformance is OwnableUpgradeable {
 
       internalBalancesMap[poolAddress][assetAddress] = externalBalance;
     }
-  }
-
-  function setExternalValue(address poolAddress, uint256 value) public onlyOwner {
-    internalValueFactorMap[poolAddress] = value;
   }
 }

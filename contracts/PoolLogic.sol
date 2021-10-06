@@ -266,14 +266,18 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+
     // calculate the exit fee
+    uint256 fundValue = _mintManagerFee();
+
     uint256 exitFee;
-    if (getExitRemainingCooldown(msg.sender) > 0) {
+    if (getExitRemainingCooldown(msg.sender) > 0 && totalSupply() != _fundTokenAmount) {
       (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
       exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+      // We need to adjust the performance down by the value of the exit fee distributed to remaining token holders
+      poolPerformance.adjustInternalValueFactor(exitFee, totalSupply().sub(_fundTokenAmount).add(exitFee));
     }
-
-    uint256 fundValue = _mintManagerFee();
 
     // calculate the proportion
     uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
@@ -287,7 +291,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
-    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
     poolPerformance.recordExternalValue(address(this));
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
@@ -316,6 +319,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
 
     // We must now update our internal balances to whatever the result of the withdraw
+    if (totalSupply() == 0) {
+      poolPerformance.resetInternalValueFactor();
+    }
+
     poolPerformance.updateInternalBalances();
 
     // Reduce length for withdrawnAssets to remove the empty items
