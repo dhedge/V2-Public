@@ -873,31 +873,31 @@
         {
           "name": "Balancer LP WMATIC-USDC-WETH-BAL",
           "asset": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
-          "assetType": 6,
+          "assetType": 0,
           "aggregator": "0x9D35ca3131E739C0A9A22AA5feD74DF87E512719"
         },
         {
           "name": "Balancer LP WETH-BAL",
           "asset": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
-          "assetType": 6,
+          "assetType": 0,
           "aggregator": "0x5100e49B5AD720F4402450823b66f5F398A5AE9E"
         },
         {
           "name": "Balancer LP USDC-LINK-WETH-BAL-AAVE",
           "asset": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
-          "assetType": 6,
+          "assetType": 0,
           "aggregator": "0x9943f6442d7F1A852c41f0f515d27d7408D1a8c6"
         },
         {
           "name": "Balancer LP WBTC-USDC-WETH",
           "asset": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
-          "assetType": 6,
+          "assetType": 0,
           "aggregator": "0xC37ca03952A4005Bad2bCc8C082daD732E874ED5"
         },
         {
           "name": "Balancer LP LINK-WETH-BAL-AAVE",
           "asset": "0xce66904b68f1f070332cbc631de7ee98b650b499",
-          "assetType": 6,
+          "assetType": 0,
           "aggregator": "0xA091A62faCa02810e2452E963BDEbF1404A0A52f"
         }
       ],
@@ -927,6 +927,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 04 Oct 2021 01:31:14 GMT"
+    "date": "Wed, 06 Oct 2021 02:46:32 GMT"
   }
 }

@@ -4,7 +4,7 @@
     "symbol": "BLP",
     "type": "balancerLpToken",
     "address": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
-    "assetType": 6,
+    "assetType": 0,
     "precision": 18,
     "link": "https://polygonscan.com/address/0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
     "data": {
@@ -25,7 +25,7 @@
     "symbol": "BLP",
     "type": "balancerLpToken",
     "address": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
-    "assetType": 6,
+    "assetType": 0,
     "precision": 18,
     "link": "https://polygonscan.com/address/0x7eb878107af0440f9e776f999ce053d277c8aca8",
     "data": {
@@ -41,7 +41,7 @@
     "symbol": "BLP",
     "type": "balancerLpToken",
     "address": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
-    "assetType": 6,
+    "assetType": 0,
     "precision": 18,
     "link": "https://polygonscan.com/address/0x36128d5436d2d70cab39c9af9cce146c38554ff0",
     "data": {
@@ -63,7 +63,7 @@
     "symbol": "BLP",
     "type": "balancerLpToken",
     "address": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
-    "assetType": 6,
+    "assetType": 0,
     "precision": 18,
     "link": "https://polygonscan.com/address/0x03cd191f589d12b0582a99808cf19851e468e6b5",
     "data": {
@@ -83,7 +83,7 @@
     "symbol": "BLP",
     "type": "balancerLpToken",
     "address": "0xce66904b68f1f070332cbc631de7ee98b650b499",
-    "assetType": 6,
+    "assetType": 0,
     "precision": 18,
     "link": "https://polygonscan.com/address/0xce66904b68f1f070332cbc631de7ee98b650b499",
     "data": {
