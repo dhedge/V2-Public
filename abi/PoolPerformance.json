@@ -66,11 +66,16 @@
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "plusAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minusAmount",
         "type": "uint256"
       }
     ],
-    "name": "addAssetBalance",
+    "name": "changeAssetBalance",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

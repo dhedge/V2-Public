@@ -234,7 +234,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
     );
 
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).addAssetBalance(_asset, _amount);
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).changeAssetBalance(_asset, _amount, 0);
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -340,7 +340,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     );
   }
 
-  /// @notice Withdraw signle asset based on the fund token amountsss
+  /// @notice Withdraw single asset based on the fund token amounts
   /// @param _fundTokenAmount the fund token amount
   /// @param _asset the withdraw asset address
   function withdrawSingle(uint256 _fundTokenAmount, address _asset) external virtual nonReentrant whenNotPaused {
@@ -362,9 +362,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
-    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
-    poolPerformance.recordExternalValue(address(this));
-
     uint256 valueWithdrawn = fundValue.mul(portion).div(10**18);
     uint256 assetPrice = IHasAssetInfo(factory).getAssetPrice(_asset);
     uint256 withdrawAmount = valueWithdrawn.mul(10**IERC20Extended(_asset).decimals()).div(assetPrice);
@@ -375,8 +372,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](1);
     withdrawnAssets[0] = WithdrawnAsset({asset: _asset, amount: withdrawAmount, externalWithdrawProcessed: false});
 
-    // We must now update our internal balances to whatever the result of the withdraw
-    poolPerformance.updateInternalBalances();
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).changeAssetBalance(
+      _asset,
+      0,
+      withdrawAmount
+    );
 
     emit Withdrawal(
       address(this),
@@ -389,6 +389,18 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       withdrawnAssets,
       block.timestamp
     );
+  }
+
+  function getWithdrawSingleMax(address _asset) external view returns (uint256 fundTokenAmount) {
+    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+    uint256 assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset);
+    fundTokenAmount = assetValue.mul(totalSupply()).div(fundValue);
+
+    // calculate exit fee
+    if (getExitRemainingCooldown(msg.sender) > 0) {
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      fundTokenAmount = fundTokenAmount.mul(exitFeeDenominator).div(exitFeeDenominator.sub(exitFeeNumerator));
+    }
   }
 
   /// @notice Perform any additional processing on withdrawal of asset

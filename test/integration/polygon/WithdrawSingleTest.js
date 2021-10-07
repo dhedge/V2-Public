@@ -296,38 +296,39 @@ describe("WithdrawSingle Test", function () {
     await expect(poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc)).to.be.revertedWith(
       "insufficient asset amount",
     );
+
+    const withdrawMaxAmount = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
+    checkAlmostSame(withdrawMaxAmount, units(250));
   });
 
-  it("not able to withdrawSingle 200 USDC (early withdraw)", async function () {
+  it("able to withdrawSingle 200 USDC (early withdraw)", async function () {
     const withdrawAmount = units(200);
 
     const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-
-    console.log(usdcBalanceBefore.toString());
-    console.log(totalFundValueBefore.toString());
+    const withdrawMaxAmountBefore = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
 
     await poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc);
 
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
-    console.log(usdcBalanceAfter.toString());
-    console.log(totalFundValueAfter.toString());
-
     // check with remove 0.5% exit fee
     checkAlmostSame(usdcBalanceBefore, units(199, 6).add(usdcBalanceAfter));
     checkAlmostSame(totalFundValueBefore, units(199).add(totalFundValueAfter));
+
+    checkAlmostSame(
+      withdrawMaxAmountBefore,
+      withdrawAmount.add(await poolLogicProxy.getWithdrawSingleMax(assets.usdc)),
+    );
   });
 
-  it("not able to withdrawSingle 200 USDC", async function () {
+  it("able to withdrawSingle 20 USDC", async function () {
     const withdrawAmount = units(20);
 
     const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-
-    console.log(usdcBalanceBefore.toString());
-    console.log(totalFundValueBefore.toString());
+    const withdrawMaxAmountBefore = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
 
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
     await poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc);
@@ -335,10 +336,12 @@ describe("WithdrawSingle Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
-    console.log(usdcBalanceAfter.toString());
-    console.log(totalFundValueAfter.toString());
-
     checkAlmostSame(usdcBalanceBefore, units(20, 6).add(usdcBalanceAfter));
     checkAlmostSame(totalFundValueBefore, units(20).add(totalFundValueAfter));
+
+    checkAlmostSame(
+      withdrawMaxAmountBefore,
+      withdrawAmount.add(await poolLogicProxy.getWithdrawSingleMax(assets.usdc)),
+    );
   });
 });
