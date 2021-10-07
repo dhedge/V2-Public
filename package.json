@@ -66,7 +66,7 @@
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/commit-analyzer": "^8.0.1",
     "@semantic-release/github": "^7.2.3",
-    "@semantic-release/release-notes-generator": "^9.0.2",
+    "@semantic-release/release-notes-generator": "^9.0.3",
     "chai": "^4.3.4",
     "chai-almost": "^1.0.1",
     "cross-env": "^7.0.3",
@@ -92,6 +92,7 @@
     "@openzeppelin/contracts-upgradeable": "3.4.1-solc-0.7-2",
     "csv-stringify": "^5.6.2",
     "csvtojson": "^2.0.10",
+    "decimal.js": "^10.3.1",
     "dotenv": "^8.2.0",
     "solidity-docgen": "^0.5.13"
   }
