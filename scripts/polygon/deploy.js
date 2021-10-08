@@ -87,11 +87,7 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
     info.pool,
     info.tokens,
     info.decimals,
-    info.weights.map((w) =>
-      ethers.BigNumber.from(10)
-        .pow(10)
-        .mul(w * 100000000),
-    ),
+    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
     [
       "50000000000000000", // maxPriceDeviation: 0.05
       K,
