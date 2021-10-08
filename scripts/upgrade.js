@@ -105,6 +105,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("aaveIncentivesControllerGuard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
   .addOptionalParam("aaveLendingPoolGuard", "upgrade AaveLendingPoolGuard", false, types.boolean)
   .addOptionalParam("oneInchV3Guard", "upgrade oneInchV3Guard", false, types.boolean)
+  .addOptionalParam("governanceNames", "upgrade Governance contract address mapping", false, types.boolean)
   .addOptionalParam("pause", "pause contract", false, types.boolean)
   .addOptionalParam("unpause", "unpause contract", false, types.boolean)
   .addOptionalParam("keepVersion", "keep the previous release published version. don't update it", false, types.boolean)
@@ -146,6 +147,7 @@ task("upgrade", "Upgrade contracts")
     // Governance
     const Governance = await hre.artifacts.readArtifact("Governance");
     const governanceABI = new ethers.utils.Interface(Governance.abi);
+    const governance = await ethers.getContractAt(governanceABI, contracts.Governance);
 
     // Asset Guard
     const assetGuardfileName = taskArgs.production ? prodAssetGuardFileName : stagingAssetGuardFileName;
@@ -216,15 +218,24 @@ task("upgrade", "Upgrade contracts")
                 break;
               }
 
-              // Deploy USDPriceAggregator
-              const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-              usdPriceAggregator = await USDPriceAggregator.deploy();
-              console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
+              let usdPriceAggregatorAddress;
+              if (!csvAsset["Chainlink Price Feed"]) {
+                // Deploy USDPriceAggregator
+                const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+                const usdPriceAggregator = await USDPriceAggregator.deploy();
+                await usdPriceAggregator.deployed();
+                usdPriceAggregatorAddress = usdPriceAggregator.address;
+              } else {
+                // Use configured USDPriceAggregator
+                usdPriceAggregatorAddress = csvAsset["Chainlink Price Feed"];
+              }
+
+              console.log("USDPriceAggregator deployed at ", usdPriceAggregatorAddress);
               assetHandlerAssets.push({
                 name: csvAsset["Asset Name"],
                 asset: csvAsset.Address,
                 assetType: assetType,
-                aggregator: usdPriceAggregator.address,
+                aggregator: usdPriceAggregatorAddress,
               });
               break;
             default:
@@ -807,6 +818,26 @@ task("upgrade", "Upgrade contracts")
         });
       }
     }
+
+    if (taskArgs.governanceNames) {
+      for (const csvGovernanceName of csvGovernanceNames) {
+        const name = csvGovernanceName.Name;
+        const destination = csvGovernanceName.Destination;
+        const nameBytes = ethers.utils.formatBytes32String(name);
+        const configuredDestination = await governance.nameToDestination(nameBytes);
+
+        if (configuredDestination === "0x0000000000000000000000000000000000000000") {
+          const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [[[nameBytes, destination]]]);
+          await proposeTx(
+            contracts.Governance,
+            setAddressesABI,
+            `setAddresses for ${name} to ${destination}`,
+            taskArgs.execute,
+          );
+        }
+      }
+    }
+
     if (taskArgs.unpause) {
       if (!taskArgs.execute) {
         console.log("Will unpause");

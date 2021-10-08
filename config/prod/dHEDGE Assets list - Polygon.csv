@@ -25,3 +25,4 @@ Sushi LP WETH-AAVE,SLP,sushiLpToken,0x2813d43463c374a680f235c428fb1d7f08de0b69,2
 Sushi LP WETH-CRV,SLP,sushiLpToken,0x396e655c309676caf0acf4607a868e0cded876db,2,18,https://polygonscan.com/address/0x396e655c309676caf0acf4607a868e0cded876db,
 Sushi LP FXS-FRAX,SLP,sushiLpToken,0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca,2,18,https://polygonscan.com/address/0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca
 Sushi LP FRAX-USDC,SLP,sushiLpToken,0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0,2,18,https://polygonscan.com/address/0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0
+Aave Lending Pool,Lend/Borrow,aaveLending,0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf,3,18,https://polygonscan.com/address/0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf,0x7A6B761836012842d304C7e4d836F226e2b52eA9
