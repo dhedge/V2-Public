@@ -35,8 +35,9 @@
     "upgrade:polygon:poolLogic": "npx hardhat upgrade --pool-logic true --network polygon",
     "upgrade:polygon:poolManagerLogic": "npx hardhat upgrade --pool-manager-logic true --network polygon",
     "upgrade:polygon:assets": "npx hardhat upgrade --assets true --network polygon",
-    "upgrade:polygon:all": "npx hardhat upgrade --pause true --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --assets true --aave-lending-pool-asset-guard true --sushi-l-p-asset-guard true --uniswap-v2-router-guard true --open-asset-guard true --quick-l-p-asset-guard true --quick-staking-rewards-guard true --sushi-mini-chef-v2-guard true --network polygon",
-    "upgrade:polygon:all:production": "npx hardhat upgrade --pause true --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --assets true --aave-lending-pool-asset-guard true --sushi-l-p-asset-guard true --uniswap-v2-router-guard true --open-asset-guard true --quick-l-p-asset-guard true --quick-staking-rewards-guard true --sushi-mini-chef-v2-guard true --production true --network polygon",
+    "upgrade:polygon:governanceNames": "npx hardhat upgrade --governance-names true --network polygon",
+    "upgrade:polygon:all": "npx hardhat upgrade --pause true --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --assets true --aave-lending-pool-asset-guard true --sushi-l-p-asset-guard true --uniswap-v2-router-guard true --open-asset-guard true --quick-l-p-asset-guard true --quick-staking-rewards-guard true --sushi-mini-chef-v2-guard true --governance-names true --network polygon",
+    "upgrade:polygon:all:production": "npx hardhat upgrade --pause true --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --assets true --aave-lending-pool-asset-guard true --sushi-l-p-asset-guard true --uniswap-v2-router-guard true --open-asset-guard true --quick-l-p-asset-guard true --quick-staking-rewards-guard true --sushi-mini-chef-v2-guard true --governance-names true --production true --network polygon",
     "upgrade:polygon:unpause": "npx hardhat upgrade --unpause true --network polygon",
     "upgrade:polygon:unpause:production": "npx hardhat upgrade --unpause true --production true --network polygon",
     "check:polygon:ownership": "npx hardhat checkConfig --ownership true --network polygon",
@@ -66,7 +67,7 @@
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/commit-analyzer": "^8.0.1",
     "@semantic-release/github": "^7.2.3",
-    "@semantic-release/release-notes-generator": "^9.0.2",
+    "@semantic-release/release-notes-generator": "^9.0.3",
     "chai": "^4.3.4",
     "chai-almost": "^1.0.1",
     "cross-env": "^7.0.3",
@@ -92,6 +93,7 @@
     "@openzeppelin/contracts-upgradeable": "3.4.1-solc-0.7-2",
     "csv-stringify": "^5.6.2",
     "csvtojson": "^2.0.10",
+    "decimal.js": "^10.3.1",
     "dotenv": "^8.2.0",
     "solidity-docgen": "^0.5.13"
   }
