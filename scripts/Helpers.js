@@ -138,6 +138,32 @@ const proposeTx = async (to, data, message, execute = false) => {
   console.log("ProposeTx: ", proposeTx);
 };
 
+const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) => {
+  for (const asset of contracts.Assets) {
+    if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
+    if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
+    if (csvAsset["Asset Name"] === asset.name) {
+      // console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
+      const assetType = parseInt(await poolFactory.getAssetType(csvAsset.Address));
+
+      if (assetType !== parseInt(csvAsset.AssetType)) {
+        console.log(`${csvAsset["Asset Name"]} asset type update from ${assetType} to ${csvAsset.AssetType}`);
+        assetHandlerAssets.push({
+          name: csvAsset["Asset Name"],
+          asset: csvAsset.Address,
+          assetType: csvAsset.AssetType,
+          aggregator: csvAsset["Chainlink Price Feed"],
+        });
+      }
+
+      const foundInVersions = true;
+      return foundInVersions;
+    }
+  }
+  const foundInVersions = false;
+  return foundInVersions;
+};
+
 const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHandlerAssets) => {
   for (const asset of contracts.Assets) {
     if (balancerLp.name === asset.name) {
@@ -171,5 +197,6 @@ module.exports = {
   toBytes32,
   proposeTx,
   nonceLog,
+  checkAsset,
   checkBalancerLpAsset,
 };

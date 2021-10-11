@@ -1,6 +1,15 @@
 const fs = require("fs");
 const csv = require("csvtojson");
-const { writeCsv, getTag, hasDuplicates, tryVerify, proposeTx, nonceLog, checkBalancerLpAsset } = require("./Helpers");
+const {
+  writeCsv,
+  getTag,
+  hasDuplicates,
+  tryVerify,
+  proposeTx,
+  nonceLog,
+  checkAsset,
+  checkBalancerLpAsset,
+} = require("./Helpers");
 const Decimal = require("decimal.js");
 const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
@@ -60,7 +69,11 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
     info.pool,
     info.tokens,
     info.decimals,
-    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+    info.weights.map((w) =>
+      ethers.BigNumber.from(10)
+        .pow(10)
+        .mul(w * 100000000),
+    ),
     [
       "50000000000000000", // maxPriceDeviation: 0.05
       K,
@@ -92,8 +105,10 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("aaveIncentivesControllerGuard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
   .addOptionalParam("aaveLendingPoolGuard", "upgrade AaveLendingPoolGuard", false, types.boolean)
   .addOptionalParam("oneInchV3Guard", "upgrade oneInchV3Guard", false, types.boolean)
+  .addOptionalParam("governanceNames", "upgrade Governance contract address mapping", false, types.boolean)
   .addOptionalParam("pause", "pause contract", false, types.boolean)
   .addOptionalParam("unpause", "unpause contract", false, types.boolean)
+  .addOptionalParam("keepVersion", "keep the previous release published version. don't update it", false, types.boolean)
   .setAction(async (taskArgs) => {
     const network = await ethers.provider.getNetwork();
     console.log("network:", network);
@@ -102,8 +117,15 @@ task("upgrade", "Upgrade contracts")
     // Init tag
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versions = require(`../publish/${network.name}/${versionFile}.json`);
-    const newTag = await getTag();
+
     const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
+    let newTag;
+    if (taskArgs.keepVersion) {
+      newTag = oldTag;
+    } else {
+      // update to latest release version
+      newTag = await getTag();
+    }
     console.log(`oldTag: ${oldTag}`);
     console.log(`newTag: ${newTag}`);
     // Comment this out as assets is default to true and it's always comes with pause/unpause true
@@ -125,6 +147,7 @@ task("upgrade", "Upgrade contracts")
     // Governance
     const Governance = await hre.artifacts.readArtifact("Governance");
     const governanceABI = new ethers.utils.Interface(Governance.abi);
+    const governance = await ethers.getContractAt(governanceABI, contracts.Governance);
 
     // Asset Guard
     const assetGuardfileName = taskArgs.production ? prodAssetGuardFileName : stagingAssetGuardFileName;
@@ -167,16 +190,7 @@ task("upgrade", "Upgrade contracts")
 
       const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
       for (const csvAsset of csvAssets) {
-        let foundInVersions = false;
-        for (const asset of contracts.Assets) {
-          if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
-          if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
-          if (csvAsset["Asset Name"] === asset.name) {
-            // console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
-            foundInVersions = true;
-            break;
-          }
-        }
+        const foundInVersions = await checkAsset(csvAsset, contracts, poolFactory, assetHandlerAssets);
         if (!foundInVersions) {
           const assetType = csvAsset.AssetType;
           switch (assetType) {
@@ -204,15 +218,24 @@ task("upgrade", "Upgrade contracts")
                 break;
               }
 
-              // Deploy USDPriceAggregator
-              const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-              usdPriceAggregator = await USDPriceAggregator.deploy();
-              console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
+              let usdPriceAggregatorAddress;
+              if (!csvAsset["Chainlink Price Feed"]) {
+                // Deploy USDPriceAggregator
+                const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+                const usdPriceAggregator = await USDPriceAggregator.deploy();
+                await usdPriceAggregator.deployed();
+                usdPriceAggregatorAddress = usdPriceAggregator.address;
+              } else {
+                // Use configured USDPriceAggregator
+                usdPriceAggregatorAddress = csvAsset["Chainlink Price Feed"];
+              }
+
+              console.log("USDPriceAggregator deployed at ", usdPriceAggregatorAddress);
               assetHandlerAssets.push({
                 name: csvAsset["Asset Name"],
                 asset: csvAsset.Address,
                 assetType: assetType,
-                aggregator: usdPriceAggregator.address,
+                aggregator: usdPriceAggregatorAddress,
               });
               break;
             default:
@@ -255,7 +278,7 @@ task("upgrade", "Upgrade contracts")
       const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
       const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
       const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
-
+      console.log("assetHandlerAssets:", assetHandlerAssets);
       if (assetHandlerAssets.length > 0) {
         await proposeTx(contracts.AssetHandlerProxy, addAssetsABI, "Update assets in Asset Handler", taskArgs.execute);
         versions[newTag].contracts.Assets = [...versions[newTag].contracts.Assets, ...assetHandlerAssets];
@@ -795,6 +818,26 @@ task("upgrade", "Upgrade contracts")
         });
       }
     }
+
+    if (taskArgs.governanceNames) {
+      for (const csvGovernanceName of csvGovernanceNames) {
+        const name = csvGovernanceName.Name;
+        const destination = csvGovernanceName.Destination;
+        const nameBytes = ethers.utils.formatBytes32String(name);
+        const configuredDestination = await governance.nameToDestination(nameBytes);
+
+        if (configuredDestination === "0x0000000000000000000000000000000000000000") {
+          const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [[[nameBytes, destination]]]);
+          await proposeTx(
+            contracts.Governance,
+            setAddressesABI,
+            `setAddresses for ${name} to ${destination}`,
+            taskArgs.execute,
+          );
+        }
+      }
+    }
+
     if (taskArgs.unpause) {
       if (!taskArgs.execute) {
         console.log("Will unpause");
