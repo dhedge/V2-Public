@@ -909,7 +909,7 @@
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
       "ERC20Guard": "0x24f6BE264E30c6eddafd4E3e45c8770423a8208f",
-      "UniswapV2RouterGuard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB",
+      "UniswapV2RouterGuard": "0x92F1458714B8a705b79DCa54B69A9c13Da90fB46",
       "SushiMiniChefV2Guard": "0x58F4B1E5194f92C3818EDD7bB27b078BebdD0f27",
       "SushiLPAssetGuard": "0x2F16bb563d31ebC61Ad6aC9Fb3edD6eAF89132d9",
       "AaveLendingPoolAssetGuard": "0x04354481A56Eb72484ff23D538a0DF21D16cE644",
