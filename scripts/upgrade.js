@@ -274,7 +274,7 @@ task("upgrade", "Upgrade contracts")
       const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
       const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
       const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
-      console.log("assetHandlerAssets:", assetHandlerAssets);
+
       if (assetHandlerAssets.length > 0) {
         await proposeTx(contracts.AssetHandlerProxy, addAssetsABI, "Update assets in Asset Handler", taskArgs.execute);
         versions[newTag].contracts.Assets = [...versions[newTag].contracts.Assets, ...assetHandlerAssets];
