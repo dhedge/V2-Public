@@ -532,19 +532,19 @@
         {
           "name": "USD Coin",
           "asset": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-          "assetType": "0",
+          "assetType": "4",
           "aggregator": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
         },
         {
           "name": "Tether USD",
           "asset": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
-          "assetType": "0",
+          "assetType": "4",
           "aggregator": "0x0A6513e40db6EB1b165753AD52E80663aeA50545"
         },
         {
           "name": "Dai USD",
           "asset": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
-          "assetType": "0",
+          "assetType": "4",
           "aggregator": "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D"
         },
         {
@@ -556,13 +556,13 @@
         {
           "name": "Wrapped Ether",
           "asset": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
-          "assetType": "0",
+          "assetType": "4",
           "aggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945"
         },
         {
           "name": "Wrapped Bitcoin",
           "asset": "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
-          "assetType": "0",
+          "assetType": "4",
           "aggregator": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
         },
         {
@@ -580,7 +580,7 @@
         {
           "name": "Aave",
           "asset": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
-          "assetType": "0",
+          "assetType": "4",
           "aggregator": "0x72484B12719E23115761D5DA1646945632979bB6"
         },
         {
@@ -684,6 +684,12 @@
           "asset": "0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0",
           "assetType": "2",
           "aggregator": "0xC3e468ebE1a19E36A6D22aBfa290b5BaeC61aCE5"
+        },
+        {
+          "name": "Aave Lending Pool",
+          "asset": "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
+          "assetType": "3",
+          "aggregator": "0x7A6B761836012842d304C7e4d836F226e2b52eA9"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
@@ -712,6 +718,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Wed, 15 Sep 2021 05:47:55 GMT"
+    "date": "Fri, 08 Oct 2021 01:36:06 GMT"
   }
 }
