@@ -9,6 +9,7 @@ const {
   nonceLog,
   checkAsset,
   checkBalancerLpAsset,
+  getAggregator,
 } = require("./Helpers");
 const Decimal = require("decimal.js");
 const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
@@ -192,7 +193,7 @@ task("upgrade", "Upgrade contracts")
           switch (assetType) {
             case "2":
               if (!taskArgs.execute) {
-                console.log("Will deploy asset ", csvAsset["Asset Name"]);
+                console.log("Will deploy asset", csvAsset["Asset Name"]);
                 break;
               }
 
@@ -210,7 +211,7 @@ task("upgrade", "Upgrade contracts")
               break;
             case "3":
               if (!taskArgs.execute) {
-                console.log("Will deploy asset ", csvAsset["Asset Name"]);
+                console.log("Will deploy asset", csvAsset["Asset Name"]);
                 break;
               }
 
@@ -235,12 +236,17 @@ task("upgrade", "Upgrade contracts")
               });
               break;
             default:
+              if (!taskArgs.execute) {
+                console.log("Will deploy asset", csvAsset["Asset Name"]);
+                break;
+              }
               console.log(`Adding new asset to AssetHandler: ${csvAsset["Asset Name"]}`);
+              const aggregator = await getAggregator(csvAsset);
               assetHandlerAssets.push({
                 name: csvAsset["Asset Name"],
                 asset: csvAsset.Address,
                 assetType: assetType,
-                aggregator: csvAsset["Chainlink Price Feed"],
+                aggregator: aggregator,
               });
           }
         }
