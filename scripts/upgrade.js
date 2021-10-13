@@ -380,7 +380,7 @@ task("upgrade", "Upgrade contracts")
         } else {
           // Deploy PoolPerformance (is not yet deployed)
           const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-          const poolPerformanceProxy = await upgrades.deployProxy(PoolPerformance, [aaveProtocolDataProvider]);
+          const poolPerformanceProxy = await upgrades.deployProxy(PoolPerformance, []);
           await poolPerformanceProxy.deployed();
           console.log("poolPerformanceProxy deployed to:", poolPerformanceProxy.address);
           const poolPerformanceAddress = await proxyAdmin.getProxyImplementation(poolPerformanceProxy.address);
