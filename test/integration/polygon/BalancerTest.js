@@ -60,7 +60,7 @@ describe("Balancer V2 Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");

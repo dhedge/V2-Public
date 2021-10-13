@@ -25,7 +25,7 @@ describe("PoolPerformance", function () {
     governance = await Governance.deploy();
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
+    poolPerformance = await upgrades.deployProxy(PoolPerformance);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
