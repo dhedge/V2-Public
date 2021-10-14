@@ -543,7 +543,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     if (lastFeeMintTime != 0) {
       uint256 timeChange = block.timestamp.sub(lastFeeMintTime);
       uint256 streamingFee = _tokenSupply.mul(timeChange).mul(_streamingFeeNumerator).div(_feeDenominator).div(
-        86400 * 365
+        365 days
       );
       available = available.add(streamingFee);
     }
