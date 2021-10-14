@@ -76,6 +76,8 @@ contract PoolManagerLogicV24 is Initializable, IPoolManagerLogicV24, IHasSupport
   uint256 public announcedFeeIncreaseNumerator;
   uint256 public announcedFeeIncreaseTimestamp;
   uint256 public managerFeeNumerator;
+  uint256 public announcedStreamingFeeNumerator;
+  uint256 public streamingFeeNumerator;
 
   function initialize(
     address _factory,
@@ -349,5 +351,5 @@ contract PoolManagerLogicV24 is Initializable, IPoolManagerLogicV24, IHasSupport
     return true;
   }
 
-  uint256[51] private __gap;
+  uint256[49] private __gap;
 }

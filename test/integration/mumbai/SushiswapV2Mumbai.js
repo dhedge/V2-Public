@@ -142,6 +142,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
         "Test Fund",
         "DHTF",
         new ethers.BigNumber.from("6000"),
+        new ethers.BigNumber.from("0"), // 0% streaming fee
         [
           [usdc, true],
           [weth, true],
@@ -156,6 +157,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
       "Test Fund",
       "DHTF",
       new ethers.BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0% streaming fee
       [
         [usdc, true],
         [weth, true],

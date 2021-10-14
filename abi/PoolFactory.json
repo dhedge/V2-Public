@@ -111,6 +111,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "streamingFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "managerFeeDenominator",
         "type": "uint256"
       }
@@ -253,7 +259,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "streamingFeeNumerator",
         "type": "uint256"
       },
       {
@@ -354,6 +366,11 @@
       {
         "internalType": "uint256",
         "name": "_managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_streamingFeeNumerator",
         "type": "uint256"
       },
       {
@@ -672,6 +689,11 @@
     "inputs": [],
     "name": "getMaximumManagerFee",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "",
@@ -1030,7 +1052,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "streamingFeeNumerator",
         "type": "uint256"
       }
     ],

@@ -161,6 +161,7 @@ describe("OneInch V3 Test", function () {
         "Test Fund",
         "DHTF",
         new ethers.BigNumber.from("6000"),
+        new ethers.BigNumber.from("0"), // 0% streaming fee
         [
           [assets.usdc, true],
           [assets.weth, true],
@@ -175,6 +176,7 @@ describe("OneInch V3 Test", function () {
       "Test Fund",
       "DHTF",
       new ethers.BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0% streaming fee
       [
         [assets.usdc, true],
         [assets.weth, true],

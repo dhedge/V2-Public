@@ -165,6 +165,7 @@ describe("Synthetix Test", function () {
         "Test Fund",
         "DHTF",
         new ethers.BigNumber.from("6000"),
+        new ethers.BigNumber.from("0"), // 0% streaming fee
         [
           [assets.susd, true],
           [assets.seth, true],
@@ -179,6 +180,7 @@ describe("Synthetix Test", function () {
       "Test Fund",
       "DHTF",
       new ethers.BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0% streaming fee
       [
         [assets.susd, true],
         [assets.seth, true],

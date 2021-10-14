@@ -141,6 +141,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   address public poolManagerLogic;
 
+  uint256 public lastFeeMintTime;
+
   modifier onlyPrivate() {
     require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
     _;
@@ -175,6 +177,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     _setPoolPrivacy(_privatePool);
     creator = msg.sender;
     creationTime = block.timestamp;
+    lastFeeMintTime = block.timestamp;
 
     tokenPriceAtLastFeeMint = 10**18;
   }
@@ -452,7 +455,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       uint256
     )
   {
-    (uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 managerFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic)
+      .getManagerFee();
     (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
     return (
@@ -495,15 +499,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
-    uint256 managerFeeNumerator;
-    uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 managerFeeNumerator, uint256 streamingFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
+      poolManagerLogic
+    ).getManagerFee();
 
     fee = _availableManagerFee(
       fundValue,
       tokenSupply,
-      tokenPriceAtLastFeeMint,
       managerFeeNumerator,
+      streamingFeeNumerator,
       managerFeeDenominator
     );
   }
@@ -511,26 +515,38 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @notice Get available manager fee of the pool internal call
   /// @param _fundValue The total fund value of the pool
   /// @param _tokenSupply The total token supply of the pool
-  /// @param _lastFeeMintPrice The price of the last fee mint
-  /// @param _feeNumerator The fee numerator
+  /// @param _managerFeeNumerator The manager fee numerator
+  /// @param _streamingFeeNumerator The streaming fee numerator
   /// @param _feeDenominator The fee denominator
   /// @return available manager fee of the pool
   function _availableManagerFee(
     uint256 _fundValue,
     uint256 _tokenSupply,
-    uint256 _lastFeeMintPrice,
-    uint256 _feeNumerator,
+    uint256 _managerFeeNumerator,
+    uint256 _streamingFeeNumerator,
     uint256 _feeDenominator
-  ) internal pure returns (uint256 available) {
+  ) internal view returns (uint256 available) {
     if (_tokenSupply == 0 || _fundValue == 0) return 0;
 
     uint256 currentTokenPrice = _fundValue.mul(10**18).div(_tokenSupply);
 
-    if (currentTokenPrice <= _lastFeeMintPrice) return 0;
+    if (currentTokenPrice > tokenPriceAtLastFeeMint) {
+      available = currentTokenPrice
+        .sub(tokenPriceAtLastFeeMint)
+        .mul(_tokenSupply)
+        .mul(_managerFeeNumerator)
+        .div(_feeDenominator)
+        .div(currentTokenPrice);
+    }
 
-    available = currentTokenPrice.sub(_lastFeeMintPrice).mul(_tokenSupply).mul(_feeNumerator).div(_feeDenominator).div(
-      currentTokenPrice
-    );
+    // this timestamp for old pools would be zero at the first time
+    if (lastFeeMintTime != 0) {
+      uint256 timeChange = block.timestamp.sub(lastFeeMintTime);
+      uint256 streamingFee = _tokenSupply.mul(timeChange).mul(_streamingFeeNumerator).div(_feeDenominator).div(
+        86400 * 365
+      );
+      available = available.add(streamingFee);
+    }
   }
 
   /// @notice Mint the manager fee of the pool
@@ -547,15 +563,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
-    uint256 managerFeeNumerator;
-    uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 managerFeeNumerator, uint256 streamingFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
+      poolManagerLogic
+    ).getManagerFee();
 
     uint256 available = _availableManagerFee(
       fundValue,
       tokenSupply,
-      tokenPriceAtLastFeeMint,
       managerFeeNumerator,
+      streamingFeeNumerator,
       managerFeeDenominator
     );
 
@@ -576,6 +592,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     if (managerFee > 0) _mint(manager(), managerFee);
 
     tokenPriceAtLastFeeMint = _tokenPrice(fundValue, tokenSupply);
+    lastFeeMintTime = block.timestamp;
 
     emit ManagerFeeMinted(address(this), manager(), available, daoFee, managerFee, tokenPriceAtLastFeeMint);
   }
@@ -675,5 +692,5 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     );
   }
 
-  uint256[50] private __gap;
+  uint256[49] private __gap;
 }

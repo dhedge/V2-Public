@@ -107,6 +107,7 @@ describe("PoolFactory", function () {
       "Test Fund",
       "DHTF",
       new ethers.BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0% streaming fee
       [
         [ProxysETH, true],
         [ProxysLINK, true],

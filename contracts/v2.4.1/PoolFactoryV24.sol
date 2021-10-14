@@ -586,5 +586,7 @@ contract PoolFactoryV24 is
   uint256 private _exitFeeNumerator;
   uint256 private _exitFeeDenominator;
 
-  uint256[47] private __gap;
+  uint256 private _MAXIMUM_STREAMING_FEE_NUMERATOR;
+
+  uint256[46] private __gap;
 }

@@ -61,7 +61,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newNumerator",
+        "name": "managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "streamingFeeNumerator",
         "type": "uint256"
       },
       {
@@ -98,7 +104,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "streamingFeeNumerator",
         "type": "uint256"
       },
       {
@@ -179,7 +191,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "_managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_streamingFeeNumerator",
         "type": "uint256"
       }
     ],
@@ -204,6 +221,19 @@
   {
     "inputs": [],
     "name": "announcedFeeIncreaseTimestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "announcedStreamingFeeNumerator",
     "outputs": [
       {
         "internalType": "uint256",
@@ -443,6 +473,11 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -472,12 +507,17 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "denominator",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
         "type": "uint256"
       }
     ],
@@ -560,6 +600,11 @@
       {
         "internalType": "uint256",
         "name": "_managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_streamingFeeNumerator",
         "type": "uint256"
       },
       {
@@ -751,7 +796,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "_managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_streamingFeeNumerator",
         "type": "uint256"
       }
     ],
@@ -790,6 +840,19 @@
     "name": "setTrader",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "streamingFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

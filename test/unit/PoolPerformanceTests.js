@@ -21,7 +21,7 @@ const _SYNTHETIX_KEY = "0x53796e746865746978000000000000000000000000000000000000
 const susdKey = "0x7355534400000000000000000000000000000000000000000000000000000000";
 const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000000";
 
-describe("PoolFactory", function () {
+describe("PoolPerformance", function () {
   beforeEach(async function () {
     [logicOwner, manager, dao, investor, user1, user2, user3, user4] = await ethers.getSigners();
 
@@ -155,6 +155,7 @@ describe("PoolFactory", function () {
       "Test Fund",
       "DHTF",
       new BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0% streaming fee
       [
         [seth, false],
         [susd, true],
@@ -244,6 +245,7 @@ describe("PoolFactory", function () {
       "Test Fund",
       "DHTF",
       new BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0%
       [
         [seth, false],
         [susd, true],
@@ -344,6 +346,7 @@ describe("PoolFactory", function () {
       "Test Fund",
       "DHTF",
       new BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0%
       [
         [seth, false],
         [susd, true],
@@ -432,6 +435,7 @@ describe("PoolFactory", function () {
       "Test Fund",
       "DHTF",
       new BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0%
       [
         [seth, false],
         [susd, true],
@@ -490,6 +494,7 @@ describe("PoolFactory", function () {
       "Test Fund",
       "DHTF",
       new BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0%
       [
         [seth, false],
         [susd, true],

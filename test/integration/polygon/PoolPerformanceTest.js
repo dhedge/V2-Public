@@ -101,9 +101,16 @@ describe("PoolPerformance", function () {
     it("tokenPriceAdjustedForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
@@ -158,9 +165,16 @@ describe("PoolPerformance", function () {
     it("withdrawal + tokenPriceAdjustForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
@@ -199,9 +213,16 @@ describe("PoolPerformance", function () {
     it("early 10% withdrawal with 0.5% fee adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
@@ -255,9 +276,16 @@ describe("PoolPerformance", function () {
     it("early 50% withdrawal with 10% fee adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
@@ -311,9 +339,16 @@ describe("PoolPerformance", function () {
     it("early 100% withdrawal should skip adjustInternalValueFactor + tokenPriceAdjustForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [[assets.usdc, true]],
+      );
 
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
@@ -360,9 +395,16 @@ describe("PoolPerformance", function () {
     // In this test we test that the realtime fee + performance is calculated correctly
     it("tokenPriceAdjustedForPerformanceAndManagerFee", async () => {
       const managerFee = BigNumber.from("5000"); // 50%;
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       const fund = funds[0];
       poolLogicProxy = await PoolLogic.attach(fund);
@@ -431,9 +473,16 @@ describe("PoolPerformance", function () {
     it("tokenPriceAdjustedForPerformanceAndManagerFee with small manager fee, small deposit", async () => {
       const oneDollarTwentyCents = 12e17;
       const managerFee = BigNumber.from("1000"); // 10%;
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       const fund = funds[0];
       poolLogicProxy = await PoolLogic.attach(fund);
@@ -576,10 +625,19 @@ describe("PoolPerformance", function () {
       const usdcAmount = (100e6).toString();
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-        [aave.lendingPool, false],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [
+          [assets.usdc, true],
+          [aave.lendingPool, false],
+        ],
+      );
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
@@ -643,10 +701,19 @@ describe("PoolPerformance", function () {
       const usdcAmount = (100e6).toString();
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-        [aave.lendingPool, false],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [
+          [assets.usdc, true],
+          [aave.lendingPool, false],
+        ],
+      );
       const funds = await poolFactory.getDeployedFunds();
       poolLogicProxy = await PoolLogic.attach(funds[0]);
       // Deposit $1 conventional way
@@ -732,10 +799,19 @@ describe("PoolPerformance", function () {
 
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.weth, true],
-        [aave.lendingPool, false],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        new ethers.BigNumber.from("0"), // 0% streaming fee
+        [
+          [assets.weth, true],
+          [aave.lendingPool, false],
+        ],
+      );
 
       const balanceOfWeth = await WETH.balanceOf(logicOwner.address);
       const halfBalanceOfWeth = balanceOfWeth.div(2);
