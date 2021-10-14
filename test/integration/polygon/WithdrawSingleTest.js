@@ -298,7 +298,7 @@ describe("WithdrawSingle Test", function () {
     );
 
     const withdrawMaxAmount = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
-    checkAlmostSame(withdrawMaxAmount, units(250));
+    checkAlmostSame(withdrawMaxAmount, units(250).mul(101).div(100));
   });
 
   it("able to withdrawSingle 200 USDC (early withdraw)", async function () {

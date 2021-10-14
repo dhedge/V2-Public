@@ -348,10 +348,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
 
     // calculate the exit fee
-    uint256 exitFee;
+    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+    uint256 exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
     if (getExitRemainingCooldown(msg.sender) > 0) {
-      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+      exitFee = exitFee.mul(2);
     }
 
     uint256 fundValue = _mintManagerFee();
@@ -394,13 +394,25 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function getWithdrawSingleMax(address _asset) external view returns (uint256 fundTokenAmount) {
     uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset);
-    fundTokenAmount = assetValue.mul(totalSupply()).div(fundValue);
+    uint256 tokenSupply = totalSupply();
+    (uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+    uint256 availableFee = _availableManagerFee(
+      fundValue,
+      tokenSupply,
+      tokenPriceAtLastFeeMint,
+      managerFeeNumerator,
+      managerFeeDenominator
+    );
+
+    fundTokenAmount = assetValue.mul(tokenSupply.add(availableFee)).div(fundValue);
 
     // calculate exit fee
     if (getExitRemainingCooldown(msg.sender) > 0) {
-      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-      fundTokenAmount = fundTokenAmount.mul(exitFeeDenominator).div(exitFeeDenominator.sub(exitFeeNumerator));
+      exitFeeNumerator = exitFeeNumerator.mul(2);
     }
+
+    fundTokenAmount = fundTokenAmount.mul(exitFeeDenominator).div(exitFeeDenominator.sub(exitFeeNumerator));
   }
 
   /// @notice Perform any additional processing on withdrawal of asset
