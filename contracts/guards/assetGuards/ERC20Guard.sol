@@ -42,6 +42,7 @@ import "../../interfaces/guards/IAssetGuard.sol";
 import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IManaged.sol";
 

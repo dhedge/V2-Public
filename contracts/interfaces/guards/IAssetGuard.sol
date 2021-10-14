@@ -35,6 +35,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import "../IHasSupportedAsset.sol";
+
 interface IAssetGuard {
   struct MultiTransaction {
     address to;

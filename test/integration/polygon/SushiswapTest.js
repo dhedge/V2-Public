@@ -1,35 +1,13 @@
 const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
+const { checkAlmostSame, getAmountOut, units } = require("../../TestHelpers");
+const { sushi, aave, assets, price_feeds } = require("../polygon-data");
 
 use(chaiAlmost());
 
-const units = (value) => ethers.utils.parseUnits(value.toString());
-
-const sushiswapV2Factory = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
-const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
-const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
-
-// For mainnet
-const wmatic = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
-const weth = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
-const usdc = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-const usdt = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
-const sushiToken = "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a";
-const matic_price_feed = "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0";
-const eth_price_feed = "0xF9680D99D6C9589e2a93a78A04A279e509205945";
-const usdc_price_feed = "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7";
-const usdt_price_feed = "0x0A6513e40db6EB1b165753AD52E80663aeA50545";
-const sushi_price_feed = "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0";
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-const sushiLpUsdcWeth = "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27";
-const sushiLPUsdcWethPoolId = 1;
-
 describe("Sushiswap V2 Test", function () {
-  let WMatic, WETH, USDC, USDT, SushiLPUSDCWETH, SUSHI;
+  let WMatic, WETH, USDC, SushiLPUSDCWETH, SUSHI;
   let sushiLPAggregator, sushiMiniChefV2Guard;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic;
@@ -44,6 +22,10 @@ describe("Sushiswap V2 Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
+    await poolPerformance.deployed();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -51,11 +33,11 @@ describe("Sushiswap V2 Test", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
-    const assetWmatic = { asset: wmatic, assetType: 0, aggregator: matic_price_feed };
-    const assetWeth = { asset: weth, assetType: 0, aggregator: eth_price_feed };
-    const assetUsdt = { asset: usdt, assetType: 0, aggregator: usdt_price_feed };
-    const assetUsdc = { asset: usdc, assetType: 0, aggregator: usdc_price_feed };
-    const assetSushi = { asset: sushiToken, assetType: 0, aggregator: sushi_price_feed };
+    const assetWmatic = { asset: assets.wmatic, assetType: 0, aggregator: price_feeds.matic };
+    const assetWeth = { asset: assets.weth, assetType: 0, aggregator: price_feeds.eth };
+    const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
+    const assetUsdc = { asset: assets.usdc, assetType: 0, aggregator: price_feeds.usdc };
+    const assetSushi = { asset: assets.sushi, assetType: 0, aggregator: price_feeds.sushi };
     const assetHandlerInitAssets = [assetWmatic, assetWeth, assetUsdt, assetUsdc, assetSushi];
 
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
@@ -72,10 +54,16 @@ describe("Sushiswap V2 Test", function () {
     ]);
     await poolFactory.deployed();
 
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+
     // Deploy Sushi LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
-    sushiLPAggregator = await UniV2LPAggregator.deploy(sushiLpUsdcWeth, poolFactory.address);
-    const assetSushiLPWethUsdc = { asset: sushiLpUsdcWeth, assetType: 2, aggregator: sushiLPAggregator.address };
+    sushiLPAggregator = await UniV2LPAggregator.deploy(sushi.pools.usdc_weth.address, poolFactory.address);
+    const assetSushiLPWethUsdc = {
+      asset: sushi.pools.usdc_weth.address,
+      assetType: 2,
+      aggregator: sushiLPAggregator.address,
+    };
     await assetHandler.addAssets([assetSushiLPWethUsdc]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
@@ -87,45 +75,47 @@ describe("Sushiswap V2 Test", function () {
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(assets.sushi, assets.wmatic);
     sushiMiniChefV2Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushi.minichef); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
-    await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(sushiMiniChefV2, sushiMiniChefV2Guard.address);
+    await governance.setContractGuard(sushi.router, uniswapV2RouterGuard.address);
+    await governance.setContractGuard(sushi.minichef, sushiMiniChefV2Guard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {
     const IWETH = await hre.artifacts.readArtifact("IWETH");
-    WMatic = await ethers.getContractAt(IWETH.abi, wmatic);
+    WMatic = await ethers.getContractAt(IWETH.abi, assets.wmatic);
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
-    USDT = await ethers.getContractAt(IERC20.abi, usdt);
-    USDC = await ethers.getContractAt(IERC20.abi, usdc);
-    WETH = await ethers.getContractAt(IERC20.abi, weth);
-    WMATIC = await ethers.getContractAt(IERC20.abi, wmatic);
-    SUSHI = await ethers.getContractAt(IERC20.abi, sushiToken);
-    SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushiLpUsdcWeth);
+    USDT = await ethers.getContractAt(IERC20.abi, assets.usdt);
+    USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
+    WETH = await ethers.getContractAt(IERC20.abi, assets.weth);
+    WMATIC = await ethers.getContractAt(IERC20.abi, assets.wmatic);
+    SUSHI = await ethers.getContractAt(IERC20.abi, assets.sushi);
+    SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushi.pools.usdc_weth.address);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
     balance = await WMATIC.balanceOf(logicOwner.address);
     console.log("WMatic balance: ", balance.toString());
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushiswapV2Router);
+    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
     // deposit Matic -> WMatic
     await WMatic.deposit({ value: units(500) });
     balance = await WMATIC.balanceOf(logicOwner.address);
     console.log("WMatic balance: ", balance.toString());
     // WMatic -> USDC
-    await WMatic.approve(sushiswapV2Router, units(500));
+    await WMatic.approve(sushi.router, units(500));
     await sushiswapRouter.swapExactTokensForTokens(
       units(500),
       0,
-      [wmatic, usdc],
+      [assets.wmatic, assets.usdc],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -145,8 +135,8 @@ describe("Sushiswap V2 Test", function () {
       poolLogic.address,
       "1000",
       [
-        [usdc, true],
-        [weth, true],
+        [assets.usdc, true],
+        [assets.weth, true],
       ],
     );
 
@@ -196,8 +186,8 @@ describe("Sushiswap V2 Test", function () {
         "DHTF",
         new ethers.BigNumber.from("6000"),
         [
-          [usdc, true],
-          [weth, true],
+          [assets.usdc, true],
+          [assets.weth, true],
         ],
       ),
     ).to.be.revertedWith("invalid manager fee");
@@ -210,8 +200,8 @@ describe("Sushiswap V2 Test", function () {
       "DHTF",
       new ethers.BigNumber.from("5000"),
       [
-        [usdc, true],
-        [weth, true],
+        [assets.usdc, true],
+        [assets.weth, true],
       ],
     );
 
@@ -247,11 +237,11 @@ describe("Sushiswap V2 Test", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdc)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(weth)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdc)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.weth)).to.be.true;
 
     //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(usdt)).to.be.false;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdt)).to.be.false;
   });
 
   it("should be able to deposit", async function () {
@@ -296,32 +286,32 @@ describe("Sushiswap V2 Test", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     console.log("supportedAsset: ", supportedAssets);
 
-    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", eth_price_feed);
+    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", price_feeds.eth);
     let ethPrice = await chainlinkEth.latestRoundData();
     console.log("eth price: ", ethPrice[1].toString());
     console.log("updatedAt: ", ethPrice[3].toString());
 
-    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", usdc_price_feed);
+    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", price_feeds.usdc);
     let usdcPrice = await chainlinkUsdc.latestRoundData();
     console.log("usdc price: ", usdcPrice[1].toString());
     console.log("updatedAt: ", usdcPrice[3].toString());
 
     // Revert on second time
-    let assetBalance = await poolManagerLogicProxy.assetBalance(usdc);
+    let assetBalance = await poolManagerLogicProxy.assetBalance(assets.usdc);
     console.log("assetBalance: ", assetBalance.toString());
 
     // Revert on second time
-    let assetValue = await poolManagerLogicProxy["assetValue(address)"](usdc);
+    let assetValue = await poolManagerLogicProxy["assetValue(address)"](assets.usdc);
     console.log("assetValue: ", assetValue.toString());
 
     // Revert on second time
     totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
-    await expect(poolLogicProxy.deposit(usdt, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
+    await expect(poolLogicProxy.deposit(assets.usdt, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
 
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
-    await poolLogicProxy.deposit(usdc, (200e6).toString());
+    await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
     let event = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
@@ -332,21 +322,20 @@ describe("Sushiswap V2 Test", function () {
     checkAlmostSame(event.fundValue, units(200));
     checkAlmostSame(event.totalSupply, units(200));
   });
-
   it("Should be able to approve", async () => {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [usdc, (200e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(usdt, approveABI)).to.be.revertedWith(
+    let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdt, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(usdc, approveABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
       "unsupported spender approval",
     );
 
-    approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, (200e6).toString()]);
-    await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
+    approveABI = iERC20.encodeFunctionData("approve", [sushi.router, (200e6).toString()]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
   });
 
   it("should be able to swap tokens on sushiswap.", async () => {
@@ -377,7 +366,7 @@ describe("Sushiswap V2 Test", function () {
     let swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdc, weth],
+      [assets.usdc, assets.weth],
       poolManagerLogicProxy.address,
       0,
     ]);
@@ -389,62 +378,62 @@ describe("Sushiswap V2 Test", function () {
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdt, weth],
+      [assets.usdt, assets.weth],
       poolLogicProxy.address,
       0,
     ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(usdc, swapABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, swapABI)).to.be.revertedWith(
       "invalid transaction",
     );
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdc, weth, usdt],
+      [assets.usdc, assets.weth, assets.usdt],
       poolLogicProxy.address,
       0,
     ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushi.router, swapABI)).to.be.revertedWith(
       "unsupported destination asset",
     );
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
-      [usdc, weth],
+      [assets.usdc, assets.weth],
       user.address,
       0,
     ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushi.router, swapABI)).to.be.revertedWith(
       "recipient is not pool",
     );
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
-      [usdc, weth],
+      await getAmountOut(sushi.router, sourceAmount, [assets.usdc, assets.weth]),
+      [assets.usdc, assets.weth],
       poolLogicProxy.address,
       0,
     ]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(sushi.router, swapABI)).to.be.revertedWith(
       "UniswapV2Router: EXPIRED",
     );
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      await getAmountOut(sushiswapV2Router, sourceAmount, [usdc, weth]),
-      [usdc, weth],
+      await getAmountOut(sushi.router, sourceAmount, [assets.usdc, assets.weth]),
+      [assets.usdc, assets.weth],
       poolLogicProxy.address,
       Math.floor(Date.now() / 1000 + 100000000),
     ]);
-    await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, swapABI);
+    await poolLogicProxy.connect(manager).execTransaction(sushi.router, swapABI);
 
     expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal(100e6);
 
     let event = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(usdc);
+    expect(event.sourceAsset).to.equal(assets.usdc);
     expect(event.sourceAmount).to.equal((100e6).toString());
-    expect(event.destinationAsset).to.equal(weth);
+    expect(event.destinationAsset).to.equal(assets.weth);
   });
 
   it("should be able to withdraw", async function () {
@@ -487,8 +476,6 @@ describe("Sushiswap V2 Test", function () {
     // Withdraw 50%
     let withdrawAmount = units(100);
 
-    await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
-
     await poolFactory.setExitCooldown(0);
 
     await poolLogicProxy.withdraw(withdrawAmount);
@@ -512,23 +499,23 @@ describe("Sushiswap V2 Test", function () {
       const IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
       iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
       const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         poolLogicProxy.address,
       ]);
 
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
-      await poolLogicProxy.connect(manager).execTransaction(sushiLpUsdcWeth, approveABI);
-      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi);
+      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
     };
 
     it("manager can add liquidity", async () => {
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLpUsdcWeth, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[sushi.pools.usdc_weth.address, false]], []);
 
-      const tokenA = usdc;
-      const tokenB = weth;
+      const tokenA = assets.usdc;
+      const tokenB = assets.weth;
       const amountADesired = await USDC.balanceOf(poolLogicProxy.address);
       const amountBDesired = await WETH.balanceOf(poolLogicProxy.address);
       const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
@@ -546,10 +533,10 @@ describe("Sushiswap V2 Test", function () {
 
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, amountADesired]);
-      await poolLogicProxy.connect(manager).execTransaction(usdc, approveABI);
-      approveABI = iERC20.encodeFunctionData("approve", [sushiswapV2Router, amountBDesired]);
-      await poolLogicProxy.connect(manager).execTransaction(weth, approveABI);
+      let approveABI = iERC20.encodeFunctionData("approve", [sushi.router, amountADesired]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
+      approveABI = iERC20.encodeFunctionData("approve", [sushi.router, amountBDesired]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
       const lpBalanceBefore = await SushiLPUSDCWETH.balanceOf(poolLogicProxy.address);
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -558,7 +545,7 @@ describe("Sushiswap V2 Test", function () {
 
       expect(lpBalanceBefore).to.be.equal(0);
 
-      await poolLogicProxy.connect(manager).execTransaction(sushiswapV2Router, addLiquidityAbi);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.router, addLiquidityAbi);
 
       expect(await SushiLPUSDCWETH.balanceOf(poolLogicProxy.address)).to.be.gt(lpBalanceBefore);
       expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.lt(usdcBalanceBefore);
@@ -590,57 +577,57 @@ describe("Sushiswap V2 Test", function () {
       const IMiniChefV2 = await hre.artifacts.readArtifact("IMiniChefV2");
       iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
       const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         poolLogicProxy.address,
       ]);
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
-      const sushiLPPrice = await assetHandler.getUSDPrice(sushiLpUsdcWeth);
+      const sushiLPPrice = await assetHandler.getUSDPrice(sushi.pools.usdc_weth.address);
       expect(totalFundValueBefore).to.gte(
         sushiLPPrice.mul(availableLpToken).div(ethers.BigNumber.from((1e18).toString())),
       ); // should at least account for the staked tokens
 
       // attempt to deposit with manager as recipient
       const badDepositAbi = iMiniChefV2.encodeFunctionData("deposit", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         manager.address,
       ]);
 
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, badDepositAbi)).to.be.revertedWith(
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushi.minichef, badDepositAbi)).to.be.revertedWith(
         "recipient is not pool",
       );
 
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi)).to.be.revertedWith(
         "enable rewardA token",
       );
 
       // enable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[assets.sushi, false]], []);
 
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi)).to.be.revertedWith(
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi)).to.be.revertedWith(
         "enable rewardB token",
       );
 
       // enable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmatic, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets([[assets.wmatic, false]], []);
 
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushiMiniChefV2, availableLpToken]);
-      await poolLogicProxy.connect(manager).execTransaction(sushiLpUsdcWeth, approveABI);
+      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
 
-      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, depositAbi);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
 
-      expect(await poolManagerLogicProxy.assetBalance(sushiLpUsdcWeth)).to.be.equal(availableLpToken);
+      expect(await poolManagerLogicProxy.assetBalance(sushi.pools.usdc_weth.address)).to.be.equal(availableLpToken);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
       const event = await stakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
-      expect(event.asset).to.equal(sushiLpUsdcWeth);
-      expect(event.stakingContract).to.equal(sushiMiniChefV2);
+      expect(event.asset).to.equal(sushi.pools.usdc_weth.address);
+      expect(event.stakingContract).to.equal(sushi.minichef);
       expect(event.amount).to.equal(availableLpToken);
     });
 
@@ -665,17 +652,17 @@ describe("Sushiswap V2 Test", function () {
 
       // attempt to withdraw with manager as recipient
       const badWithdrawAbi = iMiniChefV2.encodeFunctionData("withdraw", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         manager.address,
       ]);
 
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, badWithdrawAbi)).to.be.revertedWith(
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushi.minichef, badWithdrawAbi)).to.be.revertedWith(
         "recipient is not pool",
       );
 
       const withdrawAbi = iMiniChefV2.encodeFunctionData("withdraw", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         poolLogicProxy.address,
       ]);
@@ -683,16 +670,16 @@ describe("Sushiswap V2 Test", function () {
       const wmaticBalanceBefore = await WMATIC.balanceOf(poolLogicProxy.address);
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
-      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, withdrawAbi);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, withdrawAbi);
 
-      expect(await poolManagerLogicProxy.assetBalance(sushiLpUsdcWeth)).to.be.equal(availableLpToken);
+      expect(await poolManagerLogicProxy.assetBalance(sushi.pools.usdc_weth.address)).to.be.equal(availableLpToken);
       expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
       const event = await unstakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
-      expect(event.asset).to.equal(sushiLpUsdcWeth);
-      expect(event.stakingContract).to.equal(sushiMiniChefV2);
+      expect(event.asset).to.equal(sushi.pools.usdc_weth.address);
+      expect(event.stakingContract).to.equal(sushi.minichef);
       expect(event.amount).to.equal(availableLpToken);
     });
 
@@ -713,26 +700,29 @@ describe("Sushiswap V2 Test", function () {
         }, 60000);
       });
 
-      const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [sushiLPUsdcWethPoolId, poolLogicProxy.address]);
+      const harvestAbi = iMiniChefV2.encodeFunctionData("harvest", [
+        sushi.pools.usdc_weth.poolId,
+        poolLogicProxy.address,
+      ]);
 
       // attempt to harvest with manager as recipient
       const badHarvestAbi = iMiniChefV2.encodeFunctionData("withdraw", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         manager.address,
       ]);
 
-      await expect(poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, badHarvestAbi)).to.be.revertedWith(
+      await expect(poolLogicProxy.connect(manager).execTransaction(sushi.minichef, badHarvestAbi)).to.be.revertedWith(
         "recipient is not pool",
       );
 
       expect(await SUSHI.balanceOf(poolLogicProxy.address)).to.be.equal(0);
 
-      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, harvestAbi);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, harvestAbi);
 
       const event = await claimEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
-      expect(event.stakingContract).to.equal(sushiMiniChefV2);
+      expect(event.stakingContract).to.equal(sushi.minichef);
 
       expect(await SUSHI.balanceOf(poolLogicProxy.address)).to.be.gt(0);
     });
@@ -776,13 +766,13 @@ describe("Sushiswap V2 Test", function () {
 
       // manager attempts to withdraw to themselves
       let badWithdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         manager.address,
       ]);
 
       await expect(
-        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, badWithdrawAndHarvestAbi),
+        poolLogicProxy.connect(manager).execTransaction(sushi.minichef, badWithdrawAndHarvestAbi),
       ).to.be.revertedWith("recipient is not pool");
 
       // manager attempts to withdraw unknown LP token
@@ -793,11 +783,11 @@ describe("Sushiswap V2 Test", function () {
       ]);
 
       await expect(
-        poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, badWithdrawAndHarvestAbi),
+        poolLogicProxy.connect(manager).execTransaction(sushi.minichef, badWithdrawAndHarvestAbi),
       ).to.be.revertedWith("unsupported lp asset");
 
       const withdrawAndHarvestAbi = iMiniChefV2.encodeFunctionData("withdrawAndHarvest", [
-        sushiLPUsdcWethPoolId,
+        sushi.pools.usdc_weth.poolId,
         availableLpToken,
         poolLogicProxy.address,
       ]);
@@ -807,7 +797,7 @@ describe("Sushiswap V2 Test", function () {
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
       await ethers.provider.send("evm_increaseTime", [3600 * 24]);
-      await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2, withdrawAndHarvestAbi);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, withdrawAndHarvestAbi);
 
       expect(await SUSHI.balanceOf(poolLogicProxy.address)).to.be.gt(sushiBalanceBefore);
       expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
@@ -815,13 +805,13 @@ describe("Sushiswap V2 Test", function () {
 
       const eventUnstake = await unstakeEvent;
       expect(eventUnstake.fundAddress).to.equal(poolLogicProxy.address);
-      expect(eventUnstake.asset).to.equal(sushiLpUsdcWeth);
-      expect(eventUnstake.stakingContract).to.equal(sushiMiniChefV2);
+      expect(eventUnstake.asset).to.equal(sushi.pools.usdc_weth.address);
+      expect(eventUnstake.stakingContract).to.equal(sushi.minichef);
       expect(eventUnstake.amount).to.equal(availableLpToken);
 
       const eventClaim = await claimEvent;
       expect(eventClaim.fundAddress).to.equal(poolLogicProxy.address);
-      expect(eventClaim.stakingContract).to.equal(sushiMiniChefV2);
+      expect(eventClaim.stakingContract).to.equal(sushi.minichef);
     });
 
     it("investor can Withdraw staked Sushi LP token", async function () {
@@ -871,9 +861,9 @@ describe("Sushiswap V2 Test", function () {
       const totalFundValue = await poolManagerLogicProxy.totalFundValue();
       const usdcBalance = await USDC.balanceOf(poolLogicProxy.address);
       const wethBalance = await WETH.balanceOf(poolLogicProxy.address);
-      const usdcPrice = await assetHandler.getUSDPrice(usdc);
-      const wethPrice = await assetHandler.getUSDPrice(weth);
-      const sushiLPPrice = await assetHandler.getUSDPrice(sushiLpUsdcWeth);
+      const usdcPrice = await assetHandler.getUSDPrice(assets.usdc);
+      const wethPrice = await assetHandler.getUSDPrice(assets.weth);
+      const sushiLPPrice = await assetHandler.getUSDPrice(sushi.pools.usdc_weth.address);
       const expectedFundValue = usdcBalance
         .mul(usdcPrice)
         .div(ethers.BigNumber.from("1000000"))

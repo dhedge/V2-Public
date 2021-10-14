@@ -32,6 +32,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 
@@ -46,6 +47,10 @@ import "../interfaces/balancer/IBalancerV2Vault.sol";
 contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
   using SignedSafeMathUpgradeable for int256;
 
+  event JoinPool(address fundAddress, bytes32 poolId, address[] assets, uint256[] maxAmountsIn, uint256 time);
+
+  event ExitPool(address fundAddress, bytes32 poolId, address[] assets, uint256[] minAmountsOut, uint256 time);
+
   constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
     SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
   {}
@@ -58,7 +63,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address, // to
+    address to,
     bytes calldata data
   )
     external
@@ -74,39 +79,42 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
     bytes4 method = getMethod(data);
 
     if (method == IBalancerV2Vault.swap.selector) {
-      uint256 swapkind = uint256(getArrayIndex(data, 0, 0));
-      if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_IN)) {
-        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 1));
-        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 2));
-        address fromAddress = convert32toAddress(getInput(data, 1));
-        address toAddress = convert32toAddress(getInput(data, 3));
-        uint256 srcAmount = uint256(getArrayIndex(data, 0, 3));
-        uint256 amountOutMin = uint256(getInput(data, 5));
+      (
+        IBalancerV2Vault.SingleSwap memory singleSwap,
+        IBalancerV2Vault.FundManagement memory funds,
+        uint256 limit,
+
+      ) = abi.decode(getParams(data), (IBalancerV2Vault.SingleSwap, IBalancerV2Vault.FundManagement, uint256, uint256));
+      if (singleSwap.kind == IBalancerV2Vault.SwapKind.GIVEN_IN) {
+        address srcAsset = singleSwap.assetIn;
+        address dstAsset = singleSwap.assetOut;
+        address fromAddress = funds.sender;
+        address toAddress = funds.recipient;
+        uint256 srcAmount = singleSwap.amount;
 
         require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
         require(poolManagerLogic.poolLogic() == fromAddress, "sender is not pool");
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
-        _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
+        _checkSlippageLimit(srcAsset, dstAsset, srcAmount, limit, address(poolManagerLogic));
 
         emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
         txType = 2; // 'Exchange' type
-      } else if (swapkind == uint256(IBalancerV2Vault.SwapKind.GIVEN_OUT)) {
-        address srcAsset = convert32toAddress(getArrayIndex(data, 0, 1));
-        address dstAsset = convert32toAddress(getArrayIndex(data, 0, 2));
-        address fromAddress = convert32toAddress(getInput(data, 1));
-        address toAddress = convert32toAddress(getInput(data, 3));
-        uint256 dstAmount = uint256(getArrayIndex(data, 0, 3));
-        uint256 amountInMax = uint256(getInput(data, 5));
+      } else if (singleSwap.kind == IBalancerV2Vault.SwapKind.GIVEN_OUT) {
+        address srcAsset = singleSwap.assetIn;
+        address dstAsset = singleSwap.assetOut;
+        address fromAddress = funds.sender;
+        address toAddress = funds.recipient;
+        uint256 dstAmount = singleSwap.amount;
 
         require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
         require(poolManagerLogic.poolLogic() == fromAddress, "sender is not pool");
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
-        _checkSlippageLimit(srcAsset, dstAsset, amountInMax, dstAmount, address(poolManagerLogic));
+        _checkSlippageLimit(srcAsset, dstAsset, limit, dstAmount, address(poolManagerLogic));
 
         emit ExchangeTo(poolManagerLogic.poolLogic(), srcAsset, dstAsset, uint256(dstAmount), block.timestamp);
 
@@ -151,6 +159,92 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
         txType = 2; // 'Exchange' type
       }
+    } else if (method == IBalancerV2Vault.joinPool.selector) {
+      (bytes32 poolId, address sender, address recipient, IBalancerV2Vault.JoinPoolRequest memory joinPoolRequest) = abi
+        .decode(getParams(data), (bytes32, address, address, IBalancerV2Vault.JoinPoolRequest));
+      address pool = IBalancerV2Vault(to).getPool(poolId);
+
+      IBalancerV2Vault.JoinKind kind = abi.decode(joinPoolRequest.userData, (IBalancerV2Vault.JoinKind));
+
+      if (kind == IBalancerV2Vault.JoinKind.INIT || kind == IBalancerV2Vault.JoinKind.ALL_TOKENS_IN_FOR_EXACT_BPT_OUT) {
+        uint256 assetLength = joinPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          if (joinPoolRequest.maxAmountsIn[i] > 0) {
+            require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[i]), "unsupported asset");
+          }
+        }
+      } else if (kind == IBalancerV2Vault.JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT) {
+        (, uint256[] memory amountsIn, ) = abi.decode(
+          joinPoolRequest.userData,
+          (IBalancerV2Vault.JoinKind, uint256[], uint256)
+        );
+        uint256 assetLength = joinPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          if (amountsIn[i] > 0) {
+            require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[i]), "unsupported asset");
+          }
+        }
+      } else if (kind == IBalancerV2Vault.JoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT) {
+        (, , uint256 tokenIndex) = abi.decode(joinPoolRequest.userData, (IBalancerV2Vault.JoinKind, uint256, uint256));
+        require(poolManagerLogicAssets.isSupportedAsset(joinPoolRequest.assets[tokenIndex]), "unsupported asset");
+      }
+
+      require(poolManagerLogicAssets.isSupportedAsset(pool), "unsupported lp asset");
+      require(poolManagerLogic.poolLogic() == sender, "sender is not pool");
+      require(poolManagerLogic.poolLogic() == recipient, "recipient is not pool");
+
+      emit JoinPool(
+        poolManagerLogic.poolLogic(),
+        poolId,
+        joinPoolRequest.assets,
+        joinPoolRequest.maxAmountsIn,
+        block.timestamp
+      );
+
+      txType = 16; // `Join Pool` type
+    } else if (method == IBalancerV2Vault.exitPool.selector) {
+      (bytes32 poolId, address sender, address recipient, IBalancerV2Vault.ExitPoolRequest memory exitPoolRequest) = abi
+        .decode(getParams(data), (bytes32, address, address, IBalancerV2Vault.ExitPoolRequest));
+      address pool = IBalancerV2Vault(to).getPool(poolId);
+
+      IBalancerV2Vault.ExitKind kind = abi.decode(exitPoolRequest.userData, (IBalancerV2Vault.ExitKind));
+
+      if (kind == IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT) {
+        (, , uint256 tokenIndex) = abi.decode(exitPoolRequest.userData, (IBalancerV2Vault.ExitKind, uint256, uint256));
+
+        require(poolManagerLogicAssets.isSupportedAsset(exitPoolRequest.assets[tokenIndex]), "unsupported asset");
+      } else if (kind == IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT) {
+        uint256 assetLength = exitPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          require(poolManagerLogicAssets.isSupportedAsset(exitPoolRequest.assets[i]), "unsupported asset");
+        }
+      } else if (kind == IBalancerV2Vault.ExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT) {
+        (, uint256[] memory amountsOut, ) = abi.decode(
+          exitPoolRequest.userData,
+          (IBalancerV2Vault.ExitKind, uint256[], uint256)
+        );
+
+        uint256 assetLength = exitPoolRequest.assets.length;
+        for (uint256 i = 0; i < assetLength; i++) {
+          if (amountsOut[i] > 0) {
+            require(poolManagerLogicAssets.isSupportedAsset(exitPoolRequest.assets[i]), "unsupported asset");
+          }
+        }
+      }
+
+      require(poolManagerLogicAssets.isSupportedAsset(pool), "unsupported lp asset");
+      require(poolManagerLogic.poolLogic() == sender, "sender is not pool");
+      require(poolManagerLogic.poolLogic() == recipient, "recipient is not pool");
+
+      emit ExitPool(
+        poolManagerLogic.poolLogic(),
+        poolId,
+        exitPoolRequest.assets,
+        exitPoolRequest.minAmountsOut,
+        block.timestamp
+      );
+
+      txType = 16; // `Exit Pool` type
     }
 
     return (txType, false);

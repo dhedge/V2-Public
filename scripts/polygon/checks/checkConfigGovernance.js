@@ -29,10 +29,15 @@ const main = async (initializeData) => {
           guardFound = true;
           const deployedGuard = contracts[name];
           const governanceAssetGuard = await governance.assetGuards(csvAssetGuard.AssetType);
+          const csvAssetGuardAddress = csvAssetGuard.GuardAddress;
 
           assert(
             deployedGuard == governanceAssetGuard,
             `Asset guard ${name} deployment doesn't match Governance setting. Governance contract: ${governanceAssetGuard}, Versions deployment: ${deployedGuard}, Asset Type should be ${csvAssetGuard.AssetType}`,
+          );
+          assert(
+            governanceAssetGuard == csvAssetGuardAddress,
+            `Asset guard ${name} deployment doesn't match Asset Guard CSV. Governance contract: ${governanceAssetGuard}, CSV Asset Guards: ${csvAssetGuardAddress}`,
           );
           console.log("Asset guard", name, "ok");
         }
@@ -47,10 +52,15 @@ const main = async (initializeData) => {
           guardFound = true;
           const deployedGuard = contracts[name];
           const governanceContractGuard = await governance.contractGuards(csvContractGuard.ContractAddress);
+          const csvContractGuardAddress = csvContractGuard.GuardAddress;
 
           assert(
             deployedGuard == governanceContractGuard,
             `Contract guard ${name} deployment doesn't match Governance setting. Governance contract: ${governanceContractGuard}, Versions deployment: ${deployedGuard}`,
+          );
+          assert(
+            governanceContractGuard == csvContractGuardAddress,
+            `Contract guard ${name} deployment doesn't match Contract Guard CSV. Governance contract: ${governanceContractGuard}, CSV Contract Guards: ${csvContractGuardAddress}`,
           );
           console.log("Contract guard", name, "ok");
         }

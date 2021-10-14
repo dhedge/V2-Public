@@ -3,6 +3,17 @@ const { exec } = require("child_process");
 const execProm = util.promisify(exec);
 const stringify = require("csv-stringify/lib/sync");
 const fs = require("fs");
+const Safe = require("@gnosis.pm/safe-core-sdk");
+const { EthersAdapter } = require("@gnosis.pm/safe-core-sdk");
+const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
+const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+// https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
+const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
+const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
+let nonce,
+  safeSdk,
+  chainId,
+  nonceLog = new Array();
 
 const getTag = async () => {
   try {
@@ -70,4 +81,143 @@ const writeCsv = (data, fileName) => {
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32 };
+const proposeTx = async (to, data, message, execute = false) => {
+  if (!execute) {
+    console.log("Will propose transaction:", message);
+    return;
+  }
+
+  // Initialize the Safe SDK
+  const provider = ethers.provider;
+  const owner1 = provider.getSigner(0);
+  const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
+  chainId = chainId ? chainId : await ethAdapter.getChainId();
+
+  const contractNetworks = {
+    [chainId]: {
+      multiSendAddress: multiSendAddress,
+    },
+  };
+
+  safeSdk = safeSdk
+    ? safeSdk
+    : await Safe.default.create({
+        ethAdapter,
+        safeAddress: safeAddress,
+        contractNetworks,
+      });
+  nonce = nonce ? nonce : await safeSdk.getNonce();
+
+  const transaction = {
+    to: to,
+    value: "0",
+    data: data,
+    nonce: nonce,
+  };
+
+  nonceLog.push({
+    nonce: nonce,
+    message: message,
+  });
+
+  console.log("Proposing transaction: ", transaction);
+  console.log(`Nonce ${nonce}: ${message}`);
+
+  nonce += 1;
+
+  const safeTransaction = await safeSdk.createTransaction(...[transaction]);
+  // off-chain sign
+  const txHash = await safeSdk.getTransactionHash(safeTransaction);
+  const signature = await safeSdk.signTransactionHash(txHash);
+  // on-chain sign
+  // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
+  // console.log("approveTxResponse", approveTxResponse);
+  console.log("safeTransaction: ", safeTransaction);
+
+  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
+  console.log("ProposeTx: ", proposeTx);
+};
+
+const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) => {
+  for (const asset of contracts.Assets) {
+    if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
+    if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
+    if (csvAsset["Asset Name"] === asset.name) {
+      // console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
+      const assetType = parseInt(await poolFactory.getAssetType(csvAsset.Address));
+
+      if (assetType !== parseInt(csvAsset.AssetType)) {
+        console.log(`${csvAsset["Asset Name"]} asset type update from ${assetType} to ${csvAsset.AssetType}`);
+        assetHandlerAssets.push({
+          name: csvAsset["Asset Name"],
+          asset: csvAsset.Address,
+          assetType: csvAsset.AssetType,
+          aggregator: csvAsset["Chainlink Price Feed"],
+        });
+      }
+
+      const foundInVersions = true;
+      return foundInVersions;
+    }
+  }
+  const foundInVersions = false;
+  return foundInVersions;
+};
+
+const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHandlerAssets) => {
+  for (const asset of contracts.Assets) {
+    if (balancerLp.name === asset.name) {
+      // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
+      const assetType = parseInt(await poolFactory.getAssetType(balancerLp.address));
+
+      if (assetType !== balancerLp.assetType) {
+        console.log(`${balancerLp.name} asset type update from ${assetType} to ${balancerLp.assetType}`);
+        assetHandlerAssets.push({
+          name: balancerLp.name,
+          asset: balancerLp.data.pool,
+          assetType: balancerLp.assetType,
+          aggregator: asset.aggregator,
+        });
+      }
+
+      const foundInVersions = true;
+      return foundInVersions;
+    }
+  }
+  const foundInVersions = false;
+  return foundInVersions;
+};
+
+const getAggregator = async (csvAsset) => {
+  const assetName = csvAsset["Asset Name"];
+  let aggregator;
+
+  switch (assetName) {
+    case "dUSD":
+      // Deploy DHedgePoolAggregator
+      const assetAddress = csvAsset["Address"];
+      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
+      const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
+      await dHedgePoolAggregator.deployed();
+      aggregator = dHedgePoolAggregator;
+      break;
+    default:
+      aggregator = csvAsset["Chainlink Price Feed"];
+  }
+
+  return aggregator;
+};
+
+module.exports = {
+  writeCsv,
+  tryVerify,
+  getTag,
+  hasDuplicates,
+  isSameBytecode,
+  toBytes32,
+  proposeTx,
+  nonceLog,
+  checkAsset,
+  checkBalancerLpAsset,
+  getAggregator,
+};
