@@ -95,7 +95,7 @@ describe("PoolFactory", function () {
     await mockAaveProtocolDataProvider.givenCalldataReturnAddress(addressProviderABI, mockAaveLendingPool.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    poolPerformance = await upgrades.deployProxy(PoolPerformance, [mockAaveProtocolDataProvider.address]);
+    poolPerformance = await upgrades.deployProxy(PoolPerformance);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
