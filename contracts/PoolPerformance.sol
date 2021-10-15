@@ -139,6 +139,10 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param poolAddress The address of the pool
   /// @return the value per token of airdrops and other external value
   function realtimeInternalValueFactor(address poolAddress) public view returns (uint256) {
+    if (!poolInitialized[poolAddress]) {
+      return DENOMINATOR;
+    }
+
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     AaveAddresses memory aaveAddresses = _getAaveLendingPoolAndDataProvider(poolAddress);
@@ -189,6 +193,12 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @dev The value recorded is per token, it resets the internal balances to equal external balances once recorded.
   /// @param poolAddress The address of the pool
   function recordExternalValue(address poolAddress) external {
+    if (!poolInitialized[poolAddress]) {
+      _updateInternalBalances(poolAddress);
+      poolInitialized[poolAddress] = true;
+      return;
+    }
+
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     AaveAddresses memory aaveAddresses = _getAaveLendingPoolAndDataProvider(poolAddress);
@@ -263,6 +273,10 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param poolAddress The address of the pool
   /// @return true if the pool has external balances
   function hasExternalBalances(address poolAddress) external view returns (bool) {
+    if (!poolInitialized[poolAddress]) {
+      return false;
+    }
+
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     AaveAddresses memory aaveAddresses = _getAaveLendingPoolAndDataProvider(poolAddress);
@@ -327,9 +341,21 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   /// @notice Resets the internal balances to equal the external balances
+  /// @dev Used to update the internal balances after deployment of existing pools
+  function updateInternalBalancesOfPool(address poolAddress) internal {
+    _updateInternalBalances(poolAddress);
+  }
+
+  /// @notice Resets the internal balances to equal the external balances
   /// @dev Used to update the internal balances after a manager executes a transaction/s should only be called by the pool
   function updateInternalBalances() external {
     _updateInternalBalances(msg.sender);
+  }
+
+  /// @notice Sets the pool as initialized
+  /// @dev Should only be called when creating an empty pool
+  function initializePool() external {
+    poolInitialized[msg.sender] = true;
   }
 
   /// @notice Resets the internal balances to equal the external balances
@@ -355,9 +381,7 @@ contract PoolPerformance is OwnableUpgradeable {
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
       if (supportsAave) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
-          assetAddress
-        );
+        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
           externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));

@@ -177,6 +177,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     creationTime = block.timestamp;
 
     tokenPriceAtLastFeeMint = 10**18;
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).initializePool();
   }
 
   /// @notice Before token transfer hook
