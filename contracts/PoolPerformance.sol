@@ -348,12 +348,6 @@ contract PoolPerformance is OwnableUpgradeable {
   }
 
   /// @notice Resets the internal balances to equal the external balances
-  /// @dev Used to update the internal balances after deployment of existing pools
-  function updateInternalBalancesOfPool(address poolAddress) internal {
-    _updateInternalBalances(poolAddress);
-  }
-
-  /// @notice Resets the internal balances to equal the external balances
   /// @dev Used to update the internal balances after a manager executes a transaction/s should only be called by the pool
   function updateInternalBalances() external {
     _updateInternalBalances(msg.sender);
