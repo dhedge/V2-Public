@@ -60,4 +60,6 @@ interface IPoolPerformance {
   function adjustInternalValueFactor(uint256 a, uint256 b) external;
 
   function resetInternalValueFactor() external;
+
+  function initializePool() external;
 }

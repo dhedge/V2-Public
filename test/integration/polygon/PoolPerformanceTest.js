@@ -9,6 +9,13 @@ use(solidity);
 
 const oneDollar = units(1);
 const twoDollar = units(2);
+const threeDollar = units(3);
+
+// https://kndrck.co/posts/local_erc20_bal_mani_w_hh/
+const setStorageAt = async (address, index, value) => {
+  await ethers.provider.send("hardhat_setStorageAt", [address, index, value]);
+  await ethers.provider.send("evm_mine", []); // Just mines to the next block
+};
 
 describe("PoolPerformance", function () {
   let USDC, WETH, WMatic;
@@ -812,6 +819,159 @@ describe("PoolPerformance", function () {
       expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar / 2)),
         1e9,
+      );
+    });
+  });
+
+  describe("Existing pools before PoolPerformance deployed", () => {
+    // This tests checks that pools that existed but with not funds before PoolPerformance is deployed
+    // That they are not penalized
+    it("existing pool unitialized without deposit + tokenPriceAdjustedForPerformance", async () => {
+      const managerFee = BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [assets.usdc, true],
+      ]);
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+
+      // When pools are created they are set to initialized in PoolPerformance
+      // But in this integration test we want to test as though this pool existed
+      // Before PoolPerformance was deployed.
+      // So we hack the storage of PoolPerformance to mark the Pool as not initialised
+      expect(await poolPerformance.poolInitialized(poolLogicProxy.address)).to.equal(true);
+      const poolIndex = ethers.utils.solidityKeccak256(
+        ["uint256", "uint256"],
+        // mapping(address => bool) public poolInitialized; in PoolPerformance.sol
+        // is storage slot 101 because of extending contracts with gaps[50]
+        // I found this storage slot by looping through every index between 0 and 300 looking for true value
+        [poolLogicProxy.address, 101], // key, slot
+      );
+
+      expect(
+        await ethers.provider.getStorageAt(poolPerformance.address, poolIndex),
+        //true
+      ).to.equal("0x0000000000000000000000000000000000000000000000000000000000000001");
+
+      await setStorageAt(
+        poolPerformance.address,
+        poolIndex,
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+      );
+
+      expect(
+        await ethers.provider.getStorageAt(poolPerformance.address, poolIndex),
+        //false
+      ).to.equal("0x0000000000000000000000000000000000000000000000000000000000000000");
+      expect(await poolPerformance.poolInitialized(poolLogicProxy.address)).to.equal(false);
+
+      // Add some value into the pool directly
+      await USDC.transfer(poolLogicProxy.address, (100e6).toString());
+
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+      // Check tokenPriceAdjustForPerformance() should be $1
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
+
+      // Check hasExternalBalances() == FALSE
+      expect(await poolPerformance.hasExternalBalances(poolLogicProxy.address)).to.equal(false);
+      // Deposit $1 directly
+      await USDC.transfer(poolLogicProxy.address, (100e6).toString());
+      // Check TokenPrice() should be $3
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(threeDollar.toString());
+      // Check tokenPriceAdjustForPerformance == $2; (i.e directDepositFactor $1)
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.be.closeTo(
+        twoDollar,
+        2,
+      );
+    });
+
+    // This tests checks that pools that existed with funds before PoolPerformance is deployed
+    // That they are not penalized
+    it("existing pool unintitialized with deposit + tokenPriceAdjustedForPerformance", async () => {
+      const managerFee = BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [assets.usdc, true],
+      ]);
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+
+      // When pools are created they are set to initialized in PoolPerformance
+      // But in this integration test we want to test as though this pool existed
+      // Before PoolPerformance was deployed.
+      // So we hack the storage of PoolPerformance to mark the Pool as not initialised
+      expect(await poolPerformance.poolInitialized(poolLogicProxy.address)).to.equal(true);
+      const poolIndex = ethers.utils.solidityKeccak256(
+        ["uint256", "uint256"],
+        // mapping(address => bool) public poolInitialized; in PoolPerformance.sol
+        // is storage slot 101 because of extending contracts with gaps[50]
+        // I found this storage slot by looping through every index between 0 and 300 looking for true value
+        [poolLogicProxy.address, 101], // key, slot
+      );
+
+      expect(
+        await ethers.provider.getStorageAt(poolPerformance.address, poolIndex),
+        //true
+      ).to.equal("0x0000000000000000000000000000000000000000000000000000000000000001");
+
+      await setStorageAt(
+        poolPerformance.address,
+        poolIndex,
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+      );
+
+      expect(
+        await ethers.provider.getStorageAt(poolPerformance.address, poolIndex),
+        //false
+      ).to.equal("0x0000000000000000000000000000000000000000000000000000000000000000");
+      expect(await poolPerformance.poolInitialized(poolLogicProxy.address)).to.equal(false);
+
+      // Check tokenPriceAdjustForPerformance() should be $1
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      // Add some value into the pool directly
+      await USDC.transfer(poolLogicProxy.address, (100e6).toString());
+
+      // Check tokenPriceAdjustForPerformance() should be $2
+      // Because this pool is not initialised in PoolPerformance we ignore direct deposits
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
+
+      // Deposit $1 conventional way
+      // This will initialize the pool in PoolPerformance and record it's balances
+      await USDC.approve(poolLogicProxy.address, (100e6).toString());
+      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+
+      // Check tokenPriceAdjustForPerformance() should be $2 still
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
+
+      // Add some value into the pool directly, this should be detected now the pool is initialized in PoolPerformance
+      await USDC.transfer(poolLogicProxy.address, (100e6).toString());
+
+      // Check the $1 direct transferered is allocated to token holders
+      // TokenPrice should now be more than $2
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal("2666666666666666666");
+      // Check tokenPriceAdjustForPerformance should still be $2; (i.e directDepositFactor $1)
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.be.closeTo(
+        twoDollar,
+        2,
       );
     });
   });
