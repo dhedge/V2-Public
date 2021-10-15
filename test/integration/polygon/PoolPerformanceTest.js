@@ -9,6 +9,13 @@ use(solidity);
 
 const oneDollar = units(1);
 const twoDollar = units(2);
+const threeDollar = units(3);
+
+// https://kndrck.co/posts/local_erc20_bal_mani_w_hh/
+const setStorageAt = async (address, index, value) => {
+  await ethers.provider.send("hardhat_setStorageAt", [address, index, value]);
+  await ethers.provider.send("evm_mine", []); // Just mines to the next block
+};
 
 describe("PoolPerformance", function () {
   let USDC, WETH, WMatic;
