@@ -388,7 +388,7 @@ contract PoolPerformance is OwnableUpgradeable {
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
       if (supportsAave) {
-        (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
+        (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(assetAddress);
 
         if (aToken != address(0)) {
           externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
