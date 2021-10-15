@@ -68,6 +68,7 @@ contract PoolPerformance is OwnableUpgradeable {
     address aaveLendingPool;
   }
 
+  mapping(address => bool) public poolInitialized;
   mapping(address => mapping(address => uint256)) public internalBalancesMap;
 
   uint256 public constant DENOMINATOR = 10**18;
@@ -265,6 +266,12 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param amount The amount of the asset
   function addAssetBalance(address asset, uint256 amount) external {
     address poolAddress = msg.sender;
+    if (!poolInitialized[poolAddress]) {
+      _updateInternalBalances(poolAddress);
+      poolInitialized[poolAddress] = true;
+      return;
+    }
+
     internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(amount);
   }
 
