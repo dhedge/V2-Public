@@ -25,6 +25,24 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "a",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "b",
+        "type": "uint256"
+      }
+    ],
+    "name": "adjustInternalValueFactor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "poolManagerAddress",
         "type": "address"
@@ -78,6 +96,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "initializePool",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -86,6 +111,13 @@
       }
     ],
     "name": "recordExternalValue",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "resetInternalValueFactor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -81,7 +81,12 @@ const writeCsv = (data, fileName) => {
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-const proposeTx = async (to, data, message) => {
+const proposeTx = async (to, data, message, execute = false) => {
+  if (!execute) {
+    console.log("Will propose transaction:", message);
+    return;
+  }
+
   // Initialize the Safe SDK
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
@@ -133,4 +138,86 @@ const proposeTx = async (to, data, message) => {
   console.log("ProposeTx: ", proposeTx);
 };
 
-module.exports = { writeCsv, tryVerify, getTag, hasDuplicates, isSameBytecode, toBytes32, proposeTx };
+const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) => {
+  for (const asset of contracts.Assets) {
+    if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
+    if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
+    if (csvAsset["Asset Name"] === asset.name) {
+      // console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
+      const assetType = parseInt(await poolFactory.getAssetType(csvAsset.Address));
+
+      if (assetType !== parseInt(csvAsset.AssetType)) {
+        console.log(`${csvAsset["Asset Name"]} asset type update from ${assetType} to ${csvAsset.AssetType}`);
+        assetHandlerAssets.push({
+          name: csvAsset["Asset Name"],
+          asset: csvAsset.Address,
+          assetType: csvAsset.AssetType,
+          aggregator: csvAsset["Chainlink Price Feed"],
+        });
+      }
+
+      const foundInVersions = true;
+      return foundInVersions;
+    }
+  }
+  const foundInVersions = false;
+  return foundInVersions;
+};
+
+const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHandlerAssets) => {
+  for (const asset of contracts.Assets) {
+    if (balancerLp.name === asset.name) {
+      // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
+      const assetType = parseInt(await poolFactory.getAssetType(balancerLp.address));
+
+      if (assetType !== balancerLp.assetType) {
+        console.log(`${balancerLp.name} asset type update from ${assetType} to ${balancerLp.assetType}`);
+        assetHandlerAssets.push({
+          name: balancerLp.name,
+          asset: balancerLp.data.pool,
+          assetType: balancerLp.assetType,
+          aggregator: asset.aggregator,
+        });
+      }
+
+      const foundInVersions = true;
+      return foundInVersions;
+    }
+  }
+  const foundInVersions = false;
+  return foundInVersions;
+};
+
+const getAggregator = async (csvAsset) => {
+  const assetName = csvAsset["Asset Name"];
+  let aggregator;
+
+  switch (assetName) {
+    case "dUSD":
+      // Deploy DHedgePoolAggregator
+      const assetAddress = csvAsset["Address"];
+      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
+      const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
+      await dHedgePoolAggregator.deployed();
+      aggregator = dHedgePoolAggregator;
+      break;
+    default:
+      aggregator = csvAsset["Chainlink Price Feed"];
+  }
+
+  return aggregator;
+};
+
+module.exports = {
+  writeCsv,
+  tryVerify,
+  getTag,
+  hasDuplicates,
+  isSameBytecode,
+  toBytes32,
+  proposeTx,
+  nonceLog,
+  checkAsset,
+  checkBalancerLpAsset,
+  getAggregator,
+};

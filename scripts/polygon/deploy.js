@@ -87,11 +87,7 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
     info.pool,
     info.tokens,
     info.decimals,
-    info.weights.map((w) =>
-      ethers.BigNumber.from(10)
-        .pow(10)
-        .mul(w * 100000000),
-    ),
+    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
     [
       "50000000000000000", // maxPriceDeviation: 0.05
       K,
@@ -292,6 +288,7 @@ const deploy = async (env) => {
       PoolManagerLogicProxy: poolManagerLogicProxy.address,
       PoolManagerLogic: poolManagerLogicAddress,
       AssetHandlerProxy: assetHandler.address,
+      PoolPerformanceProxy: poolPerformance.address,
       ERC20Guard: erc20Guard.address,
       UniswapV2RouterGuard: uniswapV2RouterGuard.address,
       SushiMiniChefV2Guard: sushiMiniChefV2Guard.address,

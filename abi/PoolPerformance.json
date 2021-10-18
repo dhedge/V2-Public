@@ -32,32 +32,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "aaveLendingPool",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "aaveProtocolDataProvider",
-    "outputs": [
-      {
-        "internalType": "contract IAaveProtocolDataProvider",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -83,20 +57,19 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "poolAddress",
-        "type": "address"
-      }
-    ],
-    "name": "externalValuePerToken",
-    "outputs": [
+        "internalType": "uint256",
+        "name": "a",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "b",
         "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "name": "adjustInternalValueFactor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -119,14 +92,15 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_aaveProtocolDataProvider",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "initializePool",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -145,6 +119,25 @@
       }
     ],
     "name": "internalBalancesMap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "poolAddress",
+        "type": "address"
+      }
+    ],
+    "name": "internalValueFactor",
     "outputs": [
       {
         "internalType": "uint256",
@@ -191,6 +184,44 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "poolInitialized",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "poolAddress",
+        "type": "address"
+      }
+    ],
+    "name": "realtimeInternalValueFactor",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "poolAddress",
         "type": "address"
       }
@@ -208,6 +239,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "resetInternalValueFactor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -216,11 +254,11 @@
       },
       {
         "internalType": "uint256",
-        "name": "value",
+        "name": "newInternalValueFactor",
         "type": "uint256"
       }
     ],
-    "name": "setExternalValue",
+    "name": "setInternalValueFactor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

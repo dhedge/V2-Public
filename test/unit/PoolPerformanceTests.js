@@ -1,6 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
-
+const { BigNumber } = ethers;
 const { expect } = require("chai");
+const { units } = require("../TestHelpers");
 
 const { updateChainlinkAggregators } = require("../TestHelpers");
 
@@ -94,7 +95,7 @@ describe("PoolFactory", function () {
     await mockAaveProtocolDataProvider.givenCalldataReturnAddress(addressProviderABI, mockAaveLendingPool.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    poolPerformance = await upgrades.deployProxy(PoolPerformance, [mockAaveProtocolDataProvider.address]);
+    poolPerformance = await upgrades.deployProxy(PoolPerformance);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -153,7 +154,7 @@ describe("PoolFactory", function () {
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new ethers.BigNumber.from("5000"),
+      new BigNumber.from("5000"),
       [
         [seth, false],
         [susd, true],
@@ -242,7 +243,7 @@ describe("PoolFactory", function () {
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new ethers.BigNumber.from("5000"),
+      new BigNumber.from("5000"),
       [
         [seth, false],
         [susd, true],
@@ -315,7 +316,7 @@ describe("PoolFactory", function () {
     // The token price is now $4 and $3 of that is profit in the eyes of the contract, the manager is owed .375 tokens roughly $1.5 (50% of profit) at the current token price
     // This means after minting manager fee there would be 1.375 tokens owning $4
     // $4 / 1.375 = $2.919708029 (1 token value)
-    const twoDollarNinety = ethers.BigNumber.from(BigInt((fourDollar / 1.375) * 1));
+    const twoDollarNinety = BigNumber.from(BigInt((fourDollar / 1.375) * 1));
     expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.be.closeTo(
       twoDollarNinety,
       100,
@@ -324,7 +325,7 @@ describe("PoolFactory", function () {
     // $2.90 / 2
     expect(
       (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-    ).to.be.closeTo(ethers.BigNumber.from(BigInt(twoDollarNinety / 2)), 100);
+    ).to.be.closeTo(BigNumber.from(BigInt(twoDollarNinety / 2)), 100);
   });
 
   // manager starts pool with $1
@@ -342,7 +343,7 @@ describe("PoolFactory", function () {
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new ethers.BigNumber.from("5000"),
+      new BigNumber.from("5000"),
       [
         [seth, false],
         [susd, true],
@@ -378,7 +379,7 @@ describe("PoolFactory", function () {
     ).to.equal(oneDollar.toString());
 
     const tenDollars = 10e18;
-    await susdProxy.givenCalldataReturnUint(balanceOfABI, ethers.BigNumber.from(BigInt(100e18)).mul(10));
+    await susdProxy.givenCalldataReturnUint(balanceOfABI, BigNumber.from(BigInt(100e18)).mul(10));
 
     expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(tenDollars.toString());
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
@@ -410,7 +411,7 @@ describe("PoolFactory", function () {
     // The token price is now $20 and $19 of that is profit in the eyes of the contract, the manager is owed 0.475 tokens roughly $9.50 (50% of profit) at the current token price
     // This means after minting manager fee there would be 1.475 tokens owning $9.50
     // $20 / 1.475 = $13.559322034 (1 token value)
-    const thirteenFiftyFive = ethers.BigNumber.from(BigInt((twentyDollars / 1.475) * 1));
+    const thirteenFiftyFive = BigNumber.from(BigInt((twentyDollars / 1.475) * 1));
     expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.be.closeTo(
       thirteenFiftyFive,
       10000,
@@ -423,14 +424,14 @@ describe("PoolFactory", function () {
     ).to.be.closeTo(tenth, 10000);
   });
 
-  it("resetExternalValue", async function () {
+  it("setInternalValueFactor", async function () {
     await poolFactory.createFund(
       false,
       manager.address,
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new ethers.BigNumber.from("5000"),
+      new BigNumber.from("5000"),
       [
         [seth, false],
         [susd, true],
@@ -473,7 +474,7 @@ describe("PoolFactory", function () {
       oneDollar.toString(),
     );
 
-    await poolPerformance.setExternalValue(poolLogicProxy.address, (10 ** 18).toString());
+    await poolPerformance.setInternalValueFactor(poolLogicProxy.address, (1e18).toString());
 
     expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
@@ -481,14 +482,14 @@ describe("PoolFactory", function () {
     );
   });
 
-  it("resetExternalValue only callable by owner", async function () {
+  it("setInternalValueFactor only callable by owner", async function () {
     await poolFactory.createFund(
       false,
       manager.address,
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new ethers.BigNumber.from("5000"),
+      new BigNumber.from("5000"),
       [
         [seth, false],
         [susd, true],
@@ -499,10 +500,48 @@ describe("PoolFactory", function () {
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
 
-    await poolPerformance.setExternalValue(poolLogicProxy.address, (10 ** 18).toString());
+    await poolPerformance.setInternalValueFactor(poolLogicProxy.address, (1e18).toString());
 
     await expect(
-      poolPerformance.connect(manager).setExternalValue(poolLogicProxy.address, (10 ** 18).toString()),
+      poolPerformance.connect(manager).setInternalValueFactor(poolLogicProxy.address, (1e18).toString()),
     ).to.be.revertedWith("Ownable: caller is not the owner");
+  });
+
+  it("adjustInternalValueFactor 10 percent small number", async function () {
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1));
+    await poolPerformance.adjustInternalValueFactor(10, 100); // 10%
+    const tenPercent1e18 = units(1).div(10);
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1).sub(tenPercent1e18));
+  });
+
+  it("adjustInternalValueFactor 5% of massive number", async function () {
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1));
+    const fivePercent = units(100).div(20);
+    await poolPerformance.adjustInternalValueFactor(fivePercent, units(100)); // 5%
+    const fivePercent1e18 = units(1).div(20);
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1).sub(fivePercent1e18));
+  });
+
+  it("adjustInternalValueFactor 0.1% of massive number", async function () {
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1));
+    const zeroPointOnePercent = units(100).div(1000);
+    await poolPerformance.adjustInternalValueFactor(zeroPointOnePercent, BigInt(100e18)); // 0.1%
+    const zeroPointOnePercentOf1e18 = units(1).div(1000);
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(
+      units(1).sub(zeroPointOnePercentOf1e18),
+    );
+  });
+
+  it("adjustInternalValueFactor 10 percent twice", async function () {
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1));
+    await poolPerformance.adjustInternalValueFactor(10, 100); // 10%
+    const tenPercent1e18 = units(1).div(10);
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(units(1).sub(tenPercent1e18));
+    await poolPerformance.adjustInternalValueFactor(10, 100); // 10%
+    const ninePercent1e18 = units(90).div(1000);
+    //1 * 0.9 * 0.9 = 0.81
+    expect(await poolPerformance.internalValueFactor(logicOwner.address)).to.equal(
+      units(1).sub(tenPercent1e18).sub(ninePercent1e18),
+    );
   });
 });

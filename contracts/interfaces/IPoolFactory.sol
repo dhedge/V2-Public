@@ -32,38 +32,8 @@
 //
 // SPDX-License-Identifier: MIT
 
-import "./IHasSupportedAsset.sol";
-
 pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
 
-interface IPoolPerformance {
-  function changeAssetBalance(
-    address asset,
-    uint256 plusAmount,
-    uint256 minusAmount
-  ) external;
-
-  function hasExternalBalances(address poolAddress) external view returns (bool);
-
-  function updateInternalBalances() external;
-
-  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
-    external
-    view
-    returns (uint256[] memory supportedAssetBalances);
-
-  function updatedInternalBalancesByDiff(
-    IHasSupportedAsset.Asset[] memory supportedAssets,
-    uint256[] memory beforeSupportedAssetBalances,
-    uint256[] memory afterSupportedAssetBalances
-  ) external;
-
-  function recordExternalValue(address poolAddress) external;
-
-  function adjustInternalValueFactor(uint256 a, uint256 b) external;
-
-  function resetInternalValueFactor() external;
-
-  function initializePool() external;
+interface IPoolFactory {
+  function governanceAddress() external view returns (address);
 }
