@@ -1529,6 +1529,9 @@ describe("PoolFactory", function () {
 
     await assetHandler.setChainlinkTimeout(9000000);
 
+    await ethers.provider.send("evm_increaseTime", [3600 * 24]);
+    await ethers.provider.send("evm_mine", []);
+
     const daoBalanceBefore = ethers.BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
