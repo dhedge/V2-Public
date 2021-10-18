@@ -367,7 +367,7 @@ task("upgrade", "Upgrade contracts")
           console.log("Will upgrade PoolPerformance");
         } else {
           let oldPoolPerformance = contracts.PoolPerformanceProxy;
-          const PoolPerformance = await ethers.getContractFactory("PoolPoolPerformance");
+          const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
           const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
           console.log("poolPerformance deployed to: ", poolPerformance);
 
