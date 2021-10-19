@@ -163,6 +163,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     bool isDeposit = _asset.isDeposit;
 
     require(validateAsset(asset), "invalid asset");
+    require(poolLogic != asset, "cannot add pool asset");
 
     if (isSupportedAsset(asset)) {
       uint256 index = assetPosition[asset].sub(1);
