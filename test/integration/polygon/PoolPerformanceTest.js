@@ -570,11 +570,6 @@ describe("PoolPerformance", function () {
       await assetHandler.addAssets([assetLendingPool]);
     });
 
-    // Deposit USDC (all usdc)
-    // Deposit into aave via execute tx
-    // This will record external value
-    // Borrow
-
     // In this test we simply check that depositing into aave doesn't affect our PoolPerf figures
     // Create the fund we're going to use for testing
     // Deposit $1 conventional way
