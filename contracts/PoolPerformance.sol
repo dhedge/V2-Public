@@ -239,7 +239,6 @@ contract PoolPerformance is OwnableUpgradeable {
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, externalBalance)
       );
 
-
       internalBalancesMap[poolAddress][assetAddress] = externalBalance;
     }
 
@@ -253,7 +252,6 @@ contract PoolPerformance is OwnableUpgradeable {
         internalExternalValue.externalValue
       );
     } else {
-
       internalValueFactorMap[poolAddress] = internalValueFactorMap[poolAddress]
         .mul(internalExternalValue.internalValue.mul(DENOMINATOR).div(internalExternalValue.externalValue))
         .div(DENOMINATOR);
