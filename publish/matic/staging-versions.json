@@ -1193,7 +1193,7 @@
       "QuickStakingRewardsGuard": "0x9519BD5868f8D66DE1Db3bd6e9Ae917b1Ffa886D",
       "OneInchV3Guard": "0xa389D040C0809b3069BA5b073469413152c2EBdF",
       "PoolPerformanceProxy": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
-      "PoolPerformance": "0x7158d5b824c38dc0115c16face68de26330ef50d"
+      "PoolPerformance": "0x688466E9a38277cd3494F2606f4950EAfb374462"
     },
     "network": {
       "name": "matic",
@@ -1201,6 +1201,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 18 Oct 2021 02:16:27 GMT"
+    "date": "Tue, 19 Oct 2021 06:52:35 GMT"
   }
 }
