@@ -641,10 +641,93 @@ describe("PoolPerformance", function () {
       ).to.equal(oneDollar.toString());
     });
 
-    // Deposit USDC (all usdc)
-    // Deposit into aave via execute tx
-    // This will record external value
-    // Borrow
+    // In this test we simply check that depositing into aave doesn't affect our PoolPerf figures
+    // Create the fund we're going to use for testing
+    // Deposit $1 conventional way
+    // Check tokenPriceAdjustForPerformance() should be $1
+    // Approve usdc transfer to AAVE
+    // Check before balances of usdc and amusdc
+    // Deposit usdc to aave
+    // Check after balances of usdc and amusdc
+    // Check PoolPerformance Figures remain the same
+    // call PoolPerformance.recordExternalValue
+    // Check PoolPerformance Figures remain the same
+    it("tokenPriceAdjustForPerformance only deposit half into aave, recordExternalValue after deposit", async () => {
+      const usdcAmount = (100e6).toString();
+      const managerFee = BigNumber.from("0"); // 0%;
+      // Create the fund we're going to use for testing
+      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
+        [assets.usdc, true],
+        [aave.lendingPool, false],
+      ]);
+      const funds = await poolFactory.getDeployedFunds();
+      poolLogicProxy = await PoolLogic.attach(funds[0]);
+      // Deposit $1 conventional way
+      await USDC.approve(poolLogicProxy.address, usdcAmount);
+      await poolLogicProxy.deposit(assets.usdc, usdcAmount);
+
+      // Check tokenPriceAdjustForPerformance() should be $1
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+
+      const ILendingPool = await hre.artifacts.readArtifact("ILendingPool");
+      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+
+      // approve usdc
+      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+      await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
+
+      const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+      const amusdcBalanceBefore = await AMUSDC.balanceOf(poolLogicProxy.address);
+
+      expect(usdcBalanceBefore).to.be.equal(usdcAmount);
+      expect(amusdcBalanceBefore).to.be.equal(0);
+
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+
+      // deposit
+      let depositABI = iLendingPool.encodeFunctionData("deposit", [
+        assets.usdc,
+        usdcAmount / 2,
+        poolLogicProxy.address,
+        0,
+      ]);
+      await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
+
+      const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+      const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
+      expect(usdcBalanceAfter).to.be.equal((50e6).toString());
+      checkAlmostSame(amusdcBalanceAfter, 50e6);
+
+      // We check that depositing into AAVE doesn't affect any of our poolPerformance figures
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+      expect(
+        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+      ).to.equal(oneDollar.toString());
+
+      // This test makes sure that aToken balances are being included in the externalBalances
+      await poolPerformance.recordExternalValue(poolLogicProxy.address);
+
+      // We check that recording external value after depositing doesn't affect price
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
+      expect(
+        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
+      ).to.equal(oneDollar.toString());
+    });
 
     // In this test we simply check that depositing into aave doesn't affect our PoolPerf figures
     // Create the fund we're going to use for testing
@@ -657,7 +740,7 @@ describe("PoolPerformance", function () {
     // Check PoolPerformance Figures remain the same
     // Borrow from AAVE
     // Check PoolPerformance Figures remain the same
-    it.only("borrow + tokenPriceAdjustForPerformance no direct deposit", async () => {
+    it("borrow + tokenPriceAdjustForPerformance no direct deposit", async () => {
       const usdcAmount = (100e6).toString();
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
