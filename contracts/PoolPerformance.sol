@@ -214,11 +214,6 @@ contract PoolPerformance is OwnableUpgradeable {
       if (assetAddress == aaveAddresses.aaveLendingPool) {
         continue;
       }
-      // This is the same as what IPoolManagerLogic.totalFundValue().
-      internalExternalValue.externalValue = internalExternalValue.externalValue.add(
-        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress)
-      );
-
       // One thing to note here is that the impact of the external value is variable
       // and is impacted by when this function is called and the price of the
       // external asset at the time.
@@ -228,7 +223,6 @@ contract PoolPerformance is OwnableUpgradeable {
 
       // Once we record the current value of the internal asset, we then update the internal balance to equal the external balance
       uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
-
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
       if (supportsAave) {
@@ -240,6 +234,10 @@ contract PoolPerformance is OwnableUpgradeable {
           externalBalance = externalBalance.add(IAToken(aToken).scaledBalanceOf(poolAddress));
         }
       }
+
+      internalExternalValue.externalValue = internalExternalValue.externalValue.add(
+        IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, externalBalance)
+      );
 
       internalBalancesMap[poolAddress][assetAddress] = externalBalance;
     }
