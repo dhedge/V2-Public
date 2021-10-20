@@ -2,7 +2,7 @@
 
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 
@@ -12,7 +12,7 @@ import "../interfaces/IAggregatorV3Interface.sol";
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
 contract ETHCrossAggregator is IAggregatorV3Interface {
-  using SignedSafeMathUpgradeable for int256;
+  using SignedSafeMath for int256;
 
   address public token;
   address public tokenEthAggregator;
