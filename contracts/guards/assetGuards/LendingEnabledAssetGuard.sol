@@ -61,8 +61,7 @@ contract LendingEnabledAssetGuard is ERC20Guard {
     ).getReserveTokensAddresses(asset);
 
     // Allowing some dust
-    if (stableDebtToken != address(0))
-      require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+    if (stableDebtToken != address(0)) require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
     if (variableDebtToken != address(0))
       require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
     if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
