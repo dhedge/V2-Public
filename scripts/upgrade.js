@@ -376,7 +376,7 @@ task("upgrade", "Upgrade contracts")
           const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldPoolPerformance, poolPerformance]);
           await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Performance", taskArgs.execute);
 
-          versions[newTag].contracts.PoolPerformance = poolPerformance.address;
+          versions[newTag].contracts.PoolPerformance = poolPerformance;
         }
       } else {
         if (!taskArgs.execute) {
