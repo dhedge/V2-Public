@@ -73,6 +73,7 @@ describe("PoolFactory", function () {
           manager,
           time,
           managerFeeNumerator,
+          streamingFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -87,6 +88,7 @@ describe("PoolFactory", function () {
             manager: manager,
             time: time,
             managerFeeNumerator: managerFeeNumerator,
+            streamingFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },

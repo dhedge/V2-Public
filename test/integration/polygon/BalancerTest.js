@@ -200,6 +200,7 @@ describe("Balancer V2 Test", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         [assets.usdc, true],
         [assets.weth, true],
@@ -219,6 +220,7 @@ describe("Balancer V2 Test", function () {
           manager,
           time,
           managerFeeNumerator,
+          streamingFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -233,6 +235,7 @@ describe("Balancer V2 Test", function () {
             manager: manager,
             time: time,
             managerFeeNumerator: managerFeeNumerator,
+            streamingFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },

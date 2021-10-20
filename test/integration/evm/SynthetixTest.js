@@ -114,6 +114,7 @@ describe("Synthetix Test", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         [assets.susd, true],
         [assets.seth, true],
@@ -133,6 +134,7 @@ describe("Synthetix Test", function () {
           manager,
           time,
           managerFeeNumerator,
+          streamingFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -147,6 +149,7 @@ describe("Synthetix Test", function () {
             manager: manager,
             time: time,
             managerFeeNumerator: managerFeeNumerator,
+            streamingFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },

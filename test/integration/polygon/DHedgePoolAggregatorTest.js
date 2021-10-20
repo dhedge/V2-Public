@@ -133,6 +133,7 @@ describe("DHedgePoolAggregator Test", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         [assets.usdc, true],
         [assets.weth, true],

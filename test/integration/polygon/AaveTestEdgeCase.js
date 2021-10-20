@@ -191,6 +191,7 @@ describe("Polygon Mainnet Test", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         [assets.usdc, true],
         [assets.weth, true],
@@ -210,6 +211,7 @@ describe("Polygon Mainnet Test", function () {
           manager,
           time,
           managerFeeNumerator,
+          streamingFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -224,6 +226,7 @@ describe("Polygon Mainnet Test", function () {
             manager: manager,
             time: time,
             managerFeeNumerator: managerFeeNumerator,
+            streamingFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },

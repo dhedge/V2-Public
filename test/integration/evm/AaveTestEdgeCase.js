@@ -136,6 +136,7 @@ describe("Aave Test", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         [assets.usdc, true],
         [assets.weth, true],
@@ -155,6 +156,7 @@ describe("Aave Test", function () {
           manager,
           time,
           managerFeeNumerator,
+          streamingFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -169,6 +171,7 @@ describe("Aave Test", function () {
             manager: manager,
             time: time,
             managerFeeNumerator: managerFeeNumerator,
+            streamingFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },

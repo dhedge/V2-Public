@@ -91,6 +91,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         [usdc, true],
         [weth, true],
@@ -110,6 +111,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
           manager,
           time,
           managerFeeNumerator,
+          streamingFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -124,6 +126,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
             manager: manager,
             time: time,
             managerFeeNumerator: managerFeeNumerator,
+            streamingFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },
