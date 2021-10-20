@@ -1122,7 +1122,7 @@
           "name": "Balancer LP WBTC-USDC-WETH",
           "asset": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
           "assetType": 0,
-          "aggregator": "0xC37ca03952A4005Bad2bCc8C082daD732E874ED5"
+          "aggregator": "0x65470583794beDaC03a230Daeb7198b995166a7D"
         },
         {
           "name": "Balancer LP LINK-WETH-BAL-AAVE",
@@ -1201,6 +1201,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Tue, 19 Oct 2021 06:52:35 GMT"
+    "date": "Wed, 20 Oct 2021 08:25:09 GMT"
   }
 }

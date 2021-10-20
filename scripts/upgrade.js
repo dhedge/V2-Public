@@ -67,7 +67,7 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
 
-  return await BalancerV2LPAggregator.deploy(
+  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(
     factory,
     balancerV2Vault,
     info.pool,
@@ -81,6 +81,27 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
       matrix, // approximationMatrix
     ],
   );
+  await balancerV2LpAggregator.deployed();
+  await tryVerify(
+    hre,
+    balancerV2LpAggregator.address,
+    "contracts/assets/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
+    [
+      factory,
+      balancerV2Vault,
+      info.pool,
+      info.tokens,
+      info.decimals,
+      info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+      [
+        "50000000000000000", // maxPriceDeviation: 0.05
+        K,
+        "100000000", // powerPrecision
+        matrix, // approximationMatrix
+      ],
+    ],
+  );
+  return balancerV2LpAggregator;
 };
 
 task("upgrade", "Upgrade contracts")
@@ -127,8 +148,8 @@ task("upgrade", "Upgrade contracts")
       // update to latest release version
       newTag = await getTag();
     }
-    console.log(`oldTag: ${oldTag}`);
-    console.log(`newTag: ${newTag}`);
+    console.log(`Old Version: ${oldTag}`);
+    console.log(`New Version: ${newTag}`);
     // Comment this out as assets is default to true and it's always comes with pause/unpause true
     // const checkNewVersion = !taskArgs.assets && !taskArgs.pause && !taskArgs.unpause;
     // if (checkNewVersion && newTag == oldTag) throw "Error: No new version to upgrade"; // comment out as we could deploy and overrite the current version
@@ -269,7 +290,6 @@ task("upgrade", "Upgrade contracts")
               contracts.PoolFactoryProxy,
               balancerLp.data,
             );
-            await balancerV2Aggregator.deployed();
             console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
             assetHandlerAssets.push({
               name: balancerLp.name,
