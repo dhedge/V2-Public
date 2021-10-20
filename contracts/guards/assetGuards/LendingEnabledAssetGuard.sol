@@ -40,7 +40,6 @@ import "./ERC20Guard.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 
-import "hardhat/console.sol";
 
 /// @title Lending/Borrowing enabled token asset guard eg Aave
 /// @dev Asset type = 4

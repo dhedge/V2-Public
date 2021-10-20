@@ -11,7 +11,7 @@ const { BigNumber } = ethers;
 const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-describe.only("RemoveAssets", function () {
+describe("RemoveAssets", function () {
   let poolFactory: Contract,
     PoolLogic: ContractFactory,
     PoolManagerLogic: ContractFactory,
