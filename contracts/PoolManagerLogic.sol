@@ -191,6 +191,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     require(isSupportedAsset(asset), "asset not supported");
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
 
+    address guard = IHasGuardInfo(factory).getAssetGuard(asset);
+    IAssetGuard(guard).removeAssetCheck();
+
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
     uint256 length = supportedAssets.length;
     for (uint256 i = index; i.add(1) < length; i++) {
