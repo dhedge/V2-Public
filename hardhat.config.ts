@@ -6,8 +6,11 @@ require("hardhat-gas-reporter");
 require("hardhat-abi-exporter");
 require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
-require("@openzeppelin/hardhat-upgrades");
+
+import "@openzeppelin/hardhat-upgrades";
 require("@nomiclabs/hardhat-etherscan");
+
+import "@nomiclabs/hardhat-ethers";
 
 require("./scripts/upgrade.js");
 require("./scripts/verify.js");

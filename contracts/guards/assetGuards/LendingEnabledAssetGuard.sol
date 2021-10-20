@@ -40,6 +40,8 @@ import "./ERC20Guard.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 
+import "hardhat/console.sol";
+
 /// @title Lending/Borrowing enabled token asset guard eg Aave
 /// @dev Asset type = 4
 contract LendingEnabledAssetGuard is ERC20Guard {
@@ -60,9 +62,9 @@ contract LendingEnabledAssetGuard is ERC20Guard {
 
     // Allowing some dust
     if (stableDebtToken != address(0))
-      require(IERC20(stableDebtToken).balanceOf(pool) <= 10000, "repay Aave debt first");
+      require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
     if (variableDebtToken != address(0))
-      require(IERC20(variableDebtToken).balanceOf(pool) <= 10000, "repay Aave debt first");
-    if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) <= 10000, "withdraw Aave collateral first");
+      require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+    if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
   }
 }
