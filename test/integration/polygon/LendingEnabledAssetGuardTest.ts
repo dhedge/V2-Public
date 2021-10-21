@@ -36,6 +36,7 @@ describe("LendingEnabledAssetGuard", function () {
 
     // Initialize Asset Price Consumer
     const assetWmatic = { asset: assets.wmatic, assetType: 0, aggregator: price_feeds.matic };
+    // IMPORTANT: below must be assetType: 4 -> LendingEnabledAssetGuard
     const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc };
     const assetHandlerInitAssets = [assetWmatic, assetUsdc];
 
