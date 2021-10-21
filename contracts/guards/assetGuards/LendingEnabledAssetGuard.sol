@@ -40,7 +40,6 @@ import "./ERC20Guard.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 
-
 /// @title Lending/Borrowing enabled token asset guard eg Aave
 /// @dev Asset type = 4
 contract LendingEnabledAssetGuard is ERC20Guard {
@@ -49,7 +48,8 @@ contract LendingEnabledAssetGuard is ERC20Guard {
   /// @notice Checks that asset can be removed from supported pool assets
   /// @dev Cannot remove asset if it's deposited in Aave
   /// @dev Additional lending / borrowing protocol checks can be added in the future
-  function removeAssetCheck(address pool, address asset) external view override {
+  function removeAssetCheck(address pool, address asset) public view override {
+    super.removeAssetCheck(pool, asset);
     // check AAVE lending balances
     // returns address(0) if it's not supported in aave
     address factory = IPoolManagerLogic(pool).factory();
