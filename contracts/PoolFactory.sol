@@ -325,7 +325,7 @@ contract PoolFactory is
   /// @param numerator The numerator of the Exit fee
   /// @param denominator The denominator of the Exit fee
   function _setExitFee(uint256 numerator, uint256 denominator) internal {
-    require(numerator.mul(2) <= denominator, "invalid fraction");
+    require(numerator <= denominator, "invalid fraction");
 
     _exitFeeNumerator = numerator;
     _exitFeeDenominator = denominator;

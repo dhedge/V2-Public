@@ -269,21 +269,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
+    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
+
     IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
 
     // calculate the exit fee
     uint256 fundValue = _mintManagerFee();
 
-    uint256 exitFee;
-    if (getExitRemainingCooldown(msg.sender) > 0 && totalSupply() != _fundTokenAmount) {
-      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-      // We need to adjust the performance down by the value of the exit fee distributed to remaining token holders
-      poolPerformance.adjustInternalValueFactor(exitFee, totalSupply().sub(_fundTokenAmount).add(exitFee));
-    }
-
     // calculate the proportion
-    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
+    uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
 
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
@@ -356,13 +350,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
     // calculate the exit fee
     (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
     uint256 exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-    if (getExitRemainingCooldown(msg.sender) > 0) {
-      exitFee = exitFee.mul(2);
-    }
 
     uint256 fundValue = _mintManagerFee();
 
