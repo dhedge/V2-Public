@@ -42,6 +42,9 @@ const oneInchV3Router = "0x11111112542D85B3EF69AE05771c2dCCff4fAa26";
 let sushiToken, wmatic;
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 
+// Misc
+const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+
 const deployBalancerV2LpAggregator = async (factory, info) => {
   const ether = "1000000000000000000";
   const divisor = info.weights.reduce((acc, w, i) => {
@@ -64,7 +67,7 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
 
-  return await BalancerV2LPAggregator.deploy(
+  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(
     factory,
     balancerV2Vault,
     info.pool,
@@ -78,6 +81,27 @@ const deployBalancerV2LpAggregator = async (factory, info) => {
       matrix, // approximationMatrix
     ],
   );
+  await balancerV2LpAggregator.deployed();
+  await tryVerify(
+    hre,
+    balancerV2LpAggregator.address,
+    "contracts/assets/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
+    [
+      factory,
+      balancerV2Vault,
+      info.pool,
+      info.tokens,
+      info.decimals,
+      info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+      [
+        "50000000000000000", // maxPriceDeviation: 0.05
+        K,
+        "100000000", // powerPrecision
+        matrix, // approximationMatrix
+      ],
+    ],
+  );
+  return balancerV2LpAggregator;
 };
 
 task("upgrade", "Upgrade contracts")
@@ -107,6 +131,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("unpause", "unpause contract", false, types.boolean)
   .addOptionalParam("keepVersion", "keep the previous release published version. don't update it", false, types.boolean)
   .setAction(async (taskArgs) => {
+    const provider = ethers.provider;
     const network = await ethers.provider.getNetwork();
     console.log("network:", network);
     const hre = require("hardhat");
@@ -123,8 +148,8 @@ task("upgrade", "Upgrade contracts")
       // update to latest release version
       newTag = await getTag();
     }
-    console.log(`oldTag: ${oldTag}`);
-    console.log(`newTag: ${newTag}`);
+    console.log(`Old Version: ${oldTag}`);
+    console.log(`New Version: ${newTag}`);
     // Comment this out as assets is default to true and it's always comes with pause/unpause true
     // const checkNewVersion = !taskArgs.assets && !taskArgs.pause && !taskArgs.unpause;
     // if (checkNewVersion && newTag == oldTag) throw "Error: No new version to upgrade"; // comment out as we could deploy and overrite the current version
@@ -265,7 +290,6 @@ task("upgrade", "Upgrade contracts")
               contracts.PoolFactoryProxy,
               balancerLp.data,
             );
-            await balancerV2Aggregator.deployed();
             console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
             assetHandlerAssets.push({
               name: balancerLp.name,
@@ -363,7 +387,7 @@ task("upgrade", "Upgrade contracts")
           console.log("Will upgrade PoolPerformance");
         } else {
           let oldPoolPerformance = contracts.PoolPerformanceProxy;
-          const PoolPerformance = await ethers.getContractFactory("PoolPoolPerformance");
+          const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
           const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
           console.log("poolPerformance deployed to: ", poolPerformance);
 
@@ -372,7 +396,7 @@ task("upgrade", "Upgrade contracts")
           const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldPoolPerformance, poolPerformance]);
           await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Performance", taskArgs.execute);
 
-          versions[newTag].contracts.PoolPerformance = poolPerformance.address;
+          versions[newTag].contracts.PoolPerformance = poolPerformance;
         }
       } else {
         if (!taskArgs.execute) {
@@ -383,16 +407,19 @@ task("upgrade", "Upgrade contracts")
           const poolPerformanceProxy = await upgrades.deployProxy(PoolPerformance, []);
           await poolPerformanceProxy.deployed();
           console.log("poolPerformanceProxy deployed to:", poolPerformanceProxy.address);
-          const poolPerformanceAddress = await proxyAdmin.getProxyImplementation(poolPerformanceProxy.address);
+          const poolPerformanceAddress = ethers.utils.hexValue(
+            await provider.getStorageAt(poolPerformanceProxy.address, implementationStorage),
+          );
+          // const poolPerformanceAddress = await proxyAdmin.getProxyImplementation(poolPerformanceProxy.address);
           const poolPerformance = PoolPerformance.attach(poolPerformanceAddress);
 
           await poolPerformanceProxy.transferOwnership(protocolDao);
 
-          await tryVerify(hre, poolPerformance, "contracts/PoolPerformance.sol:PoolPerformance", []);
+          await tryVerify(hre, poolPerformance.address, "contracts/PoolPerformance.sol:PoolPerformance", []);
 
           // Set PoolPerformance address in the Factory
           const setPoolPerformanceAddressABI = PoolFactoryABI.encodeFunctionData("setPoolPerformanceAddress", [
-            poolPerformanceAddress,
+            poolPerformanceProxy.address,
           ]);
           await proposeTx(
             poolFactoryProxy,
@@ -400,7 +427,6 @@ task("upgrade", "Upgrade contracts")
             `setPoolPerformanceAddress in Factory to ${poolPerformanceAddress}`,
             taskArgs.execute,
           );
-          await poolFactory.setPoolPerformanceAddress(poolPerformanceProxy.address);
 
           // Add to versions file
           versions[newTag].contracts.PoolPerformanceProxy = poolPerformanceProxy.address;

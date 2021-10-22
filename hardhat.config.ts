@@ -40,7 +40,7 @@ module.exports = {
     localhost: {
       chainId: 31337,
       url: "http://127.0.0.1:8545",
-      timeout: 1000000,
+      timeout: 600000,
     },
     polygon: {
       chainId: 137,
@@ -48,7 +48,8 @@ module.exports = {
         ? process.env.POLYGON_RPC
         : "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_POLYGON_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 10e9,
+      gasPrice: 50e9,
+      timeout: 600000,
     },
     mumbai: {
       chainId: 80001,
