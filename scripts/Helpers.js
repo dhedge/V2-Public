@@ -199,7 +199,13 @@ const getAggregator = async (csvAsset) => {
       const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
       const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
       await dHedgePoolAggregator.deployed();
-      aggregator = dHedgePoolAggregator;
+      await tryVerify(
+        hre,
+        dHedgePoolAggregator.address,
+        "contracts/assets/DHedgePoolAggregator.sol:DHedgePoolAggregator",
+        [assetAddress],
+      );
+      aggregator = dHedgePoolAggregator.address;
       break;
     default:
       aggregator = csvAsset["Chainlink Price Feed"];
