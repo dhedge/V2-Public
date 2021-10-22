@@ -145,7 +145,6 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   /// @param asset Address of the remove asset
   function removeAssetCheck(address pool, address asset) public view virtual override {
     uint256 balance = getBalance(pool, asset);
-    // Allowing some dust
-    require(balance <= 10000, "clear your position first");
+    require(balance == 0, "cannot remove non-empty asset");
   }
 }
