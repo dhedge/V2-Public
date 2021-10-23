@@ -250,7 +250,7 @@ describe("PoolPerformance", function () {
       // Check token price has increased by the fee kept by the pool
       expect(tokenPriceAfter.toString()).to.equal(oneDollar.add(extraValuePerToken));
       // Make sure the performance of the token hasn't changed
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).closeTo(
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         oneDollar,
         1,
       );
@@ -306,7 +306,7 @@ describe("PoolPerformance", function () {
       // Check token price has increased by the fee kept by the pool
       expect(tokenPriceAfter.toString()).to.equal(oneDollar.add(extraValuePerToken));
       // Make sure the performance of the token hasn't changed
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).closeTo(
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         oneDollar,
         1,
       );
@@ -624,16 +624,26 @@ describe("PoolPerformance", function () {
       checkAlmostSame(amusdcBalanceAfter, 100e6);
 
       // We check that depositing into AAVE doesn't affect any of our poolPerformance figures
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect(
-        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal(oneDollar.toString());
+      expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
+      expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
     });
 
     // In this test we simply check that depositing into aave doesn't affect our PoolPerf figures
@@ -697,31 +707,51 @@ describe("PoolPerformance", function () {
       checkAlmostSame(amusdcBalanceAfter, 50e6);
 
       // We check that depositing into AAVE doesn't affect any of our poolPerformance figures
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect(
-        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal(oneDollar.toString());
+      expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
+      expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
 
       // This test makes sure that aToken balances are being included in the externalBalances
       await poolPerformance.recordExternalValue(poolLogicProxy.address);
 
       // We check that recording external value after depositing doesn't affect price
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect(
-        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal(oneDollar.toString());
+      expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
+      expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
     });
 
     // In this test we simply check that depositing into aave doesn't affect our PoolPerf figures
@@ -780,16 +810,26 @@ describe("PoolPerformance", function () {
       checkAlmostSame(amusdcBalanceAfter, 100e6);
 
       // We check that depositing into AAVE doesn't affect any of our poolPerformance figures
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interestes on our debt each block
+        1e11,
       );
-      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interestes on our debt each block
+        1e11,
       );
-      expect(
-        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal(oneDollar.toString());
+      expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interestes on our debt each block
+        1e11,
+      );
+      expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interestes on our debt each block
+        1e11,
+      );
 
       const borrowABI = iLendingPool.encodeFunctionData("borrow", [
         assets.usdc,
@@ -803,18 +843,27 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
 
       // We check that depositing into AAVE doesn't affect any of our poolPerformance figures
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
       );
-      expect(
-        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).to.equal(oneDollar.toString());
+      expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
+      expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
+        oneDollar,
+        // aave allocates us interest and we incur interest on our debt each block
+        1e11,
+      );
     });
-
     // In this test we make sure directDeposits of aTokens are accounted for by PoolPerformance
     // Create the fund we're going to use for testing
     // Deposit $1 conventional way
@@ -877,22 +926,23 @@ describe("PoolPerformance", function () {
       // We check that the directDeposit of amUSDC is accounted for by PoolPerformance
       // We use closeTo here because every block we are getting crumbs as interest on our aAsset which
       // increases the price slightly
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).closeTo(
+      expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar)),
-        1e10,
+        1e11,
       );
-      expect((await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).toString()).closeTo(
+      expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar)),
-        1e10,
+        1e11,
       );
 
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).closeTo(
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar / 2)),
-        1e10,
+        1e11,
       );
-      expect(
-        (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
-      ).closeTo(BigNumber.from(BigInt(twoDollar / 2)), 1e10);
+      expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).closeTo(
+        BigNumber.from(BigInt(twoDollar / 2)),
+        1e11,
+      );
     });
 
     // In this test we make sure directDeposits of aTokens are accounted for by PoolPerformance using WETH
@@ -982,22 +1032,22 @@ describe("PoolPerformance", function () {
       // increases the price slightly
       expect(await poolPerformance.tokenPrice(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar)),
-        1e9,
+        1e11,
       );
 
       expect(await poolPerformance.tokenPriceAdjustedForManagerFee(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar)),
-        1e9,
+        1e11,
       );
 
       expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar / 2)),
-        1e9,
+        1e11,
       );
 
       expect(await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).to.be.closeTo(
         BigNumber.from(BigInt(twoDollar / 2)),
-        1e9,
+        1e11,
       );
     });
   });
@@ -1063,12 +1113,11 @@ describe("PoolPerformance", function () {
       // Check TokenPrice() should be $3
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(threeDollar.toString());
       // Check tokenPriceAdjustForPerformance == $2; (i.e directDepositFactor $1)
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.be.closeTo(
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         twoDollar,
         2,
       );
     });
-
     // This tests checks that pools that existed with funds before PoolPerformance is deployed
     // That they are not penalized
     it("existing pool unintitialized with deposit + tokenPriceAdjustedForPerformance", async () => {
@@ -1148,7 +1197,7 @@ describe("PoolPerformance", function () {
       // TokenPrice should now be more than $2
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal("2666666666666666666");
       // Check tokenPriceAdjustForPerformance should still be $2; (i.e directDepositFactor $1)
-      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.be.closeTo(
+      expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         twoDollar,
         2,
       );

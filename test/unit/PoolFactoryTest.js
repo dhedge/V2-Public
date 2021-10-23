@@ -214,6 +214,18 @@ describe("PoolFactory", function () {
     const assetLendingPool = { asset: aaveLendingPool.address, assetType: 3, aggregator: usdPriceAggregator.address };
     const assetDai = { asset: dai.address, assetType: 4, aggregator: usd_price_feed.address }; // Lending enabled
     const assetUsdc = { asset: usdc.address, assetType: 4, aggregator: usd_price_feed.address }; // Lending enabled
+
+    // Any type 4 asset needs to have this configured
+    await aaveProtocolDataProvider.givenCalldataReturn(
+      iAaveProtocolDataProvider.encodeFunctionData("getReserveTokensAddresses", [usdc.address]),
+      abiCoder.encode(["address", "address", "address"], [ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS]),
+    );
+
+    await aaveProtocolDataProvider.givenCalldataReturn(
+      iAaveProtocolDataProvider.encodeFunctionData("getReserveTokensAddresses", [dai.address]),
+      abiCoder.encode(["address", "address", "address"], [ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS]),
+    );
+
     const assetSeth = { asset: sethAsset.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
     const assetHandlerInitAssets = [
       assetSusdProxy,
@@ -319,6 +331,7 @@ describe("PoolFactory", function () {
     await governance.setContractGuard(oneInchRouter.address, oneInchV3Guard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+    await governance.setAddresses([[toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider.address]]);
 
     const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
     console.log("openAssetGuardSetting:", openAssetGuardSetting);
@@ -893,7 +906,7 @@ describe("PoolFactory", function () {
     );
   });
 
-  it("should be able to manage assets", async function () {
+  it("should be able to manage assets 2", async function () {
     await expect(poolManagerLogicProxy.changeAssets([[slink, false]], [])).to.be.revertedWith(
       "only manager, trader or factory",
     );

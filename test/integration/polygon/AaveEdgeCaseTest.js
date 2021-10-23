@@ -155,7 +155,7 @@ describe("Polygon Mainnet Test", function () {
     SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushi.pools.usdc_weth.address);
     AMUSDC = await ethers.getContractAt(IERC20.abi, aave.aTokens.usdc);
     AMWETH = await ethers.getContractAt(IERC20.abi, aave.aTokens.weth);
-    VariableUSDT = await ethers.getContractAt(IERC20.abi, aave.variableDebtTokens.dai);
+    VariableUSDT = await ethers.getContractAt(IERC20.abi, aave.variableDebtTokens.usdt);
     VariableWETH = await ethers.getContractAt(IERC20.abi, aave.variableDebtTokens.weth);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());
