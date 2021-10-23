@@ -221,7 +221,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   /// @notice Get asset balance including any staked balance in external contracts
   /// @return balance of the asset
-  function assetBalance(address asset) public view returns (uint256 balance) {
+  function assetBalance(address asset) public view override returns (uint256 balance) {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     balance = IAssetGuard(guard).getBalance(poolLogic, asset);
   }
