@@ -1796,91 +1796,91 @@
             "contract": "Initializable",
             "label": "_initialized",
             "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:25"
           },
           {
             "contract": "Initializable",
             "label": "_initializing",
             "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:30"
           },
           {
             "contract": "Managed",
             "label": "manager",
             "type": "t_address",
-            "src": "contracts/Managed.sol:44"
+            "src": "contracts\\Managed.sol:44"
           },
           {
             "contract": "Managed",
             "label": "managerName",
             "type": "t_string_storage",
-            "src": "contracts/Managed.sol:45"
+            "src": "contracts\\Managed.sol:45"
           },
           {
             "contract": "Managed",
             "label": "_memberList",
             "type": "t_array(t_address)dyn_storage",
-            "src": "contracts/Managed.sol:47"
+            "src": "contracts\\Managed.sol:47"
           },
           {
             "contract": "Managed",
             "label": "_memberPosition",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "contracts/Managed.sol:48"
+            "src": "contracts\\Managed.sol:48"
           },
           {
             "contract": "Managed",
             "label": "_trader",
             "type": "t_address",
-            "src": "contracts/Managed.sol:50"
+            "src": "contracts\\Managed.sol:50"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "factory",
             "type": "t_address",
-            "src": "contracts/PoolManagerLogic.sol:69"
+            "src": "contracts\\PoolManagerLogic.sol:69"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "poolLogic",
             "type": "t_address",
-            "src": "contracts/PoolManagerLogic.sol:70"
+            "src": "contracts\\PoolManagerLogic.sol:70"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "supportedAssets",
             "type": "t_array(t_struct(Asset)14746_storage)dyn_storage",
-            "src": "contracts/PoolManagerLogic.sol:72"
+            "src": "contracts\\PoolManagerLogic.sol:72"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "assetPosition",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "contracts/PoolManagerLogic.sol:73"
+            "src": "contracts\\PoolManagerLogic.sol:73"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "announcedFeeIncreaseNumerator",
             "type": "t_uint256",
-            "src": "contracts/PoolManagerLogic.sol:76"
+            "src": "contracts\\PoolManagerLogic.sol:76"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "announcedFeeIncreaseTimestamp",
             "type": "t_uint256",
-            "src": "contracts/PoolManagerLogic.sol:77"
+            "src": "contracts\\PoolManagerLogic.sol:77"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "managerFeeNumerator",
             "type": "t_uint256",
-            "src": "contracts/PoolManagerLogic.sol:78"
+            "src": "contracts\\PoolManagerLogic.sol:78"
           },
           {
             "contract": "PoolManagerLogic",
             "label": "__gap",
             "type": "t_array(t_uint256)51_storage",
-            "src": "contracts/PoolManagerLogic.sol:349"
+            "src": "contracts\\PoolManagerLogic.sol:349"
           }
         ],
         "types": {
@@ -2378,6 +2378,143 @@
             "label": "struct IHasSupportedAsset.Asset[]"
           },
           "t_struct(Asset)15967_storage": {
+            "label": "struct IHasSupportedAsset.Asset",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_address"
+              },
+              {
+                "label": "isDeposit",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)51_storage": {
+            "label": "uint256[51]"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          }
+        }
+      }
+    },
+    "3845d584077306d3d2f73b47749eb77938332cded4c9904c61839203252d9805": {
+      "address": "0xFf3A3E3f2970B667d8D61405634EDB4557b5F233",
+      "txHash": "0x33660410352c14a0eb4dca797a75ebb2383747d8e4f19238af3f55c48ad6419a",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:30"
+          },
+          {
+            "contract": "Managed",
+            "label": "manager",
+            "type": "t_address",
+            "src": "contracts\\Managed.sol:47"
+          },
+          {
+            "contract": "Managed",
+            "label": "managerName",
+            "type": "t_string_storage",
+            "src": "contracts\\Managed.sol:48"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberList",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts\\Managed.sol:50"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\Managed.sol:51"
+          },
+          {
+            "contract": "Managed",
+            "label": "_trader",
+            "type": "t_address",
+            "src": "contracts\\Managed.sol:53"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "factory",
+            "type": "t_address",
+            "src": "contracts\\PoolManagerLogic.sol:70"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "poolLogic",
+            "type": "t_address",
+            "src": "contracts\\PoolManagerLogic.sol:71"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "supportedAssets",
+            "type": "t_array(t_struct(Asset)18008_storage)dyn_storage",
+            "src": "contracts\\PoolManagerLogic.sol:73"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "assetPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\PoolManagerLogic.sol:74"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedFeeIncreaseNumerator",
+            "type": "t_uint256",
+            "src": "contracts\\PoolManagerLogic.sol:77"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedFeeIncreaseTimestamp",
+            "type": "t_uint256",
+            "src": "contracts\\PoolManagerLogic.sol:78"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts\\PoolManagerLogic.sol:79"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "__gap",
+            "type": "t_array(t_uint256)51_storage",
+            "src": "contracts\\PoolManagerLogic.sol:393"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_struct(Asset)18008_storage)dyn_storage": {
+            "label": "struct IHasSupportedAsset.Asset[]"
+          },
+          "t_struct(Asset)18008_storage": {
             "label": "struct IHasSupportedAsset.Asset",
             "members": [
               {

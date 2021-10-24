@@ -690,17 +690,95 @@
           "asset": "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
           "assetType": "3",
           "aggregator": "0x7A6B761836012842d304C7e4d836F226e2b52eA9"
+        },
+        {
+          "name": "Balancer",
+          "asset": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
+          "assetType": "0",
+          "aggregator": "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66"
+        },
+        {
+          "name": "Balancer LP WMATIC-USDC-WETH-BAL",
+          "asset": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
+          "assetType": "0",
+          "aggregator": "0x18f7eDe0Fc695f0C3e120789d4EcF7F3FddF0D0c"
+        },
+        {
+          "name": "Balancer LP WETH-BAL",
+          "asset": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
+          "assetType": "0",
+          "aggregator": "0x0AA5667B3057CC032AD874F5344559a7C0FD99c9"
+        },
+        {
+          "name": "Balancer LP USDC-LINK-WETH-BAL-AAVE",
+          "asset": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
+          "assetType": "0",
+          "aggregator": "0x212C3403aBfad1180deB8e9c7f60CD57AdaAE8D2"
+        },
+        {
+          "name": "Balancer LP WBTC-USDC-WETH",
+          "asset": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
+          "assetType": "0",
+          "aggregator": "0x969238BFe3Eee033000B83ebb4DB29A904B88A66"
+        },
+        {
+          "name": "Balancer LP LINK-WETH-BAL-AAVE",
+          "asset": "0xce66904b68f1f070332cbc631de7ee98b650b499",
+          "assetType": "0",
+          "aggregator": "0x237c564B77E01D35392f407d4Dd08AF83dAa6C6e"
+        },
+        {
+          "name": "CEL",
+          "asset": "0xd85d1e945766fea5eda9103f918bd915fbca63e6",
+          "assetType": "0",
+          "aggregator": "0xc9ECF45956f576681bDc01F79602A79bC2667B0c"
+        },
+        {
+          "name": "COMP",
+          "asset": "0x8505b9d2254a7ae468c0e9dd10ccea3a837aef5c",
+          "assetType": "0",
+          "aggregator": "0x2A8758b7257102461BC958279054e372C2b1bDE6"
+        },
+        {
+          "name": "MANA",
+          "asset": "0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4",
+          "assetType": "0",
+          "aggregator": "0xA1CbF3Fe43BC3501e3Fc4b573e822c70e76A7512"
+        },
+        {
+          "name": "QUICK",
+          "asset": "0x831753dd7087cac61ab5644b308642cc1c33dc13",
+          "assetType": "0",
+          "aggregator": "0xa058689f4bCa95208bba3F265674AE95dED75B6D"
+        },
+        {
+          "name": "UNI",
+          "asset": "0xb33eaad8d922b1083446dc23f610c2567fb5180f",
+          "assetType": "0",
+          "aggregator": "0xdf0Fb4e4F928d2dCB76f438575fDD8682386e13C"
+        },
+        {
+          "name": "YFI",
+          "asset": "0xda537104d6a5edd53c6fbba9a898708e465260b6",
+          "assetType": "0",
+          "aggregator": "0x9d3A43c111E7b2C6601705D9fcF7a70c95b1dc55"
+        },
+        {
+          "name": "dUSD",
+          "asset": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
+          "assetType": "0",
+          "aggregator": "0x99A53914e8106cC092DbeD36E8D09F2a306B811E"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
       "PoolLogic": "0xE9F6C94567906947d781C059e64c3C1DA95FdBd7",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x3dB16dBf76b5edFF977A0b2F5e6f412238748B7b",
+      "PoolManagerLogic": "0xFf3A3E3f2970B667d8D61405634EDB4557b5F233",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
       "ERC20Guard": "0x65A1C0bE1151aEAcddc698e5dAcC4ed3c566744F",
-      "UniswapV2RouterGuard": "0x4Dd9e8e2030E587Ecb7413Cb7C3429F23a65F914",
+      "UniswapV2RouterGuard": "0x66C7f4822BCdC29290f0E44Df5F2F20dd5Ba2794",
       "SushiMiniChefV2Guard": "0x624660220C13bC6C987A05fa4f46cde4Cbe0D8d3",
       "SushiLPAssetGuard": "0x68c3fbAB170fF6D68B12A47c820a7155670195F2",
       "AaveLendingPoolAssetGuard": "0xF0cF578F86e4693b204c6Fa985Cb185B50ED36E0",
@@ -718,6 +796,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Fri, 08 Oct 2021 01:36:06 GMT"
+    "date": "Sun, 24 Oct 2021 07:01:12 GMT"
   }
 }
