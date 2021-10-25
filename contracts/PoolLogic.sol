@@ -398,7 +398,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset);
     uint256 tokenSupply = totalSupply();
     (uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
-    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
     uint256 availableFee = _availableManagerFee(
       fundValue,
       tokenSupply,
@@ -411,10 +410,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     // calculate exit fee
     if (getExitRemainingCooldown(msg.sender) > 0) {
-      exitFeeNumerator = exitFeeNumerator.mul(2);
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      fundTokenAmount = fundTokenAmount.mul(exitFeeDenominator).div(exitFeeDenominator.sub(exitFeeNumerator));
     }
-
-    fundTokenAmount = fundTokenAmount.mul(exitFeeDenominator).div(exitFeeDenominator.sub(exitFeeNumerator));
   }
 
   /// @notice Perform any additional processing on withdrawal of asset
