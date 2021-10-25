@@ -206,7 +206,7 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
   /// @notice Update treasury
   /// @dev owner can set a new treasury address
   /// @param _treasury new treasury address
-  function forceWithdraw(address _treasury) external onlyOwner {
+  function setTreasury(address _treasury) external onlyOwner {
     treasury = _treasury;
   }
 }
