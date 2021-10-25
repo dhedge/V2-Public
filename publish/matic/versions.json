@@ -788,7 +788,8 @@
       "QuickStakingRewardsGuard": "0xBe1abFCBCE1F4B472cb21B1d1deD0Dc3F5c501d0",
       "AaveIncentivesControllerGuard": "0xAF33891D6DD4e6fF6b1D676D77001B0F73197689",
       "AaveLendingPoolGuard": "0x118D2F02CBac5d0A4071632987dc0b765DdAb022",
-      "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44"
+      "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
+      "BalancerV2Guard": "0xC6CF4B058c51cf474c5984180e693AF438222363"
     },
     "network": {
       "name": "matic",
