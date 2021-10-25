@@ -7,9 +7,6 @@ const { getTag } = require("../../Helpers");
 
 use(chaiAlmost());
 
-let proxyAdmin, poolFactory, governance, assetHandler; // contracts
-let poolFactoryAddress, assetHandlerAddress; // proxy implementations
-
 const init = async (environment, deployedVersion = "") => {
   console.log("Initializing contracts and variables..");
 
@@ -54,6 +51,7 @@ const init = async (environment, deployedVersion = "") => {
   const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
   const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
   const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
+  const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
 
   const contractsArray = [
     { contract: Governance, name: "Governance" },
@@ -72,6 +70,7 @@ const init = async (environment, deployedVersion = "") => {
     { contract: QuickLPAssetGuard, name: "QuickLPAssetGuard" },
     { contract: QuickStakingRewardsGuard, name: "QuickStakingRewardsGuard" },
     { contract: OneInchV3Guard, name: "OneInchV3Guard" },
+    { contract: BalancerV2Guard, name: "BalancerV2Guard" },
   ];
 
   let contracts;
@@ -82,29 +81,30 @@ const init = async (environment, deployedVersion = "") => {
   }
 
   // create contract instances
-  proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdmin.abi, signer);
+  const proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdmin.abi, signer);
   contracts["ProxyAdmin"] = proxyAdminAddress;
 
-  poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy);
-  poolFactoryAddress = await proxyAdmin.getProxyImplementation(poolFactoryProxy.address);
-  poolFactory = PoolFactory.attach(poolFactoryAddress);
+  const poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy);
+  const poolFactoryAddress = await proxyAdmin.getProxyImplementation(poolFactoryProxy.address);
+  const poolFactory = PoolFactory.attach(poolFactoryAddress);
   contracts["PoolFactory"] = poolFactoryAddress;
 
-  assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy);
-  assetHandlerAddress = await proxyAdmin.getProxyImplementation(assetHandlerProxy.address);
-  assetHandler = AssetHandler.attach(assetHandlerAddress);
+  const assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy);
+  const assetHandlerAddress = await proxyAdmin.getProxyImplementation(assetHandlerProxy.address);
+  const assetHandler = AssetHandler.attach(assetHandlerAddress);
   contracts["AssetHandler"] = assetHandlerAddress;
 
-  governance = Governance.attach(contracts.Governance);
-  sushiLPAssetGuard = SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
-  quickLPAssetGuard = QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
-  poolLogic = PoolLogic.attach(contracts.PoolLogic);
-  poolManagerLogic = PoolManagerLogic.attach(contracts.PoolManagerLogic);
-  openAssetGuard = OpenAssetGuard.attach(contracts.OpenAssetGuard);
-  oneInchV3Guard = OpenAssetGuard.attach(contracts.OneInchV3Guard);
+  const governance = Governance.attach(contracts.Governance);
+  const sushiLPAssetGuard = SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
+  const quickLPAssetGuard = QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
+  const poolLogic = PoolLogic.attach(contracts.PoolLogic);
+  const poolManagerLogic = PoolManagerLogic.attach(contracts.PoolManagerLogic);
+  const openAssetGuard = OpenAssetGuard.attach(contracts.OpenAssetGuard);
+  const oneInchV3Guard = OpenAssetGuard.attach(contracts.OneInchV3Guard);
+  const balancerV2Guard = OpenAssetGuard.attach(contracts.BalancerV2Guard);
 
-  // const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault"); // uncomment once Balancer is deployed in prod
-  // const balancerV2Vault = await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress);
+  const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
+  const balancerV2Vault = await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress);
 
   console.log("PoolFactory Implementation:", poolFactoryAddress);
   console.log("PoolLogic Implementation:", contracts.PoolLogic);
@@ -116,7 +116,7 @@ const init = async (environment, deployedVersion = "") => {
   return {
     assetsFileName,
     balancerLps,
-    // balancerV2Vault, // uncomment once Balancer is deployed in prod
+    balancerV2Vault,
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
@@ -136,6 +136,7 @@ const init = async (environment, deployedVersion = "") => {
     governance,
     sushiLPAssetGuard,
     quickLPAssetGuard,
+    balancerV2Guard,
     poolLogic,
     poolManagerLogic,
     openAssetGuard,
