@@ -38,17 +38,18 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
-import "./interfaces/IERC20Extended.sol"; // includes decimals()
+import "./utils/AddressHelper.sol";
 
-/// @title DynamicBond
-contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
+/// @title DynamicBonds
+contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   using SafeMathUpgradeable for uint256;
-  using SafeERC20Upgradeable for IERC20Extended;
+  using AddressHelper for address;
 
   event SetBondTerms(uint256 principalAvailable, uint256 expiryTimestamp);
   event UpdateBondPrice(uint256 index, PrincipalPrice principalPrice);
+  event UpdateBondPrices(uint256[] index, PrincipalPrice[] principalPrice);
   event AddBondPrices(PrincipalPrice[] principalPrices);
   event Deposit(
     address indexed user,
@@ -79,8 +80,8 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
     uint256 lockEndTimestamp; // ending timestamp for the principal lockup
   }
 
-  IERC20Extended public payoutToken; // token paid for principal eg. USDC
-  IERC20Extended public principalToken; // inflow token eg. DHT
+  address public payoutToken; // token paid for principal eg. USDC
+  address public principalToken; // inflow token eg. DHT
   address public treasury; // receives payout token
   uint256 public debtTotal; // tracks the total amount of owed principal tokens
   uint256 public bondNumber; // tracks total number of issued bonds
@@ -102,8 +103,8 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
     __Ownable_init();
     __Pausable_init();
 
-    payoutToken = IERC20Extended(_payoutToken);
-    principalToken = IERC20Extended(_principalToken);
+    payoutToken = _payoutToken;
+    principalToken = _principalToken;
     treasury = _treasury;
     minPrincipalPrice = _minPrincipalPrice;
     maxPrincipalAvailable = _maxPrincipalAvailable;
@@ -115,6 +116,8 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
   /// @param _expiryTimestamp expired timestamp
   function setBondTerms(uint256 _principalAvailable, uint256 _expiryTimestamp) external onlyOwner {
     require(_principalAvailable <= maxPrincipalAvailable, "exceed max avaialble principal");
+    require(_expiryTimestamp > block.timestamp, "invalid expiry timestamp");
+
     bondTerms.principalAvailable = _principalAvailable;
     bondTerms.expiryTimestamp = _expiryTimestamp;
 
@@ -137,12 +140,33 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
   /// @dev only owner can set bond terms
   /// @param _index principal price index
   /// @param _principalPrice principal price
-  function updateBondPrice(uint256 _index, PrincipalPrice memory _principalPrice) external onlyOwner {
+  function _updateBondPrice(uint256 _index, PrincipalPrice memory _principalPrice) internal {
     require(_index < bondTerms.principalPrices.length, "invalid index");
-    require(_principalPrice.price >= minPrincipalPrice, "invalid principalPrices");
+    require(_principalPrice.price >= minPrincipalPrice, "invalid principal price");
     bondTerms.principalPrices[_index] = _principalPrice;
+  }
+
+  /// @notice update bond principal prices
+  /// @dev only owner can set bond terms
+  /// @param _index principal price index
+  /// @param _principalPrice principal price
+  function updateBondPrice(uint256 _index, PrincipalPrice memory _principalPrice) external onlyOwner {
+    _updateBondPrice(_index, _principalPrice);
 
     emit UpdateBondPrice(_index, _principalPrice);
+  }
+
+  /// @notice update bond principal prices
+  /// @dev only owner can set bond terms
+  /// @param _indexes principal price index list
+  /// @param _principalPrices principal price list
+  function updateBondPrices(uint256[] memory _indexes, PrincipalPrice[] memory _principalPrices) external onlyOwner {
+    require(_indexes.length == _principalPrices.length, "length doesn't match");
+    for (uint256 i = 0; i < _indexes.length; i++) {
+      _updateBondPrice(_indexes[i], _principalPrices[i]);
+    }
+
+    emit UpdateBondPrices(_indexes, _principalPrices);
   }
 
   /// @notice Creates a new bond for the user
@@ -157,9 +181,12 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
     require(_principalPriceIndex < bondTerms.principalPrices.length, "invalid principal price index");
 
     PrincipalPrice memory principalPrice = bondTerms.principalPrices[_principalPriceIndex];
+    require(principalPrice.price >= minPrincipalPrice, "too low principal price");
     require(principalPrice.lockPeriod == _lockPeriod, "lock option not match");
     uint256 needToPay = _principalAmount.mul(principalPrice.price).div(1e18);
-    payoutToken.transferFrom(msg.sender, treasury, needToPay);
+    payoutToken.tryAssemblyCall(
+      abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, treasury, needToPay)
+    );
 
     bonds[bondNumber] = Bond({
       principalLockAmount: _principalAmount,
@@ -190,7 +217,9 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
 
     bond.principalClaimed = true;
     debtTotal -= bond.principalLockAmount;
-    require(principalToken.transfer(msg.sender, bond.principalLockAmount), "failed to transfer");
+    principalToken.tryAssemblyCall(
+      abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, bond.principalLockAmount)
+    );
 
     emit Claim(msg.sender, _bondId);
   }
@@ -199,8 +228,8 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
   /// @dev owner can withdraw any erc20 tokens
   /// @param _token ERC20 token address
   /// @param _amount ERC20 token amount to withdraw
-  function forceWithdraw(IERC20Extended _token, uint256 _amount) external onlyOwner {
-    require(_token.transfer(msg.sender, _amount), "failed to transfer");
+  function forceWithdraw(address _token, uint256 _amount) external onlyOwner {
+    _token.tryAssemblyCall(abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, _amount));
   }
 
   /// @notice Update treasury
@@ -208,5 +237,19 @@ contract DynamicBond is OwnableUpgradeable, PausableUpgradeable {
   /// @param _treasury new treasury address
   function setTreasury(address _treasury) external onlyOwner {
     treasury = _treasury;
+  }
+
+  /// @notice Update minimum principal price
+  /// @dev owner can update the minimum principal price
+  /// @param _minPrincipalPrice minimum principal price
+  function setMinPrincipalPrice(uint256 _minPrincipalPrice) external onlyOwner {
+    minPrincipalPrice = _minPrincipalPrice;
+  }
+
+  /// @notice Update maximum principal available
+  /// @dev owner can update the maximum principal available
+  /// @param _maxPrincipalAvailable maximum principal available
+  function setMaxPrincipalAvailable(uint256 _maxPrincipalAvailable) external onlyOwner {
+    maxPrincipalAvailable = _maxPrincipalAvailable;
   }
 }
