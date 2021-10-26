@@ -75,6 +75,8 @@ contract PoolPerformance is OwnableUpgradeable {
   // Stores the internal value ratio numerator
   mapping(address => uint256) public internalValueFactorMap;
 
+  bool public enabled;
+
   /// @notice initialisation for the contract
   function initialize() external initializer {
     __Ownable_init();
@@ -194,6 +196,9 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @dev The value recorded is per token, it resets the internal balances to equal external balances once recorded.
   /// @param poolAddress The address of the pool
   function recordExternalValue(address poolAddress) external {
+    if (!enabled) {
+      return;
+    }
     if (!poolInitialized[poolAddress]) {
       _updateInternalBalances(poolAddress);
       poolInitialized[poolAddress] = true;
@@ -263,6 +268,9 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param asset The address of the asset
   /// @param amount The amount of the asset
   function addAssetBalance(address asset, uint256 amount) external {
+    if (!enabled) {
+      return;
+    }
     address poolAddress = msg.sender;
     if (!poolInitialized[poolAddress]) {
       _updateInternalBalances(poolAddress);
@@ -337,6 +345,9 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @param a numerator
   /// @param b The amount its being allocated over
   function adjustInternalValueFactor(uint256 a, uint256 b) external {
+    if (!enabled) {
+      return;
+    }
     address poolAddress = msg.sender;
     if (internalValueFactorMap[poolAddress] == 0) {
       internalValueFactorMap[poolAddress] = DENOMINATOR.mul(b.sub(a)).div(b);
@@ -348,12 +359,18 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @notice Resets the internal balances to equal the external balances
   /// @dev Used to update the internal balances after a manager executes a transaction/s should only be called by the pool
   function updateInternalBalances() external {
+    if (!enabled) {
+      return;
+    }
     _updateInternalBalances(msg.sender);
   }
 
   /// @notice Sets the pool as initialized
   /// @dev Should only be called when creating an empty pool
   function initializePool() external {
+    if (!enabled) {
+      return;
+    }
     poolInitialized[msg.sender] = true;
   }
 
@@ -410,5 +427,10 @@ contract PoolPerformance is OwnableUpgradeable {
     } else {
       return AaveAddresses(address(0), address(0));
     }
+  }
+
+  /// @notice Enable PoolPerformance
+  function toggleEnabled() external onlyOwner {
+    enabled = !enabled;
   }
 }
