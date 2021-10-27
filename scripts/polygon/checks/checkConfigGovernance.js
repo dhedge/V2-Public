@@ -53,16 +53,17 @@ const main = async (initializeData) => {
           const deployedGuard = contracts[name];
           const governanceContractGuard = await governance.contractGuards(csvContractGuard.ContractAddress);
           const csvContractGuardAddress = csvContractGuard.GuardAddress;
+          const guardDescription = csvContractGuard.Description;
 
           assert(
             deployedGuard == governanceContractGuard,
-            `Contract guard ${name} deployment doesn't match Governance setting. Governance contract: ${governanceContractGuard}, Versions deployment: ${deployedGuard}`,
+            `Contract guard ${guardDescription} deployment doesn't match Governance setting. Governance contract: ${governanceContractGuard}, Versions deployment: ${deployedGuard}`,
           );
           assert(
             governanceContractGuard == csvContractGuardAddress,
-            `Contract guard ${name} deployment doesn't match Contract Guard CSV. Governance contract: ${governanceContractGuard}, CSV Contract Guards: ${csvContractGuardAddress}`,
+            `Contract guard ${guardDescription} deployment doesn't match Contract Guard CSV. Governance contract: ${governanceContractGuard}, CSV Contract Guards: ${csvContractGuardAddress}`,
           );
-          console.log("Contract guard", name, "ok");
+          console.log("Contract guard", guardDescription, "ok");
         }
       }
 
