@@ -188,6 +188,32 @@ const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHan
   return foundInVersions;
 };
 
+const getAggregator = async (csvAsset) => {
+  const assetName = csvAsset["Asset Name"];
+  let aggregator;
+
+  switch (assetName) {
+    case "dUSD":
+      // Deploy DHedgePoolAggregator
+      const assetAddress = csvAsset["Address"];
+      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
+      const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
+      await dHedgePoolAggregator.deployed();
+      await tryVerify(
+        hre,
+        dHedgePoolAggregator.address,
+        "contracts/assets/DHedgePoolAggregator.sol:DHedgePoolAggregator",
+        [assetAddress],
+      );
+      aggregator = dHedgePoolAggregator.address;
+      break;
+    default:
+      aggregator = csvAsset["Chainlink Price Feed"];
+  }
+
+  return aggregator;
+};
+
 module.exports = {
   writeCsv,
   tryVerify,
@@ -199,4 +225,5 @@ module.exports = {
   nonceLog,
   checkAsset,
   checkBalancerLpAsset,
+  getAggregator,
 };

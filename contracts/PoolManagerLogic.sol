@@ -175,6 +175,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
 
+    address guard = IHasGuardInfo(factory).getAssetGuard(asset);
+    IAssetGuard(guard).removeAssetCheck(poolLogic, asset);
+
     uint256 length = supportedAssets.length;
     Asset memory lastAsset = supportedAssets[length.sub(1)];
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
@@ -218,7 +221,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   /// @notice Get asset balance including any staked balance in external contracts
   /// @return balance of the asset
-  function assetBalance(address asset) public view returns (uint256 balance) {
+  function assetBalance(address asset) public view override returns (uint256 balance) {
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     balance = IAssetGuard(guard).getBalance(poolLogic, asset);
   }
