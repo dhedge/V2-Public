@@ -80,8 +80,8 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     uint256 lockEndTimestamp; // ending timestamp for the principal lockup
   }
 
-  address public payoutToken; // token paid for principal eg. USDC
-  address public principalToken; // inflow token eg. DHT
+  address public depositToken; // token paid for principal eg. USDC
+  address public payoutToken; // inflow token eg. DHT
   address public treasury; // receives payout token
   uint256 public debtTotal; // tracks the total amount of owed principal tokens
   uint256 public bondNumber; // tracks total number of issued bonds
@@ -94,8 +94,8 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   uint256 private maxPrincipalAvailable; // safety to ensure a high sell amount isn’t set accidentally
 
   function initialize(
+    address _depositToken,
     address _payoutToken,
-    address _principalToken,
     address _treasury,
     uint256 _minPrincipalPrice,
     uint256 _maxPrincipalAvailable
@@ -103,8 +103,8 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     __Ownable_init();
     __Pausable_init();
 
+    depositToken = _depositToken;
     payoutToken = _payoutToken;
-    principalToken = _principalToken;
     treasury = _treasury;
     minPrincipalPrice = _minPrincipalPrice;
     maxPrincipalAvailable = _maxPrincipalAvailable;
@@ -184,7 +184,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     require(principalPrice.price >= minPrincipalPrice, "too low principal price");
     require(principalPrice.lockPeriod == _lockPeriod, "lock option not match");
     uint256 needToPay = _principalAmount.mul(principalPrice.price).div(1e18);
-    payoutToken.tryAssemblyCall(
+    depositToken.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, treasury, needToPay)
     );
 
@@ -217,7 +217,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
 
     bond.principalClaimed = true;
     debtTotal -= bond.principalLockAmount;
-    principalToken.tryAssemblyCall(
+    payoutToken.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, bond.principalLockAmount)
     );
 
