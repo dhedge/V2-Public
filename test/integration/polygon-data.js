@@ -86,6 +86,11 @@ const assets = {
   balancer: "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
   miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
+  ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+};
+
+const eth_price_feeds = {
+  ghst: "0xe638249AF9642CdA55A92245525268482eE4C67b",
 };
 
 const price_feeds = {
@@ -107,4 +112,5 @@ module.exports = {
   oneinch,
   assets,
   price_feeds,
+  eth_price_feeds,
 };
