@@ -271,8 +271,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
-    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
-
     // calculate the exit fee
     uint256 fundValue = _mintManagerFee();
 
@@ -288,6 +286,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
     poolPerformance.recordExternalValue(address(this));
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
@@ -352,15 +351,19 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
     require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
-    // calculate the exit fee
-    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-    uint256 exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-
     uint256 fundValue = _mintManagerFee();
+
+    uint256 exitFee;
+    // If withdrawing all existing tokens, no need to pay fee.
+    if (_fundTokenAmount == totalSupply()) {
+      exitFee = 0;
+    } else {
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+    }
 
     // calculate the proportion
     uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
-
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
@@ -406,13 +409,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       managerFeeDenominator
     );
 
-    fundTokenAmount = assetValue.mul(tokenSupply.add(availableFee)).div(fundValue);
+    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
-    // calculate exit fee
-    if (getExitRemainingCooldown(msg.sender) > 0) {
-      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-      fundTokenAmount = fundTokenAmount.mul(exitFeeDenominator).div(exitFeeDenominator.sub(exitFeeNumerator));
-    }
+    fundTokenAmount = assetValue.mul(tokenSupply.add(availableFee)).div(fundValue).mul(exitFeeDenominator).div(
+      exitFeeDenominator.sub(exitFeeNumerator)
+    );
   }
 
   /// @notice Perform any additional processing on withdrawal of asset

@@ -28,7 +28,7 @@ describe("WithdrawSingle Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, []);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -287,6 +287,7 @@ describe("WithdrawSingle Test", function () {
   });
 
   it("not able to withdrawSingle 300 USDC", async function () {
+    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
     await expect(poolLogicProxy.withdrawSingle(units(10000), assets.usdc)).to.be.revertedWith("insufficient balance");
 
     const withdrawAmount = units(300);
@@ -301,27 +302,28 @@ describe("WithdrawSingle Test", function () {
     checkAlmostSame(withdrawMaxAmount, units(250).mul(101).div(100));
   });
 
-  it("able to withdrawSingle 200 USDC (early withdraw)", async function () {
-    const withdrawAmount = units(200);
+  // Disabled early withdraw for now
+  // it("able to withdrawSingle 200 USDC (early withdraw)", async function () {
+  //   const withdrawAmount = units(200);
 
-    const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
-    const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-    const withdrawMaxAmountBefore = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
+  //   const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+  //   const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+  //   const withdrawMaxAmountBefore = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
 
-    await poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc);
+  //   await poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc);
 
-    const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
-    const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
+  //   const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+  //   const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
-    // check with remove 0.5% exit fee
-    checkAlmostSame(usdcBalanceBefore, units(199, 6).add(usdcBalanceAfter));
-    checkAlmostSame(totalFundValueBefore, units(199).add(totalFundValueAfter));
+  //   // check with remove 0.5% exit fee
+  //   checkAlmostSame(usdcBalanceBefore, units(199, 6).add(usdcBalanceAfter));
+  //   checkAlmostSame(totalFundValueBefore, units(199).add(totalFundValueAfter));
 
-    checkAlmostSame(
-      withdrawMaxAmountBefore,
-      withdrawAmount.add(await poolLogicProxy.getWithdrawSingleMax(assets.usdc)),
-    );
-  });
+  //   checkAlmostSame(
+  //     withdrawMaxAmountBefore,
+  //     withdrawAmount.add(await poolLogicProxy.getWithdrawSingleMax(assets.usdc)),
+  //   );
+  // });
 
   it("able to withdrawSingle 20 USDC", async function () {
     const withdrawAmount = units(20);
