@@ -54,6 +54,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import "./interfaces/IERC20Extended.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
@@ -234,7 +235,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
     );
 
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).addAssetBalance(_asset, _amount);
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).changeAssetBalance(_asset, _amount, 0);
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -265,23 +266,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @notice Withdraw assets based on the fund token amount
   /// @param _fundTokenAmount the fund token amount
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
+    require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
-    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
     // calculate the exit fee
     uint256 fundValue = _mintManagerFee();
 
-    uint256 exitFee;
-    if (getExitRemainingCooldown(msg.sender) > 0 && totalSupply() != _fundTokenAmount) {
-      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-      // We need to adjust the performance down by the value of the exit fee distributed to remaining token holders
-      poolPerformance.adjustInternalValueFactor(exitFee, totalSupply().sub(_fundTokenAmount).add(exitFee));
-    }
-
     // calculate the proportion
-    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
+    uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
 
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
@@ -292,6 +286,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
 
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
     poolPerformance.recordExternalValue(address(this));
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
@@ -344,6 +339,80 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       totalSupply(),
       withdrawnAssets,
       block.timestamp
+    );
+  }
+
+  /// @notice Withdraw single asset based on the fund token amounts
+  /// @param _fundTokenAmount the fund token amount
+  /// @param _asset the withdraw asset address
+  function withdrawSingle(uint256 _fundTokenAmount, address _asset) external virtual nonReentrant whenNotPaused {
+    require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
+    require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
+    require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
+
+    uint256 fundValue = _mintManagerFee();
+
+    uint256 exitFee;
+    // If withdrawing all existing tokens, no need to pay fee.
+    if (_fundTokenAmount == totalSupply()) {
+      exitFee = 0;
+    } else {
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+    }
+
+    // calculate the proportion
+    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
+    // first return funded tokens
+    _burn(msg.sender, _fundTokenAmount);
+
+    uint256 valueWithdrawn = fundValue.mul(portion).div(10**18);
+    uint256 assetPrice = IHasAssetInfo(factory).getAssetPrice(_asset);
+    uint256 withdrawAmount = valueWithdrawn.mul(10**IERC20Extended(_asset).decimals()).div(assetPrice);
+
+    require(IERC20Upgradeable(_asset).balanceOf(address(this)) >= withdrawAmount, "insufficient asset amount");
+    _asset.tryAssemblyCall(abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, withdrawAmount));
+
+    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](1);
+    withdrawnAssets[0] = WithdrawnAsset({asset: _asset, amount: withdrawAmount, externalWithdrawProcessed: false});
+
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).changeAssetBalance(
+      _asset,
+      0,
+      withdrawAmount
+    );
+
+    emit Withdrawal(
+      address(this),
+      msg.sender,
+      valueWithdrawn,
+      _fundTokenAmount,
+      balanceOf(msg.sender),
+      fundValue.sub(valueWithdrawn),
+      totalSupply(),
+      withdrawnAssets,
+      block.timestamp
+    );
+  }
+
+  function getWithdrawSingleMax(address _asset) external view returns (uint256 fundTokenAmount) {
+    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+    uint256 assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset);
+    uint256 tokenSupply = totalSupply();
+    (uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    uint256 availableFee = _availableManagerFee(
+      fundValue,
+      tokenSupply,
+      tokenPriceAtLastFeeMint,
+      managerFeeNumerator,
+      managerFeeDenominator
+    );
+
+    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+
+    fundTokenAmount = assetValue.mul(tokenSupply.add(availableFee)).div(fundValue).mul(exitFeeDenominator).div(
+      exitFeeDenominator.sub(exitFeeNumerator)
     );
   }
 
