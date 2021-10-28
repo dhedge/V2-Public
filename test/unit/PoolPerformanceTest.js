@@ -97,7 +97,7 @@ describe("PoolFactory", function () {
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
     poolPerformance = await upgrades.deployProxy(PoolPerformance);
     await poolPerformance.deployed();
-    await poolPerformance.toggleEnabled();
+    await poolPerformance.enable();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     const poolLogic = await PoolLogic.deploy();
