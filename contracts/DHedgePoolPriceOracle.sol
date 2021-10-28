@@ -29,39 +29,31 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: MIT
 
-import "./IHasSupportedAsset.sol";
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-interface IPoolPerformance {
-  function addAssetBalance(address asset, uint256 amount) external;
+import "./interfaces/IPoolLogic.sol";
+import "./interfaces/IPoolFactory.sol";
+import "./interfaces/IPoolPerformance.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-  function hasExternalBalances(address poolAddress) external view returns (bool);
+/// @notice Logic implementation for tracking pool performance
+contract DHedgePoolPriceOracle is OwnableUpgradeable {
+  address public poolAddress;
 
-  function updateInternalBalances() external;
+  /// @notice initialisation for the contract
+  function initialize(address _poolAddress) external initializer {
+    poolAddress = _poolAddress;
+    __Ownable_init();
+  }
 
-  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
-    external
-    view
-    returns (uint256[] memory supportedAssetBalances);
-
-  function updatedInternalBalancesByDiff(
-    IHasSupportedAsset.Asset[] memory supportedAssets,
-    uint256[] memory beforeSupportedAssetBalances,
-    uint256[] memory afterSupportedAssetBalances
-  ) external;
-
-  function recordExternalValue(address poolAddress) external;
-
-  function adjustInternalValueFactor(uint256 a, uint256 b) external;
-
-  function resetInternalValueFactor() external;
-
-  function initializePool() external;
-
-  function tokenPriceAdjustedForManagerFee(address poolAddress) external view returns (uint256);
+  /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
+  /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
+  function getPrice() external view returns (uint256) {
+    address poolPerformance = IPoolFactory(IPoolLogic(poolAddress).factory()).poolPerformanceAddress();
+    return IPoolPerformance(poolPerformance).tokenPriceAdjustedForManagerFee(poolAddress);
+  }
 }

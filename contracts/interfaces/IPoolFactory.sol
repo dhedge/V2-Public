@@ -36,4 +36,6 @@ pragma solidity 0.7.6;
 
 interface IPoolFactory {
   function governanceAddress() external view returns (address);
+
+  function poolPerformanceAddress() external view returns (address);
 }
