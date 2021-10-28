@@ -179,6 +179,11 @@
       "address": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
       "txHash": "0x5d8f2688ecd6e0c04d524ff34376c32009960ea05834c0705cf16e771d3253ff",
       "kind": "transparent"
+    },
+    {
+      "address": "0xE749cD67F9e6727b868bB2480195ee301aA4BA33",
+      "txHash": "0x768791201005dc4538ff6247d787af8401faf57bb624816d74d05c5059b531bb",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -3210,6 +3215,67 @@
           },
           "t_array(t_uint256)50_storage": {
             "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "4baff9cfd3e04131a4c60f02d837fd4490020ce092e90dcc10076369f860e3a7": {
+      "address": "0x8f101554017fa5D93b00eb01Ca958f2c6224F84e",
+      "txHash": "0x4c65f7054e57740ea6e7ade5e366aa85ae83678b6968a2bcf387267991417b61",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "DHedgePoolPriceOracle",
+            "label": "poolAddress",
+            "type": "t_address",
+            "src": "contracts/DHedgePoolPriceOracle.sol:45"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
           }
         }
       }

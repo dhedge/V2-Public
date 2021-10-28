@@ -4,7 +4,7 @@ const { use, expect } = require("chai");
 
 use(chaiAlmost());
 
-const oracleAddress = "0xb63d63D02A3c912A46693Cb333c55e8ae00c3c88"
+const oracleAddress = "0xE749cD67F9e6727b868bB2480195ee301aA4BA33"
 
 describe("DHedgePoolPriceOracle", function () {
   let dhedgePoolPriceOracle
