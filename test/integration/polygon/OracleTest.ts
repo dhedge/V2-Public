@@ -1,21 +1,22 @@
-const { ethers } = require("hardhat");
-const chaiAlmost = require("chai-almost");
+const { ethers, upgrades } = require("hardhat");
+import { Contract, ContractFactory } from "ethers";
 const { use, expect } = require("chai");
+import { solidity } from "ethereum-waffle";
 
-use(chaiAlmost());
+use(solidity);
 
 const poolAddress = "0xe3528a438b94e64669def9b875c381c46ef713bf";
 const deceimals = 6;
 
 describe("DHedgePoolPriceOracle", function () {
-  let dhedgePoolPriceOracle;
-  let poolLogic;
+  let dhedgePoolPriceOracle: Contract;
+  let poolLogic: Contract;
 
   beforeEach(async function () {
-    const DhedgePoolPriceOracle = await ethers.getContractFactory("DHedgePoolPriceOracle");
+    const DhedgePoolPriceOracle: ContractFactory = await ethers.getContractFactory("DHedgePoolPriceOracle");
     dhedgePoolPriceOracle = await upgrades.deployProxy(DhedgePoolPriceOracle, [poolAddress, 6]);
     await dhedgePoolPriceOracle.deployed();
-    const PoolLogic = await ethers.getContractFactory("PoolLogic");
+    const PoolLogic: ContractFactory = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.attach(poolAddress);
   });
 
@@ -26,7 +27,7 @@ describe("DHedgePoolPriceOracle", function () {
     const tokenPrice = await poolLogic.tokenPrice();
     console.log("token Price ", tokenPrice.toString());
 
-    //not differ more than 10% to token price adjusted factor 10e13
+    //not differ more than 10% to token price reduced to decimals
     expect(
       priceFromOracle.gte(
         tokenPrice
