@@ -37,8 +37,8 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "./interfaces/IPoolLogic.sol";
-import "./interfaces/IERC20Extended.sol";
+import "../interfaces/IPoolLogic.sol";
+import "../interfaces/IERC20Extended.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /// @notice Logic implementation for tracking pool performance
