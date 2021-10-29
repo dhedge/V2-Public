@@ -38,7 +38,11 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 interface IPoolPerformance {
-  function addAssetBalance(address asset, uint256 amount) external;
+  function changeAssetBalance(
+    address asset,
+    uint256 plusAmount,
+    uint256 minusAmount
+  ) external;
 
   function hasExternalBalances(address poolAddress) external view returns (bool);
 

@@ -266,11 +266,16 @@ contract PoolPerformance is OwnableUpgradeable {
     }
   }
 
-  /// @notice Increase the internal balanace of the given asset
+  /// @notice Increase/decrease the internal balanace of the given asset
   /// @dev Used for including new deposits in the internal balance
   /// @param asset The address of the asset
-  /// @param amount The amount of the asset
-  function addAssetBalance(address asset, uint256 amount) external isEnabled {
+  /// @param plusAmount The increased amount of the asset
+  /// @param minusAmount The decreased amount of the asset
+  function changeAssetBalance(
+    address asset,
+    uint256 plusAmount,
+    uint256 minusAmount
+  ) external isEnabled {
     address poolAddress = msg.sender;
     if (!poolInitialized[poolAddress]) {
       _updateInternalBalances(poolAddress);
@@ -278,7 +283,7 @@ contract PoolPerformance is OwnableUpgradeable {
       return;
     }
 
-    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(amount);
+    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(plusAmount).sub(minusAmount);
   }
 
   /// @notice Checks to see if the external balances of a pool are greater than the internal balances

@@ -821,14 +821,18 @@ describe("PoolFactory", function () {
     let totalSupply = await poolLogicProxy.totalSupply();
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
-    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
+    await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
+      "cooldown active",
+    );
 
-    let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee();
-    let exitFee = ethers.BigNumber.from(withdrawAmount.toString()).mul(exitFeeNumerator).div(exitFeeDenominator);
+    // await poolFactory.setExitCooldown(0);
+    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
+
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
     let event = await withdrawalEvent;
 
-    let fundTokensWithdrawn = ethers.BigNumber.from(withdrawAmount.toString()).sub(exitFee);
+    let fundTokensWithdrawn = withdrawAmount;
     let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
