@@ -549,6 +549,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     price = _tokenPrice(fundValue, tokenSupply);
   }
 
+  /// @notice Get price of the asset adjusted for any unminted manager fees
+  /// @param price A price of the asset
+  function tokenPriceAdjustedForManagerFee() external view returns (uint256 price) {
+    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+    uint256 managerFee = availableManagerFee();
+    uint256 tokenSupply = totalSupply().add(managerFee);
+
+    price = _tokenPrice(fundValue, tokenSupply);
+  }
+
   /// @notice Get price of the asset internal call
   /// @param _fundValue The total fund value of the pool
   /// @param _tokenSupply The total token supply of the pool
@@ -561,7 +571,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   /// @notice Get available manager fee of the pool
   /// @return fee available manager fee of the pool
-  function availableManagerFee() external view returns (uint256 fee) {
+  function availableManagerFee() public view returns (uint256 fee) {
     uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 

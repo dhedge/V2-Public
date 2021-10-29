@@ -866,6 +866,19 @@
   },
   {
     "inputs": [],
+    "name": "tokenPriceAdjustedForManagerFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "tokenPriceAtLastFeeMint",
     "outputs": [
       {
