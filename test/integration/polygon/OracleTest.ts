@@ -6,7 +6,7 @@ import { solidity } from "ethereum-waffle";
 use(solidity);
 
 const poolAddress = "0xe3528a438b94e64669def9b875c381c46ef713bf";
-const deceimals = 6;
+const decimals = 6;
 
 describe("DHedgePoolPriceOracle", function () {
   let dhedgePoolPriceOracle: Contract;
@@ -14,7 +14,7 @@ describe("DHedgePoolPriceOracle", function () {
 
   beforeEach(async function () {
     const DhedgePoolPriceOracle: ContractFactory = await ethers.getContractFactory("DHedgePoolPriceOracle");
-    dhedgePoolPriceOracle = await upgrades.deployProxy(DhedgePoolPriceOracle, [poolAddress, 6]);
+    dhedgePoolPriceOracle = await upgrades.deployProxy(DhedgePoolPriceOracle, [poolAddress, decimals]);
     await dhedgePoolPriceOracle.deployed();
     const PoolLogic: ContractFactory = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.attach(poolAddress);
@@ -33,7 +33,7 @@ describe("DHedgePoolPriceOracle", function () {
         tokenPrice
           .mul(9)
           .div(10)
-          .div(10 ** (18 - deceimals)),
+          .div(10 ** (18 - decimals)),
       ),
     ).to.be.true;
     expect(
@@ -41,7 +41,7 @@ describe("DHedgePoolPriceOracle", function () {
         tokenPrice
           .mul(11)
           .div(10)
-          .div(10 ** (18 - deceimals)),
+          .div(10 ** (18 - decimals)),
       ),
     ).to.be.true;
   });
