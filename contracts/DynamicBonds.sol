@@ -47,58 +47,56 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
 
-  event SetBondTerms(uint256 principalAvailable, uint256 expiryTimestamp);
-  event UpdateBondPrice(uint256 index, PrincipalPrice principalPrice);
-  event UpdateBondPrices(uint256[] index, PrincipalPrice[] principalPrice);
-  event AddBondPrices(PrincipalPrice[] principalPrices);
+  event SetBondTerms(uint256 payoutAvailable, uint256 expiryTimestamp);
+  event UpdateBondOption(uint256 index, BondOption bondOption);
+  event UpdateBondOptions(uint256[] index, BondOption[] bondOption);
+  event AddBondOptions(BondOption[] bondOptions);
   event Deposit(
     address indexed user,
     uint256 bondId,
-    uint256 principalAmount,
-    uint256 principalPrice,
-    uint256 lockPeriod
+    uint256 payoutAmount,
+    BondOption bondOption
   );
   event Claim(address indexed user, uint256 bondId);
 
-  struct PrincipalPrice {
-    uint256 price; // principal token sell prices in 18 decimals.
-    uint256 lockPeriod; // principal lock period in seconds.
+  struct BondOption {
+    uint256 price; // payout token sell prices in 18 decimals.
+    uint256 lockPeriod; // payout token lock period in seconds.
   }
   struct BondTerms {
     // the sale settings
-    uint256 principalAvailable; // amount of principal available to sell for the sale period
+    uint256 payoutAvailable; // amount of payout available to sell for the sale period
     uint256 expiryTimestamp; // when the sale period expires
-    PrincipalPrice[] principalPrices; // principal token sell prices in 18 decimals. e.g. 0: price for 1 week lockup, 1: price for 1 month lockup, 2: price for 6 months lockup, 3: price for 1 year lockup
+    BondOption[] bondOptions; // payout sell options. e.g. 0: price for 1 week lockup, 1: price for 1 month lockup, 2: price for 6 months lockup, 3: price for 1 year lockup
   }
   struct Bond {
     // an instance of a bond that’s been issued to a user
-    uint256 principalLockAmount; // amount of principal that is locked for the user
-    bool principalClaimed; // if the principal has been claimed by the user
-    uint256 principalPrice; // principal token price at which the bond was purchased
     address bondOwner; // bond purchaser
-    uint256 lockStartTimestamp; // starting timestamp for the principal lockup
-    uint256 lockEndTimestamp; // ending timestamp for the principal lockup
+    uint256 lockAmount; // payout token amount that is locked for the user
+    BondOption bondOption; // bond option(price and lock period) at which the bond was purchased
+    uint256 lockStartedAt; // lock start timestamp
+    bool claimed; // if the payout token has been claimed by the user
   }
 
   address public depositToken; // token paid for principal eg. USDC
   address public payoutToken; // inflow token eg. DHT
   address public treasury; // receives payout token
-  uint256 public debtTotal; // tracks the total amount of owed principal tokens
+  uint256 public debtTotal; // tracks the total amount of owed payout tokens
   uint256 public bondNumber; // tracks total number of issued bonds
 
   BondTerms public bondTerms;
   mapping(uint256 => Bond) public bonds; // get an issued bond
   mapping(address => uint256[]) public userBonds; // get the list of all user issued bond IDs
 
-  uint256 private minPrincipalPrice; // safety to ensure a very low price isn’t set accidentally
-  uint256 private maxPrincipalAvailable; // safety to ensure a high sell amount isn’t set accidentally
+  uint256 public minBondPrice; // safety to ensure a very low price isn’t set accidentally
+  uint256 public maxPayoutAvailable; // safety to ensure a high sell amount isn’t set accidentally
 
   function initialize(
     address _depositToken,
     address _payoutToken,
     address _treasury,
-    uint256 _minPrincipalPrice,
-    uint256 _maxPrincipalAvailable
+    uint256 _minBondPrice,
+    uint256 _maxPayoutAvailable
   ) external initializer {
     __Ownable_init();
     __Pausable_init();
@@ -106,119 +104,129 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     depositToken = _depositToken;
     payoutToken = _payoutToken;
     treasury = _treasury;
-    minPrincipalPrice = _minPrincipalPrice;
-    maxPrincipalAvailable = _maxPrincipalAvailable;
+    minBondPrice = _minBondPrice;
+    maxPayoutAvailable = _maxPayoutAvailable;
+  }
+
+  function bondOptions() external view returns(BondOption[] memory) {
+    return bondTerms.bondOptions;
   }
 
   /// @notice Initializes the bond terms
   /// @dev only owner can set bond terms
-  /// @param _principalAvailable avaialble principal amount
+  /// @param _payoutAvailable avaialble payout amount
   /// @param _expiryTimestamp expired timestamp
-  function setBondTerms(uint256 _principalAvailable, uint256 _expiryTimestamp) external onlyOwner {
-    require(_principalAvailable <= maxPrincipalAvailable, "exceed max avaialble principal");
+  function setBondTerms(uint256 _payoutAvailable, uint256 _expiryTimestamp) external onlyOwner {
+    require(_payoutAvailable <= maxPayoutAvailable, "exceed max avaialble payout");
     require(_expiryTimestamp > block.timestamp, "invalid expiry timestamp");
 
-    bondTerms.principalAvailable = _principalAvailable;
+    bondTerms.payoutAvailable = _payoutAvailable;
     bondTerms.expiryTimestamp = _expiryTimestamp;
 
-    emit SetBondTerms(_principalAvailable, _expiryTimestamp);
+    emit SetBondTerms(_payoutAvailable, _expiryTimestamp);
   }
 
-  /// @notice add bond principal prices
+  /// @notice add bond options
   /// @dev only owner can set bond terms
-  /// @param _principalPrices principal prices
-  function addBondPrices(PrincipalPrice[] memory _principalPrices) external onlyOwner {
-    for (uint256 i = 0; i < _principalPrices.length; i++) {
-      require(_principalPrices[i].price >= minPrincipalPrice, "invalid principalPrices");
-      bondTerms.principalPrices.push(_principalPrices[i]);
+  /// @param _bondOptions bond options
+  function addBondOptions(BondOption[] memory _bondOptions) external onlyOwner {
+    for (uint256 i = 0; i < _bondOptions.length; i++) {
+      require(_bondOptions[i].price >= minBondPrice, "too low payout price");
+      bondTerms.bondOptions.push(_bondOptions[i]);
     }
 
-    emit AddBondPrices(_principalPrices);
+    emit AddBondOptions(_bondOptions);
   }
 
-  /// @notice update bond principal prices
+  /// @notice update bond option
   /// @dev only owner can set bond terms
-  /// @param _index principal price index
-  /// @param _principalPrice principal price
-  function _updateBondPrice(uint256 _index, PrincipalPrice memory _principalPrice) internal {
-    require(_index < bondTerms.principalPrices.length, "invalid index");
-    require(_principalPrice.price >= minPrincipalPrice, "invalid principal price");
-    bondTerms.principalPrices[_index] = _principalPrice;
+  /// @param _index bond option index
+  /// @param _bondOption bond option
+  function _updateBondOption(uint256 _index, BondOption memory _bondOption) internal {
+    require(_index < bondTerms.bondOptions.length, "invalid index");
+    require(_bondOption.price >= minBondPrice, "too low payout price");
+    bondTerms.bondOptions[_index] = _bondOption;
   }
 
-  /// @notice update bond principal prices
+  /// @notice update bond option
   /// @dev only owner can set bond terms
-  /// @param _index principal price index
-  /// @param _principalPrice principal price
-  function updateBondPrice(uint256 _index, PrincipalPrice memory _principalPrice) external onlyOwner {
-    _updateBondPrice(_index, _principalPrice);
+  /// @param _index bond option index
+  /// @param _bondOption bond option
+  function updateBondOption(uint256 _index, BondOption memory _bondOption) external onlyOwner {
+    _updateBondOption(_index, _bondOption);
 
-    emit UpdateBondPrice(_index, _principalPrice);
+    emit UpdateBondOption(_index, _bondOption);
   }
 
-  /// @notice update bond principal prices
+  /// @notice update bond options
   /// @dev only owner can set bond terms
-  /// @param _indexes principal price index list
-  /// @param _principalPrices principal price list
-  function updateBondPrices(uint256[] memory _indexes, PrincipalPrice[] memory _principalPrices) external onlyOwner {
-    require(_indexes.length == _principalPrices.length, "length doesn't match");
+  /// @param _indexes bond option index list
+  /// @param _bondOptions bond options list
+  function updateBondOptions(uint256[] memory _indexes, BondOption[] memory _bondOptions) external onlyOwner {
+    require(_indexes.length == _bondOptions.length, "length doesn't match");
     for (uint256 i = 0; i < _indexes.length; i++) {
-      _updateBondPrice(_indexes[i], _principalPrices[i]);
+      _updateBondOption(_indexes[i], _bondOptions[i]);
     }
 
-    emit UpdateBondPrices(_indexes, _principalPrices);
+    emit UpdateBondOptions(_indexes, _bondOptions);
+  }
+
+  function getUserBonds(address _user) external view returns(Bond[] memory bondsArray) {
+    uint256[] memory bondIds = userBonds[_user];
+    bondsArray = new Bond[](bondIds.length);
+    for(uint256 i = 0 ; i < bondIds.length ; i ++) {
+      bondsArray[i] = bonds[bondIds[i]];
+    }
   }
 
   /// @notice Creates a new bond for the user
-  /// @param _principalAmount principal amount
-  /// @param _principalPriceIndex principal price index
+  /// @param _payoutAmount payout amount
+  /// @param _bondOptionIndex bond option index
   function deposit(
-    uint256 _principalAmount,
-    uint256 _principalPriceIndex,
-    uint256 _lockPeriod
+    uint256 _payoutAmount,
+    uint256 _bondOptionIndex
   ) external {
-    require(_principalAmount <= bondTerms.principalAvailable, "insufficient avaialble principal");
-    require(_principalPriceIndex < bondTerms.principalPrices.length, "invalid principal price index");
+    require(block.timestamp <= bondTerms.expiryTimestamp, "expired");
+    require(_payoutAmount <= bondTerms.payoutAvailable, "insufficient avaialble payout");
+    require(_bondOptionIndex < bondTerms.bondOptions.length, "invalid bond option index");
 
-    PrincipalPrice memory principalPrice = bondTerms.principalPrices[_principalPriceIndex];
-    require(principalPrice.price >= minPrincipalPrice, "too low principal price");
-    require(principalPrice.lockPeriod == _lockPeriod, "lock option not match");
-    uint256 needToPay = _principalAmount.mul(principalPrice.price).div(1e18);
+    BondOption memory bondOption = bondTerms.bondOptions[_bondOptionIndex];
+    require(bondOption.price >= minBondPrice, "too low payout price");
+    uint256 needToPay = _payoutAmount.mul(bondOption.price).div(1e18);
     depositToken.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, treasury, needToPay)
     );
 
     bonds[bondNumber] = Bond({
-      principalLockAmount: _principalAmount,
-      principalClaimed: false,
-      principalPrice: principalPrice.price,
       bondOwner: msg.sender,
-      lockStartTimestamp: block.timestamp,
-      lockEndTimestamp: block.timestamp + principalPrice.lockPeriod
+      lockAmount: _payoutAmount,
+      bondOption: bondOption,
+      lockStartedAt: block.timestamp,
+      claimed: false
     });
     bondNumber++;
 
     userBonds[msg.sender].push(bondNumber - 1);
-    bondTerms.principalAvailable -= _principalAmount;
-    debtTotal += _principalAmount;
+    bondTerms.payoutAvailable -= _payoutAmount;
+    debtTotal += _payoutAmount;
 
-    emit Deposit(msg.sender, bondNumber - 1, _principalAmount, principalPrice.price, _lockPeriod);
+    emit Deposit(msg.sender, bondNumber - 1, _payoutAmount, bondOption);
   }
 
-  /// @notice Transfers principalLockAmount to bondOwner after lockEndTimestamp
+  /// @notice Transfers lockAmount to bondOwner after lockEndTimestamp
   /// @param _bondId bond index
   function claim(uint256 _bondId) external {
     require(_bondId < bondNumber, "invalid bond index");
 
     Bond storage bond = bonds[_bondId];
     require(bond.bondOwner == msg.sender, "unauthorized");
-    require(bond.lockEndTimestamp <= block.timestamp, "locked");
-    require(!bond.principalClaimed, "principal already claimed");
+    require(bond.lockStartedAt + bond.bondOption.lockPeriod <= block.timestamp, "locked");
+    require(!bond.claimed, "already claimed");
 
-    bond.principalClaimed = true;
-    debtTotal -= bond.principalLockAmount;
+    bond.claimed = true;
+    debtTotal -= bond.lockAmount;
     payoutToken.tryAssemblyCall(
-      abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, bond.principalLockAmount)
+      abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, bond.lockAmount)
     );
 
     emit Claim(msg.sender, _bondId);
@@ -241,15 +249,15 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
 
   /// @notice Update minimum principal price
   /// @dev owner can update the minimum principal price
-  /// @param _minPrincipalPrice minimum principal price
-  function setMinPrincipalPrice(uint256 _minPrincipalPrice) external onlyOwner {
-    minPrincipalPrice = _minPrincipalPrice;
+  /// @param _minBondPrice minimum principal price
+  function setMinBondPrice(uint256 _minBondPrice) external onlyOwner {
+    minBondPrice = _minBondPrice;
   }
 
-  /// @notice Update maximum principal available
-  /// @dev owner can update the maximum principal available
-  /// @param _maxPrincipalAvailable maximum principal available
-  function setMaxPrincipalAvailable(uint256 _maxPrincipalAvailable) external onlyOwner {
-    maxPrincipalAvailable = _maxPrincipalAvailable;
+  /// @notice Update maximum payout available
+  /// @dev owner can update the maximum payout available
+  /// @param _maxPayoutAvailable maximum payout available
+  function setMaxPayoutAvailable(uint256 _maxPayoutAvailable) external onlyOwner {
+    maxPayoutAvailable = _maxPayoutAvailable;
   }
 }
