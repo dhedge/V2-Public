@@ -35,25 +35,40 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+
 import "./interfaces/IPoolLogic.sol";
-import "./interfaces/IPoolFactory.sol";
-import "./interfaces/IPoolPerformance.sol";
+import "./interfaces/IERC20Extended.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /// @notice Logic implementation for tracking pool performance
 contract DHedgePoolPriceOracle is OwnableUpgradeable {
+  using SafeMathUpgradeable for uint256;
+
   address public poolAddress;
+  uint8 public decimals;
 
   /// @notice initialisation for the contract
-  function initialize(address _poolAddress) external initializer {
+  function initialize(address _poolAddress, uint8 _decimals) external initializer {
     poolAddress = _poolAddress;
+    decimals = _decimals;
     __Ownable_init();
   }
 
-  /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
-  /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
+  /// @notice returns the realtime value of a pool token adjusted for manager fee
+  /// @return The price (6 decimals)
   function getPrice() external view returns (uint256) {
-    address poolPerformance = IPoolFactory(IPoolLogic(poolAddress).factory()).poolPerformanceAddress();
-    return IPoolPerformance(poolPerformance).tokenPriceAdjustedForManagerFee(poolAddress);
+    uint256 price = 0;
+
+    uint256 tokenPrice = IPoolLogic(poolAddress).tokenPrice();
+    if (tokenPrice != 0) {
+      uint256 totalSupply = IERC20Extended(poolAddress).totalSupply();
+      uint256 managerFee = IPoolLogic(poolAddress).availableManagerFee();
+      uint256 tokenPriceAdjustedForManagerFee = tokenPrice.mul(totalSupply).div(totalSupply.add(managerFee));
+
+      // adjust decimals
+      price = uint256(tokenPriceAdjustedForManagerFee.div(10**(18 - decimals)));
+    }
+    return price;
   }
 }

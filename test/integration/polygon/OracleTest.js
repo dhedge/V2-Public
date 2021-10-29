@@ -4,7 +4,8 @@ const { use, expect } = require("chai");
 
 use(chaiAlmost());
 
-const oracleAddress = "0xE749cD67F9e6727b868bB2480195ee301aA4BA33";
+const poolAddress = "0xe3528a438b94e64669def9b875c381c46ef713bf";
+const deceimals = 6;
 
 describe("DHedgePoolPriceOracle", function () {
   let dhedgePoolPriceOracle;
@@ -12,8 +13,8 @@ describe("DHedgePoolPriceOracle", function () {
 
   beforeEach(async function () {
     const DhedgePoolPriceOracle = await ethers.getContractFactory("DHedgePoolPriceOracle");
-    dhedgePoolPriceOracle = await DhedgePoolPriceOracle.attach(oracleAddress);
-    const poolAddress = await dhedgePoolPriceOracle.poolAddress();
+    dhedgePoolPriceOracle = await upgrades.deployProxy(DhedgePoolPriceOracle, [poolAddress, 6]);
+    await dhedgePoolPriceOracle.deployed();
     const PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.attach(poolAddress);
   });
@@ -25,8 +26,22 @@ describe("DHedgePoolPriceOracle", function () {
     const tokenPrice = await poolLogic.tokenPrice();
     console.log("token Price ", tokenPrice.toString());
 
-    //not differ more than 10%
-    expect(priceFromOracle.gte(tokenPrice.mul(9).div(10))).to.be.true;
-    expect(priceFromOracle.lte(tokenPrice.mul(11).div(10))).to.be.true;
+    //not differ more than 10% to token price adjusted factor 10e13
+    expect(
+      priceFromOracle.gte(
+        tokenPrice
+          .mul(9)
+          .div(10)
+          .div(10 ** (18 - deceimals)),
+      ),
+    ).to.be.true;
+    expect(
+      priceFromOracle.lte(
+        tokenPrice
+          .mul(11)
+          .div(10)
+          .div(10 ** (18 - deceimals)),
+      ),
+    ).to.be.true;
   });
 });
