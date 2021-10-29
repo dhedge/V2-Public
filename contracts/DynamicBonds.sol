@@ -51,12 +51,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   event UpdateBondOption(uint256 index, BondOption bondOption);
   event UpdateBondOptions(uint256[] index, BondOption[] bondOption);
   event AddBondOptions(BondOption[] bondOptions);
-  event Deposit(
-    address indexed user,
-    uint256 bondId,
-    uint256 payoutAmount,
-    BondOption bondOption
-  );
+  event Deposit(address indexed user, uint256 bondId, uint256 payoutAmount, BondOption bondOption);
   event Claim(address indexed user, uint256 bondId);
 
   struct BondOption {
@@ -108,7 +103,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     maxPayoutAvailable = _maxPayoutAvailable;
   }
 
-  function bondOptions() external view returns(BondOption[] memory) {
+  function bondOptions() external view returns (BondOption[] memory) {
     return bondTerms.bondOptions;
   }
 
@@ -171,10 +166,10 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     emit UpdateBondOptions(_indexes, _bondOptions);
   }
 
-  function getUserBonds(address _user) external view returns(Bond[] memory bondsArray) {
+  function getUserBonds(address _user) external view returns (Bond[] memory bondsArray) {
     uint256[] memory bondIds = userBonds[_user];
     bondsArray = new Bond[](bondIds.length);
-    for(uint256 i = 0 ; i < bondIds.length ; i ++) {
+    for (uint256 i = 0; i < bondIds.length; i++) {
       bondsArray[i] = bonds[bondIds[i]];
     }
   }
@@ -182,10 +177,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   /// @notice Creates a new bond for the user
   /// @param _payoutAmount payout amount
   /// @param _bondOptionIndex bond option index
-  function deposit(
-    uint256 _payoutAmount,
-    uint256 _bondOptionIndex
-  ) external {
+  function deposit(uint256 _payoutAmount, uint256 _bondOptionIndex) external {
     require(block.timestamp <= bondTerms.expiryTimestamp, "expired");
     require(_payoutAmount <= bondTerms.payoutAvailable, "insufficient avaialble payout");
     require(_bondOptionIndex < bondTerms.bondOptions.length, "invalid bond option index");
