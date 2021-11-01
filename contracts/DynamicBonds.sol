@@ -103,16 +103,49 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     maxPayoutAvailable = _maxPayoutAvailable;
   }
 
+  // ========== VIEWS ==========
+
   function bondOptions() external view returns (BondOption[] memory) {
     return bondTerms.bondOptions;
   }
 
+  function getUserBonds(address _user) external view returns (Bond[] memory bondsArray) {
+    uint256[] memory bondIds = userBonds[_user];
+    bondsArray = new Bond[](bondIds.length);
+    for (uint256 i = 0; i < bondIds.length; i++) {
+      bondsArray[i] = bonds[bondIds[i]];
+    }
+  }
+
+  // ========== MUTATIVE FUNCTIONS ==========
+
+  /// @notice Update treasury
+  /// @dev owner can set a new treasury address
+  /// @param _treasury new treasury address
+  function setTreasury(address _treasury) external onlyOwner {
+    treasury = _treasury;
+  }
+
+  /// @notice Update minimum principal price
+  /// @dev owner can update the minimum principal price
+  /// @param _minBondPrice minimum principal price
+  function setMinBondPrice(uint256 _minBondPrice) external onlyOwner {
+    minBondPrice = _minBondPrice;
+  }
+
+  /// @notice Update maximum payout available
+  /// @dev owner can update the maximum payout available
+  /// @param _maxPayoutAvailable maximum payout available
+  function setMaxPayoutAvailable(uint256 _maxPayoutAvailable) external onlyOwner {
+    maxPayoutAvailable = _maxPayoutAvailable;
+  }
+
   /// @notice Initializes the bond terms
   /// @dev only owner can set bond terms
-  /// @param _payoutAvailable avaialble payout amount
+  /// @param _payoutAvailable available payout amount
   /// @param _expiryTimestamp expired timestamp
   function setBondTerms(uint256 _payoutAvailable, uint256 _expiryTimestamp) external onlyOwner {
-    require(_payoutAvailable <= maxPayoutAvailable, "exceed max avaialble payout");
+    require(_payoutAvailable <= maxPayoutAvailable, "exceed max available payout");
     require(_expiryTimestamp > block.timestamp, "invalid expiry timestamp");
 
     bondTerms.payoutAvailable = _payoutAvailable;
@@ -166,25 +199,22 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     emit UpdateBondOptions(_indexes, _bondOptions);
   }
 
-  function getUserBonds(address _user) external view returns (Bond[] memory bondsArray) {
-    uint256[] memory bondIds = userBonds[_user];
-    bondsArray = new Bond[](bondIds.length);
-    for (uint256 i = 0; i < bondIds.length; i++) {
-      bondsArray[i] = bonds[bondIds[i]];
-    }
-  }
-
   /// @notice Creates a new bond for the user
   /// @param _payoutAmount payout amount
   /// @param _bondOptionIndex bond option index
-  function deposit(uint256 _payoutAmount, uint256 _bondOptionIndex) external {
+  function deposit(
+    uint256 _maxDepositAmount,
+    uint256 _payoutAmount,
+    uint256 _bondOptionIndex
+  ) external {
     require(block.timestamp <= bondTerms.expiryTimestamp, "expired");
-    require(_payoutAmount <= bondTerms.payoutAvailable, "insufficient avaialble payout");
+    require(_payoutAmount <= bondTerms.payoutAvailable, "insufficient available payout");
     require(_bondOptionIndex < bondTerms.bondOptions.length, "invalid bond option index");
 
     BondOption memory bondOption = bondTerms.bondOptions[_bondOptionIndex];
     require(bondOption.price >= minBondPrice, "too low payout price");
     uint256 needToPay = _payoutAmount.mul(bondOption.price).div(1e18);
+    require(needToPay <= _maxDepositAmount, "deposit amount exceeded");
     depositToken.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, treasury, needToPay)
     );
@@ -230,26 +260,5 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   /// @param _amount ERC20 token amount to withdraw
   function forceWithdraw(address _token, uint256 _amount) external onlyOwner {
     _token.tryAssemblyCall(abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, _amount));
-  }
-
-  /// @notice Update treasury
-  /// @dev owner can set a new treasury address
-  /// @param _treasury new treasury address
-  function setTreasury(address _treasury) external onlyOwner {
-    treasury = _treasury;
-  }
-
-  /// @notice Update minimum principal price
-  /// @dev owner can update the minimum principal price
-  /// @param _minBondPrice minimum principal price
-  function setMinBondPrice(uint256 _minBondPrice) external onlyOwner {
-    minBondPrice = _minBondPrice;
-  }
-
-  /// @notice Update maximum payout available
-  /// @dev owner can update the maximum payout available
-  /// @param _maxPayoutAvailable maximum payout available
-  function setMaxPayoutAvailable(uint256 _maxPayoutAvailable) external onlyOwner {
-    maxPayoutAvailable = _maxPayoutAvailable;
   }
 }

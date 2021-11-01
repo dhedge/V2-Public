@@ -1,13 +1,14 @@
-const { ethers, upgrades } = require("hardhat");
-const { BigNumber } = ethers;
-const { expect } = require("chai");
-const { units, currentBlockTimestamp } = require("../TestHelpers");
+import { ethers, upgrades } from "hardhat";
+import { expect } from "chai";
+import { Contract } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-const days = (d) => d * 3600 * 24;
+const { units, currentBlockTimestamp } = require("../TestHelpers");
+const days = (d: number) => d * 3600 * 24;
 
 describe("DynamicBonds Test", () => {
-  let usdc, dht, dynamicBonds;
-  let owner, treasury, other;
+  let usdc: Contract, dht: Contract, dynamicBonds: Contract;
+  let owner: SignerWithAddress, treasury: SignerWithAddress, other: SignerWithAddress;
 
   beforeEach(async () => {
     [owner, treasury, other] = await ethers.getSigners();
@@ -38,7 +39,7 @@ describe("DynamicBonds Test", () => {
 
     const currentTimestamp = await currentBlockTimestamp();
     await expect(dynamicBonds.setBondTerms(units(200), currentTimestamp)).to.revertedWith(
-      "exceed max avaialble payout",
+      "exceed max available payout",
     );
     await expect(dynamicBonds.setBondTerms(units(100), currentTimestamp)).to.revertedWith("invalid expiry timestamp");
 
@@ -109,16 +110,19 @@ describe("DynamicBonds Test", () => {
   });
 
   it("deposit USDC -> lock DHT", async () => {
-    await expect(dynamicBonds.deposit(units(1), 0)).to.revertedWith("expired");
+    await expect(dynamicBonds.deposit(units(1), units(1), 0)).to.revertedWith("expired");
 
     const currentTimestamp = await currentBlockTimestamp();
     await dynamicBonds.setBondTerms(units(100), currentTimestamp + days(30));
 
-    await expect(dynamicBonds.deposit(units(1000), 0)).to.revertedWith("insufficient avaialble payout");
-    await expect(dynamicBonds.deposit(units(1), 0)).to.revertedWith("invalid bond option index");
+    await expect(dynamicBonds.deposit(units(1), units(1000), 0)).to.revertedWith("insufficient available payout");
+    await expect(dynamicBonds.deposit(units(1), units(1), 0)).to.revertedWith("invalid bond option index");
 
     await dynamicBonds.addBondOptions([[units(10), days(1)]]); // 1 Day, 1 DHT = 10 USDC
-    await expect(dynamicBonds.deposit(units(1), 0)).to.revertedWith("ERC20: transfer amount exceeds allowance");
+    await expect(dynamicBonds.deposit(units(1).div(2), units(1), 0)).to.revertedWith("deposit amount exceeded");
+    await expect(dynamicBonds.deposit(units(10), units(1), 0)).to.revertedWith(
+      "ERC20: transfer amount exceeds allowance",
+    );
 
     // check before deposit
     expect(await usdc.balanceOf(treasury.address)).to.equal(0);
@@ -126,7 +130,7 @@ describe("DynamicBonds Test", () => {
     expect((await dynamicBonds.bondTerms()).payoutAvailable).to.equal(units(100));
 
     await usdc.approve(dynamicBonds.address, units(10));
-    await dynamicBonds.deposit(units(1), 0);
+    await dynamicBonds.deposit(units(10), units(1), 0);
 
     // check after deposit
 
@@ -148,7 +152,7 @@ describe("DynamicBonds Test", () => {
     await dynamicBonds.setBondTerms(units(100), currentTimestamp + days(30));
     await dynamicBonds.addBondOptions([[units(10), days(1)]]); // 1 Day, 1 DHT = 10 USDC
     await usdc.approve(dynamicBonds.address, units(10));
-    await dynamicBonds.deposit(units(1), 0);
+    await dynamicBonds.deposit(units(10), units(1), 0);
 
     await expect(dynamicBonds.claim(1)).to.revertedWith("invalid bond index");
     await expect(dynamicBonds.connect(other).claim(0)).to.revertedWith("unauthorized");
