@@ -540,18 +540,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     );
   }
 
-  /// @notice Get price of the asset
-  /// @param price A price of the asset
-  function tokenPrice() external view returns (uint256 price) {
-    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
-    uint256 tokenSupply = totalSupply();
-
-    price = _tokenPrice(fundValue, tokenSupply);
-  }
-
   /// @notice Get price of the asset adjusted for any unminted manager fees
   /// @param price A price of the asset
-  function tokenPriceAdjustedForManagerFee() external view returns (uint256 price) {
+  function tokenPrice() external view returns (uint256 price) {
     uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 managerFee = availableManagerFee();
     uint256 tokenSupply = totalSupply().add(managerFee);
