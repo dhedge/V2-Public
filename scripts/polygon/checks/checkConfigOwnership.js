@@ -13,6 +13,7 @@ const main = async (initializeData) => {
     governance,
     sushiLPAssetGuard,
     quickLPAssetGuard,
+    balancerV2Guard,
     openAssetGuard,
   } = initializeData;
 
@@ -27,6 +28,7 @@ const main = async (initializeData) => {
   owner.sushiLPAssetGuard = await sushiLPAssetGuard.owner();
   owner.quickLPAssetGuard = await quickLPAssetGuard.owner();
   owner.openAssetGuard = await openAssetGuard.owner();
+  owner.balancerV2Guard = await balancerV2Guard.owner();
 
   console.log("Protocol DAO address:", protocolDao);
   console.log("ProxyAdmin owner address:", proxyAdminOwner);
@@ -45,6 +47,8 @@ const main = async (initializeData) => {
   console.log("quickLPAssetGuard owned by pDAO");
   expect(owner.openAssetGuard).to.equal(protocolDao);
   console.log("openAssetGuard owned by pDAO");
+  expect(owner.balancerV2Guard).to.equal(protocolDao);
+  console.log("balancerV2Guard owned by pDAO");
 
   console.log("Ownership checks complete!");
   console.log("_________________________________________");
