@@ -465,9 +465,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   /// @notice Get available manager fee of the pool
   /// @return fee available manager fee of the pool
-  function availableManagerFee() public view returns (uint256) {
-    (uint256 fee, ) = availableManagerFeeAndTotalFundValue();
-    return fee;
+  function availableManagerFee() public view returns (uint256 fee) {
+    (fee, ) = availableManagerFeeAndTotalFundValue();
   }
 
   /// @notice Get available manager fee of the pool and totalFundValue
