@@ -226,13 +226,14 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
       lockStartedAt: block.timestamp,
       claimed: false
     });
+
+    userBonds[msg.sender].push(bondNumber);
+    bondTerms.payoutAvailable = bondTerms.payoutAvailable.sub(_payoutAmount);
+    debtTotal = debtTotal.add(_payoutAmount);
+
+    emit Deposit(msg.sender, bondNumber, _payoutAmount, bondOption);
+
     bondNumber++;
-
-    userBonds[msg.sender].push(bondNumber - 1);
-    bondTerms.payoutAvailable -= _payoutAmount;
-    debtTotal += _payoutAmount;
-
-    emit Deposit(msg.sender, bondNumber - 1, _payoutAmount, bondOption);
   }
 
   /// @notice Transfers lockAmount to bondOwner after lockEndTimestamp
@@ -242,11 +243,11 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
 
     Bond storage bond = bonds[_bondId];
     require(bond.bondOwner == msg.sender, "unauthorized");
-    require(bond.lockStartedAt + bond.bondOption.lockPeriod <= block.timestamp, "locked");
+    require(bond.lockStartedAt.add(bond.bondOption.lockPeriod) <= block.timestamp, "locked");
     require(!bond.claimed, "already claimed");
 
     bond.claimed = true;
-    debtTotal -= bond.lockAmount;
+    debtTotal = debtTotal.sub(bond.lockAmount);
     payoutToken.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, bond.lockAmount)
     );
