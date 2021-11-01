@@ -1,7 +1,7 @@
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 // sushiswap
-const sushi = {
+export const sushi = {
   factory: "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
   router: "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
   pools: {
@@ -15,19 +15,19 @@ const sushi = {
 };
 
 // uniswap V2
-const uniswapV2 = {
+export const uniswapV2 = {
   factory: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
   router: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
 };
 
 // uniswap V3
-const uniswapV3 = {
+export const uniswapV3 = {
   factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
   router: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
 };
 
 // aave
-const aave = {
+export const aave = {
   protocolDataProvider: "0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d",
   lendingPool: "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9",
   aTokens: {
@@ -45,19 +45,19 @@ const aave = {
 };
 
 // oneInch
-const oneinch = {
+export const oneinch = {
   v3Router: "0x11111112542D85B3EF69AE05771c2dCCff4fAa26",
 };
 
 // synthetix
-const synthetix = {
+export const synthetix = {
   addressResolver: "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83",
   susdKey: "0x7355534400000000000000000000000000000000000000000000000000000000",
   sethKey: "0x7345544800000000000000000000000000000000000000000000000000000000",
   slinkKey: "0x734c494e4b000000000000000000000000000000000000000000000000000000",
 };
 
-const assets = {
+export const assets = {
   weth: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
   usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
   usdt: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -68,7 +68,7 @@ const assets = {
   snx: "0x97767D7D04Fd0dB0A1a2478DCd4BA85290556B48",
 };
 
-const price_feeds = {
+export const price_feeds = {
   eth: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
   usdc: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6",
   usdt: "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D",
@@ -77,14 +77,3 @@ const price_feeds = {
   link: "0x2c1d072e956AFFC0D435Cb7AC38EF18d24d9127c",
 };
 
-module.exports = {
-  ZERO_ADDRESS,
-  sushi,
-  uniswapV2,
-  uniswapV3,
-  aave,
-  oneinch,
-  synthetix,
-  assets,
-  price_feeds,
-};
