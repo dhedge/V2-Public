@@ -1518,7 +1518,7 @@ describe("PoolFactory", function () {
     const daoBalanceBefore = ethers.BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
-    const tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     const calculatedAvailableFee = tokenPricePreMint

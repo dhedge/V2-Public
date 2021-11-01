@@ -543,10 +543,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @notice Get price of the asset adjusted for any unminted manager fees
   /// @param price A price of the asset
   function tokenPrice() external view returns (uint256 price) {
-    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
-    uint256 managerFee = availableManagerFee();
+    (uint256 managerFee, uint256 fundValue) = availableManagerFeeAndTotalFundValue();
     uint256 tokenSupply = totalSupply().add(managerFee);
 
+    price = _tokenPrice(fundValue, tokenSupply);
+  }
+
+  function tokenPriceWithoutManagerFee() external view returns (uint256 price) {
+    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+    uint256 tokenSupply = totalSupply();
     price = _tokenPrice(fundValue, tokenSupply);
   }
 
@@ -556,14 +561,20 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return price A price of the asset
   function _tokenPrice(uint256 _fundValue, uint256 _tokenSupply) internal pure returns (uint256 price) {
     if (_tokenSupply == 0 || _fundValue == 0) return 0;
-
     price = _fundValue.mul(10**18).div(_tokenSupply);
   }
 
   /// @notice Get available manager fee of the pool
   /// @return fee available manager fee of the pool
-  function availableManagerFee() public view returns (uint256 fee) {
-    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+  function availableManagerFee() public view returns (uint256) {
+    (uint256 fee, ) = availableManagerFeeAndTotalFundValue();
+    return fee;
+  }
+
+  /// @notice Get available manager fee of the pool and totalFundValue
+  /// @return fee available manager fee of the pool
+  function availableManagerFeeAndTotalFundValue() public view returns (uint256 fee, uint256 fundValue) {
+    fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
     uint256 managerFeeNumerator;
