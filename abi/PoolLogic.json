@@ -354,7 +354,25 @@
     "outputs": [
       {
         "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "availableManagerFeeAndTotalFundValue",
+    "outputs": [
+      {
+        "internalType": "uint256",
         "name": "fee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fundValue",
         "type": "uint256"
       }
     ],
@@ -837,11 +855,11 @@
   },
   {
     "inputs": [],
-    "name": "tokenPriceAdjustedForManagerFee",
+    "name": "tokenPriceAtLastFeeMint",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "price",
+        "name": "",
         "type": "uint256"
       }
     ],
@@ -850,11 +868,11 @@
   },
   {
     "inputs": [],
-    "name": "tokenPriceAtLastFeeMint",
+    "name": "tokenPriceWithoutManagerFee",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "price",
         "type": "uint256"
       }
     ],
