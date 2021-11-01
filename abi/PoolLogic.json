@@ -354,7 +354,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "fee",
         "type": "uint256"
       }
     ],
