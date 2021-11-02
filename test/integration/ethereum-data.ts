@@ -65,7 +65,7 @@ export const assets = {
   susd: "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
   seth: "0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb",
   slink: "0xbBC455cb4F1B9e4bFC4B73970d360c8f032EfEE6",
-  snx: "0x97767D7D04Fd0dB0A1a2478DCd4BA85290556B48",
+  snx: "0x54f25546260C7539088982bcF4b7dC8EDEF19f21",
 };
 
 export const price_feeds = {
