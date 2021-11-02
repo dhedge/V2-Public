@@ -6,7 +6,7 @@ export const sushi = {
   router: "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
   pools: {
     usdc_usdt: {
-      address: "0x3041CbD36888bECc7bbCBc0045E3B1f144466f5f",
+      address: "0xD86A120a06255Df8D4e2248aB04d4267E23aDfaA",
     },
     dai_usdt: {
       address: "0x055CEDfe14BCE33F985C41d9A1934B7654611AAC",
