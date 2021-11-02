@@ -44,18 +44,9 @@ contract DHedgePoolAggregator is IAggregatorV3Interface {
       uint80
     )
   {
-    int256 answer = 0;
-
     uint256 tokenPrice = IPoolLogic(poolLogic).tokenPrice();
-    if (tokenPrice != 0) {
-      uint256 totalSupply = IERC20Extended(poolLogic).totalSupply();
-      uint256 managerFee = IPoolLogic(poolLogic).availableManagerFee();
-      uint256 tokenPriceAdjustedForManagerFee = tokenPrice.mul(totalSupply).div(totalSupply.add(managerFee));
-
-      // adjust decimals -> 8
-      answer = int256(tokenPriceAdjustedForManagerFee.div(10**10));
-    }
-
+    // adjust decimals -> 8
+    int256 answer = tokenPrice == 0 ? 0 : tokenPrice.div(10**10);
     // we don't need roundId, startedAt and answeredInRound
     return (0, answer, 0, block.timestamp, 0);
   }
