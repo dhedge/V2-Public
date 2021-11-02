@@ -177,30 +177,30 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
 
-    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
+    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.equal(oneDollar.toString());
 
     const twoDollar = 2e18;
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (200e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      twoDollar.toString(),
+    );
 
     const oneDollarSixty = 16e17;
-    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
-      oneDollarSixty.toString(),
+    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollarSixty.toString());
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      (oneDollarSixty / 2).toString(),
     );
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.equal((oneDollarSixty / 2).toString());
 
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
@@ -213,7 +213,9 @@ describe("PoolFactory", function () {
       ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 50000000, 0, current, 0]),
     ); // $.5
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       (oneDollar / 2).toString(),
     );
@@ -221,9 +223,9 @@ describe("PoolFactory", function () {
     expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
       await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address),
     );
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.equal(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address));
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address),
+    );
   });
 
   // manager starts pool with $1
@@ -263,31 +265,30 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
 
-    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
+    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.equal(oneDollar.toString());
 
     const twoDollar = 2e18;
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (200e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
-
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      twoDollar.toString(),
+    );
 
     const oneDollarSixty = 16e17;
-    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
-      oneDollarSixty.toString(),
+    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollarSixty.toString());
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+      (oneDollarSixty / 2).toString(),
     );
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.equal((oneDollarSixty / 2).toString());
 
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
@@ -302,21 +303,21 @@ describe("PoolFactory", function () {
 
     const fourDollar = 4e18;
     // Token price is now $4
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(fourDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      fourDollar.toString(),
+    );
 
     // The token price is now $4 and $3 of that is profit in the eyes of the contract, the manager is owed .375 tokens roughly $1.5 (50% of profit) at the current token price
     // This means after minting manager fee there would be 1.375 tokens owning $4
     // $4 / 1.375 = $2.919708029 (1 token value)
     const twoDollarNinety = BigNumber.from(BigInt((fourDollar / 1.375) * 1));
-    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.be.closeTo(
-      twoDollarNinety,
-      100,
-    );
+    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.be.closeTo(twoDollarNinety, 100);
 
     // $2.90 / 2
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.be.closeTo(BigNumber.from(BigInt(twoDollarNinety / 2)), 100);
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.be.closeTo(
+      BigNumber.from(BigInt(twoDollarNinety / 2)),
+      100,
+    );
   });
 
   // manager starts pool with $1
@@ -357,23 +358,24 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
 
-    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
+    expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.equal(oneDollar.toString());
 
     const tenDollars = 10e18;
     await susdProxy.givenCalldataReturnUint(balanceOfABI, BigNumber.from(BigInt(100e18)).mul(10));
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(tenDollars.toString());
-
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      tenDollars.toString(),
+    );
 
     const current = (await ethers.provider.getBlock()).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
@@ -388,7 +390,9 @@ describe("PoolFactory", function () {
 
     const twentyDollars = 20e18;
     // Token price is now $4
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twentyDollars.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      twentyDollars.toString(),
+    );
 
     // The token price is now $20 and $19 of that is profit in the eyes of the contract, the manager is owed 0.475 tokens roughly $9.50 (50% of profit) at the current token price
     // This means after minting manager fee there would be 1.475 tokens owning $9.50
@@ -401,9 +405,10 @@ describe("PoolFactory", function () {
 
     // $13.55 - minus the direct deposit value of $18 == error
     const tenth = thirteenFiftyFive.div(10);
-    expect(
-      (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-    ).to.be.closeTo(tenth, 10000);
+    expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.be.closeTo(
+      tenth,
+      10000,
+    );
   });
 
   it("setInternalValueFactor", async function () {
@@ -436,7 +441,9 @@ describe("PoolFactory", function () {
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      oneDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
@@ -444,21 +451,27 @@ describe("PoolFactory", function () {
     const twoDollar = 2e18;
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (200e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      twoDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
 
     await poolPerformance.recordExternalValue(poolLogicProxy.address);
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      twoDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       oneDollar.toString(),
     );
 
     await poolPerformance.setInternalValueFactor(poolLogicProxy.address, (1e18).toString());
 
-    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+    expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+      twoDollar.toString(),
+    );
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
       twoDollar.toString(),
     );

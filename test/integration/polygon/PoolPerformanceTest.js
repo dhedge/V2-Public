@@ -118,7 +118,9 @@ describe("PoolPerformance", function () {
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
@@ -127,7 +129,9 @@ describe("PoolPerformance", function () {
       // Deposit $1 directly
       await USDC.transfer(poolLogicProxy.address, (100e6).toString());
       // Check TokenPrice() should be $2
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
@@ -135,7 +139,9 @@ describe("PoolPerformance", function () {
       // Call recordExternalValue
       await poolPerformance.recordExternalValue(poolLogicProxy.address);
       // Check TokenPrice() should be $2
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
@@ -144,7 +150,9 @@ describe("PoolPerformance", function () {
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Check TokenPrice() should be $2
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
@@ -183,7 +191,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
 
       // Check token price is $2
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       // Check tokenPriceAdjustForPerformance == $1; (i.e directDepositFactor $1)
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
@@ -194,7 +204,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.withdraw(withdrawQuarterAmount.toString());
 
       // Check token price is still $2
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       // Check tokenPriceAdjustForPerformance is still == $1; (i.e directDepositFactor $1)
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
@@ -382,13 +394,13 @@ describe("PoolPerformance", function () {
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
-      );
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
       expect(
         (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
       ).to.equal(oneDollar.toString());
@@ -415,7 +427,9 @@ describe("PoolPerformance", function () {
       // Deposit $1 directly
       await USDC.transfer(poolLogicProxy.address, (100e6).toString());
       // The direct deposit should be detected.
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       await checkTokenValue();
       // Call recordExternalValue
       await poolPerformance.recordExternalValue(poolLogicProxy.address);
@@ -453,13 +467,13 @@ describe("PoolPerformance", function () {
       await USDC.approve(poolLogicProxy.address, (1000e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (1000e6).toString());
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
-      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(
-        oneDollar.toString(),
-      );
+      expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
       expect(
         (await poolPerformance.tokenPriceAdjustedForPerformanceAndManagerFee(poolLogicProxy.address)).toString(),
       ).to.equal(oneDollar.toString());
@@ -599,7 +613,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
 
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
@@ -617,7 +633,9 @@ describe("PoolPerformance", function () {
       expect(usdcBalanceBefore).to.be.equal(usdcAmount);
       expect(amusdcBalanceBefore).to.be.equal(0);
 
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
 
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
@@ -677,7 +695,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
 
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
@@ -695,7 +715,9 @@ describe("PoolPerformance", function () {
       expect(usdcBalanceBefore).to.be.equal(usdcAmount);
       expect(amusdcBalanceBefore).to.be.equal(0);
 
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
 
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [
@@ -785,7 +807,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
 
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
@@ -803,7 +827,9 @@ describe("PoolPerformance", function () {
       expect(usdcBalanceBefore).to.be.equal(usdcAmount);
       expect(amusdcBalanceBefore).to.be.equal(0);
 
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
 
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
@@ -894,7 +920,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
 
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
@@ -912,7 +940,9 @@ describe("PoolPerformance", function () {
       expect(usdcBalanceBefore).to.be.equal(usdcAmount);
       expect(amusdcBalanceBefore).to.be.equal(0);
 
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
 
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
@@ -988,7 +1018,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.deposit(assets.weth, halfBalanceOfWeth);
 
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
@@ -1006,7 +1038,9 @@ describe("PoolPerformance", function () {
       expect(wethBalanceBefore).to.be.equal(halfBalanceOfWeth);
       expect(amWethBalanceBefore).to.be.equal(0);
 
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
 
       // deposit
       let depositABI = iLendingPool.encodeFunctionData("deposit", [
@@ -1106,7 +1140,9 @@ describe("PoolPerformance", function () {
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         twoDollar.toString(),
       );
@@ -1116,7 +1152,9 @@ describe("PoolPerformance", function () {
       // Deposit $1 directly
       await USDC.transfer(poolLogicProxy.address, (100e6).toString());
       // Check TokenPrice() should be $3
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(threeDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        threeDollar.toString(),
+      );
       // Check tokenPriceAdjustForPerformance == $2; (i.e directDepositFactor $1)
       expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         twoDollar,
@@ -1169,7 +1207,9 @@ describe("PoolPerformance", function () {
       expect(await poolPerformance.poolInitialized(poolLogicProxy.address)).to.equal(false);
 
       // Check tokenPriceAdjustForPerformance() should be $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
       );
@@ -1179,7 +1219,9 @@ describe("PoolPerformance", function () {
 
       // Check tokenPriceAdjustForPerformance() should be $2
       // Because this pool is not initialised in PoolPerformance we ignore direct deposits
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         twoDollar.toString(),
       );
@@ -1190,7 +1232,9 @@ describe("PoolPerformance", function () {
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
 
       // Check tokenPriceAdjustForPerformance() should be $2 still
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(twoDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        twoDollar.toString(),
+      );
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         twoDollar.toString(),
       );
@@ -1200,7 +1244,9 @@ describe("PoolPerformance", function () {
 
       // Check the $1 direct transferered is allocated to token holders
       // TokenPrice should now be more than $2
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal("2666666666666666666");
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        "2666666666666666666",
+      );
       // Check tokenPriceAdjustForPerformance should still be $2; (i.e directDepositFactor $1)
       expect(await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).to.be.closeTo(
         twoDollar,
