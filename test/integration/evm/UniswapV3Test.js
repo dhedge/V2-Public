@@ -8,6 +8,8 @@ use(chaiAlmost());
 
 const deadLine = Math.floor(Date.now() / 1000 + 100000000);
 
+const sushi_usdc_usdt = "0xD86A120a06255Df8D4e2248aB04d4267E23aDfaA";
+
 describe("Uniswap V3 Test", function () {
   let WETH, USDC, USDT, SushiUsdcUsdt, UniswapRouter;
   let logicOwner, manager, dao, user;

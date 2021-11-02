@@ -4,6 +4,8 @@ const chaiAlmost = require("chai-almost");
 const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
 const { sushi, uniswapV2, aave, assets, price_feeds } = require("../ethereum-data");
 
+const sushi_usdc_usdt = "0xD86A120a06255Df8D4e2248aB04d4267E23aDfaA";
+
 use(chaiAlmost());
 
 describe("Sushiswap/Uniswap V2 Test", function () {
@@ -546,7 +548,7 @@ describe("Sushiswap/Uniswap V2 Test", function () {
       0,
     ]);
     await expect(poolLogicProxy.connect(manager).execTransaction(sushi.router, addLiquidityAbi)).to.be.revertedWith(
-      "revert UniswapV2Router: EXPIRED",
+      "UniswapV2Router: EXPIRED",
     );
 
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
