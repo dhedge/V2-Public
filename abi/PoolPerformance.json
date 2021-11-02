@@ -310,25 +310,6 @@
         "type": "address"
       }
     ],
-    "name": "tokenPriceAdjustedForManagerFee",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "poolAddress",
-        "type": "address"
-      }
-    ],
     "name": "tokenPriceAdjustedForPerformance",
     "outputs": [
       {
@@ -348,7 +329,7 @@
         "type": "address"
       }
     ],
-    "name": "tokenPriceAdjustedForPerformanceAndManagerFee",
+    "name": "tokenPriceWithoutManagerFee",
     "outputs": [
       {
         "internalType": "uint256",
