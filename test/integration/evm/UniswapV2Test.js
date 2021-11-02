@@ -4,7 +4,6 @@ const chaiAlmost = require("chai-almost");
 const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
 const { sushi, uniswapV2, aave, assets, price_feeds } = require("../ethereum-data");
 
-
 use(chaiAlmost());
 
 describe("Sushiswap/Uniswap V2 Test", function () {
@@ -58,7 +57,11 @@ describe("Sushiswap/Uniswap V2 Test", function () {
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
     sushiLpAggregator = await UniV2LPAggregator.deploy(sushi.pools.usdc_usdt.address, poolFactory.address);
     sushiLpAggregator.deployed();
-    const assetSushiUsdcUsdt = { asset: sushi.pools.usdc_usdt.address, assetType: 2, aggregator: sushiLpAggregator.address };
+    const assetSushiUsdcUsdt = {
+      asset: sushi.pools.usdc_usdt.address,
+      assetType: 2,
+      aggregator: sushiLpAggregator.address,
+    };
     await assetHandler.addAssets([assetSushiUsdcUsdt]);
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");

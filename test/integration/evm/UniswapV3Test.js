@@ -8,7 +8,6 @@ use(chaiAlmost());
 
 const deadLine = Math.floor(Date.now() / 1000 + 100000000);
 
-
 describe("Uniswap V3 Test", function () {
   let WETH, USDC, USDT, SushiUsdcUsdt, UniswapRouter;
   let logicOwner, manager, dao, user;
@@ -456,7 +455,12 @@ describe("Uniswap V3 Test", function () {
 
     // fail to swap direct asset to asset because unsupported destination asset
     badExactInputParams.path =
-      "0x" + assets.weth.substring(2) + "000bb8" + assets.usdc.substring(2) + "000bb8" + sushi.pools.usdc_usdt.address.substring(2); // unsupported asset
+      "0x" +
+      assets.weth.substring(2) +
+      "000bb8" +
+      assets.usdc.substring(2) +
+      "000bb8" +
+      sushi.pools.usdc_usdt.address.substring(2); // unsupported asset
     swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, swapABI)).to.be.revertedWith(
       "unsupported destination asset",

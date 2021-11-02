@@ -369,12 +369,12 @@ describe("Synthetix Test", function () {
 
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
 
-    // expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
+    expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
 
-    // let event:any = await exchangeEvent;
-    // expect(event.sourceAsset).to.equal(assets.susd);
-    // expect(event.sourceAmount).to.equal((100e18).toString());
-    // expect(event.destinationAsset).to.equal(assets.seth);
+    let event:any = await exchangeEvent;
+    expect(event.sourceAsset).to.equal(assets.susd);
+    expect(event.sourceAmount).to.equal((100e18).toString());
+    expect(event.destinationAsset).to.equal(assets.seth);
   });
 
   it("should be able to withdraw", async function () {
