@@ -291,7 +291,7 @@ describe("PoolFactory", function () {
     const SushiMiniChefV2Guard = await ethers.getContractFactory(
       "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
     );
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken.address, wmaticToken.address);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken.address, wmaticToken.address]);
     sushiMiniChefV2Guard.deployed();
 
     const OneInchV3Guard = await ethers.getContractFactory("contracts/guards/OneInchV3Guard.sol:OneInchV3Guard");
@@ -1801,14 +1801,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
-      ).to.be.revertedWith("enable rewardA token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
-      ).to.be.revertedWith("enable rewardB token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
@@ -2016,14 +2016,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable rewardA token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable rewardB token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
