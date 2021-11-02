@@ -1,21 +1,22 @@
-require("dotenv").config();
+import dotenv from "dotenv";
 // require('@eth-optimism/plugins/hardhat/compiler');
 // require('@eth-optimism/plugins/hardhat/ethers');
-require("@eth-optimism/hardhat-ovm");
-require("hardhat-gas-reporter");
-require("hardhat-abi-exporter");
-require("@nomiclabs/hardhat-waffle");
-require("solidity-coverage");
-
+// import "@eth-optimism/hardhat-ovm";
 import "@openzeppelin/hardhat-upgrades";
-require("@nomiclabs/hardhat-etherscan");
-
+import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
+import "hardhat-gas-reporter";
+import "hardhat-abi-exporter";
+import "solidity-coverage";
+import "@typechain/hardhat";
+import { HardhatUserConfig } from "hardhat/config";
 
-require("./scripts/upgrade.js");
-require("./scripts/verify.js");
-require("./scripts/polygon/checks/checkConfig");
-require("@nomiclabs/hardhat-etherscan");
+import "./scripts/upgrade";
+import "./scripts/verify";
+import "./scripts/polygon/checks/checkConfig";
+
+dotenv.config()
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -24,7 +25,7 @@ require("@nomiclabs/hardhat-etherscan");
  * @type import('hardhat/config').HardhatUserConfig
  */
 
-module.exports = {
+export default {
   defaultNetwork: "kovan-optimism",
   gasReporter: {
     showTimeSpent: true,
@@ -78,7 +79,7 @@ module.exports = {
     },
   },
   mocha: {
-    timeout: false,
+    timeout: 0,
   },
   abiExporter: {
     path: "./abi",
@@ -106,4 +107,8 @@ module.exports = {
   etherscan: {
     apiKey: process.env.POLYGONSCAN_API_KEY,
   },
-};
+  typechain: {
+    outDir: "./types",
+    target: "ethers-v5",
+  },
+} as HardhatUserConfig;
