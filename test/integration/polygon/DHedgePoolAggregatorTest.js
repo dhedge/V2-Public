@@ -87,6 +87,7 @@ describe("DHedgePoolAggregator Test", function () {
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
+    await poolFactory.setExitCooldown(0);
   });
 
   it("Should be able to get USDC", async function () {
@@ -238,17 +239,7 @@ describe("DHedgePoolAggregator Test", function () {
   it("withdraw 20%", async function () {
     const withdrawAmount = units(200);
 
-    const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
-    const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-
     await poolLogicProxy.withdraw(withdrawAmount);
-
-    const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
-    const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
-
-    // check with remove 0.5% exit fee
-    checkAlmostSame(usdcBalanceBefore, units(4975, 4).add(usdcBalanceAfter));
-    checkAlmostSame(totalFundValueBefore, units(199).add(totalFundValueAfter));
 
     const [, answer] = await dhedgePoolAggregator.latestRoundData();
     checkAlmostSame(answer, units(1, 8));
