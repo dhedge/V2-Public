@@ -1,5 +1,14 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+npm run prettier-check || retVal=$?
+
+
 npm run prettier
+if [ $retVal -ne 0 ]; then
+    echo "Error Prettier"
+		exit $retVal
+fi
+echo $retVal
+
 npm run lint:sol

@@ -9,6 +9,7 @@
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "prettier -l --write \"contracts/**/*.sol\" \"test/**/*.js\" \"scripts/**/*.js\"",
+    "prettier-check": "prettier --check \"contracts/**/*.sol\" \"test/**/*.js\" \"scripts/**/*.js\"",
     "fork:evm": "hardhat node --fork $(grep ALCHEMY_EVM_URL .env | cut -d '=' -f2)$(grep ALCHEMY_EVM_KEY .env | cut -d '=' -f2)",
     "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/v1/$(grep MATIC_KEY .env | cut -d '=' -f2)",
