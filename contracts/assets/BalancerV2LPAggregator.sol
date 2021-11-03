@@ -24,6 +24,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
 
   struct PriceDeviationParams {
     uint256 maxPriceDeviation; // Threshold of spot prices deviation: 10ˆ16 represents a 1% deviation. Must be between 1 and 10ˆ18.
+    // solhint-disable-next-line
     uint256 K; // Constant K=1/ (w1ˆw1 * .. * wn^wn)
     uint256 powerPrecision; // Precision for power math function.
     uint256[][] approximationMatrix; // Approximation matrix for gas optimization
@@ -101,7 +102,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
     } else {
       answer = _getArithmeticMean(usdTotals);
     }
-
+    // solhint-disable-next-line
     return (0, int256(answer.div(10**10)), 0, block.timestamp, 0);
   }
 

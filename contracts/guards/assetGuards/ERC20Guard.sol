@@ -89,6 +89,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
         IManaged(_poolManagerLogic).manager(),
         spender,
         amount,
+        // solhint-disable-next-line not-rely-on-time
         block.timestamp
       );
 

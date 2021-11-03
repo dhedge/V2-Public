@@ -91,6 +91,7 @@ contract TxDataUtils {
 
   function read4left(bytes memory data, uint256 offset) public pure returns (bytes4 o) {
     require(data.length >= offset + 4, "Reading bytes out of bounds");
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       o := mload(add(data, add(32, offset)))
     }
@@ -102,6 +103,7 @@ contract TxDataUtils {
     uint256 length
   ) public pure returns (bytes32 o) {
     require(data.length >= offset + length, "Reading bytes out of bounds");
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       o := mload(add(data, add(32, offset)))
       let lb := sub(32, length)
@@ -118,6 +120,7 @@ contract TxDataUtils {
   function sliceUint(bytes memory data, uint256 start) internal pure returns (uint256) {
     require(data.length >= start + 32, "slicing out of range");
     uint256 x;
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       x := mload(add(data, add(0x20, start)))
     }

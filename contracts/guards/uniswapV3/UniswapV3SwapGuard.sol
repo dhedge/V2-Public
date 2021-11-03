@@ -111,7 +111,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == toAddress, "recipient is not pool");
-
+      // solhint-disable-next-line not-rely-on-time
       emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
@@ -126,7 +126,7 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == toAddress, "recipient is not pool");
-
+      // solhint-disable-next-line not-rely-on-time
       emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type

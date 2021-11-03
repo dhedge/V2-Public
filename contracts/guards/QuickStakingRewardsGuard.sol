@@ -83,7 +83,7 @@ contract QuickStakingRewardsGuard is TxDataUtils, IGuard {
       address stakingToken = IStakingRewards(to).stakingToken();
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(stakingToken), "unsupported staking asset");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Stake(poolLogic, stakingToken, to, amount, block.timestamp);
 
       txType = 5; // `Stake` type
@@ -92,11 +92,12 @@ contract QuickStakingRewardsGuard is TxDataUtils, IGuard {
       address stakingToken = IStakingRewards(to).stakingToken();
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(stakingToken), "unsupported staking asset");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Unstake(poolLogic, stakingToken, to, amount, block.timestamp);
 
       txType = 6; // `Unstake` type
     } else if (method == bytes4(keccak256("getReward()"))) {
+      // solhint-disable-next-line not-rely-on-time
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 7; // `Claim` type

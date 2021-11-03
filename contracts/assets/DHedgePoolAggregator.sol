@@ -57,6 +57,7 @@ contract DHedgePoolAggregator is IAggregatorV3Interface {
     }
 
     // we don't need roundId, startedAt and answeredInRound
+    // solhint-disable-next-line not-rely-on-time
     return (0, answer, 0, block.timestamp, 0);
   }
 }

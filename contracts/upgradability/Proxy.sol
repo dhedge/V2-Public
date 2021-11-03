@@ -70,6 +70,7 @@ abstract contract Proxy {
    * @param implementation Address to delegate.
    */
   function _delegate(address implementation) internal {
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       // Copy msg.data. We take full control of memory in this inline assembly
       // block because it will not return to Solidity code. We overwrite the
@@ -100,6 +101,7 @@ abstract contract Proxy {
    * Can be redefined in derived contracts to add functionality.
    * Redefinitions must call super._willFallback().
    */
+  // solhint-disable-next-line no-empty-blocks
   function _willFallback() internal virtual {}
 
   /**

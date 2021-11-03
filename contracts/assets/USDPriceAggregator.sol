@@ -33,6 +33,7 @@ contract USDPriceAggregator is IAggregatorV3Interface {
       uint80 answeredInRound
     )
   {
+    // solhint-disable-next-line not-rely-on-time
     return (0, 10**8, 0, block.timestamp, 0);
   }
 }

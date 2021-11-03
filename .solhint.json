@@ -3,6 +3,7 @@
   "plugins": [],
   "rules": {
     "compiler-version": ["error", "0.7.6"],
-    "max-states-count": ["warn", 21]
+    "max-states-count": ["warn", 21],
+    "func-visibility": ["warn", {"ignoreConstructors":true}]
   }
 }

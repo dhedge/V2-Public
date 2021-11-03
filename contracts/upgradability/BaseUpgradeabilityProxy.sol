@@ -37,6 +37,7 @@ contract BaseUpgradeabilityProxy is Proxy {
   function _implementation() internal view override returns (address) {
     address factory;
     bytes32 slot = IMPLEMENTATION_SLOT;
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       factory := sload(slot)
     }
@@ -51,6 +52,7 @@ contract BaseUpgradeabilityProxy is Proxy {
   /// @return proxyType Return type of the proxy.
   function _proxyType() internal view returns (uint8 proxyType) {
     bytes32 slot = PROXY_TYPE;
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       proxyType := sload(slot)
     }
@@ -73,7 +75,7 @@ contract BaseUpgradeabilityProxy is Proxy {
     require(OpenZeppelinUpgradesAddress.isContract(newImplementation), "Cannot set implementation to EOA");
 
     bytes32 slot = IMPLEMENTATION_SLOT;
-
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       sstore(slot, newImplementation)
     }
@@ -85,7 +87,7 @@ contract BaseUpgradeabilityProxy is Proxy {
    */
   function _setProxyType(uint8 proxyType) internal {
     bytes32 slot = PROXY_TYPE;
-
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       sstore(slot, proxyType)
     }

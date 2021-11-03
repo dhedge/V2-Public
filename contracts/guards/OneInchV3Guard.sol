@@ -47,7 +47,10 @@ import "../interfaces/IHasSupportedAsset.sol";
 contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
   constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
     SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
-  {}
+  // solhint-disable-next-line no-empty-blocks
+  {
+
+  }
 
   /// @notice Transaction guard for OneInchV3
   /// @dev It supports swap functionalities
@@ -86,7 +89,7 @@ contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
       require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
       _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
-
+      // solhint-disable-next-line not-rely-on-time
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
@@ -113,7 +116,7 @@ contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
-
+      // solhint-disable-next-line not-rely-on-time
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type

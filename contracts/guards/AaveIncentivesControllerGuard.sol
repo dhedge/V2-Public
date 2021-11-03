@@ -78,6 +78,7 @@ contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardToken), "unsupported reward asset");
       require(onBehalfOf == poolLogic, "recipient is not pool");
 
+      // solhint-disable-next-line not-rely-on-time
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 7; // `Claim` type

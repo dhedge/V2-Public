@@ -54,6 +54,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
   IAddressResolver public addressResolver;
 
   constructor(IAddressResolver _addressResolver) {
+    // solhint-disable-next-line reason-string
     require(address(_addressResolver) != address(0), "_addressResolver address cannot be 0");
     addressResolver = _addressResolver;
   }
@@ -90,6 +91,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
+      // solhint-disable-next-line not-rely-on-time
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type

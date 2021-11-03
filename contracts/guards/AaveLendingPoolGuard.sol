@@ -92,7 +92,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(depositAsset), "unsupported deposit asset");
 
       require(onBehalfOf == poolLogic, "recipient is not pool");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Deposit(poolLogic, depositAsset, to, amount, block.timestamp);
 
       txType = 9; // Aave `Deposit` type
@@ -107,7 +107,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported withdraw asset");
 
       require(onBehalfOf == poolLogic, "recipient is not pool");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Withdraw(poolLogic, withdrawAsset, to, amount, block.timestamp);
 
       txType = 10; // Aave `Withdraw` type
@@ -119,7 +119,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
       require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
-
+      // solhint-disable-next-line not-rely-on-time
       emit SetUserUseReserveAsCollateral(poolLogic, asset, useAsCollateral, block.timestamp);
 
       txType = 11; // Aave `SetUserUseReserveAsCollateral` type
@@ -157,7 +157,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
           "borrowing asset exists"
         );
       }
-
+      // solhint-disable-next-line not-rely-on-time
       emit Borrow(poolLogic, borrowAsset, to, amount, block.timestamp);
 
       txType = 12; // Aave `Borrow` type
@@ -172,7 +172,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(repayAsset), "unsupported repay asset");
 
       require(onBehalfOf == poolLogic, "recipient is not pool");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Repay(poolLogic, repayAsset, to, amount, block.timestamp);
 
       txType = 13; // Aave `Repay` type

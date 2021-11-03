@@ -120,7 +120,9 @@ contract PoolFactory is
 
   mapping(address => bool) public isPool;
 
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
   uint256 internal _exitCooldown;
@@ -228,6 +230,7 @@ contract PoolFactory is
       _fundName,
       _managerName,
       _manager,
+      // solhint-disable-next-line not-rely-on-time
       block.timestamp,
       _managerFeeNumerator,
       _MANAGER_FEE_DENOMINATOR
@@ -629,6 +632,7 @@ contract PoolFactory is
     }
 
     uint256 reduceLength = length.sub(index);
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(investedPools, sub(mload(investedPools), reduceLength))
     }
@@ -652,6 +656,7 @@ contract PoolFactory is
     }
 
     uint256 reduceLength = length.sub(index);
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(managedPools, sub(mload(managedPools), reduceLength))
     }

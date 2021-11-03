@@ -97,7 +97,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       require(poolLogic == receiver, "recipient is not pool");
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable rewardA token");
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable rewardB token");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Stake(poolLogic, lpToken, to, amount, block.timestamp);
 
       txType = 5; // `Stake` type
@@ -111,7 +111,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
       require(poolLogic == receiver, "recipient is not pool");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Unstake(poolLogic, lpToken, to, amount, block.timestamp);
 
       txType = 6; // `Unstake` type
@@ -123,7 +123,7 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable rewardA token");
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable rewardB token");
       require(poolLogic == receiver, "recipient is not pool");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 7; // `Claim` type
@@ -140,8 +140,9 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       require(poolLogic == receiver, "recipient is not pool");
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable rewardA token");
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable rewardB token");
-
+      // solhint-disable-next-line not-rely-on-time
       emit Unstake(poolLogic, lpToken, to, amount, block.timestamp);
+      // solhint-disable-next-line not-rely-on-time
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 8; // `UnstakeAndClaim` type

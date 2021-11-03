@@ -53,7 +53,10 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
   constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
     SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
-  {}
+  // solhint-disable-next-line no-empty-blocks
+  {
+
+  }
 
   /// @notice Transaction guard for Balancer V2 Vault
   /// @dev It supports swap functionalities
@@ -98,7 +101,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
         _checkSlippageLimit(srcAsset, dstAsset, srcAmount, limit, address(poolManagerLogic));
-
+        // solhint-disable-next-line not-rely-on-time
         emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
         txType = 2; // 'Exchange' type
@@ -115,7 +118,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
         _checkSlippageLimit(srcAsset, dstAsset, limit, dstAmount, address(poolManagerLogic));
-
+        // solhint-disable-next-line not-rely-on-time
         emit ExchangeTo(poolManagerLogic.poolLogic(), srcAsset, dstAsset, uint256(dstAmount), block.timestamp);
 
         txType = 2; // 'Exchange' type
@@ -136,7 +139,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
         _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
-
+        // solhint-disable-next-line not-rely-on-time
         emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
         txType = 2; // 'Exchange' type
@@ -154,7 +157,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
 
         _checkSlippageLimit(srcAsset, dstAsset, amountInMax, dstAmount, address(poolManagerLogic));
-
+        // solhint-disable-next-line not-rely-on-time
         emit ExchangeTo(poolManagerLogic.poolLogic(), srcAsset, dstAsset, uint256(dstAmount), block.timestamp);
 
         txType = 2; // 'Exchange' type
@@ -198,6 +201,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         poolId,
         joinPoolRequest.assets,
         joinPoolRequest.maxAmountsIn,
+        // solhint-disable-next-line not-rely-on-time
         block.timestamp
       );
 
@@ -241,6 +245,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         poolId,
         exitPoolRequest.assets,
         exitPoolRequest.minAmountsOut,
+        // solhint-disable-next-line not-rely-on-time
         block.timestamp
       );
 
