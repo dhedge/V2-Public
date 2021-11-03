@@ -113,7 +113,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
@@ -178,7 +178,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
@@ -213,8 +213,6 @@ describe("PoolPerformance", function () {
       );
     });
 
-
-
     // Early pool exit was backed out leaving here for now.
 
     // Checks to make sure PoolPerformance is updated on early withdraws
@@ -227,7 +225,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
@@ -283,7 +281,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
@@ -340,13 +338,15 @@ describe("PoolPerformance", function () {
       ]);
 
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
       await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
 
       // Check token price is $1
-      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       // Check tokenPriceAdjustForPerformance == $1;
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
         oneDollar.toString(),
@@ -366,7 +366,6 @@ describe("PoolPerformance", function () {
       expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal("0");
       // // Make sure the performance of the token hasn't changed
       expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal("0");
-
     });
 
     // In this test we test that the realtime fee + performance is calculated correctly
@@ -376,7 +375,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      const fund = funds[funds.length-1];
+      const fund = funds[funds.length - 1];
       poolLogicProxy = await PoolLogic.attach(fund);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
@@ -389,9 +388,9 @@ describe("PoolPerformance", function () {
         oneDollar.toString(),
       );
       expect((await poolPerformance.tokenPrice(poolLogicProxy.address)).toString()).to.equal(oneDollar.toString());
-      expect(
-        (await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString(),
-      ).to.equal(oneDollar.toString());
+      expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.equal(
+        oneDollar.toString(),
+      );
       // Check hasExternalBalances() == FALSE
       expect(await poolPerformance.hasExternalBalances(poolLogicProxy.address)).to.equal(false);
       // DollarSixty
@@ -449,7 +448,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      const fund = funds[funds.length-1];
+      const fund = funds[funds.length - 1];
       poolLogicProxy = await PoolLogic.attach(fund);
       // Deposit $10 conventional way
       await USDC.approve(poolLogicProxy.address, (1000e6).toString());
@@ -588,7 +587,7 @@ describe("PoolPerformance", function () {
         [aave.lendingPool, false],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, usdcAmount);
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
@@ -665,7 +664,7 @@ describe("PoolPerformance", function () {
         [aave.lendingPool, false],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, usdcAmount);
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
@@ -767,7 +766,7 @@ describe("PoolPerformance", function () {
         [aave.lendingPool, false],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, usdcAmount);
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
@@ -870,7 +869,7 @@ describe("PoolPerformance", function () {
         [aave.lendingPool, false],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, usdcAmount);
       await poolLogicProxy.deposit(assets.usdc, usdcAmount);
@@ -965,7 +964,7 @@ describe("PoolPerformance", function () {
       const halfBalanceOfWeth = balanceOfWeth.div(2);
 
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
       await WETH.approve(poolLogicProxy.address, halfBalanceOfWeth);
       await poolLogicProxy.deposit(assets.weth, halfBalanceOfWeth);
@@ -1049,7 +1048,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
 
       // When pools are created they are set to initialized in PoolPerformance
       // But in this integration test we want to test as though this pool existed
@@ -1118,7 +1117,7 @@ describe("PoolPerformance", function () {
         [assets.usdc, true],
       ]);
       const funds = await poolFactory.getDeployedFunds();
-      poolLogicProxy = await PoolLogic.attach(funds[funds.length-1]);
+      poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
 
       // Deposit $1 conventional way
       await USDC.approve(poolLogicProxy.address, (100e6).toString());
