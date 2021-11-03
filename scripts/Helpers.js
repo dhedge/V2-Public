@@ -189,11 +189,11 @@ const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHan
 };
 
 const getAggregator = async (csvAsset) => {
-  const assetName = csvAsset["Asset Name"];
+  const assetName = csvAsset["aggregatorName"];
   let aggregator;
 
   switch (assetName) {
-    case "dUSD":
+    case "DHedgePoolAggregator":
       // Deploy DHedgePoolAggregator
       const assetAddress = csvAsset["Address"];
       const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");

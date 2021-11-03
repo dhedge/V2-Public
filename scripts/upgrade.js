@@ -232,6 +232,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: sushiLPAggregator.address,
+                aggregatorName: csvAsset.aggregatorName,
               });
               break;
             case "3":
@@ -258,6 +259,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: usdPriceAggregatorAddress,
+                aggregatorName: csvAsset.aggregatorName,
               });
               break;
             default:
@@ -272,6 +274,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: aggregator,
+                aggregatorName: csvAsset.aggregatorName,
               });
           }
         }
@@ -296,6 +299,7 @@ task("upgrade", "Upgrade contracts")
               asset: balancerLp.data.pool,
               assetType: balancerLp.assetType,
               aggregator: balancerV2Aggregator.address,
+              aggregatorName: csvAsset.aggregatorName,
             });
           }
         }

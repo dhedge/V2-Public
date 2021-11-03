@@ -21,6 +21,19 @@ const main = async (initializeData) => {
     if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${contract.name}`);
   }
 
+  // Check asset aggregators
+  for (const asset of contracts.Assets) {
+    if (asset.aggregatorName) {
+      const contract = await ethers.getContractFactory(asset.aggregatorName);
+      const creationBytecode = contract.bytecode;
+      const runtimeBytecode = await ethers.provider.getCode(asset.aggregator);
+      const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
+      if (runtimeBytecode.length < 10)
+        bytecodeErrors.push(`Missing bytecode in deployed address for ${asset.aggregatorName}`);
+      if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${asset.aggregatorName}`);
+    }
+  }
+
   for (const bytecodeError of bytecodeErrors) {
     console.log(bytecodeError);
   }
