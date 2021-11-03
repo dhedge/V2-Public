@@ -1,4 +1,4 @@
-Asset Name,Symbol,Type,Address,AssetType,precision,Link,Chainlink Price Feed, aggregatorName
+Asset Name,Symbol,Type,Address,AssetType,precision,Link,Chainlink Price Feed,aggregatorName
 USD Coin,USDC,currency,0x2791bca1f2de4661ed88a30c99a7a9449aa84174,4,6,https://polygonscan.com/address/0x2791bca1f2de4661ed88a30c99a7a9449aa84174,0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7
 Tether USD,USDT,currency,0xc2132d05d31c914a87c6611c10748aeb04b58e8f,4,6,https://polygonscan.com/address/0xc2132d05d31c914a87c6611c10748aeb04b58e8f,0x0A6513e40db6EB1b165753AD52E80663aeA50545
 Dai USD,DAI,currency,0x8f3cf7ad23cd3cadbd9735aff958023239c6a063,4,18,https://polygonscan.com/address/0x8f3cf7ad23cd3cadbd9735aff958023239c6a063,0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D
@@ -33,4 +33,4 @@ MANA,Decentraland,crypto,0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4,0,18,https:/
 QUICK,QuickSwap,crypto,0x831753dd7087cac61ab5644b308642cc1c33dc13,0,18,https://polygonscan.com/token/0x831753dd7087cac61ab5644b308642cc1c33dc13,0xa058689f4bCa95208bba3F265674AE95dED75B6D,,
 UNI,Uniswap,crypto,0xb33eaad8d922b1083446dc23f610c2567fb5180f,0,18,https://polygonscan.com/token/0xb33eaad8d922b1083446dc23f610c2567fb5180f,0xdf0Fb4e4F928d2dCB76f438575fDD8682386e13C,,
 YFI,Yearn.Finance,crypto,0xda537104d6a5edd53c6fbba9a898708e465260b6,0,18,https://polygonscan.com/token/0xda537104d6a5edd53c6fbba9a898708e465260b6,0x9d3A43c111E7b2C6601705D9fcF7a70c95b1dc55,,
-dUSD,Stablecoin Yield,crypto,0xbae28251b2a4e621aa7e20538c06dee010bc06de,0,18,https://polygonscan.com/token/0xbae28251b2a4e621aa7e20538c06dee010bc06de,,dHedgePoolAggregator,
+dUSD,Stablecoin Yield,crypto,0xbae28251b2a4e621aa7e20538c06dee010bc06de,0,18,https://polygonscan.com/token/0xbae28251b2a4e621aa7e20538c06dee010bc06de,,DHedgePoolAggregator,

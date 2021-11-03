@@ -14,6 +14,7 @@ let nonce,
   safeSdk,
   chainId,
   nonceLog = new Array();
+const { wait, retryWithDelay } = require("./utils.ts");
 
 const getTag = async () => {
   try {
@@ -57,6 +58,8 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
 };
 
 const tryVerify = async (hre, address, path, constructorArguments) => {
+  await wait(10000); // Make sure Etherscan picks it up
+
   try {
     await hre.run("verify:verify", {
       address: address,
@@ -134,8 +137,10 @@ const proposeTx = async (to, data, message, execute = false) => {
   // console.log("approveTxResponse", approveTxResponse);
   console.log("safeTransaction: ", safeTransaction);
 
-  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
-  console.log("ProposeTx: ", proposeTx);
+  await retryWithDelay(
+    async () => await service.proposeTx(safeAddress, txHash, safeTransaction, signature),
+    "Gnosis safe",
+  );
 };
 
 const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) => {
@@ -189,10 +194,10 @@ const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHan
 };
 
 const getAggregator = async (csvAsset) => {
-  const assetName = csvAsset["aggregatorName"];
+  const aggregatorName = csvAsset["aggregatorName"];
   let aggregator;
 
-  switch (assetName) {
+  switch (aggregatorName) {
     case "DHedgePoolAggregator":
       // Deploy DHedgePoolAggregator
       const assetAddress = csvAsset["Address"];
