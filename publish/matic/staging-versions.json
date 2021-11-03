@@ -1183,31 +1183,31 @@
           "name": "dUSD",
           "asset": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
           "assetType": "0",
-          "aggregator": "0x8682A07AD986B66276202d91FaA15dE9A3E39Ff3",
+          "aggregator": "0xC016387a497CA090F8b6107c88F47030E61d6763",
           "aggregatorName": "DHedgePoolAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
-      "PoolLogic": "0xBA6AE6Def9c94e25B67176d2B6C32F7863968fbe",
+      "PoolLogic": "0xe38d6B375B9ed2fCEB6Edf1D64176A7E1A549410",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x330846B9eA0eb13Fe874aBcc872dC77fA99D56d5",
+      "PoolManagerLogic": "0x3cCD3B47C32d621C8C7E3f66a6D7d763E0BDc341",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
-      "ERC20Guard": "0x24f6BE264E30c6eddafd4E3e45c8770423a8208f",
-      "UniswapV2RouterGuard": "0x92F1458714B8a705b79DCa54B69A9c13Da90fB46",
+      "ERC20Guard": "0x296Ae47463d474198e797C61c19D2493208b72F9",
+      "UniswapV2RouterGuard": "0xA50f607b6b43a438Ee1b58a144686276c261a777",
       "SushiMiniChefV2Guard": "0x58F4B1E5194f92C3818EDD7bB27b078BebdD0f27",
       "SushiLPAssetGuard": "0x2F16bb563d31ebC61Ad6aC9Fb3edD6eAF89132d9",
-      "AaveLendingPoolAssetGuard": "0x04354481A56Eb72484ff23D538a0DF21D16cE644",
+      "AaveLendingPoolAssetGuard": "0xa155cde6B93159397f3BD2D82a0E2B675fCB4236",
       "AaveLendingPoolGuard": "0x5Ea7ffE8699DF0b7eFb8d2523a57F0C9F97D7BA2",
-      "LendingEnabledAssetGuard": "0x275937Ef9264FF482b0Ae68d46A94D3F6203c3D9",
+      "LendingEnabledAssetGuard": "0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6",
       "AaveIncentivesControllerGuard": "0xeE315011c5709360e5006835ECC033AebdD3F0da",
       "OpenAssetGuard": "0x9fDEfe827Df93B5b99536c8BA25D4A570b74f416",
       "QuickLPAssetGuard": "0x018338bFd3FdB1915d823a77248F43dE00B54BB7",
       "QuickStakingRewardsGuard": "0x9519BD5868f8D66DE1Db3bd6e9Ae917b1Ffa886D",
       "OneInchV3Guard": "0xa389D040C0809b3069BA5b073469413152c2EBdF",
       "PoolPerformanceProxy": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
-      "PoolPerformance": "0x688466E9a38277cd3494F2606f4950EAfb374462",
+      "PoolPerformance": "0x0a7AA4D9bf1e88240B752F965E793210Cb9fD722",
       "BalancerV2Guard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB"
     },
     "network": {
@@ -1216,6 +1216,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Wed, 20 Oct 2021 08:25:09 GMT"
+    "date": "Wed, 03 Nov 2021 12:33:06 GMT"
   }
 }

@@ -3213,6 +3213,391 @@
           }
         }
       }
+    },
+    "7478221995b96162482c243f5884798aaf7f864c1520ce74dff6a037719b61f3": {
+      "address": "0xe38d6B375B9ed2fCEB6Edf1D64176A7E1A549410",
+      "txHash": "0xedf0d51cefe01d9b67cc9f04507fe97b0fb6ece15fda1b4099d8795236393aab",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:30"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:37"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_allowances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:39"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_totalSupply",
+            "type": "t_uint256",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:41"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:43"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:44"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_decimals",
+            "type": "t_uint8",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:45"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)44_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC20\\ERC20Upgradeable.sol:312"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:37"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:67"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "privatePool",
+            "type": "t_bool",
+            "src": "contracts\\PoolLogic.sol:131"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "creator",
+            "type": "t_address",
+            "src": "contracts\\PoolLogic.sol:132"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "creationTime",
+            "type": "t_uint256",
+            "src": "contracts\\PoolLogic.sol:134"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "factory",
+            "type": "t_address",
+            "src": "contracts\\PoolLogic.sol:136"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "tokenPriceAtLastFeeMint",
+            "type": "t_uint256",
+            "src": "contracts\\PoolLogic.sol:139"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "lastDeposit",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\PoolLogic.sol:141"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "poolManagerLogic",
+            "type": "t_address",
+            "src": "contracts\\PoolLogic.sol:143"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts\\PoolLogic.sol:759"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_array(t_uint256)44_storage": {
+            "label": "uint256[44]"
+          }
+        }
+      }
+    },
+    "6a5c8325dedd8c1d1803b9679546f5fbe46536275b4572d8ccbe5d1d77fd953e": {
+      "address": "0x3cCD3B47C32d621C8C7E3f66a6D7d763E0BDc341",
+      "txHash": "0x7c59f31e003292317072f08969dfd4b0b92173d7ecd8b7c44373ae00472f06ee",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:30"
+          },
+          {
+            "contract": "Managed",
+            "label": "manager",
+            "type": "t_address",
+            "src": "contracts\\Managed.sol:47"
+          },
+          {
+            "contract": "Managed",
+            "label": "managerName",
+            "type": "t_string_storage",
+            "src": "contracts\\Managed.sol:48"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberList",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts\\Managed.sol:50"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\Managed.sol:51"
+          },
+          {
+            "contract": "Managed",
+            "label": "trader",
+            "type": "t_address",
+            "src": "contracts\\Managed.sol:53"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "factory",
+            "type": "t_address",
+            "src": "contracts\\PoolManagerLogic.sol:70"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "poolLogic",
+            "type": "t_address",
+            "src": "contracts\\PoolManagerLogic.sol:71"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "supportedAssets",
+            "type": "t_array(t_struct(Asset)20319_storage)dyn_storage",
+            "src": "contracts\\PoolManagerLogic.sol:73"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "assetPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\PoolManagerLogic.sol:74"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedFeeIncreaseNumerator",
+            "type": "t_uint256",
+            "src": "contracts\\PoolManagerLogic.sol:77"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedFeeIncreaseTimestamp",
+            "type": "t_uint256",
+            "src": "contracts\\PoolManagerLogic.sol:78"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts\\PoolManagerLogic.sol:79"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "__gap",
+            "type": "t_array(t_uint256)51_storage",
+            "src": "contracts\\PoolManagerLogic.sol:411"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_struct(Asset)20319_storage)dyn_storage": {
+            "label": "struct IHasSupportedAsset.Asset[]"
+          },
+          "t_struct(Asset)20319_storage": {
+            "label": "struct IHasSupportedAsset.Asset",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_address"
+              },
+              {
+                "label": "isDeposit",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)51_storage": {
+            "label": "uint256[51]"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          }
+        }
+      }
+    },
+    "dd71abce311e2526e8953fff5457f85af598bf1ffc1ea060747d906c5c73e377": {
+      "address": "0x0a7AA4D9bf1e88240B752F965E793210Cb9fD722",
+      "txHash": "0xabcde11c84591b786dd502490222f965b066e62dff11953c474027da7646d9ef",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:30"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "PoolPerformance",
+            "label": "poolInitialized",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "contracts\\PoolPerformance.sol:71"
+          },
+          {
+            "contract": "PoolPerformance",
+            "label": "internalBalancesMap",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "contracts\\PoolPerformance.sol:72"
+          },
+          {
+            "contract": "PoolPerformance",
+            "label": "internalValueFactorMap",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts\\PoolPerformance.sol:76"
+          },
+          {
+            "contract": "PoolPerformance",
+            "label": "enabled",
+            "type": "t_bool",
+            "src": "contracts\\PoolPerformance.sol:78"
+          }
+        ],
+        "types": {
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
     }
   }
 }
