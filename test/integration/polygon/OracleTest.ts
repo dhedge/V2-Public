@@ -5,7 +5,7 @@ import { solidity } from "ethereum-waffle";
 
 use(solidity);
 
-const poolAddress = "0xe3528a438b94e64669def9b875c381c46ef713bf";
+const poolAddress = "0x3deeba9ca29e2dd98d32eed8dd559dac55014615";
 const decimals = 6;
 
 describe("DHedgePoolPriceOracle", function () {
@@ -14,35 +14,20 @@ describe("DHedgePoolPriceOracle", function () {
 
   beforeEach(async function () {
     const DhedgePoolPriceOracle: ContractFactory = await ethers.getContractFactory("DHedgePoolPriceOracle");
-    dhedgePoolPriceOracle = await upgrades.deployProxy(DhedgePoolPriceOracle, [poolAddress, decimals]);
+    dhedgePoolPriceOracle = await DhedgePoolPriceOracle.deploy(poolAddress, decimals);
     await dhedgePoolPriceOracle.deployed();
     const PoolLogic: ContractFactory = await ethers.getContractFactory("PoolLogic");
+    // TODO: deploy a new pool and seed it with funds. Can be done after Integration test refactor.
     poolLogic = await PoolLogic.attach(poolAddress);
   });
 
   // Checks id pool address is set
-  it("price should almost be the same as token price", async () => {
+  it("price should  be the same as token price", async () => {
     const priceFromOracle = await dhedgePoolPriceOracle.getPrice();
     console.log("price from oracle ", priceFromOracle.toString());
     const tokenPrice = await poolLogic.tokenPrice();
     console.log("token Price ", tokenPrice.toString());
 
-    //not differ more than 10% to token price reduced to decimals
-    expect(
-      priceFromOracle.gte(
-        tokenPrice
-          .mul(9)
-          .div(10)
-          .div(10 ** (18 - decimals)),
-      ),
-    ).to.be.true;
-    expect(
-      priceFromOracle.lte(
-        tokenPrice
-          .mul(11)
-          .div(10)
-          .div(10 ** (18 - decimals)),
-      ),
-    ).to.be.true;
+    expect(priceFromOracle).to.equal(tokenPrice.div(10 ** (18 - decimals)));
   });
 });

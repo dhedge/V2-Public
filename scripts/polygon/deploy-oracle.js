@@ -1,17 +1,49 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const { getTag, tryVerify } = require("../Helpers");
 
-const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
-const pool = "0xe3528a438b94e64669def9b875c381c46ef713bf";
+const oracleVersionFile = "./publish/matic/oracle-versions.json";
+const pools = [
+  "0x3e5f7e9e7dc3bc3086ccebd5eb59a0a4a29d881b",
+  "0xc8fa09426ce1aeac1bc28751f1f6c8d74fa53f3c",
+  "0xcc940b5c6136994bed41bff5d88b170929921e9e",
+  "0xf4b3a195587d2735b656b7ffe9060f478faf1b32",
+];
 const decimals = 6;
 
 const main = async () => {
-  const upgrades = hre.upgrades;
+  let contracts = [];
 
   const DHedgePoolPriceOracle = await ethers.getContractFactory("DHedgePoolPriceOracle");
-  const dHedgePoolPriceOracleProxy = await upgrades.deployProxy(DHedgePoolPriceOracle, [pool, decimals]);
-  await dHedgePoolPriceOracleProxy.deployed();
-  console.log("Oracle deployed at ", dHedgePoolPriceOracleProxy.address);
-  await dHedgePoolPriceOracleProxy.transferOwnership(protocolDao);
+
+  for (const pool of pools) {
+    const dHedgePoolPriceOracle = await DHedgePoolPriceOracle.deploy(pool, decimals);
+    const tx = dHedgePoolPriceOracle.deployTransaction;
+    //wait 5 confirmations before verifying on polyscan
+    await tx.wait(5);
+    console.log(`Oracle for ${pool} deployed at ${dHedgePoolPriceOracle.address}`);
+    await tryVerify(
+      hre,
+      dHedgePoolPriceOracle.address,
+      "contracts/oracles/DHedgePoolPriceOracle.sol:DHedgePoolPriceOracle",
+      [pool, decimals],
+    );
+    contracts.push({ pool, oracle: dHedgePoolPriceOracle.address });
+  }
+
+  let tag = await getTag();
+  let versions = new Object();
+  let network = await ethers.provider.getNetwork();
+  versions[tag] = {
+    network: network,
+    date: new Date().toUTCString(),
+    contracts,
+  };
+
+  // convert JSON object to string
+  const data = JSON.stringify(versions, null, 2);
+
+  fs.writeFileSync(oracleVersionFile, data);
 };
 
 main()
