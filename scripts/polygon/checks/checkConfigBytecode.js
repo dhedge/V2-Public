@@ -11,6 +11,7 @@ const main = async (initializeData) => {
 
   // Check latest contract bytecodes (what needs to be upgraded on next release)
   console.log("Checking latest bytecodes against last deployment..");
+  await hre.run("compile");
 
   const bytecodeErrors = [];
   for (const contract of contractsArray) {
