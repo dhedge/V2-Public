@@ -1,13 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# First we need to check if there are lint changes - and store the result
-npm run prettier-check || retVal=$?
-# We still do the actual lint changes
-npm run prettier
-if [ $retVal -ne 0 ]; then
-    echo "Prettier changed files do you want to stage them?"
-		exit $retVal
-fi
-
-npm run lint:sol
+npx lint-staged
