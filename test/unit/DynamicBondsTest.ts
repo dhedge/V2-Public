@@ -127,6 +127,7 @@ describe("DynamicBonds Test", () => {
     // check before deposit
     expect(await usdc.balanceOf(treasury.address)).to.equal(0);
     expect(await dynamicBonds.debtTotal()).to.equal(0);
+    expect(await dynamicBonds.depositTotal()).to.equal(0);
     expect((await dynamicBonds.bondTerms()).payoutAvailable).to.equal(units(100));
 
     await usdc.approve(dynamicBonds.address, units(10));
@@ -143,6 +144,7 @@ describe("DynamicBonds Test", () => {
     expect(userBonds[0].lockStartedAt).to.equal(await currentBlockTimestamp());
     expect(userBonds[0].claimed).to.equal(false);
     expect(await dynamicBonds.debtTotal()).to.equal(units(1));
+    expect(await dynamicBonds.depositTotal()).to.equal(units(10));
     expect((await dynamicBonds.bondTerms()).payoutAvailable).to.equal(units(99));
     expect(await usdc.balanceOf(treasury.address)).to.equal(units(10));
   });

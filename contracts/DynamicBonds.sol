@@ -76,6 +76,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   address public depositToken; // token paid for principal eg. USDC
   address public payoutToken; // inflow token eg. DHT
   address public treasury; // receives payout token
+  uint256 public depositTotal;
   uint256 public debtTotal; // tracks the total amount of owed payout tokens
   uint256 public bondNumber; // tracks total number of issued bonds
 
@@ -229,6 +230,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
 
     userBonds[msg.sender].push(bondNumber);
     bondTerms.payoutAvailable = bondTerms.payoutAvailable.sub(_payoutAmount);
+    depositTotal = depositTotal.add(needToPay);
     debtTotal = debtTotal.add(_payoutAmount);
 
     emit Deposit(msg.sender, bondNumber, _payoutAmount, bondOption);
