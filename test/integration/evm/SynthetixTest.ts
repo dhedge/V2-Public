@@ -2,12 +2,12 @@ import { ethers, artifacts, upgrades } from "hardhat";
 import { use, expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory } from "ethers";
-import { solidity } from "ethereum-waffle";
+
 
 
 const chaiAlmost = require("chai-almost");
 const { checkAlmostSame } = require("../../TestHelpers");
-import { aave, assets, price_feeds, synthetix as SynthetixData, uniswapV2 } from "../ethereum-data"
+import { assets, price_feeds, synthetix as SynthetixData, uniswapV2 } from "../ethereum-data"
 
 use(chaiAlmost());
 
@@ -177,7 +177,7 @@ describe("Synthetix Test", function () {
       ),
     ).to.be.revertedWith("invalid manager fee");
 
-    let tx = await poolFactory.createFund(
+    await poolFactory.createFund(
       false,
       manager.address,
       "Barren Wuffet",
@@ -367,8 +367,8 @@ describe("Synthetix Test", function () {
       trackingCode,
     ]);
 
-    await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
 
+    await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
 
     let event:any = await exchangeEvent;
@@ -415,20 +415,22 @@ describe("Synthetix Test", function () {
     });
 
     // Withdraw 50%
-    let withdrawAmount = 50e18;
+    let withdrawAmount = (await poolLogicProxy.totalSupply()).div(2);
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue()
 
     await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
     await ethers.provider.send("evm_mine", []);
+
 
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
     let event:any = await withdrawalEvent;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
-    checkAlmostSame(event.valueWithdrawn, (50e18).toString());
-    checkAlmostSame(event.fundTokensWithdrawn, (50e18).toString());
-    checkAlmostSame(event.totalInvestorFundTokens, (50e18).toString());
-    checkAlmostSame(event.fundValue, (50e18).toString());
-    checkAlmostSame(event.totalSupply, (50e18).toString());
+    checkAlmostSame(event.valueWithdrawn, totalFundValue.div(2));
+    checkAlmostSame(event.fundTokensWithdrawn, withdrawAmount);
+    checkAlmostSame(event.totalInvestorFundTokens, withdrawAmount);
+    checkAlmostSame(event.fundValue, totalFundValue.div(2));
+    checkAlmostSame(event.totalSupply, withdrawAmount);
   });
 });
