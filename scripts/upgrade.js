@@ -622,7 +622,7 @@ task("upgrade", "Upgrade contracts")
         const balancerV2Guard = await BalancerV2Guard.deploy(10, 100); // set slippage 10%
         await balancerV2Guard.deployed();
         console.log("BalancerV2Guard deployed at", balancerV2Guard.address);
-        versions[newTag].contracts.UniswapV2RouterGuard = balancerV2Guard.address;
+        versions[newTag].contracts.BalancerV2Guard = balancerV2Guard.address;
 
         await tryVerify(
           hre,
@@ -751,7 +751,7 @@ task("upgrade", "Upgrade contracts")
         console.log("Will deploy SushiMiniChefV2Guard");
       } else {
         const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-        const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+        const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken, wmatic]);
         await sushiMiniChefV2Guard.deployed();
         console.log("SushiMiniChefV2Guard deployed at", sushiMiniChefV2Guard.address);
         versions[newTag].contracts.SushiMiniChefV2Guard = sushiMiniChefV2Guard.address;
@@ -940,7 +940,7 @@ task("upgrade", "Upgrade contracts")
     for (const newContractGuard of newContractGuards) {
       let replaced = false;
       for (const csvContractGuard of csvContractGuards) {
-        if (newContractGuard.GuardName == csvContractGuard.GuardName) {
+        if (newContractGuard.ContractAddress.toLowerCase() == csvContractGuard.ContractAddress.toLowerCase()) {
           csvContractGuard.ContractAddress = newContractGuard.ContractAddress;
           csvContractGuard.GuardAddress = newContractGuard.GuardAddress;
           csvContractGuard.Description = newContractGuard.Description;

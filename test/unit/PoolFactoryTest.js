@@ -291,7 +291,7 @@ describe("PoolFactory", function () {
     const SushiMiniChefV2Guard = await ethers.getContractFactory(
       "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
     );
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken.address, wmaticToken.address);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken.address, wmaticToken.address]);
     sushiMiniChefV2Guard.deployed();
 
     const OneInchV3Guard = await ethers.getContractFactory("contracts/guards/OneInchV3Guard.sol:OneInchV3Guard");
@@ -821,14 +821,18 @@ describe("PoolFactory", function () {
     let totalSupply = await poolLogicProxy.totalSupply();
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
-    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
+    await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
+      "cooldown active",
+    );
 
-    let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee();
-    let exitFee = ethers.BigNumber.from(withdrawAmount.toString()).mul(exitFeeNumerator).div(exitFeeDenominator);
+    // await poolFactory.setExitCooldown(0);
+    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
+
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
     let event = await withdrawalEvent;
 
-    let fundTokensWithdrawn = ethers.BigNumber.from(withdrawAmount.toString()).sub(exitFee);
+    let fundTokensWithdrawn = withdrawAmount;
     let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
@@ -1514,7 +1518,7 @@ describe("PoolFactory", function () {
     const daoBalanceBefore = ethers.BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
-    const tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     const calculatedAvailableFee = tokenPricePreMint
@@ -1797,14 +1801,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
-      ).to.be.revertedWith("enable rewardA token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
-      ).to.be.revertedWith("enable rewardB token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
@@ -2012,14 +2016,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable rewardA token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable rewardB token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);

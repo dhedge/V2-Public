@@ -6,9 +6,9 @@ const { aave, quickswap, assets, price_feeds } = require("../polygon-data");
 
 use(chaiAlmost());
 
-describe("DHedgePoolAggregator Test", function () {
-  let WMatic, USDC;
-  let logicOwner, manager, dao;
+describe("WithdrawSingle Test", function () {
+  let WMatic, WETH, USDC, QuickLPUSDCWETH, QUICK;
+  let logicOwner, manager, dao, user;
   let PoolLogic, PoolManagerLogic;
   let poolFactory,
     poolLogic,
@@ -16,11 +16,10 @@ describe("DHedgePoolAggregator Test", function () {
     poolLogicProxy,
     poolManagerLogicProxy,
     fundAddress,
-    uniswapV2RouterGuard,
-    dhedgePoolAggregator;
+    uniswapV2RouterGuard;
 
   before(async function () {
-    [logicOwner, manager, dao] = await ethers.getSigners();
+    [logicOwner, manager, dao, user] = await ethers.getSigners();
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
@@ -29,7 +28,7 @@ describe("DHedgePoolAggregator Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance, []);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -87,7 +86,6 @@ describe("DHedgePoolAggregator Test", function () {
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
-    await poolFactory.setExitCooldown(0);
   });
 
   it("Should be able to get USDC", async function () {
@@ -142,6 +140,41 @@ describe("DHedgePoolAggregator Test", function () {
 
     console.log("Passed poolManagerLogic Init!");
 
+    const fundCreatedEvent = new Promise((resolve, reject) => {
+      poolFactory.on(
+        "FundCreated",
+        (
+          fundAddress,
+          isPoolPrivate,
+          fundName,
+          managerName,
+          manager,
+          time,
+          managerFeeNumerator,
+          managerFeeDenominator,
+          event,
+        ) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress: fundAddress,
+            isPoolPrivate: isPoolPrivate,
+            fundName: fundName,
+            // fundSymbol: fundSymbol,
+            managerName: managerName,
+            manager: manager,
+            time: time,
+            managerFeeNumerator: managerFeeNumerator,
+            managerFeeDenominator: managerFeeDenominator,
+          });
+        },
+      );
+
+      setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 60000);
+    });
+
     await poolFactory.createFund(
       false,
       manager.address,
@@ -155,20 +188,43 @@ describe("DHedgePoolAggregator Test", function () {
       ],
     );
 
+    const event = await fundCreatedEvent;
+
+    fundAddress = event.fundAddress;
+    expect(event.isPoolPrivate).to.be.false;
+    expect(event.fundName).to.equal("Test Fund");
+    // expect(event.fundSymbol).to.equal("DHTF");
+    expect(event.managerName).to.equal("Barren Wuffet");
+    expect(event.manager).to.equal(manager.address);
+    expect(event.managerFeeNumerator.toString()).to.equal("5000");
+    expect(event.managerFeeDenominator.toString()).to.equal("10000");
+
     const deployedFunds = await poolFactory.getDeployedFunds();
-    fundAddress = deployedFunds[0];
+    const deployedFundsLength = deployedFunds.length;
+    expect(deployedFundsLength.toString()).to.equal("1");
+
+    const isPool = await poolFactory.isPool(fundAddress);
+    expect(isPool).to.be.true;
+
+    const poolManagerLogicAddress = await poolFactory.getLogic(1);
+    expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
+
+    const poolLogicAddress = await poolFactory.getLogic(2);
+    expect(poolLogicAddress).to.equal(poolLogic.address);
+
     poolLogicProxy = await PoolLogic.attach(fundAddress);
     const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
     poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
-  });
 
-  it("Deploy DHedgePoolAggregator", async () => {
-    const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
-    dhedgePoolAggregator = await DHedgePoolAggregator.deploy(poolLogicProxy.address);
-    await dhedgePoolAggregator.deployed();
+    //default assets are supported
+    const supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    const numberOfSupportedAssets = supportedAssets.length;
+    expect(numberOfSupportedAssets).to.eq(2);
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdc)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdt)).to.be.true;
 
-    const [, answer] = await dhedgePoolAggregator.latestRoundData();
-    expect(answer).to.equal(0);
+    //Other assets are not supported
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.wmatic)).to.be.false;
   });
 
   it("Deposit 1000 USDC", async function () {
@@ -203,9 +259,6 @@ describe("DHedgePoolAggregator Test", function () {
 
     await USDC.approve(poolLogicProxy.address, units(1000, 6).toString());
     await poolLogicProxy.deposit(assets.usdc, units(1000, 6).toString());
-
-    const [, answer] = await dhedgePoolAggregator.latestRoundData();
-    checkAlmostSame(answer, units(1, 8));
   });
 
   it("Approve 750 USDC", async () => {
@@ -231,17 +284,66 @@ describe("DHedgePoolAggregator Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(quickswap.router, swapABI);
 
     checkAlmostSame(await USDC.balanceOf(poolLogicProxy.address), units(250, 6));
-
-    const [, answer] = await dhedgePoolAggregator.latestRoundData();
-    checkAlmostSame(answer, units(1, 8));
   });
 
-  it("withdraw 20%", async function () {
-    const withdrawAmount = units(200);
+  it("not able to withdrawSingle 300 USDC", async function () {
+    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
+    await expect(poolLogicProxy.withdrawSingle(units(10000), assets.usdc)).to.be.revertedWith("insufficient balance");
 
-    await poolLogicProxy.withdraw(withdrawAmount);
+    const withdrawAmount = units(300);
+    await expect(poolLogicProxy.withdrawSingle(withdrawAmount, assets.quick)).to.be.revertedWith(
+      "invalid deposit asset",
+    );
+    await expect(poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc)).to.be.revertedWith(
+      "insufficient asset amount",
+    );
 
-    const [, answer] = await dhedgePoolAggregator.latestRoundData();
-    checkAlmostSame(answer, units(1, 8));
+    const withdrawMaxAmount = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
+    checkAlmostSame(withdrawMaxAmount, units(250).mul(101).div(100));
+  });
+
+  // Disabled early withdraw for now
+  // it("able to withdrawSingle 200 USDC (early withdraw)", async function () {
+  //   const withdrawAmount = units(200);
+
+  //   const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+  //   const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+  //   const withdrawMaxAmountBefore = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
+
+  //   await poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc);
+
+  //   const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+  //   const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
+
+  //   // check with remove 0.5% exit fee
+  //   checkAlmostSame(usdcBalanceBefore, units(199, 6).add(usdcBalanceAfter));
+  //   checkAlmostSame(totalFundValueBefore, units(199).add(totalFundValueAfter));
+
+  //   checkAlmostSame(
+  //     withdrawMaxAmountBefore,
+  //     withdrawAmount.add(await poolLogicProxy.getWithdrawSingleMax(assets.usdc)),
+  //   );
+  // });
+
+  it("able to withdrawSingle 20 USDC", async function () {
+    const withdrawAmount = units(20);
+
+    const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
+    const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+    const withdrawMaxAmountBefore = await poolLogicProxy.getWithdrawSingleMax(assets.usdc);
+
+    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
+    await poolLogicProxy.withdrawSingle(withdrawAmount, assets.usdc);
+
+    const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
+    const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
+
+    checkAlmostSame(usdcBalanceBefore, units(20, 6).add(usdcBalanceAfter));
+    checkAlmostSame(totalFundValueBefore, units(20).add(totalFundValueAfter));
+
+    checkAlmostSame(
+      withdrawMaxAmountBefore,
+      withdrawAmount.add(await poolLogicProxy.getWithdrawSingleMax(assets.usdc)),
+    );
   });
 });

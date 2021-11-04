@@ -75,6 +75,14 @@ contract PoolPerformance is OwnableUpgradeable {
   // Stores the internal value ratio numerator
   mapping(address => uint256) public internalValueFactorMap;
 
+  bool public enabled;
+
+  modifier isEnabled() {
+    if (enabled) {
+      _;
+    }
+  }
+
   /// @notice initialisation for the contract
   function initialize() external initializer {
     __Ownable_init();
@@ -91,34 +99,16 @@ contract PoolPerformance is OwnableUpgradeable {
     return currentTokenPrice.mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
   }
 
-  /// @notice returns the realtime value of a pool token adjusted for any external value and manager fee
-  /// @param poolAddress The address of the pool
-  /// @return the value per token that only includes the increase in value of the underlying pool assets, sans manager fee
-  function tokenPriceAdjustedForPerformanceAndManagerFee(address poolAddress) external view returns (uint256) {
-    uint256 tknPriceAdjustedForManagerFee = tokenPriceAdjustedForManagerFee(poolAddress);
-    if (tknPriceAdjustedForManagerFee == 0) {
-      return 0;
-    }
-    return tknPriceAdjustedForManagerFee.mul(realtimeInternalValueFactor(poolAddress)).div(DENOMINATOR);
-  }
-
-  /// @notice returns the realtime value of a pool tokens underlying value, sans any manager fee
-  /// @dev this is the value per token the owner receives on withdraw.
-  /// @param poolAddress The address of the pool
-  /// @return the value per token, sans manager fee, received by the user on withdraw.
-  function tokenPriceAdjustedForManagerFee(address poolAddress) public view returns (uint256) {
-    uint256 currentTokenPrice = tokenPrice(poolAddress);
-    if (currentTokenPrice == 0) {
-      return 0;
-    }
-    return
-      currentTokenPrice.mul(IERC20Extended(poolAddress).totalSupply()).div(
-        IERC20Extended(poolAddress).totalSupply().add(IPoolLogic(poolAddress).availableManagerFee())
-      );
-  }
-
   /// @notice returns the realtime value of a pool tokens underlying value
   /// @dev this value does not include any reductions for unpaid manager fees that maybe saught on withdraw
+  /// @param poolAddress The address of the pool
+  /// @return the value per token of all the underlying pool assets.
+  function tokenPriceWithoutManagerFee(address poolAddress) public view returns (uint256) {
+    return IPoolLogic(poolAddress).tokenPriceWithoutManagerFee();
+  }
+
+  /// @notice returns the realtime value of a pool tokens underlying value adjusted for any manager fee
+  /// @dev this value does include any reductions for unpaid manager fees that maybe saught on withdraw
   /// @param poolAddress The address of the pool
   /// @return the value per token of all the underlying pool assets.
   function tokenPrice(address poolAddress) public view returns (uint256) {
@@ -193,7 +183,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @notice Records the difference in value between the internal balances and the external balances of a pool
   /// @dev The value recorded is per token, it resets the internal balances to equal external balances once recorded.
   /// @param poolAddress The address of the pool
-  function recordExternalValue(address poolAddress) external {
+  function recordExternalValue(address poolAddress) external isEnabled {
     if (!poolInitialized[poolAddress]) {
       _updateInternalBalances(poolAddress);
       poolInitialized[poolAddress] = true;
@@ -258,11 +248,16 @@ contract PoolPerformance is OwnableUpgradeable {
     }
   }
 
-  /// @notice Increase the internal balanace of the given asset
+  /// @notice Increase/decrease the internal balanace of the given asset
   /// @dev Used for including new deposits in the internal balance
   /// @param asset The address of the asset
-  /// @param amount The amount of the asset
-  function addAssetBalance(address asset, uint256 amount) external {
+  /// @param plusAmount The increased amount of the asset
+  /// @param minusAmount The decreased amount of the asset
+  function changeAssetBalance(
+    address asset,
+    uint256 plusAmount,
+    uint256 minusAmount
+  ) external isEnabled {
     address poolAddress = msg.sender;
     if (!poolInitialized[poolAddress]) {
       _updateInternalBalances(poolAddress);
@@ -270,7 +265,7 @@ contract PoolPerformance is OwnableUpgradeable {
       return;
     }
 
-    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(amount);
+    internalBalancesMap[poolAddress][asset] = internalBalancesMap[poolAddress][asset].add(plusAmount).sub(minusAmount);
   }
 
   /// @notice Checks to see if the external balances of a pool are greater than the internal balances
@@ -336,7 +331,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @dev Used for including new deposits in the internal balance
   /// @param a numerator
   /// @param b The amount its being allocated over
-  function adjustInternalValueFactor(uint256 a, uint256 b) external {
+  function adjustInternalValueFactor(uint256 a, uint256 b) external isEnabled {
     address poolAddress = msg.sender;
     if (internalValueFactorMap[poolAddress] == 0) {
       internalValueFactorMap[poolAddress] = DENOMINATOR.mul(b.sub(a)).div(b);
@@ -347,13 +342,13 @@ contract PoolPerformance is OwnableUpgradeable {
 
   /// @notice Resets the internal balances to equal the external balances
   /// @dev Used to update the internal balances after a manager executes a transaction/s should only be called by the pool
-  function updateInternalBalances() external {
+  function updateInternalBalances() external isEnabled {
     _updateInternalBalances(msg.sender);
   }
 
   /// @notice Sets the pool as initialized
   /// @dev Should only be called when creating an empty pool
-  function initializePool() external {
+  function initializePool() external isEnabled {
     poolInitialized[msg.sender] = true;
   }
 
@@ -410,5 +405,10 @@ contract PoolPerformance is OwnableUpgradeable {
     } else {
       return AaveAddresses(address(0), address(0));
     }
+  }
+
+  /// @notice Enable PoolPerformance
+  function enable() external onlyOwner {
+    enabled = true;
   }
 }
