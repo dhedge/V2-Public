@@ -19,7 +19,7 @@ library BytesLib {
     require(_bytes.length >= _start + _length, "slice_outOfBounds");
 
     bytes memory tempBytes;
-    // solhint-disable-next-line no-inline-assembly
+
     assembly {
       switch iszero(_length)
       case 0 {
@@ -79,7 +79,7 @@ library BytesLib {
     require(_start + 20 >= _start, "toAddress_overflow");
     require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
     address tempAddress;
-    // solhint-disable-next-line no-inline-assembly
+
     assembly {
       tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
     }
@@ -91,7 +91,7 @@ library BytesLib {
     require(_start + 3 >= _start, "toUint24_overflow");
     require(_bytes.length >= _start + 3, "toUint24_outOfBounds");
     uint24 tempUint;
-    // solhint-disable-next-line no-inline-assembly
+
     assembly {
       tempUint := mload(add(add(_bytes, 0x3), _start))
     }

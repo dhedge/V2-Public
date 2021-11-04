@@ -97,7 +97,7 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
   function _createProxy() internal returns (InitializableUpgradeabilityProxy) {
     address payable addr;
     bytes memory code = type(InitializableUpgradeabilityProxy).creationCode;
-    // solhint-disable-next-line no-inline-assembly
+
     assembly {
       addr := create(0, add(code, 0x20), mload(code))
       if iszero(extcodesize(addr)) {

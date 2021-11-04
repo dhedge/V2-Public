@@ -64,7 +64,6 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
       uint80
     ) {
       // check chainlink price updated within 25 hours
-      // solhint-disable-next-line not-rely-on-time
       require(updatedAt.add(chainlinkTimeout) >= block.timestamp, "Chainlink price expired");
 
       if (_price > 0) {

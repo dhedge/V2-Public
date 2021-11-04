@@ -46,7 +46,6 @@ library AddressHelper {
    * @return success if the contract call is successful or not
    */
   function tryAssemblyCall(address to, bytes memory data) internal returns (bool success) {
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       success := call(gas(), to, 0, add(data, 0x20), mload(data), 0, 0)
       switch iszero(success)
@@ -65,7 +64,6 @@ library AddressHelper {
    * @return success if the contract call is successful or not
    */
   function tryAssemblyDelegateCall(address to, bytes memory data) internal returns (bool success) {
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       success := delegatecall(gas(), to, add(data, 0x20), mload(data), 0, 0)
       switch iszero(success)

@@ -3,6 +3,8 @@
   "plugins": [],
   "rules": {
     "compiler-version": ["error", "0.7.6"],
+    "no-inline-assembly": ["off"],
+    "not-rely-on-time": ["off"],
     "max-states-count": ["warn", 21],
     "func-visibility": ["warn", {"ignoreConstructors":true}]
   }

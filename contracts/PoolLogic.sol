@@ -175,7 +175,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     factory = _factory;
     _setPoolPrivacy(_privatePool);
     creator = msg.sender;
-    // solhint-disable-next-line not-rely-on-time
     creationTime = block.timestamp;
 
     tokenPriceAtLastFeeMint = 10**18;
@@ -225,7 +224,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     returns (uint256 liquidityMinted)
   {
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
-    // solhint-disable-next-line not-rely-on-time
+
     lastDeposit[msg.sender] = block.timestamp;
 
     uint256 fundValue = _mintManagerFee();
@@ -260,7 +259,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       balanceOf(msg.sender),
       fundValue.add(usdAmount),
       totalSupplyBefore.add(liquidityMinted),
-      // solhint-disable-next-line not-rely-on-time
       block.timestamp
     );
   }
@@ -268,7 +266,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @notice Withdraw assets based on the fund token amount
   /// @param _fundTokenAmount the fund token amount
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
-    // solhint-disable-next-line not-rely-on-time
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
@@ -326,7 +323,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     // Reduce length for withdrawnAssets to remove the empty items
     uint256 reduceLength = _supportedAssets.length.sub(index);
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
     }
@@ -342,7 +338,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       fundValue.sub(valueWithdrawn),
       totalSupply(),
       withdrawnAssets,
-      // solhint-disable-next-line not-rely-on-time
       block.timestamp
     );
   }
@@ -351,7 +346,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param _fundTokenAmount the fund token amount
   /// @param _asset the withdraw asset address
   function withdrawSingle(uint256 _fundTokenAmount, address _asset) external virtual nonReentrant whenNotPaused {
-    // solhint-disable-next-line not-rely-on-time
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
@@ -398,7 +392,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       fundValue.sub(valueWithdrawn),
       totalSupply(),
       withdrawnAssets,
-      // solhint-disable-next-line not-rely-on-time
       block.timestamp
     );
   }
@@ -499,7 +492,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     // We must now update our internal balances to whatever the result of this tx is
     poolPerformance.updateInternalBalances();
-    // solhint-disable-next-line not-rely-on-time
+
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
 
@@ -669,9 +662,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function getExitRemainingCooldown(address sender) public view returns (uint256 remaining) {
     uint256 cooldown = getExitCooldown();
     uint256 cooldownFinished = lastDeposit[sender].add(cooldown);
-    // solhint-disable-next-line not-rely-on-time
+
     if (cooldownFinished < block.timestamp) return 0;
-    // solhint-disable-next-line not-rely-on-time
+
     remaining = cooldownFinished.sub(block.timestamp);
   }
 

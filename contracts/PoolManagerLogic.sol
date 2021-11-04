@@ -231,7 +231,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     }
     // Reduce length for withdrawnAssets to remove the empty items
     uint256 reduceLength = assetCount.sub(index);
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(depositAssets, sub(mload(depositAssets), reduceLength))
     }
@@ -368,7 +367,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint256 feeChangeDelay = IHasFeeInfo(factory).managerFeeNumeratorChangeDelay();
 
     announcedFeeIncreaseNumerator = numerator;
-    // solhint-disable-next-line not-rely-on-time
     announcedFeeIncreaseTimestamp = block.timestamp + feeChangeDelay;
     emit ManagerFeeIncreaseAnnounced(numerator, announcedFeeIncreaseTimestamp);
   }
@@ -384,7 +382,6 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Manager can commit the performance fee increase
   /// @dev Fee increase needs to be announced first
   function commitManagerFeeIncrease() external onlyManager {
-    // solhint-disable-next-line not-rely-on-time
     require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
 
     _setManagerFeeNumerator(announcedFeeIncreaseNumerator);

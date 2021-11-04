@@ -96,7 +96,6 @@ contract OpenAssetGuard is IGuard, TxDataUtils, Ownable {
         IManaged(_poolManagerLogic).manager(),
         spender,
         amount,
-        // solhint-disable-next-line not-rely-on-time
         block.timestamp
       );
 

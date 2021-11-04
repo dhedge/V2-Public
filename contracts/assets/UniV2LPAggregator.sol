@@ -76,7 +76,6 @@ contract UniV2LPAggregator is IAggregatorV3Interface {
     uint256 answer = r.mul(p).mul(2).div(totalSupply).div(10**10); // decimal = 8
 
     // we don't need roundId, startedAt and answeredInRound
-    // solhint-disable-next-line not-rely-on-time
     return (0, int256(answer), 0, block.timestamp, 0);
   }
 

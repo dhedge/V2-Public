@@ -281,7 +281,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
     // Reduce length the empty items
     uint256 reduceLength = length.sub(index);
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(collateralAssets, sub(mload(collateralAssets), reduceLength))
       mstore(amounts, sub(mload(amounts), reduceLength))
@@ -343,7 +342,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
     // Reduce length the empty items
     uint256 reduceLength = length.sub(index);
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(borrowAssets, sub(mload(borrowAssets), reduceLength))
       mstore(amounts, sub(mload(amounts), reduceLength))
@@ -515,7 +513,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
     // Reduce length the empty items
     uint256 reduceLength = length.sub(txCount);
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(transactions, sub(mload(transactions), reduceLength))
     }
@@ -588,7 +585,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
     // Reduce length the empty items
     uint256 reduceLength = length.sub(txCount);
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       mstore(transactions, sub(mload(transactions), reduceLength))
     }
