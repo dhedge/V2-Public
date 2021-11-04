@@ -76,7 +76,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await uniswapV2RouterGuard.deployed();
 
   const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-  const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(assets.sushi, assets.wmatic);
+  const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([assets.sushi, assets.wmatic]);
   await sushiMiniChefV2Guard.deployed();
 
   const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");

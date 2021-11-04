@@ -9,7 +9,7 @@ use(solidity);
 
 const oneDollar = units(1);
 
-describe("PoolLogic", function () {
+describe.skip("Early Exit Fee", function () {
   let WMatic;
   let logicOwner, manager, dao;
   let PoolLogic;
@@ -69,7 +69,8 @@ describe("PoolLogic", function () {
   // Checks to make sure early exit of 100% drains all assets and does not incur fee
   // we make a conventional deposit and immediately withdraw 100% of the issued tokens
   // we then deposit again and check the token price is $1 to confirm not left over assets from previous withdraw
-  it("early 100% withdrawal should not incur fee when there is a fee", async () => {
+  // Skipped because this behaviour was backed out
+  it.skip("early 100% withdrawal should not incur fee when there is a fee", async () => {
     const managerFee = BigNumber.from("0"); // 0%;
     // Create the fund we're going to use for testing
     await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [

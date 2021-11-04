@@ -7,7 +7,6 @@ cache
 cache-ovm
 artifacts
 artifacts-ovm
-types
 
 #VIM
 *.swp

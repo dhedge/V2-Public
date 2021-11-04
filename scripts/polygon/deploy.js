@@ -236,7 +236,7 @@ const deploy = async (env) => {
   console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
 
   const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-  sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+  sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken, wmatic]);
   await sushiMiniChefV2Guard.deployed();
   console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
 
