@@ -75,7 +75,7 @@ describe("Sushiswap V2 Test", function () {
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(assets.sushi, assets.wmatic);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([assets.sushi, assets.wmatic]);
     sushiMiniChefV2Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
@@ -601,14 +601,14 @@ describe("Sushiswap V2 Test", function () {
       );
 
       await expect(poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi)).to.be.revertedWith(
-        "enable rewardA token",
+        "enable reward token",
       );
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[assets.sushi, false]], []);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi)).to.be.revertedWith(
-        "enable rewardB token",
+        "enable reward token",
       );
 
       // enable WMATIC token in pool

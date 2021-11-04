@@ -102,7 +102,7 @@ describe("Polygon Mainnet Test", function () {
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(assets.sushi, assets.wmatic);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([assets.sushi, assets.wmatic]);
     sushiMiniChefV2Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
