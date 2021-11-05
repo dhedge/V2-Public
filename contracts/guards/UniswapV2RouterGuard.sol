@@ -69,7 +69,10 @@ contract UniswapV2RouterGuard is TxDataUtils, SlippageChecker, IGuard {
 
   constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
     SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
-  {}
+  // solhint-disable-next-line no-empty-blocks
+  {
+
+  }
 
   /// @notice Transaction guard for Uniswap V2
   /// @dev It supports exchange, addLiquidity and removeLiquidity functionalities
