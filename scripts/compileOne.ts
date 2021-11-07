@@ -36,5 +36,5 @@ task("compile:one", "Compiles a single contract in isolation")
       quiet: true,
     });
 
-    //   await env.run("typechain"); // TODO: uncomment once typechain integration is complete
+    await env.run("typechain");
   });
