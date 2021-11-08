@@ -38,4 +38,6 @@ interface IPoolFactory {
   function governanceAddress() external view returns (address);
 
   function poolPerformanceAddress() external view returns (address);
+
+  function isPool(address pool) external view returns (bool);
 }

@@ -46,6 +46,7 @@ import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -163,7 +164,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     bool isDeposit = _asset.isDeposit;
 
     require(validateAsset(asset), "invalid asset");
-    require(poolLogic != asset, "cannot add pool asset");
+    require(!validateAsset(poolLogic) || !IPoolFactory(factory).isPool(asset), "cannot add pool asset");
 
     if (isSupportedAsset(asset)) {
       uint256 index = assetPosition[asset].sub(1);
