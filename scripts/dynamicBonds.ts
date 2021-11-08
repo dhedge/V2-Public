@@ -1,10 +1,8 @@
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { utils, BigNumber } from "ethers";
+import { utils, BigNumber, Contract } from "ethers";
 import fs from "fs";
 import axios from "axios";
-
-import { DynamicBonds } from "../types";
 
 const { tryVerify, implementationStorage } = require("./Helpers");
 const coingeckoNetwork = "polygon-pos";
@@ -115,7 +113,7 @@ const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment) => {
   return { dynamicBondsProxy, dynamicBondsImplementation };
 };
 
-const setBondTerms = async (dynamicBonds: DynamicBonds) => {
+const setBondTerms = async (dynamicBonds: Contract) => {
   const timeNow = Math.round(Date.now() / 1000);
   const timeAtSaleEnd = timeNow + saleDuration;
   console.log("-- Set bond terms --");
@@ -125,7 +123,7 @@ const setBondTerms = async (dynamicBonds: DynamicBonds) => {
   console.log("Bond terms set!");
 };
 
-const addBondOptions = async (dynamicBonds: DynamicBonds) => {
+const addBondOptions = async (dynamicBonds: Contract) => {
   const bondOptionsBefore = await dynamicBonds.bondOptions();
   if (bondOptionsBefore.length > 0) throw "Bonds already added";
 
@@ -148,7 +146,7 @@ const addBondOptions = async (dynamicBonds: DynamicBonds) => {
   console.log("Bond options added!");
 };
 
-const updateBondOptions = async (dynamicBonds: DynamicBonds) => {
+const updateBondOptions = async (dynamicBonds: Contract) => {
   const bondOptionsBefore = await dynamicBonds.bondOptions();
   const bondOptionLength = bondOptionsBefore.length;
   if (bondOptionLength == 0) throw "No bond options added yet";
@@ -188,7 +186,7 @@ const getTokenPrice = async (coingeckoNetwork: string, assetAddress: string) => 
   }
 };
 
-const printConfig = async (dynamicBonds: DynamicBonds) => {
+const printConfig = async (dynamicBonds: Contract) => {
   const bondTerms = await dynamicBonds.bondTerms();
   const bondOptions = await dynamicBonds.bondOptions();
   console.log("-- Bond Terms --");
@@ -219,7 +217,7 @@ const printConfig = async (dynamicBonds: DynamicBonds) => {
   console.log("------------------------");
 };
 
-const checkPayoutBalance = async (hre: HardhatRuntimeEnvironment, dynamicBonds: DynamicBonds) => {
+const checkPayoutBalance = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract) => {
   const IERC20 = await hre.artifacts.readArtifact("IERC20");
   const payoutTokenSetting = await dynamicBonds.payoutToken();
   const payoutTokenERC20 = await hre.ethers.getContractAt(IERC20.abi, payoutTokenSetting);
