@@ -755,7 +755,7 @@ task("upgrade", "Upgrade contracts")
         console.log("Will deploy SushiMiniChefV2Guard");
       } else {
         const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-        const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+        const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken, wmatic]);
         await sushiMiniChefV2Guard.deployed();
         console.log("SushiMiniChefV2Guard deployed at", sushiMiniChefV2Guard.address);
         versions[newTag].contracts.SushiMiniChefV2Guard = sushiMiniChefV2Guard.address;

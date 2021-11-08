@@ -55,12 +55,10 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
   event Claim(address fundAddress, address stakingContract, uint256 time);
 
   // The staking contract rewards in dual tokens.
-  address public rewardTokenA; // SUSHI token
-  address public rewardTokenB; // WMATIC token
+  address[] public rewardTokens;
 
-  constructor(address _rewardTokenA, address _rewardTokenB) {
-    rewardTokenA = _rewardTokenA;
-    rewardTokenB = _rewardTokenB;
+  constructor(address[] memory _rewardTokens) {
+    rewardTokens = _rewardTokens;
   }
 
   /// @notice Transaction guard for Sushi MiniChefV2
@@ -95,8 +93,9 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
       require(poolLogic == receiver, "recipient is not pool");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable rewardA token");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable rewardB token");
+      for (uint256 i = 0; i < rewardTokens.length; i++) {
+        require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokens[i]), "enable reward token");
+      }
 
       emit Stake(poolLogic, lpToken, to, amount, block.timestamp);
 
@@ -120,8 +119,9 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       address poolLogic = poolManagerLogic.poolLogic();
       address receiver = convert32toAddress(getInput(data, 1)); // The receiver of the SUSHI rewards.
 
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable rewardA token");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable rewardB token");
+      for (uint256 i = 0; i < rewardTokens.length; i++) {
+        require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokens[i]), "enable reward token");
+      }
       require(poolLogic == receiver, "recipient is not pool");
 
       emit Claim(poolLogic, to, block.timestamp);
@@ -138,8 +138,9 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
       require(poolLogic == receiver, "recipient is not pool");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenA), "enable rewardA token");
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokenB), "enable rewardB token");
+      for (uint256 i = 0; i < rewardTokens.length; i++) {
+        require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardTokens[i]), "enable reward token");
+      }
 
       emit Unstake(poolLogic, lpToken, to, amount, block.timestamp);
       emit Claim(poolLogic, to, block.timestamp);

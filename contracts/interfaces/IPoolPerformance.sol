@@ -66,4 +66,6 @@ interface IPoolPerformance {
   function resetInternalValueFactor() external;
 
   function initializePool() external;
+
+  function tokenPriceAdjustedForManagerFee(address poolAddress) external view returns (uint256);
 }

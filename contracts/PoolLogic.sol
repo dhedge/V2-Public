@@ -485,6 +485,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
     (uint16 txType, bool isPublic) = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
+    // solhint-disable-next-line reason-string
     require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
 
     success = to.tryAssemblyCall(data);

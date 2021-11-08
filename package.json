@@ -1,5 +1,5 @@
 {
-  "name": "dhedge-ovm",
+  "name": "dhedge-v2",
   "version": "1.0.0",
   "description": "dHEDGE ovm smart contracts",
   "main": "hardhat-config.js",
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
-    "prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.js\" \"scripts/**/*.js\"",
+    "prettier": "prettier -l --write \"contracts/**/*.sol\" \"test/**/*.js\" \"scripts/**/*.js\"",
     "fork:evm": "hardhat node --fork $(grep ALCHEMY_EVM_URL .env | cut -d '=' -f2)$(grep ALCHEMY_EVM_KEY .env | cut -d '=' -f2)",
     "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/v1/$(grep MATIC_KEY .env | cut -d '=' -f2)",
@@ -22,6 +22,7 @@
     "deploy:ovm": "node scripts/DHedge.deploy.js",
     "deploy:mumbai": "hardhat run ./scripts/mumbai/deploy.js --network mumbai",
     "deploy:polygon:prod": "hardhat run ./scripts/polygon/deploy-prod.js --network polygon",
+    "deploy:polygon:oracle": "hardhat run ./scripts/polygon/deploy-oracle.js --network polygon",
     "deploy:polygon:staging": "hardhat run ./scripts/polygon/deploy-staging.js --network polygon",
     "upgrade:mumbai:poolFactory": "npx hardhat upgrade --pool-factory true --network mumbai",
     "upgrade:mumbai:assetHandler": "npx hardhat upgrade --asset-handler true --network mumbai",
@@ -65,6 +66,8 @@
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/hardhat-upgrades": "^1.8.2",
+    "@typechain/ethers-v5": "^7.0.0",
+    "@typechain/hardhat": "^2.0.1",
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/commit-analyzer": "^8.0.1",
     "@semantic-release/github": "^7.2.3",
@@ -85,7 +88,8 @@
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.7.16",
     "ts-generator": "^0.1.1",
-    "ts-node": "^10.3.0"
+    "ts-node": "^10.3.0",
+    "typechain": "^5.0.0"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.1.4",
@@ -98,6 +102,11 @@
     "csvtojson": "^2.0.10",
     "decimal.js": "^10.3.1",
     "dotenv": "^8.2.0",
+    "lint-staged": ">=10",
     "solidity-docgen": "^0.5.13"
+  },
+  "lint-staged": {
+    "*.sol": "solhint -w 0",
+    "*.{ts,js,sol}": ["prettier --write"]
   }
 }

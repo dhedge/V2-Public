@@ -119,8 +119,9 @@ contract PoolFactory is
   uint256 internal _daoFeeDenominator;
 
   mapping(address => bool) public isPool;
-
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
   uint256 internal _exitCooldown;
