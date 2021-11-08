@@ -41,6 +41,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "./utils/AddressHelper.sol";
+import "./interfaces/IERC20Extended.sol";
 
 /// @title DynamicBonds
 contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
@@ -55,7 +56,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   event Claim(address indexed user, uint256 bondId);
 
   struct BondOption {
-    uint256 price; // payout token sell prices in 18 decimals.
+    uint256 price; // payout token sell prices in deposit token decimals.
     uint256 lockPeriod; // payout token lock period in seconds.
   }
   struct BondTerms {
@@ -87,6 +88,8 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   uint256 public minBondPrice; // safety to ensure a very low price isn’t set accidentally
   uint256 public maxPayoutAvailable; // safety to ensure a high sell amount isn’t set accidentally
 
+  uint256 private _payoutTokenUnit;
+
   function initialize(
     address _depositToken,
     address _payoutToken,
@@ -102,6 +105,8 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     treasury = _treasury;
     minBondPrice = _minBondPrice;
     maxPayoutAvailable = _maxPayoutAvailable;
+
+    _payoutTokenUnit = 10**IERC20Extended(_payoutToken).decimals();
   }
 
   // ========== VIEWS ==========
@@ -214,7 +219,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
 
     BondOption memory bondOption = bondTerms.bondOptions[_bondOptionIndex];
     require(bondOption.price >= minBondPrice, "too low payout price");
-    uint256 needToPay = _payoutAmount.mul(bondOption.price).div(1e18);
+    uint256 needToPay = _payoutAmount.mul(bondOption.price).div(_payoutTokenUnit);
     require(needToPay <= _maxDepositAmount, "deposit amount exceeded");
     depositToken.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, treasury, needToPay)

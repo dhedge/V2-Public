@@ -26,7 +26,7 @@ describe("DynamicBonds Test", () => {
       usdc.address,
       dht.address,
       treasury.address,
-      units(1), // 1 DHT = 1 USDC
+      units(1, 6), // 1 DHT = 1 USDC
       units(100), // 100 DHT
     ]);
     await dynamicBonds.deployed();
@@ -55,64 +55,66 @@ describe("DynamicBonds Test", () => {
     let bondOptions = await dynamicBonds.bondOptions();
     expect(bondOptions.length).to.equal(0);
 
-    await expect(dynamicBonds.addBondOptions([[units(1).div(2), days(1)]])).to.revertedWith("too low payout price");
+    await expect(dynamicBonds.addBondOptions([[units(1, 6).div(2), days(1)]])).to.revertedWith("too low payout price");
 
-    await dynamicBonds.addBondOptions([[units(10), days(1)]]); // 1 Day, 1 DHT = 10 USDC
+    await dynamicBonds.addBondOptions([[units(10, 6), days(1)]]); // 1 Day, 1 DHT = 10 USDC
 
     bondOptions = await dynamicBonds.bondOptions();
     expect(bondOptions.length).to.equal(1);
-    expect(bondOptions[0].price).to.equal(units(10));
+    expect(bondOptions[0].price).to.equal(units(10, 6));
     expect(bondOptions[0].lockPeriod).to.equal(days(1));
   });
 
   it("updateBondOption", async () => {
-    await dynamicBonds.addBondOptions([[units(10), days(1)]]); // 1 Day, 1 DHT = 10 USDC
+    await dynamicBonds.addBondOptions([[units(10, 6), days(1)]]); // 1 Day, 1 DHT = 10 USDC
 
     let bondOptions = await dynamicBonds.bondOptions();
     expect(bondOptions.length).to.equal(1);
-    expect(bondOptions[0].price).to.equal(units(10));
+    expect(bondOptions[0].price).to.equal(units(10, 6));
     expect(bondOptions[0].lockPeriod).to.equal(days(1));
 
-    await expect(dynamicBonds.updateBondOption(1, [units(10), days(1)])).to.revertedWith("invalid index");
-    await expect(dynamicBonds.updateBondOption(0, [units(1).div(2), days(1)])).to.revertedWith("too low payout price");
+    await expect(dynamicBonds.updateBondOption(1, [units(10, 6), days(1)])).to.revertedWith("invalid index");
+    await expect(dynamicBonds.updateBondOption(0, [units(1, 6).div(2), days(1)])).to.revertedWith(
+      "too low payout price",
+    );
 
-    await dynamicBonds.updateBondOption(0, [units(20), days(1)]);
+    await dynamicBonds.updateBondOption(0, [units(20, 6), days(1)]);
     bondOptions = await dynamicBonds.bondOptions();
     expect(bondOptions.length).to.equal(1);
-    expect(bondOptions[0].price).to.equal(units(20));
+    expect(bondOptions[0].price).to.equal(units(20, 6));
     expect(bondOptions[0].lockPeriod).to.equal(days(1));
   });
 
   it("updateBondOptions", async () => {
-    await dynamicBonds.addBondOptions([[units(10), days(1)]]); // 1 Day, 1 DHT = 10 USDC
-    await dynamicBonds.addBondOptions([[units(5), days(7)]]); // 1 Week, 1 DHT = 5 USDC
+    await dynamicBonds.addBondOptions([[units(10, 6), days(1)]]); // 1 Day, 1 DHT = 10 USDC
+    await dynamicBonds.addBondOptions([[units(5, 6), days(7)]]); // 1 Week, 1 DHT = 5 USDC
 
     let bondOptions = await dynamicBonds.bondOptions();
     expect(bondOptions.length).to.equal(2);
-    expect(bondOptions[0].price).to.equal(units(10));
+    expect(bondOptions[0].price).to.equal(units(10, 6));
     expect(bondOptions[0].lockPeriod).to.equal(days(1));
-    expect(bondOptions[1].price).to.equal(units(5));
+    expect(bondOptions[1].price).to.equal(units(5, 6));
     expect(bondOptions[1].lockPeriod).to.equal(days(7));
 
-    await expect(dynamicBonds.updateBondOptions([0, 1], [[units(10), days(1)]])).to.revertedWith(
+    await expect(dynamicBonds.updateBondOptions([0, 1], [[units(10, 6), days(1)]])).to.revertedWith(
       "length doesn't match",
     );
-    await expect(dynamicBonds.updateBondOptions([2], [[units(10), days(1)]])).to.revertedWith("invalid index");
-    await expect(dynamicBonds.updateBondOptions([0], [[units(1).div(2), days(1)]])).to.revertedWith(
+    await expect(dynamicBonds.updateBondOptions([2], [[units(10, 6), days(1)]])).to.revertedWith("invalid index");
+    await expect(dynamicBonds.updateBondOptions([0], [[units(1, 6).div(2), days(1)]])).to.revertedWith(
       "too low payout price",
     );
 
-    await dynamicBonds.updateBondOptions([0], [[units(20), days(1)]]);
+    await dynamicBonds.updateBondOptions([0], [[units(20, 6), days(1)]]);
     bondOptions = await dynamicBonds.bondOptions();
     expect(bondOptions.length).to.equal(2);
-    expect(bondOptions[0].price).to.equal(units(20));
+    expect(bondOptions[0].price).to.equal(units(20, 6));
     expect(bondOptions[0].lockPeriod).to.equal(days(1));
-    expect(bondOptions[1].price).to.equal(units(5));
+    expect(bondOptions[1].price).to.equal(units(5, 6));
     expect(bondOptions[1].lockPeriod).to.equal(days(7));
   });
 
   it("deposit USDC -> lock DHT", async () => {
-    await expect(dynamicBonds.deposit(parseUnits("1", 6), units(1), 0)).to.revertedWith("expired");
+    await expect(dynamicBonds.deposit(parseUnits("1", 6), units(1, 6), 0)).to.revertedWith("expired");
 
     const currentTimestamp = await currentBlockTimestamp();
     await dynamicBonds.setBondTerms(units(100), currentTimestamp + days(30));
@@ -122,7 +124,7 @@ describe("DynamicBonds Test", () => {
     );
     await expect(dynamicBonds.deposit(parseUnits("1", 6), units(1), 0)).to.revertedWith("invalid bond option index");
 
-    await dynamicBonds.addBondOptions([[units(10), days(1)]]); // 1 Day, 1 DHT = 10 USDC
+    await dynamicBonds.addBondOptions([[units(10, 6), days(1)]]); // 1 Day, 1 DHT = 10 USDC
     await expect(dynamicBonds.deposit(parseUnits("1", 6).div(2), units(1), 0)).to.revertedWith(
       "deposit amount exceeded",
     );
@@ -145,7 +147,7 @@ describe("DynamicBonds Test", () => {
     expect(userBonds.length).to.equal(1);
     expect(userBonds[0].bondOwner).to.equal(owner.address);
     expect(userBonds[0].lockAmount).to.equal(units(1));
-    expect(userBonds[0].bondOption.price).to.equal(units(10));
+    expect(userBonds[0].bondOption.price).to.equal(units(10, 6));
     expect(userBonds[0].bondOption.lockPeriod).to.equal(days(1));
     expect(userBonds[0].lockStartedAt).to.equal(await currentBlockTimestamp());
     expect(userBonds[0].claimed).to.equal(false);
@@ -158,7 +160,7 @@ describe("DynamicBonds Test", () => {
   it("deposit USDC -> lock DHT -> claim DHT", async () => {
     const currentTimestamp = await currentBlockTimestamp();
     await dynamicBonds.setBondTerms(units(100), currentTimestamp + days(30));
-    await dynamicBonds.addBondOptions([[units(10), days(1)]]); // 1 Day, 1 DHT = 10 USDC
+    await dynamicBonds.addBondOptions([[units(10, 6), days(1)]]); // 1 Day, 1 DHT = 10 USDC
     await usdc.approve(dynamicBonds.address, parseUnits("10", 6));
     await dynamicBonds.deposit(parseUnits("10", 6), units(1), 0);
 
@@ -199,9 +201,9 @@ describe("DynamicBonds Test", () => {
   });
 
   it("setMinBondPrice", async () => {
-    expect(await dynamicBonds.minBondPrice()).to.equal(units(1));
-    await dynamicBonds.setMinBondPrice(units(2));
-    expect(await dynamicBonds.minBondPrice()).to.equal(units(2));
+    expect(await dynamicBonds.minBondPrice()).to.equal(units(1, 6));
+    await dynamicBonds.setMinBondPrice(units(2, 6));
+    expect(await dynamicBonds.minBondPrice()).to.equal(units(2, 6));
   });
 
   it("setMaxPayoutAvailable", async () => {
