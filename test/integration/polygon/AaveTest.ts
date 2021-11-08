@@ -3,7 +3,6 @@ import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
 import { ZERO_ADDRESS, sushi, aave, assets, price_feeds } from "../polygon-data";
-import { deployContracts } from "../utils/deployContracts";
 import {
   IERC20,
   IERC20__factory,
@@ -17,6 +16,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Interface } from "@ethersproject/abi";
 import { getUSDC } from "../utils/getAccountTokens/polygon";
+import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 
 use(solidity);
 
@@ -36,7 +36,7 @@ describe("Polygon Mainnet Test", function () {
 
     iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 
-    const deployments = await deployContracts("polygon");
+    const deployments = await deployPolygonContracts();
     poolLogic = deployments.poolLogic;
     poolManagerLogic = deployments.poolManagerLogic;
     poolFactory = deployments.poolFactory;

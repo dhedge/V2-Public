@@ -14,11 +14,3 @@ export type Deployments = {
     [name: string]: IERC20;
   };
 };
-
-export const deployContracts = async (network: string): Promise<Deployments> => {
-  if (network == "polygon") {
-    return deployPolygonContracts();
-  }
-
-  throw new Error("invalid network");
-};
