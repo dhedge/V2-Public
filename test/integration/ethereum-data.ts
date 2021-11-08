@@ -76,4 +76,3 @@ export const price_feeds = {
   susd: "0xad35Bd71b9aFE6e4bDc266B345c198eaDEf9Ad94",
   link: "0x2c1d072e956AFFC0D435Cb7AC38EF18d24d9127c",
 };
-

@@ -130,8 +130,10 @@ describe("RemoveAssets", function () {
     1;
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
     await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
-    await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
-    await governance.setAddresses([[toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider.address]]);
+    await governance.setAddresses([{ name: toBytes32("openAssetGuard"), destination: openAssetGuard.address }]);
+    await governance.setAddresses([
+      { name: toBytes32("aaveProtocolDataProvider"), destination: aaveProtocolDataProvider.address },
+    ]);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
   });

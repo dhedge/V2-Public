@@ -119,7 +119,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("lendingEnabledAssetGuard", "upgrade LendingEnabledAssetGuard", false, types.boolean)
   .addOptionalParam("uniswapV2RouterGuard", "upgrade uniswapV2RouterGuard", false, types.boolean)
   .addOptionalParam("openAssetGuard", "upgrade openAssetGuard", false, types.boolean)
-  .addOptionalParam("quickLPAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
+  .addOptionalParam("quickLpAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
   .addOptionalParam("balancerv2guard", "upgrade balancerV2Guard", false, types.boolean)
   .addOptionalParam("quickStakingRewardsGuard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
@@ -232,6 +232,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: sushiLPAggregator.address,
+                aggregatorName: csvAsset.aggregatorName,
               });
               break;
             case "3":
@@ -258,6 +259,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: usdPriceAggregatorAddress,
+                aggregatorName: csvAsset.aggregatorName,
               });
               break;
             default:
@@ -272,6 +274,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: aggregator,
+                aggregatorName: csvAsset.aggregatorName,
               });
           }
         }
@@ -296,6 +299,7 @@ task("upgrade", "Upgrade contracts")
               asset: balancerLp.data.pool,
               assetType: balancerLp.assetType,
               aggregator: balancerV2Aggregator.address,
+              aggregatorName: csvAsset.aggregatorName,
             });
           }
         }
