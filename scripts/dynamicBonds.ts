@@ -13,7 +13,7 @@ const payoutToken = "0x8c92e38eca8210f4fcbf17f0951b198dd7668292"; // DHT
 const treasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3"; // Polygon Protocol Treasury
 
 // Bond terms
-const minBondPrice = utils.parseUnits("0.4"); // $0.40
+const minBondPrice = utils.parseUnits("0.4", 6); // $0.40 USDC
 const maxPayoutAvailable = utils.parseUnits("35000"); // 35k DHT/week
 const salePayoutAvailable = utils.parseUnits("25000"); // 25k DHT
 const saleDuration = 60 * 60 * 24 * 5; // 5 days
@@ -49,14 +49,15 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
 
     if (taskArgs.getConfig) {
       const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
-      await printConfig(dynamicBondsProxy);
+      const { depositTokenDecimals } = await getTokenDecimals(hre);
+      await printConfig(dynamicBondsProxy, depositTokenDecimals);
       await checkPayoutBalance(hre, dynamicBondsProxy);
     }
 
     if (taskArgs.updateTerms) {
       const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
       await setBondTerms(dynamicBondsProxy);
-      await updateBondOptions(dynamicBondsProxy);
+      await updateBondOptions(hre, dynamicBondsProxy);
     }
 
     if (taskArgs.updateTreasury) {
@@ -70,7 +71,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
 
       const { dynamicBondsProxy, dynamicBondsImplementation } = await deployDynamicBonds(hre);
       await setBondTerms(dynamicBondsProxy);
-      await addBondOptions(dynamicBondsProxy);
+      await addBondOptions(hre, dynamicBondsProxy);
       versions[latestVersion].contracts.DynamicBondsProxy = dynamicBondsProxy.address;
       versions[latestVersion].contracts.DynamicBonds = dynamicBondsImplementation.address;
       versionUpdate = true;
@@ -123,11 +124,12 @@ const setBondTerms = async (dynamicBonds: Contract) => {
   console.log("Bond terms set!");
 };
 
-const addBondOptions = async (dynamicBonds: Contract) => {
+const addBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract) => {
   const bondOptionsBefore = await dynamicBonds.bondOptions();
   if (bondOptionsBefore.length > 0) throw "Bonds already added";
 
-  const bondOptionsNew = await getBondPrices();
+  const { depositTokenDecimals } = await getTokenDecimals(hre);
+  const bondOptionsNew = await getBondPrices(depositTokenDecimals);
 
   console.log("-- Add bond options --");
   let i = 0;
@@ -135,7 +137,7 @@ const addBondOptions = async (dynamicBonds: Contract) => {
     console.log(
       `Option ${i}`,
       "Price:",
-      utils.formatEther(bondOption.price),
+      bondOption.price.toString(),
       "Days:",
       bondOption.lockPeriod.toNumber() / 86400,
     );
@@ -146,12 +148,13 @@ const addBondOptions = async (dynamicBonds: Contract) => {
   console.log("Bond options added!");
 };
 
-const updateBondOptions = async (dynamicBonds: Contract) => {
+const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract) => {
   const bondOptionsBefore = await dynamicBonds.bondOptions();
   const bondOptionLength = bondOptionsBefore.length;
   if (bondOptionLength == 0) throw "No bond options added yet";
 
-  const bondOptionsNew = await getBondPrices();
+  const { depositTokenDecimals } = await getTokenDecimals(hre);
+  const bondOptionsNew = await getBondPrices(depositTokenDecimals);
 
   if (bondOptionLength !== bondOptionsNew.length)
     throw `New bond options amount doesn't match old. Old: ${bondOptionLength}, New: ${bondOptionsNew.length}`;
@@ -162,7 +165,7 @@ const updateBondOptions = async (dynamicBonds: Contract) => {
     console.log(
       `Option ${i}`,
       "Price:",
-      utils.formatEther(bondOption.price),
+      bondOption.price.toString(),
       "Days:",
       bondOption.lockPeriod.toNumber() / 86400,
     );
@@ -186,7 +189,7 @@ const getTokenPrice = async (coingeckoNetwork: string, assetAddress: string) => 
   }
 };
 
-const printConfig = async (dynamicBonds: Contract) => {
+const printConfig = async (dynamicBonds: Contract, depositTokenDecimals: number) => {
   const bondTerms = await dynamicBonds.bondTerms();
   const bondOptions = await dynamicBonds.bondOptions();
   console.log("-- Bond Terms --");
@@ -197,7 +200,10 @@ const printConfig = async (dynamicBonds: Contract) => {
   console.log("Number of options:", bondOptions.length);
   for (let i = 0; i < bondOptions.length; i++) {
     console.log(
-      `Option ${i}: Price: $${utils.formatEther(bondOptions[i][0])}, Days: ${bondOptions[i][1].toNumber() / 86400}`,
+      `Option ${i}: Price: $${utils.formatUnits(
+        bondOptions[i][0],
+        depositTokenDecimals,
+      )} (${depositTokenDecimals} decimals), Days: ${bondOptions[i][1].toNumber() / 86400}`,
     );
   }
   console.log("------------------------");
@@ -246,27 +252,39 @@ const getDynamicBondsContract = async (hre: HardhatRuntimeEnvironment, version: 
   return dynamicBonds;
 };
 
-const getBondPrices = async () => {
+const getBondPrices = async (depositTokenDecimals: number) => {
   const dhtPrice = await getTokenPrice(coingeckoNetwork, payoutToken);
   console.log(`DHT price: $${dhtPrice}`);
 
   const bondOptionOneWeek = {
-    price: utils.parseUnits((dhtPrice * (1 - discountOneWeek)).toString()),
+    price: utils.parseUnits(
+      (dhtPrice * (1 - discountOneWeek)).toFixed(depositTokenDecimals).toString(),
+      depositTokenDecimals,
+    ),
     lockPeriod: BigNumber.from(60 * 60 * 24 * bondLockDurations[0]),
     // lockPeriod: BigNumber.from(60 * 1), // Test: 1 minute
   };
   const bondOptionOneMonth = {
-    price: utils.parseUnits((dhtPrice * (1 - discountOneMonth)).toString()),
+    price: utils.parseUnits(
+      (dhtPrice * (1 - discountOneMonth)).toFixed(depositTokenDecimals).toString(),
+      depositTokenDecimals,
+    ),
     lockPeriod: BigNumber.from(60 * 60 * 24 * bondLockDurations[1]),
     // lockPeriod: BigNumber.from(60 * 10), // Test: 10 minutes
   };
   const bondOptionSixMonths = {
-    price: utils.parseUnits((dhtPrice * (1 - discountSixMonths)).toString()),
+    price: utils.parseUnits(
+      (dhtPrice * (1 - discountSixMonths)).toFixed(depositTokenDecimals).toString(),
+      depositTokenDecimals,
+    ),
     lockPeriod: BigNumber.from(60 * 60 * 24 * bondLockDurations[2]),
     // lockPeriod: BigNumber.from(60 * 60 * 1), // Test: 1 hour
   };
   const bondOptionOneYear = {
-    price: utils.parseUnits((dhtPrice * (1 - discountOneYear)).toString()),
+    price: utils.parseUnits(
+      (dhtPrice * (1 - discountOneYear)).toFixed(depositTokenDecimals).toString(),
+      depositTokenDecimals,
+    ),
     lockPeriod: BigNumber.from(60 * 60 * 24 * bondLockDurations[3]),
     // lockPeriod: BigNumber.from(60 * 60 * 24 * 1), // Test: 1 day
   };
@@ -274,4 +292,18 @@ const getBondPrices = async () => {
   const bondOptionsNew = [bondOptionOneWeek, bondOptionOneMonth, bondOptionSixMonths, bondOptionOneYear];
 
   return bondOptionsNew;
+};
+
+const getTokenDecimals = async (hre: HardhatRuntimeEnvironment) => {
+  const IERC20 = await hre.artifacts.readArtifact("IERC20Extended");
+
+  const depositTokenSetting = depositToken;
+  const depositTokenERC20 = await hre.ethers.getContractAt(IERC20.abi, depositTokenSetting);
+  const depositTokenDecimals: number = await depositTokenERC20.decimals();
+
+  const payoutTokenSetting = payoutToken;
+  const payoutTokenERC20 = await hre.ethers.getContractAt(IERC20.abi, payoutTokenSetting);
+  const payoutTokenDecimals: number = await payoutTokenERC20.decimals();
+
+  return { depositTokenDecimals, payoutTokenDecimals };
 };
