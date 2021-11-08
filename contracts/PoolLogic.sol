@@ -617,15 +617,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   /// @notice Mint the manager fee of the pool
   function mintManagerFee() external whenNotPaused {
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
     _mintManagerFee();
   }
 
   /// @notice Get mint manager fee of the pool internal call
   /// @return fundValue The total fund value of the pool
   function _mintManagerFee() internal returns (uint256 fundValue) {
-    // This has to run on deposit
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).recordExternalValue(address(this));
-
     fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 

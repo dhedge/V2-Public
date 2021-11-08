@@ -185,10 +185,8 @@ describe("PoolPerformance", function () {
       // Deposit $1 directly
       await USDC.transfer(poolLogicProxy.address, (100e6).toString());
 
-      // Deposit $1 conventional way
       // This will record the direct deposit factor
-      await USDC.approve(poolLogicProxy.address, (100e6).toString());
-      await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
+      await poolPerformance.recordExternalValue(poolLogicProxy.address);
 
       // Check token price is $2
       expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
