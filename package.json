@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
-    "prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.js\" \"test/**/*.ts\" \"scripts/**/*.js\"",
+    "prettier": "prettier -l --write \"contracts/**/*.sol\" \"test/**/*.js\" \"test/**/*.ts\" \"scripts/**/*.js\"",
     "fork:evm": "hardhat node --fork $(grep ALCHEMY_EVM_URL .env | cut -d '=' -f2)$(grep ALCHEMY_EVM_KEY .env | cut -d '=' -f2)",
     "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/v1/$(grep MATIC_KEY .env | cut -d '=' -f2)",
@@ -102,6 +102,13 @@
     "csvtojson": "^2.0.10",
     "decimal.js": "^10.3.1",
     "dotenv": "^8.2.0",
+    "lint-staged": ">=10",
     "solidity-docgen": "^0.5.13"
+  },
+  "lint-staged": {
+    "*.sol": "solhint -w 0",
+    "*.{ts,js,sol}": [
+      "prettier --write"
+    ]
   }
 }

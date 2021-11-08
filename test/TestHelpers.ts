@@ -1,7 +1,7 @@
-import { expect } from "chai";
 import { artifacts, ethers } from "hardhat";
 import { BigNumber } from "ethers";
 import { MockContract } from "../types";
+import { expect } from "chai";
 
 export const currentBlockTimestamp = async () => {
   const currentBlockNumber = await ethers.provider.getBlockNumber();
@@ -31,9 +31,11 @@ export const updateChainlinkAggregators = async (
   ); // $35
 };
 
+// Within 1%
+// @deprecated - don't use this - use closeTo with a delta that's geared for the test
+// 1% is not an ok spread for some tests
 export const checkAlmostSame = (a: any, b: any) => {
-  expect(ethers.BigNumber.from(a).gte(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lte(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
+  expect(a).to.be.closeTo(b, a.div(100));
 };
 
 export const approxEq = (v1: number, v2: number, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
