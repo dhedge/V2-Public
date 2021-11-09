@@ -38,7 +38,6 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "./utils/AddressHelper.sol";
 import "./interfaces/IERC20Extended.sol";
@@ -222,7 +221,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     uint256 needToPay = _payoutAmount.mul(bondOption.price).div(_payoutTokenUnit);
     require(needToPay <= _maxDepositAmount, "deposit amount exceeded");
     depositToken.tryAssemblyCall(
-      abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, treasury, needToPay)
+      abi.encodeWithSelector(IERC20Extended.transferFrom.selector, msg.sender, treasury, needToPay)
     );
 
     bonds[bondNumber] = Bond({
@@ -255,9 +254,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
 
     bond.claimed = true;
     debtTotal = debtTotal.sub(bond.lockAmount);
-    payoutToken.tryAssemblyCall(
-      abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, bond.lockAmount)
-    );
+    payoutToken.tryAssemblyCall(abi.encodeWithSelector(IERC20Extended.transfer.selector, msg.sender, bond.lockAmount));
 
     emit Claim(msg.sender, _bondId);
   }
@@ -267,6 +264,6 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   /// @param _token ERC20 token address
   /// @param _amount ERC20 token amount to withdraw
   function forceWithdraw(address _token, uint256 _amount) external onlyOwner {
-    _token.tryAssemblyCall(abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, _amount));
+    _token.tryAssemblyCall(abi.encodeWithSelector(IERC20Extended.transfer.selector, msg.sender, _amount));
   }
 }
