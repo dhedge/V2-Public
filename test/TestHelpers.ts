@@ -35,7 +35,7 @@ export const updateChainlinkAggregators = async (
 // @deprecated - don't use this - use closeTo with a delta that's geared for the test
 // 1% is not an ok spread for some tests
 export const checkAlmostSame = (a: any, b: any) => {
-  expect(a).to.be.closeTo(b, a.div(100));
+  expect(ethers.BigNumber.from(a.toString())).to.be.closeTo(ethers.BigNumber.from(b.toString()), a.div(100));
 };
 
 export const approxEq = (v1: number, v2: number, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
