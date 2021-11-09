@@ -772,7 +772,7 @@
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0xE9F6C94567906947d781C059e64c3C1DA95FdBd7",
+      "PoolLogic": "0x972Ac6c728733B1f0c57BBE285926a5f2d5F3183",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
       "PoolManagerLogic": "0xFf3A3E3f2970B667d8D61405634EDB4557b5F233",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
@@ -797,6 +797,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Sun, 24 Oct 2021 07:01:12 GMT"
+    "date": "Mon, 08 Nov 2021 11:07:11 GMT"
   }
 }
