@@ -22,7 +22,6 @@
     "deploy:ovm": "node scripts/DHedge.deploy.js",
     "deploy:mumbai": "hardhat run ./scripts/mumbai/deploy.js --network mumbai",
     "deploy:polygon:prod": "hardhat run ./scripts/polygon/deploy-prod.js --network polygon",
-    "deploy:polygon:oracle": "hardhat run ./scripts/polygon/deploy-oracle.js --network polygon",
     "deploy:polygon:staging": "hardhat run ./scripts/polygon/deploy-staging.js --network polygon",
     "upgrade:mumbai:poolFactory": "npx hardhat upgrade --pool-factory true --network mumbai",
     "upgrade:mumbai:assetHandler": "npx hardhat upgrade --asset-handler true --network mumbai",
@@ -107,6 +106,8 @@
   },
   "lint-staged": {
     "*.sol": "solhint -w 0",
-    "*.{ts,js,sol}": ["prettier --write"]
+    "*.{ts,js,sol}": [
+      "prettier --write"
+    ]
   }
 }
