@@ -30,7 +30,7 @@ const updateChainlinkAggregators = async (usd_price_feed, eth_price_feed, link_p
 // @deprecated - don't use this - use closeTo with a delta that's geared for the test
 // 1% is not an ok spread for some tests
 const checkAlmostSame = (a, b) => {
-  expect(a).to.be.closeTo(b, a.div(100));
+  expect(ethers.BigNumber.from(a)).to.be.closeTo(ethers.BigNumber.from(b), ethers.BigNumber.from(b).div(100));
 };
 
 const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;

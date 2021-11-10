@@ -190,6 +190,10 @@ contract PoolPerformance is OwnableUpgradeable {
       return;
     }
 
+    if (!hasExternalBalances(poolAddress)) {
+      return;
+    }
+
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     AaveAddresses memory aaveAddresses = _getAaveLendingPoolAndDataProvider(poolAddress);
@@ -229,11 +233,13 @@ contract PoolPerformance is OwnableUpgradeable {
         IPoolManagerLogic(poolManagerAddress).assetValue(assetAddress, externalBalance)
       );
 
-      internalBalancesMap[poolAddress][assetAddress] = externalBalance;
+      if (internalBalancesMap[poolAddress][assetAddress] != externalBalance) {
+        internalBalancesMap[poolAddress][assetAddress] = externalBalance;
+      }
     }
 
     // In most cases this will be true, and when it is, there is no internalExternalValue.externalValue to record so we exit early
-    if (internalExternalValue.internalValue == internalExternalValue.externalValue) {
+    if (internalExternalValue.externalValue <= internalExternalValue.internalValue) {
       return;
     }
 
@@ -272,7 +278,7 @@ contract PoolPerformance is OwnableUpgradeable {
   /// @dev Only currently used in tests, Originally used to stop pool actions before recording air drops.
   /// @param poolAddress The address of the pool
   /// @return true if the pool has external balances
-  function hasExternalBalances(address poolAddress) external view returns (bool) {
+  function hasExternalBalances(address poolAddress) public view returns (bool) {
     if (!poolInitialized[poolAddress]) {
       return false;
     }

@@ -16,7 +16,7 @@ import "./scripts/upgrade";
 import "./scripts/verify";
 import "./scripts/polygon/checks/checkConfig";
 
-dotenv.config()
+dotenv.config();
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
