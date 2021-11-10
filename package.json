@@ -107,6 +107,8 @@
   },
   "lint-staged": {
     "*.sol": "solhint -w 0",
-    "*.{ts,js,sol}": ["prettier --write"]
+    "*.{ts,js,sol}": [
+      "prettier --write"
+    ]
   }
 }
