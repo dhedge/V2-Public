@@ -55,9 +55,7 @@ jobs:
       - name: AaveTests
         run: |
           npx hardhat test ./test/integration/evm/AaveTest.js --network localhost
-      - name: OneInch Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/OneInchTest.js --network localhost
+
 
   evm-integration2:
     if: "contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
@@ -111,6 +109,9 @@ jobs:
       - name: UniswapV2 Tests
         run: |
           npx hardhat test ./test/integration/evm/UniswapV2Test.js --network localhost
+      - name: OneInch Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/OneInchTest.js --network localhost
       - name: UniswapV3 Tests
         run: |
           npx hardhat test ./test/integration/evm/UniswapV3Test.js --network localhost
