@@ -2228,4 +2228,58 @@ describe("PoolFactory", function () {
 
     await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
   });
+
+  it("should check dhedge pool restriction", async () => {
+    await poolFactory.createFund(
+      false,
+      user1.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    pools = await poolFactory.getDeployedFunds();
+    const pool1 = pools[pools.length - 1];
+
+    await poolFactory.createFund(
+      false,
+      user1.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    pools = await poolFactory.getDeployedFunds();
+    const pool2 = pools[pools.length - 1];
+
+    await assetHandler.addAssets([
+      {
+        asset: pool1,
+        aggregator: usd_price_feed.address,
+        assetType: 2,
+      },
+      {
+        asset: pool2,
+        aggregator: usd_price_feed.address,
+        assetType: 2,
+      },
+    ]);
+
+    await poolManagerLogicProxy.connect(manager).changeAssets([[pool1, false]], []);
+
+    let pool1Logic = await PoolLogic.attach(pool1);
+    let pool1ManagerLogic = await PoolManagerLogic.attach(await pool1Logic.poolManagerLogic());
+
+    await expect(pool1ManagerLogic.connect(user1).changeAssets([[pool2, false]], [])).to.revertedWith(
+      "cannot add pool asset",
+    );
+  });
 });
