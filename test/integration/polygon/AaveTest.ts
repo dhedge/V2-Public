@@ -1,11 +1,18 @@
-import { artifacts, ethers } from "hardhat";
+import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { ZERO_ADDRESS, sushi, aave, assets } from "../polygon-data";
-import { IERC20, IERC20__factory, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
+import {
+  IAaveIncentivesController__factory,
+  IERC20,
+  IERC20__factory,
+  ILendingPool__factory,
+  PoolFactory,
+  PoolLogic,
+  PoolManagerLogic,
+} from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Interface } from "@ethersproject/abi";
 import { getUSDC } from "../utils/getAccountTokens/polygon";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
@@ -16,12 +23,11 @@ describe("Polygon Mainnet Test", function () {
   let USDC: IERC20, DAI: IERC20, AMUSDC: IERC20, WMATIC: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
-  let iERC20: Interface;
+  const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
+  const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
-
-    iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
@@ -52,8 +58,6 @@ describe("Polygon Mainnet Test", function () {
     // Pool balance: 200 USDC
     const amount = (100e6).toString();
 
-    const ILendingPool = await artifacts.readArtifact("ILendingPool");
-    const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
     let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
 
     await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, depositABI)).to.be.revertedWith(
@@ -124,8 +128,6 @@ describe("Polygon Mainnet Test", function () {
       const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
       await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
-      const ILendingPool = await artifacts.readArtifact("ILendingPool");
-      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
       const depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
       await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
     });
@@ -134,8 +136,6 @@ describe("Polygon Mainnet Test", function () {
       // Pool balance: 80 USDC, 100 amUSDC, $20 in WETH
       const amount = (50e6).toString();
 
-      const ILendingPool = await artifacts.readArtifact("ILendingPool");
-      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
       let withdrawABI = iLendingPool.encodeFunctionData("withdraw", [assets.usdc, amount, poolLogicProxy.address]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, withdrawABI)).to.be.revertedWith(
@@ -180,10 +180,7 @@ describe("Polygon Mainnet Test", function () {
       // Pool balance: 150 USDC
       // Aave balance: 50 amUSDC
 
-      const ILendingPool = await artifacts.readArtifact("ILendingPool");
-      const lendingPool = await ethers.getContractAt(ILendingPool.abi, aave.lendingPool);
-
-      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
+      const lendingPool = ILendingPool__factory.connect(aave.lendingPool, logicOwner);
 
       let abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.usdt, true]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi)).to.be.revertedWith(
@@ -231,8 +228,6 @@ describe("Polygon Mainnet Test", function () {
 
       const amount = units(25).toString();
 
-      const ILendingPool = await artifacts.readArtifact("ILendingPool");
-      const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
       let borrowABI = iLendingPool.encodeFunctionData("borrow", [assets.dai, amount, 2, 0, poolLogicProxy.address]);
 
       await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, borrowABI)).to.be.revertedWith(
@@ -286,8 +281,6 @@ describe("Polygon Mainnet Test", function () {
         await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: assets.dai, isDeposit: false }], []);
 
         const amount = units(25).toString();
-        const ILendingPool = await artifacts.readArtifact("ILendingPool");
-        const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
         const borrowABI = iLendingPool.encodeFunctionData("borrow", [assets.dai, amount, 2, 0, poolLogicProxy.address]);
         await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
       });
@@ -298,8 +291,6 @@ describe("Polygon Mainnet Test", function () {
 
         const amount = units(10);
 
-        const ILendingPool = await artifacts.readArtifact("ILendingPool");
-        const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
         let repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
 
         await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, repayABI)).to.be.revertedWith(
@@ -376,8 +367,6 @@ describe("Polygon Mainnet Test", function () {
       });
 
       it("should be able to swap borrow rate mode", async function () {
-        const ILendingPool = await artifacts.readArtifact("ILendingPool");
-        const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
         let swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.usdc, 1]);
 
         await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapRateABI)).to.be.revertedWith(
@@ -410,8 +399,6 @@ describe("Polygon Mainnet Test", function () {
       });
 
       it("should be able to rebalance stable borrow rate", async function () {
-        const ILendingPool = await artifacts.readArtifact("ILendingPool");
-        const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
         let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
           assets.usdc,
           poolLogicProxy.address,
@@ -455,25 +442,19 @@ describe("Polygon Mainnet Test", function () {
         ).to.be.revertedWith("22");
       });
 
-      it.only("should be able to claim matic rewards", async function () {
-        const IAaveIncentivesController = await artifacts.readArtifact("IAaveIncentivesController");
-        const iAaveIncentivesController = new ethers.utils.Interface(IAaveIncentivesController.abi);
+      it("should be able to claim matic rewards", async function () {
+        const iAaveIncentivesController = new ethers.utils.Interface(IAaveIncentivesController__factory.abi);
         let claimRewardsAbi = iAaveIncentivesController.encodeFunctionData("claimRewards", [
           [aave.variableDebtTokens.dai],
           1,
           assets.dai,
         ]);
 
-        const incentivesController = await ethers.getContractAt(
-          IAaveIncentivesController.abi,
-          aave.incentivesController,
-        );
+        const incentivesController = IAaveIncentivesController__factory.connect(aave.incentivesController, logicOwner);
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24 * 10]); // add 10 day
 
         const amount = units(10);
-        const ILendingPool = await artifacts.readArtifact("ILendingPool");
-        const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
         const repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
 
         let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
