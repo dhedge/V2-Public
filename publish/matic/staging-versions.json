@@ -1002,67 +1002,78 @@
           "name": "Sushi LP USDC-DAI",
           "asset": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
           "assetType": "2",
-          "aggregator": "0xCD9537EE38A7d33106423197b05ebaf977eCa386"
+          "aggregator": "0xCD9537EE38A7d33106423197b05ebaf977eCa386",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP USDC-USDT",
           "asset": "0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001",
           "assetType": "2",
-          "aggregator": "0xa99CD5A68E2d06A944Be7eb9812fd114a8dF5e43"
+          "aggregator": "0xa99CD5A68E2d06A944Be7eb9812fd114a8dF5e43",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP WETH-DAI",
           "asset": "0x6ff62bfb8c12109e8000935a6de54dad83a4f39f",
           "assetType": "2",
-          "aggregator": "0xcB5974894fd98F14D914DCCA207e77610FEc92E2"
+          "aggregator": "0xcB5974894fd98F14D914DCCA207e77610FEc92E2",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP WETH-USDT",
           "asset": "0xc2755915a85c6f6c1c0f3a86ac8c058f11caa9c9",
           "assetType": "2",
-          "aggregator": "0x2DF72868c90A4DBb2d49B94D38F05f3c237D257a"
+          "aggregator": "0x2DF72868c90A4DBb2d49B94D38F05f3c237D257a",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP USDC-WETH",
           "asset": "0x34965ba0ac2451a34a0471f04cca3f990b8dea27",
           "assetType": "2",
-          "aggregator": "0x0531BEBbF617654febB1FAd88EF2C7A1cA379DA7"
+          "aggregator": "0x0531BEBbF617654febB1FAd88EF2C7A1cA379DA7",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP SNX-WETH",
           "asset": "0x116ff0d1caa91a6b94276b3471f33dbeb52073e7",
           "assetType": "2",
-          "aggregator": "0x3feE405C646b7B3355A3C02d86ad6F070D4164ac"
+          "aggregator": "0x3feE405C646b7B3355A3C02d86ad6F070D4164ac",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP LINK-WETH",
           "asset": "0x74d23f21f780ca26b47db16b0504f2e3832b9321",
           "assetType": "2",
-          "aggregator": "0xE9cd5690B5F526D7c73eD9192B075FC39d4DC08A"
+          "aggregator": "0xE9cd5690B5F526D7c73eD9192B075FC39d4DC08A",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP WBTC-WETH",
           "asset": "0xe62ec2e799305e0d367b0cc3ee2cda135bf89816",
           "assetType": "2",
-          "aggregator": "0x228D1bB551d9e2C85D4b514108ED2a480e9eBe76"
+          "aggregator": "0x228D1bB551d9e2C85D4b514108ED2a480e9eBe76",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP WMATIC-WETH",
           "asset": "0xc4e595acdd7d12fec385e5da5d43160e8a0bac0e",
           "assetType": "2",
-          "aggregator": "0xE9A38F4636799f95248fAEfF547b2930fa4227dD"
+          "aggregator": "0xE9A38F4636799f95248fAEfF547b2930fa4227dD",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP WETH-AAVE",
           "asset": "0x2813d43463c374a680f235c428fb1d7f08de0b69",
           "assetType": "2",
-          "aggregator": "0x1A2D51763DbfF46eDdcB3Dc2191770216a1CBF87"
+          "aggregator": "0x1A2D51763DbfF46eDdcB3Dc2191770216a1CBF87",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP WETH-CRV",
           "asset": "0x396e655c309676caf0acf4607a868e0cded876db",
           "assetType": "2",
-          "aggregator": "0x5D3Ff64f93Bc2577653206607B80108C7Bc90837"
+          "aggregator": "0x5D3Ff64f93Bc2577653206607B80108C7Bc90837",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Aave Lending Pool",
@@ -1086,13 +1097,15 @@
           "name": "Sushi LP FXS-FRAX",
           "asset": "0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca",
           "assetType": "2",
-          "aggregator": "0x86D8026eC6777ced83860e418Db45bA480271eA8"
+          "aggregator": "0x86D8026eC6777ced83860e418Db45bA480271eA8",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Sushi LP FRAX-USDC",
           "asset": "0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0",
           "assetType": "2",
-          "aggregator": "0xC26291C08FeBAD7394e981c569839De8e008B6E4"
+          "aggregator": "0xC26291C08FeBAD7394e981c569839De8e008B6E4",
+          "aggregatorName": "UniV2LPAggregator"
         },
         {
           "name": "Balancer",
@@ -1170,30 +1183,32 @@
           "name": "dUSD",
           "asset": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
           "assetType": "0",
-          "aggregator": "0x8682A07AD986B66276202d91FaA15dE9A3E39Ff3"
+          "aggregator": "0xC016387a497CA090F8b6107c88F47030E61d6763",
+          "aggregatorName": "DHedgePoolAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
-      "PoolLogic": "0xBA6AE6Def9c94e25B67176d2B6C32F7863968fbe",
+      "PoolLogic": "0xe38d6B375B9ed2fCEB6Edf1D64176A7E1A549410",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x330846B9eA0eb13Fe874aBcc872dC77fA99D56d5",
+      "PoolManagerLogic": "0x3cCD3B47C32d621C8C7E3f66a6D7d763E0BDc341",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
-      "ERC20Guard": "0x24f6BE264E30c6eddafd4E3e45c8770423a8208f",
-      "UniswapV2RouterGuard": "0x92F1458714B8a705b79DCa54B69A9c13Da90fB46",
+      "ERC20Guard": "0x296Ae47463d474198e797C61c19D2493208b72F9",
+      "UniswapV2RouterGuard": "0xA50f607b6b43a438Ee1b58a144686276c261a777",
       "SushiMiniChefV2Guard": "0x58F4B1E5194f92C3818EDD7bB27b078BebdD0f27",
       "SushiLPAssetGuard": "0x2F16bb563d31ebC61Ad6aC9Fb3edD6eAF89132d9",
-      "AaveLendingPoolAssetGuard": "0x04354481A56Eb72484ff23D538a0DF21D16cE644",
+      "AaveLendingPoolAssetGuard": "0xa155cde6B93159397f3BD2D82a0E2B675fCB4236",
       "AaveLendingPoolGuard": "0x5Ea7ffE8699DF0b7eFb8d2523a57F0C9F97D7BA2",
-      "LendingEnabledAssetGuard": "0x275937Ef9264FF482b0Ae68d46A94D3F6203c3D9",
+      "LendingEnabledAssetGuard": "0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6",
       "AaveIncentivesControllerGuard": "0xeE315011c5709360e5006835ECC033AebdD3F0da",
       "OpenAssetGuard": "0x9fDEfe827Df93B5b99536c8BA25D4A570b74f416",
       "QuickLPAssetGuard": "0x018338bFd3FdB1915d823a77248F43dE00B54BB7",
       "QuickStakingRewardsGuard": "0x9519BD5868f8D66DE1Db3bd6e9Ae917b1Ffa886D",
       "OneInchV3Guard": "0xa389D040C0809b3069BA5b073469413152c2EBdF",
       "PoolPerformanceProxy": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
-      "PoolPerformance": "0x688466E9a38277cd3494F2606f4950EAfb374462",
+      "PoolPerformance": "0x0a7AA4D9bf1e88240B752F965E793210Cb9fD722",
+      "BalancerV2Guard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB"
       "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
       "DynamicBonds": "0x16cb10b7147b605e58d5495dfc563f9404ed448f"
     },

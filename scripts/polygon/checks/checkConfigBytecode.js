@@ -11,6 +11,7 @@ const main = async (initializeData) => {
 
   // Check latest contract bytecodes (what needs to be upgraded on next release)
   console.log("Checking latest bytecodes against last deployment..");
+  await hre.run("compile");
 
   const bytecodeErrors = [];
   for (const contract of contractsArray) {
@@ -19,6 +20,19 @@ const main = async (initializeData) => {
     const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
     if (runtimeBytecode.length < 10) bytecodeErrors.push(`Missing bytecode in deployed address for ${contract.name}`);
     if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${contract.name}`);
+  }
+
+  // Check asset aggregators
+  for (const asset of contracts.Assets) {
+    if (asset.aggregatorName) {
+      const contract = await ethers.getContractFactory(asset.aggregatorName);
+      const creationBytecode = contract.bytecode;
+      const runtimeBytecode = await ethers.provider.getCode(asset.aggregator);
+      const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
+      if (runtimeBytecode.length < 10)
+        bytecodeErrors.push(`Missing bytecode in deployed address for ${asset.aggregatorName}`);
+      if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${asset.aggregatorName}`);
+    }
   }
 
   for (const bytecodeError of bytecodeErrors) {
