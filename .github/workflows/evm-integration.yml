@@ -107,7 +107,7 @@ jobs:
 
       - name: Synthetix Tests
         run: |
-          npx hardhat test ./test/integration/evm/SynthetixTest.js --network localhost
+          npx hardhat test ./test/integration/evm/SynthetixTest.ts --network localhost
       - name: UniswapV2 Tests
         run: |
           npx hardhat test ./test/integration/evm/UniswapV2Test.js --network localhost
