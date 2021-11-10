@@ -103,15 +103,15 @@ jobs:
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
 
+      - name: OneInch Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/OneInchTest.js --network localhost
       - name: Synthetix Tests
         run: |
           npx hardhat test ./test/integration/evm/SynthetixTest.ts --network localhost
       - name: UniswapV2 Tests
         run: |
           npx hardhat test ./test/integration/evm/UniswapV2Test.js --network localhost
-      - name: OneInch Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/OneInchTest.js --network localhost
       - name: UniswapV3 Tests
         run: |
           npx hardhat test ./test/integration/evm/UniswapV3Test.js --network localhost
