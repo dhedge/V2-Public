@@ -122,9 +122,9 @@ jobs:
       - name: PoolPerformance Tests
         run: |
           npx hardhat test ./test/integration/polygon/PoolPerformanceTest.js --network localhost
-      # - name: Quickswap Tests
-      #   run: |
-      #     npx hardhat test ./test/integration/polygon/QuickswapTest.js --network localhost
+      - name: Quickswap Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/QuickswapTest.js --network localhost
       - name: Sushiswap Tests
         run: |
           npx hardhat test ./test/integration/polygon/SushiswapTest.js --network localhost

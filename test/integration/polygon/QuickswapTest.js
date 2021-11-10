@@ -813,6 +813,7 @@ describe("Quickswap V2 Test", function () {
     checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
   });
 
+  // Doesn't seem to be getting any rewards
   it.skip("should be able to claim rewards from quickswap.", async () => {
     const IStakingRewards = await hre.artifacts.readArtifact("IStakingRewards");
     const iStakingRewards = new ethers.utils.Interface(IStakingRewards.abi);
