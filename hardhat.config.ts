@@ -14,9 +14,11 @@ import { HardhatUserConfig } from "hardhat/config";
 
 import "./scripts/upgrade";
 import "./scripts/verify";
+import "./scripts/dynamicBonds";
 import "./scripts/polygon/checks/checkConfig";
+import "./scripts/compileOne";
 
-dotenv.config()
+dotenv.config();
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -101,6 +103,7 @@ export default {
       "QuickStakingRewardsGuard",
       "Managed",
       "Governance",
+      "DynamicBonds",
     ],
     spacing: 2,
   },
