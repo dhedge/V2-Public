@@ -49,13 +49,15 @@ jobs:
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
 
+      - name: OneInch Tests
+        run: |
+          npx hardhat test ./test/integration/evm/OneInchTest.js --network localhost
       - name: AaveEdgeCase Tests
         run: |
           npx hardhat test ./test/integration/evm/AaveEdgeCaseTest.js --network localhost
       - name: AaveTests
         run: |
           npx hardhat test ./test/integration/evm/AaveTest.js --network localhost
-
 
   evm-integration2:
     if: "contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
@@ -103,9 +105,6 @@ jobs:
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
 
-      - name: OneInch Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/OneInchTest.js --network localhost
       - name: Synthetix Tests
         run: |
           npx hardhat test ./test/integration/evm/SynthetixTest.ts --network localhost
