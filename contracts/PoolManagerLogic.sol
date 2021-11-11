@@ -164,6 +164,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     bool isDeposit = _asset.isDeposit;
 
     require(validateAsset(asset), "invalid asset");
+    // Pools with price aggregators cannot add other pools as assets
     require(!validateAsset(poolLogic) || !IPoolFactory(factory).isPool(asset), "cannot add pool asset");
 
     if (isSupportedAsset(asset)) {
