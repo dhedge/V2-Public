@@ -3,19 +3,29 @@ import { use, expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory } from "ethers";
 
-
-
 const chaiAlmost = require("chai-almost");
 const { checkAlmostSame } = require("../../TestHelpers");
-import { assets, price_feeds, synthetix as SynthetixData, uniswapV2 } from "../ethereum-data"
+import { assets, price_feeds, synthetix as SynthetixData, uniswapV2 } from "../ethereum-data";
 
 use(chaiAlmost());
 
 describe("Synthetix Test", function () {
-  let WETH:Contract, susdProxy:Contract, sethProxy:Contract, slinkProxy:Contract, addressResolver:Contract, synthetix:Contract, uniswapV2Router:Contract, synthetixGuard:Contract;
-  let logicOwner:SignerWithAddress, manager:SignerWithAddress, dao:SignerWithAddress, user:SignerWithAddress;
-  let PoolFactory:ContractFactory, PoolLogic:ContractFactory, PoolManagerLogic:ContractFactory;
-  let poolFactory:Contract, poolLogic:Contract, poolManagerLogic:Contract, poolLogicProxy:Contract, poolManagerLogicProxy:Contract, fundAddress: string;
+  let WETH: Contract,
+    susdProxy: Contract,
+    sethProxy: Contract,
+    slinkProxy: Contract,
+    addressResolver: Contract,
+    synthetix: Contract,
+    uniswapV2Router: Contract,
+    synthetixGuard: Contract;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let PoolFactory: ContractFactory, PoolLogic: ContractFactory, PoolManagerLogic: ContractFactory;
+  let poolFactory: Contract,
+    poolLogic: Contract,
+    poolManagerLogic: Contract,
+    poolLogicProxy: Contract,
+    poolManagerLogicProxy: Contract,
+    fundAddress: string;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -190,7 +200,7 @@ describe("Synthetix Test", function () {
       ],
     );
 
-    let event: any= await fundCreatedEvent;
+    let event: any = await fundCreatedEvent;
 
     fundAddress = event.fundAddress;
     expect(event.isPoolPrivate).to.be.false;
@@ -367,11 +377,10 @@ describe("Synthetix Test", function () {
       trackingCode,
     ]);
 
-
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
 
-    let event:any = await exchangeEvent;
+    let event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(assets.susd);
     expect(event.sourceAmount).to.equal((100e18).toString());
     expect(event.destinationAsset).to.equal(assets.seth);
@@ -416,15 +425,14 @@ describe("Synthetix Test", function () {
 
     // Withdraw 50%
     let withdrawAmount = (await poolLogicProxy.totalSupply()).div(2);
-    const totalFundValue = await poolManagerLogicProxy.totalFundValue()
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
     await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
     await ethers.provider.send("evm_mine", []);
 
-
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
-    let event:any = await withdrawalEvent;
+    let event: any = await withdrawalEvent;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
     checkAlmostSame(event.valueWithdrawn, totalFundValue.div(2));
