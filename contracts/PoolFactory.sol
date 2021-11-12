@@ -505,7 +505,7 @@ contract PoolFactory is
       }
     }
 
-    require(guard != address(0), "Guard not found");  
+    require(guard != address(0), "Guard not found");
   }
 
   /// @notice Get address of the asset guard
