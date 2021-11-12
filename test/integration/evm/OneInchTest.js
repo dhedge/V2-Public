@@ -6,7 +6,7 @@ const { checkAlmostSame, getAmountOut, units } = require("../../TestHelpers");
 
 use(chaiAlmost());
 
-const oneInchV3Router = "0x11111112542D85B3EF69AE05771c2dCCff4fAa26";
+const oneInchV3Router = "0x1111111254fb6c44bac0bed2854e76f90643097d";
 const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 const sushiswapRouter = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F";
@@ -427,7 +427,7 @@ describe("OneInch V3 Test", function () {
 
 const getOneInchSwapTransaction = async (params) => {
   const { srcAsset, dstAsset, srcAmount, fromAddress, toAddress, referrerAddress } = params;
-  const apiUrl = `https://api.1inch.exchange/v3.0/1/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
+  const apiUrl = `https://api.1inch.exchange/v4.0/1/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
   const response = await axios.get(apiUrl);
   const calldata = response.data.tx.data;
 

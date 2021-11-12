@@ -6,7 +6,7 @@ const { checkAlmostSame, toBytes32, getAmountOut, getAmountIn, units } = require
 
 use(chaiAlmost());
 
-const oneInchV3Router = "0x11111112542D85B3EF69AE05771c2dCCff4fAa26";
+const oneInchV3Router = "0x1111111254fb6c44bac0bed2854e76f90643097d";
 const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
 
 // For mainnet
@@ -397,7 +397,7 @@ describe("OneInch V3 Test", function () {
 
 const getOneInchSwapTransaction = async (params) => {
   const { srcAsset, dstAsset, srcAmount, fromAddress, toAddress, referrerAddress } = params;
-  const apiUrl = `https://api.1inch.exchange/v3.0/137/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
+  const apiUrl = `https://api.1inch.exchange/v4.0/137/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
   const response = await axios.get(apiUrl);
   const calldata = response.data.tx.data;
 
