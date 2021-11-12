@@ -1063,7 +1063,7 @@
       "AaveLendingPoolGuard": "0x118D2F02CBac5d0A4071632987dc0b765DdAb022",
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
       "BalancerV2Guard": "0xC6CF4B058c51cf474c5984180e693AF438222363",
-      "OneInchV4Guard": "0xD08f785114b1C182Df07bcd1D2C3eA953bD4F3e1"
+      "OneInchV4Guard": "0xC0db6Be34Fc59F40BB6285C7db82eC702737cDCD"
     },
     "network": {
       "name": "matic",
@@ -1071,6 +1071,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Fri, 12 Nov 2021 05:18:05 GMT"
+    "date": "Fri, 12 Nov 2021 05:20:20 GMT"
   }
 }

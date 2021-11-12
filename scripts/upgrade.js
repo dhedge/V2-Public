@@ -861,7 +861,7 @@ task("upgrade", "Upgrade contracts")
         await oneInchV4Guard.deployed();
         console.log("oneInchV4Guard deployed at", oneInchV4Guard.address);
         versions[newTag].contracts.OneInchV4Guard = oneInchV4Guard.address;
-
+        await new Promise((res) => setTimeout(res, 10000));
         await tryVerify(hre, oneInchV4Guard.address, "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard", [10, 100]);
 
         const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [

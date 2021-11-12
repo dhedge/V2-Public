@@ -916,7 +916,6 @@ describe("PoolFactory", function () {
       "unsupported spender approval",
     );
 
-
     //should be able to approve valid external token (OpenAssetGuard)
     // await poolLogicProxy.connect(manager).execTransaction(externalValidToken, approveABI);
 
