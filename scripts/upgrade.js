@@ -125,7 +125,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
   .addOptionalParam("aaveIncentivesControllerGuard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
   .addOptionalParam("aaveLendingPoolGuard", "upgrade AaveLendingPoolGuard", false, types.boolean)
-  .addOptionalParam("oneInchV3Guard", "upgrade oneInchV3Guard", false, types.boolean)
+  .addOptionalParam("oneInchV4Guard", "upgrade oneInchV4Guard", false, types.boolean)
   .addOptionalParam("governanceNames", "upgrade Governance contract address mapping", false, types.boolean)
   .addOptionalParam("pause", "pause contract", false, types.boolean)
   .addOptionalParam("unpause", "unpause contract", false, types.boolean)
@@ -856,9 +856,9 @@ task("upgrade", "Upgrade contracts")
       if (!taskArgs.execute) {
         console.log("Will deploy OneInchV4Guard");
       } else {
-        const OneInchV3Guard = await ethers.getContractFactory("OneInchV4Guard");
+        const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
         oneInchV4Guard = await OneInchV3Guard.deploy(10, 100); // set slippage 10%
-        await oneInchV3Guard.deployed();
+        await oneInchV4Guard.deployed();
         console.log("oneInchV4Guard deployed at", oneInchV4Guard.address);
         versions[newTag].contracts.OneInchV4Guard = oneInchV4Guard.address;
 
