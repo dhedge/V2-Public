@@ -29,43 +29,34 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: MIT
 
-import "./IHasSupportedAsset.sol";
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-interface IPoolPerformance {
-  function changeAssetBalance(
-    address asset,
-    uint256 plusAmount,
-    uint256 minusAmount
-  ) external;
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-  function hasExternalBalances(address poolAddress) external view returns (bool);
+import "../interfaces/IPoolLogic.sol";
 
-  function updateInternalBalances() external;
+/// @notice Logic implementation for tracking pool performance
+contract DHedgePoolPriceOracle {
+  using SafeMathUpgradeable for uint256;
 
-  function getBalancesSnapshot(address poolManagerAddress, IHasSupportedAsset.Asset[] memory supportedAssets)
-    external
-    view
-    returns (uint256[] memory supportedAssetBalances);
+  address public poolAddress;
+  uint8 public decimals;
 
-  function updatedInternalBalancesByDiff(
-    IHasSupportedAsset.Asset[] memory supportedAssets,
-    uint256[] memory beforeSupportedAssetBalances,
-    uint256[] memory afterSupportedAssetBalances
-  ) external;
+  /// @notice initialisation for the contract
+  constructor(address _poolAddress, uint8 _decimals) {
+    require(_decimals <= 18, "decimals above 18");
+    require(IPoolLogic(_poolAddress).tokenPrice() > 0, "pool not valid or funded");
+    poolAddress = _poolAddress;
+    decimals = _decimals;
+  }
 
-  function recordExternalValue(address poolAddress) external;
-
-  function adjustInternalValueFactor(uint256 a, uint256 b) external;
-
-  function resetInternalValueFactor() external;
-
-  function initializePool() external;
-
-  function tokenPriceAdjustedForManagerFee(address poolAddress) external view returns (uint256);
+  /// @notice returns the price of the token to provided decimals
+  /// @return The price
+  function getPrice() external view returns (uint256) {
+    return IPoolLogic(poolAddress).tokenPrice().div(10**(18 - decimals));
+  }
 }
