@@ -98,5 +98,21 @@
       "decimals": [18, 18, 18, 18],
       "weights": [0.25, 0.25, 0.25, 0.25]
     }
+  },
+  {
+    "name": "Balancer LP WBTC-WETH",
+    "symbol": "BLP",
+    "type": "balancerLpToken",
+    "address": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+    "assetType": 0,
+    "precision": 18,
+    "link": "https://polygonscan.com/address/0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+    "data": {
+      "pool": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+      "poolId": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae9500020000000000000000005a",
+      "tokens": ["0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619"],
+      "decimals": [8, 18],
+      "weights": [0.5, 0.5]
+    }
   }
 ]
