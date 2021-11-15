@@ -46,7 +46,7 @@ export const aave = {
 
 // oneInch
 export const oneinch = {
-  v3Router: "0x11111112542D85B3EF69AE05771c2dCCff4fAa26",
+  v3Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
 };
 
 // synthetix

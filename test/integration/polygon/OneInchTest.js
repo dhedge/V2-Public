@@ -388,7 +388,7 @@ describe("OneInch V3 Test", function () {
 
 const getOneInchSwapTransaction = async (params) => {
   const { srcAsset, dstAsset, srcAmount, fromAddress, toAddress, referrerAddress } = params;
-  const apiUrl = `https://api.1inch.exchange/v3.0/137/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
+  const apiUrl = `https://api.1inch.exchange/v4.0/137/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
   const response = await axios.get(apiUrl);
   const calldata = response.data.tx.data;
 
