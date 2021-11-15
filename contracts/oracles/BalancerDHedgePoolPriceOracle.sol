@@ -30,7 +30,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
@@ -38,9 +38,10 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IPoolLogic.sol";
+import "../interfaces/balancer/IRateProvider.sol";
 
 /// @notice Logic implementation for tracking pool performance
-contract DHedgePoolPriceOracle {
+contract BalancerDHedgePoolPriceOracle is IRateProvider {
   using SafeMathUpgradeable for uint256;
 
   address public poolAddress;
@@ -56,7 +57,7 @@ contract DHedgePoolPriceOracle {
 
   /// @notice returns the price of the token to provided decimals
   /// @return The price
-  function getPrice() external view returns (uint256) {
+  function getRate() external view override returns (uint256) {
     return IPoolLogic(poolAddress).tokenPrice().div(10**(18 - decimals));
   }
 }
