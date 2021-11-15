@@ -72,7 +72,7 @@ export const quickswap = {
 };
 
 // oneInch
-const oneinch = {
+export const oneinch = {
   v3Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
 };
 
@@ -87,6 +87,13 @@ export const assets = {
   miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+};
+
+export const assetsBalanceOfSlot = {
+  weth: 0,
+  usdc: 0,
+  usdt: 0,
+  dai: 0,
 };
 
 export const eth_price_feeds = {

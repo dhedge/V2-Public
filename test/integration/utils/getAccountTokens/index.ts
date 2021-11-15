@@ -5,7 +5,7 @@ export const toBytes32 = (bn: BigNumber) => {
   return ethers.utils.hexlify(ethers.utils.zeroPad(bn.toHexString(), 32));
 };
 
-export const getAccountToken = async (userAddress: string, tokenAddress: string, amount: BigNumber, slot: number) => {
+export const getAccountToken = async (amount: BigNumber, userAddress: string, tokenAddress: string, slot: number) => {
   // Get storage slot index
   const index = ethers.utils.solidityKeccak256(
     ["uint256", "uint256"],
@@ -16,9 +16,9 @@ export const getAccountToken = async (userAddress: string, tokenAddress: string,
   await ethers.provider.send("evm_mine", []); // Just mines to the next block
 };
 
-export const getAccountTokens = async (tokenAddress: string, amount: BigNumber, slot: number) => {
+export const getAccountTokens = async (amount: BigNumber, tokenAddress: string, slot: number) => {
   const signers = await ethers.getSigners();
   for (const signer of signers) {
-    await getAccountToken(signer.address, tokenAddress, amount, slot);
+    await getAccountToken(amount, signer.address, tokenAddress, slot);
   }
 };
