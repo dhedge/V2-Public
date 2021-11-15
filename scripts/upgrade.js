@@ -299,7 +299,7 @@ task("upgrade", "Upgrade contracts")
               asset: balancerLp.data.pool,
               assetType: balancerLp.assetType,
               aggregator: balancerV2Aggregator.address,
-              aggregatorName: csvAsset.aggregatorName,
+              aggregatorName: "BalancerV2LPAggregator",
             });
           }
         }
