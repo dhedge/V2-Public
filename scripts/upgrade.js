@@ -326,6 +326,8 @@ task("upgrade", "Upgrade contracts")
 
         const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
         await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory", taskArgs.execute);
+
+        versions[newTag].contracts.PoolFactory = newPoolFactoryLogic;
       }
     }
     if (taskArgs.assetHandler) {
