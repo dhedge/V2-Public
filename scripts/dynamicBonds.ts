@@ -4,7 +4,7 @@ import { utils, BigNumber, Contract } from "ethers";
 import fs from "fs";
 import axios from "axios";
 
-const { tryVerify, implementationStorage } = require("./Helpers");
+const { proposeTx, tryVerify, implementationStorage, proxyAdminAddress } = require("./Helpers");
 const coingeckoNetwork = "polygon-pos";
 
 // Addresses
@@ -31,15 +31,21 @@ const discountOneYear = 0.45;
 task("dynamicBonds", "Deploy Dynamic Bonds contract")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("deploy", "deploy Dynamic Bonds", false, types.boolean)
+  .addOptionalParam("upgrade", "upgrade Dynamic Bonds", false, types.boolean)
   .addOptionalParam("updateTerms", "update bond terms", false, types.boolean)
   .addOptionalParam("updateTreasury", "change the treasury address", false, types.boolean)
   .addOptionalParam("getConfig", "get live contract configuration", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
     const ethers = hre.ethers;
+    const upgrades = hre.upgrades;
     const network = await ethers.provider.getNetwork();
     console.log("Network:", network.name);
 
-    // Init tag
+    // Init contracts
+    const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
+    const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
+
+    // Init version
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versionPath = `../publish/${network.name}/${versionFile}.json`;
     const versions = require(versionPath);
@@ -64,6 +70,25 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
       const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
       await dynamicBondsProxy.setTreasury(treasury);
       console.log("Treasury set to:", treasury);
+    }
+
+    if (taskArgs.upgrade) {
+      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
+      const DynamicBonds = await ethers.getContractFactory("DynamicBonds");
+
+      const newDynamicBondsImplementation = await upgrades.prepareUpgrade(dynamicBondsProxy, DynamicBonds);
+      console.log("New DynamicBonds logic deployed to: ", newDynamicBondsImplementation);
+
+      await tryVerify(hre, newDynamicBondsImplementation, "contracts/DynamicBonds.sol:DynamicBonds", []);
+
+      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [
+        dynamicBondsProxy.address,
+        newDynamicBondsImplementation,
+      ]);
+      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Dynamic Bonds", true);
+
+      versions[latestVersion].contracts.DynamicBonds = newDynamicBondsImplementation;
+      versionUpdate = true;
     }
 
     if (taskArgs.deploy) {
@@ -190,6 +215,8 @@ const getTokenPrice = async (coingeckoNetwork: string, assetAddress: string) => 
 };
 
 const printConfig = async (dynamicBonds: Contract, depositTokenDecimals: number) => {
+  const owner = await dynamicBonds.owner();
+  console.log("Bond contract owner:", owner);
   const bondTerms = await dynamicBonds.bondTerms();
   const bondOptions = await dynamicBonds.bondOptions();
   console.log("-- Bond Terms --");

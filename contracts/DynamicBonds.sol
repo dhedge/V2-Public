@@ -72,6 +72,15 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     uint256 lockStartedAt; // lock start timestamp
     bool claimed; // if the payout token has been claimed by the user
   }
+  struct BondView {
+    uint256 bondId;
+    // an instance of a bond that’s been issued to a user
+    address bondOwner; // bond purchaser
+    uint256 lockAmount; // payout token amount that is locked for the user
+    BondOption bondOption; // bond option(price and lock period) at which the bond was purchased
+    uint256 lockStartedAt; // lock start timestamp
+    bool claimed; // if the payout token has been claimed by the user
+  }
 
   address public depositToken; // token paid for principal eg. USDC
   address public payoutToken; // inflow token eg. DHT
@@ -114,11 +123,19 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     return bondTerms.bondOptions;
   }
 
-  function getUserBonds(address _user) external view returns (Bond[] memory bondsArray) {
+  function getUserBonds(address _user) external view returns (BondView[] memory bondsArray) {
     uint256[] memory bondIds = userBonds[_user];
-    bondsArray = new Bond[](bondIds.length);
+    bondsArray = new BondView[](bondIds.length);
     for (uint256 i = 0; i < bondIds.length; i++) {
-      bondsArray[i] = bonds[bondIds[i]];
+      Bond memory bond = bonds[bondIds[i]];
+      bondsArray[i] = BondView({
+        bondId: bondIds[i],
+        bondOwner: bond.bondOwner,
+        lockAmount: bond.lockAmount,
+        bondOption: bond.bondOption,
+        lockStartedAt: bond.lockStartedAt,
+        claimed: bond.claimed
+      });
     }
   }
 
