@@ -581,8 +581,6 @@ contract PoolFactory is
     if (guard == address(0)) {
       if (isValidAsset(extContract)) {
         guard = getAssetGuard(extContract);
-      } else {
-        guard = getAddress("openAssetGuard");
       }
     }
 

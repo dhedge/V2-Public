@@ -145,6 +145,7 @@ describe("DynamicBonds Test", () => {
 
     const userBonds = await dynamicBonds.getUserBonds(owner.address);
     expect(userBonds.length).to.equal(1);
+    expect(userBonds[0].bondId).to.equal(0);
     expect(userBonds[0].bondOwner).to.equal(owner.address);
     expect(userBonds[0].lockAmount).to.equal(units(1));
     expect(userBonds[0].bondOption.price).to.equal(units(10, 6));

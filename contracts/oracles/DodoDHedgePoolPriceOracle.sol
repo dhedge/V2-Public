@@ -29,15 +29,34 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: MIT
+
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
-interface IPoolFactory {
-  function governanceAddress() external view returns (address);
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-  function poolPerformanceAddress() external view returns (address);
+import "../interfaces/IPoolLogic.sol";
 
-  function isPool(address pool) external view returns (bool);
+/// @notice Logic implementation for tracking pool performance
+contract DodoDHedgePoolPriceOracle {
+  using SafeMathUpgradeable for uint256;
+
+  address public poolAddress;
+  uint8 public decimals;
+
+  /// @notice initialisation for the contract
+  constructor(address _poolAddress, uint8 _decimals) {
+    require(_decimals <= 18, "decimals above 18");
+    require(IPoolLogic(_poolAddress).tokenPrice() > 0, "pool not valid or funded");
+    poolAddress = _poolAddress;
+    decimals = _decimals;
+  }
+
+  /// @notice returns the price of the token to provided decimals
+  /// @return The price
+  function getPrice() external view returns (uint256) {
+    return IPoolLogic(poolAddress).tokenPrice().div(10**(18 - decimals));
+  }
 }

@@ -1189,6 +1189,7 @@
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
+      "PoolFactory": "0x3C2E02E012d3D0cBf3F4391A71e0E27Fe8c7a192",
       "PoolLogic": "0xe38d6B375B9ed2fCEB6Edf1D64176A7E1A549410",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
       "PoolManagerLogic": "0x3cCD3B47C32d621C8C7E3f66a6D7d763E0BDc341",
@@ -1208,9 +1209,10 @@
       "OneInchV3Guard": "0xa389D040C0809b3069BA5b073469413152c2EBdF",
       "PoolPerformanceProxy": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
       "PoolPerformance": "0x0a7AA4D9bf1e88240B752F965E793210Cb9fD722",
-      "BalancerV2Guard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB"
+      "BalancerV2Guard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB",
       "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
-      "DynamicBonds": "0x16cb10b7147b605e58d5495dfc563f9404ed448f"
+      "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
+      "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03"
     },
     "network": {
       "name": "matic",
@@ -1218,6 +1220,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 08 Nov 2021 05:01:11 GMT"
+    "date": "Mon, 15 Nov 2021 05:24:53 GMT"
   }
 }

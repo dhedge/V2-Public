@@ -219,7 +219,9 @@ const getAggregator = async (csvAsset) => {
   return aggregator;
 };
 
+// Init contracts data
 const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
 module.exports = {
   writeCsv,
@@ -234,4 +236,5 @@ module.exports = {
   checkBalancerLpAsset,
   getAggregator,
   implementationStorage,
+  proxyAdminAddress,
 };
