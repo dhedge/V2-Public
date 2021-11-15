@@ -450,6 +450,11 @@
       {
         "components": [
           {
+            "internalType": "uint256",
+            "name": "bondId",
+            "type": "uint256"
+          },
+          {
             "internalType": "address",
             "name": "bondOwner",
             "type": "address"
@@ -487,7 +492,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct DynamicBonds.Bond[]",
+        "internalType": "struct DynamicBonds.BondView[]",
         "name": "bondsArray",
         "type": "tuple[]"
       }

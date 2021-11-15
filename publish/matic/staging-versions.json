@@ -1210,7 +1210,7 @@
       "PoolPerformance": "0x0a7AA4D9bf1e88240B752F965E793210Cb9fD722",
       "BalancerV2Guard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB",
       "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
-      "DynamicBonds": "0x16cb10b7147b605e58d5495dfc563f9404ed448f"
+      "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749"
     },
     "network": {
       "name": "matic",
@@ -1218,6 +1218,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 08 Nov 2021 05:01:11 GMT"
+    "date": "Sun, 14 Nov 2021 22:50:51 GMT"
   }
 }

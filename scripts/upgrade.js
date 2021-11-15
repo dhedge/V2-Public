@@ -10,9 +10,9 @@ const {
   checkAsset,
   checkBalancerLpAsset,
   getAggregator,
+  proxyAdminAddress,
 } = require("./Helpers");
 const Decimal = require("decimal.js");
-const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
 // File Names
 const stagingBalancerConfig = require("../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
