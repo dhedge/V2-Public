@@ -157,6 +157,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     _;
   }
 
+  // https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  // solhint-disable-next-line no-empty-blocks
+  constructor() initializer {}
+
   /// @notice Initialize the pool
   /// @param _factory address of the factory
   /// @param _privatePool true if the pool is private, false otherwise

@@ -83,6 +83,11 @@ contract PoolPerformance is OwnableUpgradeable {
     }
   }
 
+  //https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  // solhint-disable-next-line no-empty-blocks
+  constructor() initializer {}
+
   /// @notice initialisation for the contract
   function initialize() external initializer {
     __Ownable_init();
