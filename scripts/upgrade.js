@@ -321,8 +321,13 @@ task("upgrade", "Upgrade contracts")
         const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
         const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
         console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
+        const poolFactoryImpl = await ethers.getContractAt(PoolFactoryABI, newPoolFactoryLogic);
 
         await tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
+
+        console.log("Initialising Impl");
+        await poolFactoryImpl.implInitializer();
+        console.log("Initialising Impl");
 
         const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
         await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory", taskArgs.execute);

@@ -139,11 +139,6 @@ contract PoolFactory is
   uint256 private _exitFeeNumerator;
   uint256 private _exitFeeDenominator;
 
-  // https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
-  /// @custom:oz-upgrades-unsafe-allow constructor
-  // solhint-disable-next-line no-empty-blocks
-  constructor() initializer {}
-
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
@@ -178,6 +173,10 @@ contract PoolFactory is
 
     _setPoolStorageVersion(230); // V2.3.0;
   }
+
+  /// @notice implementations should not be left unintialized
+  // solhint-disable-next-line no-empty-blocks
+  function implInitializer() external initializer {}
 
   /// @notice Function to create a new fund
   /// @param _privatePool A boolean indicating whether the fund is private or not

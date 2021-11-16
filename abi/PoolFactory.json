@@ -713,6 +713,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "implInitializer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
