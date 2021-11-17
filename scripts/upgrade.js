@@ -327,7 +327,6 @@ task("upgrade", "Upgrade contracts")
 
         console.log("Initialising Impl");
         await poolFactoryImpl.implInitializer();
-        console.log("Initialising Impl");
 
         const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
         await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory", taskArgs.execute);
