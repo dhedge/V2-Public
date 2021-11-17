@@ -49,7 +49,7 @@ jobs:
           npx hardhat test ./test/integration/polygon/AaveEdgeCaseTest.js --network localhost
       - name: AaveTests
         run: |
-          npx hardhat test ./test/integration/polygon/AaveTest.js --network localhost
+          npx hardhat test ./test/integration/polygon/AaveTest.ts --network localhost
       - name: Balancer Tests
         run: |
           npx hardhat test ./test/integration/polygon/BalancerTest.js --network localhost
