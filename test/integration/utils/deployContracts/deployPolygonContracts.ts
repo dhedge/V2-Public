@@ -122,8 +122,14 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const USDC = await ethers.getContractAt("IERC20", assets.usdc);
   const WETH = await ethers.getContractAt("IERC20", assets.weth);
   const SUSHI = await ethers.getContractAt("IERC20", assets.sushi);
+
   const SushiLPUSDCWETH = await ethers.getContractAt("IERC20", sushi.pools.usdc_weth.address);
+
   const AMUSDC = await ethers.getContractAt("IERC20", aave.aTokens.usdc);
+  const AMWETH = await ethers.getContractAt("IERC20", aave.aTokens.weth);
+
+  const VariableWETH = await ethers.getContractAt("IERC20", aave.variableDebtTokens.weth);
+  const VariableUSDT = await ethers.getContractAt("IERC20", aave.variableDebtTokens.usdt);
 
   return {
     logicOwner,
@@ -142,6 +148,9 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
       SUSHI,
       SushiLPUSDCWETH,
       AMUSDC,
+      AMWETH,
+      VariableWETH,
+      VariableUSDT,
     },
   };
 };

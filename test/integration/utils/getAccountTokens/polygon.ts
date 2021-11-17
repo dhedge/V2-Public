@@ -27,7 +27,7 @@ export const getDAI = async (amount: BigNumber, userAddress = "") => {
 };
 
 export const getWETH = async (amount: BigNumber, userAddress = "") => {
-  if (userAddress) {
+  if (!userAddress) {
     await getAccountTokens(amount, assets.weth, assetsBalanceOfSlot.weth);
   } else {
     await getAccountToken(amount, userAddress, assets.weth, assetsBalanceOfSlot.weth);
