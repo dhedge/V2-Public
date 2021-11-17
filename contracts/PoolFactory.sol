@@ -174,6 +174,10 @@ contract PoolFactory is
     _setPoolStorageVersion(230); // V2.3.0;
   }
 
+  /// @notice implementations should not be left unintialized
+  // solhint-disable-next-line no-empty-blocks
+  function implInitializer() external initializer {}
+
   /// @notice Function to create a new fund
   /// @param _privatePool A boolean indicating whether the fund is private or not
   /// @param _manager A manager address
@@ -581,8 +585,6 @@ contract PoolFactory is
     if (guard == address(0)) {
       if (isValidAsset(extContract)) {
         guard = getAssetGuard(extContract);
-      } else {
-        guard = getAddress("openAssetGuard");
       }
     }
 
