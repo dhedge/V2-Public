@@ -93,8 +93,8 @@ describe("LendingEnabledAssetGuard", function () {
 
     await governance.setAddresses([
       // [toBytes32("swapRouter"), sushi.router],
-      [toBytes32("aaveProtocolDataProvider"), aave.protocolDataProvider],
-      [toBytes32("openAssetGuard"), openAssetGuard.address],
+      { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
+      { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
     await assetHandler.addAssets([assetLendingPool]);
 
