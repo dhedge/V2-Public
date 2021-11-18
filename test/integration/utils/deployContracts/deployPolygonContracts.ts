@@ -80,7 +80,19 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
   const assetDai = { asset: assets.dai, assetType: 4, aggregator: price_feeds.dai }; // Lending enabled
   const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
-  const assetHandlerInitAssets = [assetWmatic, assetWeth, assetUsdt, assetDai, assetUsdc, assetSushi, assetLendingPool];
+  const assetBalancer = { asset: assets.balancer, assetType: 0, aggregator: price_feeds.balancer };
+  const assetMiMatic = { asset: assets.miMatic, assetType: 0, aggregator: price_feeds.dai };
+  const assetHandlerInitAssets = [
+    assetWmatic,
+    assetWeth,
+    assetUsdt,
+    assetDai,
+    assetUsdc,
+    assetSushi,
+    assetBalancer,
+    assetMiMatic,
+    assetLendingPool,
+  ];
 
   const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
   await assetHandler.deployed();
@@ -171,6 +183,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);
   await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
   await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
+  await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
   await governance.setContractGuard(sushi.router, uniswapV2RouterGuard.address);
   await governance.setContractGuard(sushi.minichef, sushiMiniChefV2Guard.address);
   await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuard.address);
@@ -191,6 +204,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const USDC = await ethers.getContractAt("IERC20", assets.usdc);
   const WETH = await ethers.getContractAt("IERC20", assets.weth);
   const SUSHI = await ethers.getContractAt("IERC20", assets.sushi);
+  const BALANCER = await ethers.getContractAt("IERC20", assets.balancer);
 
   const SushiLPUSDCWETH = await ethers.getContractAt("IERC20", sushi.pools.usdc_weth.address);
 
@@ -199,6 +213,9 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
 
   const VariableWETH = await ethers.getContractAt("IERC20", aave.variableDebtTokens.weth);
   const VariableUSDT = await ethers.getContractAt("IERC20", aave.variableDebtTokens.usdt);
+
+  const BALANCERLP_STABLE = await ethers.getContractAt("IERC20", balancer.pools.stablePool.pool);
+  const BALANCERLP_WETH_BALANCER = await ethers.getContractAt("IERC20", balancer.pools.bal80weth20.pool);
 
   return {
     logicOwner,
@@ -215,11 +232,14 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
       USDC,
       WETH,
       SUSHI,
+      BALANCER,
       SushiLPUSDCWETH,
       AMUSDC,
       AMWETH,
       VariableWETH,
       VariableUSDT,
+      BALANCERLP_STABLE,
+      BALANCERLP_WETH_BALANCER,
     },
   };
 };
