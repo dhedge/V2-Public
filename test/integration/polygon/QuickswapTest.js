@@ -730,6 +730,7 @@ describe("Quickswap V2 Test", function () {
     checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
   });
 
+  // Removed OpenAssetGuard - needs to be reinstated securely
   it("Should be able to approve non-supported asset", async () => {
     // transfer wmatic for testing
     const depositAmount = units(500);
@@ -752,7 +753,8 @@ describe("Quickswap V2 Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(assets.wmatic, approveABI);
   });
 
-  it("Should be able to swap non-supported asset", async () => {
+  // Removed OpenAssetGuard - needs to be reinstated securely
+  it.skip("Should be able to swap non-supported asset", async () => {
     const sourceAmount = units(100);
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
@@ -772,7 +774,8 @@ describe("Quickswap V2 Test", function () {
     expect(wethBalanceAfter).gt(wethBalanceBefore);
   });
 
-  it("Should be able to swap non-supported asset (routing)", async () => {
+  // Removed OpenAssetGuard - needs to be reinstated securely
+  it.skip("Should be able to swap non-supported asset (routing)", async () => {
     const sourceAmount = units(100);
     const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
     const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router.abi);
