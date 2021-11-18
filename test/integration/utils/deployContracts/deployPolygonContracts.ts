@@ -1,8 +1,55 @@
 import { ethers, upgrades } from "hardhat";
+import Decimal from "decimal.js";
 import { PoolFactory } from "../../../../types";
 import { toBytes32 } from "../../../TestHelpers";
-import { sushi, aave, assets, price_feeds } from "../../polygon-data";
+import { sushi, aave, assets, price_feeds, balancer } from "../../polygon-data";
 import { Deployments } from ".";
+
+const deployBalancerV2LpAggregator = async (
+  poolFactory: PoolFactory,
+  info: {
+    pool: string;
+    poolId: string;
+    tokens: string[];
+    decimals: number[];
+    weights: number[];
+  },
+) => {
+  const ether = "1000000000000000000";
+  const divisor = info.weights.reduce((acc, w, i) => {
+    if (i == 0) {
+      return new Decimal(w).pow(w);
+    }
+    return acc.mul(new Decimal(w).pow(w));
+  }, new Decimal("0"));
+
+  const K = new Decimal(ether).div(divisor).toFixed(0);
+
+  let matrix = [];
+  for (let i = 1; i <= 20; i++) {
+    const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
+    for (let j = 0; j < info.weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+    }
+    matrix.push(elements);
+  }
+
+  const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
+  return await BalancerV2LPAggregator.deploy(
+    poolFactory.address,
+    balancer.v2Vault,
+    info.pool,
+    info.tokens,
+    info.decimals,
+    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+    {
+      maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
+      K,
+      powerPrecision: "100000000", // powerPrecision
+      approximationMatrix: matrix, // approximationMatrix
+    },
+  );
+};
 
 export const deployPolygonContracts = async (): Promise<Deployments> => {
   const [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -63,6 +110,23 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   };
   await assetHandler.addAssets([assetSushiLPWethUsdc]);
 
+  // Deploy Balancer LP Aggregator
+  const balancerV2Aggregator = await deployBalancerV2LpAggregator(poolFactory, balancer.pools.stablePool);
+  const balancerLpAsset = {
+    asset: balancer.pools.stablePool.pool,
+    assetType: 6,
+    aggregator: balancerV2Aggregator.address,
+  };
+  await assetHandler.addAssets([balancerLpAsset]);
+
+  const balancerV2AggregatorWethBalancer = await deployBalancerV2LpAggregator(poolFactory, balancer.pools.bal80weth20);
+  const balancerLpAssetWethBalancer = {
+    asset: balancer.pools.bal80weth20.pool,
+    assetType: 6,
+    aggregator: balancerV2AggregatorWethBalancer.address,
+  };
+  await assetHandler.addAssets([balancerLpAssetWethBalancer]);
+
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
   await erc20Guard.deployed();
@@ -99,6 +163,10 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(assets.wmatic);
   aaveIncentivesControllerGuard.deployed();
 
+  const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
+  const balancerV2Guard = await BalancerV2Guard.deploy(2, 100); // set slippage 2%
+  balancerV2Guard.deployed();
+
   await governance.setAssetGuard(0, erc20Guard.address);
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);
   await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
@@ -107,6 +175,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await governance.setContractGuard(sushi.minichef, sushiMiniChefV2Guard.address);
   await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuard.address);
   await governance.setContractGuard(aave.incentivesController, aaveIncentivesControllerGuard.address);
+  await governance.setContractGuard(balancer.v2Vault, balancerV2Guard.address);
   await governance.setAddresses([
     { name: toBytes32("swapRouter"), destination: sushi.router },
     { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
