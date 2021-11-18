@@ -247,7 +247,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         block.timestamp
       );
 
-      txType = 16; // `Exit Pool` type
+      txType = 17; // `Exit Pool` type
     }
 
     return (txType, false);
