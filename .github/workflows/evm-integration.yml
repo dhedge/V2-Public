@@ -45,7 +45,7 @@ jobs:
 
       - name: Hardhat compile
         run: npx hardhat compile
-        if: steps.hardhat-cache.outputs.cache-hit != 'true'
+        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
 
@@ -101,7 +101,7 @@ jobs:
 
       - name: Hardhat compile
         run: npx hardhat compile
-        if: steps.hardhat-cache.outputs.cache-hit != 'true'
+        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
 
