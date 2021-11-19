@@ -884,7 +884,12 @@
       "QuickLPAssetGuard": "0x018338bFd3FdB1915d823a77248F43dE00B54BB7",
       "QuickStakingRewardsGuard": "0x9519BD5868f8D66DE1Db3bd6e9Ae917b1Ffa886D",
       "OneInchV3Guard": "0xa389D040C0809b3069BA5b073469413152c2EBdF",
-      "OneInchV4Guard": "0x151a2385bA630F657D9550495b9120f95e5591b1"
+      "OneInchV4Guard": "0x151a2385bA630F657D9550495b9120f95e5591b1",
+      "PoolPerformanceProxy": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
+      "PoolPerformance": "0x0a7AA4D9bf1e88240B752F965E793210Cb9fD722",
+      "BalancerV2Guard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB",
+      "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
+      "DynamicBonds": "0x16cb10b7147b605e58d5495dfc563f9404ed448f"
     },
     "network": {
       "name": "matic",
