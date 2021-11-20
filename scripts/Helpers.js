@@ -147,7 +147,7 @@ const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) 
   for (const asset of contracts.Assets) {
     if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
     if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
-    if (csvAsset["Asset Name"] === asset.name) {
+    if (csvAsset["Address"].toLowerCase() === asset.asset.toLowerCase()) {
       // console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
       const assetType = parseInt(await poolFactory.getAssetType(csvAsset.Address));
 
