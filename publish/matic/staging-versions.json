@@ -1192,6 +1192,13 @@
           "assetType": 0,
           "aggregator": "0x605AfA2Aa6571Da603F5163373Af8e20C9A262cc",
           "aggregatorName": "BalancerV2LPAggregator"
+        },
+        {
+          "name": "Balancer LP USDC-dUSD",
+          "asset": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+          "assetType": 0,
+          "aggregator": "0xc3C893C224A95999DCa9Cd9bD264e87A6C01fC75",
+          "aggregatorName": "BalancerV2LPAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1227,6 +1234,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 15 Nov 2021 12:22:59 GMT"
+    "date": "Fri, 19 Nov 2021 01:37:26 GMT"
   }
 }
