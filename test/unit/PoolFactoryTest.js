@@ -2299,6 +2299,9 @@ describe("PoolFactory", function () {
     await expect(poolFactory.connect(manager).addTransferWhitelist(user2.address)).to.be.revertedWith(
       "caller is not the owner",
     );
+    await expect(poolFactory.connect(manager).removeTransferWhitelist(user2.address)).to.be.revertedWith(
+      "caller is not the owner",
+    );
 
     // deposit and initiate cooldown
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
