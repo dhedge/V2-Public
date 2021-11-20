@@ -958,7 +958,6 @@ describe("PoolFactory", function () {
         assetType: 0,
       },
     ];
-    console.log("assets: ", assets);
     await assetHandler.addAssets(assets);
     await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
     await poolManagerLogicManagerProxy.changeAssets([[susdAsset.address, false]], []);
@@ -970,11 +969,9 @@ describe("PoolFactory", function () {
 
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
-    console.log("supportedAssets before: ", supportedAssets);
     let assetPosition;
     for (supportedAsset of supportedAssets) {
       assetPosition = await poolManagerLogicManagerProxy.assetPosition(supportedAsset.asset);
-      console.log("assetPosition : ", assetPosition.toString());
     }
     expect(numberOfSupportedAssets).to.eq(10);
 
@@ -998,8 +995,6 @@ describe("PoolFactory", function () {
     await poolManagerLogicManagerProxy.changeAssets([], [usd_price_feed.address]);
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
-    console.log("numberOfSupportedAssets : ", numberOfSupportedAssets);
-    console.log("supportedAssets after: ", supportedAssets);
     expect(numberOfSupportedAssets).to.eq(3);
 
     // Can not remove persist asset
@@ -2298,5 +2293,40 @@ describe("PoolFactory", function () {
     let pool3Logic = await PoolLogic.attach(pool3);
     let pool3ManagerLogic = await PoolManagerLogic.attach(await pool3Logic.poolManagerLogic());
     await pool3ManagerLogic.connect(user1).changeAssets([[pool2, false]], []);
+  });
+
+  it("should be able to add/remove token transfer whitelist", async function () {
+    await expect(poolFactory.connect(manager).addTransferWhitelist(user2.address)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+
+    // deposit and initiate cooldown
+    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+    await poolLogicProxy.connect(investor).deposit(susd, (100e18).toString());
+
+    let transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    expect(transferWhitelist).to.equal(false);
+
+    // can't transfer to unknown address during cooldown
+    await poolFactory.setExitCooldown(86400);
+    await expect(poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString())).to.be.revertedWith(
+      "cooldown active",
+    );
+
+    await poolFactory.addTransferWhitelist(user2.address);
+    transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    expect(transferWhitelist).to.equal(true);
+
+    // can transfer to whitelisted address during cooldown
+    await poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString());
+
+    await poolFactory.removeTransferWhitelist(user2.address);
+    transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    expect(transferWhitelist).to.equal(false);
+
+    // can't transfer to removed whitelist address during cooldown
+    await expect(poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString())).to.be.revertedWith(
+      "cooldown active",
+    );
   });
 });
