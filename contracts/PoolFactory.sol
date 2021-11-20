@@ -660,5 +660,6 @@ contract PoolFactory is
     }
   }
 
-  uint256[47] private __gap;
+  // The Factory is not safe to be inherited by other contracts
+  // uint256[47] private __gap;
 }
