@@ -139,7 +139,7 @@ contract PoolFactory is
   uint256 private _exitFeeNumerator;
   uint256 private _exitFeeDenominator;
 
-  mapping(address => bool) public override transferWhitelist;
+  mapping(address => bool) public override transferWhitelist; // 24h lockup whitelist
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -259,16 +259,16 @@ contract PoolFactory is
     emit PoolPerformanceAddressSet(_poolPerformanceAddress);
   }
 
-  // Transfer whitelist for bypassing 24h lockup
+  // Transfer whitelist for bypassing 24h token lock
 
-  /// @notice Add an address to the transferWhitelist
+  /// @notice Add an address to the transfer whitelist (24h lock bypass)
   /// @param _extAddress The address to add to whitelist
   function addTransferWhitelist(address _extAddress) external onlyOwner {
     transferWhitelist[_extAddress] = true;
   }
 
-  /// @notice Add an address to the transferWhitelist
-  /// @param _extAddress The address to add to whitelist
+  /// @notice Remove an address from the transfer whitelist (24h lock bypass)
+  /// @param _extAddress The address to remove from whitelist
   function removeTransferWhitelist(address _extAddress) external onlyOwner {
     transferWhitelist[_extAddress] = false;
   }
