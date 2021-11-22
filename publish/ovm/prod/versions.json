@@ -1,21 +1,30 @@
 {
   "v2.11.0": {
-    "lastUpdated": "21/11/2021, 19:55:32",
+    "lastUpdated": "Mon, 22 Nov 2021 23:26:48 GMT",
     "contracts": {
       "ERC20Guard": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "SynthetixGuard": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "SynthetixGuard": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
       "Governance": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "USDPriceAggregator": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "AssetHandlerProxy": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
-      "PoolPerformanceProxy": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "PoolFactoryProxy": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+      "USDPriceAggregator": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "AssetHandler": {
+        "proxy": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+        "implementation": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "PoolPerformance": {
+        "proxy": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+        "implementation": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+      },
+      "PoolFactory": {
+        "proxy": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
+        "implementation": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
+      },
       "PoolLogic": {
-        "proxy": "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
-        "impl": "0x322813fd9a801c5507c9de605d63cea4f2ce6c44"
+        "proxy": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+        "implementation": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f"
       },
       "PoolManagerLogic": {
-        "proxy": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
-        "impl": "0x4a679253410272dd5232b3ff7cf5dbb88f295319"
+        "proxy": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+        "implementation": "0x7a2088a1bfc9d81c55368ae168c2c02570cb814f"
       }
     }
   }

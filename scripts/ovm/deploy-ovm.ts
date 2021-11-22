@@ -1,43 +1,51 @@
 import { ethers, upgrades } from "hardhat";
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
+
 import fs from "fs";
 import csv from "csvtojson";
+import { assets, synthetix } from "../../test/integration/ovm/ovm-data";
 
 const { getTag } = require("../Helpers");
 
+0xef31d75a2f85cfdd9032158a2ceb773c84d79192;
+0x6fc0411fcd7f1ab7ff99dd7eb697e6c660bebddb;
+0x253956aedc059947e700071bc6d74bd8e34fe2ab;
+
 const addresses = {
   LEET: "0x0000000000000000000000000000000000001337",
-  protocolDao: "0xef31D75A2f85CfDD9032158A2CEB773C84d79192",
-  uberPool: "0xef31D75A2f85CfDD9032158A2CEB773C84d79192",
+  // https://ogg.scopelift.co/wallet/0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08
+  protocolDao: "0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08",
+  // https://ogg.scopelift.co/wallet/0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc
+  uberPool: "0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc",
 
-  sUSD: "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
-  synthetixProxyAddress: "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4",
-  synthetixAddressResolverAddress: "0x95A6a3f44a70172E7d50a9e28c85Dfd712756B8C",
-
+  sUSD: assets.susd,
+  synthetixProxyAddress: assets.snxProxy,
+  synthetixAddressResolverAddress: synthetix.addressResolver,
   implementationStorage: "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
 };
 
 const fileNames = {
   ovmVersionFile: "./publish/ovm/prod/versions.json",
-  chainlinkAssetsFile: "./config/prod-ovm/dHEDGE Chainlink Assets.csv",
-  usdPriceAggregatorAssetsFile: "./config/prod-ovm/dHEDGE USDPriceAggregator Assets.csv",
+  chainlinkAssetsFile: "./config/prod-ovm/assets/Chainlink Assets.csv",
+  usdPriceAggregatorAssetsFile: "./config/prod-ovm/assets/USDPriceAggregator Assets.csv",
 };
 
 type Address = string;
 
 interface IContracts {
   Governance?: Address;
-  PoolFactoryProxy?: Address;
-  PoolLogic?: { proxy: Address; impl: Address };
-  PoolManagerLogic?: { proxy: Address; impl: Address };
-  AssetHandlerProxy?: Address;
-  PoolPerformanceProxy?: Address;
+  PoolFactory?: { proxy: Address; implementation: Address };
+  PoolLogic?: { proxy: Address; implementation: Address };
+  PoolManagerLogic?: { proxy: Address; implementation: Address };
+  AssetHandler?: { proxy: Address; implementation: Address };
+  PoolPerformance?: { proxy: Address; implementation: Address };
   SynthetixGuard?: Address;
   ERC20Guard?: Address;
   USDPriceAggregator?: Address;
   Assets?: { name: string; asset: Address; assetType: number; aggregator: Address }[];
 }
 
-type IVersions = {
+export type IVersions = {
   [version: string]: {
     network: string;
     lastUpdated: string;
@@ -94,20 +102,23 @@ async function main() {
       if (checkDeployed("Governance")) return;
       const Governance = await ethers.getContractFactory("Governance");
       const governance = await Governance.deploy();
+      await governance.deployed();
 
       const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
       const erc20Guard = await ERC20Guard.deploy();
       await erc20Guard.deployed();
+
       addToVersions("ERC20Guard", erc20Guard.address);
       console.log("ERC20Guard deployed at ", erc20Guard.address);
 
       await governance.setAssetGuard(0, erc20Guard.address);
+      await governance.setAssetGuard(1, erc20Guard.address);
 
       const SynthetixGuardFactory = await ethers.getContractFactory("SynthetixGuard");
       const synthetixGuard = await SynthetixGuardFactory.deploy(addresses.synthetixAddressResolverAddress);
       await synthetixGuard.deployed();
       addToVersions("SynthetixGuard", synthetixGuard.address);
-      console.log("UniswapV2RouterGuard deployed at ", synthetixGuard.address);
+      console.log("SynthetixGuard deployed at ", synthetixGuard.address);
 
       await governance.setContractGuard(addresses.synthetixProxyAddress, synthetixGuard.address);
       await governance.transferOwnership(addresses.protocolDao);
@@ -118,11 +129,12 @@ async function main() {
       if (checkDeployed("USDPriceAggregator")) return;
       const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
       const usdPriceAggregator = await USDPriceAggregator.deploy();
+      await usdPriceAggregator.deployed();
       console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
       addToVersions("USDPriceAggregator", usdPriceAggregator.address);
     },
-    AssetHandlerProxy: async () => {
-      if (checkDeployed("AssetHandlerProxy")) return;
+    AssetHandler: async () => {
+      if (checkDeployed("AssetHandler")) return;
 
       checkDeployed("USDPriceAggregator", { throw: true });
 
@@ -152,31 +164,39 @@ async function main() {
 
       const allAssets = [...chainlinkAssetHandlers, ...usdAssetHandlers];
       allAssets.forEach((asset) => console.log("Adding Asset: ", asset.name));
+
       await assetHandler.addAssets([...chainlinkAssetHandlers, ...usdAssetHandlers]);
       await assetHandler.transferOwnership(addresses.protocolDao);
-      addToVersions("AssetHandlerProxy", assetHandler.address);
+      const assetHandlerImplementation = await getImplementationAddress(ethers.provider, assetHandler.address);
+      addToVersions("AssetHandler", { proxy: assetHandler.address, implementation: assetHandlerImplementation });
       console.log("AssetHandler deployed at ", assetHandler.address);
     },
-    PoolPerformanceProxy: async () => {
-      if (checkDeployed("PoolPerformanceProxy")) return;
+    PoolPerformance: async () => {
+      if (checkDeployed("PoolPerformance")) return;
       const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
       const poolPerformance = await upgrades.deployProxy(PoolPerformance);
       await poolPerformance.deployed();
       await poolPerformance.transferOwnership(addresses.protocolDao);
-      addToVersions("PoolPerformanceProxy", poolPerformance.address);
+      const poolPerformanceImplementation = await getImplementationAddress(ethers.provider, poolPerformance.address);
+      addToVersions("PoolPerformance", {
+        proxy: poolPerformance.address,
+        implementation: poolPerformanceImplementation,
+      });
       console.log("PoolPerformance deployed at ", poolPerformance.address);
     },
-    PoolFactoryProxy: async () => {
-      if (checkDeployed("PoolFactoryProxy")) return;
+    PoolFactory: async () => {
+      if (checkDeployed("PoolFactory")) return;
 
-      checkDeployed("AssetHandlerProxy", { throw: true });
-      checkDeployed("PoolPerformanceProxy", { throw: true });
+      checkDeployed("AssetHandler", { throw: true });
+      checkDeployed("PoolPerformance", { throw: true });
 
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
       const poolLogic = await PoolLogic.deploy();
+      await poolLogic.deployed();
 
       const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
       const poolManagerLogic = await PoolManagerLogic.deploy();
+      await poolManagerLogic.deployed();
 
       const contracts = versions[tag].contracts;
 
@@ -185,29 +205,30 @@ async function main() {
       const poolFactory = await upgrades.deployProxy(PoolFactory, [
         poolLogic.address,
         poolManagerLogic.address,
-        contracts.AssetHandlerProxy,
+        contracts.AssetHandler?.proxy,
         addresses.protocolDao,
         contracts.Governance,
       ]);
 
       await poolFactory.deployed();
       await poolFactory.setDAOAddress(addresses.uberPool);
-      await poolFactory.setPoolPerformanceAddress(contracts.PoolPerformanceProxy);
+      await poolFactory.setPoolPerformanceAddress(contracts.PoolPerformance?.proxy);
       await poolFactory.transferOwnership(addresses.protocolDao);
-      addToVersions("PoolFactoryProxy", poolFactory.address);
+      const poolFactoryImplementation = await getImplementationAddress(ethers.provider, poolFactory.address);
+      addToVersions("PoolFactory", { proxy: poolFactory.address, implementation: poolFactoryImplementation });
       console.log("poolFactory deployed at ", poolFactory.address);
     },
     PoolLogic: async () => {
       if (checkDeployed("PoolLogic")) return;
 
-      checkDeployed("PoolFactoryProxy", { throw: true });
+      checkDeployed("PoolFactory", { throw: true });
 
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
       const poolLogic = await PoolLogic.deploy();
       console.log("PoolLogic deployed at ", poolLogic.address);
 
       const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [
-        versions[tag].contracts.PoolFactoryProxy,
+        versions[tag].contracts.PoolFactory?.proxy,
         false,
         "NA",
         "NA",
@@ -218,18 +239,18 @@ async function main() {
         addresses.implementationStorage,
       );
       const poolLogicAddress = ethers.utils.hexValue(poolLogicAddressX);
-      addToVersions("PoolLogic", { proxy: poolLogicProxy.address, impl: poolLogicAddress });
+      addToVersions("PoolLogic", { proxy: poolLogicProxy.address, implementation: poolLogicAddress });
       console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
     },
     PoolManagerLogic: async () => {
       if (checkDeployed("PoolManagerLogic")) return;
 
       checkDeployed("PoolLogic", { throw: true });
-      checkDeployed("PoolFactoryProxy", { throw: true });
+      checkDeployed("PoolFactory", { throw: true });
 
       const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
       const poolManagerLogicProxy = await upgrades.deployProxy(PoolManagerLogic, [
-        versions[tag].contracts.PoolFactoryProxy,
+        versions[tag].contracts.PoolFactory?.proxy,
         addresses.LEET,
         "ManagerName",
         versions[tag].contracts.PoolLogic?.proxy,
@@ -242,7 +263,10 @@ async function main() {
         addresses.implementationStorage,
       );
       const poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddressX);
-      addToVersions("PoolManagerLogic", { proxy: poolManagerLogicProxy.address, impl: poolManagerLogicAddress });
+      addToVersions("PoolManagerLogic", {
+        proxy: poolManagerLogicProxy.address,
+        implementation: poolManagerLogicAddress,
+      });
       console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
     },
   };
