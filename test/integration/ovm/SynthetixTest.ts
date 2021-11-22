@@ -84,20 +84,8 @@ describe("Synthetix Test", function () {
     susdProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.susd);
     sethProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.seth);
 
-    // for (let i = 0; i < 500; i++) {
-    //   try {
-    //     // I got this by going to the sUSD Proxy, getting the "target" value and then the "tokenState" contract
-    //     const sUSD_target__tokenState = "0x92bac115d89ca17fd02ed9357ceca32842acb4c2";
-    //     await getAccountToken(units(500), logicOwner.address, "0x92bac115d89ca17fd02ed9357ceca32842acb4c2", i);
-    //   } catch {}
-    //   console.log(i);
-    //   const x = await susdProxy.balanceOf(logicOwner.address);
-    //   if (x > 0) {
-    //     console.log(">>>>>>>>>>>index", i);
-    //     break;
-    //   }
-    // }
-    await getAccountToken(units(500), logicOwner.address, "0x92bac115d89ca17fd02ed9357ceca32842acb4c2", 3);
+    const sUSDProxy_target_tokenState = "0x92bac115d89ca17fd02ed9357ceca32842acb4c2";
+    await getAccountToken(units(500), logicOwner.address, sUSDProxy_target_tokenState, 3);
     expect(await susdProxy.balanceOf(logicOwner.address)).to.equal(units(500));
   });
 
