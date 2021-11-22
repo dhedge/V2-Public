@@ -94,6 +94,7 @@ export const assetsBalanceOfSlot = {
   usdc: 0,
   usdt: 0,
   dai: 0,
+  susd: 0,
 };
 
 export const eth_price_feeds = {

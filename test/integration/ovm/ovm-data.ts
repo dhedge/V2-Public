@@ -9,11 +9,12 @@ export const synthetix = {
 };
 
 export const assets = {
-  // susd: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+  susd: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
   seth: "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
   sbtc: "0x298B9B95708152ff6968aafd889c6586e9169f1D",
   slink: "0xc5Db22719A06418028A40A9B5E9A7c02959D0d08",
-  snx: "0xff4287311138ad3BD051F84524B2eA3A682944a5",
+  // snx: "0xff4287311138ad3BD051F84524B2eA3A682944a5",
+  snx: "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4",
 };
 
 export const price_feeds = {

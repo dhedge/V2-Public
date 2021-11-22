@@ -1,23 +1,15 @@
 import { ethers, artifacts, upgrades } from "hardhat";
-import { use, expect } from "chai";
+import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory } from "ethers";
 
-const chaiAlmost = require("chai-almost");
 const { checkAlmostSame } = require("../../TestHelpers");
-import { assets, price_feeds, synthetix as SynthetixData, uniswapV2 } from "./ovm-data";
-
-use(chaiAlmost());
+import { assets, price_feeds, synthetix as SynthetixData } from "./ovm-data";
+import { units } from "../../TestHelpers";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 describe("Synthetix Test", function () {
-  let WETH: Contract,
-    susdProxy: Contract,
-    sethProxy: Contract,
-    slinkProxy: Contract,
-    addressResolver: Contract,
-    synthetix: Contract,
-    uniswapV2Router: Contract,
-    synthetixGuard: Contract;
+  let susdProxy: Contract, sethProxy: Contract, synthetix: Contract, synthetixGuard: Contract;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
   let PoolFactory: ContractFactory, PoolLogic: ContractFactory, PoolManagerLogic: ContractFactory;
   let poolFactory: Contract,
@@ -46,8 +38,12 @@ describe("Synthetix Test", function () {
     PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
+    const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+    const usdPriceAggregator = await USDPriceAggregator.deploy();
+    console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
+
     // Initialize Asset Price Consumer
-    const assetSusd = { asset: assets.susd, assetType: 1, aggregator: price_feeds.susd };
+    const assetSusd = { asset: assets.susd, assetType: 1, aggregator: usdPriceAggregator.address };
     const assetSeth = { asset: assets.seth, assetType: 1, aggregator: price_feeds.eth };
     const assetSlink = { asset: assets.slink, assetType: 1, aggregator: price_feeds.link };
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
@@ -67,55 +63,42 @@ describe("Synthetix Test", function () {
     await poolFactory.deployed();
     await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
-    const IAddressResolver = await artifacts.readArtifact("IAddressResolver");
-    addressResolver = await ethers.getContractAt(IAddressResolver.abi, SynthetixData.addressResolver);
-
-    const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
-    uniswapV2Router = await ethers.getContractAt(IUniswapV2Router.abi, uniswapV2.router);
-
     const ISynthetix = await artifacts.readArtifact("ISynthetix");
     synthetix = await ethers.getContractAt(ISynthetix.abi, assets.snx);
 
     const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
-    synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
+    synthetixGuard = await SynthetixGuard.deploy(SynthetixData.addressResolver);
     synthetixGuard.deployed();
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     const erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
-    uniswapV2RouterGuard.deployed();
-
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(1, erc20Guard.address);
-    await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
-  });
-
-  it("Should be able to get assets.susd", async function () {
-    const IWETH = await artifacts.readArtifact("IWETH");
-    WETH = await ethers.getContractAt(IWETH.abi, assets.weth);
 
     const ISynthAddressProxy = await artifacts.readArtifact("ISynthAddressProxy");
     susdProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.susd);
     sethProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.seth);
-    slinkProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.slink);
 
-    // deposit ETH -> WETH
-    await WETH.deposit({ value: (5e18).toString() });
-    // WETH -> susd
-    await WETH.approve(uniswapV2Router.address, (5e18).toString());
-    await uniswapV2Router.swapExactTokensForTokens(
-      (5e18).toString(),
-      0,
-      [assets.weth, assets.susd],
-      logicOwner.address,
-      Math.floor(Date.now() / 1000 + 100000000),
-    );
+    // for (let i = 0; i < 500; i++) {
+    //   try {
+    //     // I got this by going to the sUSD Proxy, getting the "target" value and then the "tokenState" contract
+    //     const sUSD_target__tokenState = "0x92bac115d89ca17fd02ed9357ceca32842acb4c2";
+    //     await getAccountToken(units(500), logicOwner.address, "0x92bac115d89ca17fd02ed9357ceca32842acb4c2", i);
+    //   } catch {}
+    //   console.log(i);
+    //   const x = await susdProxy.balanceOf(logicOwner.address);
+    //   if (x > 0) {
+    //     console.log(">>>>>>>>>>>index", i);
+    //     break;
+    //   }
+    // }
+    await getAccountToken(units(500), logicOwner.address, "0x92bac115d89ca17fd02ed9357ceca32842acb4c2", 3);
+    expect(await susdProxy.balanceOf(logicOwner.address)).to.equal(units(500));
   });
 
   it("Should be able to createFund", async function () {
