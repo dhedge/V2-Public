@@ -37,7 +37,7 @@ export default {
     },
     ovm: {
       chainId: 10,
-      url: process.env.ALCHEMY_POLYGON_KEY,
+      url: process.env.ALCHEMY_OPTIMISM_URL || "https://opt-mainnet.g.alchemy.com/v2/",
       accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
     },
     polygon: {

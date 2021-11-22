@@ -1,14 +1,13 @@
 import { ethers, upgrades } from "hardhat";
 import fs from "fs";
 import csv from "csvtojson";
-import { version } from "chai";
 
 const { getTag } = require("../Helpers");
 
 const addresses = {
   LEET: "0x0000000000000000000000000000000000001337",
-  protocolDao: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
-  uberPool: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
+  protocolDao: "0xef31D75A2f85CfDD9032158A2CEB773C84d79192",
+  uberPool: "0xef31D75A2f85CfDD9032158A2CEB773C84d79192",
 
   sUSD: "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
   synthetixProxyAddress: "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4",
