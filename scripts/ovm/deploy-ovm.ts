@@ -4,8 +4,6 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import fs from "fs";
 import csv from "csvtojson";
 import { assets, synthetix } from "../../test/integration/ovm/ovm-data";
-import { PoolManagerLogic__factory } from "../../types/factories/PoolManagerLogic__factory";
-import { Proxy } from "../../types/Proxy.d";
 
 const { getTag } = require("../Helpers");
 

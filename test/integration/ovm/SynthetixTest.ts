@@ -64,7 +64,7 @@ describe("Synthetix Test", function () {
     await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     const ISynthetix = await artifacts.readArtifact("ISynthetix");
-    synthetix = await ethers.getContractAt(ISynthetix.abi, assets.snx);
+    synthetix = await ethers.getContractAt(ISynthetix.abi, assets.snxProxy);
 
     const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
     synthetixGuard = await SynthetixGuard.deploy(SynthetixData.addressResolver);
