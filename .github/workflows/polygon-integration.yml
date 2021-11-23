@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   polygon-integration1:
-    if: "contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: PIT 1
     runs-on: ubuntu-latest
 
@@ -74,7 +74,7 @@ jobs:
 
   # Polygon tests are current split in 2 because they use more than 10k matic together... its also faster
   polygon-integration2:
-    if: "contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: PIT 2
     runs-on: ubuntu-latest
 
