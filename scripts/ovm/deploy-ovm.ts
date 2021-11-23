@@ -4,6 +4,8 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import fs from "fs";
 import csv from "csvtojson";
 import { assets, synthetix } from "../../test/integration/ovm/ovm-data";
+import { PoolManagerLogic__factory } from "../../types/factories/PoolManagerLogic__factory";
+import { Proxy } from "../../types/Proxy.d";
 
 const { getTag } = require("../Helpers");
 
@@ -34,6 +36,8 @@ type Address = string;
 
 interface IContracts {
   Governance?: Address;
+  PoolLogicTemp?: string;
+  PoolManagerLogicTemp?: string;
   PoolFactory?: { proxy: Address; implementation: Address };
   PoolLogic?: { proxy: Address; implementation: Address };
   PoolManagerLogic?: { proxy: Address; implementation: Address };
@@ -69,6 +73,7 @@ interface IUSDAsset {
 const versions: IVersions = JSON.parse(fs.readFileSync(fileNames.ovmVersionFile, "utf-8"));
 
 const writeVersions = () => {
+  console.log("Writing Versions");
   const versionsStringified = JSON.stringify(versions, null, 2);
   console.log(versionsStringified);
   fs.writeFileSync(fileNames.ovmVersionFile, versionsStringified);
@@ -184,27 +189,63 @@ async function main() {
       });
       console.log("PoolPerformance deployed at ", poolPerformance.address);
     },
+    PoolLogic: async () => {
+      if (checkDeployed("PoolLogic")) return;
+      ///
+      /// Note: The proxy we deploy here is no used by the PoolFactory (or by anything else).
+      /// The PoolFactory deploys its own Proxy Pattern for PoolLogic and PoolManagerLogic
+      /// The proxy is only created and stored so that we can use the hardhat tools to
+      /// check that the new implementation we are deploying is compatible with the existing storage
+      ///
+      const PoolLogic = await ethers.getContractFactory("PoolLogic");
+      const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [], { initializer: false });
+      console.log("PoolLogicProxy deployed at ", poolLogicProxy.address);
+      const poolLogicAddressX = await ethers.provider.getStorageAt(
+        poolLogicProxy.address,
+        addresses.implementationStorage,
+      );
+      const poolLogicAddress = ethers.utils.hexValue(poolLogicAddressX);
+      addToVersions("PoolLogic", { proxy: poolLogicProxy.address, implementation: poolLogicAddress });
+      console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
+    },
+    PoolManagerLogic: async () => {
+      if (checkDeployed("PoolManagerLogic")) return;
+
+      ///
+      /// Note: The proxy we deploy here is no used by the PoolFactory (or by anything else).
+      /// The PoolFactory deploys its own Proxy Pattern for PoolLogic and PoolManagerLogic
+      /// The proxy is only created and stored so that we can use the hardhat tools to
+      /// check that the new implementation we are upgrading to is compatible with the existing storage.
+      ///
+      const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+      const poolManagerLogicProxy = await upgrades.deployProxy(PoolManagerLogic, [], { initializer: false });
+      console.log("Deployed PoolManagerLogic");
+      const poolManagerLogicAddressX = await ethers.provider.getStorageAt(
+        poolManagerLogicProxy.address,
+        addresses.implementationStorage,
+      );
+      const poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddressX);
+      addToVersions("PoolManagerLogic", {
+        proxy: poolManagerLogicProxy.address,
+        implementation: poolManagerLogicAddress,
+      });
+      console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
+    },
     PoolFactory: async () => {
       if (checkDeployed("PoolFactory")) return;
 
       checkDeployed("AssetHandler", { throw: true });
       checkDeployed("PoolPerformance", { throw: true });
-
-      const PoolLogic = await ethers.getContractFactory("PoolLogic");
-      const poolLogic = await PoolLogic.deploy();
-      await poolLogic.deployed();
-
-      const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-      const poolManagerLogic = await PoolManagerLogic.deploy();
-      await poolManagerLogic.deployed();
+      checkDeployed("PoolLogic", { throw: true });
+      checkDeployed("PoolManagerLogic", { throw: true });
 
       const contracts = versions[tag].contracts;
 
       const PoolFactory = await ethers.getContractFactory("PoolFactory");
 
       const poolFactory = await upgrades.deployProxy(PoolFactory, [
-        poolLogic.address,
-        poolManagerLogic.address,
+        contracts.PoolLogic?.implementation,
+        contracts.PoolManagerLogic?.implementation,
         contracts.AssetHandler?.proxy,
         addresses.protocolDao,
         contracts.Governance,
@@ -218,57 +259,6 @@ async function main() {
       addToVersions("PoolFactory", { proxy: poolFactory.address, implementation: poolFactoryImplementation });
       console.log("poolFactory deployed at ", poolFactory.address);
     },
-    PoolLogic: async () => {
-      if (checkDeployed("PoolLogic")) return;
-
-      checkDeployed("PoolFactory", { throw: true });
-
-      const PoolLogic = await ethers.getContractFactory("PoolLogic");
-      const poolLogic = await PoolLogic.deploy();
-      console.log("PoolLogic deployed at ", poolLogic.address);
-
-      const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [
-        versions[tag].contracts.PoolFactory?.proxy,
-        false,
-        "NA",
-        "NA",
-      ]);
-      console.log("PoolLogicProxy deployed at ", poolLogicProxy.address);
-      const poolLogicAddressX = await ethers.provider.getStorageAt(
-        poolLogicProxy.address,
-        addresses.implementationStorage,
-      );
-      const poolLogicAddress = ethers.utils.hexValue(poolLogicAddressX);
-      addToVersions("PoolLogic", { proxy: poolLogicProxy.address, implementation: poolLogicAddress });
-      console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
-    },
-    PoolManagerLogic: async () => {
-      if (checkDeployed("PoolManagerLogic")) return;
-
-      checkDeployed("PoolLogic", { throw: true });
-      checkDeployed("PoolFactory", { throw: true });
-
-      const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-      const poolManagerLogicProxy = await upgrades.deployProxy(PoolManagerLogic, [
-        versions[tag].contracts.PoolFactory?.proxy,
-        addresses.LEET,
-        "ManagerName",
-        versions[tag].contracts.PoolLogic?.proxy,
-        "1000",
-        [[addresses.sUSD, true]],
-      ]);
-      console.log("Deployed PoolManagerLogic");
-      const poolManagerLogicAddressX = await ethers.provider.getStorageAt(
-        poolManagerLogicProxy.address,
-        addresses.implementationStorage,
-      );
-      const poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddressX);
-      addToVersions("PoolManagerLogic", {
-        proxy: poolManagerLogicProxy.address,
-        implementation: poolManagerLogicAddress,
-      });
-      console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
-    },
   };
 
   console.log("Starting deployment");
@@ -279,6 +269,5 @@ async function main() {
 }
 
 main().finally(() => {
-  console.log("Writing Versions");
   writeVersions();
 });
