@@ -14,8 +14,8 @@ import {
 } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { getUSDC, getWETH } from "../utils/getAccountTokens/polygon";
-import { assets, quickswap } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, quickswap } from "../polygon-data";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
 
@@ -36,8 +36,8 @@ describe("WithdrawSingle Test", function () {
     QUICK = deployments.assets.QUICK;
     QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH;
 
-    await getUSDC(units(10000, 6));
-    await getWETH(units(10000));
+    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+    await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
 
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },

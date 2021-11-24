@@ -13,8 +13,8 @@ import {
 } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { getUSDC, getWETH } from "../utils/getAccountTokens/polygon";
-import { assets, balancer } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, balancer } from "../polygon-data";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
 
@@ -41,8 +41,8 @@ describe("Balancer V2 Test", function () {
     BALANCERLP_STABLE = deployments.assets.BALANCERLP_STABLE;
     BALANCERLP_WETH_BALANCER = deployments.assets.BALANCERLP_WETH_BALANCER;
 
-    await getUSDC(units(10000, 6));
-    await getWETH(units(10000));
+    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+    await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
 
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },

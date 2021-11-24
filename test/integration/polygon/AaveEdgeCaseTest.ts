@@ -3,7 +3,7 @@ import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
-import { sushi, aave, assets } from "../polygon-data";
+import { sushi, aave, assets, assetsBalanceOfSlot } from "../polygon-data";
 import {
   IERC20,
   IERC20__factory,
@@ -15,7 +15,7 @@ import {
 } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { getUSDC, getWETH } from "../utils/getAccountTokens/polygon";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
 
@@ -52,8 +52,8 @@ describe("Polygon Mainnet Aave Edge Test", function () {
     VariableWETH = deployments.assets.VariableWETH;
     VariableUSDT = deployments.assets.VariableUSDT;
 
-    await getUSDC(units(10000, 6));
-    await getWETH(units(10000));
+    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+    await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
 
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },

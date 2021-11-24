@@ -16,9 +16,9 @@ import {
 } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { getUSDC } from "../utils/getAccountTokens/polygon";
-import { assets, sushi } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, sushi } from "../polygon-data";
 import { BigNumber } from "ethers";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
 
@@ -49,7 +49,7 @@ describe("Sushiswap V2 Test", function () {
     WMATIC = deployments.assets.WMATIC;
     SushiLPUSDCWETH = deployments.assets.SushiLPUSDCWETH;
 
-    await getUSDC(units(10000, 6));
+    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
