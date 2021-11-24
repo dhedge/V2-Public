@@ -2320,6 +2320,14 @@ describe("PoolFactory", function () {
     transferWhitelist = await poolFactory.transferWhitelist(user2.address);
     expect(transferWhitelist).to.equal(true);
 
+    // check whitelisted view function (user2 is whitelisted)
+    let whitelisted = await poolFactory.isTransferWhitelisted(user1.address, user2.address);
+    expect(whitelisted).to.equal(true);
+    whitelisted = await poolFactory.isTransferWhitelisted(user2.address, user1.address);
+    expect(whitelisted).to.equal(true);
+    whitelisted = await poolFactory.isTransferWhitelisted(logicOwner.address, user1.address);
+    expect(whitelisted).to.equal(false);
+
     // can transfer to whitelisted address during cooldown
     await poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString());
 
