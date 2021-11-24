@@ -1,0 +1,121 @@
+// SPDX-License-Identifier: BUSL-1.1
+
+pragma solidity 0.7.6;
+
+import "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
+
+import "../interfaces/IAggregatorV3Interface.sol";
+import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
+import "../utils/uniswap/UniswapV2OracleLibrary.sol";
+
+/**
+ * @title Median TWAP USD price aggregator.
+ * @notice Convert ETH denominated oracles to to USD denominated oracle
+ * @dev This should have `latestRoundData` function as chainlink pricing oracle.
+ */
+contract MedianTWAPAggregator is IAggregatorV3Interface {
+  using SignedSafeMath for int256;
+  using FixedPoint for *;
+
+  IUniswapV2Pair public immutable pair;
+  IAggregatorV3Interface public immutable otherTokenUsdAggregator;
+
+  address public immutable mainToken;
+  bool public isToken0;
+
+  uint256 public priceCumulativeLast;
+  uint32 public blockTimestampLast;
+
+  mapping(uint256 => int256) public twaps;
+  uint256 public twapLastIndex;
+
+  constructor(
+    IUniswapV2Pair _pair,
+    address _mainToken, // DHT
+    IAggregatorV3Interface _otherTokenUsdAggregator // WETH price aggregator
+  ) {
+    pair = _pair;
+    mainToken = _mainToken;
+    otherTokenUsdAggregator = _otherTokenUsdAggregator;
+    isToken0 = (_mainToken == _pair.token0());
+
+    if (isToken0) {
+      priceCumulativeLast = _pair.price1CumulativeLast();
+    } else {
+      priceCumulativeLast = _pair.price0CumulativeLast();
+    }
+  }
+
+  function decimals() external pure override returns (uint8) {
+    return 8;
+  }
+
+  function update() external {
+    (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
+      .currentCumulativePrices(address(pair));
+    uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+
+    // ensure that at least one full period has passed since the last update
+    // require(timeElapsed >= PERIOD, "period is not passed");
+
+    uint256 priceCumulative = isToken0 ? price1Cumulative : price0Cumulative;
+    // overflow is desired, casting never truncates
+    // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+    twaps[twapLastIndex] = (FixedPoint.uq112x112(uint224((priceCumulative - priceCumulativeLast) / timeElapsed)))
+      .decode();
+    twapLastIndex++;
+
+    priceCumulativeLast = priceCumulative;
+    blockTimestampLast = blockTimestamp;
+  }
+
+  function consult() public view returns (int256 price) {
+    require(twapLastIndex >= 3, "not enough twaps");
+
+    if (twaps[twapLastIndex - 3] <= twaps[twapLastIndex - 2]) {
+      if (twaps[twapLastIndex - 2] <= twaps[twapLastIndex - 1]) {
+        return twaps[twapLastIndex - 2];
+      }
+      if (twaps[twapLastIndex - 1] <= twaps[twapLastIndex - 3]) {
+        return twaps[twapLastIndex - 3];
+      }
+      return twaps[twapLastIndex - 1];
+    } else {
+      if (twaps[twapLastIndex - 2] > twaps[twapLastIndex - 1]) {
+        return twaps[twapLastIndex - 2];
+      }
+      if (twaps[twapLastIndex - 1] > twaps[twapLastIndex - 3]) {
+        return twaps[twapLastIndex - 3];
+      }
+      return twaps[twapLastIndex - 1];
+    }
+  }
+
+  /**
+   * @notice Get the latest round data. Should be the same format as chainlink aggregator.
+   * @return roundId The round ID.
+   * @return answer The price - the latest round data of USD (price decimal: 8)
+   * @return startedAt Timestamp of when the round started.
+   * @return updatedAt Timestamp of when the round was updated.
+   * @return answeredInRound The round ID of the round in which the answer was computed.
+   */
+  function latestRoundData()
+    external
+    view
+    override
+    returns (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    )
+  {
+    uint256 updatedAt1 = blockTimestampLast;
+    (, int256 usdPrice, , uint256 updatedAt2, ) = otherTokenUsdAggregator.latestRoundData();
+    answer = consult().mul(usdPrice).div(int256(10**otherTokenUsdAggregator.decimals()));
+
+    return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
+  }
+}
