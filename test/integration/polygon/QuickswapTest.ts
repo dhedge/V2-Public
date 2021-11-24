@@ -346,6 +346,7 @@ describe("Quickswap V2 Test", function () {
     checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
   });
 
+  // Removed OpenAssetGuard - needs to be reinstated securely
   it.skip("Should be able to approve non-supported asset", async () => {
     // transfer wmatic for testing
     const depositAmount = units(500);
@@ -362,6 +363,7 @@ describe("Quickswap V2 Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(assets.wmatic, approveABI);
   });
 
+  // Removed OpenAssetGuard - needs to be reinstated securely
   it.skip("Should be able to swap non-supported asset", async () => {
     const sourceAmount = units(100);
     let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
@@ -380,6 +382,7 @@ describe("Quickswap V2 Test", function () {
     expect(wethBalanceAfter).gt(wethBalanceBefore);
   });
 
+  // Removed OpenAssetGuard - needs to be reinstated securely
   it.skip("Should be able to swap non-supported asset (routing)", async () => {
     const sourceAmount = units(100);
     let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
@@ -415,6 +418,7 @@ describe("Quickswap V2 Test", function () {
     checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
   });
 
+  // Doesn't seem to be getting any rewards
   it.skip("should be able to claim rewards from quickswap.", async () => {
     let claimABI = iStakingRewards.encodeFunctionData("getReward", []);
 

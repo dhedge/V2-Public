@@ -1185,6 +1185,20 @@
           "assetType": "0",
           "aggregator": "0xC016387a497CA090F8b6107c88F47030E61d6763",
           "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Balancer LP WBTC-WETH",
+          "asset": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+          "assetType": 0,
+          "aggregator": "0x605AfA2Aa6571Da603F5163373Af8e20C9A262cc",
+          "aggregatorName": "BalancerV2LPAggregator"
+        },
+        {
+          "name": "Balancer LP USDC-dUSD",
+          "asset": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+          "assetType": 0,
+          "aggregator": "0xc3C893C224A95999DCa9Cd9bD264e87A6C01fC75",
+          "aggregatorName": "BalancerV2LPAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1220,6 +1234,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 15 Nov 2021 05:24:53 GMT"
+    "date": "Fri, 19 Nov 2021 01:37:26 GMT"
   }
 }

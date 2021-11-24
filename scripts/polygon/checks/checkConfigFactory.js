@@ -1,10 +1,18 @@
-const { expect } = require("chai");
+const { expect, assert } = require("chai");
 
 const main = async (initializeData) => {
-  const { protocolTreasury, poolFactoryProxy, assetHandlerProxy, governance } = initializeData;
+  const { protocolTreasury, poolFactoryProxy, assetHandlerProxy, governance, poolFactory } = initializeData;
 
   // Check Factory settings
   console.log("Checking Factory settings..");
+
+  try {
+    await poolFactory.implInitializer();
+    assert(false, "poolFactory implementation Should be already initialized");
+  } catch (e) {
+    assert(e.message.contains("implementation: contract is already initialized"));
+    console.log("Pool Factory Implementation is initialized.");
+  }
 
   const protocolTreasurySetting = await poolFactoryProxy.daoAddress();
   expect(protocolTreasurySetting).to.equal(protocolTreasury);

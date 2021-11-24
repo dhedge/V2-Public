@@ -104,6 +104,7 @@ export default {
       "Managed",
       "Governance",
       "DynamicBonds",
+      "BalancerV2Guard",
     ],
     spacing: 2,
   },
