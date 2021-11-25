@@ -47,7 +47,7 @@ contract SynthPriceAggregator is IAggregatorV3Interface {
     (, int256 sUSDUsdPrice, , uint256 updatedAt1, ) = IAggregatorV3Interface(susdPriceAggregator).latestRoundData();
     (, int256 tokenUsdPrice, , uint256 updatedAt2, ) = IAggregatorV3Interface(tokenPriceAggregator).latestRoundData();
 
-    answer = sUSDUsdPrice.mul(tokenUsdPrice).div(1e18);
+    answer = sUSDUsdPrice.mul(tokenUsdPrice).div(1e8);
     return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
   }
 }
