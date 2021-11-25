@@ -1,9 +1,13 @@
-const { ethers } = require("hardhat");
-const { expect } = require("chai");
-const { price_feeds } = require("../polygon-data");
+import { IAggregatorV3Interface } from "../../../types/IAggregatorV3Interface";
+
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { price_feeds } from "./ovm-data";
 
 describe("SynthPriceAggregator Test", function () {
-  let ethUsdAggregator;
+  let ethUsdAggregator: IAggregatorV3Interface;
+  let usdPriceAggregator: IAggregatorV3Interface;
+  let synthPriceAggregator: IAggregatorV3Interface;
 
   before(async function () {
     const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
@@ -20,7 +24,9 @@ describe("SynthPriceAggregator Test", function () {
   it("Should be able to get Price", async function () {
     const { answer: ethUsdPrice } = await ethUsdAggregator.latestRoundData();
     const { answer: synthUsdPrice } = await synthPriceAggregator.latestRoundData();
+    const { answer: usdPrice } = await usdPriceAggregator.latestRoundData();
 
+    expect(usdPrice).to.equal(1e8);
     expect(ethUsdPrice).to.equal(synthUsdPrice);
   });
 });

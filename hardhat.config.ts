@@ -22,12 +22,13 @@ dotenv.config();
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
- */
+ */ import { SynthPriceAggregator } from "./types/SynthPriceAggregator.d";
 
 export default {
   gasReporter: {
+    enabled: true,
+    currency: "ETH",
     showTimeSpent: true,
-    currency: "USD",
   },
   networks: {
     localhost: {
