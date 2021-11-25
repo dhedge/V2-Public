@@ -195,8 +195,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // cooldown check
     if (
       from != address(0) && // allow minting
-      !IHasGuardInfo(factory).transferWhitelist(to) &&
-      !IHasGuardInfo(factory).transferWhitelist(from)
+      !IHasGuardInfo(factory).isTransferWhitelisted(from, to)
     ) {
       require(getExitRemainingCooldown(from) == 0, "cooldown active");
     }
