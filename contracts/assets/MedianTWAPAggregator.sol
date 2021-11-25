@@ -2,7 +2,10 @@
 
 pragma solidity 0.7.6;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
@@ -14,15 +17,14 @@ import "../utils/uniswap/UniswapV2OracleLibrary.sol";
  * @notice Convert ETH denominated oracles to to USD denominated oracle
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
-contract MedianTWAPAggregator is IAggregatorV3Interface {
+contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
+  using SafeERC20 for IERC20;
   using SignedSafeMath for int256;
   using FixedPoint for *;
 
   IUniswapV2Pair public immutable pair;
-  IAggregatorV3Interface public immutable otherTokenUsdAggregator;
-
   address public immutable mainToken;
-  bool public isToken0;
+  IAggregatorV3Interface public immutable otherTokenUsdAggregator;
 
   uint256 public priceCumulativeLast;
   uint32 public blockTimestampLast;
@@ -30,17 +32,26 @@ contract MedianTWAPAggregator is IAggregatorV3Interface {
   mapping(uint256 => int256) public twaps;
   uint256 public twapLastIndex;
 
+  IERC20 public rewardToken;
+  uint256 public updateRewardAmount;
+  uint256 public updateInterval;
+
   constructor(
     IUniswapV2Pair _pair,
     address _mainToken, // DHT
-    IAggregatorV3Interface _otherTokenUsdAggregator // WETH price aggregator
-  ) {
+    IAggregatorV3Interface _otherTokenUsdAggregator, // WETH price aggregator
+    uint256 _updateInterval,
+    address _rewardToken,
+    uint256 _updateRewardAmount
+  ) Ownable() {
     pair = _pair;
     mainToken = _mainToken;
     otherTokenUsdAggregator = _otherTokenUsdAggregator;
-    isToken0 = (_mainToken == _pair.token0());
+    updateInterval = _updateInterval;
+    rewardToken = IERC20(_rewardToken);
+    updateRewardAmount = _updateRewardAmount;
 
-    if (isToken0) {
+    if (_mainToken == _pair.token0()) {
       priceCumulativeLast = _pair.price1CumulativeLast();
     } else {
       priceCumulativeLast = _pair.price0CumulativeLast();
@@ -51,15 +62,24 @@ contract MedianTWAPAggregator is IAggregatorV3Interface {
     return 8;
   }
 
+  function setUpdateInterval(uint256 _updateInterval) external onlyOwner {
+    updateInterval = _updateInterval;
+  }
+
+  function setUpdateRewards(address _rewardToken, uint256 _updateRewardAmount) external onlyOwner {
+    rewardToken = IERC20(_rewardToken);
+    updateRewardAmount = _updateRewardAmount;
+  }
+
   function update() external {
     (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
       .currentCumulativePrices(address(pair));
     uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
 
     // ensure that at least one full period has passed since the last update
-    // require(timeElapsed >= PERIOD, "period is not passed");
+    require(timeElapsed >= updateInterval, "period is not passed");
 
-    uint256 priceCumulative = isToken0 ? price1Cumulative : price0Cumulative;
+    uint256 priceCumulative = mainToken == pair.token0() ? price1Cumulative : price0Cumulative;
     // overflow is desired, casting never truncates
     // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
     twaps[twapLastIndex] = (FixedPoint.uq112x112(uint224((priceCumulative - priceCumulativeLast) / timeElapsed)))
@@ -68,6 +88,13 @@ contract MedianTWAPAggregator is IAggregatorV3Interface {
 
     priceCumulativeLast = priceCumulative;
     blockTimestampLast = blockTimestamp;
+
+    uint256 rewards = (timeElapsed * updateRewardAmount) / timeElapsed;
+    uint256 remaining = rewardToken.balanceOf(address(this));
+    rewards = rewards > remaining ? remaining : rewards;
+    if (rewards > 0) {
+      rewardToken.safeTransfer(msg.sender, rewards);
+    }
   }
 
   function consult() public view returns (int256 price) {
