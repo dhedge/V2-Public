@@ -7,10 +7,6 @@ import { assets, synthetix } from "../../test/integration/ovm/ovm-data";
 
 const { getTag } = require("../Helpers");
 
-0xef31d75a2f85cfdd9032158a2ceb773c84d79192;
-0x6fc0411fcd7f1ab7ff99dd7eb697e6c660bebddb;
-0x253956aedc059947e700071bc6d74bd8e34fe2ab;
-
 const addresses = {
   LEET: "0x0000000000000000000000000000000000001337",
   // https://ogg.scopelift.co/wallet/0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08
@@ -115,7 +111,6 @@ async function main() {
       console.log("ERC20Guard deployed at ", erc20Guard.address);
 
       await governance.setAssetGuard(0, erc20Guard.address);
-      await governance.setAssetGuard(1, erc20Guard.address);
 
       const SynthetixGuardFactory = await ethers.getContractFactory("SynthetixGuard");
       const synthetixGuard = await SynthetixGuardFactory.deploy(addresses.synthetixAddressResolverAddress);
@@ -197,14 +192,14 @@ async function main() {
       ///
       const PoolLogic = await ethers.getContractFactory("PoolLogic");
       const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [], { initializer: false });
-      console.log("PoolLogicProxy deployed at ", poolLogicProxy.address);
+      await poolLogicProxy.deployed();
       const poolLogicAddressX = await ethers.provider.getStorageAt(
         poolLogicProxy.address,
         addresses.implementationStorage,
       );
       const poolLogicAddress = ethers.utils.hexValue(poolLogicAddressX);
       addToVersions("PoolLogic", { proxy: poolLogicProxy.address, implementation: poolLogicAddress });
-      console.log("poolLogicProxy deployed at ", poolLogicProxy.address);
+      console.log("PoolLogicProxy deployed at ", poolLogicProxy.address);
     },
     PoolManagerLogic: async () => {
       if (checkDeployed("PoolManagerLogic")) return;
@@ -217,6 +212,7 @@ async function main() {
       ///
       const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
       const poolManagerLogicProxy = await upgrades.deployProxy(PoolManagerLogic, [], { initializer: false });
+      await poolManagerLogicProxy.deployed();
       console.log("Deployed PoolManagerLogic");
       const poolManagerLogicAddressX = await ethers.provider.getStorageAt(
         poolManagerLogicProxy.address,
@@ -254,7 +250,12 @@ async function main() {
       await poolFactory.setPoolPerformanceAddress(contracts.PoolPerformance?.proxy);
       await poolFactory.transferOwnership(addresses.protocolDao);
       const poolFactoryImplementation = await getImplementationAddress(ethers.provider, poolFactory.address);
-      addToVersions("PoolFactory", { proxy: poolFactory.address, implementation: poolFactoryImplementation });
+      const poolFactoryImpl = PoolFactory.attach(poolFactoryImplementation);
+      // There is a security issue where if we don't initialize the impl someone else can take take ownership
+      // Using this they can escalate to destroy the contract.
+      await poolFactoryImpl.implInitializer();
+
+      await addToVersions("PoolFactory", { proxy: poolFactory.address, implementation: poolFactoryImplementation });
       console.log("poolFactory deployed at ", poolFactory.address);
     },
   };
