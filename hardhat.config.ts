@@ -1,7 +1,4 @@
 import dotenv from "dotenv";
-// require('@eth-optimism/plugins/hardhat/compiler');
-// require('@eth-optimism/plugins/hardhat/ethers');
-// import "@eth-optimism/hardhat-ovm";
 import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
@@ -28,22 +25,20 @@ dotenv.config();
  */
 
 export default {
-  defaultNetwork: "kovan-optimism",
   gasReporter: {
     showTimeSpent: true,
     currency: "USD",
   },
   networks: {
-    "kovan-optimism": {
-      url: process.env.KOVAN_OVM_URL || "https://kovan.optimism.io",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 0,
-      ovm: true,
-    },
     localhost: {
       chainId: 31337,
       url: "http://127.0.0.1:8545",
       timeout: 600000,
+    },
+    ovm: {
+      chainId: 10,
+      url: process.env.ALCHEMY_OPTIMISM_URL || "https://opt-mainnet.g.alchemy.com/v2/",
+      accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
     },
     polygon: {
       chainId: 137,
@@ -62,15 +57,7 @@ export default {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
-  ovm: {
-    solcVersion: "0.7.6",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      },
-    },
-  },
+
   solidity: {
     version: "0.7.6",
     settings: {
