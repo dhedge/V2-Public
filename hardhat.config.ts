@@ -22,7 +22,7 @@ dotenv.config();
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
- */ import { SynthPriceAggregator } from "./types/SynthPriceAggregator.d";
+ */
 
 export default {
   gasReporter: {
