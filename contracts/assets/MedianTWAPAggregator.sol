@@ -3,6 +3,7 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -17,7 +18,7 @@ import "../utils/uniswap/UniswapV2OracleLibrary.sol";
  * @notice Convert ETH denominated oracles to to USD denominated oracle
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
-contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
+contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   using SafeERC20 for IERC20;
   using SignedSafeMath for int256;
   using FixedPoint for *;
@@ -43,7 +44,7 @@ contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
     uint256 _updateInterval,
     address _rewardToken,
     uint256 _updateRewardAmount
-  ) Ownable() {
+  ) Ownable() Pausable() {
     pair = _pair;
     mainToken = _mainToken;
     otherTokenUsdAggregator = _otherTokenUsdAggregator;
@@ -56,6 +57,14 @@ contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
     } else {
       priceCumulativeLast = _pair.price0CumulativeLast();
     }
+  }
+
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  function unpause() external onlyOwner {
+    _unpause();
   }
 
   function decimals() external pure override returns (uint8) {
@@ -71,7 +80,7 @@ contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
     updateRewardAmount = _updateRewardAmount;
   }
 
-  function update() external {
+  function update() external whenNotPaused {
     (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
       .currentCumulativePrices(address(pair));
     uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
@@ -89,7 +98,7 @@ contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
     priceCumulativeLast = priceCumulative;
     blockTimestampLast = blockTimestamp;
 
-    uint256 rewards = (timeElapsed * updateRewardAmount) / timeElapsed;
+    uint256 rewards = (timeElapsed * updateRewardAmount) / updateInterval;
     uint256 remaining = rewardToken.balanceOf(address(this));
     rewards = rewards > remaining ? remaining : rewards;
     if (rewards > 0) {
@@ -97,7 +106,7 @@ contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
     }
   }
 
-  function consult() public view returns (int256 price) {
+  function consult() public view whenNotPaused returns (int256 price) {
     require(twapLastIndex >= 3, "not enough twaps");
 
     if (twaps[twapLastIndex - 3] <= twaps[twapLastIndex - 2]) {
@@ -131,6 +140,7 @@ contract MedianTWAPAggregator is Ownable, IAggregatorV3Interface {
     external
     view
     override
+    whenNotPaused
     returns (
       uint80 roundId,
       int256 answer,
