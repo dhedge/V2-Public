@@ -51,3 +51,6 @@ jobs:
       - name: Synthetix Tests
         run: |
           npx hardhat test ./test/integration/ovm/SynthetixTest.ts --network localhost
+      - name: SynthPriceAggregator Tests
+        run: |
+          npx hardhat test ./test/integration/ovm/SynthPriceAggregatorTest.ts --network localhost

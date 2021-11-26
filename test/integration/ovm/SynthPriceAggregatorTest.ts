@@ -23,10 +23,46 @@ describe("SynthPriceAggregator Test", function () {
 
   it("Should be able to get Price", async function () {
     const { answer: ethUsdPrice } = await ethUsdAggregator.latestRoundData();
-    const { answer: synthUsdPrice } = await synthPriceAggregator.latestRoundData();
+    const { answer: synthEthPrice } = await synthPriceAggregator.latestRoundData();
     const { answer: usdPrice } = await usdPriceAggregator.latestRoundData();
 
     expect(usdPrice).to.equal(1e8);
-    expect(ethUsdPrice).to.equal(synthUsdPrice);
+    expect(synthEthPrice).to.equal(ethUsdPrice);
+  });
+
+  it("Adjusts when under 1 dollar", async function () {
+    const FixedPriceAggregator = await ethers.getContractFactory("FixedPriceAggregator");
+    // 97 cents
+    const fixedPriceAggregator = await FixedPriceAggregator.deploy((1e8 / 100) * 97);
+    fixedPriceAggregator.deployed();
+
+    const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
+    synthPriceAggregator = await SynthPriceAggregator.deploy(fixedPriceAggregator.address, price_feeds.eth);
+    synthPriceAggregator.deployed();
+
+    const { answer: ethUsdPrice } = await ethUsdAggregator.latestRoundData();
+    const { answer: synthEthPrice } = await synthPriceAggregator.latestRoundData();
+    const { answer: fixedPrice } = await fixedPriceAggregator.latestRoundData();
+
+    expect(fixedPrice).to.equal((1e8 / 100) * 97);
+    expect(synthEthPrice).to.equal(ethUsdPrice.div(100).mul(97));
+  });
+
+  it("Adjusts when under 1 dollar", async function () {
+    const FixedPriceAggregator = await ethers.getContractFactory("FixedPriceAggregator");
+    // 103 cents
+    const fixedPriceAggregator = await FixedPriceAggregator.deploy((1e8 / 100) * 103);
+    fixedPriceAggregator.deployed();
+
+    const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
+    synthPriceAggregator = await SynthPriceAggregator.deploy(fixedPriceAggregator.address, price_feeds.eth);
+    synthPriceAggregator.deployed();
+
+    const { answer: ethUsdPrice } = await ethUsdAggregator.latestRoundData();
+    const { answer: synthEthPrice } = await synthPriceAggregator.latestRoundData();
+    const { answer: fixedPrice } = await fixedPriceAggregator.latestRoundData();
+
+    expect(fixedPrice).to.equal((1e8 / 100) * 103);
+    expect(synthEthPrice).to.equal(ethUsdPrice.div(100).mul(103));
   });
 });
