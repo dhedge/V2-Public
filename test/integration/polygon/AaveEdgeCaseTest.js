@@ -102,7 +102,7 @@ describe("Polygon Mainnet Test", function () {
     uniswapV2RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(assets.sushi, assets.wmatic);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([assets.sushi, assets.wmatic]);
     sushiMiniChefV2Guard.deployed();
 
     const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
@@ -155,7 +155,7 @@ describe("Polygon Mainnet Test", function () {
     SushiLPUSDCWETH = await ethers.getContractAt(IERC20.abi, sushi.pools.usdc_weth.address);
     AMUSDC = await ethers.getContractAt(IERC20.abi, aave.aTokens.usdc);
     AMWETH = await ethers.getContractAt(IERC20.abi, aave.aTokens.weth);
-    VariableUSDT = await ethers.getContractAt(IERC20.abi, aave.variableDebtTokens.dai);
+    VariableUSDT = await ethers.getContractAt(IERC20.abi, aave.variableDebtTokens.usdt);
     VariableWETH = await ethers.getContractAt(IERC20.abi, aave.variableDebtTokens.weth);
     let balance = await ethers.provider.getBalance(logicOwner.address);
     console.log("Matic balance: ", balance.toString());

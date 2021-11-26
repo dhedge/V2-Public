@@ -1,18 +1,24 @@
-require("dotenv").config();
+import dotenv from "dotenv";
 // require('@eth-optimism/plugins/hardhat/compiler');
 // require('@eth-optimism/plugins/hardhat/ethers');
-require("@eth-optimism/hardhat-ovm");
-require("hardhat-gas-reporter");
-require("hardhat-abi-exporter");
-require("@nomiclabs/hardhat-waffle");
-require("solidity-coverage");
-require("@openzeppelin/hardhat-upgrades");
-require("@nomiclabs/hardhat-etherscan");
+// import "@eth-optimism/hardhat-ovm";
+import "@openzeppelin/hardhat-upgrades";
+import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-ethers";
+import "hardhat-gas-reporter";
+import "hardhat-abi-exporter";
+import "solidity-coverage";
+import "@typechain/hardhat";
+import { HardhatUserConfig } from "hardhat/config";
 
-require("./scripts/upgrade.js");
-require("./scripts/verify.js");
-require("./scripts/polygon/checks/checkConfig");
-require("@nomiclabs/hardhat-etherscan");
+import "./scripts/upgrade";
+import "./scripts/verify";
+import "./scripts/dynamicBonds";
+import "./scripts/polygon/checks/checkConfig";
+import "./scripts/compileOne";
+
+dotenv.config();
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -21,7 +27,7 @@ require("@nomiclabs/hardhat-etherscan");
  * @type import('hardhat/config').HardhatUserConfig
  */
 
-module.exports = {
+export default {
   defaultNetwork: "kovan-optimism",
   gasReporter: {
     showTimeSpent: true,
@@ -37,7 +43,7 @@ module.exports = {
     localhost: {
       chainId: 31337,
       url: "http://127.0.0.1:8545",
-      timeout: 1000000,
+      timeout: 600000,
     },
     polygon: {
       chainId: 137,
@@ -45,7 +51,8 @@ module.exports = {
         ? process.env.POLYGON_RPC
         : "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_POLYGON_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 10e9,
+      gasPrice: 50e9,
+      timeout: 600000,
     },
     mumbai: {
       chainId: 80001,
@@ -74,7 +81,7 @@ module.exports = {
     },
   },
   mocha: {
-    timeout: false,
+    timeout: 0,
   },
   abiExporter: {
     path: "./abi",
@@ -96,10 +103,16 @@ module.exports = {
       "QuickStakingRewardsGuard",
       "Managed",
       "Governance",
+      "DynamicBonds",
+      "BalancerV2Guard",
     ],
     spacing: 2,
   },
   etherscan: {
     apiKey: process.env.POLYGONSCAN_API_KEY,
   },
-};
+  typechain: {
+    outDir: "./types",
+    target: "ethers-v5",
+  },
+} as HardhatUserConfig;

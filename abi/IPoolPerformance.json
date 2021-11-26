@@ -2,24 +2,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "addAssetBalance",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "a",
         "type": "uint256"
@@ -31,6 +13,29 @@
       }
     ],
     "name": "adjustInternalValueFactor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "plusAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minusAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "changeAssetBalance",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -91,6 +96,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "initializePool",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -108,6 +120,25 @@
     "name": "resetInternalValueFactor",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "poolAddress",
+        "type": "address"
+      }
+    ],
+    "name": "tokenPriceAdjustedForManagerFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

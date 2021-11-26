@@ -98,5 +98,37 @@
       "decimals": [18, 18, 18, 18],
       "weights": [0.25, 0.25, 0.25, 0.25]
     }
+  },
+  {
+    "name": "Balancer LP WBTC-WETH",
+    "symbol": "BLP",
+    "type": "balancerLpToken",
+    "address": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+    "assetType": 0,
+    "precision": 18,
+    "link": "https://polygonscan.com/address/0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+    "data": {
+      "pool": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+      "poolId": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae9500020000000000000000005a",
+      "tokens": ["0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619"],
+      "decimals": [8, 18],
+      "weights": [0.5, 0.5]
+    }
+  },
+  {
+    "name": "Balancer LP USDC-dUSD",
+    "symbol": "BLP",
+    "type": "balancerLpToken",
+    "address": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+    "assetType": 0,
+    "precision": 18,
+    "link": "https://polygonscan.com/address/0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+    "data": {
+      "pool": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+      "poolId": "0x5028497af0c9a54ea8c6d42a054c0341b9fc616800020000000000000000007b",
+      "tokens": ["0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", "0xbAe28251B2a4E621aA7e20538c06DEe010Bc06DE"],
+      "decimals": [6, 18],
+      "weights": [0.5, 0.5]
+    }
   }
 ]

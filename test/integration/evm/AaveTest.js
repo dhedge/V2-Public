@@ -366,7 +366,7 @@ describe("Aave Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, depositABI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("Guard not found");
 
       depositABI = iLendingPool.encodeFunctionData("deposit", [aave.aTokens.usdt, amount, poolLogicProxy.address, 0]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
@@ -434,7 +434,7 @@ describe("Aave Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, withdrawABI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("Guard not found");
 
       withdrawABI = iLendingPool.encodeFunctionData("withdraw", [aave.aTokens.usdt, amount, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, withdrawABI)).to.be.revertedWith(
@@ -533,7 +533,7 @@ describe("Aave Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("Guard not found");
 
       borrowABI = iLendingPool.encodeFunctionData("borrow", [aave.aTokens.dai, amount, 2, 0, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI)).to.be.revertedWith(
@@ -588,7 +588,7 @@ describe("Aave Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, repayABI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("Guard not found");
 
       repayABI = iLendingPool.encodeFunctionData("repay", [aave.aTokens.dai, amount, 2, poolLogicProxy.address]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI)).to.be.revertedWith(
@@ -661,7 +661,7 @@ describe("Aave Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, swapRateABI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("Guard not found");
 
       swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [aave.aTokens.dai, 1]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
@@ -703,7 +703,7 @@ describe("Aave Test", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
-      ).to.be.revertedWith("invalid destination");
+      ).to.be.revertedWith("Guard not found");
 
       rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
         aave.aTokens.dai,

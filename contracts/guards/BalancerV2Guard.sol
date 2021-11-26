@@ -53,7 +53,10 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
 
   constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
     SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
-  {}
+  // solhint-disable-next-line no-empty-blocks
+  {
+
+  }
 
   /// @notice Transaction guard for Balancer V2 Vault
   /// @dev It supports swap functionalities
@@ -244,7 +247,7 @@ contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
         block.timestamp
       );
 
-      txType = 16; // `Exit Pool` type
+      txType = 17; // `Exit Pool` type
     }
 
     return (txType, false);

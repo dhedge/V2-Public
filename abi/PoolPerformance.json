@@ -34,24 +34,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "addAssetBalance",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "a",
         "type": "uint256"
@@ -65,6 +47,49 @@
     "name": "adjustInternalValueFactor",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "plusAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minusAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "changeAssetBalance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "enable",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "enabled",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -89,6 +114,13 @@
   {
     "inputs": [],
     "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "initializePool",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -163,6 +195,25 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "poolInitialized",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -259,25 +310,6 @@
         "type": "address"
       }
     ],
-    "name": "tokenPriceAdjustedForManagerFee",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "poolAddress",
-        "type": "address"
-      }
-    ],
     "name": "tokenPriceAdjustedForPerformance",
     "outputs": [
       {
@@ -297,7 +329,7 @@
         "type": "address"
       }
     ],
-    "name": "tokenPriceAdjustedForPerformanceAndManagerFee",
+    "name": "tokenPriceWithoutManagerFee",
     "outputs": [
       {
         "internalType": "uint256",

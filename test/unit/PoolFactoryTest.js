@@ -214,6 +214,18 @@ describe("PoolFactory", function () {
     const assetLendingPool = { asset: aaveLendingPool.address, assetType: 3, aggregator: usdPriceAggregator.address };
     const assetDai = { asset: dai.address, assetType: 4, aggregator: usd_price_feed.address }; // Lending enabled
     const assetUsdc = { asset: usdc.address, assetType: 4, aggregator: usd_price_feed.address }; // Lending enabled
+
+    // Any type 4 asset needs to have this configured
+    await aaveProtocolDataProvider.givenCalldataReturn(
+      iAaveProtocolDataProvider.encodeFunctionData("getReserveTokensAddresses", [usdc.address]),
+      abiCoder.encode(["address", "address", "address"], [ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS]),
+    );
+
+    await aaveProtocolDataProvider.givenCalldataReturn(
+      iAaveProtocolDataProvider.encodeFunctionData("getReserveTokensAddresses", [dai.address]),
+      abiCoder.encode(["address", "address", "address"], [ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS]),
+    );
+
     const assetSeth = { asset: sethAsset.address, assetType: 0, aggregator: usd_price_feed.address }; // just peg price to USD
     const assetHandlerInitAssets = [
       assetSusdProxy,
@@ -279,7 +291,7 @@ describe("PoolFactory", function () {
     const SushiMiniChefV2Guard = await ethers.getContractFactory(
       "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
     );
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken.address, wmaticToken.address);
+    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken.address, wmaticToken.address]);
     sushiMiniChefV2Guard.deployed();
 
     const OneInchV3Guard = await ethers.getContractFactory("contracts/guards/OneInchV3Guard.sol:OneInchV3Guard");
@@ -319,6 +331,7 @@ describe("PoolFactory", function () {
     await governance.setContractGuard(oneInchRouter.address, oneInchV3Guard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+    await governance.setAddresses([[toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider.address]]);
 
     const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
     console.log("openAssetGuardSetting:", openAssetGuardSetting);
@@ -808,14 +821,18 @@ describe("PoolFactory", function () {
     let totalSupply = await poolLogicProxy.totalSupply();
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
-    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
+    await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
+      "cooldown active",
+    );
 
-    let [exitFeeNumerator, exitFeeDenominator] = await poolFactory.getExitFee();
-    let exitFee = ethers.BigNumber.from(withdrawAmount.toString()).mul(exitFeeNumerator).div(exitFeeDenominator);
+    // await poolFactory.setExitCooldown(0);
+    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
+
+    await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
     let event = await withdrawalEvent;
 
-    let fundTokensWithdrawn = ethers.BigNumber.from(withdrawAmount.toString()).sub(exitFee);
+    let fundTokensWithdrawn = withdrawAmount;
     let valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
@@ -893,7 +910,7 @@ describe("PoolFactory", function () {
     );
   });
 
-  it("should be able to manage assets", async function () {
+  it("should be able to manage assets 2", async function () {
     await expect(poolManagerLogicProxy.changeAssets([[slink, false]], [])).to.be.revertedWith(
       "only manager, trader or factory",
     );
@@ -941,7 +958,6 @@ describe("PoolFactory", function () {
         assetType: 0,
       },
     ];
-    console.log("assets: ", assets);
     await assetHandler.addAssets(assets);
     await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
     await poolManagerLogicManagerProxy.changeAssets([[susdAsset.address, false]], []);
@@ -953,11 +969,9 @@ describe("PoolFactory", function () {
 
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
-    console.log("supportedAssets before: ", supportedAssets);
     let assetPosition;
     for (supportedAsset of supportedAssets) {
       assetPosition = await poolManagerLogicManagerProxy.assetPosition(supportedAsset.asset);
-      console.log("assetPosition : ", assetPosition.toString());
     }
     expect(numberOfSupportedAssets).to.eq(10);
 
@@ -981,8 +995,6 @@ describe("PoolFactory", function () {
     await poolManagerLogicManagerProxy.changeAssets([], [usd_price_feed.address]);
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
-    console.log("numberOfSupportedAssets : ", numberOfSupportedAssets);
-    console.log("supportedAssets after: ", supportedAssets);
     expect(numberOfSupportedAssets).to.eq(3);
 
     // Can not remove persist asset
@@ -1172,12 +1184,12 @@ describe("PoolFactory", function () {
       "unsupported spender approval",
     );
 
-    // should be able to approve valid external token (OpenAssetGuard)
-    await poolLogicProxy.connect(manager).execTransaction(externalValidToken, approveABI);
+    //should be able to approve valid external token (OpenAssetGuard)
+    // await poolLogicProxy.connect(manager).execTransaction(externalValidToken, approveABI);
 
     // shouldn't be able to approve invalid external token (OpenAssetGuard)
     await expect(poolLogicProxy.connect(manager).execTransaction(externalInvalidToken, approveABI)).to.be.revertedWith(
-      "invalid destination",
+      "Guard not found",
     );
 
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV2Router.address, (100e18).toString()]);
@@ -1501,7 +1513,7 @@ describe("PoolFactory", function () {
     const daoBalanceBefore = ethers.BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
-    const tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     const calculatedAvailableFee = tokenPricePreMint
@@ -1784,14 +1796,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
-      ).to.be.revertedWith("enable rewardA token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
-      ).to.be.revertedWith("enable rewardB token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
@@ -1999,14 +2011,14 @@ describe("PoolFactory", function () {
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable rewardA token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
-      ).to.be.revertedWith("enable rewardB token");
+      ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
@@ -2210,5 +2222,122 @@ describe("PoolFactory", function () {
     expect(poolLogicAddress).to.equal(TESTNET_DAO);
 
     await poolFactory.setLogic(poolLogic.address, poolManagerLogic.address);
+  });
+
+  it("should check dhedge pool restriction", async () => {
+    await poolFactory.createFund(
+      false,
+      user1.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    pools = await poolFactory.getDeployedFunds();
+    const pool1 = pools[pools.length - 1];
+
+    await poolFactory.createFund(
+      false,
+      user1.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    pools = await poolFactory.getDeployedFunds();
+    const pool2 = pools[pools.length - 1];
+
+    await poolFactory.createFund(
+      false,
+      user1.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      new ethers.BigNumber.from("5000"),
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
+    pools = await poolFactory.getDeployedFunds();
+    const pool3 = pools[pools.length - 1];
+
+    await assetHandler.addAssets([
+      {
+        asset: pool1,
+        aggregator: usd_price_feed.address,
+        assetType: 2,
+      },
+      {
+        asset: pool2,
+        aggregator: usd_price_feed.address,
+        assetType: 2,
+      },
+    ]);
+
+    let pool1Logic = await PoolLogic.attach(pool1);
+    let pool1ManagerLogic = await PoolManagerLogic.attach(await pool1Logic.poolManagerLogic());
+
+    await expect(pool1ManagerLogic.connect(user1).changeAssets([[pool2, false]], [])).to.revertedWith(
+      "cannot add pool asset",
+    );
+
+    let pool3Logic = await PoolLogic.attach(pool3);
+    let pool3ManagerLogic = await PoolManagerLogic.attach(await pool3Logic.poolManagerLogic());
+    await pool3ManagerLogic.connect(user1).changeAssets([[pool2, false]], []);
+  });
+
+  it("should be able to add/remove token transfer whitelist", async function () {
+    await expect(poolFactory.connect(manager).addTransferWhitelist(user2.address)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+    await expect(poolFactory.connect(manager).removeTransferWhitelist(user2.address)).to.be.revertedWith(
+      "caller is not the owner",
+    );
+
+    // deposit and initiate cooldown
+    await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
+    await poolLogicProxy.connect(investor).deposit(susd, (100e18).toString());
+
+    let transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    expect(transferWhitelist).to.equal(false);
+
+    // can't transfer to unknown address during cooldown
+    await poolFactory.setExitCooldown(86400);
+    await expect(poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString())).to.be.revertedWith(
+      "cooldown active",
+    );
+
+    await poolFactory.addTransferWhitelist(user2.address);
+    transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    expect(transferWhitelist).to.equal(true);
+
+    // check whitelisted view function (user2 is whitelisted)
+    let whitelisted = await poolFactory.isTransferWhitelisted(user1.address, user2.address);
+    expect(whitelisted).to.equal(true);
+    whitelisted = await poolFactory.isTransferWhitelisted(user2.address, user1.address);
+    expect(whitelisted).to.equal(true);
+    whitelisted = await poolFactory.isTransferWhitelisted(logicOwner.address, user1.address);
+    expect(whitelisted).to.equal(false);
+
+    // can transfer to whitelisted address during cooldown
+    await poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString());
+
+    await poolFactory.removeTransferWhitelist(user2.address);
+    transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    expect(transferWhitelist).to.equal(false);
+
+    // can't transfer to removed whitelist address during cooldown
+    await expect(poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString())).to.be.revertedWith(
+      "cooldown active",
+    );
   });
 });

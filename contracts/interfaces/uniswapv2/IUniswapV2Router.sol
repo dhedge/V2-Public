@@ -4,6 +4,7 @@ pragma solidity 0.7.6;
 interface IUniswapV2Router {
   function factory() external pure returns (address);
 
+  // solhint-disable-next-line func-name-mixedcase
   function WETH() external view returns (address);
 
   function getAmountsIn(uint256 amountOut, address[] memory path) external view returns (uint256[] memory amounts);

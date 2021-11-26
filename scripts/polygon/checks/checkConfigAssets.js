@@ -20,7 +20,7 @@ const main = async (initializeData) => {
   const assets = versions[version].contracts.Assets;
   const csvAssets = await csv().fromFile(assetsFileName);
 
-  // Check for any new assets in the CSV
+  // Check for any new assets in the asset CSV config
   for (const csvAsset of csvAssets) {
     let foundInVersions = false;
     for (const asset of assets) {
@@ -29,14 +29,14 @@ const main = async (initializeData) => {
     assert(foundInVersions, `Couldn't find ${csvAsset["Asset Name"]} address in published versions.json list.`);
   }
 
-  // Check Balancer assets
+  // Check for any new assets in the Balancer JSON config
   for (const balancerLp of balancerLps) {
     let foundInVersions = false;
     for (const asset of assets) {
       if (balancerLp.address === asset.asset) {
         foundInVersions = true;
         console.log("Checking", balancerLp.name);
-        await checkBalancerLpAsset(balancerLp, balancerV2Vault);
+        await checkBalancerLpAsset(balancerLp, balancerV2Vault, poolFactoryProxy, assetHandlerProxy);
       }
     }
     assert(foundInVersions, `Couldn't find ${balancerLp.name} address in published versions.json list.`);
@@ -54,6 +54,8 @@ const main = async (initializeData) => {
     );
 
     let foundInCsv = false;
+
+    // Reverse check Asset CSV config
     for (const csvAsset of csvAssets) {
       if (csvAsset.Address == assetAddress) {
         foundInCsv = true;
@@ -63,19 +65,37 @@ const main = async (initializeData) => {
         );
       }
     }
-    if (asset.name.includes("Balancer LP")) break; // Balancer LP asset config is in a different JSON file
 
-    assert(foundInCsv, `Couldn't find ${asset.name} address in the Assets CSV.`);
+    // Reverse check Balancer LP JSON config
+    for (const balancerLp of balancerLps) {
+      if (balancerLp.address === asset.asset) {
+        foundInCsv = true;
+        assert(
+          assetType == parseInt(balancerLp.assetType),
+          `${asset.name} assetType mismatch. Balancer LP JSON assetType = ${balancerLp.AssetType}, Contract assetType = ${assetType}`,
+        );
+      }
+    }
+
+    assert(foundInCsv, `Couldn't find ${asset.name} address in the Assets CSV or Balancer JSON config.`);
 
     // Check primitive asset prices against Coingecko (correct price oracle config)
     const assetPriceUsd = assetPrice / 1e18;
     let coingeckoAssetPriceUsd;
 
-    if (assetType == 0 || assetType == 1 || assetType == 4) {
+    // Skip Coingecko price checks for some assets that don't exist on Coingecko
+    const checkCoingeckoPrice =
+      !asset.name.includes("Balancer LP") &&
+      !asset.name.includes("dUSD") &&
+      (assetType == 0 || assetType == 1 || assetType == 4)
+        ? true
+        : false;
+
+    if (checkCoingeckoPrice) {
       const url = `https://api.coingecko.com/api/v3/simple/token_price/${coingeckoNetwork}?contract_addresses=${assetAddress}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=true`;
       try {
         const { data } = await axios.get(url);
-        coingeckoAssetPriceUsd = data[assetAddress].usd;
+        coingeckoAssetPriceUsd = data[assetAddress.toLowerCase()].usd;
 
         assert(
           approxEq(assetPriceUsd, coingeckoAssetPriceUsd),
@@ -86,6 +106,7 @@ const main = async (initializeData) => {
         console.error(`Error getting Coingecko feed for ${asset.name}`);
       }
     }
+
     console.log(
       `${asset.name} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
     );
@@ -95,7 +116,7 @@ const main = async (initializeData) => {
   console.log("_________________________________________");
 };
 
-const checkBalancerLpAsset = async (balancerLp, balancerV2Vault) => {
+const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProxy, assetHandlerProxy) => {
   const balancerLPAggregator = await assetHandlerProxy.priceAggregators(balancerLp.address);
   const BalancerV2LPAggregator = await hre.artifacts.readArtifact("BalancerV2LPAggregator");
   const aggregator = await ethers.getContractAt(BalancerV2LPAggregator.abi, balancerLPAggregator);

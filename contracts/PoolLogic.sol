@@ -54,6 +54,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import "./interfaces/IERC20Extended.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
@@ -177,6 +178,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     creationTime = block.timestamp;
 
     tokenPriceAtLastFeeMint = 10**18;
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).initializePool();
   }
 
   /// @notice Before token transfer hook
@@ -190,7 +192,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   ) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
 
-    if (from != address(0) && to != address(0)) {
+    // cooldown check
+    if (
+      from != address(0) && // allow minting
+      !IHasGuardInfo(factory).isTransferWhitelisted(from, to)
+    ) {
       require(getExitRemainingCooldown(from) == 0, "cooldown active");
     }
   }
@@ -233,7 +239,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
     );
 
-    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).addAssetBalance(_asset, _amount);
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).changeAssetBalance(_asset, _amount, 0);
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
@@ -264,23 +270,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @notice Withdraw assets based on the fund token amount
   /// @param _fundTokenAmount the fund token amount
   function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
+    require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
-    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
+    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
     // calculate the exit fee
     uint256 fundValue = _mintManagerFee();
 
-    uint256 exitFee;
-    if (getExitRemainingCooldown(msg.sender) > 0 && totalSupply() != _fundTokenAmount) {
-      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
-      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
-      // We need to adjust the performance down by the value of the exit fee distributed to remaining token holders
-      poolPerformance.adjustInternalValueFactor(exitFee, totalSupply().sub(_fundTokenAmount).add(exitFee));
-    }
-
     // calculate the proportion
-    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
+    uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
 
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
@@ -290,8 +289,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
     uint16 index = 0;
-
-    poolPerformance.recordExternalValue(address(this));
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
@@ -318,6 +315,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
     }
 
+    IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
     // We must now update our internal balances to whatever the result of the withdraw
     if (totalSupply() == 0) {
       poolPerformance.resetInternalValueFactor();
@@ -343,6 +341,80 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       totalSupply(),
       withdrawnAssets,
       block.timestamp
+    );
+  }
+
+  /// @notice Withdraw single asset based on the fund token amounts
+  /// @param _fundTokenAmount the fund token amount
+  /// @param _asset the withdraw asset address
+  function withdrawSingle(uint256 _fundTokenAmount, address _asset) external virtual nonReentrant whenNotPaused {
+    require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
+    require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
+    require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
+
+    uint256 fundValue = _mintManagerFee();
+
+    uint256 exitFee;
+    // If withdrawing all existing tokens, no need to pay fee.
+    if (_fundTokenAmount == totalSupply()) {
+      exitFee = 0;
+    } else {
+      (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(exitFeeDenominator);
+    }
+
+    // calculate the proportion
+    uint256 portion = _fundTokenAmount.sub(exitFee).mul(10**18).div(totalSupply());
+    // first return funded tokens
+    _burn(msg.sender, _fundTokenAmount);
+
+    uint256 valueWithdrawn = fundValue.mul(portion).div(10**18);
+    uint256 assetPrice = IHasAssetInfo(factory).getAssetPrice(_asset);
+    uint256 withdrawAmount = valueWithdrawn.mul(10**IERC20Extended(_asset).decimals()).div(assetPrice);
+
+    require(IERC20Upgradeable(_asset).balanceOf(address(this)) >= withdrawAmount, "insufficient asset amount");
+    _asset.tryAssemblyCall(abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, withdrawAmount));
+
+    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](1);
+    withdrawnAssets[0] = WithdrawnAsset({asset: _asset, amount: withdrawAmount, externalWithdrawProcessed: false});
+
+    IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress()).changeAssetBalance(
+      _asset,
+      0,
+      withdrawAmount
+    );
+
+    emit Withdrawal(
+      address(this),
+      msg.sender,
+      valueWithdrawn,
+      _fundTokenAmount,
+      balanceOf(msg.sender),
+      fundValue.sub(valueWithdrawn),
+      totalSupply(),
+      withdrawnAssets,
+      block.timestamp
+    );
+  }
+
+  function getWithdrawSingleMax(address _asset) external view returns (uint256 fundTokenAmount) {
+    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+    uint256 assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset);
+    uint256 tokenSupply = totalSupply();
+    (uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getManagerFee();
+    uint256 availableFee = _availableManagerFee(
+      fundValue,
+      tokenSupply,
+      tokenPriceAtLastFeeMint,
+      managerFeeNumerator,
+      managerFeeDenominator
+    );
+
+    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+
+    fundTokenAmount = assetValue.mul(tokenSupply.add(availableFee)).div(fundValue).mul(exitFeeDenominator).div(
+      exitFeeDenominator.sub(exitFeeNumerator)
     );
   }
 
@@ -415,6 +487,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // to pass the guard, the data must return a transaction type. refer to header for transaction types
     (uint16 txType, bool isPublic) = IGuard(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
+    // solhint-disable-next-line reason-string
     require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
 
     success = to.tryAssemblyCall(data);
@@ -470,12 +543,18 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     );
   }
 
-  /// @notice Get price of the asset
+  /// @notice Get price of the asset adjusted for any unminted manager fees
   /// @param price A price of the asset
   function tokenPrice() external view returns (uint256 price) {
+    (uint256 managerFee, uint256 fundValue) = availableManagerFeeAndTotalFundValue();
+    uint256 tokenSupply = totalSupply().add(managerFee);
+
+    price = _tokenPrice(fundValue, tokenSupply);
+  }
+
+  function tokenPriceWithoutManagerFee() external view returns (uint256 price) {
     uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
-
     price = _tokenPrice(fundValue, tokenSupply);
   }
 
@@ -485,14 +564,19 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return price A price of the asset
   function _tokenPrice(uint256 _fundValue, uint256 _tokenSupply) internal pure returns (uint256 price) {
     if (_tokenSupply == 0 || _fundValue == 0) return 0;
-
     price = _fundValue.mul(10**18).div(_tokenSupply);
   }
 
   /// @notice Get available manager fee of the pool
   /// @return fee available manager fee of the pool
-  function availableManagerFee() external view returns (uint256 fee) {
-    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+  function availableManagerFee() public view returns (uint256 fee) {
+    (fee, ) = availableManagerFeeAndTotalFundValue();
+  }
+
+  /// @notice Get available manager fee of the pool and totalFundValue
+  /// @return fee available manager fee of the pool
+  function availableManagerFeeAndTotalFundValue() public view returns (uint256 fee, uint256 fundValue) {
+    fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
     uint256 managerFeeNumerator;

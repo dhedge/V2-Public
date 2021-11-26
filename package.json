@@ -1,5 +1,5 @@
 {
-  "name": "dhedge-ovm",
+  "name": "dhedge-v2",
   "version": "1.0.0",
   "description": "dHEDGE ovm smart contracts",
   "main": "hardhat-config.js",
@@ -8,14 +8,17 @@
   },
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
-    "prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.js\" \"scripts/**/*.js\"",
+    "prettier": "prettier -l --write \"contracts/**/*.sol\" \"test/**/*.js\" \"test/**/*.ts\" \"scripts/**/*.js\"",
     "fork:evm": "hardhat node --fork $(grep ALCHEMY_EVM_URL .env | cut -d '=' -f2)$(grep ALCHEMY_EVM_KEY .env | cut -d '=' -f2)",
     "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
+    "fork:arbitrum": "hardhat node --fork $(grep ARBITRUM_URL .env | cut -d '=' -f2)",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/v1/$(grep MATIC_KEY .env | cut -d '=' -f2)",
-    "test:unit": "hardhat test test/unit/*.js --network hardhat",
+    "compile": "hardhat compile",
+    "test:unit": "hardhat test test/unit/*Test.* test/unit/**/*Test.* --network hardhat",
     "test:inte:ovm": "hardhat test test/integration/ovm/*.js",
     "test:inte:evm": "hardhat test test/integration/evm/*.js --network localhost",
     "test:inte:polygon": "hardhat test test/integration/polygon/*.js --network localhost",
+    "test:inte:arbitrum": "hardhat test test/integration/arbitrum/*.js --network localhost",
     "test:inte:mumbai": "hardhat test test/integration/mumbai/*.js --network localhost",
     "coverage": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --network hardhat",
     "coverage:unit": "node --max-old-space-size=4096 ./node_modules/.bin/hardhat coverage --testfiles \"test/unit/*.js\" --network hardhat",
@@ -65,10 +68,13 @@
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/hardhat-upgrades": "^1.8.2",
+    "@typechain/ethers-v5": "^7.0.0",
+    "@typechain/hardhat": "^2.0.1",
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/commit-analyzer": "^8.0.1",
     "@semantic-release/github": "^7.2.3",
     "@semantic-release/release-notes-generator": "^9.0.3",
+    "@types/mocha": "^9.0.0",
     "chai": "^4.3.4",
     "chai-almost": "^1.0.1",
     "cross-env": "^7.0.3",
@@ -83,19 +89,28 @@
     "solc-0.7": "npm:solc@^0.7.6",
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.7.16",
-    "ts-generator": "^0.1.1"
+    "ts-generator": "^0.1.1",
+    "ts-node": "^10.3.0",
+    "typechain": "^5.0.0"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.1.4",
     "@gnosis.pm/safe-core-sdk": "^0.3.1",
     "@gnosis.pm/safe-ethers-adapters": "^0.1.0-alpha.3",
     "@nomiclabs/hardhat-etherscan": "^2.1.4",
-    "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
-    "@openzeppelin/contracts-upgradeable": "3.4.1-solc-0.7-2",
+    "@openzeppelin/contracts": "3.4.2",
+    "@openzeppelin/contracts-upgradeable": "3.4.2",
     "csv-stringify": "^5.6.2",
     "csvtojson": "^2.0.10",
     "decimal.js": "^10.3.1",
     "dotenv": "^8.2.0",
+    "lint-staged": ">=10",
     "solidity-docgen": "^0.5.13"
+  },
+  "lint-staged": {
+    "*.sol": "solhint -w 0",
+    "*.{ts,js,sol}": [
+      "prettier --write"
+    ]
   }
 }
