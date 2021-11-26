@@ -112,7 +112,9 @@ contract PoolFactoryV24 is
 
   mapping(address => bool) public isPool;
 
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
   uint256 internal _exitCooldown;
@@ -581,10 +583,10 @@ contract PoolFactoryV24 is
 
   // Hack: New variable added by JHM since initial deployment because of
   // https://forum.openzeppelin.com/t/storage-layout-upgrade-with-hardhat-upgrades/14567/3
-  address public poolPerformanceAddress;
+  // address public poolPerformanceAddress;
 
-  uint256 private _exitFeeNumerator;
-  uint256 private _exitFeeDenominator;
+  // uint256 private _exitFeeNumerator;
+  // uint256 private _exitFeeDenominator;
 
-  uint256[47] private __gap;
+  // uint256[47] private __gap;
 }

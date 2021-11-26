@@ -139,6 +139,8 @@ contract PoolFactory is
   uint256 private _exitFeeNumerator;
   uint256 private _exitFeeDenominator;
 
+  mapping(address => bool) public transferWhitelist; // 24h lockup whitelist
+
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
@@ -255,6 +257,27 @@ contract PoolFactory is
     poolPerformanceAddress = _poolPerformanceAddress;
 
     emit PoolPerformanceAddressSet(_poolPerformanceAddress);
+  }
+
+  // Transfer whitelist for bypassing 24h token lock
+
+  /// @notice Add an address to the transfer whitelist (24h lock bypass)
+  /// @param _extAddress The address to add to whitelist
+  function addTransferWhitelist(address _extAddress) external onlyOwner {
+    transferWhitelist[_extAddress] = true;
+  }
+
+  /// @notice Remove an address from the transfer whitelist (24h lock bypass)
+  /// @param _extAddress The address to remove from whitelist
+  function removeTransferWhitelist(address _extAddress) external onlyOwner {
+    transferWhitelist[_extAddress] = false;
+  }
+
+  /// @notice Checks if transfer is whitelisted (24h lock bypass)
+  /// @param _from The address to transfer from
+  /// @param _to The address to transfer to
+  function isTransferWhitelisted(address _from, address _to) external view override returns (bool) {
+    return transferWhitelist[_from] || transferWhitelist[_to]; // if either 'from' or 'to' is whitelisted, transfer will pass.
   }
 
   // DAO info (Uber Pool)
@@ -660,5 +683,6 @@ contract PoolFactory is
     }
   }
 
-  uint256[47] private __gap;
+  // The Factory is not safe to be inherited by other contracts
+  // uint256[47] private __gap;
 }
