@@ -51,7 +51,7 @@ describe("SynthPriceAggregator Test", function () {
     );
   });
 
-  it("Adjusts when under 1 dollar", async function () {
+  it("Adjusts when over 1 dollar", async function () {
     const FixedPriceAggregator = await ethers.getContractFactory("FixedPriceAggregator");
     // 103 cents
     const fixedPriceAggregator = await FixedPriceAggregator.deploy((10 ** 8 / 100) * 103);

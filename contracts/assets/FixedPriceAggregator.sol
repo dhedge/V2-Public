@@ -8,8 +8,8 @@ import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IERC20Extended.sol"; // includes decimals()
 
 /**
- * @title USD price aggregator. For dHEDGE LP Price Feeds.
- * @notice You can use this contract for usd price = $1.
+ * @title Fixed price aggregator. Takes the price at construction
+ * @notice You can use this contract for any price.
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
 contract FixedPriceAggregator is IAggregatorV3Interface {
