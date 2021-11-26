@@ -33,7 +33,7 @@ describe("SynthPriceAggregator Test", function () {
   it("Adjusts when under 1 dollar", async function () {
     const FixedPriceAggregator = await ethers.getContractFactory("FixedPriceAggregator");
     // 97 cents
-    const fixedPriceAggregator = await FixedPriceAggregator.deploy((1e8 / 100) * 97);
+    const fixedPriceAggregator = await FixedPriceAggregator.deploy((10 ** 8 / 100) * 97);
     fixedPriceAggregator.deployed();
 
     const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
@@ -44,14 +44,17 @@ describe("SynthPriceAggregator Test", function () {
     const { answer: synthEthPrice } = await synthPriceAggregator.latestRoundData();
     const { answer: fixedPrice } = await fixedPriceAggregator.latestRoundData();
 
-    expect(fixedPrice).to.equal((1e8 / 100) * 97);
-    expect(synthEthPrice).to.equal(ethUsdPrice.div(100).mul(97));
+    expect(fixedPrice).to.equal((10 ** 8 / 100) * 97);
+    expect(synthEthPrice).to.be.closeTo(
+      ethUsdPrice.div(100).mul(97),
+      ethUsdPrice.div(100).mul(97).div(1000).toNumber(),
+    );
   });
 
   it("Adjusts when under 1 dollar", async function () {
     const FixedPriceAggregator = await ethers.getContractFactory("FixedPriceAggregator");
     // 103 cents
-    const fixedPriceAggregator = await FixedPriceAggregator.deploy((1e8 / 100) * 103);
+    const fixedPriceAggregator = await FixedPriceAggregator.deploy((10 ** 8 / 100) * 103);
     fixedPriceAggregator.deployed();
 
     const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
@@ -62,7 +65,10 @@ describe("SynthPriceAggregator Test", function () {
     const { answer: synthEthPrice } = await synthPriceAggregator.latestRoundData();
     const { answer: fixedPrice } = await fixedPriceAggregator.latestRoundData();
 
-    expect(fixedPrice).to.equal((1e8 / 100) * 103);
-    expect(synthEthPrice).to.equal(ethUsdPrice.div(100).mul(103));
+    expect(fixedPrice).to.equal((10 ** 8 / 100) * 103);
+    expect(synthEthPrice).to.be.closeTo(
+      ethUsdPrice.div(100).mul(103),
+      ethUsdPrice.div(100).mul(103).div(1000).toNumber(),
+    );
   });
 });
