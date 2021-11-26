@@ -53,9 +53,9 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     updateRewardAmount = _updateRewardAmount;
 
     if (_mainToken == _pair.token0()) {
-      priceCumulativeLast = _pair.price1CumulativeLast();
-    } else {
       priceCumulativeLast = _pair.price0CumulativeLast();
+    } else {
+      priceCumulativeLast = _pair.price1CumulativeLast();
     }
   }
 
@@ -88,11 +88,12 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     // ensure that at least one full period has passed since the last update
     require(timeElapsed >= updateInterval, "period is not passed");
 
-    uint256 priceCumulative = mainToken == pair.token0() ? price1Cumulative : price0Cumulative;
+    uint256 priceCumulative = mainToken == pair.token0() ? price0Cumulative : price1Cumulative;
     // overflow is desired, casting never truncates
     // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
     twaps[twapLastIndex] = (FixedPoint.uq112x112(uint224((priceCumulative - priceCumulativeLast) / timeElapsed)))
-      .decode();
+      .mul(10**18)
+      .decode144();
     twapLastIndex++;
 
     priceCumulativeLast = priceCumulative;
@@ -151,7 +152,7 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   {
     uint256 updatedAt1 = blockTimestampLast;
     (, int256 usdPrice, , uint256 updatedAt2, ) = otherTokenUsdAggregator.latestRoundData();
-    answer = consult().mul(usdPrice).div(int256(10**otherTokenUsdAggregator.decimals()));
+    answer = consult().mul(usdPrice).div(10**10).div(int256(10**otherTokenUsdAggregator.decimals()));
 
     return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
   }
