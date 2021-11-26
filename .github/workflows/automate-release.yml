@@ -25,5 +25,6 @@ jobs:
         run: npm ci
         if : steps.cache.outputs.cache-hit != 'true'
       - name: Semantic Releases
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
