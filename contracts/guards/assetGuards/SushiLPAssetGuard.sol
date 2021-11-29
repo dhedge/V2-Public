@@ -60,6 +60,8 @@ contract SushiLPAssetGuard is ERC20Guard, Ownable {
   /// @dev Set up the sushiPoolIds mapping from sushiStaking contract
   /// @param _sushiStaking Sushi's staking MiniChefV2 contract
   constructor(address _sushiStaking) {
+    // solhint-disable-next-line reason-string
+    require(_sushiStaking != address(0), "_sushiStaking address cannot be 0");
     sushiStaking = _sushiStaking;
     IMiniChefV2 sushiMiniChefV2 = IMiniChefV2(sushiStaking);
     for (uint256 i = 0; i < sushiMiniChefV2.poolLength(); i++) {

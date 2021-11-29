@@ -1,14 +1,19 @@
-const { expect } = require("chai");
+import { artifacts, ethers } from "hardhat";
+import { BigNumber } from "ethers";
+import { MockContract } from "../types";
+import { expect } from "chai";
 
-const currentBlockTimestamp = async () => {
+export const currentBlockTimestamp = async () => {
   const currentBlockNumber = await ethers.provider.getBlockNumber();
   return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
 };
 
-const updateChainlinkAggregators = async (usd_price_feed, eth_price_feed, link_price_feed) => {
-  const MockContract = await ethers.getContractFactory("MockContract");
-
-  const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
+export const updateChainlinkAggregators = async (
+  usd_price_feed: MockContract,
+  eth_price_feed: MockContract,
+  link_price_feed: MockContract,
+) => {
+  const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
   const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
   const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
   const current = await currentBlockTimestamp();
@@ -26,41 +31,32 @@ const updateChainlinkAggregators = async (usd_price_feed, eth_price_feed, link_p
   ); // $35
 };
 
-const checkAlmostSame = (a, b) => {
-  expect(ethers.BigNumber.from(a).gte(ethers.BigNumber.from(b).mul(99).div(100))).to.be.true;
-  expect(ethers.BigNumber.from(a).lte(ethers.BigNumber.from(b).mul(101).div(100))).to.be.true;
+// Within 1%
+// @deprecated - don't use this - use closeTo with a delta that's geared for the test
+// 1% is not an ok spread for some tests
+export const checkAlmostSame = (a: any, b: any) => {
+  expect(ethers.BigNumber.from(a.toString())).to.be.closeTo(ethers.BigNumber.from(b.toString()), a.div(100));
 };
 
-const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
+export const approxEq = (v1: number, v2: number, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
 
 /// Converts a string into a hex representation of bytes32
-const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
+export const toBytes32 = (key: string) => ethers.utils.formatBytes32String(key);
 
-const getAmountOut = async (routerAddress, amountIn, path) => {
-  const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+export const getAmountOut = async (routerAddress: string, amountIn: BigNumber | string, path: string[]) => {
+  const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
   const router = await ethers.getContractAt(IUniswapV2Router.abi, routerAddress);
   const amountsOut = await router.getAmountsOut(amountIn, path);
   return amountsOut[amountsOut.length - 1];
 };
 
-const getAmountIn = async (routerAddress, amountOut, path) => {
-  const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
+export const getAmountIn = async (routerAddress: string, amountOut: BigNumber | string, path: string[]) => {
+  const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
   const router = await ethers.getContractAt(IUniswapV2Router.abi, routerAddress);
   const amountsIn = await router.getAmountsIn(amountOut, path);
   return amountsIn[0];
 };
 
-const units = (amount, decimal = 18) => {
+export const units = (amount: number, decimal = 18) => {
   return ethers.BigNumber.from(amount.toString()).mul(ethers.BigNumber.from(10).pow(decimal));
-};
-
-module.exports = {
-  updateChainlinkAggregators,
-  currentBlockTimestamp,
-  checkAlmostSame,
-  approxEq,
-  toBytes32,
-  getAmountOut,
-  getAmountIn,
-  units,
 };

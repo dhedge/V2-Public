@@ -59,6 +59,10 @@ describe("Balancer V2 Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
+    await poolPerformance.deployed();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -97,6 +101,7 @@ describe("Balancer V2 Test", function () {
     ]);
     await poolFactory.deployed();
 
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
     // Deploy Balancer LP Aggregator
     const balancerV2Aggregator = await deployBalancerV2LpAggregator(balancer.pools.stablePool);
     const balancerLpAsset = {
@@ -135,6 +140,8 @@ describe("Balancer V2 Test", function () {
     await governance.setContractGuard(quickswap.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(balancer.v2Vault, balancerV2Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to get USDC", async function () {

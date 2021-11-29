@@ -49,6 +49,7 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
   /// @notice initialise poolLogic and poolManagerLogic
   /// @param _poolLogic address of the pool logic
   /// @param _poolManagerLogic address of the pool manager logic
+  // solhint-disable-next-line func-name-mixedcase
   function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic) internal {
     __Ownable_init();
 

@@ -1,36 +1,31 @@
-const { ethers, upgrades } = require("hardhat");
-const { expect, use } = require("chai");
+import { ethers, artifacts, upgrades } from "hardhat";
+import { use, expect } from "chai";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Contract, ContractFactory } from "ethers";
+
 const chaiAlmost = require("chai-almost");
 const { checkAlmostSame } = require("../../TestHelpers");
+import { assets, price_feeds, synthetix as SynthetixData, uniswapV2 } from "../ethereum-data";
 
 use(chaiAlmost());
 
-const uniswapV2Factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
-const uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-
-// For mainnet
-const susd_price_feed = "0xad35Bd71b9aFE6e4bDc266B345c198eaDEf9Ad94";
-const eth_price_feed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
-const link_price_feed = "0x2c1d072e956AFFC0D435Cb7AC38EF18d24d9127c";
-
-const weth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-const usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-const susd = "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51";
-const seth = "0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb";
-const slink = "0xbBC455cb4F1B9e4bFC4B73970d360c8f032EfEE6";
-const susdKey = "0x7355534400000000000000000000000000000000000000000000000000000000";
-const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000000";
-const slinkKey = "0x734c494e4b000000000000000000000000000000000000000000000000000000";
-const addressResolverAddress = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
-const synthetixAddress = "0x97767D7D04Fd0dB0A1a2478DCd4BA85290556B48";
-const uniswapV2RouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
 describe("Synthetix Test", function () {
-  let WETH, susdProxy, sethProxy, slinkProxy, addressResolver, synthetix, uniswapV2Router;
-  let logicOwner, manager, dao, user;
-  let PoolFactory, PoolLogic, PoolManagerLogic;
-  let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
+  let WETH: Contract,
+    susdProxy: Contract,
+    sethProxy: Contract,
+    slinkProxy: Contract,
+    addressResolver: Contract,
+    synthetix: Contract,
+    uniswapV2Router: Contract,
+    synthetixGuard: Contract;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let PoolFactory: ContractFactory, PoolLogic: ContractFactory, PoolManagerLogic: ContractFactory;
+  let poolFactory: Contract,
+    poolLogic: Contract,
+    poolManagerLogic: Contract,
+    poolLogicProxy: Contract,
+    poolManagerLogicProxy: Contract,
+    fundAddress: string;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -41,6 +36,10 @@ describe("Synthetix Test", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
+    await poolPerformance.deployed();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -48,12 +47,12 @@ describe("Synthetix Test", function () {
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Initialize Asset Price Consumer
-    const assetSusd = { asset: susd, assetType: 0, aggregator: susd_price_feed };
-    const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed };
-    const assetSlink = { asset: slink, assetType: 0, aggregator: link_price_feed };
+    const assetSusd = { asset: assets.susd, assetType: 1, aggregator: price_feeds.susd };
+    const assetSeth = { asset: assets.seth, assetType: 1, aggregator: price_feeds.eth };
+    const assetSlink = { asset: assets.slink, assetType: 1, aggregator: price_feeds.link };
     const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
 
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
+    const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year
 
@@ -66,41 +65,45 @@ describe("Synthetix Test", function () {
       governance.address,
     ]);
     await poolFactory.deployed();
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
-    const IAddressResolver = await hre.artifacts.readArtifact("IAddressResolver");
-    addressResolver = await ethers.getContractAt(IAddressResolver.abi, addressResolverAddress);
+    const IAddressResolver = await artifacts.readArtifact("IAddressResolver");
+    addressResolver = await ethers.getContractAt(IAddressResolver.abi, SynthetixData.addressResolver);
 
-    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    uniswapV2Router = await ethers.getContractAt(IUniswapV2Router.abi, uniswapV2RouterAddress);
+    const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
+    uniswapV2Router = await ethers.getContractAt(IUniswapV2Router.abi, uniswapV2.router);
 
-    const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
-    synthetix = await ethers.getContractAt(ISynthetix.abi, synthetixAddress);
+    const ISynthetix = await artifacts.readArtifact("ISynthetix");
+    synthetix = await ethers.getContractAt(ISynthetix.abi, assets.snx);
 
     const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
 
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-    erc20Guard = await ERC20Guard.deploy();
+    const erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
+    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     uniswapV2RouterGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(1, erc20Guard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
-  it("Should be able to get susd", async function () {
-    const IWETH = await hre.artifacts.readArtifact("IWETH");
-    WETH = await ethers.getContractAt(IWETH.abi, weth);
+  it("Should be able to get assets.susd", async function () {
+    const IWETH = await artifacts.readArtifact("IWETH");
+    WETH = await ethers.getContractAt(IWETH.abi, assets.weth);
 
-    const ISynthAddressProxy = await hre.artifacts.readArtifact("ISynthAddressProxy");
-    susdProxy = await ethers.getContractAt(ISynthAddressProxy.abi, susd);
-    sethProxy = await ethers.getContractAt(ISynthAddressProxy.abi, seth);
-    slinkProxy = await ethers.getContractAt(ISynthAddressProxy.abi, slink);
+    const ISynthAddressProxy = await artifacts.readArtifact("ISynthAddressProxy");
+    susdProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.susd);
+    sethProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.seth);
+    slinkProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.slink);
 
     // deposit ETH -> WETH
     await WETH.deposit({ value: (5e18).toString() });
@@ -109,7 +112,7 @@ describe("Synthetix Test", function () {
     await uniswapV2Router.swapExactTokensForTokens(
       (5e18).toString(),
       0,
-      [weth, susd],
+      [assets.weth, assets.susd],
       logicOwner.address,
       Math.floor(Date.now() / 1000 + 100000000),
     );
@@ -127,8 +130,8 @@ describe("Synthetix Test", function () {
       poolLogic.address,
       "1000",
       [
-        [susd, true],
-        [seth, true],
+        [assets.susd, true],
+        [assets.seth, true],
       ],
     );
 
@@ -176,28 +179,28 @@ describe("Synthetix Test", function () {
         "Barren Wuffet",
         "Test Fund",
         "DHTF",
-        new ethers.BigNumber.from("6000"),
+        ethers.BigNumber.from("6000"),
         [
-          [susd, true],
-          [seth, true],
+          [assets.susd, true],
+          [assets.seth, true],
         ],
       ),
     ).to.be.revertedWith("invalid manager fee");
 
-    let tx = await poolFactory.createFund(
+    await poolFactory.createFund(
       false,
       manager.address,
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new ethers.BigNumber.from("5000"),
+      ethers.BigNumber.from("5000"),
       [
-        [susd, true],
-        [seth, true],
+        [assets.susd, true],
+        [assets.seth, true],
       ],
     );
 
-    let event = await fundCreatedEvent;
+    let event: any = await fundCreatedEvent;
 
     fundAddress = event.fundAddress;
     expect(event.isPoolPrivate).to.be.false;
@@ -229,11 +232,11 @@ describe("Synthetix Test", function () {
     let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isSupportedAsset(susd)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(seth)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.susd)).to.be.true;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.seth)).to.be.true;
 
     //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(slink)).to.be.false;
+    expect(await poolManagerLogicProxy.isSupportedAsset(assets.slink)).to.be.false;
   });
 
   it("should be able to deposit", async function () {
@@ -278,11 +281,11 @@ describe("Synthetix Test", function () {
     let totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
-    await expect(poolLogicProxy.deposit(slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
+    await expect(poolLogicProxy.deposit(assets.slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
 
     await susdProxy.approve(poolLogicProxy.address, (100e18).toString());
-    await poolLogicProxy.deposit(susd, (100e18).toString());
-    let event = await depositEvent;
+    await poolLogicProxy.deposit(assets.susd, (100e18).toString());
+    let event: any = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
@@ -294,19 +297,19 @@ describe("Synthetix Test", function () {
   });
 
   it("Should be able to approve", async () => {
-    const IERC20 = await hre.artifacts.readArtifact("IERC20");
+    const IERC20 = await artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [susd, (100e18).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(slink, approveABI)).to.be.revertedWith(
+    let approveABI = iERC20.encodeFunctionData("approve", [assets.susd, (100e18).toString()]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.slink, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(susd, approveABI)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI)).to.be.revertedWith(
       "unsupported spender approval",
     );
 
     approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, (100e18).toString()]);
-    await poolLogicProxy.connect(manager).execTransaction(susd, approveABI);
+    await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
   });
 
   it("should be able to swap tokens on synthetix.", async () => {
@@ -331,13 +334,13 @@ describe("Synthetix Test", function () {
       }, 600000);
     });
 
-    const sourceKey = susdKey;
+    const sourceKey = SynthetixData.susdKey;
     const sourceAmount = (100e18).toString();
-    const destinationKey = sethKey;
-    const daoAddress = await poolFactory.daoAddress();
+    const destinationKey = SynthetixData.sethKey;
+    const daoAddress = await poolFactory.owner();
     const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
-    const ISynthetix = await hre.artifacts.readArtifact("ISynthetix");
+    const ISynthetix = await artifacts.readArtifact("ISynthetix");
     const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
     let swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
       sourceKey,
@@ -358,7 +361,7 @@ describe("Synthetix Test", function () {
     swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
       sourceKey,
       sourceAmount,
-      slinkKey,
+      SynthetixData.slinkKey,
       daoAddress,
       trackingCode,
     ]);
@@ -373,14 +376,14 @@ describe("Synthetix Test", function () {
       daoAddress,
       trackingCode,
     ]);
-    await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
 
+    await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
 
-    let event = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(susd);
+    let event: any = await exchangeEvent;
+    expect(event.sourceAsset).to.equal(assets.susd);
     expect(event.sourceAmount).to.equal((100e18).toString());
-    expect(event.destinationAsset).to.equal(seth);
+    expect(event.destinationAsset).to.equal(assets.seth);
   });
 
   it("should be able to withdraw", async function () {
@@ -421,22 +424,21 @@ describe("Synthetix Test", function () {
     });
 
     // Withdraw 50%
-    let withdrawAmount = 50e18;
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount.toString())).to.be.revertedWith("cooldown active");
+    let withdrawAmount = (await poolLogicProxy.totalSupply()).div(2);
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
     await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
     await ethers.provider.send("evm_mine", []);
 
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
-    let event = await withdrawalEvent;
+    let event: any = await withdrawalEvent;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
-    checkAlmostSame(event.valueWithdrawn, (50e18).toString());
-    checkAlmostSame(event.fundTokensWithdrawn, (50e18).toString());
-    checkAlmostSame(event.totalInvestorFundTokens, (50e18).toString());
-    checkAlmostSame(event.fundValue, (50e18).toString());
-    checkAlmostSame(event.totalSupply, (50e18).toString());
+    checkAlmostSame(event.valueWithdrawn, totalFundValue.div(2));
+    checkAlmostSame(event.fundTokensWithdrawn, withdrawAmount);
+    checkAlmostSame(event.totalInvestorFundTokens, withdrawAmount);
+    checkAlmostSame(event.fundValue, totalFundValue.div(2));
+    checkAlmostSame(event.totalSupply, withdrawAmount);
   });
 });

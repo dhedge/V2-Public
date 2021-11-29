@@ -48,7 +48,8 @@ contract LendingEnabledAssetGuard is ERC20Guard {
   /// @notice Checks that asset can be removed from supported pool assets
   /// @dev Cannot remove asset if it's deposited in Aave
   /// @dev Additional lending / borrowing protocol checks can be added in the future
-  function removeAssetCheck(address pool, address asset) external view override {
+  function removeAssetCheck(address pool, address asset) public view override {
+    super.removeAssetCheck(pool, asset);
     // check AAVE lending balances
     // returns address(0) if it's not supported in aave
     address factory = IPoolManagerLogic(pool).factory();
@@ -58,11 +59,9 @@ contract LendingEnabledAssetGuard is ERC20Guard {
       aaveProtocolDataProvider
     ).getReserveTokensAddresses(asset);
 
-    // Allowing some dust
-    if (stableDebtToken != address(0))
-      require(IERC20(stableDebtToken).balanceOf(pool) <= 10000, "repay Aave debt first");
+    if (stableDebtToken != address(0)) require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
     if (variableDebtToken != address(0))
-      require(IERC20(variableDebtToken).balanceOf(pool) <= 10000, "repay Aave debt first");
-    if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) <= 10000, "withdraw Aave collateral first");
+      require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+    if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
   }
 }

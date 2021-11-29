@@ -45,6 +45,7 @@ import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasPausable.sol";
+import "./interfaces/IHasPoolPerformance.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IGovernance.sol";
 import "./interfaces/IManaged.sol";
@@ -63,7 +64,8 @@ contract PoolFactory is
   IHasFeeInfo,
   IHasAssetInfo,
   IHasGuardInfo,
-  IHasPausable
+  IHasPausable,
+  IHasPoolPerformance
 {
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
@@ -105,6 +107,8 @@ contract PoolFactory is
 
   event SetManagerFeeNumeratorChangeDelay(uint256 delay);
 
+  event PoolPerformanceAddressSet(address poolPerformanceAddress);
+
   address[] public deployedFunds;
 
   address public override daoAddress;
@@ -115,8 +119,9 @@ contract PoolFactory is
   uint256 internal _daoFeeDenominator;
 
   mapping(address => bool) public isPool;
-
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
   uint256 internal _exitCooldown;
@@ -128,6 +133,13 @@ contract PoolFactory is
 
   uint256 public override maximumManagerFeeNumeratorChange;
   uint256 public override managerFeeNumeratorChangeDelay;
+
+  // Added after initial deployment
+  address public override poolPerformanceAddress;
+  uint256 private _exitFeeNumerator;
+  uint256 private _exitFeeDenominator;
+
+  mapping(address => bool) public transferWhitelist; // 24h lockup whitelist
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -154,6 +166,7 @@ contract PoolFactory is
     _setMaximumManagerFee(5000, 10000);
 
     _setDaoFee(10, 100); // 10%
+    _setExitFee(5, 1000); // 0.5%
     _setExitCooldown(1 days);
     setManagerFeeNumeratorChangeDelay(4 weeks);
     setMaximumManagerFeeNumeratorChange(1000);
@@ -162,6 +175,10 @@ contract PoolFactory is
 
     _setPoolStorageVersion(230); // V2.3.0;
   }
+
+  /// @notice implementations should not be left unintialized
+  // solhint-disable-next-line no-empty-blocks
+  function implInitializer() external initializer {}
 
   /// @notice Function to create a new fund
   /// @param _privatePool A boolean indicating whether the fund is private or not
@@ -224,6 +241,45 @@ contract PoolFactory is
     );
   }
 
+  // Pool Performance (for tracking pool performance)
+
+  /// @notice Set the poolPerformance address
+  /// @param _poolPerformanceAddress The address of the DAO
+  function setPoolPerformanceAddress(address _poolPerformanceAddress) external onlyOwner {
+    _setPoolPerformanceAddress(_poolPerformanceAddress);
+  }
+
+  /// @notice Set the poolPerformance address internal call
+  /// @param _poolPerformanceAddress The address of the DAO
+  function _setPoolPerformanceAddress(address _poolPerformanceAddress) internal {
+    require(_poolPerformanceAddress != address(0), "Invalid poolPerformanceAddress");
+
+    poolPerformanceAddress = _poolPerformanceAddress;
+
+    emit PoolPerformanceAddressSet(_poolPerformanceAddress);
+  }
+
+  // Transfer whitelist for bypassing 24h token lock
+
+  /// @notice Add an address to the transfer whitelist (24h lock bypass)
+  /// @param _extAddress The address to add to whitelist
+  function addTransferWhitelist(address _extAddress) external onlyOwner {
+    transferWhitelist[_extAddress] = true;
+  }
+
+  /// @notice Remove an address from the transfer whitelist (24h lock bypass)
+  /// @param _extAddress The address to remove from whitelist
+  function removeTransferWhitelist(address _extAddress) external onlyOwner {
+    transferWhitelist[_extAddress] = false;
+  }
+
+  /// @notice Checks if transfer is whitelisted (24h lock bypass)
+  /// @param _from The address to transfer from
+  /// @param _to The address to transfer to
+  function isTransferWhitelisted(address _from, address _to) external view override returns (bool) {
+    return transferWhitelist[_from] || transferWhitelist[_to]; // if either 'from' or 'to' is whitelisted, transfer will pass.
+  }
+
   // DAO info (Uber Pool)
 
   /// @notice Set the DAO address
@@ -284,6 +340,32 @@ contract PoolFactory is
   /// @return The denominator of the DAO fee
   function getDaoFee() external view override returns (uint256, uint256) {
     return (_daoFeeNumerator, _daoFeeDenominator);
+  }
+
+  /// @notice Set the Exit fee
+  /// @param numerator The numerator of the Exit fee
+  /// @param denominator The denominator of the Exit fee
+  function setExitFee(uint256 numerator, uint256 denominator) external onlyOwner {
+    _setExitFee(numerator, denominator);
+  }
+
+  /// @notice Set the Exit fee internal call
+  /// @param numerator The numerator of the Exit fee
+  /// @param denominator The denominator of the Exit fee
+  function _setExitFee(uint256 numerator, uint256 denominator) internal {
+    require(numerator <= denominator, "invalid fraction");
+
+    _exitFeeNumerator = numerator;
+    _exitFeeDenominator = denominator;
+
+    emit ExitFeeSet(numerator, denominator);
+  }
+
+  /// @notice Get the Exit fee
+  /// @return The numerator of the Exit fee
+  /// @return The denominator of the Exit fee
+  function getExitFee() external view override returns (uint256, uint256) {
+    return (_exitFeeNumerator, _exitFeeDenominator);
   }
 
   // Manager fees
@@ -444,6 +526,7 @@ contract PoolFactory is
   ) internal {
     require(pool != address(0), "target-invalid");
     require(data.length > 0, "data-invalid");
+    require(poolVersion[pool] < targetVersion, "already upgraded");
 
     pool.tryAssemblyDelegateCall(data);
 
@@ -455,13 +538,11 @@ contract PoolFactory is
   /// @notice Upgrade pools in batch
   /// @param startIndex The start index of the pool upgrade
   /// @param endIndex The end index of the pool upgrade
-  /// @param sourceVersion The source version of the pool upgrade
   /// @param targetVersion The target version of the pool upgrade
   /// @param data The calldata for the target address
   function upgradePoolBatch(
     uint256 startIndex,
     uint256 endIndex,
-    uint256 sourceVersion,
     uint256 targetVersion,
     bytes calldata data
   ) external onlyOwner {
@@ -470,9 +551,34 @@ contract PoolFactory is
     for (uint256 i = startIndex; i <= endIndex; i++) {
       address pool = deployedFunds[i];
 
-      if (poolVersion[pool] != sourceVersion) continue;
+      if (pool == address(0)) continue;
+      if (poolVersion[pool] >= targetVersion) continue;
 
       _upgradePool(pool, data, targetVersion);
+    }
+  }
+
+  /// @notice Upgrade pools in batch with array of data
+  /// @param startIndex The start index of the pool upgrade
+  /// @param endIndex The end index of the pool upgrade
+  /// @param targetVersion The target version of the pool upgrade
+  /// @param data Array of calldata for the target address
+  function upgradePoolBatch(
+    uint256 startIndex,
+    uint256 endIndex,
+    uint256 targetVersion,
+    bytes[] calldata data
+  ) external onlyOwner {
+    require(startIndex <= endIndex && endIndex < deployedFunds.length, "invalid bounds");
+    require(data.length == endIndex.sub(startIndex).add(1), "data not metch index");
+
+    for (uint256 i = startIndex; i <= endIndex; i++) {
+      address pool = deployedFunds[i];
+
+      if (pool == address(0)) continue;
+      if (poolVersion[pool] >= targetVersion) continue;
+
+      _upgradePool(pool, data[i.sub(startIndex)], targetVersion);
     }
   }
 
@@ -577,5 +683,6 @@ contract PoolFactory is
     }
   }
 
-  uint256[50] private __gap;
+  // The Factory is not safe to be inherited by other contracts
+  // uint256[47] private __gap;
 }

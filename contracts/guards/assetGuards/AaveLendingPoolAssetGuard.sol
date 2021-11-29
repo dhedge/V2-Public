@@ -54,7 +54,9 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   using SafeMathUpgradeable for uint256;
 
   // For Aave decimal calculation
+  // solhint-disable-next-line state-visibility
   uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+  // solhint-disable-next-line state-visibility
   uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
@@ -62,6 +64,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   address public override aaveLendingPool;
 
   constructor(address _aaveProtocolDataProvider) {
+    // solhint-disable-next-line reason-string
+    require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
     aaveLendingPool = aaveAddressProvider.getLendingPool();

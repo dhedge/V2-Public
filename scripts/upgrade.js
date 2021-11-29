@@ -10,9 +10,9 @@ const {
   checkAsset,
   checkBalancerLpAsset,
   getAggregator,
+  proxyAdminAddress,
 } = require("./Helpers");
 const Decimal = require("decimal.js");
-const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
 // File Names
 const stagingBalancerConfig = require("../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
@@ -119,7 +119,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("lendingEnabledAssetGuard", "upgrade LendingEnabledAssetGuard", false, types.boolean)
   .addOptionalParam("uniswapV2RouterGuard", "upgrade uniswapV2RouterGuard", false, types.boolean)
   .addOptionalParam("openAssetGuard", "upgrade openAssetGuard", false, types.boolean)
-  .addOptionalParam("quickLPAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
+  .addOptionalParam("quickLpAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
   .addOptionalParam("balancerv2guard", "upgrade balancerV2Guard", false, types.boolean)
   .addOptionalParam("quickStakingRewardsGuard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
@@ -232,6 +232,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: sushiLPAggregator.address,
+                aggregatorName: csvAsset.aggregatorName,
               });
               break;
             case "3":
@@ -258,6 +259,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: usdPriceAggregatorAddress,
+                aggregatorName: csvAsset.aggregatorName,
               });
               break;
             default:
@@ -272,6 +274,7 @@ task("upgrade", "Upgrade contracts")
                 asset: csvAsset.Address,
                 assetType: assetType,
                 aggregator: aggregator,
+                aggregatorName: csvAsset.aggregatorName,
               });
           }
         }
@@ -318,11 +321,17 @@ task("upgrade", "Upgrade contracts")
         const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
         const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
         console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
+        const poolFactoryImpl = await ethers.getContractAt(PoolFactoryABI, newPoolFactoryLogic);
 
         await tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
 
+        console.log("Initialising Impl");
+        await poolFactoryImpl.implInitializer();
+
         const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
         await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory", taskArgs.execute);
+
+        versions[newTag].contracts.PoolFactory = newPoolFactoryLogic;
       }
     }
     if (taskArgs.assetHandler) {
@@ -752,7 +761,7 @@ task("upgrade", "Upgrade contracts")
         console.log("Will deploy SushiMiniChefV2Guard");
       } else {
         const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-        const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+        const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken, wmatic]);
         await sushiMiniChefV2Guard.deployed();
         console.log("SushiMiniChefV2Guard deployed at", sushiMiniChefV2Guard.address);
         versions[newTag].contracts.SushiMiniChefV2Guard = sushiMiniChefV2Guard.address;
@@ -862,7 +871,7 @@ task("upgrade", "Upgrade contracts")
         await oneInchV4Guard.deployed();
         console.log("oneInchV4Guard deployed at", oneInchV4Guard.address);
         versions[newTag].contracts.OneInchV4Guard = oneInchV4Guard.address;
-        await new Promise((res) => setTimeout(res, 10000));
+
         await tryVerify(hre, oneInchV4Guard.address, "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard", [10, 100]);
 
         const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
