@@ -131,6 +131,27 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
     poolTokens.length === balancerLp.data.tokens.length,
     `${balancerLp.name} pool tokens length mismatch with configuration.`,
   );
+
+  // get token weights
+  const pool = await ethers.getContractAt(
+    [
+      {
+        inputs: [],
+        name: "getNormalizedWeights",
+        outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    balancerLp.address,
+  );
+  let weights;
+  try {
+    weights = await pool.getNormalizedWeights();
+  } catch (error) {
+    weights = ["500000000000000000", "500000000000000000"]; // no normalized weights on a 50/50 pool
+  }
+
   for (let i = 0; i < poolTokens.length; i++) {
     assert(
       poolTokens[i].toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
@@ -156,20 +177,6 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
       `${balancerLp.name} pool token decimals mismatch with deployment.`,
     );
 
-    // check token weight
-    const pool = await ethers.getContractAt(
-      [
-        {
-          inputs: [],
-          name: "getNormalizedWeights",
-          outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
-          stateMutability: "view",
-          type: "function",
-        },
-      ],
-      balancerLp.address,
-    );
-    const weights = await pool.getNormalizedWeights();
     assert(
       weights[i] / 1e18 === balancerLp.data.weights[i],
       `${balancerLp.name} pool token ${poolTokens[i]} weights mismatch with configuration.`,
