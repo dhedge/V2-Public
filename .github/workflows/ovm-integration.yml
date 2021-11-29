@@ -1,0 +1,56 @@
+name: OVM Integration Tests
+on: [push]
+
+jobs:
+# This workflow contains a single job called "test"
+  ovm-integration1:
+    if: "contains(join(github.event.commits.*.message), '[run-ovm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    name: OIT 1
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Node module cache
+        uses: actions/cache@v2
+        id: node-cache
+        with:
+          path: '**/node_modules'
+          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-v2-
+      - name: Install dependencies
+        run: npm ci
+        if: steps.node-cache.outputs.cache-hit != 'true'
+      - name: Hardhat artifact cache
+        uses: actions/cache@v2
+        id: hardhat-cache
+        with:
+          path: "artifacts"
+          key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            artifacts-
+
+      - name: Run EVM Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.OVM_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --fork $ALCHEMY_URL &
+
+      - name: Hardhat compile
+        run: npx hardhat compile
+
+      # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
+
+      - name: Synthetix Tests
+        run: |
+          npx hardhat test ./test/integration/ovm/SynthetixTest.ts --network localhost
+      - name: SynthPriceAggregator Tests
+        run: |
+          npx hardhat test ./test/integration/ovm/SynthPriceAggregatorTest.ts --network localhost
