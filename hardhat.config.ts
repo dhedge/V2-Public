@@ -26,8 +26,9 @@ dotenv.config();
 
 export default {
   gasReporter: {
+    enabled: true,
+    currency: "ETH",
     showTimeSpent: true,
-    currency: "USD",
   },
   networks: {
     localhost: {
