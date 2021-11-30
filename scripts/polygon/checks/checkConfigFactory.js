@@ -10,7 +10,7 @@ const main = async (initializeData) => {
     await poolFactory.implInitializer();
     assert(false, "poolFactory implementation Should be already initialized");
   } catch (e) {
-    assert(e.message.contains("implementation: contract is already initialized"));
+    assert(e.error.message.includes("contract is already initialized"));
     console.log("Pool Factory Implementation is initialized.");
   }
 

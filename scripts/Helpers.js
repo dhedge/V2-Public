@@ -14,7 +14,7 @@ let nonce,
   safeSdk,
   chainId,
   nonceLog = new Array();
-const { wait, retryWithDelay } = require("./utils.ts");
+const { retryWithDelay } = require("./utils.ts");
 
 const getTag = async () => {
   try {
@@ -58,17 +58,19 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
 };
 
 const tryVerify = async (hre, address, path, constructorArguments) => {
-  await wait(10000); // Make sure Etherscan picks it up
-
-  try {
-    await hre.run("verify:verify", {
-      address: address,
-      contract: path,
-      constructorArguments: constructorArguments,
-    });
-  } catch (err) {
-    console.log("Error: ", err);
-  }
+  await retryWithDelay(async () => {
+    try {
+      await hre.run("verify:verify", {
+        address: address,
+        contract: path,
+        constructorArguments: constructorArguments,
+      });
+    } catch (e) {
+      if (!e.message.toLowerCase().includes("already verified")) {
+        throw e;
+      }
+    }
+  }, "Try Verify: " + address);
 };
 
 const writeCsv = (data, fileName) => {
