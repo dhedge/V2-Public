@@ -1530,7 +1530,7 @@
       "OneInchV3Guard": "0xa389D040C0809b3069BA5b073469413152c2EBdF",
       "PoolPerformanceProxy": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
       "PoolPerformance": "0x97967D1ec91d9104c4Fb4BFa0c6FBF6eC1e0F323",
-      "BalancerV2Guard": "0x21e64Fe21A4703fC11C29BB38302025970d802dB",
+      "BalancerV2Guard": "0xe048300AF8359D0e8e8b27E1C931AF49ba1BA6eA",
       "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
       "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03"
@@ -1541,6 +1541,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Mon, 29 Nov 2021 03:48:42 GMT"
+    "date": "Tue, 30 Nov 2021 06:07:23 GMT"
   }
 }
