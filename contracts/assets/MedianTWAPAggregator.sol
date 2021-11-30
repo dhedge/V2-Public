@@ -11,6 +11,7 @@ import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
+import "../interfaces/IERC20Extended.sol";
 import "../utils/uniswap/UniswapV2OracleLibrary.sol";
 
 /**
@@ -26,6 +27,8 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   IUniswapV2Pair public immutable pair;
   address public immutable mainToken;
   IAggregatorV3Interface public immutable otherTokenUsdAggregator;
+  uint256 public mainTokenDecimals;
+  uint256 public otherTokenDecimals;
 
   uint256 public priceCumulativeLast;
   uint32 public blockTimestampLast;
@@ -52,10 +55,13 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     rewardToken = IERC20(_rewardToken);
     updateRewardAmount = _updateRewardAmount;
 
+    mainTokenDecimals = IERC20Extended(_mainToken).decimals();
     if (_mainToken == _pair.token0()) {
       priceCumulativeLast = _pair.price0CumulativeLast();
+      otherTokenDecimals = IERC20Extended(_pair.token1()).decimals();
     } else {
       priceCumulativeLast = _pair.price1CumulativeLast();
+      otherTokenDecimals = IERC20Extended(_pair.token0()).decimals();
     }
   }
 
@@ -92,7 +98,7 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     // overflow is desired, casting never truncates
     // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
     twaps[twapLastIndex] = (FixedPoint.uq112x112(uint224((priceCumulative - priceCumulativeLast) / timeElapsed)))
-      .mul(10**18)
+      .mul(10**mainTokenDecimals)
       .decode144();
     twapLastIndex++;
 
@@ -152,7 +158,16 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   {
     uint256 updatedAt1 = blockTimestampLast;
     (, int256 usdPrice, , uint256 updatedAt2, ) = otherTokenUsdAggregator.latestRoundData();
-    answer = consult().mul(usdPrice).div(10**10).div(int256(10**otherTokenUsdAggregator.decimals()));
+
+    if (otherTokenDecimals < 8) {
+      answer = consult().mul(usdPrice).mul(int256(10**(8 - otherTokenDecimals))).div(
+        int256(10**otherTokenUsdAggregator.decimals())
+      );
+    } else {
+      answer = consult().mul(usdPrice).div(int256(10**(otherTokenDecimals - 8))).div(
+        int256(10**otherTokenUsdAggregator.decimals())
+      );
+    }
 
     return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
   }
