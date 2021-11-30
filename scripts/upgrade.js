@@ -115,12 +115,12 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("assets", "deploy new assets", false, types.boolean)
   .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("aaveLendingPoolAssetGuard", "upgrade aaveLendingPoolAssetGuard", false, types.boolean)
-  .addOptionalParam("sushiLPAssetGuard", "upgrade sushiLPAssetGuard", false, types.boolean)
+  .addOptionalParam("sushiLpAssetGuard", "upgrade sushiLPAssetGuard", false, types.boolean)
   .addOptionalParam("erc20Guard", "upgrade erc20Guard", false, types.boolean)
   .addOptionalParam("lendingEnabledAssetGuard", "upgrade LendingEnabledAssetGuard", false, types.boolean)
   .addOptionalParam("uniswapV2RouterGuard", "upgrade uniswapV2RouterGuard", false, types.boolean)
   .addOptionalParam("openAssetGuard", "upgrade openAssetGuard", false, types.boolean)
-  .addOptionalParam("quickLPAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
+  .addOptionalParam("quickLpAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
   .addOptionalParam("balancerv2guard", "upgrade balancerV2Guard", false, types.boolean)
   .addOptionalParam("quickStakingRewardsGuard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
@@ -488,7 +488,7 @@ task("upgrade", "Upgrade contracts")
         });
       }
     }
-    if (taskArgs.sushiLPAssetGuard) {
+    if (taskArgs.sushiLpAssetGuard) {
       if (!taskArgs.execute) {
         console.log("Will deploy SushiLPAssetGuard");
       } else {
@@ -696,7 +696,7 @@ task("upgrade", "Upgrade contracts")
         });
       }
     }
-    if (taskArgs.quickLPAssetGuard) {
+    if (taskArgs.quickLpAssetGuard) {
       if (!taskArgs.execute) {
         console.log("Will deploy QuickLpAssetGuard");
       } else {
