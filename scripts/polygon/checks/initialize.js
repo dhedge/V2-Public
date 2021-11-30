@@ -8,7 +8,7 @@ const { getTag } = require("../../Helpers");
 use(chaiAlmost());
 
 const init = async (environment, deployedVersion = "") => {
-  console.log("Initializing contracts and variables..");
+  console.log("Initializing contracts and variables..", environment);
 
   const {
     versionsFileName,
@@ -23,7 +23,7 @@ const init = async (environment, deployedVersion = "") => {
     await getEnvironmentContracts(environment);
 
   const versions = require(versionsFileName);
-  const balancerLps = require(balancerLpsFileName);
+  const balancerLps = balancerLpsFileName ? require(balancerLpsFileName) : [];
   let version;
   const signer = (await ethers.getSigners())[0];
   if (!deployedVersion) {
@@ -86,31 +86,37 @@ const init = async (environment, deployedVersion = "") => {
   const proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdmin.abi, signer);
   contracts["ProxyAdmin"] = proxyAdminAddress;
 
-  const poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy);
+  const poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy || contracts.PoolFactory.proxy);
   const poolFactoryAddress = await proxyAdmin.getProxyImplementation(poolFactoryProxy.address);
   const poolFactory = PoolFactory.attach(poolFactoryAddress);
   contracts["PoolFactory"] = poolFactoryAddress;
 
-  const assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy);
+  const assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy || contracts.AssetHandler.proxy);
   const assetHandlerAddress = await proxyAdmin.getProxyImplementation(assetHandlerProxy.address);
   const assetHandler = AssetHandler.attach(assetHandlerAddress);
   contracts["AssetHandler"] = assetHandlerAddress;
 
   const governance = Governance.attach(contracts.Governance);
-  const sushiLPAssetGuard = SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
-  const quickLPAssetGuard = QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
-  const poolLogic = PoolLogic.attach(contracts.PoolLogic);
-  const poolManagerLogic = PoolManagerLogic.attach(contracts.PoolManagerLogic);
-  const openAssetGuard = OpenAssetGuard.attach(contracts.OpenAssetGuard);
-  const oneInchV3Guard = OpenAssetGuard.attach(contracts.OneInchV3Guard);
-  const balancerV2Guard = OpenAssetGuard.attach(contracts.BalancerV2Guard);
+  const sushiLPAssetGuard = contracts.SushiLPAssetGuard && SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
+  const quickLPAssetGuard = contracts.SushiLPAssetGuard && QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
+
+  const poolLogic = PoolLogic.attach(
+    (contracts.PoolLogic && contracts.PoolLogic.implementation) || contracts.PoolLogic,
+  );
+  const poolManagerLogic = PoolManagerLogic.attach(
+    (contracts.PoolManagerLogic && contracts.PoolManagerLogic.implementation) || contracts.PoolManagerLogic,
+  );
+  const openAssetGuard = contracts.OpenAssetGuard && OpenAssetGuard.attach(contracts.OpenAssetGuard);
+  const oneInchV3Guard = contracts.OneInchV3Guard && OpenAssetGuard.attach(contracts.OneInchV3Guard);
+  const balancerV2Guard = contracts.BalancerV2Guard && OpenAssetGuard.attach(contracts.BalancerV2Guard);
 
   const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
-  const balancerV2Vault = await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress);
+  const balancerV2Vault =
+    balancerV2VaultAddress && (await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress));
 
   console.log("PoolFactory Implementation:", poolFactoryAddress);
-  console.log("PoolLogic Implementation:", contracts.PoolLogic);
-  console.log("PoolManagerLogic Implementation:", contracts.PoolManagerLogic);
+  console.log("PoolLogic Implementation:", poolLogic.address);
+  console.log("PoolManagerLogic Implementation:", poolManagerLogic.address);
 
   console.log("Initialization complete!");
   console.log("_________________________________________");
@@ -150,7 +156,7 @@ const getEnvironmentFiles = async (environment) => {
   let versionsFileName, assetsFileName, balancerLpsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
 
   switch (environment) {
-    case "prod":
+    case "polygon":
       versionsFileName = "../../../publish/matic/versions.json";
       balancerLpsFileName = "../../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json";
       // CSV
@@ -170,6 +176,17 @@ const getEnvironmentFiles = async (environment) => {
       contractGuardsFileName = "./config/staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
       break;
 
+    case "ovm":
+      versionsFileName = "../../../publish/ovm/prod/versions.json";
+      balancerLpsFileName = undefined;
+      // CSV
+      assetsFileName = "./config/prod-ovm/assets/Chainlink Assets.csv";
+      usdPriceAggregatorAssetsFileName = "./config/prod-ovm/assets/USDPriceAggregator Assets.csv";
+      namesFileName = undefined;
+      assetGuardsFileName = "./config/prod-ovm/dHEDGE Governance Asset Guards.csv";
+      contractGuardsFileName = "./config/prod-ovm/dHEDGE Governance Contract Guards.csv";
+      break;
+
     default:
       throw "Invalid environment input. Should be 'prod' or 'staging'.";
   }
@@ -184,15 +201,15 @@ const getEnvironmentFiles = async (environment) => {
 };
 
 const getEnvironmentContracts = async (environment) => {
-  let protocolDao, proxyAdminAddress, protocolTreasury;
-  const balancerV2VaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+  let protocolDao, proxyAdminAddress, protocolTreasury, balancerV2VaultAddress;
 
   switch (environment) {
-    case "prod":
+    case "polygon":
       proxyAdminOwner = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
       proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
       protocolDao = proxyAdminOwner;
       protocolTreasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
+      balancerV2VaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
       break;
 
     case "staging":
@@ -200,6 +217,14 @@ const getEnvironmentContracts = async (environment) => {
       proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
       protocolDao = proxyAdminOwner;
       protocolTreasury = "0x51150F973c2b0537642f5AE8911A49567598808f";
+      balancerV2VaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+      break;
+
+    case "ovm":
+      protocolDao = "0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08";
+      proxyAdminOwner = "0xef31D75A2f85CfDD9032158A2CEB773C84d79192";
+      proxyAdminAddress = "0x9FEE88a18479bf7f0D41Da03819538AA7A617730";
+      protocolTreasury = "0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc";
       break;
 
     default:

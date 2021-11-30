@@ -1,5 +1,5 @@
 task("checkConfig", "Check deployed contracts")
-  .addOptionalParam("environment", "staging or prod", "prod", types.string)
+  .addOptionalParam("environment", "staging or prod", undefined, types.string)
   .addOptionalParam("v", "deployment version eg. 'v2.4.0'", "", types.string)
   .addOptionalParam("ownership", "check ownership", false, types.boolean)
   .addOptionalParam("factory", "check factory", false, types.boolean)
@@ -14,23 +14,24 @@ task("checkConfig", "Check deployed contracts")
     const checkAssets = require("./checkConfigAssets");
     const checkBytecode = require("./checkConfigBytecode");
 
-    const environment = taskArgs.environment;
+    const environment = taskArgs.environment || hre.network.name;
     const version = taskArgs.v;
+    const notSpecific = !taskArgs.specific;
     const initializeData = await initialize.init(environment, version);
 
     // Checks ownable contracts are owned by Protocol DAO
-    if (taskArgs.ownership) await checkOwnership.main(initializeData);
+    if (notSpecific || taskArgs.ownership) await checkOwnership.main(initializeData);
 
     // Checks deployed asset configuration vs CSV & versions file
-    if (taskArgs.factory) await checkFactory.main(initializeData);
+    if (notSpecific || taskArgs.factory) await checkFactory.main(initializeData);
 
     // Goverernance contract configuration vs CSV
-    if (taskArgs.governance) await checkGovernance.main(initializeData);
+    if (notSpecific || taskArgs.governance) await checkGovernance.main(initializeData);
 
     // Checks deployed asset configuration vs CSV & versions file
-    if (taskArgs.assets) await checkAssets.main(initializeData);
+    if (notSpecific || taskArgs.assets) await checkAssets.main(initializeData);
 
     // Checks for differences in deployed bytecode vs current repo bytecode
     // Note: Bytecode checks are excluded from 'check:polygon:all' script and can be executed separately.
-    if (taskArgs.bytecode) await checkBytecode.main(initializeData);
+    if (notSpecific || taskArgs.bytecode) await checkBytecode.main(initializeData);
   });

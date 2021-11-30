@@ -12,7 +12,7 @@ const main = async (initializeData) => {
   // Check Governance settings
   console.log("Checking Governance settings..");
 
-  const csvNames = await csv().fromFile(namesFileName);
+  const csvNames = (namesFileName && (await csv().fromFile(namesFileName))) || [];
 
   // Check governance guard mappings match the CSV
   const csvAssetGuards = await csv().fromFile(assetGuardsFileName);

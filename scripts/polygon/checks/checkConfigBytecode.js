@@ -16,7 +16,9 @@ const main = async (initializeData) => {
   const bytecodeErrors = [];
   for (const contract of contractsArray) {
     const creationBytecode = contract.contract.bytecode;
-    const runtimeBytecode = await ethers.provider.getCode(contracts[contract.name]);
+    const runtimeBytecode = await ethers.provider.getCode(
+      (contracts[contract.name] && contracts[contract.name].implementation) || contracts[contract.name],
+    );
     const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
     if (runtimeBytecode.length < 10) bytecodeErrors.push(`Missing bytecode in deployed address for ${contract.name}`);
     if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${contract.name}`);

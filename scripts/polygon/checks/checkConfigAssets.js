@@ -6,7 +6,9 @@ const csv = require("csvtojson");
 use(chaiAlmost());
 
 // Coingecko API
-const coingeckoNetwork = "polygon-pos";
+// https://www.coingecko.com/en/api/documentation - asset_platforms
+// asset_platforms
+const coingeckoNetwork = hre.network.name == "polygon" ? "polygon-pos" : "optimistic-ethereum";
 
 const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
 
@@ -19,6 +21,8 @@ const main = async (initializeData) => {
 
   const assets = versions[version].contracts.Assets;
   const csvAssets = await csv().fromFile(assetsFileName);
+  const csvUSDPriceAggregatorAssets =
+    (usdPriceAggregatorAssetsFileName && (await csv().fromFile(usdPriceAggregatorAssetsFileName))) || [];
 
   // Check for any new assets in the asset CSV config
   for (const csvAsset of csvAssets) {
@@ -66,6 +70,16 @@ const main = async (initializeData) => {
       }
     }
 
+    for (const csvAsset of csvUSDPriceAggregatorAssets) {
+      if (csvAsset.Address == assetAddress) {
+        foundInCsv = true;
+        assert(
+          assetType == parseInt(csvAsset.AssetType),
+          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.AssetType}, Contract assetType = ${assetType}`,
+        );
+      }
+    }
+
     // Reverse check Balancer LP JSON config
     for (const balancerLp of balancerLps) {
       if (balancerLp.address === asset.asset) {
@@ -77,7 +91,10 @@ const main = async (initializeData) => {
       }
     }
 
-    assert(foundInCsv, `Couldn't find ${asset.name} address in the Assets CSV or Balancer JSON config.`);
+    assert(
+      foundInCsv,
+      `Couldn't find ${asset.name} address in the Assets CSV, USD Assets CSV or Balancer JSON config.`,
+    );
 
     // Check primitive asset prices against Coingecko (correct price oracle config)
     const assetPriceUsd = assetPrice / 1e18;
@@ -93,6 +110,7 @@ const main = async (initializeData) => {
 
     if (checkCoingeckoPrice) {
       const url = `https://api.coingecko.com/api/v3/simple/token_price/${coingeckoNetwork}?contract_addresses=${assetAddress}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=true`;
+      console.log(url);
       try {
         const { data } = await axios.get(url);
         coingeckoAssetPriceUsd = data[assetAddress.toLowerCase()].usd;

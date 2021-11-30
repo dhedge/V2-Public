@@ -10,8 +10,9 @@ const main = async (initializeData) => {
     await poolFactory.implInitializer();
     assert(false, "poolFactory implementation Should be already initialized");
   } catch (e) {
-    assert(e.message.contains("implementation: contract is already initialized"));
-    console.log("Pool Factory Implementation is initialized.");
+    console.error(e.error.message);
+    assert(e.error.message.includes("already initialized"), "PoolFactory implementation should be initialised");
+    console.log("PoolFactory Implementation is initialized.");
   }
 
   const protocolTreasurySetting = await poolFactoryProxy.daoAddress();

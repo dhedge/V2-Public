@@ -7,23 +7,23 @@ import { assets, synthetix } from "../../test/integration/ovm/ovm-data";
 
 const { getTag } = require("../Helpers");
 
+const fileNames = {
+  ovmVersionFile: "./publish/ovm/prod/versions.json",
+  chainlinkAssetsFile: "./config/prod-ovm/assets/Chainlink Assets.csv",
+  usdPriceAggregatorAssetsFile: "./config/prod-ovm/assets/USDPriceAggregator Assets.csv",
+};
+
 const addresses = {
   LEET: "0x0000000000000000000000000000000000001337",
   // https://ogg.scopelift.co/wallet/0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08
   protocolDao: "0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08",
   // https://ogg.scopelift.co/wallet/0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc
-  uberPool: "0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc",
+  protocolTreasury: "0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc",
 
   sUSD: assets.susd,
   synthetixProxyAddress: assets.snxProxy,
   synthetixAddressResolverAddress: synthetix.addressResolver,
   implementationStorage: "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
-};
-
-const fileNames = {
-  ovmVersionFile: "./publish/ovm/prod/versions.json",
-  chainlinkAssetsFile: "./config/prod-ovm/assets/Chainlink Assets.csv",
-  usdPriceAggregatorAssetsFile: "./config/prod-ovm/assets/USDPriceAggregator Assets.csv",
 };
 
 type Address = string;
@@ -40,7 +40,7 @@ interface IContracts {
   SynthetixGuard?: Address;
   ERC20Guard?: Address;
   USDPriceAggregator?: Address;
-  Assets?: { name: string; asset: Address; assetType: number; aggregator: Address }[];
+  Assets?: { name: string; asset: Address; assetType: string | undefined; aggregator: Address | undefined }[];
 }
 
 export type IVersions = {
@@ -166,6 +166,7 @@ async function main() {
       await assetHandler.addAssets([...chainlinkAssetHandlers, ...usdAssetHandlers]);
       await assetHandler.transferOwnership(addresses.protocolDao);
       const assetHandlerImplementation = await getImplementationAddress(ethers.provider, assetHandler.address);
+      addToVersions("Assets", allAssets);
       addToVersions("AssetHandler", { proxy: assetHandler.address, implementation: assetHandlerImplementation });
       console.log("AssetHandler deployed at ", assetHandler.address);
     },
@@ -246,7 +247,7 @@ async function main() {
       ]);
 
       await poolFactory.deployed();
-      await poolFactory.setDAOAddress(addresses.uberPool);
+      await poolFactory.setDAOAddress(addresses.protocolTreasury);
       await poolFactory.setPoolPerformanceAddress(contracts.PoolPerformance?.proxy);
       await poolFactory.transferOwnership(addresses.protocolDao);
       const poolFactoryImplementation = await getImplementationAddress(ethers.provider, poolFactory.address);
