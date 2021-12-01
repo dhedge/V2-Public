@@ -146,6 +146,20 @@ contract SushiMiniChefV2Guard is TxDataUtils, IGuard {
       emit Claim(poolLogic, to, block.timestamp);
 
       txType = 8; // `UnstakeAndClaim` type
+    } else if (method == bytes4(keccak256("emergencyWithdraw(uint256,address)"))) {
+      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+      address poolLogic = poolManagerLogic.poolLogic();
+      uint256 poolId = uint256(getInput(data, 0)); // The index of the pool in MiniChefV2.
+      address receiver = convert32toAddress(getInput(data, 1)); // The receiver of all the staked LP tokens.
+      address lpToken = IMiniChefV2(to).lpToken(poolId); // Sushi LP token to unstake.
+      (uint256 amount, ) = IMiniChefV2(to).userInfo(poolId, receiver); // Amount LP token amount that will be unstaked.
+
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(lpToken), "unsupported lp asset");
+      require(poolLogic == receiver, "recipient is not pool");
+
+      emit Unstake(poolLogic, lpToken, to, amount, block.timestamp);
+
+      txType = 6; // `Unstake` type
     }
   }
 }
