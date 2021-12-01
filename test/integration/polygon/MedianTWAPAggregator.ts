@@ -6,23 +6,61 @@ import axios from "axios";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { assets, price_feeds, eth_price_feeds, sushi } from "../polygon-data";
 import { MedianTWAPAggregator } from "../../../types";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 use(solidity);
 
 describe("ETHCrossAggregator Test", function () {
+  let logicOwner: SignerWithAddress, other: SignerWithAddress;
   let dhedgeMedianTwapAggregator: MedianTWAPAggregator;
 
   beforeEach(async function () {
+    [logicOwner, other] = await ethers.getSigners();
     const MedianTWAPAggregator = await ethers.getContractFactory("MedianTWAPAggregator");
     dhedgeMedianTwapAggregator = await MedianTWAPAggregator.deploy(
       sushi.pools.weth_dht.address,
       assets.dht,
       price_feeds.eth,
       1000,
-      assets.usdc,
-      units(10), // 10 USDC
     );
     await dhedgeMedianTwapAggregator.deployed();
+  });
+
+  it("check update interval", async () => {
+    await dhedgeMedianTwapAggregator.update();
+    await ethers.provider.send("evm_increaseTime", [200]);
+    await expect(dhedgeMedianTwapAggregator.update()).to.revertedWith("period is not passed");
+    await ethers.provider.send("evm_increaseTime", [800]);
+    await dhedgeMedianTwapAggregator.update();
+  });
+
+  it("change update interval", async () => {
+    expect(await dhedgeMedianTwapAggregator.updateInterval()).to.equal(1000);
+    await dhedgeMedianTwapAggregator.setUpdateInterval(2000);
+    expect(await dhedgeMedianTwapAggregator.updateInterval()).to.equal(2000);
+  });
+
+  it("incentive for update", async () => {
+    const balanceBefore = await logicOwner.getBalance();
+
+    await expect(dhedgeMedianTwapAggregator.updateWithIncentive()).to.revertedWith("failed to send incentive");
+
+    await other.sendTransaction({ value: units(100), to: dhedgeMedianTwapAggregator.address });
+    await dhedgeMedianTwapAggregator.updateWithIncentive();
+
+    const balanceAfter = await logicOwner.getBalance();
+
+    expect(balanceBefore).lt(balanceAfter);
+  });
+
+  it("try with high gas price", async () => {
+    await other.sendTransaction({ value: units(100), to: dhedgeMedianTwapAggregator.address });
+
+    const balanceBefore = await logicOwner.getBalance();
+    await dhedgeMedianTwapAggregator.updateWithIncentive({ gasPrice: 1000000000000 });
+    const balanceAfter = await logicOwner.getBalance();
+
+    expect(balanceBefore).gt(balanceAfter);
   });
 
   it("Get Dhedge price", async () => {
@@ -35,10 +73,8 @@ describe("ETHCrossAggregator Test", function () {
     await dhedgeMedianTwapAggregator.update();
 
     const price = (await dhedgeMedianTwapAggregator.latestRoundData()).answer;
-    console.log(price.toString());
     const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.dht)).toString(), 8);
-    console.log(priceFromCongecko.toString());
-    expect(price).to.be.closeTo(priceFromCongecko, price.mul(3).div(100) as any); // 3% diff
+    expect(price).to.be.closeTo(priceFromCongecko, price.mul(5).div(100) as any); // 3% diff
   });
 
   it("Get WETH price", async () => {
@@ -48,8 +84,6 @@ describe("ETHCrossAggregator Test", function () {
       assets.weth,
       price_feeds.usdc,
       1000,
-      assets.usdc,
-      units(10), // 10 USDC
     );
     await wethMedianTwapAggregator.deployed();
 
@@ -62,9 +96,7 @@ describe("ETHCrossAggregator Test", function () {
     await wethMedianTwapAggregator.update();
 
     const price = (await wethMedianTwapAggregator.latestRoundData()).answer;
-    console.log(price.toString());
     const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.weth)).toString(), 8);
-    console.log(priceFromCongecko.toString());
     expect(price).to.be.closeTo(priceFromCongecko, price.mul(3).div(100) as any); // 3% diff
   });
 
@@ -75,8 +107,6 @@ describe("ETHCrossAggregator Test", function () {
       assets.usdc,
       price_feeds.eth,
       1000,
-      assets.usdc,
-      units(10), // 10 USDC
     );
     await usdcMedianTwapAggregator.deployed();
 
@@ -89,9 +119,7 @@ describe("ETHCrossAggregator Test", function () {
     await usdcMedianTwapAggregator.update();
 
     const price = (await usdcMedianTwapAggregator.latestRoundData()).answer;
-    console.log(price.toString());
     const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.usdc)).toString(), 8);
-    console.log(priceFromCongecko.toString());
     expect(price).to.be.closeTo(priceFromCongecko, price.mul(3).div(100) as any); // 3% diff
   });
 });

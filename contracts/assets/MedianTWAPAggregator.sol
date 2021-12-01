@@ -4,6 +4,7 @@ pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -13,6 +14,7 @@ import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
 import "../interfaces/IERC20Extended.sol";
 import "../utils/uniswap/UniswapV2OracleLibrary.sol";
+import "../utils/DhedgeMath.sol";
 
 /**
  * @title Median TWAP USD price aggregator.
@@ -22,6 +24,8 @@ import "../utils/uniswap/UniswapV2OracleLibrary.sol";
 contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   using SafeERC20 for IERC20;
   using SignedSafeMath for int256;
+  using SafeMath for uint256;
+  using DhedgeMath for uint256;
   using FixedPoint for *;
 
   IUniswapV2Pair public immutable pair;
@@ -36,24 +40,27 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   mapping(uint256 => int256) public twaps;
   uint256 public twapLastIndex;
 
-  IERC20 public rewardToken;
-  uint256 public updateRewardAmount;
   uint256 public updateInterval;
+
+  uint256 public maxGasPrice = 200000000000; // 200 GWEI
+  uint256 public maxGasUsed = 130000; //130K
+
+  // solhint-disable-next-line no-empty-blocks
+  receive() external payable {}
+
+  // solhint-disable-next-line no-empty-blocks
+  fallback() external payable {}
 
   constructor(
     IUniswapV2Pair _pair,
     address _mainToken, // DHT
     IAggregatorV3Interface _otherTokenUsdAggregator, // WETH price aggregator
-    uint256 _updateInterval,
-    address _rewardToken,
-    uint256 _updateRewardAmount
+    uint256 _updateInterval
   ) Ownable() Pausable() {
     pair = _pair;
     mainToken = _mainToken;
     otherTokenUsdAggregator = _otherTokenUsdAggregator;
     updateInterval = _updateInterval;
-    rewardToken = IERC20(_rewardToken);
-    updateRewardAmount = _updateRewardAmount;
 
     mainTokenDecimals = IERC20Extended(_mainToken).decimals();
     if (_mainToken == _pair.token0()) {
@@ -81,12 +88,23 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     updateInterval = _updateInterval;
   }
 
-  function setUpdateRewards(address _rewardToken, uint256 _updateRewardAmount) external onlyOwner {
-    rewardToken = IERC20(_rewardToken);
-    updateRewardAmount = _updateRewardAmount;
+  function update() external {
+    _update();
   }
 
-  function update() external whenNotPaused {
+  function updateWithIncentive() external {
+    _update();
+
+    uint256 gasPrice = tx.gasprice;
+    uint256 cost = maxGasUsed.mul(maxGasPrice > gasPrice ? gasPrice : maxGasPrice);
+    uint256 reward = uint256(cost.sqrt()).div(10);
+
+    // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+    (bool sent, ) = msg.sender.call{value: cost.add(reward)}("");
+    require(sent, "failed to send incentive");
+  }
+
+  function _update() internal whenNotPaused {
     (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
       .currentCumulativePrices(address(pair));
     uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
@@ -104,13 +122,6 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
 
     priceCumulativeLast = priceCumulative;
     blockTimestampLast = blockTimestamp;
-
-    uint256 rewards = (timeElapsed * updateRewardAmount) / updateInterval;
-    uint256 remaining = rewardToken.balanceOf(address(this));
-    rewards = rewards > remaining ? remaining : rewards;
-    if (rewards > 0) {
-      rewardToken.safeTransfer(msg.sender, rewards);
-    }
   }
 
   function consult() public view whenNotPaused returns (int256 price) {
