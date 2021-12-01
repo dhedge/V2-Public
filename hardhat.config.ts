@@ -11,6 +11,7 @@ import { HardhatUserConfig } from "hardhat/config";
 
 import "./scripts/upgrade";
 import "./scripts/verify";
+import "./scripts/explorer-verify";
 import "./scripts/dynamicBonds";
 import "./scripts/polygon/checks/checkConfig";
 import "./scripts/compileOne";

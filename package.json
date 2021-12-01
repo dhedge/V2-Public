@@ -60,7 +60,8 @@
     "check:ovm:all": "npx hardhat checkConfig --network ovm",
     "doc:gen": "solidity-docgen --solc-module solc-0.7 -t templates",
     "prepare": "husky install",
-    "verify:polygon": "hardhat run ./scripts/verify.js --network polygon"
+    "verify:polygon": "hardhat run ./scripts/verify.js --network polygon",
+    "verify:ovm": "hardhat explorerVerify --network ovm"
   },
   "author": "dHEDGE Team",
   "license": "ISC",

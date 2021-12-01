@@ -1,6 +1,6 @@
 {
   "v2.12.0": {
-    "lastUpdated": "Mon, 29 Nov 2021 21:50:09 GMT",
+    "lastUpdated": "Wed, 01 Dec 2021 05:51:21 GMT",
     "contracts": {
       "Assets": [
         {
@@ -40,17 +40,17 @@
         "proxy": "0x0896A33E351fb11f405d3E9c03f4D4Fc667894a8",
         "implementation": "0xa3A54bA1572BCc1468789C793bE2d46F38cf11dc"
       },
-      "PoolLogic": {
-        "proxy": "0x7F1A04397236Dae726fe63f322E7f3C08AB53Cf8",
-        "implementation": "0xa2822a8d9aca3d56a2ed2be70f0c11136875289c"
-      },
       "PoolManagerLogic": {
         "proxy": "0x3621f9aAc18a42D2343270849611ea09aAea3e54",
         "implementation": "0xbc87becd9b2aed3e282d352b94b80045946cf4b9"
       },
+      "PoolLogic": {
+        "proxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
+        "implementation": "0xfe231f6b46d84f1dd046b4e4b5562a6433f3e914"
+      },
       "PoolFactory": {
-        "proxy": "0x03228Ddd04f0FF07cB68F53d164b53Dc2E4362eA",
-        "implementation": "0xB27f3F87B962f07188612E17D2721Df7F23D7E71"
+        "proxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
+        "implementation": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8"
       }
     }
   }
