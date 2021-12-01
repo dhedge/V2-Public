@@ -33,6 +33,7 @@ const main = async (initializeData) => {
   }
   if (quickLPAssetGuard) {
     owner.quickLPAssetGuard = await quickLPAssetGuard.owner();
+    qq;
   }
   if (openAssetGuard) {
     owner.openAssetGuard = await openAssetGuard.owner();

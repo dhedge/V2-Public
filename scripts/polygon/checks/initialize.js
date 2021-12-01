@@ -40,40 +40,8 @@ const init = async (environment, deployedVersion = "") => {
   const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-  const UniswapV2RouterGuard = await ethers.getContractFactory("ERC20Guard");
-  const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-  const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-  const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-  const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-  const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
-  const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
   const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
   const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
-  const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
-  const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
-  const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
-  const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-
-  const contractsArray = [
-    { contract: Governance, name: "Governance" },
-    { contract: PoolFactory, name: "PoolFactory" },
-    { contract: PoolLogic, name: "PoolLogic" },
-    { contract: PoolManagerLogic, name: "PoolManagerLogic" },
-    { contract: AssetHandler, name: "AssetHandler" },
-    { contract: ERC20Guard, name: "ERC20Guard" },
-    { contract: UniswapV2RouterGuard, name: "UniswapV2RouterGuard" },
-    { contract: SushiMiniChefV2Guard, name: "SushiMiniChefV2Guard" },
-    { contract: AaveLendingPoolAssetGuard, name: "AaveLendingPoolAssetGuard" },
-    { contract: AaveLendingPoolGuard, name: "AaveLendingPoolGuard" },
-    { contract: LendingEnabledAssetGuard, name: "LendingEnabledAssetGuard" },
-    { contract: AaveIncentivesControllerGuard, name: "AaveIncentivesControllerGuard" },
-    { contract: OpenAssetGuard, name: "OpenAssetGuard" },
-    { contract: QuickLPAssetGuard, name: "QuickLPAssetGuard" },
-    { contract: QuickStakingRewardsGuard, name: "QuickStakingRewardsGuard" },
-    { contract: OneInchV3Guard, name: "OneInchV3Guard" },
-    { contract: BalancerV2Guard, name: "BalancerV2Guard" },
-    { contract: PoolPerformance, name: "PoolPerformance" },
-  ];
 
   let contracts;
   try {
@@ -134,7 +102,6 @@ const init = async (environment, deployedVersion = "") => {
     protocolDao,
     protocolTreasury,
     contracts,
-    contractsArray,
     proxyAdmin,
     proxyAdminOwner,
     poolFactoryProxy,

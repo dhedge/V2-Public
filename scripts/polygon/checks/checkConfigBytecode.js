@@ -1,13 +1,56 @@
 const { ethers } = require("hardhat");
 const { assert, use } = require("chai");
 const chaiAlmost = require("chai-almost");
+const uc = require("@openzeppelin/upgrades-core");
 
 use(chaiAlmost());
 
 const { isSameBytecode } = require("../../Helpers");
 
 const main = async (initializeData) => {
-  const { contracts, contractsArray } = initializeData;
+  const { contracts } = initializeData;
+
+  const PoolFactoryProxy = await ethers.getContractFactory("PoolFactory");
+  const PoolFactory = PoolFactoryProxy;
+  const Governance = await ethers.getContractFactory("Governance");
+  const AssetHandlerProxy = await ethers.getContractFactory("AssetHandler");
+  const AssetHandler = AssetHandlerProxy;
+  const PoolLogic = await ethers.getContractFactory("PoolLogic");
+  const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+  const UniswapV2RouterGuard = await ethers.getContractFactory("ERC20Guard");
+  const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
+  const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
+  const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+  const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+  const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+  const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
+  const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+  const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
+  const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
+  const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
+  const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
+  const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+
+  const contractsArray = [
+    { contract: Governance, name: "Governance" },
+    { contract: PoolFactory, name: "PoolFactory" },
+    { contract: PoolLogic, name: "PoolLogic" },
+    { contract: PoolManagerLogic, name: "PoolManagerLogic" },
+    { contract: AssetHandler, name: "AssetHandler" },
+    { contract: ERC20Guard, name: "ERC20Guard" },
+    { contract: UniswapV2RouterGuard, name: "UniswapV2RouterGuard" },
+    { contract: SushiMiniChefV2Guard, name: "SushiMiniChefV2Guard" },
+    { contract: AaveLendingPoolAssetGuard, name: "AaveLendingPoolAssetGuard" },
+    { contract: AaveLendingPoolGuard, name: "AaveLendingPoolGuard" },
+    { contract: LendingEnabledAssetGuard, name: "LendingEnabledAssetGuard" },
+    { contract: AaveIncentivesControllerGuard, name: "AaveIncentivesControllerGuard" },
+    { contract: OpenAssetGuard, name: "OpenAssetGuard" },
+    { contract: QuickLPAssetGuard, name: "QuickLPAssetGuard" },
+    { contract: QuickStakingRewardsGuard, name: "QuickStakingRewardsGuard" },
+    { contract: OneInchV3Guard, name: "OneInchV3Guard" },
+    { contract: BalancerV2Guard, name: "BalancerV2Guard" },
+    { contract: PoolPerformance, name: "PoolPerformance" },
+  ];
 
   // Check latest contract bytecodes (what needs to be upgraded on next release)
   console.log("Checking latest bytecodes against last deployment..");
@@ -15,13 +58,20 @@ const main = async (initializeData) => {
 
   const bytecodeErrors = [];
   for (const contract of contractsArray) {
-    const creationBytecode = contract.contract.bytecode;
-    const runtimeBytecode = await ethers.provider.getCode(
-      (contracts[contract.name] && contracts[contract.name].implementation) || contracts[contract.name],
-    );
-    const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
-    if (runtimeBytecode.length < 10) bytecodeErrors.push(`Missing bytecode in deployed address for ${contract.name}`);
-    if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${contract.name}`);
+    let contractAddress;
+    if (contracts[contract.name] && contracts[contract.name].proxy) {
+      contractAddress = await uc.getImplementationAddress(ethers.provider, contracts[contract.name].proxy);
+    } else {
+      contractAddress = contracts[contract.name];
+    }
+
+    if (contractAddress) {
+      const creationBytecode = contract.contract.bytecode;
+      const runtimeBytecode = await ethers.provider.getCode(contractAddress);
+      const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
+      if (runtimeBytecode.length < 10) bytecodeErrors.push(`Missing bytecode in deployed address for ${contract.name}`);
+      if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${contract.name}`);
+    }
   }
 
   // Check asset aggregators

@@ -110,24 +110,24 @@ const main = async (initializeData) => {
 
     if (checkCoingeckoPrice) {
       const url = `https://api.coingecko.com/api/v3/simple/token_price/${coingeckoNetwork}?contract_addresses=${assetAddress}&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=true`;
-      console.log(url);
       try {
         const { data } = await axios.get(url);
         coingeckoAssetPriceUsd = data[assetAddress.toLowerCase()].usd;
 
-        assert(
-          approxEq(assetPriceUsd, coingeckoAssetPriceUsd),
-          `${asset.name} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
+        console.log(
+          `${asset.name} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
         );
+
+        if (approxEq(assetPriceUsd, coingeckoAssetPriceUsd)) {
+          console.error(
+            `${asset.name} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
+          );
+        }
       } catch (err) {
-        console.error(err);
-        console.error(`Error getting Coingecko feed for ${asset.name}`);
+        console.error(`Error getting Coingecko feed for ${asset.name}`, err);
+        console.log("CoinGecko Request: ", url);
       }
     }
-
-    console.log(
-      `${asset.name} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
-    );
   }
 
   console.log("Asset checks complete!");
