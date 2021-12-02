@@ -115,34 +115,34 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     uint256 priceCumulative = mainToken == pair.token0() ? price0Cumulative : price1Cumulative;
     // overflow is desired, casting never truncates
     // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+    twapLastIndex++;
     twaps[twapLastIndex] = (FixedPoint.uq112x112(uint224((priceCumulative - priceCumulativeLast) / timeElapsed)))
       .mul(10**mainTokenDecimals)
       .decode144();
-    twapLastIndex++;
 
     priceCumulativeLast = priceCumulative;
     blockTimestampLast = blockTimestamp;
   }
 
   function consult() public view whenNotPaused returns (int256 price) {
-    require(twapLastIndex >= 3, "not enough twaps");
+    require(twapLastIndex > 3, "not enough twaps");
 
-    if (twaps[twapLastIndex - 3] <= twaps[twapLastIndex - 2]) {
-      if (twaps[twapLastIndex - 2] <= twaps[twapLastIndex - 1]) {
+    if (twaps[twapLastIndex - 2] <= twaps[twapLastIndex - 1]) {
+      if (twaps[twapLastIndex - 1] <= twaps[twapLastIndex]) {
+        return twaps[twapLastIndex - 1];
+      }
+      if (twaps[twapLastIndex] <= twaps[twapLastIndex - 2]) {
         return twaps[twapLastIndex - 2];
       }
-      if (twaps[twapLastIndex - 1] <= twaps[twapLastIndex - 3]) {
-        return twaps[twapLastIndex - 3];
-      }
-      return twaps[twapLastIndex - 1];
+      return twaps[twapLastIndex];
     } else {
-      if (twaps[twapLastIndex - 2] > twaps[twapLastIndex - 1]) {
+      if (twaps[twapLastIndex - 1] > twaps[twapLastIndex]) {
+        return twaps[twapLastIndex - 1];
+      }
+      if (twaps[twapLastIndex] > twaps[twapLastIndex - 2]) {
         return twaps[twapLastIndex - 2];
       }
-      if (twaps[twapLastIndex - 1] > twaps[twapLastIndex - 3]) {
-        return twaps[twapLastIndex - 3];
-      }
-      return twaps[twapLastIndex - 1];
+      return twaps[twapLastIndex];
     }
   }
 
@@ -169,6 +169,9 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   {
     uint256 updatedAt1 = blockTimestampLast;
     (, int256 usdPrice, , uint256 updatedAt2, ) = otherTokenUsdAggregator.latestRoundData();
+    updatedAt = updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1;
+
+    require(updatedAt.add(updateInterval.mul(12)) > block.timestamp, "price expired");
 
     if (otherTokenDecimals < 8) {
       answer = consult().mul(usdPrice).mul(int256(10**(8 - otherTokenDecimals))).div(
@@ -180,6 +183,6 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
       );
     }
 
-    return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
+    return (0, answer, 0, updatedAt, 0);
   }
 }

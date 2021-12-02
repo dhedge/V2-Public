@@ -13,8 +13,10 @@ use(solidity);
 describe("ETHCrossAggregator Test", function () {
   let logicOwner: SignerWithAddress, other: SignerWithAddress;
   let dhedgeMedianTwapAggregator: MedianTWAPAggregator;
+  let snapshot: any;
 
   beforeEach(async function () {
+    snapshot = await ethers.provider.send("evm_snapshot", []);
     [logicOwner, other] = await ethers.getSigners();
     const MedianTWAPAggregator = await ethers.getContractFactory("MedianTWAPAggregator");
     dhedgeMedianTwapAggregator = await MedianTWAPAggregator.deploy(
@@ -24,6 +26,10 @@ describe("ETHCrossAggregator Test", function () {
       1000,
     );
     await dhedgeMedianTwapAggregator.deployed();
+  });
+
+  afterEach(async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
   });
 
   it("check update interval", async () => {
