@@ -42,7 +42,7 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
 
   uint256 public updateInterval;
 
-  uint256 public maxGasPrice = 200000000000; // 200 GWEI
+  uint256 public maxGasPrice = 200 gwei;
   uint256 public maxGasUsed = 130000; //130K
 
   // solhint-disable-next-line no-empty-blocks
