@@ -1,13 +1,13 @@
-const { ethers } = require("hardhat");
-const { use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const ProxyAdmin = require("@openzeppelin/contracts/build/contracts/ProxyAdmin.json");
+import ProxyAdmin from "@openzeppelin/contracts/build/contracts/ProxyAdmin.json";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 const { getTag } = require("../../Helpers");
 
-use(chaiAlmost());
+type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
+export type InitType = Awaited<ReturnType<typeof init>>;
 
-const init = async (environment, deployedVersion = "") => {
+export const init = async (environment: string, deployedVersion = "", hre: HardhatRuntimeEnvironment) => {
+  const { ethers, artifacts } = hre;
   console.log("Initializing contracts and variables..", environment);
 
   const {
@@ -17,6 +17,7 @@ const init = async (environment, deployedVersion = "") => {
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
+    usdPriceAggregatorAssetsFileName,
   } = await getEnvironmentFiles(environment);
 
   const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress } =
@@ -78,9 +79,9 @@ const init = async (environment, deployedVersion = "") => {
   const oneInchV3Guard = contracts.OneInchV3Guard && OpenAssetGuard.attach(contracts.OneInchV3Guard);
   const balancerV2Guard = contracts.BalancerV2Guard && OpenAssetGuard.attach(contracts.BalancerV2Guard);
 
-  const IBalancerV2Vault = await hre.artifacts.readArtifact("IBalancerV2Vault");
+  const IBalancerV2Vault = await artifacts.readArtifact("IBalancerV2Vault");
   const balancerV2Vault =
-    balancerV2VaultAddress && (await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress));
+    (balancerV2VaultAddress && (await ethers.getContractAt(IBalancerV2Vault.abi, balancerV2VaultAddress))) || undefined;
 
   console.log("PoolFactory Implementation:", poolFactoryAddress);
   console.log("PoolLogic Implementation:", poolLogic.address);
@@ -94,6 +95,7 @@ const init = async (environment, deployedVersion = "") => {
     balancerLps,
     balancerV2Vault,
     namesFileName,
+    usdPriceAggregatorAssetsFileName,
     assetGuardsFileName,
     contractGuardsFileName,
     versions,
@@ -119,8 +121,14 @@ const init = async (environment, deployedVersion = "") => {
   };
 };
 
-const getEnvironmentFiles = async (environment) => {
-  let versionsFileName, assetsFileName, balancerLpsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
+const getEnvironmentFiles = async (environment: string) => {
+  let versionsFileName,
+    assetsFileName,
+    balancerLpsFileName,
+    namesFileName,
+    assetGuardsFileName,
+    contractGuardsFileName,
+    usdPriceAggregatorAssetsFileName;
 
   switch (environment) {
     case "polygon":
@@ -164,11 +172,12 @@ const getEnvironmentFiles = async (environment) => {
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
+    usdPriceAggregatorAssetsFileName,
   };
 };
 
-const getEnvironmentContracts = async (environment) => {
-  let protocolDao, proxyAdminAddress, protocolTreasury, balancerV2VaultAddress;
+const getEnvironmentContracts = async (environment: string) => {
+  let proxyAdminOwner, protocolDao, proxyAdminAddress, protocolTreasury, balancerV2VaultAddress;
 
   switch (environment) {
     case "polygon":
@@ -199,5 +208,3 @@ const getEnvironmentContracts = async (environment) => {
   }
   return { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress };
 };
-
-module.exports = { init };

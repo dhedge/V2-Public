@@ -1,6 +1,8 @@
-const { expect, assert } = require("chai");
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { InitType } from "./initialize";
+import { expect, assert } from "chai";
 
-const main = async (initializeData) => {
+export const checkFactory = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
   const { protocolTreasury, poolFactoryProxy, assetHandlerProxy, governance, poolFactory } = initializeData;
 
   // Check Factory settings
@@ -30,5 +32,3 @@ const main = async (initializeData) => {
   console.log("Factory settings checks complete!");
   console.log("_________________________________________");
 };
-
-module.exports = { main };

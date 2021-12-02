@@ -1,3 +1,11 @@
+import { task, types } from "hardhat/config";
+import { init } from "./initialize";
+import { checkOwnership } from "./checkConfigOwnership";
+import { checkFactory } from "./checkConfigFactory";
+import { checkGovernance } from "./checkConfigGovernance";
+import { checkAssets } from "./checkConfigAssets";
+import { checkBytecode } from "./checkConfigBytecode";
+
 task("checkConfig", "Check deployed contracts")
   .addOptionalParam("environment", "staging or prod", undefined, types.string)
   .addOptionalParam("v", "deployment version eg. 'v2.4.0'", "", types.string)
@@ -6,32 +14,25 @@ task("checkConfig", "Check deployed contracts")
   .addOptionalParam("assets", "check assets", false, types.boolean)
   .addOptionalParam("governance", "check governance", false, types.boolean)
   .addOptionalParam("bytecode", "check bytecode", false, types.boolean)
-  .setAction(async (taskArgs) => {
-    const initialize = require("./initialize");
-    const checkOwnership = require("./checkConfigOwnership");
-    const checkFactory = require("./checkConfigFactory");
-    const checkGovernance = require("./checkConfigGovernance");
-    const checkAssets = require("./checkConfigAssets");
-    const checkBytecode = require("./checkConfigBytecode");
-
+  .setAction(async (taskArgs, hre) => {
     const environment = taskArgs.environment || hre.network.name;
     const version = taskArgs.v;
     const notSpecific = !taskArgs.specific;
-    const initializeData = await initialize.init(environment, version);
+    const initializeData = await init(environment, version, hre);
 
     // Checks ownable contracts are owned by Protocol DAO
-    if (notSpecific || taskArgs.ownership) await checkOwnership.main(initializeData);
+    if (notSpecific || taskArgs.ownership) await checkOwnership(initializeData, hre);
 
     // Checks deployed asset configuration vs CSV & versions file
-    if (notSpecific || taskArgs.factory) await checkFactory.main(initializeData);
+    if (notSpecific || taskArgs.factory) await checkFactory(initializeData, hre);
 
     // Goverernance contract configuration vs CSV
-    if (notSpecific || taskArgs.governance) await checkGovernance.main(initializeData);
+    if (notSpecific || taskArgs.governance) await checkGovernance(initializeData, hre);
 
     // Checks deployed asset configuration vs CSV & versions file
-    if (notSpecific || taskArgs.assets) await checkAssets.main(initializeData);
+    if (notSpecific || taskArgs.assets) await checkAssets(initializeData, hre);
 
     // Checks for differences in deployed bytecode vs current repo bytecode
     // Note: Bytecode checks are excluded from 'check:polygon:all' script and can be executed separately.
-    if (notSpecific || taskArgs.bytecode) await checkBytecode.main(initializeData);
+    if (notSpecific || taskArgs.bytecode) await checkBytecode(initializeData, hre);
   });

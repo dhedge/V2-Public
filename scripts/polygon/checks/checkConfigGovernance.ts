@@ -1,12 +1,11 @@
-const { assert, use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const csv = require("csvtojson");
-
-use(chaiAlmost());
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { InitType } from "./initialize";
+import { assert } from "chai";
+import csv from "csvtojson";
 
 const { toBytes32 } = require("../../Helpers");
 
-const main = async (initializeData) => {
+export const checkGovernance = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
   const { namesFileName, assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;
 
   // Check Governance settings
@@ -88,5 +87,3 @@ const main = async (initializeData) => {
   console.log("Governance checks complete!");
   console.log("_________________________________________");
 };
-
-module.exports = { main };

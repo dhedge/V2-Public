@@ -66,5 +66,3 @@ task("explorerVerify", "Verify contracts")
       await tryVerify(hre, address, "contracts/PoolPerformance.sol:PoolPerformance", []);
     }
   });
-
-module.exports = {};

@@ -1,13 +1,13 @@
-const { ethers } = require("hardhat");
-const { assert, use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const uc = require("@openzeppelin/upgrades-core");
-
-use(chaiAlmost());
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
+import { assert } from "chai";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { InitType } from "./initialize";
+import { Contract } from "ethers";
 
 const { isSameBytecode } = require("../../Helpers");
 
-const main = async (initializeData) => {
+export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntimeEnvironment) => {
+  const { ethers } = hre;
   const { contracts } = initializeData;
 
   const PoolFactoryProxy = await ethers.getContractFactory("PoolFactory");
@@ -60,7 +60,7 @@ const main = async (initializeData) => {
   for (const contract of contractsArray) {
     let contractAddress;
     if (contracts[contract.name] && contracts[contract.name].proxy) {
-      contractAddress = await uc.getImplementationAddress(ethers.provider, contracts[contract.name].proxy);
+      contractAddress = await getImplementationAddress(ethers.provider, contracts[contract.name].proxy);
     } else {
       contractAddress = contracts[contract.name];
     }
@@ -77,7 +77,7 @@ const main = async (initializeData) => {
   // Check asset aggregators
   for (const asset of contracts.Assets) {
     if (asset.aggregatorName) {
-      const contract = await ethers.getContractFactory(asset.aggregatorName);
+      const contract = (await ethers.getContractFactory(asset.aggregatorName)) as Contract;
       const creationBytecode = contract.bytecode;
       const runtimeBytecode = await ethers.provider.getCode(asset.aggregator);
       const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
@@ -96,5 +96,3 @@ const main = async (initializeData) => {
   console.log("Bytecode checks complete!");
   console.log("_________________________________________");
 };
-
-module.exports = { main };

@@ -1,20 +1,29 @@
-const { assert, use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const axios = require("axios");
-const csv = require("csvtojson");
+import axios from "axios";
+import { assert } from "chai";
+import csv from "csvtojson";
+import { Contract } from "ethers";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { InitType } from "./initialize";
 
-use(chaiAlmost());
+const approxEq = (v1: number, v2: number, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
 
-// Coingecko API
-// https://www.coingecko.com/en/api/documentation - asset_platforms
-// asset_platforms
-const coingeckoNetwork = hre.network.name == "polygon" ? "polygon-pos" : "optimistic-ethereum";
+export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeEnvironment) => {
+  const { network } = hre;
+  // Coingecko API
+  // https://www.coingecko.com/en/api/documentation - asset_platforms
+  // asset_platforms
+  const coingeckoNetwork = network.name == "polygon" ? "polygon-pos" : "optimistic-ethereum";
 
-const approxEq = (v1, v2, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
-
-const main = async (initializeData) => {
-  const { versions, version, assetsFileName, balancerLps, poolFactoryProxy, balancerV2Vault, assetHandlerProxy } =
-    initializeData;
+  const {
+    versions,
+    version,
+    assetsFileName,
+    usdPriceAggregatorAssetsFileName,
+    balancerLps,
+    poolFactoryProxy,
+    balancerV2Vault,
+    assetHandlerProxy,
+  } = initializeData;
 
   // Check Assets settings against latest Assets CSV file
   console.log("Checking assets..");
@@ -34,22 +43,24 @@ const main = async (initializeData) => {
   }
 
   // Check for any new assets in the Balancer JSON config
-  for (const balancerLp of balancerLps) {
-    let foundInVersions = false;
-    for (const asset of assets) {
-      if (balancerLp.address === asset.asset) {
-        foundInVersions = true;
-        console.log("Checking", balancerLp.name);
-        await checkBalancerLpAsset(balancerLp, balancerV2Vault, poolFactoryProxy, assetHandlerProxy);
+  if (balancerV2Vault) {
+    for (const balancerLp of balancerLps) {
+      let foundInVersions = false;
+      for (const asset of assets) {
+        if (balancerLp.address === asset.asset) {
+          foundInVersions = true;
+          console.log("Checking", balancerLp.name);
+          await checkBalancerLpAsset(hre, balancerLp, balancerV2Vault, poolFactoryProxy, assetHandlerProxy);
+        }
       }
+      assert(foundInVersions, `Couldn't find ${balancerLp.name} address in published versions.json list.`);
     }
-    assert(foundInVersions, `Couldn't find ${balancerLp.name} address in published versions.json list.`);
   }
 
   for (const asset of assets) {
     const assetAddress = asset.asset;
-    const assetPrice = parseInt(await poolFactoryProxy.getAssetPrice(assetAddress));
-    const assetType = parseInt(await poolFactoryProxy.getAssetType(assetAddress));
+    const assetPrice = parseInt(await (await poolFactoryProxy.getAssetPrice(assetAddress)).toString());
+    const assetType = parseInt(await (await poolFactoryProxy.getAssetType(assetAddress)).toString());
 
     assert(assetPrice > 0, `${asset.name} price is not above 0`);
     assert(
@@ -134,9 +145,16 @@ const main = async (initializeData) => {
   console.log("_________________________________________");
 };
 
-const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProxy, assetHandlerProxy) => {
+const checkBalancerLpAsset = async (
+  hre: HardhatRuntimeEnvironment,
+  balancerLp: Contract,
+  balancerV2Vault: Contract,
+  poolFactoryProxy: Contract,
+  assetHandlerProxy: Contract,
+) => {
+  const { ethers, artifacts } = hre;
   const balancerLPAggregator = await assetHandlerProxy.priceAggregators(balancerLp.address);
-  const BalancerV2LPAggregator = await hre.artifacts.readArtifact("BalancerV2LPAggregator");
+  const BalancerV2LPAggregator = await artifacts.readArtifact("BalancerV2LPAggregator");
   const aggregator = await ethers.getContractAt(BalancerV2LPAggregator.abi, balancerLPAggregator);
   const poolTokens = (await balancerV2Vault.getPoolTokens(balancerLp.data.poolId))[0];
   const assetType = parseInt(await poolFactoryProxy.getAssetType(balancerLp.address));
@@ -161,7 +179,7 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
     );
 
     // check token decimals
-    const IERC20 = await hre.artifacts.readArtifact("IERC20Extended");
+    const IERC20 = await artifacts.readArtifact("IERC20Extended");
     const token = await ethers.getContractAt(IERC20.abi, poolTokens[i]);
     const decimals = await token.decimals();
     assert(
@@ -199,5 +217,3 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
     );
   }
 };
-
-module.exports = { main };
