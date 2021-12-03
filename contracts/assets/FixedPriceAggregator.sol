@@ -41,4 +41,8 @@ contract FixedPriceAggregator is IAggregatorV3Interface {
   {
     return (0, price, 0, block.timestamp, 0);
   }
+
+  function decimals() external view override returns (uint8) {
+    return 8;
+  }
 }
