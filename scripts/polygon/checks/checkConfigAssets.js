@@ -149,7 +149,8 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
   try {
     weights = await pool.getNormalizedWeights();
   } catch (error) {
-    weights = ["500000000000000000", "500000000000000000"]; // no normalized weights on a 50/50 pool
+    console.warn("Could not fetch normalized weights, using 50/50");
+    weights = ["500000000000000000", "500000000000000000"];
   }
 
   for (let i = 0; i < poolTokens.length; i++) {
