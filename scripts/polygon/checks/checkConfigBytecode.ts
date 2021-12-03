@@ -77,7 +77,7 @@ export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntim
   // Check asset aggregators
   for (const asset of contracts.Assets) {
     if (asset.aggregatorName) {
-      const contract = (await ethers.getContractFactory(asset.aggregatorName)) as Contract;
+      const contract = (await ethers.getContractFactory(asset.aggregatorName)) as unknown as Contract;
       const creationBytecode = contract.bytecode;
       const runtimeBytecode = await ethers.provider.getCode(asset.aggregator);
       const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
