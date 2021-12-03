@@ -2,6 +2,8 @@
 pragma solidity 0.7.6;
 
 interface IAggregatorV3Interface {
+  function decimals() external view returns (uint8);
+
   function latestRoundData()
     external
     view

@@ -28,6 +28,10 @@ contract ETHCrossAggregator is IAggregatorV3Interface {
     ethUsdAggregator = _ethUsdAggregator;
   }
 
+  function decimals() external pure override returns (uint8) {
+    return 8;
+  }
+
   /**
    * @notice Get the latest round data. Should be the same format as chainlink aggregator.
    * @return roundId The round ID.
