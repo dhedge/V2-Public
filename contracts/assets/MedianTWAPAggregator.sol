@@ -168,10 +168,10 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     )
   {
     uint256 updatedAt1 = blockTimestampLast;
-    (, int256 usdPrice, , uint256 updatedAt2, ) = otherTokenUsdAggregator.latestRoundData();
-    updatedAt = updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1;
+    require(updatedAt1.add(updateInterval.mul(12)) > block.timestamp, "TWAP price expired");
 
-    require(updatedAt.add(updateInterval.mul(12)) > block.timestamp, "price expired");
+    (, int256 usdPrice, , uint256 updatedAt2, ) = otherTokenUsdAggregator.latestRoundData(); // This price may only update on deviation
+    updatedAt = updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1;
 
     if (otherTokenDecimals < 8) {
       answer = consult().mul(usdPrice).mul(int256(10**(8 - otherTokenDecimals))).div(

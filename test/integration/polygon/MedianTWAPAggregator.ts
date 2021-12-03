@@ -7,6 +7,7 @@ import { checkAlmostSame, units } from "../../TestHelpers";
 import { assets, price_feeds, eth_price_feeds, sushi } from "../polygon-data";
 import { MedianTWAPAggregator } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { EthersAdapter } from "@gnosis.pm/safe-core-sdk";
 
 use(solidity);
 
@@ -127,6 +128,25 @@ describe("ETHCrossAggregator Test", function () {
     const price = (await usdcMedianTwapAggregator.latestRoundData()).answer;
     const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.usdc)).toString(), 8);
     expect(price).to.be.closeTo(priceFromCongecko, price.mul(3).div(100) as any); // 3% diff
+  });
+
+  it("Stale TWAP price expiry", async () => {
+    await dhedgeMedianTwapAggregator.update();
+    await ethers.provider.send("evm_increaseTime", [2000]);
+    await dhedgeMedianTwapAggregator.update();
+    await ethers.provider.send("evm_increaseTime", [2000]);
+    await dhedgeMedianTwapAggregator.update();
+    await ethers.provider.send("evm_increaseTime", [2000]);
+    await dhedgeMedianTwapAggregator.update();
+    await ethers.provider.send("evm_increaseTime", [13000]); // more than 12x of update interval to make the oracle price stale
+
+    await other.sendTransaction({
+      to: "0x0000000000000000000000000000000000000000",
+      value: ethers.utils.parseEther("0"),
+    }); // dummy transaction to increase block time
+
+    const currentBlock = await ethers.provider.getBlockNumber();
+    await expect(dhedgeMedianTwapAggregator.latestRoundData()).to.revertedWith("TWAP price expired");
   });
 });
 
