@@ -1,15 +1,16 @@
-const { ethers } = require("hardhat");
-const { expect, use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const { units } = require("../../TestHelpers");
-const { assets, price_feeds, eth_price_feeds } = require("../polygon-data");
+import { ethers } from "hardhat";
+import { solidity } from "ethereum-waffle";
+import { expect, use } from "chai";
+import { units } from "../../TestHelpers";
+import { ETHCrossAggregator, IAggregatorV3Interface } from "../../../types";
+import { assets, eth_price_feeds, price_feeds } from "../polygon-data";
 
-use(chaiAlmost());
+use(solidity);
 
 describe("ETHCrossAggregator Test", function () {
-  let ethUsdAggregator;
-  let ghstEthAggregator;
-  let ghstUsdAggregator;
+  let ethUsdAggregator: IAggregatorV3Interface;
+  let ghstEthAggregator: IAggregatorV3Interface;
+  let ghstUsdAggregator: ETHCrossAggregator;
 
   before(async function () {
     const ETHCrossAggregator = await ethers.getContractFactory("ETHCrossAggregator");

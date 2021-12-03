@@ -39,7 +39,8 @@ const quickLpUsdcWethStakingRewards = "0x4A73218eF2e820987c59F838906A82455F42D98
 const aaveIncentivesController = "0x357D51124f59836DeD84c8a1730D72B749d8BC23";
 const aaveLendingPool = "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf";
 const oneInchV4Router = "0x1111111254fb6c44bac0bed2854e76f90643097d";
-let sushiToken, wmatic;
+const sushiToken = "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a";
+const wmatic = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
 const sushiMiniChefV2 = "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F";
 
 // Misc
@@ -114,7 +115,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("assets", "deploy new assets", false, types.boolean)
   .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("aaveLendingPoolAssetGuard", "upgrade aaveLendingPoolAssetGuard", false, types.boolean)
-  .addOptionalParam("sushiLPAssetGuard", "upgrade sushiLPAssetGuard", false, types.boolean)
+  .addOptionalParam("sushiLpAssetGuard", "upgrade sushiLPAssetGuard", false, types.boolean)
   .addOptionalParam("erc20Guard", "upgrade erc20Guard", false, types.boolean)
   .addOptionalParam("lendingEnabledAssetGuard", "upgrade LendingEnabledAssetGuard", false, types.boolean)
   .addOptionalParam("uniswapV2RouterGuard", "upgrade uniswapV2RouterGuard", false, types.boolean)
@@ -322,11 +323,18 @@ task("upgrade", "Upgrade contracts")
         const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
         console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
         const poolFactoryImpl = await ethers.getContractAt(PoolFactoryABI, newPoolFactoryLogic);
+        console.log("Initialising Impl");
+        try {
+          // If this script runs and then fails, on retry,
+          // The deploy contract will already be initialised.
+          await poolFactoryImpl.implInitializer();
+        } catch (e) {
+          if (!e.error.message.includes("contract is already initialized")) {
+            throw e;
+          }
+        }
 
         await tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
-
-        console.log("Initialising Impl");
-        await poolFactoryImpl.implInitializer();
 
         const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [poolFactoryProxy, newPoolFactoryLogic]);
         await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Pool Factory", taskArgs.execute);
@@ -480,7 +488,7 @@ task("upgrade", "Upgrade contracts")
         });
       }
     }
-    if (taskArgs.sushiLPAssetGuard) {
+    if (taskArgs.sushiLpAssetGuard) {
       if (!taskArgs.execute) {
         console.log("Will deploy SushiLPAssetGuard");
       } else {
@@ -688,7 +696,7 @@ task("upgrade", "Upgrade contracts")
         });
       }
     }
-    if (taskArgs.quickLPAssetGuard) {
+    if (taskArgs.quickLpAssetGuard) {
       if (!taskArgs.execute) {
         console.log("Will deploy QuickLpAssetGuard");
       } else {
@@ -770,7 +778,7 @@ task("upgrade", "Upgrade contracts")
           hre,
           sushiMiniChefV2Guard.address,
           "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
-          [sushiToken, wmatic],
+          [[sushiToken, wmatic]],
         );
 
         const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [

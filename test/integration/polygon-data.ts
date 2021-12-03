@@ -10,6 +10,9 @@ export const sushi = {
       address: "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27",
       poolId: 1,
     },
+    weth_dht: {
+      address: "0xa375d23a751124359568f3a22576528bD1C8C3e3",
+    },
   },
 };
 
@@ -87,6 +90,7 @@ export const assets = {
   miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+  dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
 };
 
 export const assetsBalanceOfSlot = {

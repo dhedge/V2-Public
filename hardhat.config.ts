@@ -27,8 +27,9 @@ dotenv.config();
 
 export default {
   gasReporter: {
+    enabled: true,
+    currency: "ETH",
     showTimeSpent: true,
-    currency: "USD",
   },
   networks: {
     localhost: {
@@ -52,7 +53,7 @@ export default {
         ? process.env.POLYGON_RPC
         : "https://polygon-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_POLYGON_KEY,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 50e9,
+      gasPrice: 100e9,
       timeout: 600000,
     },
     mumbai: {

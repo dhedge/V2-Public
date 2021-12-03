@@ -58,5 +58,5 @@ export const getAmountIn = async (routerAddress: string, amountOut: BigNumber | 
 };
 
 export const units = (amount: number, decimal = 18) => {
-  return ethers.BigNumber.from(amount.toString()).mul(ethers.BigNumber.from(10).pow(decimal));
+  return ethers.BigNumber.from(amount).mul(ethers.BigNumber.from(10).pow(decimal));
 };
