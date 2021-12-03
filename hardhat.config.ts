@@ -41,6 +41,11 @@ export default {
       url: process.env.ALCHEMY_OPTIMISM_URL || "https://opt-mainnet.g.alchemy.com/v2/",
       accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
     },
+    "ovm-kovan": {
+      chainId: 69,
+      url: process.env.ALCHEMY_KOVAN_OPTIMISM_URL || "https://opt-kovan.g.alchemy.com/v2",
+      accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
+    },
     polygon: {
       chainId: 137,
       url: process.env.POLYGON_RPC
