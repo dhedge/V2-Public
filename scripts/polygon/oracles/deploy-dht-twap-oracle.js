@@ -20,7 +20,7 @@ const main = async () => {
 
   const MedianTWAPAggregator = await ethers.getContractFactory("MedianTWAPAggregator");
   console.log("Deploying Median TWAP oracle..");
-  const dhedgeMedianTwapAggregator = await MedianTWAPAggregator.deploy(weth_dth, dht, eth_oracle, 300);
+  const dhedgeMedianTwapAggregator = await MedianTWAPAggregator.deploy(weth_dth, dht, eth_oracle, 300, 25); // 5 minute update interval, 25% volatility trip
   await dhedgeMedianTwapAggregator.deployed();
 
   // wait 5 confirmations before verifying

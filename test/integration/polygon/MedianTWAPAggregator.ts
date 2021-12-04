@@ -1,20 +1,21 @@
-import { ethers } from "hardhat";
+import { ethers, artifacts } from "hardhat";
 import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
+import { expect, assert, use } from "chai";
 import axios from "axios";
-
-import { checkAlmostSame, units } from "../../TestHelpers";
-import { assets, price_feeds, eth_price_feeds, sushi } from "../polygon-data";
-import { MedianTWAPAggregator } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { EthersAdapter } from "@gnosis.pm/safe-core-sdk";
+
+import { getAccountToken } from "../utils/getAccountTokens";
+import { units } from "../../TestHelpers";
+import { assets, assetsBalanceOfSlot, price_feeds, sushi } from "../polygon-data";
+import { MedianTWAPAggregator, IUniswapV2Router__factory } from "../../../types";
 
 use(solidity);
 
-describe("ETHCrossAggregator Test", function () {
+describe("Median TWAP Oracle Test", function () {
   let logicOwner: SignerWithAddress, other: SignerWithAddress;
   let dhedgeMedianTwapAggregator: MedianTWAPAggregator;
   let snapshot: any;
+  const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
   beforeEach(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);
@@ -25,7 +26,10 @@ describe("ETHCrossAggregator Test", function () {
       assets.dht,
       price_feeds.eth,
       1000,
+      25,
     );
+    await getAccountToken(units(1000, 18), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+
     await dhedgeMedianTwapAggregator.deployed();
   });
 
@@ -91,6 +95,7 @@ describe("ETHCrossAggregator Test", function () {
       assets.weth,
       price_feeds.usdc,
       1000,
+      25,
     );
     await wethMedianTwapAggregator.deployed();
 
@@ -114,6 +119,7 @@ describe("ETHCrossAggregator Test", function () {
       assets.usdc,
       price_feeds.eth,
       1000,
+      25,
     );
     await usdcMedianTwapAggregator.deployed();
 
@@ -148,7 +154,81 @@ describe("ETHCrossAggregator Test", function () {
     const currentBlock = await ethers.provider.getBlockNumber();
     await expect(dhedgeMedianTwapAggregator.latestRoundData()).to.revertedWith("TWAP price expired");
   });
+
+  it("Volatility check", async () => {
+    // Make sure volatility works in different twap order scenarios by buying and selling DHT on Sushi
+    for (let i = 0; i < 4; i++) {
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+      if (i == 0) await buyDht();
+      if (i == 1) await sellDht();
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+      if (i == 2) await buyDht();
+      if (i == 3) await sellDht();
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+
+      // check that trades made a significant enough price impact
+      const pricePercentIncrease = await getPricePercentIncrease(dhedgeMedianTwapAggregator);
+      assert(pricePercentIncrease > 5, "Test price change is too small. Increase swap amount");
+
+      // should get oracle price if low volatility
+      await dhedgeMedianTwapAggregator.setVolatilityTripLimit(pricePercentIncrease + 1);
+      await dhedgeMedianTwapAggregator.latestRoundData();
+
+      // should revert getting oracle price if high volatility
+      await dhedgeMedianTwapAggregator.setVolatilityTripLimit(pricePercentIncrease - 1);
+      await expect(dhedgeMedianTwapAggregator.latestRoundData()).to.revertedWith("price volatility too high");
+    }
+  });
+
+  const buyDht = async () => {
+    const WETH = await ethers.getContractAt("IERC20", assets.weth);
+    const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
+    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
+    const sourceAmount = units(100);
+    await WETH.approve(sushi.router, sourceAmount);
+    await sushiswapRouter.swapExactTokensForTokens(
+      sourceAmount,
+      0,
+      [assets.weth, assets.dht],
+      logicOwner.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    );
+  };
+
+  const sellDht = async () => {
+    const DHT = await ethers.getContractAt("IERC20", assets.dht);
+    const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
+    const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
+    const dhtBalance = await DHT.balanceOf(logicOwner.address);
+    const sourceAmount = dhtBalance;
+    await DHT.approve(sushi.router, sourceAmount);
+    await sushiswapRouter.swapExactTokensForTokens(
+      sourceAmount,
+      0,
+      [assets.dht, assets.weth],
+      logicOwner.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    );
+  };
 });
+
+const getPricePercentIncrease = async (dhedgeMedianTwapAggregator: MedianTWAPAggregator) => {
+  const twapLastIndex = await dhedgeMedianTwapAggregator.twapLastIndex();
+  const twap1 = await dhedgeMedianTwapAggregator.twaps(twapLastIndex);
+  const twap2 = await dhedgeMedianTwapAggregator.twaps(Number(twapLastIndex) - 1);
+  const twap3 = await dhedgeMedianTwapAggregator.twaps(Number(twapLastIndex) - 2);
+
+  return Math.max(
+    twap1.mul(100).div(twap2).sub(100).toNumber(),
+    twap2.mul(100).div(twap3).sub(100).toNumber(),
+    twap3.mul(100).div(twap1).sub(100).toNumber(),
+  );
+};
 
 const getTokenPriceFromCoingecko = async (tokenAddr: string) => {
   const apiUrl = `https://api.coingecko.com/api/v3/simple/token_price/polygon-pos?contract_addresses=${tokenAddr}&vs_currencies=usd`;
