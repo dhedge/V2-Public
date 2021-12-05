@@ -1,12 +1,12 @@
 {
-  "v2.11.0": {
+  "v2.12.0": {
     "network": {
       "name": "matic",
       "chainId": 137,
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Thu, 02 Dec 2021 07:37:11 GMT",
+    "date": "Sat, 04 Dec 2021 23:53:30 GMT",
     "contracts": [
       {
         "pool": "0x3e5f7e9e7dc3bc3086ccebd5eb59a0a4a29d881b",
@@ -31,6 +31,10 @@
       {
         "pool": "0xa375d23a751124359568f3a22576528bD1C8C3e3",
         "dhtTwapOracle": "0x5C530b3e0552184C6c283973FCFFc89A6d0EA3F0"
+      },
+      {
+        "pool": "0xa375d23a751124359568f3a22576528bD1C8C3e3",
+        "dhtTwapOracle": "0xb5Ed15B15414918DC8870272E5dBCc63FCFD8E2D"
       }
     ]
   }
