@@ -31,7 +31,7 @@ const main = async () => {
     hre,
     dhedgeMedianTwapAggregator.address,
     "contracts/assets/MedianTWAPAggregator.sol:MedianTWAPAggregator",
-    [weth_dth, dht, eth_oracle, 300],
+    [weth_dth, dht, eth_oracle, 300, 25],
   );
 
   versions[tag].contracts.push({ pool: weth_dth, dhtTwapOracle: dhedgeMedianTwapAggregator.address });
