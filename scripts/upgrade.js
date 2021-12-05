@@ -30,6 +30,7 @@ const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon Ex
 
 // Addresses
 const balancerV2Vault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+const balancerMerkleOrchard = "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e";
 const aaveProtocolDataProvider = "0x7551b5D2763519d4e37e8B81929D336De671d46d";
 const sushiswapV2Router = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506";
 const quickswapRouter = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
@@ -122,6 +123,7 @@ task("upgrade", "Upgrade contracts")
   .addOptionalParam("openAssetGuard", "upgrade openAssetGuard", false, types.boolean)
   .addOptionalParam("quickLpAssetGuard", "upgrade quickLPAssetGuard", false, types.boolean)
   .addOptionalParam("balancerv2guard", "upgrade balancerV2Guard", false, types.boolean)
+  .addOptionalParam("balancerMerkleOrchardGuard", "upgrade balancerMerkleOrchardGuard", false, types.boolean)
   .addOptionalParam("quickStakingRewardsGuard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiMiniChefV2Guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
   .addOptionalParam("aaveIncentivesControllerGuard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
@@ -665,6 +667,41 @@ task("upgrade", "Upgrade contracts")
           GuardName: "BalancerV2Guard",
           GuardAddress: balancerV2Guard.address,
           Description: "Balancer V2 Guard",
+        });
+      }
+    }
+    if (taskArgs.balancerMerkleOrchardGuard) {
+      if (!taskArgs.execute) {
+        console.log("Will deploy BalancerMerkleOrchardGuard");
+      } else {
+        const BalancerMerkleOrchardGuard = await ethers.getContractFactory("BalancerMerkleOrchardGuard");
+        const balancerMerkleOrchardGuard = await BalancerMerkleOrchardGuard.deploy();
+        await balancerMerkleOrchardGuard.deployed();
+        console.log("BalancerMerkleOrchardGuard deployed at", balancerMerkleOrchardGuard.address);
+        versions[newTag].contracts.BalancerMerkleOrchardGuard = balancerMerkleOrchardGuard.address;
+
+        await tryVerify(
+          hre,
+          balancerMerkleOrchardGuard.address,
+          "contracts/guards/BalancerMerkleOrchardGuard.sol:BalancerMerkleOrchardGuard",
+          [],
+        );
+
+        let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+          balancerMerkleOrchard,
+          balancerMerkleOrchardGuard.address,
+        ]);
+        await proposeTx(
+          contracts.Governance,
+          setContractGuardABI,
+          "setContractGuard for balancerMerkleOrchard",
+          taskArgs.execute,
+        );
+        newContractGuards.push({
+          ContractAddress: balancerMerkleOrchard,
+          GuardName: "BalancerMerkleOrchardGuard",
+          GuardAddress: balancerMerkleOrchardGuard.address,
+          Description: "Balancer Merkle Orchard Guard",
         });
       }
     }
