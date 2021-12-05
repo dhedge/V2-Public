@@ -64,6 +64,17 @@ describe("Median TWAP Oracle Test", function () {
     expect(balanceBefore).lt(balanceAfter);
   });
 
+  it("withdraw balance", async () => {
+    const amount = units(100);
+    await other.sendTransaction({ value: amount, to: dhedgeMedianTwapAggregator.address });
+
+    await expect(dhedgeMedianTwapAggregator.connect(other).withdraw(amount)).to.revertedWith(
+      "Ownable: caller is not the owner",
+    );
+    await expect(dhedgeMedianTwapAggregator.withdraw(amount.add(1))).to.revertedWith("balance is too low");
+    await dhedgeMedianTwapAggregator.withdraw(amount); // can withdraw full balance
+  });
+
   it("try with high gas price", async () => {
     await other.sendTransaction({ value: units(100), to: dhedgeMedianTwapAggregator.address });
 
