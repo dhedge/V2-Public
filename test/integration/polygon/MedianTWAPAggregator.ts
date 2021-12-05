@@ -28,7 +28,8 @@ describe("Median TWAP Oracle Test", function () {
       1000,
       25,
     );
-    await getAccountToken(units(1000, 18), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+    await getAccountToken(units(1000, 18), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth); // get WETH
+    await getAccountToken(units(1000000, 18), logicOwner.address, assets.dht, assetsBalanceOfSlot.dht); // get DHT
 
     await dhedgeMedianTwapAggregator.deployed();
   });
@@ -166,35 +167,55 @@ describe("Median TWAP Oracle Test", function () {
     await expect(dhedgeMedianTwapAggregator.latestRoundData()).to.revertedWith("TWAP price expired");
   });
 
-  it("Volatility check", async () => {
-    // Make sure volatility works in different twap order scenarios by buying and selling DHT on Sushi
-    for (let i = 0; i < 4; i++) {
+  it("Buying lots of DHT triggers volatility revert", async () => {
+    // Make sure volatility works in different twap order scenarios by buying DHT on Sushi
+    for (let i = 0; i < 2; i++) {
       await ethers.provider.send("evm_increaseTime", [2000]);
       await dhedgeMedianTwapAggregator.update();
       await ethers.provider.send("evm_increaseTime", [2000]);
       await dhedgeMedianTwapAggregator.update();
-      if (i == 0) await buyDht();
-      if (i == 1) await sellDht();
+      if (i == 0) await buyDht(); // loop 0: buy DHT on middle TWAP
       await ethers.provider.send("evm_increaseTime", [2000]);
       await dhedgeMedianTwapAggregator.update();
-      if (i == 2) await buyDht();
-      if (i == 3) await sellDht();
+      if (i == 1) await buyDht(); // loop 1: buy DHT on last TWAP
       await ethers.provider.send("evm_increaseTime", [2000]);
       await dhedgeMedianTwapAggregator.update();
 
-      // check that trades made a significant enough price impact
-      const pricePercentIncrease = await getPricePercentIncrease(dhedgeMedianTwapAggregator);
-      assert(pricePercentIncrease > 5, "Test price change is too small. Increase swap amount");
-
-      // should get oracle price if low volatility
-      await dhedgeMedianTwapAggregator.setVolatilityTripLimit(pricePercentIncrease + 1);
-      await dhedgeMedianTwapAggregator.latestRoundData();
-
-      // should revert getting oracle price if high volatility
-      await dhedgeMedianTwapAggregator.setVolatilityTripLimit(pricePercentIncrease - 1);
-      await expect(dhedgeMedianTwapAggregator.latestRoundData()).to.revertedWith("price volatility too high");
+      await checkVolatilityRevert(dhedgeMedianTwapAggregator);
     }
   });
+
+  it("Selling lots of DHT triggers volatility revert", async () => {
+    // Make sure volatility works in different twap order scenarios by selling DHT on Sushi
+    for (let i = 0; i < 2; i++) {
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+      if (i == 0) await sellDht(); // loop 0: sell DHT on middle TWAP
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+      if (i == 1) await sellDht(); // loop 1: sell DHT on last TWAP
+      await ethers.provider.send("evm_increaseTime", [2000]);
+      await dhedgeMedianTwapAggregator.update();
+
+      await checkVolatilityRevert(dhedgeMedianTwapAggregator);
+    }
+  });
+
+  const checkVolatilityRevert = async (dhedgeMedianTwapAggregator: MedianTWAPAggregator) => {
+    // check that trades made a significant enough price impact
+    const pricePercentIncrease = await getPricePercentIncrease(dhedgeMedianTwapAggregator);
+    assert(pricePercentIncrease > 5, "Test price change is too small. Increase swap amount");
+
+    // should get oracle price if low volatility
+    await dhedgeMedianTwapAggregator.setVolatilityTripLimit(pricePercentIncrease + 1);
+    await dhedgeMedianTwapAggregator.latestRoundData();
+
+    // should revert getting oracle price if high volatility
+    await dhedgeMedianTwapAggregator.setVolatilityTripLimit(pricePercentIncrease - 1);
+    await expect(dhedgeMedianTwapAggregator.latestRoundData()).to.revertedWith("price volatility too high");
+  };
 
   const buyDht = async () => {
     const WETH = await ethers.getContractAt("IERC20", assets.weth);
@@ -216,7 +237,7 @@ describe("Median TWAP Oracle Test", function () {
     const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
     const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
     const dhtBalance = await DHT.balanceOf(logicOwner.address);
-    const sourceAmount = dhtBalance;
+    const sourceAmount = units(100000);
     await DHT.approve(sushi.router, sourceAmount);
     await sushiswapRouter.swapExactTokensForTokens(
       sourceAmount,
