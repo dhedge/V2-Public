@@ -3,11 +3,11 @@ const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 const axios = require("axios");
 const { checkAlmostSame, getAmountOut, units } = require("../../TestHelpers");
-const { ZERO_ADDRESS, sushi, uniswapV2, aave, oneinch, assets, price_feeds } = require("../ethereum-data");
+const { ZERO_ADDRESS, sushi, uniswapV2, oneinch, assets, price_feeds } = require("../ethereum-data");
 
 use(chaiAlmost());
 
-describe("OneInch V3 Test", function () {
+describe("OneInch V4 Test", function () {
   let WETH, USDC, USDT, UniswapRouter;
   let logicOwner, manager, dao, user;
   let PoolFactory, PoolLogic, PoolManagerLogic, assetHandler;
@@ -63,15 +63,15 @@ describe("OneInch V3 Test", function () {
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
     uniswapV2RouterGuard.deployed();
 
-    const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
-    oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
-    oneInchV3Guard.deployed();
+    const OneInchV4Guard = await ethers.getContractFactory("OneInchV4Guard");
+    oneInchV4Guard = await OneInchV4Guard.deploy(2, 100); // set slippage 2%
+    oneInchV4Guard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, erc20Guard.address); // as normal erc20 token
     await governance.setContractGuard(uniswapV2.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushi.router, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
+    await governance.setContractGuard(oneinch.v3Router, oneInchV4Guard.address);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
   });
@@ -334,13 +334,13 @@ describe("OneInch V3 Test", function () {
 
     await poolManagerLogicProxy.connect(manager).changeAssets([[assets.usdt, false]], []);
 
-    await oneInchV3Guard.setSlippageLimit(1, 1000); // 50%
+    await oneInchV4Guard.setSlippageLimit(1, 1000); // 50%
 
     await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
       "slippage limit exceed",
     );
 
-    await oneInchV3Guard.setSlippageLimit(10, 100); // 50%
+    await oneInchV4Guard.setSlippageLimit(10, 100); // 50%
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
@@ -355,7 +355,7 @@ describe("OneInch V3 Test", function () {
 
   // getOneInchSwapTransaction is returning a `uniswapV3Swap()` not `swap()` which is a function we don't IHasSupportedAsset
   // this needs to be investigated
-  it.skip("should be able to swap tokens on oneInch - swap.", async () => {
+  it("should be able to swap tokens on oneInch - swap.", async () => {
     const srcAsset = assets.usdc;
     const dstAsset = assets.usdt;
     const srcAmount = units(199000, 6);
@@ -416,11 +416,17 @@ describe("OneInch V3 Test", function () {
   });
 });
 
-const getOneInchSwapTransaction = async (params) => {
+const getOneInchSwapTransaction = async (params, retry = 3) => {
   const { srcAsset, dstAsset, srcAmount, fromAddress, toAddress, referrerAddress } = params;
   const apiUrl = `https://api.1inch.exchange/v4.0/1/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;
-  const response = await axios.get(apiUrl);
-  const calldata = response.data.tx.data;
-
-  return calldata;
+  try {
+    const response = await axios.get(apiUrl);
+    const calldata = response.data.tx.data;
+    return calldata;
+  } catch (e) {
+    if (retry >= 1) {
+      return getOneInchSwapTransaction(params, retry - 1);
+    }
+    throw error("failed to call oneInch api");
+  }
 };
