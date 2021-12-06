@@ -139,6 +139,8 @@ task("upgrade", "Upgrade contracts")
     console.log("network:", network);
     const hre = require("hardhat");
 
+    await hre.run("compile");
+
     // Init tag
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
     const versions = require(`../publish/${network.name}/${versionFile}.json`);
