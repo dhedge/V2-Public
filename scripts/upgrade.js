@@ -196,9 +196,8 @@ task("upgrade", "Upgrade contracts")
     const poolFactory = await ethers.getContractAt(PoolFactoryABI, poolFactoryProxy);
 
     if (taskArgs.pause) {
-      if (!taskArgs.execute) {
-        console.log("Will pause");
-      } else {
+      console.log("Will pause");
+      if (taskArgs.execute) {
         const pauseABI = PoolFactoryABI.encodeFunctionData("pause", []);
         await proposeTx(poolFactoryProxy, pauseABI, "Pause Pool Factory", taskArgs.execute);
       }
@@ -220,8 +219,8 @@ task("upgrade", "Upgrade contracts")
           const assetType = csvAsset.AssetType;
           switch (assetType) {
             case "2":
+              console.log("Will deploy asset", csvAsset["Asset Name"]);
               if (!taskArgs.execute) {
-                console.log("Will deploy asset", csvAsset["Asset Name"]);
                 break;
               }
 
@@ -239,8 +238,8 @@ task("upgrade", "Upgrade contracts")
               });
               break;
             case "3":
+              console.log("Will deploy asset", csvAsset["Asset Name"]);
               if (!taskArgs.execute) {
-                console.log("Will deploy asset", csvAsset["Asset Name"]);
                 break;
               }
 
@@ -266,8 +265,8 @@ task("upgrade", "Upgrade contracts")
               });
               break;
             default:
+              console.log("Will deploy asset", csvAsset["Asset Name"]);
               if (!taskArgs.execute) {
-                console.log("Will deploy asset", csvAsset["Asset Name"]);
                 break;
               }
               console.log(`Adding new asset to AssetHandler: ${csvAsset["Asset Name"]}`);
@@ -287,9 +286,8 @@ task("upgrade", "Upgrade contracts")
       for (const balancerLp of balancerLps) {
         const foundInVersions = await checkBalancerLpAsset(balancerLp, contracts, poolFactory, assetHandlerAssets);
         if (!foundInVersions) {
-          if (!taskArgs.execute) {
-            console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
-          } else {
+          console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
+          if (taskArgs.execute) {
             // Deploy Balancer LP Aggregator
             console.log("Deploying ", balancerLp.name);
             const balancerV2Aggregator = await deployBalancerV2LpAggregator(
@@ -318,9 +316,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.poolFactory) {
-      if (!taskArgs.execute) {
-        console.log("Will upgrade PoolFactory");
-      } else {
+      console.log("Will upgrade PoolFactory");
+      if (taskArgs.execute) {
         const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
         const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
         console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
@@ -345,9 +342,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.assetHandler) {
-      if (!taskArgs.execute) {
-        console.log("Will upgrade AssetHandler");
-      } else {
+      console.log("Will upgrade AssetHandler");
+      if (taskArgs.execute) {
         let oldAssetHandler = contracts.AssetHandlerProxy;
         const AssetHandler = await ethers.getContractFactory("AssetHandler");
         const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
@@ -360,9 +356,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.poolLogic) {
-      if (!taskArgs.execute) {
-        console.log("Will upgrade PoolLogic");
-      } else {
+      console.log("Will upgrade PoolLogic");
+      if (taskArgs.execute) {
         let oldPooLogicProxy = contracts.PoolLogicProxy;
         const PoolLogic = await ethers.getContractFactory("PoolLogic");
         const poolLogic = await upgrades.prepareUpgrade(oldPooLogicProxy, PoolLogic);
@@ -374,9 +369,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.poolManagerLogic) {
-      if (!taskArgs.execute) {
-        console.log("Will upgrade PoolManagerLogic");
-      } else {
+      console.log("Will upgrade PoolManagerLogic");
+      if (taskArgs.execute) {
         let oldPooManagerLogicProxy = contracts.PoolManagerLogicProxy;
         const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
         const poolManagerLogic = await upgrades.prepareUpgrade(oldPooManagerLogicProxy, PoolManagerLogic);
@@ -403,9 +397,8 @@ task("upgrade", "Upgrade contracts")
     if (taskArgs.poolPerformance) {
       if (contracts.PoolPerformanceProxy) {
         // Upgrade PoolPerformance
-        if (!taskArgs.execute) {
-          console.log("Will upgrade PoolPerformance");
-        } else {
+        console.log("Will upgrade PoolPerformance");
+        if (taskArgs.execute) {
           let oldPoolPerformance = contracts.PoolPerformanceProxy;
           const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
           const poolPerformance = await upgrades.prepareUpgrade(oldPoolPerformance, PoolPerformance);
@@ -419,9 +412,8 @@ task("upgrade", "Upgrade contracts")
           versions[newTag].contracts.PoolPerformance = poolPerformance;
         }
       } else {
-        if (!taskArgs.execute) {
-          console.log("Will deploy PoolPerformance");
-        } else {
+        console.log("Will deploy PoolPerformance");
+        if (taskArgs.execute) {
           // Deploy PoolPerformance (is not yet deployed)
           const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
           const poolPerformanceProxy = await upgrades.deployProxy(PoolPerformance, []);
@@ -456,9 +448,8 @@ task("upgrade", "Upgrade contracts")
     }
 
     if (taskArgs.aaveLendingPoolAssetGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy AaveLendingPoolAssetGuard");
-      } else {
+      console.log("Will deploy AaveLendingPoolAssetGuard");
+      if (taskArgs.execute) {
         const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
         const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveProtocolDataProvider);
         await aaveLendingPoolAssetGuard.deployed();
@@ -491,9 +482,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.sushiLpAssetGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy SushiLPAssetGuard");
-      } else {
+      console.log("Will deploy SushiLPAssetGuard");
+      if (taskArgs.execute) {
         const SushiLPAssetGuard = await ethers.getContractFactory("SushiLPAssetGuard");
         const sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2); // initialise with Sushi staking pool Id
         await sushiLPAssetGuard.deployed();
@@ -524,9 +514,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.erc20Guard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy ERC20Guard");
-      } else {
+      console.log("Will deploy ERC20Guard");
+      if (taskArgs.execute) {
         const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
         const erc20Guard = await ERC20Guard.deploy();
         await erc20Guard.deployed();
@@ -546,9 +535,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.lendingEnabledAssetGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy LendingEnabledAssetGuard");
-      } else {
+      console.log("Will deploy LendingEnabledAssetGuard");
+      if (taskArgs.execute) {
         const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
         const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
         await lendingEnabledAssetGuard.deployed();
@@ -582,9 +570,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.uniswapV2RouterGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy UniswapV2RouterGuard");
-      } else {
+      console.log("Will deploy UniswapV2RouterGuard");
+      if (taskArgs.execute) {
         const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
         const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(10, 100); // set slippage 10%
         await uniswapV2RouterGuard.deployed();
@@ -635,9 +622,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.balancerv2guard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy BalancerV2Guard");
-      } else {
+      console.log("Will deploy BalancerV2Guard");
+      if (taskArgs.execute) {
         const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
         const balancerV2Guard = await BalancerV2Guard.deploy(10, 100); // set slippage 10%
         await balancerV2Guard.deployed();
@@ -671,9 +657,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.balancerMerkleOrchardGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy BalancerMerkleOrchardGuard");
-      } else {
+      console.log("Will deploy BalancerMerkleOrchardGuard");
+      if (taskArgs.execute) {
         const BalancerMerkleOrchardGuard = await ethers.getContractFactory("BalancerMerkleOrchardGuard");
         const balancerMerkleOrchardGuard = await BalancerMerkleOrchardGuard.deploy();
         await balancerMerkleOrchardGuard.deployed();
@@ -706,9 +691,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.openAssetGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy OpenAssetGuard");
-      } else {
+      console.log("Will deploy OpenAssetGuard");
+      if (taskArgs.execute) {
         const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;
         const csvAssets = await csv().fromFile(fileName);
         let addresses = csvAssets.map((asset) => asset.Address);
@@ -734,9 +718,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.quickLpAssetGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy QuickLpAssetGuard");
-      } else {
+      console.log("Will deploy QuickLpAssetGuard");
+      if (taskArgs.execute) {
         const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
         const quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickStakingRewardsFactory);
         await quickLPAssetGuard.deployed();
@@ -767,9 +750,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.quickStakingRewardsGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy QuickStakingRewardsGuard");
-      } else {
+      console.log("Will deploy QuickStakingRewardsGuard");
+      if (taskArgs.execute) {
         const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
         const quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy();
         await quickStakingRewardsGuard.deployed();
@@ -802,9 +784,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.sushiMiniChefV2Guard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy SushiMiniChefV2Guard");
-      } else {
+      console.log("Will deploy SushiMiniChefV2Guard");
+      if (taskArgs.execute) {
         const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
         const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken, wmatic]);
         await sushiMiniChefV2Guard.deployed();
@@ -837,9 +818,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.aaveIncentivesControllerGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy AaveIncentivesControllerGuard");
-      } else {
+      console.log("Will deploy AaveIncentivesControllerGuard");
+      if (taskArgs.execute) {
         const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
         console.log("wmatic: ", wmatic);
         const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(wmatic);
@@ -873,9 +853,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.aaveLendingPoolGuard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy AaveLendingPoolGuard");
-      } else {
+      console.log("Will deploy AaveLendingPoolGuard");
+      if (taskArgs.execute) {
         const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
         const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
         await aaveLendingPoolGuard.deployed();
@@ -908,9 +887,8 @@ task("upgrade", "Upgrade contracts")
       }
     }
     if (taskArgs.oneInchV4Guard) {
-      if (!taskArgs.execute) {
-        console.log("Will deploy OneInchV4Guard");
-      } else {
+      console.log("Will deploy OneInchV4Guard");
+      if (taskArgs.execute) {
         const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
         oneInchV4Guard = await OneInchV3Guard.deploy(10, 100); // set slippage 10%
         await oneInchV4Guard.deployed();
@@ -958,9 +936,8 @@ task("upgrade", "Upgrade contracts")
     }
 
     if (taskArgs.unpause) {
-      if (!taskArgs.execute) {
-        console.log("Will unpause");
-      } else {
+      console.log("Will unpause");
+      if (taskArgs.execute) {
         // Unpause Pool Factory
         const unpauseABI = PoolFactoryABI.encodeFunctionData("unpause", []);
         await proposeTx(poolFactoryProxy, unpauseABI, "Unpause pool Factory", taskArgs.execute);
