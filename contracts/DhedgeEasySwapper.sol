@@ -73,6 +73,7 @@ contract DhedgeEasySwapper is Ownable {
     ERC20 depositAsset,
     uint256 amount
   ) external returns (uint256 liquidityMinted) {
+    require(allowedPools[pool], "Pool is not allowed.");
     // Transfer the users funds to this contract
     depositAsset.transferFrom(msg.sender, address(this), amount);
     // Approve the pool to take the funds
@@ -93,6 +94,7 @@ contract DhedgeEasySwapper is Ownable {
     ERC20 withdrawalAsset,
     uint256 expectedAmountOutInWithdrawalAsset
   ) external {
+    require(allowedPools[pool], "Pool is not allowed.");
     // burn wrapper tokens
     pool.transferFrom(msg.sender, address(this), fundTokenAmount);
     pool.withdraw(fundTokenAmount);
