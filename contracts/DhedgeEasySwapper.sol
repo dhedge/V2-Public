@@ -56,6 +56,12 @@ contract DhedgeEasySwapper is Ownable {
     weth = _weth;
   }
 
+  /// @notice helper view function to calculating expected withdraw value in usdc
+  /// @param pool the pool that being withdrawn from
+  /// @param fundTokenAmount the amount of tokens being withdrawn
+  /// @param slippageNumerator combine with denominator 99/100 for 1% slippage
+  /// @param slippageDenominator combine with numerator 99/100 for 1% slippage
+  /// @return The amount the tokens are worth adjusted for the slippage tolerance
   function getExpectedOutUSDC(
     IPoolLogic pool,
     uint256 fundTokenAmount,
