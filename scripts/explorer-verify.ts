@@ -1,6 +1,5 @@
 import { task, types } from "hardhat/config";
 import { synthetix } from "../test/integration/ovm/ovm-data";
-import { SynthetixGuard } from "../types/SynthetixGuard.d";
 
 const { getTag, tryVerify } = require("./Helpers");
 
