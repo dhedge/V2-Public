@@ -444,6 +444,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     }
   }
 
+  // take flashloan for debt asset
+
   /// @notice calculate and return withdraw Aave transactions for execution
   /// @param pool the PoolLogic address
   /// @param portion the portion of assets to be withdrawn
