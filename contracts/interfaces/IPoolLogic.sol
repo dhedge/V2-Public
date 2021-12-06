@@ -46,4 +46,8 @@ interface IPoolLogic {
   function tokenPrice() external view returns (uint256 price);
 
   function tokenPriceWithoutManagerFee() external view returns (uint256 price);
+
+  function deposit(address _asset, uint256 _amount) external returns (uint256 liquidityMinted);
+
+  function withdraw(uint256 _fundTokenAmount) external;
 }
