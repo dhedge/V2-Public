@@ -40,10 +40,8 @@ import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/uniswapv2/IUniswapV2Router.sol";
 import "./interfaces/IHasSupportedAsset.sol";
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-// Ownable with a setter for the router?
 contract DhedgeEasySwapper is Ownable {
   using SignedSafeMath for int256;
 
@@ -56,6 +54,15 @@ contract DhedgeEasySwapper is Ownable {
     weth = _weth;
   }
 
+  function getExpectedOut(
+    IPoolLogic pool,
+    uint256 fundTokenAmount,
+    uint256 slippageNumerator,
+    uint256 slippageDenominator
+  ) external view {
+    return pool.tokenPrice().mul(fundTokenAmount).div(slippageDenominator).mul(slippageNumerator);
+  }
+
   function setPoolAllowed(address pool, bool allowed) external onlyOwner {
     allowedPools[pool] = allowed;
   }
@@ -65,21 +72,30 @@ contract DhedgeEasySwapper is Ownable {
   }
 
   /// @notice deposit into underlying pool and receive tokens that aren't locked
-  /// @param depositAsset the deposit asset
+  /// @param pool the pool to deposit into
+  /// @param depositAsset the asset the user wants to deposit
   /// @param amount the amount of the deposit asset
+  /// @param poolDepositAsset the asset that the pool accepts
   /// @return liquidityMinted the number of wrapper tokens allocated
   function deposit(
     IPoolLogic pool,
     ERC20 depositAsset,
-    uint256 amount
+    uint256 amount,
+    ERC20 poolDepositAsset
   ) external returns (uint256 liquidityMinted) {
     require(allowedPools[pool], "Pool is not allowed.");
     // Transfer the users funds to this contract
     depositAsset.transferFrom(msg.sender, address(this), amount);
+
+    if (depositAsset != poolDepositAsset) {
+      swapThat(depositAsset, poolDepositAsset);
+    }
+
     // Approve the pool to take the funds
-    depositAsset.approve(address(pool), amount);
+    poolDepositAsset.approve(address(pool), amount);
     // Deposit
-    liquidityMinted = pool.deposit(address(depositAsset), amount);
+    liquidityMinted = pool.deposit(address(poolDepositAsset), amount);
+    // Transfer the pool tokens to the depositer
     pool.transfer(msg.sender, liquidityMinted);
   }
 
@@ -87,15 +103,14 @@ contract DhedgeEasySwapper is Ownable {
   /// @dev Swaps the underlying pool withdrawal assets to expectedWithdrawalAssetOfUser
   /// @param fundTokenAmount the amount to withdraw
   /// @param withdrawalAsset must have direct pair to all pool.supportedAssets on swapRouter
-  /// @param expectedAmountOutInWithdrawalAsset the amount of value in the expectedAmountOutInWithdrawalAsset expected (slippage protection)
+  /// @param expectedAmountOut the amount of value in the withdrawalAsset expected (slippage protection)
   function withdraw(
     IPoolLogic pool,
     uint256 fundTokenAmount,
     ERC20 withdrawalAsset,
-    uint256 expectedAmountOutInWithdrawalAsset
+    uint256 expectedAmountOut
   ) external {
     require(allowedPools[pool], "Pool is not allowed.");
-    // burn wrapper tokens
     pool.transferFrom(msg.sender, address(this), fundTokenAmount);
     pool.withdraw(fundTokenAmount);
     // Pools that have aave enabled withdraw weth to the user. This isnt in supportedAssets somestimes :(
@@ -113,9 +128,7 @@ contract DhedgeEasySwapper is Ownable {
     }
 
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
-    if (balanceAfterSwaps < expectedAmountOutInWithdrawalAsset) {
-      revert("Slippage detected");
-    }
+    require(balanceAfterSwaps >= expectedAmountOut, "Slippage detected");
     withdrawalAsset.transfer(msg.sender, balanceAfterSwaps);
   }
 
