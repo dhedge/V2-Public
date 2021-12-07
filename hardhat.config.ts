@@ -93,6 +93,7 @@ export default {
       "Governance",
       "DynamicBonds",
       "BalancerV2Guard",
+      "DhedgeEasySwapper",
     ],
     spacing: 2,
   },

@@ -47,32 +47,39 @@ contract DhedgeEasySwapper is Ownable {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
+  event Deposit(
+    address pool,
+    address depositor,
+    IERC20 depositAsset,
+    uint256 amount,
+    IERC20 poolDepositAsset,
+    uint256 liquidityMinted
+  );
+  event Withdraw(
+    address pool,
+    uint256 fundTokenAmount,
+    IERC20 withdrawalAsset,
+    uint256 amountWithdrawnInWithdrawalAsset
+  );
+
   mapping(address => bool) public allowedPools;
   IERC20 public weth;
   IUniswapV2Router public swapRouter;
+
+  // aaveLendingPool
+  mapping(address => bool) public assetsToSkip;
 
   constructor(IUniswapV2Router _swapRouter, IERC20 _weth) {
     swapRouter = _swapRouter;
     weth = _weth;
   }
 
-  /// @notice helper view function to calculating expected withdraw value in usdc
-  /// @param pool the pool that being withdrawn from
-  /// @param fundTokenAmount the amount of tokens being withdrawn
-  /// @param slippageNumerator combine with denominator 99/100 for 1% slippage
-  /// @param slippageDenominator combine with numerator 99/100 for 1% slippage
-  /// @return The amount the tokens are worth adjusted for the slippage tolerance
-  function getExpectedOutUSDC(
-    IPoolLogic pool,
-    uint256 fundTokenAmount,
-    uint256 slippageNumerator,
-    uint256 slippageDenominator
-  ) external view returns (uint256) {
-    return pool.tokenPrice().mul(fundTokenAmount).div(slippageDenominator).mul(slippageNumerator);
-  }
-
   function setPoolAllowed(address pool, bool allowed) external onlyOwner {
     allowedPools[pool] = allowed;
+  }
+
+  function setAssetToSkip(address asset, bool skip) external onlyOwner {
+    assetsToSkip[asset] = skip;
   }
 
   function setSwapRouter(IUniswapV2Router _swapRouter) external onlyOwner {
@@ -84,12 +91,14 @@ contract DhedgeEasySwapper is Ownable {
   /// @param depositAsset the asset the user wants to deposit
   /// @param amount the amount of the deposit asset
   /// @param poolDepositAsset the asset that the pool accepts
+  /// @param expectedLiquidityMinted the expected amount of pool tokens to receive (slippage protection)
   /// @return liquidityMinted the number of wrapper tokens allocated
   function deposit(
     address pool,
     IERC20 depositAsset,
     uint256 amount,
-    IERC20 poolDepositAsset
+    IERC20 poolDepositAsset,
+    uint256 expectedLiquidityMinted
   ) external returns (uint256 liquidityMinted) {
     require(allowedPools[address(pool)], "Pool is not allowed.");
     // Transfer the users funds to this contract
@@ -100,11 +109,14 @@ contract DhedgeEasySwapper is Ownable {
     }
 
     // Approve the pool to take the funds
-    poolDepositAsset.safeApprove(address(pool), amount);
+    poolDepositAsset.safeApprove(address(pool), poolDepositAsset.balanceOf(address(this)));
     // Deposit
-    liquidityMinted = IPoolLogic(pool).deposit(address(poolDepositAsset), amount);
-    // Transfer the pool tokens to the depositer
+    liquidityMinted = IPoolLogic(pool).deposit(address(poolDepositAsset), poolDepositAsset.balanceOf(address(this)));
+
+    require(liquidityMinted >= expectedLiquidityMinted, "Slippage detected");
+    // // Transfer the pool tokens to the depositer
     IERC20(pool).safeTransfer(msg.sender, liquidityMinted);
+    emit Deposit(pool, msg.sender, depositAsset, amount, poolDepositAsset, liquidityMinted);
   }
 
   /// @notice withdraw underlying value of tokens in expectedWithdrawalAssetOfUser
@@ -129,7 +141,7 @@ contract DhedgeEasySwapper is Ownable {
 
     for (uint256 i = 0; i < supportedAssets.length; i++) {
       IERC20 from = IERC20(supportedAssets[i].asset);
-      if (from == withdrawalAsset) {
+      if (from == withdrawalAsset || assetsToSkip[address(from)]) {
         continue;
       }
       swapThat(from, withdrawalAsset);
@@ -138,6 +150,7 @@ contract DhedgeEasySwapper is Ownable {
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
     require(balanceAfterSwaps >= expectedAmountOut, "Slippage detected");
     withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
+    emit Withdraw(pool, fundTokenAmount, withdrawalAsset, balanceAfterSwaps);
   }
 
   /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
