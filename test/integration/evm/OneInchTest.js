@@ -334,13 +334,13 @@ describe("OneInch V4 Test", function () {
 
     await poolManagerLogicProxy.connect(manager).changeAssets([[assets.usdt, false]], []);
 
-    await oneInchV4Guard.setSlippageLimit(1, 1000); // 50%
+    await oneInchV4Guard.setSlippageLimit(1, 1000); // 0.1%
 
     await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
       "slippage limit exceed",
     );
 
-    await oneInchV4Guard.setSlippageLimit(10, 100); // 50%
+    await oneInchV4Guard.setSlippageLimit(10, 100); // 10%
 
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
