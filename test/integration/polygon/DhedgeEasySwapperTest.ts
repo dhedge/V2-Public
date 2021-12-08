@@ -3,12 +3,22 @@ import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { DhedgeEasySwapper, PoolFactory, PoolLogic } from "../../../types";
+import { DhedgeEasySwapper, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
 import { units } from "../../TestHelpers";
 import { aave, assets, assetsBalanceOfSlot, quickswap } from "../polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
+
+interface TestCase {
+  testName: string;
+  torosPoolAddress: string;
+  userDepositToken: string;
+  userDepositTokenSlot: number;
+  poolDepositToken: string;
+  depositAmount: BigNumber;
+  withdrawToken: string;
+}
 
 describe("DhedgeEasySwapper", function () {
   let logicOwner: SignerWithAddress;
@@ -95,86 +105,171 @@ describe("DhedgeEasySwapper", function () {
     });
   });
 
-  describe("ETHBEAR2X", () => {
-    let shortEthTorosPool: PoolLogic;
-    before(async () => {
-      shortEthTorosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
-      await dhedgeEasySwapper.setPoolAllowed(ETHBEAR2X, true);
-    });
+  describe("Toros Tests", () => {
+    const createTest = (test: TestCase) => {
+      const {
+        testName,
+        torosPoolAddress,
+        userDepositToken,
+        userDepositTokenSlot,
+        depositAmount,
+        withdrawToken,
+        poolDepositToken,
+      } = test;
+      it(testName, async () => {
+        const torosPool = await ethers.getContractAt("PoolLogic", torosPoolAddress);
+        await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
 
-    it("can deposit and withdraw - no swap on the way in", async () => {
-      // TokenPrice is in 10**18
-      // But usdc is in 10**6
-      const tokenPrice = await shortEthTorosPool.tokenPrice();
-      const costOf1TokenInUSDC = tokenPrice.div(10 ** 12);
-      const USDC = await ethers.getContractAt("IERC20", assets.usdc);
-      await USDC.approve(dhedgeEasySwapper.address, costOf1TokenInUSDC);
+        // Reset token ownership - for when other tests fail
+        const balanceBefore = await torosPool.balanceOf(logicOwner.address);
+        if (balanceBefore > BigNumber.from(0)) {
+          await torosPool.approve(dhedgeEasySwapper.address, balanceBefore);
+          await dhedgeEasySwapper.withdraw(ETHBEAR2X, balanceBefore, withdrawToken, 0);
+        }
 
-      // deposit the cost of 1 token
-      await dhedgeEasySwapper.deposit(
-        ETHBEAR2X,
-        assets.usdc,
-        costOf1TokenInUSDC,
-        assets.usdc,
-        // 1% slippage
-        units(1).div(100).mul(99),
-      );
-      // Make sure we received very close to one token
-      const balance = await shortEthTorosPool.balanceOf(logicOwner.address);
-      // Should have 1 toros token
-      expect(balance).closeTo(units(1), units(1).div(1000).toNumber());
-      expect(await USDC.balanceOf(logicOwner.address)).to.equal(0);
+        // TokenPrice is in 10**18
+        // But usdc is in 10**6
+        // And asset price in 10**18 hurt my brain
+        const tokenPriceInUSDC = await torosPool.tokenPrice();
+        const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+        const poolManagerLogicProxy: PoolManagerLogic = await PoolManagerLogic.attach(
+          await torosPool.poolManagerLogic(),
+        );
+        const depositAssetValueInUSDC = await poolManagerLogicProxy["assetValue(address,uint256)"](
+          userDepositToken,
+          depositAmount,
+        );
 
-      // Withdraw all
+        const expectedTokens = depositAssetValueInUSDC.mul(units(1)).div(tokenPriceInUSDC.toString());
 
-      await shortEthTorosPool.approve(dhedgeEasySwapper.address, balance);
-      await dhedgeEasySwapper.withdraw(ETHBEAR2X, balance, assets.usdc, costOf1TokenInUSDC.div(100).mul(95));
+        const DepositToken = await ethers.getContractAt("IERC20", userDepositToken);
+        await getAccountToken(depositAmount, logicOwner.address, userDepositToken, userDepositTokenSlot);
+        expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(depositAmount);
 
-      // All tokens were withdrawn
-      const balanceAfterWithdraw = await shortEthTorosPool.balanceOf(logicOwner.address);
-      expect(balanceAfterWithdraw).to.equal(0);
+        await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
+        // deposit the cost of 1 token
+        await dhedgeEasySwapper.deposit(
+          torosPool.address,
+          userDepositToken,
+          depositAmount,
+          poolDepositToken,
+          // 5% slippage
+          expectedTokens.div(100).mul(95),
+        );
 
-      // Check we received back funds close to what we deposited
-      const fundsReturned = await USDC.balanceOf(logicOwner.address);
-      const difference = costOf1TokenInUSDC.div(costOf1TokenInUSDC.sub(fundsReturned));
-      console.log("Slippage", 100 / difference.toNumber());
-      // Funds returned should be close to funds in
-      expect(fundsReturned).closeTo(
-        costOf1TokenInUSDC,
-        // 2% - in and out slippage is quite a bit 605570-595902
-        costOf1TokenInUSDC.div(50).toNumber(),
-      );
-    });
+        // Make sure we received very close to one token
+        const balance = await torosPool.balanceOf(logicOwner.address);
+        expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100) as unknown as number);
+        expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(0);
 
-    it("can deposit and withdraw - swap on the way in", async () => {
-      const oneEth = units(1);
-      await getAccountToken(oneEth, logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
-      const WETH = await ethers.getContractAt("IERC20", assets.weth);
-      await WETH.approve(dhedgeEasySwapper.address, oneEth);
-      expect(await WETH.balanceOf(logicOwner.address)).to.equal(oneEth);
+        // Withdraw all
+        await torosPool.approve(dhedgeEasySwapper.address, balance);
 
-      // TODO: improve this test by calculating the number of tokens we should receive for 1 eth
-      await dhedgeEasySwapper.deposit(ETHBEAR2X, assets.weth, oneEth, assets.usdc, 0);
-      const balance = await shortEthTorosPool.balanceOf(logicOwner.address);
-      expect(balance > BigNumber.from(0)).to.be.true;
-      expect(await WETH.balanceOf(logicOwner.address)).to.equal(0);
+        // Here I need update this to calculate the withdrawal amount out in withdraw token
+        await dhedgeEasySwapper.withdraw(torosPool.address, balance, withdrawToken, 0);
 
-      await shortEthTorosPool.approve(dhedgeEasySwapper.address, balance);
-      await dhedgeEasySwapper.withdraw(ETHBEAR2X, balance, assets.weth, 0);
-      const balanceAfterWithdraw = await shortEthTorosPool.balanceOf(logicOwner.address);
-      expect(balanceAfterWithdraw).to.equal(0);
+        // All tokens were withdrawn
+        const balanceAfterWithdraw = await torosPool.balanceOf(logicOwner.address);
+        expect(balanceAfterWithdraw).to.equal(0);
 
-      // Check we received back funds close to what we deposited
-      const fundsReturned = await WETH.balanceOf(logicOwner.address);
+        // Check we received back funds close to the value of what we deposited
+        const WithdrawToken = await ethers.getContractAt("IERC20", withdrawToken);
+        const fundsReturned = await WithdrawToken.balanceOf(logicOwner.address);
 
-      const difference = oneEth.div(oneEth.sub(fundsReturned));
-      console.log("Slippage", 100 / difference.toNumber());
-      // Funds returned should be close to funds in
-      expect(fundsReturned).to.closeTo(
-        oneEth,
-        // 2%
-        oneEth.div(50) as unknown as number,
-      );
-    });
+        const withdrawAmountUSDC = await poolManagerLogicProxy["assetValue(address,uint256)"](
+          withdrawToken,
+          fundsReturned,
+        );
+
+        // Funds returned should be close to funds in
+        const difference = depositAssetValueInUSDC.div(depositAssetValueInUSDC.sub(withdrawAmountUSDC));
+        console.log("Total in out Slippage %", 100 / difference.toNumber());
+        // Funds returned should be close to funds in
+        expect(withdrawAmountUSDC).closeTo(
+          depositAssetValueInUSDC,
+          // 2% - in and out slippage is quite a bit 605570-595902
+          depositAssetValueInUSDC.div(100).mul(3) as unknown as number,
+        );
+      });
+    };
+
+    const tests: TestCase[] = [
+      {
+        testName: "ETHBEAR2X - can deposit and withdraw - no swap on in or out",
+        torosPoolAddress: ETHBEAR2X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(1, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.usdc,
+      },
+      {
+        testName: "ETHBEAR2X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: ETHBEAR2X,
+        userDepositToken: assets.weth,
+        depositAmount: units(1),
+        userDepositTokenSlot: assetsBalanceOfSlot.weth,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.weth,
+      },
+      {
+        testName: "ETHBULL3X - can deposit and withdraw - no swap on the way in, swap out",
+        torosPoolAddress: ETHBULL3X,
+        userDepositToken: assets.weth,
+        depositAmount: units(1),
+        userDepositTokenSlot: assetsBalanceOfSlot.weth,
+        poolDepositToken: assets.weth,
+        withdrawToken: assets.weth,
+      },
+      {
+        testName: "ETHBULL3X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: ETHBULL3X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(1, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.weth,
+        withdrawToken: assets.usdc,
+      },
+
+      {
+        testName: "BTCBEAR2X - can deposit and withdraw - no swap on the way in, swap on way out",
+        torosPoolAddress: BTCBEAR2X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(1, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.usdc,
+      },
+
+      {
+        testName: "BTCBEAR2X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: BTCBEAR2X,
+        userDepositToken: assets.weth,
+        depositAmount: units(1),
+        userDepositTokenSlot: assetsBalanceOfSlot.weth,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.weth,
+      },
+      {
+        testName: "BTCBULL3X - can deposit and withdraw - no swap on the way in, swap out",
+        torosPoolAddress: BTCBULL3X,
+        userDepositToken: assets.wbtc,
+        depositAmount: units(1, 7), // 0.1 btc (I think)
+        userDepositTokenSlot: assetsBalanceOfSlot.wbtc,
+        poolDepositToken: assets.wbtc,
+        withdrawToken: assets.wbtc,
+      },
+      {
+        testName: "BTCBULL3X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: BTCBULL3X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(1, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.wbtc,
+        withdrawToken: assets.usdc,
+      },
+    ];
+
+    tests.forEach(createTest);
   });
 });
