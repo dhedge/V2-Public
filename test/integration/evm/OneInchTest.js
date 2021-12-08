@@ -3,7 +3,15 @@ const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 const axios = require("axios");
 const { checkAlmostSame, getAmountOut, units } = require("../../TestHelpers");
-const { ZERO_ADDRESS, sushi, uniswapV2, aave, oneinch, assets, price_feeds } = require("../ethereum-data");
+const {
+  ZERO_ADDRESS,
+  sushi,
+  uniswapV2,
+  aave,
+  oneinch,
+  assets,
+  price_feeds,
+} = require("../../../config/chainData/ethereum-data");
 
 use(chaiAlmost());
 

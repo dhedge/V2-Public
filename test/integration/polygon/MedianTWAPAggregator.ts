@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { getAccountToken } from "../utils/getAccountTokens";
 import { units } from "../../TestHelpers";
-import { assets, assetsBalanceOfSlot, price_feeds, sushi } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, price_feeds, sushi } from "../../../config/chainData/polygon-data";
 import { MedianTWAPAggregator, IUniswapV2Router__factory } from "../../../types";
 
 use(solidity);
