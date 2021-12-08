@@ -1,4 +1,5 @@
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 
 // sushiswap
 export const sushi = {
