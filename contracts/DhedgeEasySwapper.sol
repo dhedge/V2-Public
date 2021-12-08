@@ -50,15 +50,15 @@ contract DhedgeEasySwapper is Ownable {
   event Deposit(
     address pool,
     address depositor,
-    IERC20 depositAsset,
+    address depositAsset,
     uint256 amount,
-    IERC20 poolDepositAsset,
+    address poolDepositAsset,
     uint256 liquidityMinted
   );
   event Withdraw(
     address pool,
     uint256 fundTokenAmount,
-    IERC20 withdrawalAsset,
+    address withdrawalAsset,
     uint256 amountWithdrawnInWithdrawalAsset
   );
 
@@ -66,7 +66,7 @@ contract DhedgeEasySwapper is Ownable {
   IERC20 public weth;
   IUniswapV2Router public swapRouter;
 
-  // aaveLendingPool
+  // non erc20 assets -> aaveLendingPool etc
   mapping(address => bool) public assetsToSkip;
 
   constructor(IUniswapV2Router _swapRouter, IERC20 _weth) {
@@ -116,7 +116,7 @@ contract DhedgeEasySwapper is Ownable {
     require(liquidityMinted >= expectedLiquidityMinted, "Slippage detected");
     // // Transfer the pool tokens to the depositer
     IERC20(pool).safeTransfer(msg.sender, liquidityMinted);
-    emit Deposit(pool, msg.sender, depositAsset, amount, poolDepositAsset, liquidityMinted);
+    emit Deposit(pool, msg.sender, address(depositAsset), amount, address(poolDepositAsset), liquidityMinted);
   }
 
   /// @notice withdraw underlying value of tokens in expectedWithdrawalAssetOfUser
@@ -141,7 +141,7 @@ contract DhedgeEasySwapper is Ownable {
 
     for (uint256 i = 0; i < supportedAssets.length; i++) {
       IERC20 from = IERC20(supportedAssets[i].asset);
-      if (from == withdrawalAsset || assetsToSkip[address(from)]) {
+      if (assetsToSkip[address(from)]) {
         continue;
       }
       swapThat(from, withdrawalAsset);
@@ -150,13 +150,17 @@ contract DhedgeEasySwapper is Ownable {
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
     require(balanceAfterSwaps >= expectedAmountOut, "Slippage detected");
     withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
-    emit Withdraw(pool, fundTokenAmount, withdrawalAsset, balanceAfterSwaps);
+    emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
   }
 
   /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
   /// @dev get on the floor
   /// @param from asset to swap from
   function swapThat(IERC20 from, IERC20 to) internal {
+    if (from == to) {
+      return;
+    }
+
     uint256 balance = from.balanceOf(address(this));
     if (balance == 0) {
       return;

@@ -32,7 +32,7 @@
       },
       {
         "indexed": false,
-        "internalType": "contract IERC20",
+        "internalType": "address",
         "name": "depositAsset",
         "type": "address"
       },
@@ -44,7 +44,7 @@
       },
       {
         "indexed": false,
-        "internalType": "contract IERC20",
+        "internalType": "address",
         "name": "poolDepositAsset",
         "type": "address"
       },
@@ -94,7 +94,7 @@
       },
       {
         "indexed": false,
-        "internalType": "contract IERC20",
+        "internalType": "address",
         "name": "withdrawalAsset",
         "type": "address"
       },

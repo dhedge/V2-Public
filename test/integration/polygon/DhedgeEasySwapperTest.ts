@@ -14,12 +14,14 @@ describe("DhedgeEasySwapper", function () {
   let logicOwner: SignerWithAddress;
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
-  const shortEthTorosPoolAddress = "0xf4b3a195587d2735b656b7ffe9060f478faf1b32";
+
+  const ETHBEAR2X = "0xf4b3a195587d2735b656b7ffe9060f478faf1b32";
+  const ETHBULL3X = "0x3e5f7e9e7dc3bc3086ccebd5eb59a0a4a29d881b";
+  const BTCBEAR2X = "0xcc940b5c6136994bed41bff5d88b170929921e9e";
+  const BTCBULL3X = "0xc8fa09426ce1aeac1bc28751f1f6c8d74fa53f3c";
 
   before(async function () {
     [logicOwner] = await ethers.getSigners();
-    // const deployments = await deployPolygonContracts();
-    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
     const poolFactoryProxy = "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0";
     const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
@@ -87,17 +89,17 @@ describe("DhedgeEasySwapper", function () {
 
   describe("allowedPools", () => {
     it("only approved pools can use Swapper", async () => {
-      expect(
-        dhedgeEasySwapper.deposit(shortEthTorosPoolAddress, assets.usdc, units(1, 6), assets.usdc, 0),
-      ).to.be.revertedWith("Pool is not allowed.");
+      expect(dhedgeEasySwapper.deposit(ETHBEAR2X, assets.usdc, units(1, 6), assets.usdc, 0)).to.be.revertedWith(
+        "Pool is not allowed.",
+      );
     });
   });
 
-  describe("Toros Short Eth", () => {
+  describe("ETHBEAR2X", () => {
     let shortEthTorosPool: PoolLogic;
     before(async () => {
-      shortEthTorosPool = await ethers.getContractAt("PoolLogic", shortEthTorosPoolAddress);
-      await dhedgeEasySwapper.setPoolAllowed(shortEthTorosPoolAddress, true);
+      shortEthTorosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
+      await dhedgeEasySwapper.setPoolAllowed(ETHBEAR2X, true);
     });
 
     it("can deposit and withdraw - no swap on the way in", async () => {
@@ -110,7 +112,7 @@ describe("DhedgeEasySwapper", function () {
 
       // deposit the cost of 1 token
       await dhedgeEasySwapper.deposit(
-        shortEthTorosPoolAddress,
+        ETHBEAR2X,
         assets.usdc,
         costOf1TokenInUSDC,
         assets.usdc,
@@ -119,13 +121,29 @@ describe("DhedgeEasySwapper", function () {
       );
       // Make sure we received very close to one token
       const balance = await shortEthTorosPool.balanceOf(logicOwner.address);
+      // Should have 1 toros token
       expect(balance).closeTo(units(1), units(1).div(1000).toNumber());
+      expect(await USDC.balanceOf(logicOwner.address)).to.equal(0);
 
       // Withdraw all
+
       await shortEthTorosPool.approve(dhedgeEasySwapper.address, balance);
-      await dhedgeEasySwapper.withdraw(shortEthTorosPoolAddress, balance, assets.usdc, 0);
+      await dhedgeEasySwapper.withdraw(ETHBEAR2X, balance, assets.usdc, costOf1TokenInUSDC.div(100).mul(95));
+
+      // All tokens were withdrawn
       const balanceAfterWithdraw = await shortEthTorosPool.balanceOf(logicOwner.address);
       expect(balanceAfterWithdraw).to.equal(0);
+
+      // Check we received back funds close to what we deposited
+      const fundsReturned = await USDC.balanceOf(logicOwner.address);
+      const difference = costOf1TokenInUSDC.div(costOf1TokenInUSDC.sub(fundsReturned));
+      console.log("Slippage", 100 / difference.toNumber());
+      // Funds returned should be close to funds in
+      expect(fundsReturned).closeTo(
+        costOf1TokenInUSDC,
+        // 2% - in and out slippage is quite a bit 605570-595902
+        costOf1TokenInUSDC.div(50).toNumber(),
+      );
     });
 
     it("can deposit and withdraw - swap on the way in", async () => {
@@ -136,15 +154,27 @@ describe("DhedgeEasySwapper", function () {
       expect(await WETH.balanceOf(logicOwner.address)).to.equal(oneEth);
 
       // TODO: improve this test by calculating the number of tokens we should receive for 1 eth
-      await dhedgeEasySwapper.deposit(shortEthTorosPoolAddress, assets.weth, oneEth, assets.usdc, 0);
+      await dhedgeEasySwapper.deposit(ETHBEAR2X, assets.weth, oneEth, assets.usdc, 0);
       const balance = await shortEthTorosPool.balanceOf(logicOwner.address);
       expect(balance > BigNumber.from(0)).to.be.true;
+      expect(await WETH.balanceOf(logicOwner.address)).to.equal(0);
 
       await shortEthTorosPool.approve(dhedgeEasySwapper.address, balance);
-
-      await dhedgeEasySwapper.withdraw(shortEthTorosPoolAddress, balance, assets.usdc, 0);
+      await dhedgeEasySwapper.withdraw(ETHBEAR2X, balance, assets.weth, 0);
       const balanceAfterWithdraw = await shortEthTorosPool.balanceOf(logicOwner.address);
       expect(balanceAfterWithdraw).to.equal(0);
+
+      // Check we received back funds close to what we deposited
+      const fundsReturned = await WETH.balanceOf(logicOwner.address);
+
+      const difference = oneEth.div(oneEth.sub(fundsReturned));
+      console.log("Slippage", 100 / difference.toNumber());
+      // Funds returned should be close to funds in
+      expect(fundsReturned).to.closeTo(
+        oneEth,
+        // 2%
+        oneEth.div(50) as unknown as number,
+      );
     });
   });
 });
