@@ -1,8 +1,9 @@
 import { task, types } from "hardhat/config";
 import fs from "fs";
-import { assets, quickswap, protocolDao } from "../config/chainData/polygon-data";
+import { assets, quickswap, protocolDao, aave, toros } from "../config/chainData/polygon-data";
 
 const { tryVerify } = require("./Helpers");
+const torosLeveragePools = toros.leveragePools;
 
 task("easySwapper", "dHEDGE Easy Swapper commands")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
@@ -32,6 +33,12 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
         quickswap.router,
         assets.weth,
       ]);
+
+      await dhedgeEasySwapper.setAssetToSkip(aave.lendingPool, true); // Aave is processed separately
+      // Enable the Toros leverage pools (Production)
+      for (const leveragePool of torosLeveragePools) {
+        await dhedgeEasySwapper.setPoolAllowed(leveragePool, true);
+      }
 
       await dhedgeEasySwapper.transferOwnership(protocolDao);
 
