@@ -65,9 +65,9 @@ contract UniswapV3AssetGuard is ERC20Guard {
   /// @return balance The total balance of the pool
   function getBalance(address pool, address) public view override returns (uint256 balance) {
     uint256 length = nonfungiblePositionManager.balanceOf(pool);
-    for (uint256 i = 0; i < length; i++) {
+    for (uint256 i = 0; i < length; ++i) {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
-      var (, , , , , , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
+      (, , , , , , , uint128 liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
       // (
       //   uint96 nonce,
       //   address operator,
@@ -87,7 +87,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       uint256 price = 0;
 
       // return liquidity in usd
-      return liquidity.mul(price);
+      balance = balance.add(price.mul(liquidity));
     }
   }
 

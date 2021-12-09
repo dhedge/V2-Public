@@ -764,7 +764,7 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     address,
     uint256,
     bytes calldata
-  ) external override returns (bytes4) {
+  ) external pure override returns (bytes4) {
     return this.onERC721Received.selector;
   }
 
