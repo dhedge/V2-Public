@@ -170,7 +170,7 @@ describe("DhedgeEasySwapper", function () {
     });
   });
 
-  describe.only("Multiple users can use swapper at the same time", () => {
+  describe("Multiple users can use swapper at the same time", () => {
     it("2 users deposit, wait, withdraw", async () => {
       const userDepositToken = assets.usdc;
       const userDepositTokenSlot = assetsBalanceOfSlot.usdc;
