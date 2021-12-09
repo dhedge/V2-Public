@@ -24,7 +24,7 @@ contract FlashSwapperTest {
   }
 
   // Only toros pools
-  function flashSwapHakorMod3(
+  function flashSwapDirectWithdraw(
     DhedgeEasySwapper swapper,
     address pool,
     IERC20 depositToken,
@@ -37,25 +37,4 @@ contract FlashSwapperTest {
     IERC20(pool).approve(pool, fundTokenAmount);
     IPoolLogic(pool).withdraw(fundTokenAmount);
   }
-
-  // Only toros pools
-  function flashSwapHakorMod32(
-    DhedgeEasySwapper swapper,
-    address pool,
-    IERC20 depositToken,
-    uint256 amount
-  ) public {
-    depositToken.transferFrom(msg.sender, address(this), amount);
-    depositToken.approve(address(swapper), amount);
-    uint256 fundTokenAmount = swapper.deposit(pool, depositToken, amount, depositToken, 1);
-    // Should revert, cannot deposit withdraw in same block
-    IERC20(pool).approve(address(swapper), fundTokenAmount);
-    swapper.withdraw(pool, fundTokenAmount, depositToken, 1);
-  }
 }
-
-// Mint with swapper
-// Transfer to different address
-// With different address withdraw
-
-// only one person

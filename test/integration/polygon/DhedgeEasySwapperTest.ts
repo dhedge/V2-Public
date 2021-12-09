@@ -21,7 +21,7 @@ interface TestCase {
 }
 
 describe("DhedgeEasySwapper", function () {
-  let logicOwner: SignerWithAddress, directDepositor: SignerWithAddress;
+  let logicOwner: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
 
@@ -31,7 +31,7 @@ describe("DhedgeEasySwapper", function () {
   const BTCBULL3X = "0xc8fa09426ce1aeac1bc28751f1f6c8d74fa53f3c";
 
   before(async function () {
-    [logicOwner, directDepositor] = await ethers.getSigners();
+    [logicOwner, user1, user2] = await ethers.getSigners();
 
     const poolFactoryProxy = "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0";
     const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
@@ -125,7 +125,7 @@ describe("DhedgeEasySwapper", function () {
       ).to.be.revertedWith("whitelist cooldown active");
     });
 
-    it("hacker use swapper then withdraw directly from pool", async () => {
+    it("cannot use swapper then withdraw directly from pool", async () => {
       // Ensures against the Circumvention of the 1 block, flash attack protection
       // Setup
       const FlashSwapperTest = await ethers.getContractFactory("FlashSwapperTest");
@@ -141,46 +141,111 @@ describe("DhedgeEasySwapper", function () {
       await DepositToken.approve(flashSwapperTest.address, depositAmount);
       // Test
       await expect(
-        flashSwapperTest.flashSwapHakorMod3(dhedgeEasySwapper.address, torosPool.address, assets.usdc, depositAmount),
-      ).to.be.revertedWith("whitelist cooldown active");
-    });
-
-    it("hacker use swapper then transfer then withdraw", async () => {
-      // Setup
-      const FlashSwapperTest = await ethers.getContractFactory("FlashSwapperTest");
-      const flashSwapperTest = await FlashSwapperTest.deploy();
-      await flashSwapperTest.deployed();
-      const depositAmount = units(1, 6);
-      await getAccountToken(depositAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
-      // Whitelist
-      const torosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
-      await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
-
-      const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
-      await DepositToken.approve(flashSwapperTest.address, depositAmount);
-      // Test
-      await expect(
-        flashSwapperTest.flashSwapHakorMod32(dhedgeEasySwapper.address, torosPool.address, assets.usdc, depositAmount),
+        flashSwapperTest.flashSwapDirectWithdraw(
+          dhedgeEasySwapper.address,
+          torosPool.address,
+          assets.usdc,
+          depositAmount,
+        ),
       ).to.be.revertedWith("whitelist cooldown active");
     });
   });
 
-  describe("Early withdraw without swapper", () => {
-    it("cannot withdraw early unless using swapper", async () => {
-      /// NOTE we operate as directDepositor.address in this test so that we don't trigger cooldown for other tests
+  describe("Not using the swapper", () => {
+    it("24 hour lock up still works", async () => {
+      /// NOTE we operate as user1.address in this test so that we don't trigger wallet cooldown for other tests
       // Setup
       const depositAmount = units(1, 6);
-      await getAccountToken(depositAmount, directDepositor.address, assets.usdc, assetsBalanceOfSlot.usdc);
+      await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
       const torosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
       const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
-      await DepositToken.connect(directDepositor).approve(torosPool.address, depositAmount);
+      await DepositToken.connect(user1).approve(torosPool.address, depositAmount);
 
       // Deposit
-      torosPool.connect(directDepositor).deposit(assets.usdc, depositAmount);
-      const balance = await torosPool.connect(directDepositor).balanceOf(directDepositor.address);
+      torosPool.connect(user1).deposit(assets.usdc, depositAmount);
+      const balance = await torosPool.connect(user1).balanceOf(user1.address);
       // Withdraw
-      await ethers.provider.send("evm_increaseTime", [60 * 4.5]); // 4.5 minutes
-      await expect(torosPool.connect(directDepositor).withdraw(balance)).to.be.revertedWith("cooldown active");
+      await ethers.provider.send("evm_increaseTime", [3600]); // 1 hour
+      await expect(torosPool.connect(user1).withdraw(balance)).to.be.revertedWith("cooldown active");
+    });
+  });
+
+  describe.only("Multiple users can use swapper at the same time", () => {
+    it("2 users deposit, wait, withdraw", async () => {
+      const userDepositToken = assets.usdc;
+      const userDepositTokenSlot = assetsBalanceOfSlot.usdc;
+      const poolDepositToken = assets.usdc;
+      const withdrawToken = assets.usdc;
+      const torosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
+      await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
+
+      const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
+      const depositAmount = units(1, 6);
+
+      await getAccountToken(depositAmount, logicOwner.address, userDepositToken, userDepositTokenSlot);
+      await getAccountToken(depositAmount, user2.address, userDepositToken, userDepositTokenSlot);
+
+      expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(depositAmount);
+      expect(await DepositToken.balanceOf(user2.address)).to.equal(depositAmount);
+
+      await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
+      await DepositToken.connect(user2).approve(dhedgeEasySwapper.address, depositAmount);
+
+      await dhedgeEasySwapper.deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+      await dhedgeEasySwapper
+        .connect(user2)
+        .deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+
+      const balanceLogicOwner = await torosPool.balanceOf(logicOwner.address);
+      const balanceUser2 = await torosPool.balanceOf(user2.address);
+
+      await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+
+      // Withdraw all
+      await torosPool.approve(dhedgeEasySwapper.address, balanceLogicOwner);
+      await torosPool.connect(user2).approve(dhedgeEasySwapper.address, balanceUser2);
+
+      await dhedgeEasySwapper.withdraw(torosPool.address, balanceLogicOwner, withdrawToken, 0);
+      await dhedgeEasySwapper.connect(user2).withdraw(torosPool.address, balanceUser2, withdrawToken, 0);
+    });
+
+    it("one user deposits, waits, second user deposits, first user immediate withdraw", async () => {
+      const userDepositToken = assets.usdc;
+      const userDepositTokenSlot = assetsBalanceOfSlot.usdc;
+      const poolDepositToken = assets.usdc;
+      const withdrawToken = assets.usdc;
+      const torosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
+      await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
+
+      const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
+      const depositAmount = units(1, 6);
+
+      await getAccountToken(depositAmount, logicOwner.address, userDepositToken, userDepositTokenSlot);
+      await getAccountToken(depositAmount, user2.address, userDepositToken, userDepositTokenSlot);
+
+      expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(depositAmount);
+      expect(await DepositToken.balanceOf(user2.address)).to.equal(depositAmount);
+
+      await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
+      await DepositToken.connect(user2).approve(dhedgeEasySwapper.address, depositAmount);
+
+      await dhedgeEasySwapper.deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+      const balanceLogicOwner = await torosPool.balanceOf(logicOwner.address);
+
+      await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+
+      // Withdraw all
+      await dhedgeEasySwapper
+        .connect(user2)
+        .deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+      const balanceUser2 = await torosPool.balanceOf(user2.address);
+
+      await torosPool.approve(dhedgeEasySwapper.address, balanceLogicOwner);
+      await dhedgeEasySwapper.withdraw(torosPool.address, balanceLogicOwner, withdrawToken, 0);
+
+      await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+      await torosPool.connect(user2).approve(dhedgeEasySwapper.address, balanceUser2);
+      await dhedgeEasySwapper.connect(user2).withdraw(torosPool.address, balanceUser2, withdrawToken, 0);
     });
   });
 
