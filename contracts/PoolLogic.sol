@@ -274,8 +274,6 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
-    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
-
     // calculate the exit fee
     uint256 fundValue = _mintManagerFee();
 
