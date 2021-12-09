@@ -142,6 +142,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   address public poolManagerLogic;
 
+  mapping(address => uint256) public lastWhitelistTransfer;
+
   modifier onlyPrivate() {
     require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
     _;
@@ -191,14 +193,21 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 amount
   ) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
-
-    // cooldown check
-    if (
-      from != address(0) && // allow minting
-      !IHasGuardInfo(factory).isTransferWhitelisted(from, to)
-    ) {
-      require(getExitRemainingCooldown(from) == 0, "cooldown active");
+    // Minting
+    if (from == address(0)) {
+      return;
     }
+    uint256 exitCoolDownRemaining = getExitRemainingCooldown(from);
+    bool isWhitelisted = IHasGuardInfo(factory).isTransferWhitelisted(from, to);
+    if (isWhitelisted) {
+      if (exitCoolDownRemaining > 0) {
+        lastWhitelistTransfer[to] = block.timestamp;
+      }
+      return;
+    }
+    // People that receive tokens from a whitelisted source cannot withdraw, or transfer them on, in the same block
+    require(lastWhitelistTransfer[from] < block.timestamp, "whitelist cooldown active");
+    require(getExitRemainingCooldown(from) == 0, "cooldown active");
   }
 
   /// @notice Set the pool privacy
