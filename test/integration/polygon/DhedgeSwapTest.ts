@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { units } from "../../TestHelpers";
-import { assets, sushi } from "../polygon-data";
+import { assets, sushi } from "../../../config/chainData/polygon-data";
 import { DhedgeSwapTest, IERC20, IWETH } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
