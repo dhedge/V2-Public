@@ -495,30 +495,4 @@ describe("Balancer V2 Test", function () {
     const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
     checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
-  it("should be able to claim rewards on Balancer.", async () => {
-    const claimDistributionsTx = iBalancerMerkleOrchard.encodeFunctionData("claimDistributions", [
-      poolLogicProxy.address,
-      [],
-      [BALANCER.address],
-    ]);
-
-    const wrongClaimerClaimDistributionsTx = iBalancerMerkleOrchard.encodeFunctionData("claimDistributions", [
-      manager.address,
-      [],
-      [BALANCER.address],
-    ]);
-
-    // TODO: Use beforeEach for each test so that each test is independent. Currently unable to remove BAL token to test "enable reward token" error
-    // await poolManagerLogicProxy.connect(manager).changeAssets([], [BALANCER.address]); // disable reward token
-    // await expect(
-    //   poolLogicProxy.connect(manager).execTransaction(balancer.merkleOrchard, claimDistributionsTx),
-    // ).to.be.revertedWith("enable reward token");
-    await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: BALANCER.address, isDeposit: false }], []); // re-enable reward token
-
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction(balancer.merkleOrchard, wrongClaimerClaimDistributionsTx),
-    ).to.be.revertedWith("sender is not pool");
-
-    await poolLogicProxy.connect(manager).execTransaction(balancer.merkleOrchard, claimDistributionsTx);
-  });
 });
