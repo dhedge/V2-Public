@@ -58,6 +58,7 @@ import "./interfaces/IERC20Extended.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
@@ -197,16 +198,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     if (from == address(0)) {
       return;
     }
-    uint256 exitCoolDownRemaining = getExitRemainingCooldown(from);
-    bool isWhitelisted = IHasGuardInfo(factory).isTransferWhitelisted(from, to);
+
+    bool isWhitelisted = IPoolFactory(factory).transferWhitelist(from);
+
     if (isWhitelisted) {
-      if (exitCoolDownRemaining > 0) {
-        lastWhitelistTransfer[to] = block.timestamp;
-      }
+      lastWhitelistTransfer[to] = block.timestamp;
       return;
     }
-    // People that receive tokens from a whitelisted source cannot withdraw, or transfer them on, in the same block
-    require(lastWhitelistTransfer[from] < block.timestamp, "whitelist cooldown active");
+
+    // Users that receive tokens from a whitelisted source cannot withdraw, or transfer them on, for 5 minutes
+    require(lastWhitelistTransfer[from].add(5 minutes) < block.timestamp, "whitelist cooldown active");
     require(getExitRemainingCooldown(from) == 0, "cooldown active");
   }
 
@@ -358,7 +359,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
-    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
     uint256 fundValue = _mintManagerFee();
 
