@@ -2,7 +2,15 @@ import { ethers, upgrades } from "hardhat";
 import Decimal from "decimal.js";
 import { AssetHandler, PoolFactory, PoolPerformance } from "../../../../types";
 import { toBytes32 } from "../../../TestHelpers";
-import { sushi, aave, assets, price_feeds, balancer, quickswap, oneinch } from "../../polygon-data";
+import {
+  sushi,
+  aave,
+  assets,
+  price_feeds,
+  balancer,
+  quickswap,
+  oneinch,
+} from "../../../../config/chainData/polygon-data";
 import { Deployments } from ".";
 
 const deployBalancerV2LpAggregator = async (

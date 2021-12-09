@@ -3,7 +3,7 @@ const { BigNumber } = ethers;
 const { expect, use } = require("chai");
 const { solidity } = require("ethereum-waffle");
 const { checkAlmostSame, toBytes32, units } = require("../../TestHelpers");
-const { sushi, aave, assets, price_feeds } = require("../polygon-data");
+const { sushi, aave, assets, price_feeds } = require("../../../config/chainData/polygon-data");
 
 use(solidity);
 

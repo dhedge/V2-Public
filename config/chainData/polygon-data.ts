@@ -1,4 +1,5 @@
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 
 // sushiswap
 export const sushi = {
@@ -115,4 +116,13 @@ export const price_feeds = {
   dai: "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D",
   sushi: "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0",
   balancer: "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66",
+};
+
+export const toros = {
+  leveragePools: [
+    "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada", // Bitcoin Bear 2x
+    "0x027da30fadab6202801f97be344e2348a2a92842", // Ethereum Bear 2x
+    "0xdb88ab5b485b38edbeef866314f9e49d095bce39", // Bitcoin Bull 3x
+    "0x460b60565cb73845d56564384ab84bf84c13e47d", // Ethereum Bull 3x
+  ],
 };

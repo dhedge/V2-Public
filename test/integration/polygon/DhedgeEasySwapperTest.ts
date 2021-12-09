@@ -5,7 +5,7 @@ import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { DhedgeEasySwapper, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
 import { units } from "../../TestHelpers";
-import { aave, assets, assetsBalanceOfSlot, quickswap } from "../polygon-data";
+import { aave, assets, assetsBalanceOfSlot, quickswap } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
