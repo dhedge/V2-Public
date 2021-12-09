@@ -114,11 +114,11 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   }
 
   /// @notice Checks for high price volatility in the recent TWAPs
-  function highVolatility(int256 twapA, int256 twapB) public view returns (bool highVolatility) {
+  function highVolatility(int256 twapA, int256 twapB) public view returns (bool volatilityHigh) {
     uint256 deviationPercent = abs(twapA - twapB).mul(100).div(uint256(twapA));
 
     if (deviationPercent >= volatilityTripLimit) {
-      highVolatility = true;
+      volatilityHigh = true;
     }
   }
 

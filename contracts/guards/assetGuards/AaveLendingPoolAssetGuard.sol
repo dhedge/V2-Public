@@ -181,7 +181,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       modes,
       pool, // onBehalfOf
       params,
-      0 // referralCode
+      196 // referralCode
     );
   }
 

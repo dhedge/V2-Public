@@ -1273,7 +1273,7 @@
           "name": "Wrapped Bitcoin",
           "asset": "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
           "assetType": "4",
-          "aggregator": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
+          "aggregator": "0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6"
         },
         {
           "name": "Chainlink",
@@ -1506,12 +1506,75 @@
           "assetType": 0,
           "aggregator": "0xc3C893C224A95999DCa9Cd9bD264e87A6C01fC75",
           "aggregatorName": "BalancerV2LPAggregator"
+        },
+        {
+          "name": "dHEDGE DAO",
+          "asset": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
+          "assetType": "0",
+          "aggregator": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E",
+          "aggregatorName": "MedianTWAPAggregator"
+        },
+        {
+          "name": "Sushi LP DHT-WETH",
+          "asset": "0xa375d23a751124359568f3a22576528bd1c8c3e3",
+          "assetType": "2",
+          "aggregator": "0x2eb4669a820e2570AC953C512263857aE6ED5832",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Sushi LP WMATIC-USDC",
+          "asset": "0xcd353f79d9fade311fc3119b841e1f456b54e858",
+          "assetType": "2",
+          "aggregator": "0xc52696F35462480C173c4631214A1D8542f24F28",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Aavegotchi",
+          "asset": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+          "assetType": "0",
+          "aggregator": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Wrapped UST Token",
+          "asset": "0x692597b009d13c4049a947cab2239b7d6517875f",
+          "assetType": "0",
+          "aggregator": "0x2D455E55e8Ad3BA965E3e95e7AaB7dF1C671af19",
+          "aggregatorName": ""
+        },
+        {
+          "name": "TrueUSD",
+          "asset": "0x2e1ad108ff1d8c782fcbbb89aad783ac49586756",
+          "assetType": "0",
+          "aggregator": "0x7C5D415B64312D38c56B54358449d0a4058339d2",
+          "aggregatorName": ""
+        },
+        {
+          "name": "renBTC",
+          "asset": "0xdbf31df14b66535af65aac99c32e9ea844e14501",
+          "assetType": "0",
+          "aggregator": "0xc907E116054Ad103354f2D350FD2514433D57F6f",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Solana",
+          "asset": "0x7DfF46370e9eA5f0Bad3C4E29711aD50062EA7A4",
+          "assetType": "0",
+          "aggregator": "0x10C8264C0935b3B9870013e057f330Ff3e9C56dC",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Nexo",
+          "asset": "0x41b3966b4ff7b427969ddf5da3627d6aeae9a48e",
+          "assetType": "0",
+          "aggregator": "0x666bb13b3ED3816504E8c30D0F9B9C16b371774b",
+          "aggregatorName": ""
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
       "PoolFactory": "0x378786f6d149380Fc7460c938D2Cb8C6F78aB936",
-      "PoolLogic": "0x748083bf747e3537d692e26dc18cdf00efF4f7d7",
+      "PoolLogic": "0xdBFd8257f5921E09400Ac71892370dbB09AF5019",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
       "PoolManagerLogic": "0x51583c1923eb0F338c88dE674A59aB3f05731Ea8",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
@@ -1542,6 +1605,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Wed, 08 Dec 2021 05:02:44 GMT"
+    "date": "Thu, 09 Dec 2021 05:17:23 GMT"
   }
 }
