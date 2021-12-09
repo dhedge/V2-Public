@@ -113,7 +113,7 @@ contract DhedgeEasySwapper is Ownable {
     // Deposit
     liquidityMinted = IPoolLogic(pool).deposit(address(poolDepositAsset), poolDepositAsset.balanceOf(address(this)));
 
-    require(liquidityMinted >= expectedLiquidityMinted, "Slippage detected");
+    require(liquidityMinted >= expectedLiquidityMinted, "Deposit Slippage detected");
     // // Transfer the pool tokens to the depositer
     IERC20(pool).safeTransfer(msg.sender, liquidityMinted);
     emit Deposit(pool, msg.sender, address(depositAsset), amount, address(poolDepositAsset), liquidityMinted);
@@ -148,7 +148,7 @@ contract DhedgeEasySwapper is Ownable {
     }
 
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
-    require(balanceAfterSwaps >= expectedAmountOut, "Slippage detected");
+    require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
     withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
     emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
   }

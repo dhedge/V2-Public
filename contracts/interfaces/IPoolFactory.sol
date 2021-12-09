@@ -40,4 +40,7 @@ interface IPoolFactory {
   function poolPerformanceAddress() external view returns (address);
 
   function isPool(address pool) external view returns (bool);
+
+  // Check if address can bypass 24h lock
+  function transferWhitelist(address from) external view returns (bool);
 }
