@@ -38,6 +38,7 @@ export const aave = {
 // balancer
 export const balancer = {
   v2Vault: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+  merkleOrchard: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",
   pools: {
     // USDC, DAI, miMatic, USDT
     stablePool: {

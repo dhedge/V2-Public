@@ -1598,6 +1598,7 @@
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
       "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03",
       "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4"
+      "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826"
     },
     "network": {
       "name": "matic",
