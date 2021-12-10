@@ -16,7 +16,7 @@ import {
 } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { assets, assetsBalanceOfSlot, sushi } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, sushi } from "../../../config/chainData/polygon-data";
 import { BigNumber } from "ethers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
@@ -379,6 +379,66 @@ describe("Sushiswap V2 Test", function () {
       expect(event.stakingContract).to.equal(sushi.minichef);
 
       expect(await SUSHI.balanceOf(poolLogicProxy.address)).to.be.gt(0);
+    });
+
+    it("manager can Emergency Unstake Sushi LP token", async function () {
+      const unstakeEvent = new Promise((resolve, reject) => {
+        sushiMiniChefV2Guard.on("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
+          event.removeListener();
+
+          resolve({
+            fundAddress,
+            asset,
+            stakingContract,
+            amount,
+            time,
+          });
+        });
+
+        setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 60000);
+      });
+
+      // First stake
+      const depositAbi = iMiniChefV2.encodeFunctionData("deposit", [
+        sushi.pools.usdc_weth.poolId,
+        availableLpToken,
+        poolLogicProxy.address,
+      ]);
+      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
+      await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
+
+      // Then emergency unstake
+      // attempt to withdraw with manager as recipient
+      const badEmergencyWithdrawAbi = iMiniChefV2.encodeFunctionData("emergencyWithdraw", [
+        sushi.pools.usdc_weth.poolId,
+        manager.address,
+      ]);
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(sushi.minichef, badEmergencyWithdrawAbi),
+      ).to.be.revertedWith("recipient is not pool");
+
+      const emergencyWithdrawAbi = iMiniChefV2.encodeFunctionData("emergencyWithdraw", [
+        sushi.pools.usdc_weth.poolId,
+        poolLogicProxy.address,
+      ]);
+
+      const wmaticBalanceBefore = await WMATIC.balanceOf(poolLogicProxy.address);
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, emergencyWithdrawAbi);
+
+      expect(await poolManagerLogicProxy.assetBalance(sushi.pools.usdc_weth.address)).to.be.equal(availableLpToken);
+      expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+
+      const event: any = await unstakeEvent;
+      expect(event.fundAddress).to.equal(poolLogicProxy.address);
+      expect(event.asset).to.equal(sushi.pools.usdc_weth.address);
+      expect(event.stakingContract).to.equal(sushi.minichef);
+      expect(event.amount).to.equal(availableLpToken);
     });
 
     it.skip("manager can Withdraw And Harvest staked Sushi LP token", async function () {

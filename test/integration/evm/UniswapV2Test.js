@@ -2,7 +2,7 @@ const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 const { checkAlmostSame, getAmountOut } = require("../../TestHelpers");
-const { sushi, uniswapV2, aave, assets, price_feeds } = require("../ethereum-data");
+const { sushi, uniswapV2, aave, assets, price_feeds } = require("../../../config/chainData/ethereum-data");
 
 use(chaiAlmost());
 

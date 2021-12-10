@@ -14,7 +14,7 @@ import {
 } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { assets, assetsBalanceOfSlot, quickswap } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, quickswap } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);

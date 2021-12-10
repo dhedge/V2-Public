@@ -273,13 +273,6 @@ contract PoolFactory is
     transferWhitelist[_extAddress] = false;
   }
 
-  /// @notice Checks if transfer is whitelisted (24h lock bypass)
-  /// @param _from The address to transfer from
-  /// @param _to The address to transfer to
-  function isTransferWhitelisted(address _from, address _to) external view override returns (bool) {
-    return transferWhitelist[_from] || transferWhitelist[_to]; // if either 'from' or 'to' is whitelisted, transfer will pass.
-  }
-
   // DAO info (Uber Pool)
 
   /// @notice Set the DAO address

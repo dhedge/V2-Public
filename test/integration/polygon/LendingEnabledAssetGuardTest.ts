@@ -8,7 +8,7 @@ const { BigNumber } = ethers;
 use(solidity);
 
 const { toBytes32, units } = require("../../TestHelpers");
-const { sushi, aave, assets, price_feeds } = require("../polygon-data");
+const { sushi, aave, assets, price_feeds } = require("../../../config/chainData/polygon-data");
 
 describe("LendingEnabledAssetGuard", function () {
   let USDC: Contract, WMatic: Contract;
