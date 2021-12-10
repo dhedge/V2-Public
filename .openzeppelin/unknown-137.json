@@ -2666,12 +2666,6 @@
             "label": "poolManagerLogic",
             "type": "t_address",
             "src": "contracts\\PoolLogic.sol:138"
-          },
-          {
-            "contract": "PoolLogic",
-            "label": "__gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "contracts\\PoolLogic.sol:646"
           }
         ],
         "types": {
@@ -2862,12 +2856,6 @@
             "label": "managerFeeNumeratorChangeDelay",
             "type": "t_uint256",
             "src": "contracts/PoolFactory.sol:130"
-          },
-          {
-            "contract": "PoolFactory",
-            "label": "__gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "contracts/PoolFactory.sol:580"
           }
         ],
         "types": {
