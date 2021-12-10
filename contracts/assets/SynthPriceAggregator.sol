@@ -7,25 +7,21 @@ import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "../interfaces/IAggregatorV3Interface.sol";
 
 /**
- * @title USD price aggregator.
- * @notice Convert ETH denominated oracles to to USD denominated oracle
+ * @title Chainlink Cross price aggregator.
+ * @notice Convert Susd priced assets into usd priced assets
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
-contract ETHCrossAggregator is IAggregatorV3Interface {
+contract SynthPriceAggregator is IAggregatorV3Interface {
   using SignedSafeMath for int256;
 
-  address public token;
-  address public tokenEthAggregator;
-  address public ethUsdAggregator;
+  // i.e sUSD chainlink Oracle
+  address public susdPriceAggregator;
+  // i.e Eth chainlink Oracle
+  address public tokenPriceAggregator;
 
-  constructor(
-    address _token,
-    address _tokenEthAggregator,
-    address _ethUsdAggregator
-  ) {
-    token = _token;
-    tokenEthAggregator = _tokenEthAggregator;
-    ethUsdAggregator = _ethUsdAggregator;
+  constructor(address _susdPriceAggregator, address _tokenPriceAggregator) {
+    susdPriceAggregator = _susdPriceAggregator;
+    tokenPriceAggregator = _tokenPriceAggregator;
   }
 
   function decimals() external pure override returns (uint8) {
@@ -52,10 +48,10 @@ contract ETHCrossAggregator is IAggregatorV3Interface {
       uint80 answeredInRound
     )
   {
-    (, int256 tokenEthPrice, , uint256 updatedAt1, ) = IAggregatorV3Interface(tokenEthAggregator).latestRoundData();
-    (, int256 ethUsdPrice, , uint256 updatedAt2, ) = IAggregatorV3Interface(ethUsdAggregator).latestRoundData();
+    (, int256 sUSDUsdPrice, , uint256 updatedAt1, ) = IAggregatorV3Interface(susdPriceAggregator).latestRoundData();
+    (, int256 tokenUsdPrice, , uint256 updatedAt2, ) = IAggregatorV3Interface(tokenPriceAggregator).latestRoundData();
 
-    answer = tokenEthPrice.mul(ethUsdPrice).div(1e18);
+    answer = sUSDUsdPrice.mul(tokenUsdPrice).div(1e8);
     return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
   }
 }

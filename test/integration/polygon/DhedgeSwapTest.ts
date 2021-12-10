@@ -1,15 +1,17 @@
-const { ethers } = require("hardhat");
-const { expect, use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const { units } = require("../../TestHelpers");
-const { sushi, assets } = require("../polygon-data");
+import { ethers } from "hardhat";
+import { solidity } from "ethereum-waffle";
+import { expect, use } from "chai";
+import { units } from "../../TestHelpers";
+import { assets, sushi } from "../polygon-data";
+import { DhedgeSwapTest, IERC20, IWETH } from "../../../types";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-use(chaiAlmost());
+use(solidity);
 
 describe("DhedgeSwap Test", function () {
-  let WMATIC, WETH, USDC, USDT, DAI;
-  let owner;
-  let dhedgeSwapTest;
+  let WMATIC: IWETH, WETH: IERC20, USDC: IERC20, USDT: IERC20, DAI: IERC20;
+  let owner: SignerWithAddress;
+  let dhedgeSwapTest: DhedgeSwapTest;
 
   before(async function () {
     [owner] = await ethers.getSigners();
@@ -20,14 +22,11 @@ describe("DhedgeSwap Test", function () {
   });
 
   it("Should be able to get WMATIC", async function () {
-    const IWETH = await hre.artifacts.readArtifact("IWETH");
-    WMATIC = await ethers.getContractAt(IWETH.abi, assets.wmatic);
-
-    const IERC20 = await hre.artifacts.readArtifact("IERC20");
-    USDT = await ethers.getContractAt(IERC20.abi, assets.usdt);
-    DAI = await ethers.getContractAt(IERC20.abi, assets.dai);
-    USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
-    WETH = await ethers.getContractAt(IERC20.abi, assets.weth);
+    WMATIC = await ethers.getContractAt("IWETH", assets.wmatic);
+    USDT = await ethers.getContractAt("IERC20", assets.usdt);
+    DAI = await ethers.getContractAt("IERC20", assets.dai);
+    USDC = await ethers.getContractAt("IERC20", assets.usdc);
+    WETH = await ethers.getContractAt("IERC20", assets.weth);
 
     // deposit Matic -> WMATIC
     await WMATIC.deposit({ value: units(500) });

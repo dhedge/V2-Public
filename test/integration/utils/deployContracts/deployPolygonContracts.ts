@@ -1,8 +1,55 @@
 import { ethers, upgrades } from "hardhat";
-import { PoolFactory } from "../../../../types";
+import Decimal from "decimal.js";
+import { AssetHandler, PoolFactory, PoolPerformance } from "../../../../types";
 import { toBytes32 } from "../../../TestHelpers";
-import { sushi, aave, assets, price_feeds } from "../../polygon-data";
+import { sushi, aave, assets, price_feeds, balancer, quickswap, oneinch } from "../../polygon-data";
 import { Deployments } from ".";
+
+const deployBalancerV2LpAggregator = async (
+  poolFactory: PoolFactory,
+  info: {
+    pool: string;
+    poolId: string;
+    tokens: string[];
+    decimals: number[];
+    weights: number[];
+  },
+) => {
+  const ether = "1000000000000000000";
+  const divisor = info.weights.reduce((acc, w, i) => {
+    if (i == 0) {
+      return new Decimal(w).pow(w);
+    }
+    return acc.mul(new Decimal(w).pow(w));
+  }, new Decimal("0"));
+
+  const K = new Decimal(ether).div(divisor).toFixed(0);
+
+  let matrix = [];
+  for (let i = 1; i <= 20; i++) {
+    const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
+    for (let j = 0; j < info.weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+    }
+    matrix.push(elements);
+  }
+
+  const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
+  return await BalancerV2LPAggregator.deploy(
+    poolFactory.address,
+    balancer.v2Vault,
+    info.pool,
+    info.tokens,
+    info.decimals,
+    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+    {
+      maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
+      K,
+      powerPrecision: "100000000", // powerPrecision
+      approximationMatrix: matrix, // approximationMatrix
+    },
+  );
+};
 
 export const deployPolygonContracts = async (): Promise<Deployments> => {
   const [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -13,7 +60,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const governance = await Governance.deploy();
 
   const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-  const poolPerformance = await upgrades.deployProxy(PoolPerformance);
+  const poolPerformance = <PoolPerformance>await upgrades.deployProxy(PoolPerformance);
   await poolPerformance.deployed();
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -33,9 +80,21 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
   const assetDai = { asset: assets.dai, assetType: 4, aggregator: price_feeds.dai }; // Lending enabled
   const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
-  const assetHandlerInitAssets = [assetWmatic, assetWeth, assetUsdt, assetDai, assetUsdc, assetSushi, assetLendingPool];
+  const assetBalancer = { asset: assets.balancer, assetType: 0, aggregator: price_feeds.balancer };
+  const assetMiMatic = { asset: assets.miMatic, assetType: 0, aggregator: price_feeds.dai };
+  const assetHandlerInitAssets = [
+    assetWmatic,
+    assetWeth,
+    assetUsdt,
+    assetDai,
+    assetUsdc,
+    assetSushi,
+    assetBalancer,
+    assetMiMatic,
+    assetLendingPool,
+  ];
 
-  const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
+  const assetHandler = <AssetHandler>await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
   await assetHandler.deployed();
   await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
 
@@ -63,6 +122,31 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   };
   await assetHandler.addAssets([assetSushiLPWethUsdc]);
 
+  const quickLPAggregator = await UniV2LPAggregator.deploy(quickswap.pools.usdc_weth.address, poolFactory.address);
+  const assetQuickLPWethUsdc = {
+    asset: quickswap.pools.usdc_weth.address,
+    assetType: 5,
+    aggregator: quickLPAggregator.address,
+  };
+  await assetHandler.addAssets([assetQuickLPWethUsdc]);
+
+  // Deploy Balancer LP Aggregator
+  const balancerV2Aggregator = await deployBalancerV2LpAggregator(poolFactory, balancer.pools.stablePool);
+  const balancerLpAsset = {
+    asset: balancer.pools.stablePool.pool,
+    assetType: 6,
+    aggregator: balancerV2Aggregator.address,
+  };
+  await assetHandler.addAssets([balancerLpAsset]);
+
+  const balancerV2AggregatorWethBalancer = await deployBalancerV2LpAggregator(poolFactory, balancer.pools.bal80weth20);
+  const balancerLpAssetWethBalancer = {
+    asset: balancer.pools.bal80weth20.pool,
+    assetType: 6,
+    aggregator: balancerV2AggregatorWethBalancer.address,
+  };
+  await assetHandler.addAssets([balancerLpAssetWethBalancer]);
+
   const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
   const erc20Guard = await ERC20Guard.deploy();
   await erc20Guard.deployed();
@@ -74,6 +158,14 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
   const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
   await uniswapV2RouterGuard.deployed();
+
+  const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
+  const quickStakingRewardsGuard = await QuickStakingRewardsGuard.deploy();
+  await quickStakingRewardsGuard.deployed();
+
+  const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
+  const quickLPAssetGuard = await QuickLPAssetGuard.deploy(quickswap.stakingRewardsFactory);
+  await quickLPAssetGuard.deployed();
 
   const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
   const sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([assets.sushi, assets.wmatic]);
@@ -99,14 +191,28 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(assets.wmatic);
   aaveIncentivesControllerGuard.deployed();
 
+  const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
+  const balancerV2Guard = await BalancerV2Guard.deploy(2, 100); // set slippage 2%
+  balancerV2Guard.deployed();
+
+  const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
+  const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
+  oneInchV3Guard.deployed();
+
   await governance.setAssetGuard(0, erc20Guard.address);
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);
   await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
   await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
+  await governance.setAssetGuard(5, quickLPAssetGuard.address);
+  await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
+  await governance.setContractGuard(quickswap.router, uniswapV2RouterGuard.address);
+  await governance.setContractGuard(quickswap.pools.usdc_weth.stakingRewards, quickStakingRewardsGuard.address);
   await governance.setContractGuard(sushi.router, uniswapV2RouterGuard.address);
   await governance.setContractGuard(sushi.minichef, sushiMiniChefV2Guard.address);
   await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuard.address);
   await governance.setContractGuard(aave.incentivesController, aaveIncentivesControllerGuard.address);
+  await governance.setContractGuard(balancer.v2Vault, balancerV2Guard.address);
+  await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
   await governance.setAddresses([
     { name: toBytes32("swapRouter"), destination: sushi.router },
     { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
@@ -122,17 +228,33 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const USDC = await ethers.getContractAt("IERC20", assets.usdc);
   const WETH = await ethers.getContractAt("IERC20", assets.weth);
   const SUSHI = await ethers.getContractAt("IERC20", assets.sushi);
+  const BALANCER = await ethers.getContractAt("IERC20", assets.balancer);
+  const QUICK = await ethers.getContractAt("IERC20", assets.quick);
+
   const SushiLPUSDCWETH = await ethers.getContractAt("IERC20", sushi.pools.usdc_weth.address);
+  const QuickLPUSDCWETH = await ethers.getContractAt("IERC20", quickswap.pools.usdc_weth.address);
+
   const AMUSDC = await ethers.getContractAt("IERC20", aave.aTokens.usdc);
+  const AMWETH = await ethers.getContractAt("IERC20", aave.aTokens.weth);
+
+  const VariableWETH = await ethers.getContractAt("IERC20", aave.variableDebtTokens.weth);
+  const VariableUSDT = await ethers.getContractAt("IERC20", aave.variableDebtTokens.usdt);
+
+  const BALANCERLP_STABLE = await ethers.getContractAt("IERC20", balancer.pools.stablePool.pool);
+  const BALANCERLP_WETH_BALANCER = await ethers.getContractAt("IERC20", balancer.pools.bal80weth20.pool);
 
   return {
     logicOwner,
     manager,
     dao,
     user,
+    governance,
+    assetHandler,
+    poolFactory,
     poolLogic,
     poolManagerLogic,
-    poolFactory,
+    poolPerformance,
+    sushiMiniChefV2Guard,
     assets: {
       WMATIC,
       USDT,
@@ -140,8 +262,16 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
       USDC,
       WETH,
       SUSHI,
+      QUICK,
+      BALANCER,
       SushiLPUSDCWETH,
+      QuickLPUSDCWETH,
       AMUSDC,
+      AMWETH,
+      VariableWETH,
+      VariableUSDT,
+      BALANCERLP_STABLE,
+      BALANCERLP_WETH_BALANCER,
     },
   };
 };

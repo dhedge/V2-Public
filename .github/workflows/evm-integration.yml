@@ -4,7 +4,7 @@ on: [push]
 jobs:
 # This workflow contains a single job called "test"
   evm-integration1:
-    if: "contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    if: "contains(join(github.event.commits.*.message), '[run-evm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: EIT 1
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -60,7 +60,7 @@ jobs:
           npx hardhat test ./test/integration/evm/AaveTest.js --network localhost
 
   evm-integration2:
-    if: "contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    if: "contains(join(github.event.commits.*.message), '[run-evm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: EIT 2
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -104,10 +104,6 @@ jobs:
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
-
-      - name: Synthetix Tests
-        run: |
-          npx hardhat test ./test/integration/evm/SynthetixTest.ts --network localhost
       - name: UniswapV2 Tests
         run: |
           npx hardhat test ./test/integration/evm/UniswapV2Test.js --network localhost

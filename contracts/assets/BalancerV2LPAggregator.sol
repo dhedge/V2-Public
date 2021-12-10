@@ -35,7 +35,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
   IBalancerPool public pool;
   bytes32 public poolId;
   address[] public tokens;
-  uint8[] public decimals;
+  uint8[] public tokenDecimals;
   uint256[] public weights;
   PriceDeviationParams public params;
 
@@ -67,12 +67,16 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
     vault = _vault;
     poolId = _pool.getPoolId();
     tokens = _tokens;
-    decimals = _decimals;
+    tokenDecimals = _decimals;
     weights = _weights;
     params = _params;
   }
 
   /* ========== VIEWS ========== */
+
+  function decimals() external pure override returns (uint8) {
+    return 8;
+  }
 
   /**
    * @notice Get the latest round data. Should be the same format as chainlink aggregator.
@@ -121,7 +125,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
     (, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
 
     for (uint256 index = 0; index < tokens.length; index++) {
-      usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10**decimals[index]);
+      usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10**tokenDecimals[index]);
     }
   }
 

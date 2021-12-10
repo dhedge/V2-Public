@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { checkAlmostSame, units } from "../../TestHelpers";
-import { ZERO_ADDRESS, sushi, aave, assets } from "../polygon-data";
+import { ZERO_ADDRESS, sushi, aave, assets, assetsBalanceOfSlot } from "../polygon-data";
 import {
   IAaveIncentivesController__factory,
   IERC20,
@@ -13,13 +13,13 @@ import {
   PoolManagerLogic,
 } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getUSDC } from "../utils/getAccountTokens/polygon";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
 
-describe("Polygon Mainnet Test", function () {
+describe("Polygon Mainnet Aave Test", function () {
   let USDC: IERC20, DAI: IERC20, AMUSDC: IERC20, WMATIC: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
@@ -36,7 +36,7 @@ describe("Polygon Mainnet Test", function () {
     WMATIC = deployments.assets.WMATIC;
     AMUSDC = deployments.assets.AMUSDC;
 
-    await getUSDC(units(10000, 6));
+    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
   });
 
   beforeEach(async function () {
