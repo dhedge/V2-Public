@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { checkAlmostSame, units } from "../../TestHelpers";
-import { ZERO_ADDRESS, sushi, aave, assets, assetsBalanceOfSlot } from "../polygon-data";
+import { ZERO_ADDRESS, sushi, aave, assets, assetsBalanceOfSlot } from "../../../config/chainData/polygon-data";
 import {
   IAaveIncentivesController__factory,
   IERC20,

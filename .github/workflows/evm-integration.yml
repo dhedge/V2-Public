@@ -2,7 +2,6 @@ name: EVM Integration Tests
 on: [push]
 
 jobs:
-# This workflow contains a single job called "test"
   evm-integration1:
     if: "contains(join(github.event.commits.*.message), '[run-evm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: EIT 1
