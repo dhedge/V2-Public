@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { units } from "../../TestHelpers";
-import { assets } from "../polygon-data";
+import { assets } from "../../../config/chainData/polygon-data";
 import { IWETH, PoolFactory, PoolLogic, PoolLogic__factory } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";

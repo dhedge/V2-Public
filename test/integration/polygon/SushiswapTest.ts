@@ -16,7 +16,7 @@ import {
 } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { assets, assetsBalanceOfSlot, sushi } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, sushi } from "../../../config/chainData/polygon-data";
 import { BigNumber } from "ethers";
 import { getAccountToken } from "../utils/getAccountTokens";
 

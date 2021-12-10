@@ -3,7 +3,7 @@ import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { units } from "../../TestHelpers";
 import { ETHCrossAggregator, IAggregatorV3Interface } from "../../../types";
-import { assets, eth_price_feeds, price_feeds } from "../polygon-data";
+import { assets, eth_price_feeds, price_feeds } from "../../../config/chainData/polygon-data";
 
 use(solidity);
 

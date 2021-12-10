@@ -3,7 +3,7 @@ const { BigNumber } = ethers;
 const { expect, use } = require("chai");
 const { solidity } = require("ethereum-waffle");
 const { checkAlmostSame, toBytes32, units } = require("../../TestHelpers");
-const { sushi, aave, assets, price_feeds } = require("../polygon-data");
+const { sushi, aave, assets, price_feeds } = require("../../../config/chainData/polygon-data");
 
 use(solidity);
 
@@ -13,6 +13,7 @@ const threeDollar = units(3);
 
 // https://kndrck.co/posts/local_erc20_bal_mani_w_hh/
 const setStorageAt = async (address, index, value) => {
+  console.log("Debug:SetStorage:", address, index, value);
   await ethers.provider.send("hardhat_setStorageAt", [address, index, value]);
   await ethers.provider.send("evm_mine", []); // Just mines to the next block
 };
