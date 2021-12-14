@@ -88,7 +88,7 @@ contract DhedgeEasySwapper is Ownable {
   }
 
   function setFee(uint256 numerator, uint256 denominator) external onlyOwner {
-    require(feeDenominator >= feeNumerator, "numerator must be < denominator");
+    require(feeDenominator >= feeNumerator, "numerator must be <= denominator");
     feeNumerator = numerator;
     feeDenominator = denominator;
   }
@@ -131,7 +131,7 @@ contract DhedgeEasySwapper is Ownable {
     if (feeNumerator > 0 && feeDenominator > 0 && feeSink != address(0)) {
       poolDepositAsset.safeTransfer(
         feeSink,
-        poolDepositAsset.balanceOf(address(this)).div(feeDenominator).mul(feeNumerator)
+        poolDepositAsset.balanceOf(address(this)).mul(feeNumerator).div(feeDenominator)
       );
     }
 

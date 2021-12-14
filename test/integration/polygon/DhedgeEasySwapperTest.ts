@@ -47,45 +47,6 @@ describe("DhedgeEasySwapper", function () {
     ]);
     await ethers.provider.send("evm_mine", []); // Just mines to the next block
 
-    ///
-    /// ONCE Prod is updated below can be removed
-    ///
-
-    // Take over ownership of the proxyAdmin
-    const proxyAdmin = await ethers.getContractAt("ProxyAdmin", proxyAdminAddress);
-    await ethers.provider.send("hardhat_setStorageAt", [
-      proxyAdminAddress,
-      "0x0",
-      "0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-    ]);
-    await ethers.provider.send("evm_mine", []); // Just mines to the next block
-    expect(await poolFactory.owner()).to.equal(logicOwner.address);
-
-    const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
-    const newPoolFactory = await PoolFactoryContract.deploy();
-    await newPoolFactory.deployed();
-
-    await proxyAdmin.upgrade(poolFactoryProxy, newPoolFactory.address);
-
-    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await PoolPerformance.deploy();
-    await poolPerformance.deployed();
-
-    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
-
-    const PoolLogic = await ethers.getContractFactory("PoolLogic");
-    const poolLogic = await PoolLogic.deploy();
-    await poolLogic.deployed();
-    const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    const poolManagerLogic = await PoolManagerLogic.deploy();
-    await poolManagerLogic.deployed();
-
-    await poolFactory.setLogic(poolLogic.address, await poolManagerLogic.address);
-
-    ///
-    /// ONCE Prod is updated above can be removed ^^^
-    ///
-
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
     dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
     await dhedgeEasySwapper.deployed();
@@ -125,6 +86,7 @@ describe("DhedgeEasySwapper", function () {
       // Fee of 1% received by fee sink
       const balanceAfter = await DepositToken.balanceOf(feeSink.address);
       expect(balanceAfter.sub(balanceBEfore)).to.equal(depositAmount.div(100));
+      await dhedgeEasySwapper.setFee(0, 0); // 1%
     });
   });
 
