@@ -25,7 +25,7 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
       if (versions[latestVersion].contracts.DhedgeEasySwapper) throw "Easy Swapper contract already deployed";
 
       const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(quickswap.router, assets.weth);
+      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(protocolDao, quickswap.router, assets.weth);
       await dhedgeEasySwapper.deployed();
 
       console.log("DhedgeEasySwapper deployed to: ", dhedgeEasySwapper.address);

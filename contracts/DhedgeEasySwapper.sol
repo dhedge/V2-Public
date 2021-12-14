@@ -62,6 +62,10 @@ contract DhedgeEasySwapper is Ownable {
     uint256 amountWithdrawnInWithdrawalAsset
   );
 
+  address payable public feeSink;
+  uint256 public feeNumerator = 50;
+  uint256 public feeDenominator = 1000;
+
   mapping(address => bool) public allowedPools;
   IERC20 public weth;
   IUniswapV2Router public swapRouter;
@@ -69,13 +73,28 @@ contract DhedgeEasySwapper is Ownable {
   // non erc20 assets -> aaveLendingPool etc
   mapping(address => bool) public assetsToSkip;
 
-  constructor(IUniswapV2Router _swapRouter, IERC20 _weth) {
+  constructor(
+    address payable _feeSink,
+    IUniswapV2Router _swapRouter,
+    IERC20 _weth
+  ) {
+    feeSink = _feeSink;
     swapRouter = _swapRouter;
     weth = _weth;
   }
 
   function setPoolAllowed(address pool, bool allowed) external onlyOwner {
     allowedPools[pool] = allowed;
+  }
+
+  function setFee(uint256 numerator, uint256 denominator) external onlyOwner {
+    require(feeDenominator > feeNumerator, "numerator must be < denominator");
+    feeNumerator = numerator;
+    feeDenominator = denominator;
+  }
+
+  function setFeeSink(address payable sink) external onlyOwner {
+    feeSink = sink;
   }
 
   function setAssetToSkip(address asset, bool skip) external onlyOwner {
@@ -106,6 +125,14 @@ contract DhedgeEasySwapper is Ownable {
 
     if (depositAsset != poolDepositAsset) {
       swapThat(depositAsset, poolDepositAsset);
+    }
+
+    // Sweep fee to sink
+    if (feeNumerator > 0 && feeDenominator > 0 && feeSink != address(0)) {
+      poolDepositAsset.safeTransfer(
+        feeSink,
+        poolDepositAsset.balanceOf(address(this)).div(feeDenominator).mul(feeNumerator)
+      );
     }
 
     // Approve the pool to take the funds
