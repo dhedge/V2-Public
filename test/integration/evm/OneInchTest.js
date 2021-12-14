@@ -71,7 +71,7 @@ describe("OneInch V4 Test", function () {
     await governance.setAssetGuard(2, erc20Guard.address); // as normal erc20 token
     await governance.setContractGuard(uniswapV2.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(sushi.router, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(oneinch.v3Router, oneInchV4Guard.address);
+    await governance.setContractGuard(oneinch.v4Router, oneInchV4Guard.address);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
   });
@@ -291,7 +291,7 @@ describe("OneInch V4 Test", function () {
       "unsupported spender approval",
     );
 
-    approveABI = iERC20.encodeFunctionData("approve", [oneinch.v3Router, amount]);
+    approveABI = iERC20.encodeFunctionData("approve", [oneinch.v4Router, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
   });
 
@@ -315,7 +315,7 @@ describe("OneInch V4 Test", function () {
       ["0x80000000000000003b6d0340" + sushi.pools.dai_usdt.address.slice(2, sushi.pools.dai_usdt.address.length)],
     ]);
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v4Router, swapTx)).to.be.revertedWith(
       "invalid path",
     );
 
@@ -328,7 +328,7 @@ describe("OneInch V4 Test", function () {
       referrerAddress,
     });
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v4Router, swapTx)).to.be.revertedWith(
       "unsupported destination asset",
     );
 
@@ -336,7 +336,7 @@ describe("OneInch V4 Test", function () {
 
     await oneInchV4Guard.setSlippageLimit(1, 1000); // 0.1%
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v4Router, swapTx)).to.be.revertedWith(
       "slippage limit exceed",
     );
 
@@ -345,7 +345,7 @@ describe("OneInch V4 Test", function () {
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
 
-    await poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx);
+    await poolLogicProxy.connect(manager).execTransaction(oneinch.v4Router, swapTx);
 
     const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
@@ -378,7 +378,7 @@ describe("OneInch V4 Test", function () {
       referrerAddress,
     });
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v4Router, swapTx)).to.be.revertedWith(
       "unsupported destination asset",
     );
 
@@ -391,7 +391,7 @@ describe("OneInch V4 Test", function () {
       referrerAddress,
     });
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx)).to.be.revertedWith(
+    await expect(poolLogicProxy.connect(manager).execTransaction(oneinch.v4Router, swapTx)).to.be.revertedWith(
       "recipient is not pool",
     );
 
@@ -407,7 +407,7 @@ describe("OneInch V4 Test", function () {
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
 
-    await poolLogicProxy.connect(manager).execTransaction(oneinch.v3Router, swapTx);
+    await poolLogicProxy.connect(manager).execTransaction(oneinch.v4Router, swapTx);
 
     const usdtBalanceAfter = await USDT.balanceOf(poolLogicProxy.address);
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
