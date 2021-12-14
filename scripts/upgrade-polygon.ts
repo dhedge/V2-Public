@@ -159,6 +159,14 @@ task("upgrade-polygon", "Upgrade contracts")
     const ozExpectedFile = ozPath + "unknown-137.json";
     fs.renameSync(ozEnvFile, ozExpectedFile);
 
+    process.on("SIGINT", () => {
+      console.log("Process Interrupted, Reverting rename");
+      fs.renameSync(ozExpectedFile, ozEnvFile);
+      console.log("Exiting...");
+      // eventually exit
+      process.exit(); // Add code if necessary
+    });
+
     const writeVersions = () => {
       const data = JSON.stringify(versions, null, 2);
       fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);

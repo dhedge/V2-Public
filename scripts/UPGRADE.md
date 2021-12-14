@@ -10,6 +10,7 @@ New immutable contracts, for example, new implementations or guards, can and are
 
 We use `Openzepplin` tooling that helps us ensure our upgradable contracts remaining upgradable by following the expected storage patterns. To do this Openzepplin stores information about our deployments in the .openzepplin folder, there is unfortunately one file per chain for polygon it is `unknown-137. json`, https://docs.openzeppelin.com/cli/2.6/configuration#network.json this means our staging and production deployments can collide unless we do some clever switching. When the upgrade script starts it will rename `polygon-production.json` or `polygon-staging.json` to `unknown-137.json` depending on the environment we are executing the upgrade on.
 
+**NOTE**: If you force exit the script early it may not switch the name back - this would need to be reverted.
 
 ## Gnosis
 
