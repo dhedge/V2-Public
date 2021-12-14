@@ -88,7 +88,7 @@ contract DhedgeEasySwapper is Ownable {
   }
 
   function setFee(uint256 numerator, uint256 denominator) external onlyOwner {
-    require(feeDenominator > feeNumerator, "numerator must be < denominator");
+    require(feeDenominator >= feeNumerator, "numerator must be < denominator");
     feeNumerator = numerator;
     feeDenominator = denominator;
   }

@@ -114,16 +114,17 @@ describe("DhedgeEasySwapper", function () {
       // Whitelist
       const torosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
       await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
-      await dhedgeEasySwapper.setFee(50, 1000); // 1%
+      await dhedgeEasySwapper.setFee(1, 100); // 1%
 
       const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
       await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
       // Check feeSink is empty
-      expect(await DepositToken.balanceOf(feeSink.address)).to.equal(0);
+      const balanceBEfore = await DepositToken.balanceOf(feeSink.address);
       // Deposit
       await dhedgeEasySwapper.deposit(ETHBEAR2X, assets.usdc, depositAmount, assets.usdc, 0);
       // Fee of 1% received by fee sink
-      expect(await DepositToken.balanceOf(feeSink.address)).to.equal(1000);
+      const balanceAfter = await DepositToken.balanceOf(feeSink.address);
+      expect(balanceAfter.sub(balanceBEfore)).to.equal(depositAmount.div(100));
     });
   });
 
