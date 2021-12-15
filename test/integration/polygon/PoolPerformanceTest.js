@@ -163,6 +163,7 @@ describe("PoolPerformance", function () {
         2,
       );
     });
+
     // This tests checks that pools that existed with funds before PoolPerformance is deployed
     // That they are not penalized
     it("existing pool unintitialized with deposit + tokenPriceAdjustedForPerformance", async () => {
@@ -195,6 +196,9 @@ describe("PoolPerformance", function () {
         await ethers.provider.getStorageAt(poolPerformance.address, poolIndex),
         //true
       ).to.equal("0x0000000000000000000000000000000000000000000000000000000000000001");
+
+      console.log(">>>>>>>> poolIndex", poolIndex);
+      console.log(">>>>>>>> poolPerformance.address", poolPerformance.address);
 
       await setStorageAt(
         poolPerformance.address,
