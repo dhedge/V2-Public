@@ -2,7 +2,6 @@ name: OVM Integration Tests
 on: [push]
 
 jobs:
-# This workflow contains a single job called "test"
   ovm-integration1:
     if: "contains(join(github.event.commits.*.message), '[run-ovm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: OIT 1

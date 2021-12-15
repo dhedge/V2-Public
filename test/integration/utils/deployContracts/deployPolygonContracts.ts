@@ -2,7 +2,15 @@ import { ethers, upgrades } from "hardhat";
 import Decimal from "decimal.js";
 import { AssetHandler, PoolFactory, PoolPerformance } from "../../../../types";
 import { toBytes32 } from "../../../TestHelpers";
-import { sushi, aave, assets, price_feeds, balancer, quickswap, oneinch } from "../../polygon-data";
+import {
+  sushi,
+  aave,
+  assets,
+  price_feeds,
+  balancer,
+  quickswap,
+  oneinch,
+} from "../../../../config/chainData/polygon-data";
 import { Deployments } from ".";
 
 const deployBalancerV2LpAggregator = async (
@@ -195,6 +203,10 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const balancerV2Guard = await BalancerV2Guard.deploy(2, 100); // set slippage 2%
   balancerV2Guard.deployed();
 
+  const BalancerMerkleOrchardGuard = await ethers.getContractFactory("BalancerMerkleOrchardGuard");
+  const balancerMerkleOrchardGuard = await BalancerMerkleOrchardGuard.deploy();
+  balancerMerkleOrchardGuard.deployed();
+
   const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
   const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
   oneInchV3Guard.deployed();
@@ -212,6 +224,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuard.address);
   await governance.setContractGuard(aave.incentivesController, aaveIncentivesControllerGuard.address);
   await governance.setContractGuard(balancer.v2Vault, balancerV2Guard.address);
+  await governance.setContractGuard(balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
   await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
   await governance.setAddresses([
     { name: toBytes32("swapRouter"), destination: sushi.router },
