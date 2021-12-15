@@ -789,7 +789,9 @@
       "AaveIncentivesControllerGuard": "0xAF33891D6DD4e6fF6b1D676D77001B0F73197689",
       "AaveLendingPoolGuard": "0x118D2F02CBac5d0A4071632987dc0b765DdAb022",
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
-      "BalancerV2Guard": "0xC6CF4B058c51cf474c5984180e693AF438222363"
+      "BalancerV2Guard": "0xC6CF4B058c51cf474c5984180e693AF438222363",
+      "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
+      "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749"
     },
     "network": {
       "name": "matic",
@@ -797,6 +799,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Sun, 24 Oct 2021 07:01:12 GMT"
+    "date": "Wed, 15 Dec 2021 03:34:02 GMT"
   }
 }
