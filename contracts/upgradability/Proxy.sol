@@ -100,6 +100,7 @@ abstract contract Proxy {
    * Can be redefined in derived contracts to add functionality.
    * Redefinitions must call super._willFallback().
    */
+  // solhint-disable-next-line no-empty-blocks
   function _willFallback() internal virtual {}
 
   /**

@@ -34,6 +34,9 @@ describe("Sushiswap V2 Test Mumbai", function () {
     let governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
+    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
+    const poolPerformance = await PoolPerformance.deploy();
+
     PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
@@ -59,6 +62,7 @@ describe("Sushiswap V2 Test Mumbai", function () {
     ]);
     await poolFactory.deployed();
 
+    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
     //set higher timeout value for testnet
     await assetHandler.setChainlinkTimeout(10000000);
 
@@ -72,6 +76,8 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setContractGuard(sushiswapV2Router, uniswapV2RouterGuard.address);
+
+    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("Should be able to createFund", async function () {
@@ -407,8 +413,6 @@ describe("Sushiswap V2 Test Mumbai", function () {
 
     // Withdraw 50%
     let withdrawAmount = units(5);
-
-    await expect(poolLogicProxy.withdraw(withdrawAmount)).to.be.revertedWith("cooldown active");
 
     ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
 

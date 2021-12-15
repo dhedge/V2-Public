@@ -25,6 +25,7 @@ contract UniV2LPAggregator is IAggregatorV3Interface {
 
   constructor(address _pair, address _factory) {
     require(_pair != address(0), "_pair address cannot be 0");
+    require(_factory != address(0), "_factory address cannot be 0");
     pair = _pair;
     token0 = IUniswapV2Pair(pair).token0();
     token1 = IUniswapV2Pair(pair).token1();
@@ -32,6 +33,10 @@ contract UniV2LPAggregator is IAggregatorV3Interface {
   }
 
   /* ========== VIEWS ========== */
+
+  function decimals() external pure override returns (uint8) {
+    return 8;
+  }
 
   /**
    * @notice Get the latest round data. Should be the same format as chainlink aggregator.

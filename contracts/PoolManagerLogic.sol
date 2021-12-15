@@ -46,6 +46,7 @@ import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -77,6 +78,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public announcedFeeIncreaseNumerator;
   uint256 public announcedFeeIncreaseTimestamp;
   uint256 public managerFeeNumerator;
+
+  modifier onlyManagerOrTraderOrFactory() {
+    require(msg.sender == manager || msg.sender == trader || msg.sender == factory, "only manager, trader or factory");
+    _;
+  }
 
   /// @notice initialize the pool manager
   /// @param _factory address of the factory
@@ -127,7 +133,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Change assets of the pool
   /// @param _addAssets array of assets to add
   /// @param _removeAssets array of asset addresses to remove
-  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets) external onlyManagerOrTrader {
+  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets)
+    external
+    onlyManagerOrTraderOrFactory
+  {
     _changeAssets(_addAssets, _removeAssets);
   }
 
@@ -155,13 +164,24 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     bool isDeposit = _asset.isDeposit;
 
     require(validateAsset(asset), "invalid asset");
+    // Pools with price aggregators cannot add other pools as assets
+    require(!validateAsset(poolLogic) || !IPoolFactory(factory).isPool(asset), "cannot add pool asset");
 
     if (isSupportedAsset(asset)) {
       uint256 index = assetPosition[asset].sub(1);
       supportedAssets[index].isDeposit = isDeposit;
     } else {
-      supportedAssets.push(Asset(asset, isDeposit));
-      assetPosition[asset] = supportedAssets.length;
+      uint256 i = supportedAssets.length;
+      supportedAssets.push(_asset);
+      assetPosition[asset] = i.add(1); // adjusting the index because the map stores 1-based
+      uint16 assetType = IHasAssetInfo(factory).getAssetType(asset);
+      for (i; i > 0 && IHasAssetInfo(factory).getAssetType(supportedAssets[i.sub(1)].asset) < assetType; i--) {
+        Asset memory temp = supportedAssets[i];
+        supportedAssets[i] = supportedAssets[i.sub(1)];
+        assetPosition[supportedAssets[i].asset] = i.add(1);
+        supportedAssets[i.sub(1)] = temp;
+        assetPosition[supportedAssets[i.sub(1)].asset] = i;
+      }
     }
 
     emit AssetAdded(poolLogic, manager, asset, isDeposit);
@@ -172,22 +192,22 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param asset asset address
   function _removeAsset(address asset) internal {
     require(isSupportedAsset(asset), "asset not supported");
-
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
 
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     IAssetGuard(guard).removeAssetCheck(poolLogic, asset);
 
-    uint256 length = supportedAssets.length;
-    Asset memory lastAsset = supportedAssets[length.sub(1)];
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
+    uint256 length = supportedAssets.length;
+    for (uint256 i = index; i.add(1) < length; i++) {
+      Asset memory temp = supportedAssets[i];
+      supportedAssets[i] = supportedAssets[i.add(1)];
+      assetPosition[supportedAssets[i].asset] = i.add(1);
+      supportedAssets[i.add(1)] = temp;
+      assetPosition[supportedAssets[i.add(1)].asset] = i.add(2);
+    }
 
-    // overwrite the asset to be removed with the last supported asset
-    supportedAssets[index] = lastAsset;
-    assetPosition[lastAsset.asset] = index.add(1); // adjusting the index to be 1-based
-    assetPosition[asset] = 0; // update the map
-
-    // delete the last supported asset and resize the array
+    assetPosition[supportedAssets[length.sub(1)].asset] = 0;
     supportedAssets.pop();
 
     emit AssetRemoved(poolLogic, manager, asset);

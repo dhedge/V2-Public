@@ -10,10 +10,11 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
+const axios = require("axios");
+
 let nonce,
-  safeSdk,
-  chainId,
   nonceLog = new Array();
+const { retryWithDelay } = require("./utils.ts");
 
 const getTag = async () => {
   try {
@@ -57,15 +58,19 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
 };
 
 const tryVerify = async (hre, address, path, constructorArguments) => {
-  try {
-    await hre.run("verify:verify", {
-      address: address,
-      contract: path,
-      constructorArguments: constructorArguments,
-    });
-  } catch (err) {
-    console.log("Error: ", err);
-  }
+  await retryWithDelay(async () => {
+    try {
+      await hre.run("verify:verify", {
+        address: address,
+        contract: path,
+        constructorArguments: constructorArguments,
+      });
+    } catch (e) {
+      if (!e.message.toLowerCase().includes("already verified")) {
+        throw e;
+      }
+    }
+  }, "Try Verify: " + address);
 };
 
 const writeCsv = (data, fileName) => {
@@ -81,7 +86,28 @@ const writeCsv = (data, fileName) => {
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-const proposeTx = async (to, data, message, execute = false) => {
+const getNonce = async (safeSdk, chainId, safeAddress, restartFromLastConfirmedNonce) => {
+  const lastConfirmedNonce = await safeSdk.getNonce();
+  if (restartFromLastConfirmedNonce) {
+    console.log("GetNonce: Starting from LAST CONFIRMED NONCE: ", nonce);
+    return lastConfirmedNonce;
+  }
+
+  const safeTxApi = `https://safe-client.gnosis.io/v1/chains/${chainId}/safes/${safeAddress}/transactions/queued`;
+  const response = await axios.get(safeTxApi);
+  const results = response.data.results.reverse();
+  const last = results.find((r) => r.type === "TRANSACTION");
+  if (!last) {
+    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", nonce);
+    return lastConfirmedNonce;
+  }
+
+  const nonce = last.transaction.executionInfo.nonce + 1;
+  console.log("GetNonce: Starting from last PENDING nonce: ", nonce);
+  return nonce;
+};
+
+const proposeTx = async (to, data, message, execute = false, restartFromLastConfirmedNonce = false) => {
   if (!execute) {
     console.log("Will propose transaction:", message);
     return;
@@ -91,7 +117,7 @@ const proposeTx = async (to, data, message, execute = false) => {
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
   const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
-  chainId = chainId ? chainId : await ethAdapter.getChainId();
+  const chainId = await ethAdapter.getChainId();
 
   const contractNetworks = {
     [chainId]: {
@@ -99,14 +125,13 @@ const proposeTx = async (to, data, message, execute = false) => {
     },
   };
 
-  safeSdk = safeSdk
-    ? safeSdk
-    : await Safe.default.create({
-        ethAdapter,
-        safeAddress: safeAddress,
-        contractNetworks,
-      });
-  nonce = nonce ? nonce : await safeSdk.getNonce();
+  const safeSdk = await Safe.default.create({
+    ethAdapter,
+    safeAddress: safeAddress,
+    contractNetworks,
+  });
+
+  nonce = nonce ? nonce : await getNonce(safeSdk, chainId, safeAddress, restartFromLastConfirmedNonce);
 
   const transaction = {
     to: to,
@@ -115,13 +140,14 @@ const proposeTx = async (to, data, message, execute = false) => {
     nonce: nonce,
   };
 
-  nonceLog.push({
+  const log = {
     nonce: nonce,
     message: message,
-  });
+  };
 
   console.log("Proposing transaction: ", transaction);
-  console.log(`Nonce ${nonce}: ${message}`);
+  console.log(`Nonce Log`, log);
+  nonceLog.push(log);
 
   nonce += 1;
 
@@ -134,8 +160,10 @@ const proposeTx = async (to, data, message, execute = false) => {
   // console.log("approveTxResponse", approveTxResponse);
   console.log("safeTransaction: ", safeTransaction);
 
-  const proposeTx = await service.proposeTx(safeAddress, txHash, safeTransaction, signature);
-  console.log("ProposeTx: ", proposeTx);
+  await retryWithDelay(
+    async () => await service.proposeTx(safeAddress, txHash, safeTransaction, signature),
+    "Gnosis safe",
+  );
 };
 
 const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) => {
@@ -189,11 +217,11 @@ const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHan
 };
 
 const getAggregator = async (csvAsset) => {
-  const assetName = csvAsset["Asset Name"];
+  const aggregatorName = csvAsset["aggregatorName"];
   let aggregator;
 
-  switch (assetName) {
-    case "dUSD":
+  switch (aggregatorName) {
+    case "DHedgePoolAggregator":
       // Deploy DHedgePoolAggregator
       const assetAddress = csvAsset["Address"];
       const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
@@ -214,6 +242,10 @@ const getAggregator = async (csvAsset) => {
   return aggregator;
 };
 
+// Init contracts data
+const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
+
 module.exports = {
   writeCsv,
   tryVerify,
@@ -226,4 +258,6 @@ module.exports = {
   checkAsset,
   checkBalancerLpAsset,
   getAggregator,
+  implementationStorage,
+  proxyAdminAddress,
 };

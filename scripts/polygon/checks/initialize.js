@@ -52,6 +52,7 @@ const init = async (environment, deployedVersion = "") => {
   const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
   const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
   const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
+  const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
 
   const contractsArray = [
     { contract: Governance, name: "Governance" },
@@ -71,6 +72,7 @@ const init = async (environment, deployedVersion = "") => {
     { contract: QuickStakingRewardsGuard, name: "QuickStakingRewardsGuard" },
     { contract: OneInchV3Guard, name: "OneInchV3Guard" },
     { contract: BalancerV2Guard, name: "BalancerV2Guard" },
+    { contract: PoolPerformance, name: "PoolPerformance" },
   ];
 
   let contracts;

@@ -54,7 +54,9 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   using SafeMathUpgradeable for uint256;
 
   // For Aave decimal calculation
+  // solhint-disable-next-line state-visibility
   uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+  // solhint-disable-next-line state-visibility
   uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
@@ -62,6 +64,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   address public override aaveLendingPool;
 
   constructor(address _aaveProtocolDataProvider) {
+    // solhint-disable-next-line reason-string
+    require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
     aaveLendingPool = aaveAddressProvider.getLendingPool();
@@ -177,7 +181,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       modes,
       pool, // onBehalfOf
       params,
-      0 // referralCode
+      196 // referralCode
     );
   }
 
@@ -365,13 +369,19 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
     address weth = IHasGuardInfo(factory).getAddress("weth");
 
+    // At this stage we have the flashloan.
+
+    // Repay the debt with out flashloans
+    // This will unlock our portion of the collateral
     MultiTransaction[] memory aaveRepayTransactions = _repayAaveTransactions(
       pool,
       repayAssets,
       repayAmounts,
       interestRateModes
     );
+    // Withdraw our collateral from aave and swap everything to weth
     MultiTransaction[] memory aaveWithdrawTransactions = _withdrawAaveTransactions(pool, portion, swapRouter, weth);
+    // Swaps weth to the flashloaned amounts and approves aave to take back funds for loan
     MultiTransaction[] memory flashloanWithdrawTransactions = _repayFlashloanTransactions(
       pool,
       swapRouter,
@@ -439,6 +449,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       txCount++;
     }
   }
+
+  // take flashloan for debt asset
 
   /// @notice calculate and return withdraw Aave transactions for execution
   /// @param pool the PoolLogic address

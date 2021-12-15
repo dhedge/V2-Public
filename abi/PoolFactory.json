@@ -201,6 +201,19 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "poolPerformanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "PoolPerformanceAddressSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "proxy",
         "type": "address"
       }
@@ -310,6 +323,19 @@
     ],
     "name": "Unpaused",
     "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_extAddress",
+        "type": "address"
+      }
+    ],
+    "name": "addTransferWhitelist",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [
@@ -562,6 +588,24 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getExitFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -679,6 +723,13 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "implInitializer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -826,6 +877,19 @@
   },
   {
     "inputs": [],
+    "name": "poolPerformanceAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "poolStorageVersion",
     "outputs": [
       {
@@ -854,6 +918,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_extAddress",
+        "type": "address"
+      }
+    ],
+    "name": "removeTransferWhitelist",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -916,6 +993,24 @@
       }
     ],
     "name": "setExitCooldown",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "numerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "denominator",
+        "type": "uint256"
+      }
+    ],
+    "name": "setExitFee",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1006,6 +1101,19 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_poolPerformanceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setPoolPerformanceAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "_poolStorageVersion",
         "type": "uint256"
@@ -1030,6 +1138,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "transferWhitelist",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "unpause",
     "outputs": [],
@@ -1050,7 +1177,30 @@
       },
       {
         "internalType": "uint256",
-        "name": "sourceVersion",
+        "name": "targetVersion",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "data",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "upgradePoolBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "startIndex",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endIndex",
         "type": "uint256"
       },
       {

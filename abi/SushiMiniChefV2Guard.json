@@ -2,14 +2,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_rewardTokenA",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_rewardTokenB",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "_rewardTokens",
+        "type": "address[]"
       }
     ],
     "stateMutability": "nonpayable",
@@ -429,21 +424,14 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "rewardTokenA",
-    "outputs": [
+    "inputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rewardTokenB",
+    "name": "rewardTokens",
     "outputs": [
       {
         "internalType": "address",

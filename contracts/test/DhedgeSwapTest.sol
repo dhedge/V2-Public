@@ -10,6 +10,7 @@ contract DhedgeSwapTest {
   using DhedgeSwap for IUniswapV2Router;
 
   IUniswapV2Router public swapRouter;
+  // solhint-disable-next-line state-visibility
   address weth;
 
   constructor(address _swapRouter, address _weth) {

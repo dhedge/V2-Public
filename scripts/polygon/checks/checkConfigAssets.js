@@ -131,6 +131,28 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
     poolTokens.length === balancerLp.data.tokens.length,
     `${balancerLp.name} pool tokens length mismatch with configuration.`,
   );
+
+  // get token weights
+  const pool = await ethers.getContractAt(
+    [
+      {
+        inputs: [],
+        name: "getNormalizedWeights",
+        outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    balancerLp.address,
+  );
+  let weights;
+  try {
+    weights = await pool.getNormalizedWeights();
+  } catch (error) {
+    console.warn("Could not fetch normalized weights, using 50/50");
+    weights = ["500000000000000000", "500000000000000000"];
+  }
+
   for (let i = 0; i < poolTokens.length; i++) {
     assert(
       poolTokens[i].toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
@@ -150,26 +172,12 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
       decimals === balancerLp.data.decimals[i],
       `${balancerLp.name} pool token ${poolTokens[i]} decimals mismatch with configuration.`,
     );
-    const aggregatorPoolDecimals = await aggregator.decimals(i);
+    const tokenDecimals = await token.decimals();
     assert(
-      aggregatorPoolDecimals === balancerLp.data.decimals[i],
+      tokenDecimals === balancerLp.data.decimals[i],
       `${balancerLp.name} pool token decimals mismatch with deployment.`,
     );
 
-    // check token weight
-    const pool = await ethers.getContractAt(
-      [
-        {
-          inputs: [],
-          name: "getNormalizedWeights",
-          outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
-          stateMutability: "view",
-          type: "function",
-        },
-      ],
-      balancerLp.address,
-    );
-    const weights = await pool.getNormalizedWeights();
     assert(
       weights[i] / 1e18 === balancerLp.data.weights[i],
       `${balancerLp.name} pool token ${poolTokens[i]} weights mismatch with configuration.`,
