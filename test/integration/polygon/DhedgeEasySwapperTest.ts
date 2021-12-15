@@ -25,16 +25,15 @@ describe("DhedgeEasySwapper", function () {
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
 
-  const ETHBEAR2X = "0xf4b3a195587d2735b656b7ffe9060f478faf1b32";
-  const ETHBULL3X = "0x3e5f7e9e7dc3bc3086ccebd5eb59a0a4a29d881b";
-  const BTCBEAR2X = "0xcc940b5c6136994bed41bff5d88b170929921e9e";
-  const BTCBULL3X = "0xc8fa09426ce1aeac1bc28751f1f6c8d74fa53f3c";
+  const ETHBEAR2X = "0x027da30fadab6202801f97be344e2348a2a92842";
+  const ETHBULL3X = "0x460b60565cb73845d56564384ab84bf84c13e47d";
+  const BTCBEAR2X = "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada";
+  const BTCBULL3X = "0xdb88ab5b485b38edbeef866314f9e49d095bce39";
 
   before(async function () {
     [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
 
     const poolFactoryProxy = "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0";
-    const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
     poolFactory = await ethers.getContractAt("PoolFactory", poolFactoryProxy);
 

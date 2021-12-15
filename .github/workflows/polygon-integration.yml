@@ -125,9 +125,6 @@ jobs:
       - name: Sushiswap Tests
         run: |
           npx hardhat test ./test/integration/polygon/SushiswapTest.ts --network localhost
-      - name: WithdrawSingle Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
 
 # Polygon tests are current split in 3 because they use more than 10k matic together... its also faster
   polygon-integration3:
@@ -176,3 +173,6 @@ jobs:
       - name: DhedgeEasySwapper
         run: |
           npx hardhat test ./test/integration/polygon/DhedgeEasySwapperTest.ts --network localhost
+      - name: WithdrawSingle Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
