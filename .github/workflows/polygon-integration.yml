@@ -118,7 +118,7 @@ jobs:
           npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
       - name: PoolPerformance Tests
         run: |
-          npx hardhat test ./test/integration/polygon/PoolPerformanceTest.js --network localhost
+          npx hardhat test ./test/integration/polygon/PoolPerformanceTest.ts --network localhost
       - name: Quickswap Tests
         run: |
           npx hardhat test ./test/integration/polygon/QuickswapTest.ts --network localhost
