@@ -35,27 +35,34 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PositionValue.sol";
+import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import "./ERC20Guard.sol";
-import "../../interfaces/uniswapv3/INonfungiblePositionManager.sol";
 import "../../interfaces/IHasAssetInfo.sol";
-import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
-import "../../interfaces/IHasGuardInfo.sol";
-import "../../interfaces/uniswapv2/IUniswapV2Router.sol";
+import "../../interfaces/IERC20Extended.sol";
 
 /// @title Uniswap V3 asset guard
 /// @dev Asset type = 6
 contract UniswapV3AssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
+  using PositionValue for INonfungiblePositionManager;
 
+  IUniswapV3Factory public uniswapV3Factory;
   INonfungiblePositionManager public nonfungiblePositionManager;
+  uint32 public priceUpdateInterval = 2 minutes;
 
-  constructor(address _nonfungiblePositionManager) {
+  constructor(address _uniswapV3Factory, address _nonfungiblePositionManager) {
     // solhint-disable-next-line reason-string
     require(_nonfungiblePositionManager != address(0), "_nonfungiblePositionManager address cannot be 0");
+    // solhint-disable-next-line reason-string
+    require(_uniswapV3Factory != address(0), "_uniswapV3Factory address cannot be 0");
 
+    uniswapV3Factory = IUniswapV3Factory(_uniswapV3Factory);
     nonfungiblePositionManager = INonfungiblePositionManager(_nonfungiblePositionManager);
   }
 
@@ -64,10 +71,12 @@ contract UniswapV3AssetGuard is ERC20Guard {
   /// @param pool The pool logic address
   /// @return balance The total balance of the pool
   function getBalance(address pool, address) public view override returns (uint256 balance) {
+    address factory = IPoolLogic(pool).factory();
+
     uint256 length = nonfungiblePositionManager.balanceOf(pool);
     for (uint256 i = 0; i < length; ++i) {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
-      (, , , , , , , uint128 liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
+      (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
       // (
       //   uint96 nonce,
       //   address operator,
@@ -83,11 +92,20 @@ contract UniswapV3AssetGuard is ERC20Guard {
       //   uint128 tokensOwed1
       // ) = nonfungiblePositionManager.positions(tokenId);
 
-      // calculate liquidity price
-      uint256 price = 0;
+      (int24 tick, ) = OracleLibrary.consult(uniswapV3Factory.getPool(token0, token1, fee), priceUpdateInterval);
+      uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
+      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, sqrtRatioX96);
 
-      // return liquidity in usd
-      balance = balance.add(price.mul(liquidity));
+      {
+        // add token0 USD amount
+        uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token0);
+        balance = balance.add(tokenPriceInUsd.mul(amount0).div(10**IERC20Extended(token0).decimals()));
+      }
+      {
+        // add token0 USD amount
+        uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token1);
+        balance = balance.add(tokenPriceInUsd.mul(amount1).div(10**IERC20Extended(token1).decimals()));
+      }
     }
   }
 

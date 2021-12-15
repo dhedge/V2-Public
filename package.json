@@ -102,6 +102,8 @@
     "@openzeppelin/contracts": "3.4.2-solc-0.7",
     "@openzeppelin/contracts-upgradeable": "3.4.2-solc-0.7",
     "@uniswap/lib": "^4.0.1-alpha",
+    "@uniswap/v3-core": "^1.0.0",
+    "@uniswap/v3-periphery": "^1.1.1",
     "csv-stringify": "^5.6.2",
     "csvtojson": "^2.0.10",
     "decimal.js": "^10.3.1",
