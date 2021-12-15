@@ -172,9 +172,9 @@ const checkBalancerLpAsset = async (balancerLp, balancerV2Vault, poolFactoryProx
       decimals === balancerLp.data.decimals[i],
       `${balancerLp.name} pool token ${poolTokens[i]} decimals mismatch with configuration.`,
     );
-    const aggregatorPoolDecimals = await aggregator.decimals(i);
+    const tokenDecimals = await token.decimals();
     assert(
-      aggregatorPoolDecimals === balancerLp.data.decimals[i],
+      tokenDecimals === balancerLp.data.decimals[i],
       `${balancerLp.name} pool token decimals mismatch with deployment.`,
     );
 

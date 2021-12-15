@@ -1596,7 +1596,9 @@
       "BalancerV2Guard": "0xe048300AF8359D0e8e8b27E1C931AF49ba1BA6eA",
       "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
-      "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03"
+      "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03",
+      "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4"
+      "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826"
     },
     "network": {
       "name": "matic",

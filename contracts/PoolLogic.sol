@@ -58,6 +58,7 @@ import "./interfaces/IERC20Extended.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
@@ -143,6 +144,8 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
 
   address public poolManagerLogic;
 
+  mapping(address => uint256) public lastWhitelistTransfer;
+
   modifier onlyPrivate() {
     require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
     _;
@@ -192,14 +195,21 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     uint256 amount
   ) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
-
-    // cooldown check
-    if (
-      from != address(0) && // allow minting
-      !IHasGuardInfo(factory).isTransferWhitelisted(from, to)
-    ) {
-      require(getExitRemainingCooldown(from) == 0, "cooldown active");
+    // Minting
+    if (from == address(0)) {
+      return;
     }
+
+    bool isWhitelisted = IPoolFactory(factory).transferWhitelist(from);
+
+    if (isWhitelisted) {
+      lastWhitelistTransfer[to] = block.timestamp;
+      return;
+    }
+
+    // Users that receive tokens from a whitelisted source cannot withdraw, or transfer them on, for 5 minutes
+    require(lastWhitelistTransfer[from].add(5 minutes) < block.timestamp, "whitelist cooldown active");
+    require(getExitRemainingCooldown(from) == 0, "cooldown active");
   }
 
   /// @notice Set the pool privacy
@@ -350,7 +360,6 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
-    require(getExitRemainingCooldown(msg.sender) == 0, "cooldown active");
 
     uint256 fundValue = _mintManagerFee();
 
@@ -768,5 +777,5 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     return this.onERC721Received.selector;
   }
 
-  uint256[50] private __gap;
+  uint256[49] private __gap;
 }
