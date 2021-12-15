@@ -5,6 +5,7 @@ import fs from "fs";
 import axios from "axios";
 
 const { proposeTx, tryVerify, implementationStorage, proxyAdminAddress } = require("./Helpers");
+import { protocolDao } from "../config/chainData/polygon-data";
 const coingeckoNetwork = "polygon-pos";
 
 // Addresses
@@ -13,8 +14,8 @@ const payoutToken = "0x8c92e38eca8210f4fcbf17f0951b198dd7668292"; // DHT
 const treasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3"; // Polygon Protocol Treasury
 
 // Bond terms
-const minBondPrice = utils.parseUnits("0.4", 6); // $0.40 USDC
-const maxPayoutAvailable = utils.parseUnits("35000"); // 35k DHT/week
+const minBondPrice = utils.parseUnits("0.1", 6); // $0.10 USDC
+const maxPayoutAvailable = utils.parseUnits("50000"); // 50k DHT/week
 const salePayoutAvailable = utils.parseUnits("25000"); // 25k DHT
 const saleDuration = 60 * 60 * 24 * 5; // 5 days
 
@@ -40,6 +41,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
     const upgrades = hre.upgrades;
     const network = await ethers.provider.getNetwork();
     console.log("Network:", network.name);
+    await hre.run("compile");
 
     // Init contracts
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
@@ -95,8 +97,12 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
       if (versions[latestVersion].contracts.DynamicBondsProxy) throw "Dynamic Bonds contract already deployed";
 
       const { dynamicBondsProxy, dynamicBondsImplementation } = await deployDynamicBonds(hre);
+      console.log("Dynamic Bonds proxy deployed to", dynamicBondsProxy.address);
       await setBondTerms(dynamicBondsProxy);
       await addBondOptions(hre, dynamicBondsProxy);
+      const transferOwnershipTx = await dynamicBondsProxy.transferOwnership(protocolDao);
+      await transferOwnershipTx.wait(5);
+      console.log("Ownership transferred to", protocolDao);
       versions[latestVersion].contracts.DynamicBondsProxy = dynamicBondsProxy.address;
       versions[latestVersion].contracts.DynamicBonds = dynamicBondsImplementation.address;
       versionUpdate = true;
