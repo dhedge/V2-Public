@@ -132,7 +132,7 @@ jobs:
 # Polygon tests are current split in 3 because they use more than 10k matic together... its also faster
   polygon-integration3:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
-    name: PIT 2
+    name: PIT 3
     runs-on: ubuntu-latest
 
     steps:
