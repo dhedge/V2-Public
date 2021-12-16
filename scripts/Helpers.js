@@ -10,9 +10,9 @@ const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
+const axios = require("axios");
+
 let nonce,
-  safeSdk,
-  chainId,
   nonceLog = new Array();
 const { retryWithDelay } = require("./utils.ts");
 
@@ -86,7 +86,28 @@ const writeCsv = (data, fileName) => {
 /// Converts a string into a hex representation of bytes32
 const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
 
-const proposeTx = async (to, data, message, execute = false) => {
+const getNonce = async (safeSdk, chainId, safeAddress, restartFromLastConfirmedNonce) => {
+  const lastConfirmedNonce = await safeSdk.getNonce();
+  if (restartFromLastConfirmedNonce) {
+    console.log("GetNonce: Starting from LAST CONFIRMED NONCE: ", nonce);
+    return lastConfirmedNonce;
+  }
+
+  const safeTxApi = `https://safe-client.gnosis.io/v1/chains/${chainId}/safes/${safeAddress}/transactions/queued`;
+  const response = await axios.get(safeTxApi);
+  const results = response.data.results.reverse();
+  const last = results.find((r) => r.type === "TRANSACTION");
+  if (!last) {
+    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", nonce);
+    return lastConfirmedNonce;
+  }
+
+  const nonce = last.transaction.executionInfo.nonce + 1;
+  console.log("GetNonce: Starting from last PENDING nonce: ", nonce);
+  return nonce;
+};
+
+const proposeTx = async (to, data, message, execute = false, restartFromLastConfirmedNonce = false) => {
   if (!execute) {
     console.log("Will propose transaction:", message);
     return;
@@ -96,7 +117,7 @@ const proposeTx = async (to, data, message, execute = false) => {
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
   const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
-  chainId = chainId ? chainId : await ethAdapter.getChainId();
+  const chainId = await ethAdapter.getChainId();
 
   const contractNetworks = {
     [chainId]: {
@@ -104,14 +125,13 @@ const proposeTx = async (to, data, message, execute = false) => {
     },
   };
 
-  safeSdk = safeSdk
-    ? safeSdk
-    : await Safe.default.create({
-        ethAdapter,
-        safeAddress: safeAddress,
-        contractNetworks,
-      });
-  nonce = nonce ? nonce : await safeSdk.getNonce();
+  const safeSdk = await Safe.default.create({
+    ethAdapter,
+    safeAddress: safeAddress,
+    contractNetworks,
+  });
+
+  nonce = nonce ? nonce : await getNonce(safeSdk, chainId, safeAddress, restartFromLastConfirmedNonce);
 
   const transaction = {
     to: to,
@@ -120,13 +140,14 @@ const proposeTx = async (to, data, message, execute = false) => {
     nonce: nonce,
   };
 
-  nonceLog.push({
+  const log = {
     nonce: nonce,
     message: message,
-  });
+  };
 
   console.log("Proposing transaction: ", transaction);
-  console.log(`Nonce ${nonce}: ${message}`);
+  console.log(`Nonce Log`, log);
+  nonceLog.push(log);
 
   nonce += 1;
 

@@ -21,20 +21,19 @@ interface TestCase {
 }
 
 describe("DhedgeEasySwapper", function () {
-  let logicOwner: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
+  let logicOwner: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress, feeSink: SignerWithAddress;
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
 
-  const ETHBEAR2X = "0xf4b3a195587d2735b656b7ffe9060f478faf1b32";
-  const ETHBULL3X = "0x3e5f7e9e7dc3bc3086ccebd5eb59a0a4a29d881b";
-  const BTCBEAR2X = "0xcc940b5c6136994bed41bff5d88b170929921e9e";
-  const BTCBULL3X = "0xc8fa09426ce1aeac1bc28751f1f6c8d74fa53f3c";
+  const ETHBEAR2X = "0x027da30fadab6202801f97be344e2348a2a92842";
+  const ETHBULL3X = "0x460b60565cb73845d56564384ab84bf84c13e47d";
+  const BTCBEAR2X = "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada";
+  const BTCBULL3X = "0xdb88ab5b485b38edbeef866314f9e49d095bce39";
 
   before(async function () {
-    [logicOwner, user1, user2] = await ethers.getSigners();
+    [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
 
     const poolFactoryProxy = "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0";
-    const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
     poolFactory = await ethers.getContractAt("PoolFactory", poolFactoryProxy);
 
@@ -47,51 +46,13 @@ describe("DhedgeEasySwapper", function () {
     ]);
     await ethers.provider.send("evm_mine", []); // Just mines to the next block
 
-    ///
-    /// ONCE Prod is updated below can be removed
-    ///
-
-    // Take over ownership of the proxyAdmin
-    const proxyAdmin = await ethers.getContractAt("ProxyAdmin", proxyAdminAddress);
-    await ethers.provider.send("hardhat_setStorageAt", [
-      proxyAdminAddress,
-      "0x0",
-      "0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-    ]);
-    await ethers.provider.send("evm_mine", []); // Just mines to the next block
-    expect(await poolFactory.owner()).to.equal(logicOwner.address);
-
-    const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
-    const newPoolFactory = await PoolFactoryContract.deploy();
-    await newPoolFactory.deployed();
-
-    await proxyAdmin.upgrade(poolFactoryProxy, newPoolFactory.address);
-
-    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await PoolPerformance.deploy();
-    await poolPerformance.deployed();
-
-    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
-
-    const PoolLogic = await ethers.getContractFactory("PoolLogic");
-    const poolLogic = await PoolLogic.deploy();
-    await poolLogic.deployed();
-    const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    const poolManagerLogic = await PoolManagerLogic.deploy();
-    await poolManagerLogic.deployed();
-
-    await poolFactory.setLogic(poolLogic.address, await poolManagerLogic.address);
-
-    ///
-    /// ONCE Prod is updated above can be removed ^^^
-    ///
-
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(quickswap.router, assets.weth);
+    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
     await dhedgeEasySwapper.deployed();
 
     // AavelendingPool
     await dhedgeEasySwapper.setAssetToSkip(aave.lendingPool, true);
+    await dhedgeEasySwapper.setFee(0, 0);
 
     await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);
     expect(await poolFactory.transferWhitelist(dhedgeEasySwapper.address)).to.be.true;
@@ -102,6 +63,29 @@ describe("DhedgeEasySwapper", function () {
       expect(dhedgeEasySwapper.deposit(ETHBEAR2X, assets.usdc, units(1, 6), assets.usdc, 0)).to.be.revertedWith(
         "Pool is not allowed.",
       );
+    });
+  });
+
+  describe("takes fee", () => {
+    it("fee sink receives fee", async () => {
+      const depositAmount = units(1, 6);
+      await getAccountToken(depositAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+
+      // Whitelist
+      const torosPool = await ethers.getContractAt("PoolLogic", ETHBEAR2X);
+      await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
+      await dhedgeEasySwapper.setFee(1, 100); // 1%
+
+      const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
+      await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
+      // Check feeSink is empty
+      const balanceBEfore = await DepositToken.balanceOf(feeSink.address);
+      // Deposit
+      await dhedgeEasySwapper.deposit(ETHBEAR2X, assets.usdc, depositAmount, assets.usdc, 0);
+      // Fee of 1% received by fee sink
+      const balanceAfter = await DepositToken.balanceOf(feeSink.address);
+      expect(balanceAfter.sub(balanceBEfore)).to.equal(depositAmount.div(100));
+      await dhedgeEasySwapper.setFee(0, 0); // 1%
     });
   });
 
