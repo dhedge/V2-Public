@@ -41,7 +41,7 @@
     "upgrade:polygon:poolPerformance": "npx hardhat upgrade --pool-performance true --network polygon",
     "upgrade:polygon:assets": "npx hardhat upgrade --assets true --network polygon",
     "upgrade:polygon:governanceNames": "npx hardhat upgrade --governance-names true --network polygon",
-    "upgrade:polygon:all": "npx hardhat upgrade --pause true --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --assets true --aave-lending-pool-asset-guard true --sushi-lp-asset-guard true --uniswap-v2-router-guard true --open-asset-guard true --quick-lp-asset-guard true --quick-staking-rewards-guard true --sushi-mini-chef-v2-guard true --governance-names true --pool-performance true --balancerv2guard true --balancer-merkle-orchard-guard true --network polygon",
+    "upgrade:polygon:all": "npx hardhat upgrade --pause true --pool-factory true --asset-handler true --pool-logic true --pool-manager-logic true --assets true --aave-lending-pool-asset-guard true --sushi-lp-asset-guard true --uniswap-v2-router-guard true --open-asset-guard true --quick-lp-asset-guard true --quick-staking-rewards-guard true --sushi-mini-chef-v2-guard true --governance-names true --balancerv2guard true --balancer-merkle-orchard-guard true --network polygon",
     "upgrade:polygon:all:production": "npm run upgrade:polygon:all -- --production true",
     "upgrade:polygon:unpause": "npx hardhat upgrade --unpause true --network polygon",
     "upgrade:polygon:unpause:production": "npx hardhat upgrade --unpause true --production true --network polygon",

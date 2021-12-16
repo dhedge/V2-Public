@@ -118,21 +118,18 @@ jobs:
           npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
       - name: PoolPerformance Tests
         run: |
-          npx hardhat test ./test/integration/polygon/PoolPerformanceTest.js --network localhost
+          npx hardhat test ./test/integration/polygon/PoolPerformanceTest.ts --network localhost
       - name: Quickswap Tests
         run: |
           npx hardhat test ./test/integration/polygon/QuickswapTest.ts --network localhost
       - name: Sushiswap Tests
         run: |
           npx hardhat test ./test/integration/polygon/SushiswapTest.ts --network localhost
-      - name: WithdrawSingle Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
 
 # Polygon tests are current split in 3 because they use more than 10k matic together... its also faster
   polygon-integration3:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
-    name: PIT 2
+    name: PIT 3
     runs-on: ubuntu-latest
 
     steps:
@@ -176,3 +173,6 @@ jobs:
       - name: DhedgeEasySwapper
         run: |
           npx hardhat test ./test/integration/polygon/DhedgeEasySwapperTest.ts --network localhost
+      - name: WithdrawSingle Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
