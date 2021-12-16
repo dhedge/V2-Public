@@ -9,7 +9,7 @@ import "solidity-coverage";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/config";
 
-import "./scripts/upgrade";
+import "./scripts/upgrade-polygon";
 import "./scripts/verify";
 import "./scripts/explorer-verify";
 import "./scripts/dynamicBonds";
