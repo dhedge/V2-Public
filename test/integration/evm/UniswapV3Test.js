@@ -2,7 +2,14 @@ const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 const { checkAlmostSame } = require("../../TestHelpers");
-const { ZERO_ADDRESS, uniswapV3, aave, assets, price_feeds } = require("../ethereum-data");
+const {
+  ZERO_ADDRESS,
+  uniswapV3,
+  aave,
+  assets,
+  price_feeds,
+  sushi,
+} = require("../../../config/chainData/ethereum-data");
 
 use(chaiAlmost());
 
@@ -24,7 +31,7 @@ describe("Uniswap V3 Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -76,7 +83,7 @@ describe("Uniswap V3 Test", function () {
     const IERC20 = await hre.artifacts.readArtifact("IERC20");
     USDT = await ethers.getContractAt(IERC20.abi, assets.usdt);
     USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
-    SushiUsdcUsdt = await ethers.getContractAt(IERC20.abi, sushi_usdc_usdt);
+    SushiUsdcUsdt = await ethers.getContractAt(IERC20.abi, sushi.pools.usdc_usdt.address);
     const IUniswapV3Router = await hre.artifacts.readArtifact("IUniswapV3Router");
     UniswapRouter = await ethers.getContractAt(IUniswapV3Router.abi, uniswapV3.router);
     // deposit ETH -> WETH
@@ -460,7 +467,12 @@ describe("Uniswap V3 Test", function () {
 
     // fail to swap direct asset to asset because unsupported destination asset
     badExactInputParams.path =
-      "0x" + assets.weth.substring(2) + "000bb8" + assets.usdc.substring(2) + "000bb8" + sushi_usdc_usdt.substring(2); // unsupported asset
+      "0x" +
+      assets.weth.substring(2) +
+      "000bb8" +
+      assets.usdc.substring(2) +
+      "000bb8" +
+      sushi.pools.usdc_usdt.address.substring(2); // unsupported asset
     swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [badExactInputParams]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, swapABI)).to.be.revertedWith(
       "unsupported destination asset",

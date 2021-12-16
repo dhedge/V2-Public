@@ -2,7 +2,7 @@ const { ethers, upgrades, artifacts } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 const { checkAlmostSame, units, currentBlockTimestamp } = require("../../TestHelpers");
-const { aave, quickswap, assets, price_feeds } = require("../polygon-data");
+const { aave, quickswap, assets, price_feeds } = require("../../../config/chainData/polygon-data");
 
 use(chaiAlmost());
 
@@ -37,7 +37,7 @@ describe("ManagerFee Test", function () {
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance, [aave.protocolDataProvider]);
+    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
     await poolPerformance.deployed();
 
     PoolLogic = await ethers.getContractFactory("PoolLogic");
@@ -135,7 +135,7 @@ describe("ManagerFee Test", function () {
       "Test Fund",
       "DHTF",
       new ethers.BigNumber.from("5000"),
-      new ethers.BigNumber.from("2"), // 0% streaming fee
+      new ethers.BigNumber.from("200"),
       [
         [assets.usdc, true],
         [assets.usdt, true],
@@ -201,7 +201,7 @@ describe("ManagerFee Test", function () {
     const daoBalanceBefore = await poolLogicProxy.balanceOf(dao.address);
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
-    const tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     const streamingFeeNumerator = await poolManagerLogicProxy.streamingFeeNumerator();
@@ -210,16 +210,15 @@ describe("ManagerFee Test", function () {
       .mul(streamingFeeNumerator)
       .div(10000)
       .div(86400 * 365);
-    const calculatedAvailableFee =
-      tokenPricePreMint > tokenPriceAtLastFeeMint
-        ? tokenPricePreMint
-            .sub(tokenPriceAtLastFeeMint)
-            .mul(totalSupplyPreMint)
-            .mul(managerFeeNumerator)
-            .div(10000)
-            .div(tokenPricePreMint)
-            .add(streamingFee)
-        : streamingFee;
+    const calculatedAvailableFee = tokenPricePreMint.gt(tokenPriceAtLastFeeMint)
+      ? tokenPricePreMint
+          .sub(tokenPriceAtLastFeeMint)
+          .mul(totalSupplyPreMint)
+          .mul(managerFeeNumerator)
+          .div(10000)
+          .div(tokenPricePreMint)
+          .add(streamingFee)
+      : streamingFee;
 
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");
@@ -295,7 +294,7 @@ describe("ManagerFee Test", function () {
     const daoBalanceBefore = await poolLogicProxy.balanceOf(dao.address);
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
-    const tokenPricePreMint = await poolLogicProxy.tokenPrice();
+    const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     const streamingFeeNumerator = await poolManagerLogicProxy.streamingFeeNumerator();
@@ -304,16 +303,15 @@ describe("ManagerFee Test", function () {
       .mul(streamingFeeNumerator)
       .div(10000)
       .div(86400 * 365);
-    const calculatedAvailableFee =
-      tokenPricePreMint > tokenPriceAtLastFeeMint
-        ? tokenPricePreMint
-            .sub(tokenPriceAtLastFeeMint)
-            .mul(totalSupplyPreMint)
-            .mul(managerFeeNumerator)
-            .div(10000)
-            .div(tokenPricePreMint)
-            .add(streamingFee)
-        : streamingFee;
+    const calculatedAvailableFee = tokenPricePreMint.gt(tokenPriceAtLastFeeMint)
+      ? tokenPricePreMint
+          .sub(tokenPriceAtLastFeeMint)
+          .mul(totalSupplyPreMint)
+          .mul(managerFeeNumerator)
+          .div(10000)
+          .div(tokenPricePreMint)
+          .add(streamingFee)
+      : streamingFee;
 
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");

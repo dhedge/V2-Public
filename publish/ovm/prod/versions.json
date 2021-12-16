@@ -1,0 +1,57 @@
+{
+  "v2.12.0": {
+    "lastUpdated": "Wed, 01 Dec 2021 05:51:21 GMT",
+    "contracts": {
+      "Assets": [
+        {
+          "name": "Synth sETH",
+          "asset": "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
+          "assetType": 0,
+          "aggregator": "0xA969bEB73d918f6100163Cd0fba3C586C269bee1"
+        },
+        {
+          "name": "Synth sBTC",
+          "asset": "0x298B9B95708152ff6968aafd889c6586e9169f1D",
+          "assetType": 0,
+          "aggregator": "0xc326371d4D866C6Ff522E69298e36Fe75797D358"
+        },
+        {
+          "name": "Synth sLINK",
+          "asset": "0xc5Db22719A06418028A40A9B5E9A7c02959D0d08",
+          "assetType": 0,
+          "aggregator": "0x74d6B50283AC1D651f9Afdc33521e4c1E3332b78"
+        },
+        {
+          "name": "Synth sUSD",
+          "asset": "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+          "assetType": 0,
+          "aggregator": "0x645f8ec14d0940Efd7272ba478c12968e8eB9937"
+        }
+      ],
+      "ERC20Guard": "0x6212FFDDe8f24e525264df10A7FfC6D017c8424A",
+      "SynthetixGuard": "0xEFEFCa1f7C5ac491d6fE720E6D6725255290D621",
+      "Governance": "0xa9F912c1dB1b844fd96192Ac3B496E9d8F445bc9",
+      "USDPriceAggregator": "0x645f8ec14d0940Efd7272ba478c12968e8eB9937",
+      "AssetHandler": {
+        "proxy": "0xBEa170C49036d7917cdA7511B57cAfd41efEDC01",
+        "implementation": "0x2B3779AC26dDDCe403A71E818E4C7491A495B195"
+      },
+      "PoolPerformance": {
+        "proxy": "0x0896A33E351fb11f405d3E9c03f4D4Fc667894a8",
+        "implementation": "0xa3A54bA1572BCc1468789C793bE2d46F38cf11dc"
+      },
+      "PoolManagerLogic": {
+        "proxy": "0x3621f9aAc18a42D2343270849611ea09aAea3e54",
+        "implementation": "0xbc87becd9b2aed3e282d352b94b80045946cf4b9"
+      },
+      "PoolLogic": {
+        "proxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
+        "implementation": "0xfe231f6b46d84f1dd046b4e4b5562a6433f3e914"
+      },
+      "PoolFactory": {
+        "proxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
+        "implementation": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8"
+      }
+    }
+  }
+}

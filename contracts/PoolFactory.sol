@@ -120,8 +120,9 @@ contract PoolFactory is
   uint256 internal _daoFeeDenominator;
 
   mapping(address => bool) public isPool;
-
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
   uint256 internal _exitCooldown;
@@ -139,7 +140,9 @@ contract PoolFactory is
   uint256 private _exitFeeNumerator;
   uint256 private _exitFeeDenominator;
 
-  uint256 private _MAXIMUM_STREAMING_FEE_NUMERATOR;
+  mapping(address => bool) public transferWhitelist; // 24h lockup whitelist
+
+  uint256 private maximumStreamingFeeNumerator;
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -175,6 +178,10 @@ contract PoolFactory is
 
     _setPoolStorageVersion(230); // V2.3.0;
   }
+
+  /// @notice implementations should not be left unintialized
+  // solhint-disable-next-line no-empty-blocks
+  function implInitializer() external initializer {}
 
   /// @notice Function to create a new fund
   /// @param _privatePool A boolean indicating whether the fund is private or not
@@ -256,6 +263,20 @@ contract PoolFactory is
     poolPerformanceAddress = _poolPerformanceAddress;
 
     emit PoolPerformanceAddressSet(_poolPerformanceAddress);
+  }
+
+  // Transfer whitelist for bypassing 24h token lock
+
+  /// @notice Add an address to the transfer whitelist (24h lock bypass)
+  /// @param _extAddress The address to add to whitelist
+  function addTransferWhitelist(address _extAddress) external onlyOwner {
+    transferWhitelist[_extAddress] = true;
+  }
+
+  /// @notice Remove an address from the transfer whitelist (24h lock bypass)
+  /// @param _extAddress The address to remove from whitelist
+  function removeTransferWhitelist(address _extAddress) external onlyOwner {
+    transferWhitelist[_extAddress] = false;
   }
 
   // DAO info (Uber Pool)
@@ -361,7 +382,7 @@ contract PoolFactory is
       uint256
     )
   {
-    return (_MAXIMUM_MANAGER_FEE_NUMERATOR, _MAXIMUM_STREAMING_FEE_NUMERATOR, _MANAGER_FEE_DENOMINATOR);
+    return (_MAXIMUM_MANAGER_FEE_NUMERATOR, maximumStreamingFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee
@@ -383,7 +404,7 @@ contract PoolFactory is
     require(managerFeeNumerator <= denominator && streamingFeeNumerator <= denominator, "invalid fraction");
 
     _MAXIMUM_MANAGER_FEE_NUMERATOR = managerFeeNumerator;
-    _MAXIMUM_STREAMING_FEE_NUMERATOR = streamingFeeNumerator;
+    maximumStreamingFeeNumerator = streamingFeeNumerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
 
     emit SetMaximumManagerFee(managerFeeNumerator, streamingFeeNumerator, denominator);
@@ -602,8 +623,6 @@ contract PoolFactory is
     if (guard == address(0)) {
       if (isValidAsset(extContract)) {
         guard = getAssetGuard(extContract);
-      } else {
-        guard = getAddress("openAssetGuard");
       }
     }
 
@@ -679,5 +698,6 @@ contract PoolFactory is
     }
   }
 
-  uint256[46] private __gap;
+  // The Factory is not safe to be inherited by other contracts
+  // uint256[47] private __gap;
 }

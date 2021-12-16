@@ -47,7 +47,10 @@ import "../interfaces/IHasSupportedAsset.sol";
 contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
   constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
     SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
-  {}
+  // solhint-disable-next-line no-empty-blocks
+  {
+
+  }
 
   /// @notice Transaction guard for OneInchV3
   /// @dev It supports swap functionalities

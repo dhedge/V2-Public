@@ -236,7 +236,7 @@ const deploy = async (env) => {
   console.log("UniswapV2RouterGuard deployed at ", uniswapV2RouterGuard.address);
 
   const SushiMiniChefV2Guard = await ethers.getContractFactory("SushiMiniChefV2Guard");
-  sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy(sushiToken, wmatic);
+  sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken, wmatic]);
   await sushiMiniChefV2Guard.deployed();
   console.log("SushiMiniChefV2Guard deployed at ", sushiMiniChefV2Guard.address);
 
@@ -288,6 +288,7 @@ const deploy = async (env) => {
       PoolManagerLogicProxy: poolManagerLogicProxy.address,
       PoolManagerLogic: poolManagerLogicAddress,
       AssetHandlerProxy: assetHandler.address,
+      PoolPerformanceProxy: poolPerformance.address,
       ERC20Guard: erc20Guard.address,
       UniswapV2RouterGuard: uniswapV2RouterGuard.address,
       SushiMiniChefV2Guard: sushiMiniChefV2Guard.address,

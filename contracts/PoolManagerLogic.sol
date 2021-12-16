@@ -46,6 +46,7 @@ import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./Managed.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -176,6 +177,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     bool isDeposit = _asset.isDeposit;
 
     require(validateAsset(asset), "invalid asset");
+    // Pools with price aggregators cannot add other pools as assets
+    require(!validateAsset(poolLogic) || !IPoolFactory(factory).isPool(asset), "cannot add pool asset");
 
     if (isSupportedAsset(asset)) {
       uint256 index = assetPosition[asset].sub(1);
@@ -203,6 +206,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function _removeAsset(address asset) internal {
     require(isSupportedAsset(asset), "asset not supported");
     require(assetBalance(asset) == 0, "cannot remove non-empty asset");
+
+    address guard = IHasGuardInfo(factory).getAssetGuard(asset);
+    IAssetGuard(guard).removeAssetCheck(poolLogic, asset);
 
     uint256 index = assetPosition[asset].sub(1); // adjusting the index because the map stores 1-based
     uint256 length = supportedAssets.length;
