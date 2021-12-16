@@ -1370,7 +1370,9 @@
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",
       "PoolPerformance": "0x7d14c9408f56e1aeafd765d5b0b0842c270181c4",
-      "DhedgeEasySwapper": "0xC3e6d2811f669094d94F7589CaEa69672D93408e"
+      "DhedgeEasySwapper": "0xC3e6d2811f669094d94F7589CaEa69672D93408e",
+      "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
+      "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749"
     },
     "network": {
       "name": "matic",
