@@ -24,10 +24,6 @@ contract SynthPriceAggregator is IAggregatorV3Interface {
     tokenPriceAggregator = _tokenPriceAggregator;
   }
 
-  function decimals() external pure override returns (uint8) {
-    return 8;
-  }
-
   /**
    * @notice Get the latest round data. Should be the same format as chainlink aggregator.
    * @return roundId The round ID.
@@ -55,7 +51,7 @@ contract SynthPriceAggregator is IAggregatorV3Interface {
     return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
   }
 
-  function decimals() external view override returns (uint8) {
+  function decimals() external pure override returns (uint8) {
     return 8;
   }
 }
