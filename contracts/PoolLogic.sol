@@ -417,13 +417,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset);
     uint256 tokenSupply = totalSupply();
     // TODO: check streaming fee
-    (uint256 managerFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic)
-      .getManagerFee();
+    (uint256 managerFeeNumerator, uint256 streamingFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
+      poolManagerLogic
+    ).getManagerFee();
+
     uint256 availableFee = _availableManagerFee(
       fundValue,
       tokenSupply,
-      tokenPriceAtLastFeeMint,
       managerFeeNumerator,
+      streamingFeeNumerator,
       managerFeeDenominator
     );
 

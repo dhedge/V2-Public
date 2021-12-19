@@ -54,9 +54,16 @@ describe("PoolPerformance", function () {
     it("existing pool unintitialized with deposit + tokenPriceAdjustedForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        BigNumber.from("0"),
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       const poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       console.log(">>>>>>>> poolAddress", poolLogicProxy.address);
@@ -149,9 +156,16 @@ describe("PoolPerformance", function () {
     it("existing pool unitialized without deposit + tokenPriceAdjustedForPerformance", async () => {
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        BigNumber.from("0"),
+        [[assets.usdc, true]],
+      );
       const funds = await poolFactory.getDeployedFunds();
       const poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
 
@@ -695,10 +709,19 @@ describe("PoolPerformance", function () {
       const usdcAmount = (100e6).toString();
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-        [aave.lendingPool, false],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        BigNumber.from("0"),
+        [
+          [assets.usdc, true],
+          [aave.lendingPool, false],
+        ],
+      );
       const funds = await poolFactory.getDeployedFunds();
       const poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
@@ -772,10 +795,19 @@ describe("PoolPerformance", function () {
       const usdcAmount = (100e6).toString();
       const managerFee = BigNumber.from("0"); // 0%;
       // Create the fund we're going to use for testing
-      await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-        [assets.usdc, true],
-        [aave.lendingPool, false],
-      ]);
+      await poolFactory.createFund(
+        false,
+        manager.address,
+        "Barren Wuffet",
+        "Test Fund",
+        "DHTF",
+        managerFee,
+        BigNumber.from("0"),
+        [
+          [assets.usdc, true],
+          [aave.lendingPool, false],
+        ],
+      );
       const funds = await poolFactory.getDeployedFunds();
       const poolLogicProxy = await PoolLogic.attach(funds[funds.length - 1]);
       // Deposit $1 conventional way
