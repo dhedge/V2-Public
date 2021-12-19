@@ -239,7 +239,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [[assets.usdc, true]],
       );
       const funds = await poolFactory.getDeployedFunds();
@@ -311,7 +311,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [[assets.usdc, true]],
       );
       const funds = await poolFactory.getDeployedFunds();
@@ -365,7 +365,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [[assets.usdc, true]],
       );
       const funds = await poolFactory.getDeployedFunds();
@@ -428,7 +428,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [[assets.usdc, true]],
       );
       const funds = await poolFactory.getDeployedFunds();
@@ -491,7 +491,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [[assets.usdc, true]],
       );
 
@@ -536,7 +536,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [[assets.usdc, true]],
       );
       const funds = await poolFactory.getDeployedFunds();
@@ -616,7 +616,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [[assets.usdc, true]],
       );
       const funds = await poolFactory.getDeployedFunds();
@@ -876,7 +876,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [
           [assets.usdc, true],
           [aave.lendingPool, false],
@@ -988,7 +988,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [
           [assets.usdc, true],
           [aave.lendingPool, false],
@@ -1076,7 +1076,7 @@ describe("PoolPerformance", function () {
         "Test Fund",
         "DHTF",
         managerFee,
-        new ethers.BigNumber.from("0"), // 0% streaming fee
+        ethers.BigNumber.from("0"), // 0% streaming fee
         [
           [assets.weth, true],
           [aave.lendingPool, false],
