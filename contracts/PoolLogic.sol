@@ -278,9 +278,13 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     );
   }
 
+  function withdraw(uint256 _fundTokenAmount) external {
+    withdrawTo(msg.sender, _fundTokenAmount);
+  }
+
   /// @notice Withdraw assets based on the fund token amount
   /// @param _fundTokenAmount the fund token amount
-  function withdraw(uint256 _fundTokenAmount) external virtual nonReentrant whenNotPaused {
+  function withdrawTo(address _recipient, uint256 _fundTokenAmount) public virtual nonReentrant whenNotPaused {
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
 
@@ -302,7 +306,7 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
         _supportedAssets[i].asset,
-        msg.sender,
+        _recipient,
         portion
       );
 
@@ -310,7 +314,7 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
         require(asset != address(0), "requires asset to withdraw");
         // Ignoring return value for transfer as want to transfer no matter what happened
         asset.tryAssemblyCall(
-          abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, msg.sender, portionOfAssetBalance)
+          abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, _recipient, portionOfAssetBalance)
         );
       }
 

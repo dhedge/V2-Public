@@ -1,6 +1,8 @@
-const { expect, assert } = require("chai");
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { InitType } from "./initialize";
+import { expect, assert } from "chai";
 
-const main = async (initializeData) => {
+export const checkFactory = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
   const { protocolTreasury, poolFactoryProxy, assetHandlerProxy, governance, poolFactory } = initializeData;
 
   // Check Factory settings
@@ -10,8 +12,9 @@ const main = async (initializeData) => {
     await poolFactory.implInitializer();
     assert(false, "poolFactory implementation Should be already initialized");
   } catch (e) {
-    assert(e.error.message.includes("contract is already initialized"));
-    console.log("Pool Factory Implementation is initialized.");
+    console.error(e.error.message);
+    assert(e.error.message.includes("already initialized"), "PoolFactory implementation should be initialised");
+    console.log("PoolFactory Implementation is initialized.");
   }
 
   const protocolTreasurySetting = await poolFactoryProxy.daoAddress();
@@ -29,5 +32,3 @@ const main = async (initializeData) => {
   console.log("Factory settings checks complete!");
   console.log("_________________________________________");
 };
-
-module.exports = { main };

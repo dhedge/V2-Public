@@ -70,6 +70,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
   const poolPerformance = <PoolPerformance>await upgrades.deployProxy(PoolPerformance);
   await poolPerformance.deployed();
+  await poolPerformance.enable();
 
   const PoolLogic = await ethers.getContractFactory("PoolLogic");
   const poolLogic = await PoolLogic.deploy();
