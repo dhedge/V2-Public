@@ -186,31 +186,35 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
 
   const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
   const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aave.protocolDataProvider);
-  aaveLendingPoolAssetGuard.deployed();
+  await aaveLendingPoolAssetGuard.deployed();
 
   const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
   const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
-  aaveLendingPoolGuard.deployed();
+  await aaveLendingPoolGuard.deployed();
 
   const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
   const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
-  lendingEnabledAssetGuard.deployed();
+  await lendingEnabledAssetGuard.deployed();
 
   const AaveIncentivesControllerGuard = await ethers.getContractFactory("AaveIncentivesControllerGuard");
   const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy(assets.wmatic);
-  aaveIncentivesControllerGuard.deployed();
+  await aaveIncentivesControllerGuard.deployed();
 
   const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
   const balancerV2Guard = await BalancerV2Guard.deploy(2, 100); // set slippage 2%
-  balancerV2Guard.deployed();
+  await balancerV2Guard.deployed();
 
   const BalancerMerkleOrchardGuard = await ethers.getContractFactory("BalancerMerkleOrchardGuard");
   const balancerMerkleOrchardGuard = await BalancerMerkleOrchardGuard.deploy();
-  balancerMerkleOrchardGuard.deployed();
+  await balancerMerkleOrchardGuard.deployed();
 
   const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
   const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
-  oneInchV3Guard.deployed();
+  await oneInchV3Guard.deployed();
+
+  const SwapRouter = await ethers.getContractFactory("SwapRouter");
+  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router]);
+  await swapRouter.deployed();
 
   await governance.setAssetGuard(0, erc20Guard.address);
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);
@@ -228,7 +232,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await governance.setContractGuard(balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
   await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
   await governance.setAddresses([
-    { name: toBytes32("swapRouter"), destination: sushi.router },
+    { name: toBytes32("swapRouter"), destination: swapRouter.address },
     { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
     { name: toBytes32("weth"), destination: assets.weth },
     { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
