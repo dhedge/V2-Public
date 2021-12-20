@@ -60,7 +60,7 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
     uint256 deadline
   ) external override returns (uint256[] memory amounts) {
     (uint256 routerIndex, uint256 bestAmountOut) = getBestAmountOutUniV2Router(amountIn, path);
-    require(bestAmountOut > 2 * 10**15, "SwapRouter: invalid routing 01"); // invalid routing with Uni v2 swapExactTokensForTokens
+    require(bestAmountOut > 0, "SwapRouter: invalid routing 01"); // invalid routing with Uni v2 swapExactTokensForTokens
 
     IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
     IERC20(path[0]).approve(address(uniV2Routers[routerIndex]), amountIn);
