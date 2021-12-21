@@ -10,6 +10,7 @@ import {
   balancer,
   quickswap,
   oneinch,
+  curve,
 } from "../../../../config/chainData/polygon-data";
 import { Deployments } from ".";
 
@@ -213,8 +214,18 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await oneInchV3Guard.deployed();
 
   const SwapRouter = await ethers.getContractFactory("SwapRouter");
-  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router]);
+  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], [curve.atricrypto3.address]);
   await swapRouter.deployed();
+  interface CurvePoolCoin {
+    curvePool: string;
+    token: string;
+    coinId: string;
+  }
+  let curvePoolCoins: CurvePoolCoin[] = [];
+  for (const coin of curve.atricrypto3.coins) {
+    curvePoolCoins.push({ curvePool: curve.atricrypto3.address, token: coin.token, coinId: coin.coinId });
+  }
+  await swapRouter.setCurvePoolCoins(curvePoolCoins);
 
   await governance.setAssetGuard(0, erc20Guard.address);
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);

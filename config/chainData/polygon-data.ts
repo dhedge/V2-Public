@@ -76,6 +76,20 @@ export const quickswap = {
   },
 };
 
+// Curve
+export const curve = {
+  atricrypto3: {
+    address: "0x1d8b86e3D88cDb2d34688e87E72F388Cb541B7C8",
+    coins: [
+      { token: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063", coinId: "0" }, // DAI
+      { token: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", coinId: "1" }, // USDC
+      { token: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", coinId: "2" }, // USDT
+      { token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", coinId: "3" }, // WBTC
+      { token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", coinId: "4" }, // WETH
+    ],
+  },
+};
+
 // oneInch
 export const oneinch = {
   v3Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
