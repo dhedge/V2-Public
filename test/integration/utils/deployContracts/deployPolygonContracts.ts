@@ -216,12 +216,12 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const SwapRouter = await ethers.getContractFactory("SwapRouter");
   const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], [curve.atricrypto3.address]);
   await swapRouter.deployed();
-  interface CurvePoolCoin {
+
+  let curvePoolCoins: {
     curvePool: string;
     token: string;
     coinId: string;
-  }
-  let curvePoolCoins: CurvePoolCoin[] = [];
+  }[] = [];
   for (const coin of curve.atricrypto3.coins) {
     curvePoolCoins.push({ curvePool: curve.atricrypto3.address, token: coin.token, coinId: coin.coinId });
   }

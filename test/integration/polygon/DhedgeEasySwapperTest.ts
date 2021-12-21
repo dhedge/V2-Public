@@ -5,7 +5,7 @@ import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { DhedgeEasySwapper, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
 import { units } from "../../TestHelpers";
-import { aave, assets, assetsBalanceOfSlot, quickswap } from "../../../config/chainData/polygon-data";
+import { aave, assets, assetsBalanceOfSlot, quickswap, sushi, curve } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
@@ -46,8 +46,22 @@ describe("DhedgeEasySwapper", function () {
     ]);
     await ethers.provider.send("evm_mine", []); // Just mines to the next block
 
+    const SwapRouter = await ethers.getContractFactory("SwapRouter");
+    const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], [curve.atricrypto3.address]);
+    await swapRouter.deployed();
+
+    let curvePoolCoins: {
+      curvePool: string;
+      token: string;
+      coinId: string;
+    }[] = [];
+    for (const coin of curve.atricrypto3.coins) {
+      curvePoolCoins.push({ curvePool: curve.atricrypto3.address, token: coin.token, coinId: coin.coinId });
+    }
+    await swapRouter.setCurvePoolCoins(curvePoolCoins);
+
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
+    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, swapRouter.address, assets.weth);
     await dhedgeEasySwapper.deployed();
 
     // AavelendingPool
