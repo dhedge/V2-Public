@@ -9,12 +9,12 @@ import "solidity-coverage";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/config";
 
-import "./scripts/upgrade-polygon";
-import "./scripts/verify";
-import "./scripts/explorer-verify";
+import "./scripts/polygon/upgrade-polygon";
+import "./scripts/polygon/verify";
+import "./scripts/ovm/explorer-verify";
 import "./scripts/dynamicBonds";
-import "./scripts/dhedgeEasySwapper";
-import "./scripts/polygon/checks/checkConfig";
+import "./scripts/polygon/dhedgeEasySwapper";
+import "./scripts/checks/checkConfig";
 import "./scripts/compileOne";
 
 dotenv.config();

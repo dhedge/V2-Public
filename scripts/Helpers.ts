@@ -1,22 +1,27 @@
-const util = require("util");
-const { exec } = require("child_process");
+import util from "util";
+import { ethers } from "hardhat";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { exec } from "child_process";
+import fs from "fs";
 const execProm = util.promisify(exec);
-const stringify = require("csv-stringify/lib/sync");
-const fs = require("fs");
-const Safe = require("@gnosis.pm/safe-core-sdk");
-const { EthersAdapter } = require("@gnosis.pm/safe-core-sdk");
-const { SafeService } = require("@gnosis.pm/safe-ethers-adapters");
+import stringify from "csv-stringify/lib/sync";
+
+import { SafeService } from "@gnosis.pm/safe-ethers-adapters";
+import Safe, { EthersAdapter } from "@gnosis.pm/safe-core-sdk";
+
 const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
 const axios = require("axios");
 
-let nonce,
-  nonceLog = new Array();
+let nonce: number;
+
+export const nonceLog = new Array();
+
 const { retryWithDelay } = require("./utils.ts");
 
-const getTag = async () => {
+export const getTag = async () => {
   try {
     await execProm("git pull --tags");
   } catch {}
@@ -24,12 +29,12 @@ const getTag = async () => {
   return result.stdout.trim();
 };
 
-const hasDuplicates = async (array, key) => {
-  const valueArr = array.map(function (item) {
+export const hasDuplicates = async (array: any, key: any) => {
+  const valueArr = array.map(function (item: any) {
     return item[key];
   });
 
-  const isDuplicate = valueArr.some(function (item, idx) {
+  const isDuplicate = valueArr.some(function (item: any, idx: number) {
     if (!item) return false;
     return valueArr.indexOf(item) != idx;
   });
@@ -37,7 +42,7 @@ const hasDuplicates = async (array, key) => {
   return isDuplicate;
 };
 
-const isSameBytecode = (creationBytecode, runtimeBytecode) => {
+export const isSameBytecode = (creationBytecode: string, runtimeBytecode: string) => {
   const bytecodeB = runtimeBytecode.substring(39);
   const bytecodeSnippet = bytecodeB.substring(0, 100);
   const indexOfSnippet = creationBytecode.indexOf(bytecodeSnippet);
@@ -57,7 +62,12 @@ const isSameBytecode = (creationBytecode, runtimeBytecode) => {
   return true;
 };
 
-const tryVerify = async (hre, address, path, constructorArguments) => {
+const tryVerify = async (
+  hre: HardhatRuntimeEnvironment,
+  address: string,
+  path: string,
+  constructorArguments: any[],
+) => {
   await retryWithDelay(async () => {
     try {
       await hre.run("verify:verify", {
@@ -65,7 +75,7 @@ const tryVerify = async (hre, address, path, constructorArguments) => {
         contract: path,
         constructorArguments: constructorArguments,
       });
-    } catch (e) {
+    } catch (e: any) {
       if (!e.message.toLowerCase().includes("already verified")) {
         throw e;
       }
@@ -73,32 +83,32 @@ const tryVerify = async (hre, address, path, constructorArguments) => {
   }, "Try Verify: " + address);
 };
 
-const writeCsv = (data, fileName) => {
+export const writeCsv = (data: any, fileName: string) => {
   const output = stringify(data, { header: true });
-  fs.writeFileSync(fileName, output, (err) => {
-    if (err) {
-      console.log(err);
-    }
-    console.log(`${fileName} updated.`);
-  });
+  fs.writeFileSync(fileName, output);
 };
 
 /// Converts a string into a hex representation of bytes32
-const toBytes32 = (key) => ethers.utils.formatBytes32String(key);
+export const toBytes32 = (key: string) => ethers.utils.formatBytes32String(key);
 
-const getNonce = async (safeSdk, chainId, safeAddress, restartFromLastConfirmedNonce) => {
+const getNonce = async (
+  safeSdk: Safe,
+  chainId: number,
+  safeAddress: string,
+  restartFromLastConfirmedNonce: boolean,
+) => {
   const lastConfirmedNonce = await safeSdk.getNonce();
   if (restartFromLastConfirmedNonce) {
-    console.log("GetNonce: Starting from LAST CONFIRMED NONCE: ", nonce);
+    console.log("GetNonce: Starting from LAST CONFIRMED NONCE: ", lastConfirmedNonce);
     return lastConfirmedNonce;
   }
 
   const safeTxApi = `https://safe-client.gnosis.io/v1/chains/${chainId}/safes/${safeAddress}/transactions/queued`;
   const response = await axios.get(safeTxApi);
   const results = response.data.results.reverse();
-  const last = results.find((r) => r.type === "TRANSACTION");
+  const last = results.find((r: any) => r.type === "TRANSACTION");
   if (!last) {
-    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", nonce);
+    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", lastConfirmedNonce);
     return lastConfirmedNonce;
   }
 
@@ -107,7 +117,13 @@ const getNonce = async (safeSdk, chainId, safeAddress, restartFromLastConfirmedN
   return nonce;
 };
 
-const proposeTx = async (to, data, message, execute = false, restartFromLastConfirmedNonce = false) => {
+export const proposeTx = async (
+  to: string,
+  data: string,
+  message: string,
+  execute = false,
+  restartFromLastConfirmedNonce = false,
+) => {
   if (!execute) {
     console.log("Will propose transaction:", message);
     return;
@@ -117,15 +133,15 @@ const proposeTx = async (to, data, message, execute = false, restartFromLastConf
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
   const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
-  const chainId = await ethAdapter.getChainId();
+  const chainId: number = await ethAdapter.getChainId();
 
-  const contractNetworks = {
+  const contractNetworks: any = {
     [chainId]: {
       multiSendAddress: multiSendAddress,
     },
   };
 
-  const safeSdk = await Safe.default.create({
+  const safeSdk = await Safe.create({
     ethAdapter,
     safeAddress: safeAddress,
     contractNetworks,
@@ -166,10 +182,10 @@ const proposeTx = async (to, data, message, execute = false, restartFromLastConf
   );
 };
 
-const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) => {
+export const checkAsset = async (csvAsset: any, contracts: any, poolFactory: any, assetHandlerAssets: any) => {
   for (const asset of contracts.Assets) {
-    if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
-    if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
+    // if (csvAsset["Asset Name"] === "Sushi") sushiToken = csvAsset.Address;
+    // if (csvAsset["Asset Name"] === "Wrapped Matic") wmatic = csvAsset.Address;
     if (csvAsset["Address"].toLowerCase() === asset.asset.toLowerCase()) {
       // console.log(`csvAsset: ${csvAsset["Asset Name"]} is already in the current contracts.Assets`);
       const assetType = parseInt(await poolFactory.getAssetType(csvAsset.Address));
@@ -192,7 +208,12 @@ const checkAsset = async (csvAsset, contracts, poolFactory, assetHandlerAssets) 
   return foundInVersions;
 };
 
-const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHandlerAssets) => {
+export const checkBalancerLpAsset = async (
+  balancerLp: any,
+  contracts: any,
+  poolFactory: any,
+  assetHandlerAssets: any,
+) => {
   for (const asset of contracts.Assets) {
     if (balancerLp.name === asset.name) {
       // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
@@ -216,7 +237,7 @@ const checkBalancerLpAsset = async (balancerLp, contracts, poolFactory, assetHan
   return foundInVersions;
 };
 
-const getAggregator = async (csvAsset) => {
+export const getAggregator = async (hre: HardhatRuntimeEnvironment, csvAsset: any) => {
   const aggregatorName = csvAsset["aggregatorName"];
   let aggregator;
 
@@ -243,21 +264,5 @@ const getAggregator = async (csvAsset) => {
 };
 
 // Init contracts data
-const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
-const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
-
-module.exports = {
-  writeCsv,
-  tryVerify,
-  getTag,
-  hasDuplicates,
-  isSameBytecode,
-  toBytes32,
-  proposeTx,
-  nonceLog,
-  checkAsset,
-  checkBalancerLpAsset,
-  getAggregator,
-  implementationStorage,
-  proxyAdminAddress,
-};
+export const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+export const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
