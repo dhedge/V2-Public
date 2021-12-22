@@ -6,7 +6,7 @@ import axios from "axios";
 
 const { proposeTx, tryVerify, implementationStorage, proxyAdminAddress } = require("./Helpers");
 import { protocolDao } from "../config/chainData/polygon-data";
-import { DynamicBonds } from "../types";
+// import { DynamicBonds } from "../types"; // Unit test fails on Github Actions
 const coingeckoNetwork = "polygon-pos";
 
 // Addresses
@@ -149,7 +149,7 @@ const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment) => {
   return { dynamicBondsProxy, dynamicBondsImplementation };
 };
 
-const setBondTerms = async (dynamicBonds: DynamicBonds, taskArgs: any) => {
+const setBondTerms = async (dynamicBonds: Contract, taskArgs: any) => {
   const timeNow = Math.round(Date.now() / 1000);
   const timeAtSaleEnd = timeNow + saleDuration;
   console.log("-- Set bond terms --");
@@ -196,7 +196,7 @@ const addBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Cont
   console.log("Bond options added!");
 };
 
-const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: DynamicBonds, taskArgs: any) => {
+const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract, taskArgs: any) => {
   const bondOptionsBefore = await dynamicBonds.bondOptions();
   const bondOptionLength = bondOptionsBefore.length;
   if (bondOptionLength == 0) throw "No bond options added yet";
