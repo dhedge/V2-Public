@@ -66,6 +66,12 @@ const tryVerify = async (hre, address, path, constructorArguments) => {
         constructorArguments: constructorArguments,
       });
     } catch (e) {
+      if (e.message.toLowerCase().includes("constructor arguments exceeds max accepted")) {
+        // This error may be to do with the compiler, "constructor arguments exceeds max accepted (10k chars) length"
+        // Possibly because the contract should have been compiled in isolation before deploying ie "compile:one"
+        console.warning(`Couldn't verify contract at ${address}. Error: ${e.message}`);
+        return;
+      }
       if (!e.message.toLowerCase().includes("already verified")) {
         throw e;
       }
@@ -98,7 +104,7 @@ const getNonce = async (safeSdk, chainId, safeAddress, restartFromLastConfirmedN
   const results = response.data.results.reverse();
   const last = results.find((r) => r.type === "TRANSACTION");
   if (!last) {
-    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", nonce);
+    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE:", lastConfirmedNonce);
     return lastConfirmedNonce;
   }
 
