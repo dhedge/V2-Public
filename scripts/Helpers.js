@@ -104,7 +104,7 @@ const getNonce = async (safeSdk, chainId, safeAddress, restartFromLastConfirmedN
   const results = response.data.results.reverse();
   const last = results.find((r) => r.type === "TRANSACTION");
   if (!last) {
-    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", nonce);
+    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE:", lastConfirmedNonce);
     return lastConfirmedNonce;
   }
 
