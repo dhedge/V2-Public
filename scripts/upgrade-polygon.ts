@@ -71,6 +71,8 @@ const deployBalancerV2LpAggregator = async (factory: string, info: any, hre: Har
     matrix.push(elements);
   }
 
+  await hre.run("compile:one", { contractName: "BalancerV2LPAggregator" });
+
   const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
 
   const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(
@@ -1086,11 +1088,15 @@ task("upgrade-polygon", "Upgrade contracts")
       console.error(e);
       console.log("UPGRADE EXIT UNEXPECTED");
     } finally {
-      console.log("Updating versions.json");
-      writeVersions();
-      console.log("Updating csv");
-      writeNewGuards();
-      if (taskArgs.execute) console.log(nonceLog);
+      if (taskArgs.execute) {
+        // only update the files if executing an upgrade
+        console.log("Updating versions.json");
+        writeVersions();
+        console.log("Updating csv");
+        writeNewGuards();
+        console.log(nonceLog);
+      }
+
       console.log("Switching back OZ file");
       fs.renameSync(ozExpectedFile, ozEnvFile);
     }
