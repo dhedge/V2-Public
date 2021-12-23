@@ -105,7 +105,7 @@ describe("PoolFactory", function () {
     await poolPerformance.deployed();
     await poolPerformance.enable();
 
-    const PoolLogic = await ethers.getContractFactory("PoolLogic");
+    PoolLogic = (await ethers.getContractFactory("PoolLogic")) as any;
     const poolLogic = await PoolLogic.deploy();
 
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -336,7 +336,7 @@ describe("PoolFactory", function () {
     await poolLogicProxy.deposit(susd, (100e18).toString());
 
     const oneDollar = 1e18;
-    const twoDollar = 2e18;
+
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 

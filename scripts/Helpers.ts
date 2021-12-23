@@ -1,25 +1,22 @@
 import util from "util";
-import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { exec } from "child_process";
 import fs from "fs";
 const execProm = util.promisify(exec);
 import stringify from "csv-stringify/lib/sync";
-
 import { SafeService } from "@gnosis.pm/safe-ethers-adapters";
 import Safe, { EthersAdapter } from "@gnosis.pm/safe-core-sdk";
+import { retryWithDelay } from "./utils";
+import axios from "axios";
 
 const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
 const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
-const axios = require("axios");
 
 let nonce: number;
 
 export const nonceLog = new Array();
-
-const { retryWithDelay } = require("./utils.ts");
 
 export const getTag = async () => {
   try {
@@ -62,7 +59,7 @@ export const isSameBytecode = (creationBytecode: string, runtimeBytecode: string
   return true;
 };
 
-const tryVerify = async (
+export const tryVerify = async (
   hre: HardhatRuntimeEnvironment,
   address: string,
   path: string,
@@ -89,7 +86,10 @@ export const writeCsv = (data: any, fileName: string) => {
 };
 
 /// Converts a string into a hex representation of bytes32
-export const toBytes32 = (key: string) => ethers.utils.formatBytes32String(key);
+export const toBytes32 = (key: string) => {
+  const { ethers } = require("hardhat");
+  return ethers.utils.formatBytes32String(key);
+};
 
 const getNonce = async (
   safeSdk: Safe,
@@ -130,6 +130,7 @@ export const proposeTx = async (
   }
 
   // Initialize the Safe SDK
+  const { ethers } = require("hardhat");
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
   const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
@@ -245,6 +246,7 @@ export const getAggregator = async (hre: HardhatRuntimeEnvironment, csvAsset: an
     case "DHedgePoolAggregator":
       // Deploy DHedgePoolAggregator
       const assetAddress = csvAsset["Address"];
+      const { ethers } = require("hardhat");
       const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
       const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
       await dHedgePoolAggregator.deployed();
