@@ -36,6 +36,8 @@
     "check:staging:assets": "npx hardhat checkConfig --environment staging --specific true --assets true --network polygon",
     "check:staging:bytecode": "npx hardhat checkConfig --environment staging --specific true --bytecode true --network polygon",
     "check:staging:all": "npx hardhat checkConfig --environment staging --network polygon",
+    "check:polygon:all:prod": "npx hardhat checkConfig --network polygon",
+    "check:polygon:all:staging": "npm run check:polygon:all:prod -- --environment staging",
     "check:ovm:all": "npx hardhat checkConfig --network ovm",
     "doc:gen": "solidity-docgen --solc-module solc-0.7 -t templates",
     "prepare": "husky install",

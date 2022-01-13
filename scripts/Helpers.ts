@@ -73,6 +73,12 @@ export const tryVerify = async (
         constructorArguments: constructorArguments,
       });
     } catch (e: any) {
+      if (e.message.toLowerCase().includes("constructor arguments exceeds max accepted")) {
+        // This error may be to do with the compiler, "constructor arguments exceeds max accepted (10k chars) length"
+        // Possibly because the contract should have been compiled in isolation before deploying ie "compile:one"
+        console.warn(`Couldn't verify contract at ${address}. Error: ${e.message}`);
+        return;
+      }
       if (!e.message.toLowerCase().includes("already verified")) {
         throw e;
       }
