@@ -54,7 +54,11 @@ contract UniswapV3AssetGuard is ERC20Guard {
 
   IUniswapV3Factory public uniswapV3Factory;
   INonfungiblePositionManager public nonfungiblePositionManager;
+
+  // Number of seconds in the past from which to calculate the time-weighted means
   uint32 public priceUpdateInterval = 2 minutes;
+
+  uint256 public constant MAXIMUM_POSITIONS = 1;
 
   constructor(address _uniswapV3Factory, address _nonfungiblePositionManager) {
     // solhint-disable-next-line reason-string
@@ -74,7 +78,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     address factory = IPoolLogic(pool).factory();
 
     uint256 length = nonfungiblePositionManager.balanceOf(pool);
-    for (uint256 i = 0; i < length; ++i) {
+    for (uint256 i = length >= MAXIMUM_POSITIONS ? length - MAXIMUM_POSITIONS : 0; i < length; ++i) {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
       (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
       // (
@@ -96,17 +100,17 @@ contract UniswapV3AssetGuard is ERC20Guard {
       uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
       (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, sqrtRatioX96);
 
-      {
-        // add token0 USD amount
-        uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token0);
-        balance = balance.add(tokenPriceInUsd.mul(amount0).div(10**IERC20Extended(token0).decimals()));
-      }
-      {
-        // add token0 USD amount
-        uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token1);
-        balance = balance.add(tokenPriceInUsd.mul(amount1).div(10**IERC20Extended(token1).decimals()));
-      }
+      balance = balance.add(_assetValue(factory, token0, amount0)).add(_assetValue(factory, token1, amount1));
     }
+  }
+
+  function _assetValue(
+    address factory,
+    address token,
+    uint256 amount
+  ) internal view returns (uint256) {
+    uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token);
+    return tokenPriceInUsd.mul(amount).div(10**IERC20Extended(token).decimals());
   }
 
   /// @notice Returns decimal of the Aave lending pool asset
