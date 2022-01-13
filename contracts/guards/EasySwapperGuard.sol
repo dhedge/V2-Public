@@ -76,7 +76,7 @@ contract EasySwapperGuard is TxDataUtils, IGuard {
     //     uint256 amount,
     //     IERC20 poolDepositAsset,
     //     uint256 expectedLiquidityMinted
-    //   )
+    // )
     if (method == bytes4(keccak256("deposit(address,address,uint256,address,uint256)"))) {
       // I.e Toros pool
       address asset = convert32toAddress(getInput(data, 0));
@@ -88,12 +88,12 @@ contract EasySwapperGuard is TxDataUtils, IGuard {
 
       txType = 18; // Deposit: EasySwapper Deposit
     }
-    //   function withdraw(
-    //     address pool,
-    //     uint256 fundTokenAmount,
-    //     IERC20 withdrawalAsset,
-    //     uint256 expectedAmountOut
-    //  )
+    // withdraw(
+    //   address pool,
+    //   uint256 fundTokenAmount,
+    //   IERC20 withdrawalAsset,
+    //   uint256 expectedAmountOut
+    // )
     else if (method == bytes4(keccak256("withdraw(address,uint256,address,uint256)"))) {
       // I.e Toros pool
       address from = convert32toAddress(getInput(data, 0));
