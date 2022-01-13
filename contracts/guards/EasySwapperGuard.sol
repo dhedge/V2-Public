@@ -39,10 +39,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../utils/TxDataUtils.sol";
 import "../interfaces/guards/IGuard.sol";
-import "../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 
 /// @title Transaction guard for Dhedge EasySwapper
