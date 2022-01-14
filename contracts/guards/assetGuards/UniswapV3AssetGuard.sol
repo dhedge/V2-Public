@@ -36,9 +36,11 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import "@uniswap/v3-periphery/contracts/libraries/PositionValue.sol";
+import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import "./ERC20Guard.sol";
@@ -125,10 +127,10 @@ contract UniswapV3AssetGuard is ERC20Guard {
   /// @return withdrawBalance are used to withdraw portion of asset balance to investor
   /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
-    address, // pool
+    address pool,
     address, // asset
-    uint256, // portion
-    address // to
+    uint256 portion,
+    address to
   )
     external
     view
@@ -140,6 +142,103 @@ contract UniswapV3AssetGuard is ERC20Guard {
       MultiTransaction[] memory transactions
     )
   {
+    uint256 length = nonfungiblePositionManager.balanceOf(pool);
+
+    uint256 validPositionCount;
+    for (uint256 i = 0; i < length; ++i) {
+      uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
+      (, , , , , , , uint128 liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
+      if (liquidity > 0) {
+        validPositionCount++;
+      }
+    }
+    transactions = new MultiTransaction[](validPositionCount * 4);
+
+    uint256 txCount;
+    for (uint256 i = 0; i < length; ++i) {
+      uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
+      DecreaseLiquidity memory decreaseLiquidity = _calcDecreaseLiquidity(tokenId, portion);
+
+      transactions[txCount].to = address(nonfungiblePositionManager);
+      transactions[txCount].txData = abi.encodeWithSelector(
+        INonfungiblePositionManager.decreaseLiquidity.selector,
+        INonfungiblePositionManager.DecreaseLiquidityParams(
+          tokenId,
+          decreaseLiquidity.lpAmount,
+          0,
+          0,
+          type(uint256).max
+        )
+      );
+      txCount++;
+
+      transactions[txCount].to = address(nonfungiblePositionManager);
+      transactions[txCount].txData = abi.encodeWithSelector(
+        INonfungiblePositionManager.collect.selector,
+        INonfungiblePositionManager.CollectParams(tokenId, pool, type(uint128).max, type(uint128).max)
+      );
+      txCount++;
+
+      transactions[txCount].to = decreaseLiquidity.token0;
+      transactions[txCount].txData = abi.encodeWithSelector(
+        bytes4(keccak256("transfer(address,uint256)")),
+        to, // recipient
+        decreaseLiquidity.amount0
+      );
+      txCount++;
+
+      transactions[txCount].to = decreaseLiquidity.token1;
+      transactions[txCount].txData = abi.encodeWithSelector(
+        bytes4(keccak256("transfer(address,uint256)")),
+        to, // recipient
+        decreaseLiquidity.amount1
+      );
+      txCount++;
+    }
+
     return (withdrawAsset, withdrawBalance, transactions);
+  }
+
+  // for stack too deep
+  struct DecreaseLiquidity {
+    uint128 lpAmount;
+    address token0;
+    address token1;
+    uint256 amount0;
+    uint256 amount1;
+  }
+
+  /// @notice Calculates liquidity withdraw balances
+  /// @param tokenId nft position id
+  /// @param portion withdraw portion
+  /// @return liquidity withdraw info
+  function _calcDecreaseLiquidity(uint256 tokenId, uint256 portion) internal view returns (DecreaseLiquidity memory) {
+    (
+      ,
+      ,
+      address token0,
+      address token1,
+      uint24 fee,
+      int24 tickLower,
+      int24 tickUpper,
+      uint128 liquidity,
+      ,
+      ,
+      ,
+
+    ) = nonfungiblePositionManager.positions(tokenId);
+
+    uint128 lpAmount = uint128(portion.mul(liquidity).div(10**18));
+
+    (, int24 tick, , , , , ) = IUniswapV3Pool(uniswapV3Factory.getPool(token0, token1, fee)).slot0();
+
+    (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
+      TickMath.getSqrtRatioAtTick(tick),
+      TickMath.getSqrtRatioAtTick(tickLower),
+      TickMath.getSqrtRatioAtTick(tickUpper),
+      lpAmount
+    );
+
+    return DecreaseLiquidity(lpAmount, token0, token1, amount0, amount1);
   }
 }

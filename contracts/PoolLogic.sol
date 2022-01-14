@@ -75,6 +75,7 @@ import "./utils/AddressHelper.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -146,6 +147,9 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
 
   mapping(address => uint256) public lastWhitelistTransfer;
 
+  // uniswap v3 liquidity position count limit
+  uint256 public uniV3PositionsLimit;
+
   modifier onlyPrivate() {
     require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
     _;
@@ -210,6 +214,10 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     // Users that receive tokens from a whitelisted source cannot withdraw, or transfer them on, for 5 minutes
     require(lastWhitelistTransfer[from].add(5 minutes) < block.timestamp, "whitelist cooldown active");
     require(getExitRemainingCooldown(from) == 0, "cooldown active");
+  }
+
+  function setUniV3PositionsLimit(uint256 _uniV3PositionsLimit) external onlyManager {
+    uniV3PositionsLimit = _uniV3PositionsLimit;
   }
 
   /// @notice Set the pool privacy
@@ -777,7 +785,12 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     address,
     uint256,
     bytes calldata
-  ) external pure override returns (bytes4) {
+  ) external view override returns (bytes4) {
+    if (msg.sender == IHasGuardInfo(factory).getAddress("NonfungiblePositionManager")) {
+      // restrict uniswap v3 NFT position count
+      require(IERC721Upgradeable(msg.sender).balanceOf(address(this)) <= uniV3PositionsLimit, "too many positions");
+    }
+
     return this.onERC721Received.selector;
   }
 
