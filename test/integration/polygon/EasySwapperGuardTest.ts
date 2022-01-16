@@ -55,6 +55,7 @@ describe("EasySwapperGuard", () => {
       ethers.BigNumber.from("0"),
       [
         { asset: assets.usdc, isDeposit: true },
+        // Note: we're enabling one of the toros pools as an asset
         { asset: assets.ETHBEAR2X, isDeposit: true },
       ],
     );
