@@ -141,6 +141,9 @@ contract PoolFactory is
 
   mapping(address => bool) public transferWhitelist; // 24h lockup whitelist
 
+  // uniswap v3 liquidity position count limit
+  uint256 private _uniV3PositionsLimit;
+
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
@@ -422,6 +425,16 @@ contract PoolFactory is
   /// @return The exit cool down time in seconds
   function getExitCooldown() external view override returns (uint256) {
     return _exitCooldown;
+  }
+
+  /// @notice Set the position limit of Uniswap V3
+  /// @param uniV3PositionsLimit The positions limit
+  function setUniV3PositionsLimit(uint256 uniV3PositionsLimit) external onlyOwner {
+    _uniV3PositionsLimit = uniV3PositionsLimit;
+  }
+
+  function getUniV3PositionsLimit() external view override onlyOwner returns (uint256) {
+    return _uniV3PositionsLimit;
   }
 
   // Asset Info
