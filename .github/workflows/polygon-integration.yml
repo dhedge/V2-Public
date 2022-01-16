@@ -173,6 +173,9 @@ jobs:
       - name: DhedgeEasySwapper
         run: |
           npx hardhat test ./test/integration/polygon/DhedgeEasySwapperTest.ts --network localhost
+      - name: EasySwapperGuard Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/EasySwapperGuardTest.ts --network localhost
       - name: WithdrawSingle Tests
         run: |
           npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost

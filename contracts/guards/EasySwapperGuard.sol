@@ -32,7 +32,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -41,6 +40,7 @@ import "../utils/TxDataUtils.sol";
 import "../interfaces/guards/IGuard.sol";
 import "../interfaces/IPoolManagerLogic.sol";
 import "../interfaces/IHasSupportedAsset.sol";
+import "../DhedgeEasySwapper.sol";
 
 /// @title Transaction guard for Dhedge EasySwapper
 contract EasySwapperGuard is TxDataUtils, IGuard {
@@ -70,38 +70,22 @@ contract EasySwapperGuard is TxDataUtils, IGuard {
     bytes4 method = getMethod(data);
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
-    // deposit(
-    //     address pool,
-    //     IERC20 depositAsset,
-    //     uint256 amount,
-    //     IERC20 poolDepositAsset,
-    //     uint256 expectedLiquidityMinted
-    // )
-    if (method == bytes4(keccak256("deposit(address,address,uint256,address,uint256)"))) {
-      // I.e Toros pool
-      address asset = convert32toAddress(getInput(data, 0));
+    if (method == DhedgeEasySwapper.deposit.selector) {
+      // I.e asset == Toros pool
+      (address asset, , , , ) = abi.decode(getParams(data), (address, address, uint256, address, uint256));
 
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
-      require(poolManagerLogicAssets.isSupportedAsset(asset), "Asset not supported");
+      require(poolManagerLogicAssets.isSupportedAsset(asset), "unsupported asset");
 
       emit Deposit(poolLogic, asset, block.timestamp);
-
       txType = 18; // Deposit: EasySwapper Deposit
-    }
-    // withdraw(
-    //   address pool,
-    //   uint256 fundTokenAmount,
-    //   IERC20 withdrawalAsset,
-    //   uint256 expectedAmountOut
-    // )
-    else if (method == bytes4(keccak256("withdraw(address,uint256,address,uint256)"))) {
-      // I.e Toros pool
-      address from = convert32toAddress(getInput(data, 0));
-      address withdrawAsset = convert32toAddress(getInput(data, 2));
+    } else if (method == DhedgeEasySwapper.withdraw.selector) {
+      // I.e from == Toros pool
+      (address from, , address withdrawAsset, ) = abi.decode(getParams(data), (address, uint256, address, uint256));
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
-      require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported withdraw asset");
-      emit Withdraw(poolLogic, from, withdrawAsset, block.timestamp);
+      require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported asset");
 
+      emit Withdraw(poolLogic, from, withdrawAsset, block.timestamp);
       txType = 19; // Withdraw: EasySwapper Withdraw
     }
 
