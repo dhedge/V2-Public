@@ -9,6 +9,7 @@ import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/balancer/IBalancerPool.sol";
 import "../interfaces/balancer/IBalancerV2Vault.sol";
 import "../interfaces/IHasAssetInfo.sol";
+import "../interfaces/IERC20Extended.sol";
 import "../utils/BalancerLib.sol";
 
 /**
@@ -26,26 +27,18 @@ contract BalancerStablePoolAggregator is IAggregatorV3Interface {
   address[] public tokens;
   uint8[] public tokenDecimals;
 
-  constructor(
-    address _factory,
-    IBalancerV2Vault _vault,
-    IBalancerPool _pool,
-    address[] memory _tokens,
-    uint8[] memory _decimals
-  ) {
+  constructor(address _factory, IBalancerPool _pool) {
     require(_factory != address(0), "_factory address cannot be 0");
-    require(address(_vault) != address(0), "_vault address cannot be 0");
     require(address(_pool) != address(0), "_pool address cannot be 0");
-
-    uint256 length = _tokens.length;
-    require(length == _decimals.length, "Invalid decimals length");
 
     factory = _factory;
     pool = _pool;
-    vault = _vault;
+    vault = IBalancerV2Vault(_pool.getVault());
     poolId = _pool.getPoolId();
-    tokens = _tokens;
-    tokenDecimals = _decimals;
+    (tokens, , ) = IBalancerV2Vault(vault).getPoolTokens(poolId);
+    for (uint256 i = 0; i < tokens.length; i++) {
+      tokenDecimals.push(IERC20Extended(tokens[i]).decimals());
+    }
   }
 
   /* ========== VIEWS ========== */

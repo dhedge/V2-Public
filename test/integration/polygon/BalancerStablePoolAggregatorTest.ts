@@ -1,14 +1,11 @@
 import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
+import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { units } from "../../TestHelpers";
 import { balancer } from "../../../config/chainData/polygon-data";
 import { BalancerStablePoolAggregator, PoolFactory } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
-
-use(solidity);
 
 describe("Balancer Stable Pool Aggregator Test", function () {
   let logicOwner: SignerWithAddress, other: SignerWithAddress;
@@ -25,10 +22,7 @@ describe("Balancer Stable Pool Aggregator Test", function () {
     const BalancerStablePoolAggregator = await ethers.getContractFactory("BalancerStablePoolAggregator");
     balancerStablePoolAggregator = await BalancerStablePoolAggregator.deploy(
       poolFactory.address,
-      balancer.v2Vault,
-      balancer.stablePools.stablePool.pool,
-      balancer.stablePools.stablePool.tokens,
-      balancer.stablePools.stablePool.decimals,
+      balancer.stablePools.BPSP_TUSD,
     );
     await balancerStablePoolAggregator.deployed();
 

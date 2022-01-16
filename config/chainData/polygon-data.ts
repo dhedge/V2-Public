@@ -64,17 +64,7 @@ export const balancer = {
   },
   stablePools: {
     // USDC, TUSD, DAI, USDT
-    stablePool: {
-      pool: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f",
-      poolId: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f000000000000000000000068",
-      tokens: [
-        "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-        "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
-        "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
-        "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-      ],
-      decimals: [6, 18, 18, 6],
-    },
+    BPSP_TUSD: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f",
   },
 };
 
