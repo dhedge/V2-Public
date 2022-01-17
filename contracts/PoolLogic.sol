@@ -48,6 +48,8 @@
 // 15. RebalanceStableBorrowRate: Aave rebalance stable borrow rate
 // 16. JoinPool: Balancer join pool
 // 17. ExitPool: Balancer exit pool
+// 18. Deposit: EasySwapper Deposit
+// 19. Withdraw: EasySwapper Withdraw
 
 // SPDX-License-Identifier: BUSL-1.1
 
