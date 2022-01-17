@@ -130,5 +130,42 @@
       "decimals": [6, 18],
       "weights": [0.5, 0.5]
     }
+  },
+  {
+    "name": "Balancer LP BPSP-TUSD",
+    "symbol": "BLP",
+    "type": "balancerLpToken",
+    "address": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+    "assetType": 0,
+    "precision": 18,
+    "link": "https://polygonscan.com/address/0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+    "data": {
+      "pool": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+      "poolId": "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f000000000000000000000068",
+      "tokens": [
+        "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
+        "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+        "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+      ],
+      "decimals": [6, 18, 18, 6],
+      "weights": [0.25, 0.25, 0.25, 0.25]
+    }
+  },
+  {
+    "name": "Balancer LP BP-BTC-SP",
+    "symbol": "BLP",
+    "type": "balancerLpToken",
+    "address": "0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
+    "assetType": 0,
+    "precision": 18,
+    "link": "https://polygonscan.com/address/0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
+    "data": {
+      "pool": "0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
+      "poolId": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc5600020000000000000000001e",
+      "tokens": ["0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", "0xDBf31dF14B66535aF65AaC99C32e9eA844e14501"],
+      "decimals": [8, 8],
+      "weights": [0.5, 0.5]
+    }
   }
 ]

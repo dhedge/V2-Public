@@ -22,6 +22,10 @@ contract DHedgePoolAggregator is IAggregatorV3Interface {
     poolLogic = _poolLogic;
   }
 
+  function decimals() external pure override returns (uint8) {
+    return 8;
+  }
+
   /* ========== VIEWS ========== */
 
   /**

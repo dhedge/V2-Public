@@ -3,7 +3,7 @@ import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
-import { sushi, aave, assets, assetsBalanceOfSlot } from "../polygon-data";
+import { sushi, aave, assets, assetsBalanceOfSlot } from "../../../config/chainData/polygon-data";
 import {
   IERC20,
   IERC20__factory,

@@ -50,4 +50,8 @@ contract SynthPriceAggregator is IAggregatorV3Interface {
     answer = sUSDUsdPrice.mul(tokenUsdPrice).div(1e8);
     return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
   }
+
+  function decimals() external pure override returns (uint8) {
+    return 8;
+  }
 }

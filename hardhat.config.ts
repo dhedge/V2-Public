@@ -9,9 +9,11 @@ import "solidity-coverage";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/config";
 
-import "./scripts/upgrade";
+import "./scripts/upgrade-polygon";
 import "./scripts/verify";
+import "./scripts/explorer-verify";
 import "./scripts/dynamicBonds";
+import "./scripts/dhedgeEasySwapper";
 import "./scripts/polygon/checks/checkConfig";
 import "./scripts/compileOne";
 
@@ -39,6 +41,11 @@ export default {
     ovm: {
       chainId: 10,
       url: process.env.ALCHEMY_OPTIMISM_URL || "https://opt-mainnet.g.alchemy.com/v2/",
+      accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
+    },
+    "ovm-kovan": {
+      chainId: 69,
+      url: process.env.ALCHEMY_KOVAN_OPTIMISM_URL || "https://opt-kovan.g.alchemy.com/v2",
       accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
     },
     polygon: {
@@ -93,6 +100,7 @@ export default {
       "Governance",
       "DynamicBonds",
       "BalancerV2Guard",
+      "DhedgeEasySwapper",
     ],
     spacing: 2,
   },

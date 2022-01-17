@@ -1,4 +1,5 @@
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
 
 // sushiswap
 export const sushi = {
@@ -9,6 +10,9 @@ export const sushi = {
     usdc_weth: {
       address: "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27",
       poolId: 1,
+    },
+    weth_dht: {
+      address: "0xa375d23a751124359568f3a22576528bD1C8C3e3",
     },
   },
 };
@@ -34,6 +38,7 @@ export const aave = {
 // balancer
 export const balancer = {
   v2Vault: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+  merkleOrchard: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",
   pools: {
     // USDC, DAI, miMatic, USDT
     stablePool: {
@@ -78,6 +83,7 @@ export const oneinch = {
 
 export const assets = {
   wmatic: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+  wbtc: "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
   weth: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
   usdc: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
   usdt: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
@@ -87,6 +93,7 @@ export const assets = {
   miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+  dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
 };
 
 export const assetsBalanceOfSlot = {
@@ -94,6 +101,8 @@ export const assetsBalanceOfSlot = {
   usdc: 0,
   usdt: 0,
   dai: 0,
+  dht: 0,
+  wbtc: 0,
 };
 
 export const eth_price_feeds = {
@@ -108,4 +117,13 @@ export const price_feeds = {
   dai: "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D",
   sushi: "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0",
   balancer: "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66",
+};
+
+export const toros = {
+  leveragePools: [
+    "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada", // Bitcoin Bear 2x
+    "0x027da30fadab6202801f97be344e2348a2a92842", // Ethereum Bear 2x
+    "0xdb88ab5b485b38edbeef866314f9e49d095bce39", // Bitcoin Bull 3x
+    "0x460b60565cb73845d56564384ab84bf84c13e47d", // Ethereum Bull 3x
+  ],
 };

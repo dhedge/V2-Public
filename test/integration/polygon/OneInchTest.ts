@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { IERC20, IERC20__factory, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
-import { assets, assetsBalanceOfSlot, oneinch, ZERO_ADDRESS } from "../polygon-data";
+import { assets, assetsBalanceOfSlot, oneinch, ZERO_ADDRESS } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
 const axios = require("axios");
 

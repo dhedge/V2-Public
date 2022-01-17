@@ -2316,23 +2316,18 @@ describe("PoolFactory", function () {
       "cooldown active",
     );
 
-    await poolFactory.addTransferWhitelist(user2.address);
-    transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    await poolFactory.addTransferWhitelist(investor.address);
+    transferWhitelist = await poolFactory.transferWhitelist(investor.address);
     expect(transferWhitelist).to.equal(true);
 
-    // check whitelisted view function (user2 is whitelisted)
-    let whitelisted = await poolFactory.isTransferWhitelisted(user1.address, user2.address);
-    expect(whitelisted).to.equal(true);
-    whitelisted = await poolFactory.isTransferWhitelisted(user2.address, user1.address);
-    expect(whitelisted).to.equal(true);
-    whitelisted = await poolFactory.isTransferWhitelisted(logicOwner.address, user1.address);
+    whitelisted = await poolFactory.transferWhitelist(logicOwner.address);
     expect(whitelisted).to.equal(false);
 
     // can transfer to whitelisted address during cooldown
     await poolLogicProxy.connect(investor).transfer(user2.address, (1e18).toString());
 
-    await poolFactory.removeTransferWhitelist(user2.address);
-    transferWhitelist = await poolFactory.transferWhitelist(user2.address);
+    await poolFactory.removeTransferWhitelist(investor.address);
+    transferWhitelist = await poolFactory.transferWhitelist(investor.address);
     expect(transferWhitelist).to.equal(false);
 
     // can't transfer to removed whitelist address during cooldown

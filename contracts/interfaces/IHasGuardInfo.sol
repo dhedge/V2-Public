@@ -43,7 +43,4 @@ interface IHasGuardInfo {
 
   // Get mapped addresses from Governance
   function getAddress(bytes32 name) external view returns (address);
-
-  // Check if address can bypass 24h lock
-  function isTransferWhitelisted(address from, address to) external view returns (bool);
 }
