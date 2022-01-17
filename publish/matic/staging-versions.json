@@ -1623,8 +1623,8 @@
           "name": "Balancer LP BPSP-TUSD",
           "asset": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
           "assetType": 0,
-          "aggregator": "0x747Ff22D6606f094359AfcBA6cFd316a94381eA3",
-          "aggregatorName": "BalancerV2LPAggregator"
+          "aggregator": "0x355Df4C5c2430C1dB86077aD88D33a5D7ACB90b7",
+          "aggregatorName": "BalancerLpStablePoolAggregator"
         },
         {
           "name": "Balancer LP BP-BTC-SP",
@@ -1669,6 +1669,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Fri, 17 Dec 2021 05:56:39 GMT"
+    "date": "Mon, 17 Jan 2022 05:28:14 GMT"
   }
 }
