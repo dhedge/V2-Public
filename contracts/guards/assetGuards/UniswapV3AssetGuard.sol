@@ -139,64 +139,47 @@ contract UniswapV3AssetGuard is ERC20Guard {
     )
   {
     uint256 length = nonfungiblePositionManager.balanceOf(pool);
+    uint256 txCount;
+    transactions = new MultiTransaction[](length * 4);
+    for (uint256 i = 0; i < length; ++i) {
+      uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
+      DecreaseLiquidity memory decreaseLiquidity = _calcDecreaseLiquidity(tokenId, portion);
 
-    {
-      uint256 validPositionCount;
-      for (uint256 i = 0; i < length; ++i) {
-        uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
-        (, , , , , , , uint128 liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
-        if (liquidity > 0) {
-          validPositionCount++;
-        }
-      }
-      transactions = new MultiTransaction[](validPositionCount * 4);
-    }
+      transactions[txCount].to = address(nonfungiblePositionManager);
+      transactions[txCount].txData = abi.encodeWithSelector(
+        INonfungiblePositionManager.decreaseLiquidity.selector,
+        INonfungiblePositionManager.DecreaseLiquidityParams(
+          tokenId,
+          decreaseLiquidity.lpAmount,
+          0,
+          0,
+          type(uint256).max
+        )
+      );
+      txCount++;
 
-    {
-      uint256 txCount;
-      for (uint256 i = 0; i < length; ++i) {
-        uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
-        (, , , , , , , uint128 liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
-        if (liquidity > 0) {
-          DecreaseLiquidity memory decreaseLiquidity = _calcDecreaseLiquidity(tokenId, portion);
+      transactions[txCount].to = address(nonfungiblePositionManager);
+      transactions[txCount].txData = abi.encodeWithSelector(
+        INonfungiblePositionManager.collect.selector,
+        INonfungiblePositionManager.CollectParams(tokenId, pool, type(uint128).max, type(uint128).max)
+      );
+      txCount++;
 
-          transactions[txCount].to = address(nonfungiblePositionManager);
-          transactions[txCount].txData = abi.encodeWithSelector(
-            INonfungiblePositionManager.decreaseLiquidity.selector,
-            INonfungiblePositionManager.DecreaseLiquidityParams(
-              tokenId,
-              decreaseLiquidity.lpAmount,
-              0,
-              0,
-              type(uint256).max
-            )
-          );
-          txCount++;
+      transactions[txCount].to = decreaseLiquidity.token0;
+      transactions[txCount].txData = abi.encodeWithSelector(
+        bytes4(keccak256("transfer(address,uint256)")),
+        to, // recipient
+        decreaseLiquidity.amount0
+      );
+      txCount++;
 
-          transactions[txCount].to = address(nonfungiblePositionManager);
-          transactions[txCount].txData = abi.encodeWithSelector(
-            INonfungiblePositionManager.collect.selector,
-            INonfungiblePositionManager.CollectParams(tokenId, pool, type(uint128).max, type(uint128).max)
-          );
-          txCount++;
-
-          transactions[txCount].to = decreaseLiquidity.token0;
-          transactions[txCount].txData = abi.encodeWithSelector(
-            bytes4(keccak256("transfer(address,uint256)")),
-            to, // recipient
-            decreaseLiquidity.amount0
-          );
-          txCount++;
-
-          transactions[txCount].to = decreaseLiquidity.token1;
-          transactions[txCount].txData = abi.encodeWithSelector(
-            bytes4(keccak256("transfer(address,uint256)")),
-            to, // recipient
-            decreaseLiquidity.amount1
-          );
-          txCount++;
-        }
-      }
+      transactions[txCount].to = decreaseLiquidity.token1;
+      transactions[txCount].txData = abi.encodeWithSelector(
+        bytes4(keccak256("transfer(address,uint256)")),
+        to, // recipient
+        decreaseLiquidity.amount1
+      );
+      txCount++;
     }
 
     return (withdrawAsset, withdrawBalance, transactions);
