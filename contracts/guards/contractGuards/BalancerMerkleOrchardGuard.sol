@@ -17,11 +17,11 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 
-import "../utils/TxDataUtils.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/balancer/IBalancerMerkleOrchard.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
+import "../../interfaces/balancer/IBalancerMerkleOrchard.sol";
 
 /// @notice Transaction guard for Balancer claiming distribution rewards
 contract BalancerMerkleOrchardGuard is TxDataUtils, IGuard {

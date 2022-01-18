@@ -26,9 +26,12 @@ task("explorerVerify", "Verify contracts")
     const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
 
     if (contracts.SynthetixGuard) {
-      await tryVerify(hre, contracts.SynthetixGuard, "contracts/guards/SynthetixGuard.sol:SynthetixGuard", [
-        synthetix.addressResolver,
-      ]);
+      await tryVerify(
+        hre,
+        contracts.SynthetixGuard,
+        "contracts/guards/contractGuards/SynthetixGuard.sol:SynthetixGuard",
+        [synthetix.addressResolver],
+      );
     }
     if (contracts.Governance) {
       await tryVerify(hre, contracts.Governance, "contracts/Governance.sol:Governance", []);

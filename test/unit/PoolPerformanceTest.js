@@ -126,7 +126,9 @@ describe("PoolFactory", function () {
     await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     // Deploy contract guards
-    const SynthetixGuard = await ethers.getContractFactory("contracts/guards/SynthetixGuard.sol:SynthetixGuard");
+    const SynthetixGuard = await ethers.getContractFactory(
+      "contracts/guards/contractGuards/SynthetixGuard.sol:SynthetixGuard",
+    );
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
 

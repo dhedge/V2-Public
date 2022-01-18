@@ -272,29 +272,33 @@ describe("PoolFactory", function () {
     await assetHandler.addAssets([assetSushiLPLinkWeth, assetQuickLPLinkWeth]);
 
     // Deploy contract guards
-    const SynthetixGuard = await ethers.getContractFactory("contracts/guards/SynthetixGuard.sol:SynthetixGuard");
+    const SynthetixGuard = await ethers.getContractFactory(
+      "contracts/guards/contractGuards/SynthetixGuard.sol:SynthetixGuard",
+    );
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory(
-      "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
+      "contracts/guards/contractGuards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
     );
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
     uniswapV2RouterGuard.deployed();
 
     const UniswapV3SwapGuard = await ethers.getContractFactory(
-      "contracts/guards/uniswapV3/UniswapV3SwapGuard.sol:UniswapV3SwapGuard",
+      "contracts/guards/contractGuards/uniswapV3/UniswapV3SwapGuard.sol:UniswapV3SwapGuard",
     );
     uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
     uniswapV3SwapGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory(
-      "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
+      "contracts/guards/contractGuards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
     );
     sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken.address, wmaticToken.address]);
     sushiMiniChefV2Guard.deployed();
 
-    const OneInchV3Guard = await ethers.getContractFactory("contracts/guards/OneInchV3Guard.sol:OneInchV3Guard");
+    const OneInchV3Guard = await ethers.getContractFactory(
+      "contracts/guards/contractGuards/OneInchV3Guard.sol:OneInchV3Guard",
+    );
     oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
     oneInchV3Guard.deployed();
 
