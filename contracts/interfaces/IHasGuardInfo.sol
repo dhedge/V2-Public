@@ -43,7 +43,4 @@ interface IHasGuardInfo {
 
   // Get mapped addresses from Governance
   function getAddress(bytes32 name) external view returns (address);
-
-  // Get Uniswap V3 positions limit
-  function getUniV3PositionsLimit() external view returns (uint256);
 }

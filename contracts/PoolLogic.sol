@@ -33,7 +33,7 @@
 // Transaction Types in execTransaction()
 // 1. Approve: Approving a token for spending by different address/contract
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
-// 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
+// 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap, Uniswap V3
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
 // 5. Stake: Stake tokens into a third party contract (eg. Sushi yield farming)
 // 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
@@ -68,6 +68,7 @@ import "./interfaces/IHasPoolPerformance.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IManaged.sol";
+import "./interfaces/IUniswapV3NonfungiblePositionGuard.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
@@ -781,9 +782,12 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
   ) external view override returns (bytes4) {
     if (msg.sender == IHasGuardInfo(factory).getAddress("NonfungiblePositionManager")) {
       // restrict uniswap v3 NFT position count
+      IUniswapV3NonfungiblePositionGuard guard = IUniswapV3NonfungiblePositionGuard(
+        IHasGuardInfo(factory).getGuard(msg.sender)
+      );
       require(
-        IERC721Upgradeable(msg.sender).balanceOf(address(this)) <= IHasGuardInfo(factory).getUniV3PositionsLimit(),
-        "too many positions"
+        IERC721Upgradeable(msg.sender).balanceOf(address(this)) <= guard.uniV3PositionsLimit(),
+        "too many uniswap v3 positions"
       );
     }
 
