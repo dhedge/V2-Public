@@ -3,24 +3,24 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import fs from "fs";
 const csv = require("csvtojson");
-const {
+import {
   writeCsv,
   getTag,
   hasDuplicates,
-  tryVerify,
   proposeTx,
   nonceLog,
   checkAsset,
   checkBalancerLpAsset,
   getAggregator,
   proxyAdminAddress,
-} = require("./Helpers");
+  tryVerify,
+} from "../Helpers";
 
 const Decimal = require("decimal.js");
 
 // File Names
-const stagingBalancerConfig = require("../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
-const prodBalancerConfig = require("../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
+const stagingBalancerConfig = require("../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
+const prodBalancerConfig = require("../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
 const stagingAssetFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 const prodAssetFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingAssetGuardFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
@@ -70,6 +70,8 @@ const deployBalancerV2LpAggregator = async (factory: string, info: any, hre: Har
     }
     matrix.push(elements);
   }
+
+  await hre.run("compile:one", { contractName: "BalancerV2LPAggregator" });
 
   const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
 
@@ -358,7 +360,7 @@ task("upgrade-polygon", "Upgrade contracts")
                   break;
                 }
                 console.log(`Adding new asset to AssetHandler: ${csvAsset["Asset Name"]}`);
-                const aggregator = await getAggregator(csvAsset);
+                const aggregator = await getAggregator(hre, csvAsset);
                 assetHandlerAssets.push({
                   name: csvAsset["Asset Name"],
                   asset: csvAsset.Address,
@@ -1086,11 +1088,15 @@ task("upgrade-polygon", "Upgrade contracts")
       console.error(e);
       console.log("UPGRADE EXIT UNEXPECTED");
     } finally {
-      console.log("Updating versions.json");
-      writeVersions();
-      console.log("Updating csv");
-      writeNewGuards();
-      if (taskArgs.execute) console.log(nonceLog);
+      if (taskArgs.execute) {
+        // only update the files if executing an upgrade
+        console.log("Updating versions.json");
+        writeVersions();
+        console.log("Updating csv");
+        writeNewGuards();
+        console.log(nonceLog);
+      }
+
       console.log("Switching back OZ file");
       fs.renameSync(ozExpectedFile, ozEnvFile);
     }

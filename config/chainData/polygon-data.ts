@@ -81,6 +81,13 @@ export const oneinch = {
   v3Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
 };
 
+export const torosPools = {
+  ETHBEAR2X: "0x027da30fadab6202801f97be344e2348a2a92842",
+  ETHBULL3X: "0x460b60565cb73845d56564384ab84bf84c13e47d",
+  BTCBEAR2X: "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
+  BTCBULL3X: "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+};
+
 export const assets = {
   wmatic: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
   wbtc: "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
@@ -94,6 +101,7 @@ export const assets = {
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
   dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
+  ...torosPools,
 };
 
 export const assetsBalanceOfSlot = {
@@ -127,3 +135,5 @@ export const toros = {
     "0x460b60565cb73845d56564384ab84bf84c13e47d", // Ethereum Bull 3x
   ],
 };
+
+export const dhedgeEasySwapperAddress = "0xC3e6d2811f669094d94F7589CaEa69672D93408e";

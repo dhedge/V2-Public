@@ -5,7 +5,6 @@ import { checkAlmostSame, units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   IBalancerV2Vault__factory,
-  IBalancerMerkleOrchard__factory,
   IERC20,
   IERC20__factory,
   PoolFactory,
@@ -30,7 +29,6 @@ describe("Balancer V2 Test", function () {
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault__factory.abi);
-  const iBalancerMerkleOrchard = new ethers.utils.Interface(IBalancerMerkleOrchard__factory.abi);
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();

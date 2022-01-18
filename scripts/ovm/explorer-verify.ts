@@ -1,11 +1,11 @@
 import { task, types } from "hardhat/config";
-import { synthetix } from "../test/integration/ovm/ovm-data";
+import { synthetix } from "../../test/integration/ovm/ovm-data";
 
 const { getTag, tryVerify } = require("./Helpers");
 
 task("explorerVerify", "Verify contracts")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
-  .setAction(async (taskArgs) => {
+  .setAction(async () => {
     const hre = require("hardhat");
     let versionsFilePath;
 

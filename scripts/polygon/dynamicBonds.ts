@@ -5,7 +5,7 @@ import fs from "fs";
 import axios from "axios";
 
 const { proposeTx, tryVerify, implementationStorage, proxyAdminAddress } = require("./Helpers");
-import { protocolDao } from "../config/chainData/polygon-data";
+import { protocolDao } from "../../config/chainData/polygon-data";
 const coingeckoNetwork = "polygon-pos";
 
 // Addresses

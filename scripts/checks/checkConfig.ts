@@ -8,6 +8,7 @@ import { checkBytecode } from "./checkConfigBytecode";
 
 task("checkConfig", "Check deployed contracts")
   .addOptionalParam("environment", "staging or prod", undefined, types.string)
+  .addOptionalParam("specific", "propose transactions", false, types.boolean)
   .addOptionalParam("v", "deployment version eg. 'v2.4.0'", "", types.string)
   .addOptionalParam("ownership", "check ownership", false, types.boolean)
   .addOptionalParam("factory", "check factory", false, types.boolean)
