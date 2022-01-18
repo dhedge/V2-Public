@@ -15,6 +15,7 @@ import {
   proxyAdminAddress,
   tryVerify,
 } from "../Helpers";
+import { dhedgeEasySwapperAddress } from "../../config/chainData/polygon-data";
 
 const Decimal = require("decimal.js");
 
@@ -137,6 +138,7 @@ task("upgrade-polygon", "Upgrade contracts")
   .addOptionalParam("balancermerkleorchardguard", "upgrade balancerMerkleOrchardGuard", false, types.boolean)
   .addOptionalParam("quickstakingrewardsguard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiminichefv2guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
+  .addOptionalParam("easyswapperguard", "upgrade easyswapperguard", false, types.boolean)
   .addOptionalParam("aaveincentivescontrollerguard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
   .addOptionalParam("aavelendingpoolguard", "upgrade AaveLendingPoolGuard", false, types.boolean)
   .addOptionalParam("oneinchv4guard", "upgrade oneInchV4Guard", false, types.boolean)
@@ -948,6 +950,37 @@ task("upgrade-polygon", "Upgrade contracts")
             GuardName: "SushiMiniChefV2Guard",
             GuardAddress: sushiMiniChefV2Guard.address,
             Description: "Sushi rewards contract",
+          });
+        }
+      }
+      if (!taskArgs.specific || taskArgs.easyswapperguard) {
+        console.log("Will deploy easyswapperguard");
+        if (taskArgs.execute) {
+          const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
+          const easySwapperGuard = await EasySwapperGuard.deploy();
+          await easySwapperGuard.deployed();
+          console.log("EasySwapperGuard deployed at", easySwapperGuard.address);
+          versions[newTag].contracts.EasySwapperGuard = easySwapperGuard.address;
+
+          await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", [
+            [sushiToken, wmatic],
+          ]);
+
+          const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+            dhedgeEasySwapperAddress,
+            easySwapperGuard.address,
+          ]);
+          await proposeTx(
+            versions[oldTag].contracts.Governance,
+            setContractGuardABI,
+            "setContractGuard for easySwapperGuard",
+            taskArgs.execute,
+          );
+          newContractGuards.push({
+            ContractAddress: dhedgeEasySwapperAddress,
+            GuardName: "EasySwapperGuard",
+            GuardAddress: easySwapperGuard.address,
+            Description: "Dhedge EasySwapper - allows access to toros pools",
           });
         }
       }

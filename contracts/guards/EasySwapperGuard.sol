@@ -73,26 +73,23 @@ contract EasySwapperGuard is TxDataUtils, IGuard {
 
     if (method == DhedgeEasySwapper.deposit.selector) {
       // I.e asset == EthBear2x
-      (address assetToReceiveViaEzSwapper, , , , ) = abi.decode(
-        getParams(data),
-        (address, address, uint256, address, uint256)
-      );
+      (address assetToReceive, , , , ) = abi.decode(getParams(data), (address, address, uint256, address, uint256));
 
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
-      require(poolManagerLogicAssets.isSupportedAsset(assetToReceiveViaEzSwapper), "unsupported asset");
+      require(poolManagerLogicAssets.isSupportedAsset(assetToReceive), "unsupported asset");
 
-      emit Deposit(poolLogic, assetToReceiveViaEzSwapper, block.timestamp);
+      emit Deposit(poolLogic, assetToReceive, block.timestamp);
       txType = 18; // Deposit: EasySwapper Deposit
     } else if (method == DhedgeEasySwapper.withdraw.selector) {
       // I.e from == EthBear2x
-      (address withdrawingFromViaEzSwapper, , address withdrawAsset, ) = abi.decode(
+      (address withdrawingFrom, , address withdrawAsset, ) = abi.decode(
         getParams(data),
         (address, uint256, address, uint256)
       );
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
       require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported asset");
 
-      emit Withdraw(poolLogic, withdrawingFromViaEzSwapper, withdrawAsset, block.timestamp);
+      emit Withdraw(poolLogic, withdrawingFrom, withdrawAsset, block.timestamp);
       txType = 19; // Withdraw: EasySwapper Withdraw
     }
 
