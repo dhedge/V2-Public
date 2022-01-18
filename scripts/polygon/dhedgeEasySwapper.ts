@@ -1,6 +1,6 @@
 import { task, types } from "hardhat/config";
 import fs from "fs";
-import { assets, quickswap, protocolDao, aave, toros } from "../config/chainData/polygon-data";
+import { assets, quickswap, protocolDao, aave, toros } from "../../config/chainData/polygon-data";
 
 const { tryVerify } = require("./Helpers");
 const torosLeveragePools = toros.leveragePools;
@@ -10,7 +10,6 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
   .addOptionalParam("deploy", "deploy Dynamic Bonds", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
     const ethers = hre.ethers;
-    const upgrades = hre.upgrades;
     const network = await ethers.provider.getNetwork();
     console.log("Network:", network.name);
 

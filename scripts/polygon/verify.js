@@ -1,5 +1,5 @@
 const csv = require("csvtojson");
-const { getTag, tryVerify } = require("./Helpers");
+const { getTag, tryVerify } = require("../Helpers");
 const stagingExternalAssetFileName = "./config/staging/dHEDGE Assets list - Polygon External Staging.csv";
 const prodExternalAssetFileName = "./config/prod/dHEDGE Assets list - Polygon External.csv";
 
