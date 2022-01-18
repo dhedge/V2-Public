@@ -153,10 +153,14 @@ task("upgrade-polygon", "Upgrade contracts")
       throw new Error("Aborting: Expected chainId to 137. Must supply `--network polygon`");
     }
 
+    if (taskArgs.restartnonce) {
+      console.log("Restarting from last submitted nonce.");
+    }
+
     await hre.run("compile");
     // Init tag
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
-    const versions = require(`../publish/${network.name}/${versionFile}.json`);
+    const versions = require(`../../publish/${network.name}/${versionFile}.json`);
 
     const ozPath = "./.openzeppelin/";
     const ozEnvFile = ozPath + (taskArgs.production ? "polygon-production.json" : "polygon-staging.json");
@@ -962,9 +966,7 @@ task("upgrade-polygon", "Upgrade contracts")
           console.log("EasySwapperGuard deployed at", easySwapperGuard.address);
           versions[newTag].contracts.EasySwapperGuard = easySwapperGuard.address;
 
-          await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", [
-            [sushiToken, wmatic],
-          ]);
+          await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", []);
 
           const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
             dhedgeEasySwapperAddress,
