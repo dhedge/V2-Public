@@ -3,7 +3,7 @@ import { InitType } from "./initialize";
 import { assert } from "chai";
 import csv from "csvtojson";
 
-const { toBytes32 } = require("../../Helpers");
+import { toBytes32 } from "../Helpers";
 
 export const checkGovernance = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
   const { namesFileName, assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;
