@@ -61,7 +61,7 @@ task("explorerVerify", "Verify contracts")
       const implementation = await provider.getStorageAt(contracts.AssetHandler.proxy, implementationStorage);
       const address = hre.ethers.utils.hexValue(implementation);
       console.log("AssetHandler: ", address);
-      await tryVerify(hre, address, "contracts/assets/AssetHandler.sol:AssetHandler", []);
+      await tryVerify(hre, address, "contracts/priceAggregators/AssetHandler.sol:AssetHandler", []);
     }
 
     if (contracts.ERC20Guard) {

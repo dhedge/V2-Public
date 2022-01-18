@@ -241,7 +241,7 @@ describe("PoolFactory", function () {
 
     // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
     // await assetHandler.deployed();
-    AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
+    AssetHandlerLogic = await ethers.getContractFactory("contracts/priceAggregators/AssetHandler.sol:AssetHandler");
     assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);

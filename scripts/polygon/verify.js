@@ -36,7 +36,7 @@ task("verify", "Verify contracts")
       const implementation = await provider.getStorageAt(contracts.AssetHandlerProxy, implementationStorage);
       const address = ethers.utils.hexValue(implementation);
       console.log("AssetHandler: ", address);
-      await tryVerify(hre, address, "contracts/assets/AssetHandler.sol:AssetHandler", []);
+      await tryVerify(hre, address, "contracts/priceAggregators/AssetHandler.sol:AssetHandler", []);
     }
     if (contracts.OpenAssetGuard) {
       const fileName = taskArgs.production ? prodExternalAssetFileName : stagingExternalAssetFileName;

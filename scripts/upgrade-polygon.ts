@@ -3,24 +3,24 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import fs from "fs";
 const csv = require("csvtojson");
-import {
+const {
   writeCsv,
   getTag,
   hasDuplicates,
+  tryVerify,
   proposeTx,
   nonceLog,
   checkAsset,
   checkBalancerLpAsset,
   getAggregator,
   proxyAdminAddress,
-  tryVerify,
-} from "../Helpers";
+} = require("./Helpers");
 
 const Decimal = require("decimal.js");
 
 // File Names
-const stagingBalancerConfig = require("../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
-const prodBalancerConfig = require("../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
+const stagingBalancerConfig = require("../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
+const prodBalancerConfig = require("../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
 const stagingAssetFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 const prodAssetFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingAssetGuardFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
@@ -360,7 +360,7 @@ task("upgrade-polygon", "Upgrade contracts")
                   break;
                 }
                 console.log(`Adding new asset to AssetHandler: ${csvAsset["Asset Name"]}`);
-                const aggregator = await getAggregator(hre, csvAsset);
+                const aggregator = await getAggregator(csvAsset);
                 assetHandlerAssets.push({
                   name: csvAsset["Asset Name"],
                   asset: csvAsset.Address,
