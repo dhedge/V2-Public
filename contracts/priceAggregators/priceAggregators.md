@@ -1,4 +1,4 @@
-# Price Aggregators
+# Price Aggregators (aka price oracles)
 
 Price aggregators are the backbone of dhedge. They allow us to understand the value of a pools assets. This is important for enabling fair deposits and fair withdrawals.
 

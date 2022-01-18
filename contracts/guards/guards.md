@@ -13,23 +13,23 @@ A contract guard can also allow a function to be called by anyone (not just the 
 
 ## Asset Guards
 
-Through asset guards we can allow pools to hold not only simple erc20 positions but also complex groups of assets. We can currently think of a `asset` as either a individual erc20 position, a group of erc20 positions, a group of erc721 positions.
+Through asset guards we can allow pools to hold not only simple erc20 positions but also complex groups of assets. We can currently think of a `asset` as either a individual erc20 contract, a group of erc20 positions managed through a central contract like AaveLendingPool, or a group of erc721 LP positions like through the UniswapV3 NftPositionManager.
 
-Some examples:
+Some other examples:
 
 - Plain erc20 token position (weth, susd, usdc, wbtc, sushi, etc, etc)
-- Uniswap V2 erc20 Automated Market Maker Liquidity Providing (uniswap, sushiswap, quickswap)
-- Balancer erc20 Automated Market Maker Liquidity Providing
-- Uniswap v3 erc721 Automated Market Liquidity Providing
-- A group of Lending and Borrowing positions through Aave.
+- Individual Uniswap V2 erc20 Automated Market Maker Liquidity Providing (uniswap, sushiswap, quickswap)
+- Individual Balancer erc20 Automated Market Maker Liquidity Providing
+- A group of Uniswap v3 erc721 Automated Market Liquidity Providing Positions
+- A group of Lending and Borrowing positions through AaveLendingPool.
 
-An asset guard is responsible for exposing an asset(groups) positions:
+An asset guard is responsible for exposing an assets:
 
 - Balance or Aggregate Balance for assets that hold multiple positions (i.e aave).
-- If a pool can remove that asset (i.e 0 balance, debts have been repayed etc).
+- Whether a Manager can remove that asset from the supported assets of the pool (i.e 0 balance, debts have been repayed etc).
 - WithdrawProcessing - How an investor can claim and withdraw their portion of the asset (i.e lp position may need to be unrolled, aave debt position might need to be repayed etc).
 
-Remember in some cases a single `asset` can represent multiple erc20 positions as a group. I.E all loan and borrow positions within aave are represented by the AaveLendingPool asset even though underneath the pool holds aTokens and debtTokens.
+Remember in some cases a single `asset` can represent multiple sub assets. I.E all loan and borrow positions within aave are represented by the AaveLendingPool asset even though underneath the pool holds aTokens and debtTokens.
 
 Other examples to clarify:
 
