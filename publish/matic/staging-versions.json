@@ -1632,6 +1632,34 @@
           "assetType": 0,
           "aggregator": "0x988C3677C8AF84c2b7Ac1C6DC12b5648Fd54C190",
           "aggregatorName": "BalancerV2LPAggregator"
+        },
+        {
+          "name": "Toros ETHBEAR2X",
+          "asset": "0x027da30fadab6202801f97be344e2348a2a92842",
+          "assetType": "0",
+          "aggregator": "0x5218e7aEe91e3705579C37C63f9a1506aA18fC7b",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros ETHBULL3X",
+          "asset": "0x460b60565cb73845d56564384ab84bf84c13e47d",
+          "assetType": "0",
+          "aggregator": "0x39a950506b8CF6caf2300cF52d0DDC79a9BdE41c",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros BTCBEAR2X",
+          "asset": "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
+          "assetType": "0",
+          "aggregator": "0xb3505BF6a294F1fB3960DC1718bc9832e79A579d",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros BTCBULL3X",
+          "asset": "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+          "assetType": "0",
+          "aggregator": "0xE2279b4d0F2fF88A09E47399c4F56a4CFb4BDeDa",
+          "aggregatorName": "DHedgePoolAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1661,7 +1689,8 @@
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
       "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03",
       "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4",
-      "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826"
+      "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
+      "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E"
     },
     "network": {
       "name": "matic",
@@ -1669,6 +1698,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Fri, 17 Dec 2021 05:56:39 GMT"
+    "date": "Tue, 18 Jan 2022 02:19:25 GMT"
   }
 }
