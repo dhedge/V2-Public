@@ -35,6 +35,7 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
@@ -98,10 +99,10 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address, // to
-    bytes calldata data
+    address to,
+    bytes memory data
   )
-    external
+    public
     override
     returns (
       uint16 txType, // transaction type
@@ -199,6 +200,15 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
       emit Collect(poolManagerLogic.poolLogic(), param.tokenId, param.amount0Max, param.amount1Max, block.timestamp);
 
       txType = 24; // 'Collect' type
+    } else if (method == IMulticall.multicall.selector) {
+      bytes[] memory params = abi.decode(getParams(data), (bytes[]));
+
+      for (uint256 i = 0; i < params.length; i++) {
+        (txType, ) = txGuard(_poolManagerLogic, to, params[i]);
+        require(txType > 0, "invalid transaction");
+      }
+
+      txType = 25; // 'Multicall' type
     }
 
     return (txType, false);
