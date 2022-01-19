@@ -33,7 +33,7 @@
 // Transaction Types in execTransaction()
 // 1. Approve: Approving a token for spending by different address/contract
 // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
-// 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap, Uniswap V3
+// 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
 // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
 // 5. Stake: Stake tokens into a third party contract (eg. Sushi yield farming)
 // 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
@@ -50,6 +50,12 @@
 // 17. ExitPool: Balancer exit pool
 // 18. Deposit: EasySwapper Deposit
 // 19. Withdraw: EasySwapper Withdraw
+// 20. Mint: Uniswap V3 Mint position
+// 21. IncreaseLiquidity: Uniswap V3 increase liquidity position
+// 22. DecreaseLiquidity: Uniswap V3 decrease liquidity position
+// 23. Burn: Uniswap V3 Burn position
+// 24. Collect: Uniswap V3 collect fees
+// 25. Multicall: Uniswap V3 Multicall
 
 // SPDX-License-Identifier: BUSL-1.1
 

@@ -48,11 +48,7 @@ import "../../interfaces/IHasSupportedAsset.sol";
 contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3NonfungiblePositionGuard {
   using SafeMathUpgradeable for uint256;
 
-  address public nonfungiblePositionManager;
-  // uniswap v3 liquidity position count limit
-  uint256 public override uniV3PositionsLimit;
-
-  event AddLiquidity(
+  event Mint(
     address fundAddress,
     address token0,
     address token1,
@@ -65,9 +61,32 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
     uint256 amount1Min,
     uint256 time
   );
+  event IncreaseLiquidity(
+    address fundAddress,
+    uint256 tokenId,
+    uint256 amount0Desired,
+    uint256 amount1Desired,
+    uint256 amount0Min,
+    uint256 amount1Min,
+    uint256 time
+  );
+  event DecreaseLiquidity(
+    address fundAddress,
+    uint256 tokenId,
+    uint128 liquidity,
+    uint256 amount0Min,
+    uint256 amount1Min,
+    uint256 time
+  );
+  event Burn(address fundAddress, uint256 tokenId, uint256 time);
+  event Collect(address fundAddress, uint256 tokenId, uint128 amount0Max, uint128 amount1Max, uint256 time);
+
+  INonfungiblePositionManager public nonfungiblePositionManager;
+  // uniswap v3 liquidity position count limit
+  uint256 public override uniV3PositionsLimit;
 
   constructor(address _nonfungiblePositionManager, uint256 _uniV3PositionsLimit) {
-    nonfungiblePositionManager = _nonfungiblePositionManager;
+    nonfungiblePositionManager = INonfungiblePositionManager(_nonfungiblePositionManager);
     uniV3PositionsLimit = _uniV3PositionsLimit;
   }
 
@@ -96,36 +115,90 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
     address pool = poolManagerLogic.poolLogic();
 
     if (method == INonfungiblePositionManager.mint.selector) {
-      INonfungiblePositionManager.MintParams memory mintParams = abi.decode(
+      INonfungiblePositionManager.MintParams memory param = abi.decode(
         getParams(data),
         (INonfungiblePositionManager.MintParams)
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
+      require(poolManagerLogicAssets.isSupportedAsset(param.token0), "unsupported asset: tokenA");
+      require(poolManagerLogicAssets.isSupportedAsset(param.token1), "unsupported asset: tokenB");
 
-      require(
-        IERC721Upgradeable(nonfungiblePositionManager).balanceOf(pool) < uniV3PositionsLimit,
-        "too many uniswap v3 positions"
-      );
+      require(nonfungiblePositionManager.balanceOf(pool) < uniV3PositionsLimit, "too many uniswap v3 positions");
 
-      require(pool == mintParams.recipient, "recipient is not pool");
+      require(pool == param.recipient, "recipient is not pool");
 
-      emit AddLiquidity(
+      emit Mint(
         poolManagerLogic.poolLogic(),
-        mintParams.token0,
-        mintParams.token1,
-        mintParams.fee,
-        mintParams.tickLower,
-        mintParams.tickUpper,
-        mintParams.amount0Desired,
-        mintParams.amount1Desired,
-        mintParams.amount0Min,
-        mintParams.amount1Min,
+        param.token0,
+        param.token1,
+        param.fee,
+        param.tickLower,
+        param.tickUpper,
+        param.amount0Desired,
+        param.amount1Desired,
+        param.amount0Min,
+        param.amount1Min,
         block.timestamp
       );
 
-      txType = 3; // 'AddLiquidity' type
+      txType = 20; // 'Mint' type
+    } else if (method == INonfungiblePositionManager.increaseLiquidity.selector) {
+      INonfungiblePositionManager.IncreaseLiquidityParams memory param = abi.decode(
+        getParams(data),
+        (INonfungiblePositionManager.IncreaseLiquidityParams)
+      );
+
+      require(pool == nonfungiblePositionManager.ownerOf(param.tokenId), "not position owner");
+
+      emit IncreaseLiquidity(
+        poolManagerLogic.poolLogic(),
+        param.tokenId,
+        param.amount0Desired,
+        param.amount1Desired,
+        param.amount0Min,
+        param.amount1Min,
+        block.timestamp
+      );
+
+      txType = 21; // 'IncreaseLiquidity' type
+    } else if (method == INonfungiblePositionManager.decreaseLiquidity.selector) {
+      INonfungiblePositionManager.DecreaseLiquidityParams memory param = abi.decode(
+        getParams(data),
+        (INonfungiblePositionManager.DecreaseLiquidityParams)
+      );
+
+      require(pool == nonfungiblePositionManager.ownerOf(param.tokenId), "not position owner");
+
+      emit DecreaseLiquidity(
+        poolManagerLogic.poolLogic(),
+        param.tokenId,
+        param.liquidity,
+        param.amount0Min,
+        param.amount1Min,
+        block.timestamp
+      );
+
+      txType = 22; // 'DecreaseLiquidity' type
+    } else if (method == INonfungiblePositionManager.burn.selector) {
+      uint256 tokenId = abi.decode(getParams(data), (uint256));
+
+      require(pool == nonfungiblePositionManager.ownerOf(tokenId), "not position owner");
+
+      emit Burn(poolManagerLogic.poolLogic(), tokenId, block.timestamp);
+
+      txType = 23; // 'Burn' type
+    } else if (method == INonfungiblePositionManager.collect.selector) {
+      INonfungiblePositionManager.CollectParams memory param = abi.decode(
+        getParams(data),
+        (INonfungiblePositionManager.CollectParams)
+      );
+
+      require(pool == nonfungiblePositionManager.ownerOf(param.tokenId), "not position owner");
+      require(pool == param.recipient, "recipient is not pool");
+
+      emit Collect(poolManagerLogic.poolLogic(), param.tokenId, param.amount0Max, param.amount1Max, block.timestamp);
+
+      txType = 24; // 'Collect' type
     }
 
     return (txType, false);
