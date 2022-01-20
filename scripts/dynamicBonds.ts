@@ -22,13 +22,13 @@ const saleDuration = 60 * 60 * 24 * 5; // 5 days
 
 // Bond option lock durations
 const bondLockDurations = [7, 30, 182, 365]; // in days
-// const bondLockDurations = [1 / (24 * 60), 1 / 24, 1, 7]; // Test in days
+// const bondLockDurations = [1 / (24 * 60), 1 / 24, 1, 7]; // Short durations that can be used for testing
 
 // Bond option discount percentages
-const discountOneWeek = 0.05;
-const discountOneMonth = 0.15;
-const discountSixMonths = 0.3;
-const discountOneYear = 0.45;
+const discountOneWeek = 0.04;
+const discountOneMonth = 0.08;
+const discountSixMonths = 0.15;
+const discountOneYear = 0.28;
 
 task("dynamicBonds", "Deploy Dynamic Bonds contract")
   .addOptionalParam("restartnonce", "propose transactions", false, types.boolean)
