@@ -1,6 +1,6 @@
 # Price Aggregators (aka price oracles)
 
-Price aggregators are the backbone of dhedge. They allow us to understand the value of a pools assets. This is important for enabling fair deposits and fair withdrawals.
+Price aggregators are the backbone of dhedge. They allow us to understand the value of a pool's assets. This is important for enabling fair deposits and fair withdrawals.
 
 Price aggregators must implement the ChainLink IAggregatorV3Interface. They are used to determine the USD value of an asset.
 For most simple erc20 assets (i.e weth, wbtc, link, matic, sushi) we use the Chainlink price feed (aggregator). Chainlink is a decentralised system that pushes off chain information on chain. Chainlink price feeds usually consist of the given token's price on major exchanges averaged with other smaller exchanges.
