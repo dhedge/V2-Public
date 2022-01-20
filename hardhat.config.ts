@@ -12,10 +12,10 @@ import { HardhatUserConfig } from "hardhat/config";
 import "./scripts/polygon/upgrade-polygon";
 import "./scripts/polygon/verify";
 import "./scripts/ovm/explorer-verify";
-import "./scripts/polygon/dynamicBonds";
 import "./scripts/polygon/dhedgeEasySwapper";
 import "./scripts/checks/checkConfig";
 import "./scripts/compileOne";
+import "./scripts/dynamicBonds";
 
 dotenv.config();
 
