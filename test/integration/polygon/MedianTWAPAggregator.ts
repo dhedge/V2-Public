@@ -15,7 +15,6 @@ describe("Median TWAP Oracle Test", function () {
   let logicOwner: SignerWithAddress, other: SignerWithAddress;
   let dhedgeMedianTwapAggregator: MedianTWAPAggregator;
   let snapshot: any;
-  const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
   beforeEach(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);

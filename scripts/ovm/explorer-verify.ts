@@ -1,11 +1,11 @@
 import { task, types } from "hardhat/config";
-import { synthetix } from "../test/integration/ovm/ovm-data";
+import { synthetix } from "../../test/integration/ovm/ovm-data";
 
-const { getTag, tryVerify } = require("./Helpers");
+import { getTag, tryVerify } from "../Helpers";
 
 task("explorerVerify", "Verify contracts")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
-  .setAction(async (taskArgs) => {
+  .setAction(async () => {
     const hre = require("hardhat");
     let versionsFilePath;
 
@@ -62,7 +62,7 @@ task("explorerVerify", "Verify contracts")
     }
 
     if (contracts.ERC20Guard) {
-      await tryVerify(hre, contracts.ERC20Guard, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard");
+      await tryVerify(hre, contracts.ERC20Guard, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
     }
 
     if (contracts.PoolPerformance && contracts.PoolPerformance.proxy) {
