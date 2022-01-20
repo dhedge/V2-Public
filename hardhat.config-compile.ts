@@ -13,7 +13,7 @@ import "hardhat-abi-exporter";
 import "solidity-coverage";
 import "@typechain/hardhat";
 
-import HardHatConfig from "./hardhat.config";
+import HardHatConfig from "./hardhat.config-common";
 
 dotenv.config();
 

@@ -42,7 +42,7 @@ jobs:
             artifacts-
 
       - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechainbon
+        run: npx hardhat --config hardhat.config-compile.ts typechain
       - name: Hardhat compile
         run: npx hardhat compile
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
