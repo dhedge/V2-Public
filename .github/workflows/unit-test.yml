@@ -40,6 +40,9 @@ jobs:
           key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
           restore-keys: |
             artifacts-
+
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechainbon
       - name: Hardhat compile
         run: npx hardhat compile
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
