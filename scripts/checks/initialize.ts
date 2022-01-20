@@ -1,7 +1,7 @@
 import ProxyAdmin from "@openzeppelin/contracts/build/contracts/ProxyAdmin.json";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-const { getTag } = require("../../Helpers");
+import { getTag } from "../Helpers";
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 export type InitType = Awaited<ReturnType<typeof init>>;
@@ -132,8 +132,8 @@ const getEnvironmentFiles = async (environment: string) => {
 
   switch (environment) {
     case "polygon":
-      versionsFileName = "../../../publish/matic/versions.json";
-      balancerLpsFileName = "../../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json";
+      versionsFileName = "../../publish/matic/versions.json";
+      balancerLpsFileName = "../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json";
       // CSV
       assetsFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
       namesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
@@ -142,8 +142,8 @@ const getEnvironmentFiles = async (environment: string) => {
       break;
 
     case "staging":
-      versionsFileName = "../../../publish/matic/staging-versions.json";
-      balancerLpsFileName = "../../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
+      versionsFileName = "../../publish/matic/staging-versions.json";
+      balancerLpsFileName = "../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
       // CSV
       assetsFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
       namesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";
@@ -152,7 +152,7 @@ const getEnvironmentFiles = async (environment: string) => {
       break;
 
     case "ovm":
-      versionsFileName = "../../../publish/ovm/prod/versions.json";
+      versionsFileName = "../../publish/ovm/prod/versions.json";
       balancerLpsFileName = undefined;
       // CSV
       assetsFileName = "./config/prod-ovm/assets/Chainlink Assets.csv";

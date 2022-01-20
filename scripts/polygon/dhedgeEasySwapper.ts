@@ -2,7 +2,7 @@ import { task, types } from "hardhat/config";
 import fs from "fs";
 import { assets, quickswap, protocolDao, aave, toros } from "../../config/chainData/polygon-data";
 
-const { tryVerify } = require("./Helpers");
+import { tryVerify } from "../Helpers";
 const torosLeveragePools = toros.leveragePools;
 
 task("easySwapper", "dHEDGE Easy Swapper commands")

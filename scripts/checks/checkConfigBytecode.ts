@@ -4,7 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { InitType } from "./initialize";
 import { Contract } from "ethers";
 
-const { isSameBytecode } = require("../../Helpers");
+import { isSameBytecode } from "../Helpers";
 
 export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntimeEnvironment) => {
   const { ethers } = hre;
