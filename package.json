@@ -41,7 +41,9 @@
     "doc:gen": "solidity-docgen --solc-module solc-0.7 -t templates",
     "prepare": "husky install",
     "verify:polygon": "hardhat run ./scripts/verify.js --network polygon",
-    "verify:ovm": "hardhat explorerVerify --network ovm"
+    "verify:ovm": "hardhat explorerVerify --network ovm",
+    "dynamicbonds:polygon:getconfig": "npx hardhat dynamicBonds --get-config true --production true --network polygon",
+    "dynamicbonds:polygon:updateterms": "npx hardhat dynamicBonds --update-terms true --production true --network polygon"
   },
   "author": "dHEDGE Team",
   "license": "ISC",
