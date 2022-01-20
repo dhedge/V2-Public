@@ -10,7 +10,7 @@ For more complex assets such as Liquidity Positions we must do some logic to und
 Other examples:
 
 - The DhedgePoolAggregator allows dhedge pools to hold and value dhedge pools as assets. It is basically a proxy for PoolLogic.tokenPrice().
-- ETHCrossAggregator allows us to support erc20 tokens that only have a Price feed that is denominator in ETH rather than usdc. It works by taking the eth price of the token and then multiplying it by the value of eth in usdc.
+- ETHCrossAggregator allows us to support erc20 tokens that only have a Price feed that is denominated in ETH rather than USDC. It works by taking the ETH price of the token and then multiplying it by the value of ETH in USDC.
 - USDPriceAggregator is really a FixedPriceAggregator that always returns $1. Used for assets with guards that return the balance already in USD (Aave).
 - MedianTWAPAggregator - This allows us to support assets that do not have a chainlink feed, A TWAP (Time-Weighted Average Price) is calculated by consistently (at an interval) sampling the onchain price of an asset and average the most recent samples. TWAPs require offchain automation that call an update function so that it can sample the price. These can be expensive to operate over a long term.
 
