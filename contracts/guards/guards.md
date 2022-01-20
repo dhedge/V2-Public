@@ -7,7 +7,7 @@ Guards allow us to safely interface with external protocols and assets. They als
 
 ## Contract Guards
 
-A contract guard ensures that a manager can only call functions on an external contract that we allow. For instance the AaveLending Guard ensures that the manager can `deposit`, `borrow`, `repay`, and `withdraw` through aave. The manager can only call functions on the aave contract we allow. As an example we would no want a manager to be able to call a function like `DepositAs(as: address)` with a `as` address other than the pool. This could allow the manager to steal funds. We can also control other functionality such as how many assets a manager can borrow through aave, i.e we currently restrict it to 1.
+A contract guard ensures that a manager can only call functions on an external contract that we allow. For instance the AaveLending Guard ensures that the manager can `deposit`, `borrow`, `repay`, and `withdraw` through Aave. The manager can only call functions on the Aave contract we allow. As an example we would not want a manager to be able to call a function like `DepositAs(as: address)` with a `as` address other than the pool. This could allow the manager to steal funds. We can also control other functionality such as how many assets a manager can borrow through Aave, i.e we currently restrict it to 1.
 
 A contract guard can also allow a function to be called by anyone (not just the manager) through a second return variable called `public`. For instance some protocols require rewards to be `claimed`, we allow anyone to call the `claim` function on the rewards contract.
 
