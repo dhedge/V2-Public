@@ -1,6 +1,6 @@
 # Guards
 
-Guards  allow us to safely interface with external protocols and assets. They also act as adapters, i.e exposing a common interface to our other logic (poolLogic, poolManagerLogic etc). There are currently two types of guards:
+Guards allow us to safely interface with external protocols and assets. They also act as adapters, i.e exposing a common interface to our other logic (poolLogic, poolManagerLogic etc). There are currently two types of guards:
 
 1. Contract Guards
 2. Asset Guards
