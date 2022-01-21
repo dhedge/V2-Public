@@ -1569,6 +1569,97 @@
           "assetType": "0",
           "aggregator": "0x666bb13b3ED3816504E8c30D0F9B9C16b371774b",
           "aggregatorName": ""
+        },
+        {
+          "name": "Sushi LP WBTC-renBTC",
+          "asset": "0x24619c126cC93C6Dfb2cF4eCC5D4d7CFCe73c97D",
+          "assetType": "2",
+          "aggregator": "0xBD82AF6bB1078Ba798651a057b48B4A345297Ca6",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Sushi LP USDC-TUSD",
+          "asset": "0x4AB66a7138F50Db9B7aDaF8CE8aFB3F638B22f7f",
+          "assetType": "2",
+          "aggregator": "0x2a4578df4f7046c53Ba562E746B9b5312efdb6a2",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Sush LP WMATIC-GHST",
+          "asset": "0xf69e93771F11AECd8E554aA165C3Fe7fd811530c",
+          "assetType": "2",
+          "aggregator": "0x399164858855dd6736eB52F2a08EAe9A5A2b96bA",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Sushi LP WETH-YFI",
+          "asset": "0xdfa3ddd1807db8e4b4851d2e5421374e433a2983",
+          "assetType": "2",
+          "aggregator": "0xdB38Dd1584736ED125d8b73E4ce890CD0B994618",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Sushi LP WETH-COMP",
+          "asset": "0x9021A31062A1D9C9C35d632Ed54a9d923e46809F",
+          "assetType": "2",
+          "aggregator": "0xF69D764Aaa1F99415966f76DcE52BF6775Ba1918",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Sushi LP WETH-MANA",
+          "asset": "0xc48AE82ca34C63887b975F20ABA91a38f2a900B8",
+          "assetType": "2",
+          "aggregator": "0x321535294D38D5F4DE5F0Ea8c41c013023270aFE",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Sushi LP WETH-UNI",
+          "asset": "0xc56060aF39152C614fA67E169c0DD1809a886e4F",
+          "assetType": "2",
+          "aggregator": "0xcb682967d0c6642ed1eB91A1cc4942Fae1C9F1Db",
+          "aggregatorName": ""
+        },
+        {
+          "name": "Balancer LP BPSP-TUSD",
+          "asset": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+          "assetType": 0,
+          "aggregator": "0x747Ff22D6606f094359AfcBA6cFd316a94381eA3",
+          "aggregatorName": "BalancerV2LPAggregator"
+        },
+        {
+          "name": "Balancer LP BP-BTC-SP",
+          "asset": "0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
+          "assetType": 0,
+          "aggregator": "0x988C3677C8AF84c2b7Ac1C6DC12b5648Fd54C190",
+          "aggregatorName": "BalancerV2LPAggregator"
+        },
+        {
+          "name": "Toros ETHBEAR2X",
+          "asset": "0x027da30fadab6202801f97be344e2348a2a92842",
+          "assetType": "0",
+          "aggregator": "0x5218e7aEe91e3705579C37C63f9a1506aA18fC7b",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros ETHBULL3X",
+          "asset": "0x460b60565cb73845d56564384ab84bf84c13e47d",
+          "assetType": "0",
+          "aggregator": "0x39a950506b8CF6caf2300cF52d0DDC79a9BdE41c",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros BTCBEAR2X",
+          "asset": "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
+          "assetType": "0",
+          "aggregator": "0xb3505BF6a294F1fB3960DC1718bc9832e79A579d",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros BTCBULL3X",
+          "asset": "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+          "assetType": "0",
+          "aggregator": "0xE2279b4d0F2fF88A09E47399c4F56a4CFb4BDeDa",
+          "aggregatorName": "DHedgePoolAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1598,7 +1689,8 @@
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
       "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03",
       "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4",
-      "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826"
+      "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
+      "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E"
     },
     "network": {
       "name": "matic",
@@ -1606,6 +1698,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Thu, 09 Dec 2021 05:17:23 GMT"
+    "date": "Tue, 18 Jan 2022 02:19:25 GMT"
   }
 }

@@ -1,20 +1,16 @@
-const { ethers, upgrades } = require("hardhat");
-const { BigNumber } = ethers;
-const { expect } = require("chai");
-const { units } = require("../TestHelpers");
+import { artifacts, ethers, upgrades } from "hardhat";
+import { expect } from "chai";
+import { Contract } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Artifact } from "hardhat/types";
 
-const { updateChainlinkAggregators } = require("../TestHelpers");
+import { updateChainlinkAggregators } from "../TestHelpers";
+import { MockContract } from "../../types";
+import { Interface } from "@ethersproject/abi";
 
-let logicOwner, manager, dao, investor;
-let poolFactory, PoolLogic, poolLogicProxy, poolPerformance;
+const { BigNumber, utils } = ethers;
 
-let IERC20, iERC20;
-let synthetixGuard; // contract guards
-let erc20Guard; // asset guards
-let addressResolver, synthetix; // integrating contracts
-let susd, seth;
-let susdAsset, susdProxy, sethAsset, sethProxy;
-let usd_price_feed, eth_price_feed, link_price_feed; // integrating aggregators
+const { units, currentBlockTimestamp } = require("../TestHelpers");
 
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
 
@@ -22,8 +18,18 @@ const susdKey = "0x7355534400000000000000000000000000000000000000000000000000000
 const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000000";
 
 describe("PoolPerformance", function () {
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, investor: SignerWithAddress;
+  let poolFactory: Contract, PoolLogic: Contract, poolLogicProxy: Contract, poolPerformance: Contract;
+
+  let IERC20: Artifact, iERC20: Interface;
+  let synthetixGuard; // contract guards
+  let erc20Guard; // asset guards
+  let addressResolver, synthetix; // integrating contracts
+  let susd: string, seth: string;
+  let susdAsset: MockContract, susdProxy: MockContract, sethAsset: MockContract, sethProxy: MockContract;
+  let usd_price_feed: MockContract, eth_price_feed: MockContract, link_price_feed: MockContract; // integrating aggregators
   beforeEach(async function () {
-    [logicOwner, manager, dao, investor, user1, user2, user3, user4] = await ethers.getSigners();
+    [logicOwner, manager, dao, investor] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
     addressResolver = await MockContract.deploy();
@@ -39,16 +45,16 @@ describe("PoolPerformance", function () {
     seth = sethProxy.address;
 
     // mock IAddressResolver
-    const IAddressResolver = await hre.artifacts.readArtifact(
+    const IAddressResolver = await artifacts.readArtifact(
       "contracts/interfaces/synthetix/IAddressResolver.sol:IAddressResolver",
     );
-    const iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi);
+    const iAddressResolver = new utils.Interface(IAddressResolver.abi);
     let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
     // mock ISynthetix
-    const ISynthetix = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
-    const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
+    const ISynthetix = await artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
+    const iSynthetix = new utils.Interface(ISynthetix.abi);
     let synthsABI = iSynthetix.encodeFunctionData("synths", [susdKey]);
     await synthetix.givenCalldataReturnAddress(synthsABI, susdAsset.address);
     synthsABI = iSynthetix.encodeFunctionData("synths", [sethKey]);
@@ -60,23 +66,23 @@ describe("PoolPerformance", function () {
     await synthetix.givenCalldataReturn(synthsByAddressABI, sethKey);
 
     // mock ISynth
-    const ISynth = await hre.artifacts.readArtifact("contracts/interfaces/synthetix/ISynth.sol:ISynth");
-    const iSynth = new ethers.utils.Interface(ISynth.abi);
+    const ISynth = await artifacts.readArtifact("contracts/interfaces/synthetix/ISynth.sol:ISynth");
+    const iSynth = new utils.Interface(ISynth.abi);
     const proxyABI = iSynth.encodeFunctionData("proxy", []);
     await susdAsset.givenCalldataReturnAddress(proxyABI, susdProxy.address);
     await sethAsset.givenCalldataReturnAddress(proxyABI, sethProxy.address);
 
     // mock ISynthAddressProxy
-    const ISynthAddressProxy = await hre.artifacts.readArtifact(
+    const ISynthAddressProxy = await artifacts.readArtifact(
       "contracts/interfaces/synthetix/ISynthAddressProxy.sol:ISynthAddressProxy",
     );
-    const iSynthAddressProxy = new ethers.utils.Interface(ISynthAddressProxy.abi);
+    const iSynthAddressProxy = new utils.Interface(ISynthAddressProxy.abi);
     const targetABI = iSynthAddressProxy.encodeFunctionData("target", []);
     await susdProxy.givenCalldataReturnAddress(targetABI, susdAsset.address);
     await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
 
-    IERC20 = await hre.artifacts.readArtifact("ERC20Upgradeable");
-    iERC20 = new ethers.utils.Interface(IERC20.abi);
+    IERC20 = await artifacts.readArtifact("ERC20Upgradeable");
+    iERC20 = new utils.Interface(IERC20.abi);
     let decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
     await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
@@ -87,10 +93,10 @@ describe("PoolPerformance", function () {
     const mockAaveProtocolDataProvider = await MockContract.deploy();
     const mockAaveLendingPool = await MockContract.deploy();
 
-    const IAaveProtocolDataProvider = await hre.artifacts.readArtifact(
+    const IAaveProtocolDataProvider = await artifacts.readArtifact(
       "contracts/interfaces/aave/IAaveProtocolDataProvider.sol:IAaveProtocolDataProvider",
     );
-    const iAaveProtocolDataProvider = new ethers.utils.Interface(IAaveProtocolDataProvider.abi);
+    const iAaveProtocolDataProvider = new utils.Interface(IAaveProtocolDataProvider.abi);
     const addressProviderABI = iAaveProtocolDataProvider.encodeFunctionData("ADDRESSES_PROVIDER", []);
     await mockAaveProtocolDataProvider.givenCalldataReturnAddress(addressProviderABI, mockAaveLendingPool.address);
 
@@ -99,7 +105,7 @@ describe("PoolPerformance", function () {
     await poolPerformance.deployed();
     await poolPerformance.enable();
 
-    PoolLogic = await ethers.getContractFactory("PoolLogic");
+    PoolLogic = (await ethers.getContractFactory("PoolLogic")) as any;
     const poolLogic = await PoolLogic.deploy();
 
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -110,8 +116,8 @@ describe("PoolPerformance", function () {
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetHandlerInitAssets = [assetSusd, assetSeth];
 
-    AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
+    const AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
+    const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
@@ -155,8 +161,8 @@ describe("PoolPerformance", function () {
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new BigNumber.from("5000"),
-      new ethers.BigNumber.from("0"), // 0% streaming fee
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0% streaming fee
       [
         [seth, false],
         [susd, true],
@@ -203,9 +209,9 @@ describe("PoolPerformance", function () {
       (oneDollarSixty / 2).toString(),
     );
 
-    const current = (await ethers.provider.getBlock()).timestamp;
-    const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
-    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const current = await currentBlockTimestamp();
+    const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
+    const iAggregatorV3 = new utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
     // Halve the usd price
@@ -244,8 +250,8 @@ describe("PoolPerformance", function () {
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new BigNumber.from("5000"),
-      new ethers.BigNumber.from("0"), // 0%
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0%
       [
         [seth, false],
         [susd, true],
@@ -292,9 +298,9 @@ describe("PoolPerformance", function () {
       (oneDollarSixty / 2).toString(),
     );
 
-    const current = (await ethers.provider.getBlock()).timestamp;
-    const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
-    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const current = await currentBlockTimestamp();
+    const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
+    const iAggregatorV3 = new utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
     // Double the usd price
@@ -317,7 +323,7 @@ describe("PoolPerformance", function () {
 
     // $2.90 / 2
     expect((await poolPerformance.tokenPriceAdjustedForPerformance(poolLogicProxy.address)).toString()).to.be.closeTo(
-      BigNumber.from(BigInt(twoDollarNinety / 2)),
+      twoDollarNinety.div(2),
       100,
     );
   });
@@ -337,8 +343,8 @@ describe("PoolPerformance", function () {
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new BigNumber.from("5000"),
-      new ethers.BigNumber.from("0"), // 0%
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0%
       [
         [seth, false],
         [susd, true],
@@ -357,7 +363,7 @@ describe("PoolPerformance", function () {
     await poolLogicProxy.deposit(susd, (100e18).toString());
 
     const oneDollar = 1e18;
-    const twoDollar = 2e18;
+
     let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
@@ -380,9 +386,9 @@ describe("PoolPerformance", function () {
       tenDollars.toString(),
     );
 
-    const current = (await ethers.provider.getBlock()).timestamp;
-    const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
-    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const current = await currentBlockTimestamp();
+    const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
+    const iAggregatorV3 = new utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
     // Double the usd price
@@ -488,8 +494,8 @@ describe("PoolPerformance", function () {
       "Barren Wuffet",
       "Test Fund",
       "DHTF",
-      new BigNumber.from("5000"),
-      new ethers.BigNumber.from("0"), // 0%
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0%
       [
         [seth, false],
         [susd, true],

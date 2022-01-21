@@ -3,24 +3,25 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import fs from "fs";
 const csv = require("csvtojson");
-const {
+import {
   writeCsv,
   getTag,
   hasDuplicates,
-  tryVerify,
   proposeTx,
   nonceLog,
   checkAsset,
   checkBalancerLpAsset,
   getAggregator,
   proxyAdminAddress,
-} = require("./Helpers");
+  tryVerify,
+} from "../Helpers";
+import { dhedgeEasySwapperAddress } from "../../config/chainData/polygon-data";
 
 const Decimal = require("decimal.js");
 
 // File Names
-const stagingBalancerConfig = require("../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
-const prodBalancerConfig = require("../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
+const stagingBalancerConfig = require("../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json");
+const prodBalancerConfig = require("../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json");
 const stagingAssetFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
 const prodAssetFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
 const stagingAssetGuardFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
@@ -70,6 +71,8 @@ const deployBalancerV2LpAggregator = async (factory: string, info: any, hre: Har
     }
     matrix.push(elements);
   }
+
+  await hre.run("compile:one", { contractName: "BalancerV2LPAggregator" });
 
   const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
 
@@ -135,6 +138,7 @@ task("upgrade-polygon", "Upgrade contracts")
   .addOptionalParam("balancermerkleorchardguard", "upgrade balancerMerkleOrchardGuard", false, types.boolean)
   .addOptionalParam("quickstakingrewardsguard", "upgrade quickStakingRewardsGuard", false, types.boolean)
   .addOptionalParam("sushiminichefv2guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
+  .addOptionalParam("easyswapperguard", "upgrade easyswapperguard", false, types.boolean)
   .addOptionalParam("aaveincentivescontrollerguard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
   .addOptionalParam("aavelendingpoolguard", "upgrade AaveLendingPoolGuard", false, types.boolean)
   .addOptionalParam("oneinchv4guard", "upgrade oneInchV4Guard", false, types.boolean)
@@ -149,10 +153,14 @@ task("upgrade-polygon", "Upgrade contracts")
       throw new Error("Aborting: Expected chainId to 137. Must supply `--network polygon`");
     }
 
+    if (taskArgs.restartnonce) {
+      console.log("Restarting from last submitted nonce.");
+    }
+
     await hre.run("compile");
     // Init tag
     const versionFile = taskArgs.production ? "versions" : "staging-versions";
-    const versions = require(`../publish/${network.name}/${versionFile}.json`);
+    const versions = require(`../../publish/${network.name}/${versionFile}.json`);
 
     const ozPath = "./.openzeppelin/";
     const ozEnvFile = ozPath + (taskArgs.production ? "polygon-production.json" : "polygon-staging.json");
@@ -358,7 +366,7 @@ task("upgrade-polygon", "Upgrade contracts")
                   break;
                 }
                 console.log(`Adding new asset to AssetHandler: ${csvAsset["Asset Name"]}`);
-                const aggregator = await getAggregator(csvAsset);
+                const aggregator = await getAggregator(hre, csvAsset);
                 assetHandlerAssets.push({
                   name: csvAsset["Asset Name"],
                   asset: csvAsset.Address,
@@ -949,6 +957,35 @@ task("upgrade-polygon", "Upgrade contracts")
           });
         }
       }
+      if (!taskArgs.specific || taskArgs.easyswapperguard) {
+        console.log("Will deploy easyswapperguard");
+        if (taskArgs.execute) {
+          const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
+          const easySwapperGuard = await EasySwapperGuard.deploy();
+          await easySwapperGuard.deployed();
+          console.log("EasySwapperGuard deployed at", easySwapperGuard.address);
+          versions[newTag].contracts.EasySwapperGuard = easySwapperGuard.address;
+
+          await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", []);
+
+          const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+            dhedgeEasySwapperAddress,
+            easySwapperGuard.address,
+          ]);
+          await proposeTx(
+            versions[oldTag].contracts.Governance,
+            setContractGuardABI,
+            "setContractGuard for easySwapperGuard",
+            taskArgs.execute,
+          );
+          newContractGuards.push({
+            ContractAddress: dhedgeEasySwapperAddress,
+            GuardName: "EasySwapperGuard",
+            GuardAddress: easySwapperGuard.address,
+            Description: "Dhedge EasySwapper - allows access to toros pools",
+          });
+        }
+      }
       if (!taskArgs.specific || taskArgs.aaveincentivescontrollerguard) {
         console.log("Will deploy aaveincentivescontrollerguard");
         if (taskArgs.execute) {
@@ -1086,11 +1123,15 @@ task("upgrade-polygon", "Upgrade contracts")
       console.error(e);
       console.log("UPGRADE EXIT UNEXPECTED");
     } finally {
-      console.log("Updating versions.json");
-      writeVersions();
-      console.log("Updating csv");
-      writeNewGuards();
-      if (taskArgs.execute) console.log(nonceLog);
+      if (taskArgs.execute) {
+        // only update the files if executing an upgrade
+        console.log("Updating versions.json");
+        writeVersions();
+        console.log("Updating csv");
+        writeNewGuards();
+        console.log(nonceLog);
+      }
+
       console.log("Switching back OZ file");
       fs.renameSync(ozExpectedFile, ozEnvFile);
     }
