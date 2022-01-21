@@ -34,36 +34,26 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../utils/TxDataUtils.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
-import "../interfaces/synthetix/ISynth.sol";
-import "../interfaces/synthetix/ISynthetix.sol";
-import "../interfaces/synthetix/IAddressResolver.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
+import "../../DhedgeEasySwapper.sol";
 
-/// @title Transaction guard for Synthetix's Exchanger contract
-contract SynthetixGuard is TxDataUtils, IGuard {
+/// @title Transaction guard for Dhedge EasySwapper
+contract EasySwapperGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
-  bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
+  event Deposit(address fundAddress, address depositAsset, uint256 time);
+  event Withdraw(address fundAddress, address from, address withdrawalAsset, uint256 time);
 
-  IAddressResolver public addressResolver;
-
-  constructor(IAddressResolver _addressResolver) {
-    // solhint-disable-next-line reason-string
-    require(address(_addressResolver) != address(0), "_addressResolver address cannot be 0");
-    addressResolver = _addressResolver;
-  }
-
-  /// @notice Transaction guard for Synthetix Exchanger
-  /// @dev It supports exchangeWithTracking functionality
+  /// @notice Transaction guard for EasySwapper - used for Toros
+  /// @dev It supports Deposit, and Withdraw
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  /// @return txType the transaction type of a given transaction data.
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
@@ -73,39 +63,36 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     external
     override
     returns (
-      uint16 txType, // transaction type
+      uint16 txType,
       bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
+    // The pool the manager is operating against
+    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
-    if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-      bytes32 srcKey = getInput(data, 0);
-      bytes32 srcAmount = getInput(data, 1);
-      bytes32 dstKey = getInput(data, 2);
+    if (method == DhedgeEasySwapper.deposit.selector) {
+      // I.e asset == EthBear2x
+      (address assetToReceive, , , , ) = abi.decode(getParams(data), (address, address, uint256, address, uint256));
 
-      address srcAsset = getAssetProxy(srcKey);
-      address dstAsset = getAssetProxy(dstKey);
-
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
-      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+      require(poolManagerLogicAssets.isSupportedAsset(assetToReceive), "unsupported asset");
 
-      emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
+      emit Deposit(poolLogic, assetToReceive, block.timestamp);
+      txType = 18; // Deposit: EasySwapper Deposit
+    } else if (method == DhedgeEasySwapper.withdraw.selector) {
+      // I.e from == EthBear2x
+      (address withdrawingFrom, , address withdrawAsset, ) = abi.decode(
+        getParams(data),
+        (address, uint256, address, uint256)
+      );
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+      require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported asset");
 
-      txType = 2; // 'Exchange' type
+      emit Withdraw(poolLogic, withdrawingFrom, withdrawAsset, block.timestamp);
+      txType = 19; // Withdraw: EasySwapper Withdraw
     }
 
     return (txType, false);
-  }
-
-  /// @notice Get asset proxy address from addressResolver
-  /// @param key the key of the asset
-  /// @return proxy the proxy address of the asset
-  function getAssetProxy(bytes32 key) public view returns (address proxy) {
-    address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
-    require(synth != address(0), "invalid key");
-    proxy = ISynth(synth).proxy();
-    require(proxy != address(0), "invalid proxy");
   }
 }

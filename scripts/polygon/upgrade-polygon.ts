@@ -463,7 +463,7 @@ task("upgrade-polygon", "Upgrade contracts")
           const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
           console.log("assetHandler logic deployed to: ", assetHandler);
 
-          await tryVerify(hre, assetHandler, "contracts/assets/AssetHandler.sol:AssetHandler", []);
+          await tryVerify(hre, assetHandler, "contracts/priceAggregators/AssetHandler.sol:AssetHandler", []);
 
           const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAssetHandler, assetHandler]);
           await proposeTx(
@@ -712,7 +712,7 @@ task("upgrade-polygon", "Upgrade contracts")
           await tryVerify(
             hre,
             uniswapV2RouterGuard.address,
-            "contracts/guards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
+            "contracts/guards/contractGuards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
             [10, 100],
           );
 
@@ -764,7 +764,7 @@ task("upgrade-polygon", "Upgrade contracts")
           await tryVerify(
             hre,
             balancerV2Guard.address,
-            "contracts/guards/BalancerV2Guard.sol:BalancerV2Guard",
+            "contracts/guards/contractGuards/BalancerV2Guard.sol:BalancerV2Guard",
             [10, 100],
           );
 
@@ -799,7 +799,7 @@ task("upgrade-polygon", "Upgrade contracts")
           await tryVerify(
             hre,
             balancerMerkleOrchardGuard.address,
-            "contracts/guards/BalancerMerkleOrchardGuard.sol:BalancerMerkleOrchardGuard",
+            "contracts/guards/contractGuards/BalancerMerkleOrchardGuard.sol:BalancerMerkleOrchardGuard",
             [],
           );
 
@@ -901,7 +901,7 @@ task("upgrade-polygon", "Upgrade contracts")
           await tryVerify(
             hre,
             quickStakingRewardsGuard.address,
-            "contracts/guards/QuickStakingRewardsGuard.sol:QuickStakingRewardsGuard",
+            "contracts/guards/contractGuards/QuickStakingRewardsGuard.sol:QuickStakingRewardsGuard",
             [],
           );
 
@@ -935,7 +935,7 @@ task("upgrade-polygon", "Upgrade contracts")
           await tryVerify(
             hre,
             sushiMiniChefV2Guard.address,
-            "contracts/guards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
+            "contracts/guards/contractGuards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
             [[sushiToken, wmatic]],
           );
 
@@ -999,7 +999,7 @@ task("upgrade-polygon", "Upgrade contracts")
           await tryVerify(
             hre,
             aaveIncentivesControllerGuard.address,
-            "contracts/guards/AaveIncentivesControllerGuard.sol:AaveIncentivesControllerGuard",
+            "contracts/guards/contractGuards/AaveIncentivesControllerGuard.sol:AaveIncentivesControllerGuard",
             [wmatic],
           );
 
@@ -1033,7 +1033,7 @@ task("upgrade-polygon", "Upgrade contracts")
           await tryVerify(
             hre,
             aaveLendingPoolGuard.address,
-            "contracts/guards/AaveLendingPoolGuard.sol:AaveLendingPoolGuard",
+            "contracts/guards/contractGuards/AaveLendingPoolGuard.sol:AaveLendingPoolGuard",
             [],
           );
 
@@ -1064,7 +1064,12 @@ task("upgrade-polygon", "Upgrade contracts")
           console.log("oneInchV4Guard deployed at", oneInchV4Guard.address);
           versions[newTag].contracts.OneInchV4Guard = oneInchV4Guard.address;
 
-          await tryVerify(hre, oneInchV4Guard.address, "contracts/guards/OneInchV3Guard.sol:OneInchV3Guard", [10, 100]);
+          await tryVerify(
+            hre,
+            oneInchV4Guard.address,
+            "contracts/guards/contractGuards/OneInchV3Guard.sol:OneInchV3Guard",
+            [10, 100],
+          );
 
           const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
             oneInchV4Router,

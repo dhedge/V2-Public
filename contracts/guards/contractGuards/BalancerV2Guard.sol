@@ -36,12 +36,12 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 
-import "../utils/TxDataUtils.sol";
-import "../utils/SlippageChecker.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/balancer/IBalancerV2Vault.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../utils/SlippageChecker.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
+import "../../interfaces/balancer/IBalancerV2Vault.sol";
 
 /// @notice Transaction guard for Balancer V2 Vault
 contract BalancerV2Guard is TxDataUtils, SlippageChecker, IGuard {
