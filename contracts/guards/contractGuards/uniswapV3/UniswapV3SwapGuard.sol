@@ -36,12 +36,12 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./Path.sol";
-import "../../utils/TxDataUtils.sol";
-import "../../interfaces/guards/IGuard.sol";
-import "../../interfaces/IPoolManagerLogic.sol";
-import "../../interfaces/IHasGuardInfo.sol";
-import "../../interfaces/IManaged.sol";
-import "../../interfaces/IHasSupportedAsset.sol";
+import "../../../utils/TxDataUtils.sol";
+import "../../../interfaces/guards/IGuard.sol";
+import "../../../interfaces/IPoolManagerLogic.sol";
+import "../../../interfaces/IHasGuardInfo.sol";
+import "../../../interfaces/IManaged.sol";
+import "../../../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;

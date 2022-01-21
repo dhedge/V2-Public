@@ -34,10 +34,10 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "../utils/TxDataUtils.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 
 /// @title Transaction guard for Aave's incentives controller contract
 contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {

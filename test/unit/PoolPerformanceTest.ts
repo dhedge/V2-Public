@@ -116,7 +116,9 @@ describe("PoolPerformance", function () {
     const assetSeth = { asset: seth, assetType: 0, aggregator: eth_price_feed.address };
     const assetHandlerInitAssets = [assetSusd, assetSeth];
 
-    const AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
+    const AssetHandlerLogic = await ethers.getContractFactory(
+      "contracts/priceAggregators/AssetHandler.sol:AssetHandler",
+    );
     const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
 
@@ -132,7 +134,9 @@ describe("PoolPerformance", function () {
     await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
     // Deploy contract guards
-    const SynthetixGuard = await ethers.getContractFactory("contracts/guards/SynthetixGuard.sol:SynthetixGuard");
+    const SynthetixGuard = await ethers.getContractFactory(
+      "contracts/guards/contractGuards/SynthetixGuard.sol:SynthetixGuard",
+    );
     synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
 
