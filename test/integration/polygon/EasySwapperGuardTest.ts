@@ -7,18 +7,12 @@ import {
   dhedgeEasySwapperAddress,
   ZERO_ADDRESS,
 } from "../../../config/chainData/polygon-data";
-import {
-  IERC20,
-  PoolFactory,
-  PoolLogic,
-  PoolLogic__factory,
-  PoolManagerLogic__factory,
-  DhedgeEasySwapper__factory,
-} from "../../../types";
+import { IERC20, PoolFactory, PoolLogic, PoolManagerLogic__factory, DhedgeEasySwapper__factory } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { Interface } from "@ethersproject/abi";
+import { createFund } from "../utils/createFund";
 
 const oneDollar = units(1);
 
@@ -46,22 +40,12 @@ describe("EasySwapperGuard", () => {
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     USDC = await ethers.getContractAt("IERC20", assets.usdc);
     // Create the fund we're going to use for testing
-    await poolFactory.createFund(
-      false,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      ethers.BigNumber.from("0"),
-      [
-        { asset: assets.usdc, isDeposit: true },
-        // Note: we're enabling one of the toros pools as an asset
-        { asset: assets.ETHBEAR2X, isDeposit: true },
-      ],
-    );
-
-    const funds = await poolFactory.getDeployedFunds();
-    poolLogicProxy = await PoolLogic__factory.connect(funds[funds.length - 1], logicOwner);
+    const funds = await createFund(poolFactory, logicOwner, manager, [
+      { asset: assets.usdc, isDeposit: true },
+      // Note: we're enabling one of the toros pools as an asset
+      { asset: assets.ETHBEAR2X, isDeposit: true },
+    ]);
+    poolLogicProxy = funds.poolLogicProxy;
   });
 
   it("Manager can use easy swapper deposit and withdraw", async () => {
