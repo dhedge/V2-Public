@@ -30,7 +30,7 @@ const main = async () => {
   await tryVerify(
     hre,
     dhedgeMedianTwapAggregator.address,
-    "contracts/assets/MedianTWAPAggregator.sol:MedianTWAPAggregator",
+    "contracts/priceAggregators/MedianTWAPAggregator.sol:MedianTWAPAggregator",
     [weth_dth, dht, eth_oracle, 300, 25],
   );
 
