@@ -788,7 +788,7 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     uint256,
     bytes calldata
   ) external view override returns (bytes4) {
-    if (msg.sender == IHasGuardInfo(factory).getAddress("NonfungiblePositionManager")) {
+    if (msg.sender == IHasGuardInfo(factory).getAddress("nonfungiblePositionManager")) {
       // restrict uniswap v3 NFT position count
       IUniswapV3NonfungiblePositionGuard guard = IUniswapV3NonfungiblePositionGuard(
         IHasGuardInfo(factory).getGuard(msg.sender)
