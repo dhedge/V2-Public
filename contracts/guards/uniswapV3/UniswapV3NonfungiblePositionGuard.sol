@@ -84,11 +84,19 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
 
   INonfungiblePositionManager public nonfungiblePositionManager;
   // uniswap v3 liquidity position count limit
-  uint256 public override uniV3PositionsLimit;
+  uint256 public uniV3PositionsLimit;
 
   constructor(address _nonfungiblePositionManager, uint256 _uniV3PositionsLimit) {
     nonfungiblePositionManager = INonfungiblePositionManager(_nonfungiblePositionManager);
     uniV3PositionsLimit = _uniV3PositionsLimit;
+  }
+
+  /// @notice Receive guard for Uniswap V3 non-fungible Position Manager
+  /// @dev revert if position limit
+  /// @param _poolLogic Pool address
+  function onReceive(address _poolLogic) external view override returns (bool) {
+    require(nonfungiblePositionManager.balanceOf(_poolLogic) <= uniV3PositionsLimit, "too many uniswap v3 positions");
+    return true;
   }
 
   /// @notice Transaction guard for Uniswap V3 non-fungible Position Manager
