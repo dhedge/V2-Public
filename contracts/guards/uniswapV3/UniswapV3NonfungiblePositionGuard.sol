@@ -157,8 +157,6 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
         (INonfungiblePositionManager.IncreaseLiquidityParams)
       );
 
-      require(pool == nonfungiblePositionManager.ownerOf(param.tokenId), "not position owner");
-
       emit IncreaseLiquidity(
         poolManagerLogic.poolLogic(),
         param.tokenId,
@@ -176,8 +174,6 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
         (INonfungiblePositionManager.DecreaseLiquidityParams)
       );
 
-      require(pool == nonfungiblePositionManager.ownerOf(param.tokenId), "not position owner");
-
       emit DecreaseLiquidity(
         poolManagerLogic.poolLogic(),
         param.tokenId,
@@ -191,8 +187,6 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
     } else if (method == INonfungiblePositionManager.burn.selector) {
       uint256 tokenId = abi.decode(getParams(data), (uint256));
 
-      require(pool == nonfungiblePositionManager.ownerOf(tokenId), "not position owner");
-
       emit Burn(poolManagerLogic.poolLogic(), tokenId, block.timestamp);
 
       txType = 23; // 'Burn' type
@@ -202,7 +196,6 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3Non
         (INonfungiblePositionManager.CollectParams)
       );
 
-      require(pool == nonfungiblePositionManager.ownerOf(param.tokenId), "not position owner");
       require(pool == param.recipient, "recipient is not pool");
 
       emit Collect(poolManagerLogic.poolLogic(), param.tokenId, param.amount0Max, param.amount1Max, block.timestamp);
