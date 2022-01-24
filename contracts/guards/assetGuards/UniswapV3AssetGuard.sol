@@ -138,6 +138,12 @@ contract UniswapV3AssetGuard is ERC20Guard {
       MultiTransaction[] memory transactions
     )
   {
+    // withdraw Processing
+    // for each nft Position:
+    // 1. decrease liuidity of a position based on the portion
+    // 2. collect fees from the position
+    // 3. transfer token0, token1 direcly to user. (token amount which was decreased from liquidity position)
+
     uint256 length = nonfungiblePositionManager.balanceOf(pool);
     uint256 txCount;
     transactions = new MultiTransaction[](length * 4);
@@ -145,6 +151,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
       DecreaseLiquidity memory decreaseLiquidity = _calcDecreaseLiquidity(tokenId, portion);
 
+      // decrease liquidity
       transactions[txCount].to = address(nonfungiblePositionManager);
       transactions[txCount].txData = abi.encodeWithSelector(
         INonfungiblePositionManager.decreaseLiquidity.selector,
@@ -158,6 +165,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       );
       txCount++;
 
+      // collect fees
       transactions[txCount].to = address(nonfungiblePositionManager);
       transactions[txCount].txData = abi.encodeWithSelector(
         INonfungiblePositionManager.collect.selector,
@@ -165,6 +173,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       );
       txCount++;
 
+      // transfer token0 to user
       transactions[txCount].to = decreaseLiquidity.token0;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("transfer(address,uint256)")),
@@ -173,6 +182,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       );
       txCount++;
 
+      // transfer token1 to user
       transactions[txCount].to = decreaseLiquidity.token1;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("transfer(address,uint256)")),

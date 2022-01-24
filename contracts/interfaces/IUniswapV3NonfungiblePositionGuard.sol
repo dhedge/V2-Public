@@ -2,5 +2,5 @@
 pragma solidity 0.7.6;
 
 interface IUniswapV3NonfungiblePositionGuard {
-  function uniV3PositionsLimit() external view returns (uint256);
+  function onReceive(address _poolLogic) external view returns (bool);
 }

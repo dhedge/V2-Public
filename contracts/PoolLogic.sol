@@ -793,10 +793,7 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
       IUniswapV3NonfungiblePositionGuard guard = IUniswapV3NonfungiblePositionGuard(
         IHasGuardInfo(factory).getGuard(msg.sender)
       );
-      require(
-        IERC721Upgradeable(msg.sender).balanceOf(address(this)) <= guard.uniV3PositionsLimit(),
-        "too many uniswap v3 positions"
-      );
+      guard.onReceive(address(this));
     }
 
     return this.onERC721Received.selector;
