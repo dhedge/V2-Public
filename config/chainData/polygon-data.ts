@@ -76,6 +76,13 @@ export const quickswap = {
   },
 };
 
+// uniswap V3
+export const uniswapV3 = {
+  factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+  router: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  nonfungiblePositionManager: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+};
+
 // oneInch
 export const oneinch = {
   v3Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
