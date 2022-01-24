@@ -95,7 +95,9 @@ describe("RemoveAssets", function () {
 
     const assetHandlerInitAssets = [assetLendingPool, assetDai, assetUsdc];
 
-    const AssetHandlerLogic = await ethers.getContractFactory("contracts/assets/AssetHandler.sol:AssetHandler");
+    const AssetHandlerLogic = await ethers.getContractFactory(
+      "contracts/priceAggregators/AssetHandler.sol:AssetHandler",
+    );
     const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
 

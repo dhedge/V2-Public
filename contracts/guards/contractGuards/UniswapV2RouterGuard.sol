@@ -33,13 +33,13 @@
 
 pragma solidity 0.7.6;
 
-import "../utils/TxDataUtils.sol";
-import "../utils/SlippageChecker.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/uniswapv2/IUniswapV2Factory.sol";
-import "../interfaces/uniswapv2/IUniswapV2Router.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../utils/SlippageChecker.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/uniswapv2/IUniswapV2Factory.sol";
+import "../../interfaces/uniswapv2/IUniswapV2Router.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 
 /// @notice Transaction guard for UniswapV2Router
 /// @dev This will be used for sushiswap as well since Sushi uses the same interface.

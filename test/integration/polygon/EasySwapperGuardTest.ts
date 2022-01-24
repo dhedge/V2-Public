@@ -113,8 +113,8 @@ describe("EasySwapperGuard", () => {
     const torosBalanceAfterWithdraw = await poolManagerLogicProxy.assetBalance(assets.ETHBEAR2X);
     expect(torosBalanceAfterWithdraw).to.equal(0);
 
-    // Check token price is $1
-    expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100) as any);
+    // Check token price is 98c to $1.02
+    expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(50) as any);
   });
 
   it("manager cannot use other functions", async () => {

@@ -1,7 +1,7 @@
 import { task, types } from "hardhat/config";
 import { synthetix } from "../../test/integration/ovm/ovm-data";
 
-const { getTag, tryVerify } = require("./Helpers");
+import { getTag, tryVerify } from "../Helpers";
 
 task("explorerVerify", "Verify contracts")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
@@ -26,9 +26,12 @@ task("explorerVerify", "Verify contracts")
     const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
 
     if (contracts.SynthetixGuard) {
-      await tryVerify(hre, contracts.SynthetixGuard, "contracts/guards/SynthetixGuard.sol:SynthetixGuard", [
-        synthetix.addressResolver,
-      ]);
+      await tryVerify(
+        hre,
+        contracts.SynthetixGuard,
+        "contracts/guards/contractGuards/SynthetixGuard.sol:SynthetixGuard",
+        [synthetix.addressResolver],
+      );
     }
     if (contracts.Governance) {
       await tryVerify(hre, contracts.Governance, "contracts/Governance.sol:Governance", []);
@@ -58,11 +61,11 @@ task("explorerVerify", "Verify contracts")
       const implementation = await provider.getStorageAt(contracts.AssetHandler.proxy, implementationStorage);
       const address = hre.ethers.utils.hexValue(implementation);
       console.log("AssetHandler: ", address);
-      await tryVerify(hre, address, "contracts/assets/AssetHandler.sol:AssetHandler", []);
+      await tryVerify(hre, address, "contracts/priceAggregators/AssetHandler.sol:AssetHandler", []);
     }
 
     if (contracts.ERC20Guard) {
-      await tryVerify(hre, contracts.ERC20Guard, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard");
+      await tryVerify(hre, contracts.ERC20Guard, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
     }
 
     if (contracts.PoolPerformance && contracts.PoolPerformance.proxy) {

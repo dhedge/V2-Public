@@ -35,32 +35,24 @@ pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "../utils/TxDataUtils.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
-import "../interfaces/synthetix/ISynth.sol";
-import "../interfaces/synthetix/ISynthetix.sol";
-import "../interfaces/synthetix/IAddressResolver.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../utils/SlippageChecker.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/uniswapv2/IUniswapV2Pair.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 
-/// @title Transaction guard for Synthetix's Exchanger contract
-contract SynthetixGuard is TxDataUtils, IGuard {
-  using SafeMathUpgradeable for uint256;
+/// @notice Transaction guard for OneInchV3Router
+contract OneInchV3Guard is TxDataUtils, SlippageChecker, IGuard {
+  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
+    SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
+  // solhint-disable-next-line no-empty-blocks
+  {
 
-  bytes32 private constant _SYNTHETIX_KEY = "Synthetix";
-
-  IAddressResolver public addressResolver;
-
-  constructor(IAddressResolver _addressResolver) {
-    // solhint-disable-next-line reason-string
-    require(address(_addressResolver) != address(0), "_addressResolver address cannot be 0");
-    addressResolver = _addressResolver;
   }
 
-  /// @notice Transaction guard for Synthetix Exchanger
-  /// @dev It supports exchangeWithTracking functionality
+  /// @notice Transaction guard for OneInchV3
+  /// @dev It supports swap functionalities
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
@@ -77,19 +69,52 @@ contract SynthetixGuard is TxDataUtils, IGuard {
       bool // isPublic
     )
   {
+    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
     bytes4 method = getMethod(data);
 
-    if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-      bytes32 srcKey = getInput(data, 0);
-      bytes32 srcAmount = getInput(data, 1);
-      bytes32 dstKey = getInput(data, 2);
+    if (
+      method == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"))
+    ) {
+      address srcAsset = convert32toAddress(getInput(data, 3));
+      address dstAsset = convert32toAddress(getInput(data, 4));
+      address toAddress = convert32toAddress(getInput(data, 6));
+      uint256 srcAmount = uint256(getInput(data, 7));
+      uint256 amountOutMin = uint256(getInput(data, 8));
 
-      address srcAsset = getAssetProxy(srcKey);
-      address dstAsset = getAssetProxy(dstKey);
-
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
+
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
+
+      emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
+
+      txType = 2; // 'Exchange' type
+    } else if (method == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
+      address srcAsset = convert32toAddress(getInput(data, 0));
+      uint256 srcAmount = uint256(getInput(data, 1));
+      uint256 amountOutMin = uint256(getInput(data, 2));
+
+      address dstAsset = srcAsset;
+      uint256 poolLength = getArrayLength(data, 3);
+      for (uint8 i = 0; i < poolLength; i++) {
+        address pool = convert32toAddress(getArrayIndex(data, 3, i));
+        address token0 = IUniswapV2Pair(pool).token0();
+        address token1 = IUniswapV2Pair(pool).token1();
+        if (dstAsset == token0) {
+          dstAsset = token1;
+        } else if (dstAsset == token1) {
+          dstAsset = token0;
+        } else {
+          require(false, "invalid path");
+        }
+      }
+
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
       emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
@@ -97,15 +122,5 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     }
 
     return (txType, false);
-  }
-
-  /// @notice Get asset proxy address from addressResolver
-  /// @param key the key of the asset
-  /// @return proxy the proxy address of the asset
-  function getAssetProxy(bytes32 key) public view returns (address proxy) {
-    address synth = ISynthetix(addressResolver.getAddress(_SYNTHETIX_KEY)).synths(key);
-    require(synth != address(0), "invalid key");
-    proxy = ISynth(synth).proxy();
-    require(proxy != address(0), "invalid proxy");
   }
 }
