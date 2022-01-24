@@ -129,14 +129,16 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
           `${asset.name} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
         );
 
-        if (approxEq(assetPriceUsd, coingeckoAssetPriceUsd)) {
-          console.error(
-            `${asset.name} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
+        if (!approxEq(assetPriceUsd, coingeckoAssetPriceUsd)) {
+          console.warn(
+            `WARNING: ${asset.name} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
           );
         }
-      } catch (err) {
-        console.error(`Error getting Coingecko feed for ${asset.name}`, err);
-        console.log("CoinGecko Request: ", url);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error(`WARNING: Error getting Coingecko price for ${asset.name}: ${err.message}`);
+        }
+        console.warn(`${asset.name} dHEDGE price ${assetPriceUsd}, Coingecko price N/A`);
       }
     }
   }
@@ -182,13 +184,17 @@ const checkBalancerLpAsset = async (
     balancerLp.address,
   );
   let weights;
-  try {
-    weights = await pool.getNormalizedWeights();
-  } catch (error) {
-    console.warn("Could not fetch normalized weights, using 50/50");
-    weights = ["500000000000000000", "500000000000000000"];
+  if (balancerLp.type === "balancerLpToken") {
+    // weighted pool - set weights
+    try {
+      weights = await pool.getNormalizedWeights();
+    } catch (error) {
+      console.warn("Could not fetch normalized weights, using 50/50");
+      weights = ["500000000000000000", "500000000000000000"];
+    }
   }
 
+  // pool token checks
   for (let i = 0; i < poolTokens.length; i++) {
     assert(
       poolTokens[i].toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
@@ -214,14 +220,17 @@ const checkBalancerLpAsset = async (
       `${balancerLp.name} pool token decimals mismatch with deployment.`,
     );
 
-    assert(
-      weights[i] / 1e18 === balancerLp.data.weights[i],
-      `${balancerLp.name} pool token ${poolTokens[i]} weights mismatch with configuration.`,
-    );
-    const aggregatorPoolWeights = await aggregator.weights(i);
-    assert(
-      aggregatorPoolWeights / 1e18 === balancerLp.data.weights[i],
-      `${balancerLp.name} pool token weights mismatch with deployment.`,
-    );
+    if (balancerLp.type === "balancerLpToken") {
+      // weighted pool - check token weight
+      assert(
+        weights[i] / 1e18 === balancerLp.data.weights[i],
+        `${balancerLp.name} pool token ${poolTokens[i]} weights mismatch with configuration.`,
+      );
+      const aggregatorPoolWeights = await aggregator.weights(i);
+      assert(
+        aggregatorPoolWeights / 1e18 === balancerLp.data.weights[i],
+        `${balancerLp.name} pool token weights mismatch with deployment.`,
+      );
+    }
   }
 };

@@ -40,11 +40,11 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./Path.sol";
-import "../../utils/TxDataUtils.sol";
-import "../../interfaces/guards/IGuard.sol";
-import "../../interfaces/IUniswapV3NonfungiblePositionGuard.sol";
-import "../../interfaces/IPoolManagerLogic.sol";
-import "../../interfaces/IHasSupportedAsset.sol";
+import "../../../utils/TxDataUtils.sol";
+import "../../../interfaces/guards/IGuard.sol";
+import "../../../interfaces/IUniswapV3NonfungiblePositionGuard.sol";
+import "../../../interfaces/IPoolManagerLogic.sol";
+import "../../../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3NonfungiblePositionGuard {
   using SafeMathUpgradeable for uint256;
