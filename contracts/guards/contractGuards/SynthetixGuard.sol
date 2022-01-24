@@ -35,15 +35,15 @@ pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "../utils/TxDataUtils.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasGuardInfo.sol";
-import "../interfaces/IManaged.sol";
-import "../interfaces/synthetix/ISynth.sol";
-import "../interfaces/synthetix/ISynthetix.sol";
-import "../interfaces/synthetix/IAddressResolver.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/IManaged.sol";
+import "../../interfaces/synthetix/ISynth.sol";
+import "../../interfaces/synthetix/ISynthetix.sol";
+import "../../interfaces/synthetix/IAddressResolver.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 
 /// @title Transaction guard for Synthetix's Exchanger contract
 contract SynthetixGuard is TxDataUtils, IGuard {

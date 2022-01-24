@@ -32,56 +32,67 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
 
-import "../utils/TxDataUtils.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/// @title Transaction guard for Aave's incentives controller contract
-contract AaveIncentivesControllerGuard is TxDataUtils, IGuard {
-  event Claim(address fundAddress, address stakingContract, uint256 time);
+import "../../utils/TxDataUtils.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
+import "../../DhedgeEasySwapper.sol";
 
-  address public rewardToken;
+/// @title Transaction guard for Dhedge EasySwapper
+contract EasySwapperGuard is TxDataUtils, IGuard {
+  using SafeMathUpgradeable for uint256;
 
-  constructor(address _rewardToken) {
-    rewardToken = _rewardToken;
-  }
+  event Deposit(address fundAddress, address depositAsset, uint256 time);
+  event Withdraw(address fundAddress, address from, address withdrawalAsset, uint256 time);
 
-  /// @notice Transaction guard for Aave incentives controller
-  /// @dev It supports claimRewards functionality
+  /// @notice Transaction guard for EasySwapper - used for Toros
+  /// @dev It supports Deposit, and Withdraw
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  /// @return txType the transaction type of a given transaction data. 2 for `Exchange` type
+  /// @return txType the transaction type of a given transaction data.
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address to,
+    address, // to
     bytes calldata data
   )
     external
     override
     returns (
-      uint16 txType, // transaction type
-      bool isPublic
+      uint16 txType,
+      bool // isPublic
     )
   {
     bytes4 method = getMethod(data);
+    // The pool the manager is operating against
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
-    if (method == bytes4(keccak256("claimRewards(address[],uint256,address)"))) {
-      // https://github.com/aave/aave-stake-v2/blob/feat/deployment-scripts/contracts/stake/AaveIncentivesController.sol#L129
+    if (method == DhedgeEasySwapper.deposit.selector) {
+      // I.e asset == EthBear2x
+      (address assetToReceive, , , , ) = abi.decode(getParams(data), (address, address, uint256, address, uint256));
 
-      address onBehalfOf = convert32toAddress(getInput(data, 2));
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+      require(poolManagerLogicAssets.isSupportedAsset(assetToReceive), "unsupported asset");
 
-      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(rewardToken), "unsupported reward asset");
-      require(onBehalfOf == poolLogic, "recipient is not pool");
+      emit Deposit(poolLogic, assetToReceive, block.timestamp);
+      txType = 18; // Deposit: EasySwapper Deposit
+    } else if (method == DhedgeEasySwapper.withdraw.selector) {
+      // I.e from == EthBear2x
+      (address withdrawingFrom, , address withdrawAsset, ) = abi.decode(
+        getParams(data),
+        (address, uint256, address, uint256)
+      );
+      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+      require(poolManagerLogicAssets.isSupportedAsset(withdrawAsset), "unsupported asset");
 
-      emit Claim(poolLogic, to, block.timestamp);
-
-      txType = 7; // `Claim` type
-      isPublic = true;
+      emit Withdraw(poolLogic, withdrawingFrom, withdrawAsset, block.timestamp);
+      txType = 19; // Withdraw: EasySwapper Withdraw
     }
+
+    return (txType, false);
   }
 }
