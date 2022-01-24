@@ -1455,6 +1455,13 @@
           "assetType": "2",
           "aggregator": "0xBb504C5F2Baa51d349D055F2F6b943948c6b0966",
           "aggregatorName": ""
+        },
+        {
+          "name": "Balancer LP BPSP-TUSD",
+          "asset": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+          "assetType": 0,
+          "aggregator": "0x8e2C4244B39dc330F07f5b7B1E57588Ed23C848E",
+          "aggregatorName": "BalancerLpStablePoolAggregator"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
@@ -1492,6 +1499,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Wed, 22 Dec 2021 03:32:29 GMT"
+    "date": "Mon, 24 Jan 2022 05:53:32 GMT"
   }
 }
