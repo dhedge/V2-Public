@@ -15,6 +15,7 @@ import {
   IERC20,
   IERC20__factory,
   ILendingPool__factory,
+  IMulticall__factory,
   INonfungiblePositionManager,
   INonfungiblePositionManager__factory,
   PoolFactory,
@@ -38,6 +39,7 @@ describe("Uniswap V3 LP Test", function () {
   let nonfungiblePositionManager: INonfungiblePositionManager, tokenId: BigNumber;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
+  const iMulticall = new ethers.utils.Interface(IMulticall__factory.abi);
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
@@ -216,6 +218,29 @@ describe("Uniswap V3 LP Test", function () {
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, burnABI);
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
+    });
+
+    it("Should be able to multicall", async () => {
+      const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+      let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        [tokenId, positionBefore.liquidity, 0, 0, deadLine],
+      ]);
+
+      let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        [tokenId, poolLogicProxy.address, units(10000), units(10000)],
+      ]);
+
+      let burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
+
+      let multicallABI = iMulticall.encodeFunctionData("multicall", [[decreaseLiquidityABI, collectABI, burnABI]]);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, multicallABI);
 
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
