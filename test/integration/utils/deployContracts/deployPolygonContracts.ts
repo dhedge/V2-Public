@@ -276,7 +276,6 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
     { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
     { name: toBytes32("weth"), destination: assets.weth },
     { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
-    { name: toBytes32("nonfungiblePositionManager"), destination: uniswapV3.nonfungiblePositionManager },
   ]);
 
   await poolFactory.setExitFee(5, 1000); // 0.5%
