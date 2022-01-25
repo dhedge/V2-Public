@@ -42,11 +42,11 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "./Path.sol";
 import "../../../utils/TxDataUtils.sol";
 import "../../../interfaces/guards/IGuard.sol";
-import "../../../interfaces/IUniswapV3NonfungiblePositionGuard.sol";
+import "../../../interfaces/INFTGuard.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
 
-contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, IUniswapV3NonfungiblePositionGuard {
+contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, INFTGuard {
   using SafeMathUpgradeable for uint256;
 
   event Mint(
