@@ -130,5 +130,17 @@
       "decimals": [6, 18],
       "weights": [0.5, 0.5]
     }
+  },
+  {
+    "name": "Balancer LP BPSP-TUSD",
+    "symbol": "BLP",
+    "type": "balancerLpStablePool",
+    "address": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+    "assetType": 0,
+    "precision": 18,
+    "link": "https://polygonscan.com/address/0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+    "data": {
+      "pool": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f"
+    }
   }
 ]

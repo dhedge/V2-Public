@@ -113,6 +113,22 @@ const deployBalancerV2LpAggregator = async (factory: string, info: any, hre: Har
   return balancerV2LpAggregator;
 };
 
+const deployBalancerLpStablePoolAggregator = async (factory: string, pool: string, hre: HardhatRuntimeEnvironment) => {
+  await hre.run("compile:one", { contractName: "BalancerStablePoolAggregator" });
+
+  const BalancerStablePoolAggregator = await hre.ethers.getContractFactory("BalancerStablePoolAggregator");
+
+  const balancerStablePoolAggregator = await BalancerStablePoolAggregator.deploy(factory, pool);
+  await balancerStablePoolAggregator.deployed();
+  await tryVerify(
+    hre,
+    balancerStablePoolAggregator.address,
+    "contracts/assets/BalancerStablePoolAggregator.sol:BalancerStablePoolAggregator",
+    [factory, pool],
+  );
+  return balancerStablePoolAggregator;
+};
+
 task("upgrade-polygon", "Upgrade contracts")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("restartnonce", "propose transactions", false, types.boolean)
@@ -386,25 +402,48 @@ task("upgrade-polygon", "Upgrade contracts")
             poolFactory,
             assetHandlerAssets,
           );
-          if (!foundInVersions) {
-            console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
-            if (taskArgs.execute) {
-              // Deploy Balancer LP Aggregator
-              console.log("Deploying ", balancerLp.name);
-              const balancerV2Aggregator = await deployBalancerV2LpAggregator(
-                versions[oldTag].contracts.PoolFactoryProxy,
-                balancerLp.data,
-                hre,
-              );
-              console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
-              assetHandlerAssets.push({
-                name: balancerLp.name,
-                asset: balancerLp.data.pool,
-                assetType: balancerLp.assetType,
-                aggregator: balancerV2Aggregator.address,
-                aggregatorName: "BalancerV2LPAggregator",
-              });
-            }
+          if (foundInVersions) continue; // skip if the asset is already deployed
+          if (balancerLp) console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
+          if (!taskArgs.execute) continue; // skip if the `execute` flag is not set
+
+          // Weighted pool
+          if (balancerLp.type === "balancerLpToken") {
+            // Deploy Balancer LP Weighted Pool Aggregator
+            console.log("Deploying ", balancerLp.name);
+            const balancerV2Aggregator = await deployBalancerV2LpAggregator(
+              versions[oldTag].contracts.PoolFactoryProxy,
+              balancerLp.data,
+              hre,
+            );
+            console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
+            assetHandlerAssets.push({
+              name: balancerLp.name,
+              asset: balancerLp.data.pool,
+              assetType: balancerLp.assetType,
+              aggregator: balancerV2Aggregator.address,
+              aggregatorName: "BalancerV2LPAggregator",
+            });
+          }
+
+          // Stable pool
+          if (balancerLp.type === "balancerLpStablePool") {
+            // Deploy Balancer LP Stable Pool Aggregator
+            console.log("Deploying ", balancerLp.name);
+            const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
+              versions[oldTag].contracts.PoolFactoryProxy,
+              balancerLp.data.pool,
+              hre,
+            );
+            console.log(
+              `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator.address}`,
+            );
+            assetHandlerAssets.push({
+              name: balancerLp.name,
+              asset: balancerLp.data.pool,
+              assetType: balancerLp.assetType,
+              aggregator: balancerLpStablePoolAggregator.address,
+              aggregatorName: "BalancerLpStablePoolAggregator",
+            });
           }
         }
 
