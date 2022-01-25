@@ -83,6 +83,7 @@ describe("Uniswap V3 LP Test", function () {
   });
 
   it("Should be able to add liquidity", async () => {
+    // try to mint before enabling nft position asset
     let mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
       [
         assets.usdc,
@@ -98,15 +99,90 @@ describe("Uniswap V3 LP Test", function () {
         deadLine,
       ],
     ]);
-
     await expect(
       poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
     ).to.revertedWith("asset not enabled in pool");
 
-    // add supported assets
     await poolManagerLogicProxy
       .connect(manager)
       .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
+
+    // try to mint with unsupported token0
+    mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
+      [
+        assets.miMatic,
+        assets.weth,
+        10000,
+        -414400,
+        -253200,
+        units(2000, 6),
+        units(1),
+        0,
+        0,
+        poolLogicProxy.address,
+        deadLine,
+      ],
+    ]);
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
+    ).to.revertedWith("unsupported asset: tokenA");
+
+    // try to mint with unsupported token1
+    mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
+      [
+        assets.usdc,
+        assets.miMatic,
+        10000,
+        -414400,
+        -253200,
+        units(2000, 6),
+        units(1),
+        0,
+        0,
+        poolLogicProxy.address,
+        deadLine,
+      ],
+    ]);
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
+    ).to.revertedWith("unsupported asset: tokenB");
+
+    // try to mint with wrong receiver
+    mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
+      [
+        assets.usdc,
+        assets.weth,
+        10000,
+        -414400,
+        -253200,
+        units(2000, 6),
+        units(1),
+        0,
+        0,
+        poolManagerLogicProxy.address,
+        deadLine,
+      ],
+    ]);
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
+    ).to.revertedWith("recipient is not pool");
+
+    // mint success
+    mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
+      [
+        assets.usdc,
+        assets.weth,
+        10000,
+        -414400,
+        -253200,
+        units(2000, 6),
+        units(1),
+        0,
+        0,
+        poolLogicProxy.address,
+        deadLine,
+      ],
+    ]);
 
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
@@ -115,6 +191,26 @@ describe("Uniswap V3 LP Test", function () {
     checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
     expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
+
+    // try to mint more than positions limit
+    mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
+      [
+        assets.usdc,
+        assets.weth,
+        5000,
+        -414400,
+        -253200,
+        units(2000, 6),
+        units(1),
+        0,
+        0,
+        poolManagerLogicProxy.address,
+        deadLine,
+      ],
+    ]);
+    await expect(
+      poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
+    ).to.revertedWith("too many uniswap v3 positions");
   });
 
   describe("After position", () => {
@@ -185,7 +281,15 @@ describe("Uniswap V3 LP Test", function () {
       ]);
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
 
+      // try to collect fees with wrong receiver
       let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        [tokenId, poolManagerLogicProxy.address, units(10000), units(10000)],
+      ]);
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, collectABI),
+      ).to.revertedWith("recipient is not pool");
+
+      collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
         [tokenId, poolLogicProxy.address, units(10000), units(10000)],
       ]);
 
@@ -233,10 +337,17 @@ describe("Uniswap V3 LP Test", function () {
       let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
         [tokenId, poolLogicProxy.address, units(10000), units(10000)],
       ]);
+      let wrongABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, units(10000, 6)]);
 
       let burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
 
-      let multicallABI = iMulticall.encodeFunctionData("multicall", [[decreaseLiquidityABI, collectABI, burnABI]]);
+      // try multicall with bad transaction
+      let multicallABI = iMulticall.encodeFunctionData("multicall", [[decreaseLiquidityABI, wrongABI, burnABI]]);
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, multicallABI),
+      ).to.revertedWith("invalid transaction");
+
+      multicallABI = iMulticall.encodeFunctionData("multicall", [[decreaseLiquidityABI, collectABI, burnABI]]);
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
@@ -245,6 +356,44 @@ describe("Uniswap V3 LP Test", function () {
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
+    });
+
+    it("Should be able to withdraw", async () => {
+      const shares = await poolLogicProxy.balanceOf(logicOwner.address);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+      const usdcBalanceBefore = await USDC.balanceOf(logicOwner.address);
+      const wethBalanceBefore = await WETH.balanceOf(logicOwner.address);
+
+      await poolLogicProxy.withdraw(shares.div(2));
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2));
+      expect(await USDC.balanceOf(logicOwner.address)).gt(usdcBalanceBefore);
+      expect(await WETH.balanceOf(logicOwner.address)).gt(wethBalanceBefore);
+    });
+
+    it.only("can't receive more position nfts", async () => {
+      await getAccountToken(units(5), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+      await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+      await WETH.approve(nonfungiblePositionManager.address, units(5));
+      await USDC.approve(nonfungiblePositionManager.address, units(10000, 5));
+      await nonfungiblePositionManager.mint({
+        token0: assets.usdc,
+        token1: assets.weth,
+        fee: 10000,
+        tickLower: -414400,
+        tickUpper: -253200,
+        amount0Desired: units(2000, 6),
+        amount1Desired: units(1),
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: logicOwner.address,
+        deadline: deadLine,
+      });
+      tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(logicOwner.address, 0);
+      await expect(
+        nonfungiblePositionManager.transferFrom(logicOwner.address, poolLogicProxy.address, tokenId),
+      ).to.revertedWith("too many uniswap v3 positions");
     });
   });
 });
