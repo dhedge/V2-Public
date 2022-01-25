@@ -173,6 +173,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       );
       txCount++;
 
+      // We directly transfer the amount of tokens we receive from decreasing by the withdrawers portion.
       // transfer token0 to user
       transactions[txCount].to = decreaseLiquidity.token0;
       transactions[txCount].txData = abi.encodeWithSelector(
