@@ -259,7 +259,7 @@ export const getAggregator = async (hre: HardhatRuntimeEnvironment, csvAsset: an
       await tryVerify(
         hre,
         dHedgePoolAggregator.address,
-        "contracts/assets/DHedgePoolAggregator.sol:DHedgePoolAggregator",
+        "contracts/priceAggregators/DHedgePoolAggregator.sol:DHedgePoolAggregator",
         [assetAddress],
       );
       aggregator = dHedgePoolAggregator.address;

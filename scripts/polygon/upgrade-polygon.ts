@@ -94,7 +94,7 @@ const deployBalancerV2LpAggregator = async (factory: string, info: any, hre: Har
   await tryVerify(
     hre,
     balancerV2LpAggregator.address,
-    "contracts/assets/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
+    "contracts/priceAggregators/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
     [
       factory,
       balancerV2Vault,
@@ -966,7 +966,12 @@ task("upgrade-polygon", "Upgrade contracts")
           console.log("EasySwapperGuard deployed at", easySwapperGuard.address);
           versions[newTag].contracts.EasySwapperGuard = easySwapperGuard.address;
 
-          await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", []);
+          await tryVerify(
+            hre,
+            easySwapperGuard.address,
+            "contracts/guards/contractGuards/EasySwapperGuard.sol:EasySwapperGuard",
+            [],
+          );
 
           const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
             dhedgeEasySwapperAddress,
