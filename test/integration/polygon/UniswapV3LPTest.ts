@@ -381,8 +381,8 @@ describe("Uniswap V3 LP Test", function () {
         token0: assets.usdc,
         token1: assets.weth,
         fee: 10000,
-        tickLower: -414400,
-        tickUpper: -253200,
+        tickLower: -414000,
+        tickUpper: -253000,
         amount0Desired: units(2000, 6),
         amount1Desired: units(1),
         amount0Min: 0,
@@ -392,8 +392,15 @@ describe("Uniswap V3 LP Test", function () {
       });
       tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(logicOwner.address, 0);
       await expect(
-        nonfungiblePositionManager.transferFrom(logicOwner.address, poolLogicProxy.address, tokenId),
+        nonfungiblePositionManager["safeTransferFrom(address,address,uint256)"](
+          logicOwner.address,
+          poolLogicProxy.address,
+          tokenId,
+        ),
       ).to.revertedWith("too many uniswap v3 positions");
+
+      await nonfungiblePositionManager.transferFrom(logicOwner.address, poolLogicProxy.address, tokenId);
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(2);
     });
   });
 });
