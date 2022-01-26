@@ -10,10 +10,12 @@ const fileNames: OVMDeployFileNames = {
 
 const addresses: OVMDeployAddress = {
   LEET: "0x0000000000000000000000000000000000001337",
-  // https://ogg.scopelift.co/wallet/0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08
-  protocolDao: "0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08",
-  // https://ogg.scopelift.co/wallet/0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc
-  protocolTreasury: "0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc",
+  // old - https://ogg.scopelift.co/wallet/0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08
+  // https://gnosis-safe.io/app/oeth:0x90b1a66957914EbbE7a8df254c0c1E455972379C/balances - 3/3
+  protocolDao: "0x90b1a66957914EbbE7a8df254c0c1E455972379C",
+  // old - https://ogg.scopelift.co/wallet/0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc
+  // https://gnosis-safe.io/app/oeth:0xD857e322351Dc56592e3D9181FBF65034EF4aef2 2/5
+  protocolTreasury: "0xD857e322351Dc56592e3D9181FBF65034EF4aef2",
 
   sUSD: assets.susd,
   synthetixProxyAddress: assets.snxProxy,

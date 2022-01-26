@@ -127,8 +127,8 @@ export const proposeTx = async (
   to: string,
   data: string,
   message: string,
-  execute = false,
-  restartFromLastConfirmedNonce = false,
+  execute: boolean,
+  restartFromLastConfirmedNonce: boolean,
 ) => {
   if (!execute) {
     console.log("Will propose transaction:", message);
