@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedAssetGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const quickLpAssetGuard: IJob<IDeployedAssetGuard | undefined> = async (
+export const quickLpAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { assetGuardsFileName: string },
   addresses: { protocolDaoAddress: string; quickStakingRewardsFactoryAddress?: string },
 ) => {
   if (!addresses.quickStakingRewardsFactoryAddress) {
@@ -43,11 +44,14 @@ export const quickLpAssetGuard: IJob<IDeployedAssetGuard | undefined> = async (
       config.execute,
       config.restartnonce,
     );
-    return {
+
+    const deployedGuard = {
       AssetType: 5,
       GuardName: "QuickLPAssetGuard",
       GuardAddress: quickLPAssetGuard.address,
       Description: "Quick LP tokens",
     };
+
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
   }
 };

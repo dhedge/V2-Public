@@ -10,7 +10,6 @@ export interface OVMDeployAddress {
   LEET: Address;
   protocolDao: Address;
   protocolTreasury: Address;
-  sUSD: Address;
   synthetixProxyAddress: Address;
   synthetixAddressResolverAddress: Address;
   implementationStorage: Address;

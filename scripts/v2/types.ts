@@ -18,17 +18,13 @@ export type IJob<T> = (
 
 // File Names
 export interface IFileNames {
-  balancerConfigFileName?: string;
   assetsFileName: string;
   governanceNamesFileName: string;
-  stagingAssetGuardFileName?: string;
-  prodAssetGuardFileName?: string;
-  stagingContractGuardFileName?: string;
-  prodContractGuardFileName?: string;
-  stagingGovernanceNamesFileName?: string;
-  prodGovernanceNamesFileName?: string;
-  stagingExternalAssetFileName?: string;
-  prodExternalAssetFileName?: string;
+  contractGuardsFileName: string;
+  assetGuardsFileName: string;
+
+  balancerConfigFileName?: string;
+  externalAssetFileName?: string;
 }
 
 // Addresses
@@ -36,17 +32,21 @@ export interface IAddresses {
   // Dhedge
   protocolDaoAddress: string;
   proxyAdminAddress: string;
-  implementationStorageAddress: string;
+  implementationStorageAddress: "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
   dhedgeEasySwapperAddress?: string;
 
   // External Logic Contracts
+
+  synthetixProxyAddress?: string;
+  synthetixAddressResolverAddress?: string;
+
   balancerV2VaultAddress?: string;
   sushiMiniChefV2Address?: string;
   balancerMerkleOrchardAddress?: string;
   aaveProtocolDataProviderAddress?: string;
 
   quickStakingRewardsFactoryAddress?: string;
-  v2RouterAddresses: string[]; //quickswapRouter, sushiswapV2Router etc etc
+  v2RouterAddresses?: string[]; //quickswapRouter, sushiswapV2Router etc etc
   quickLpUsdcWethStakingRewardsAddress?: string;
   aaveIncentivesControllerAddress?: string;
   aaveLendingPoolAddress?: string;

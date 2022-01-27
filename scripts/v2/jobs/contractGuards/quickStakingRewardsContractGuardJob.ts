@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const quickStakingRewardsContractGuard: IJob<IDeployedContractGuard[] | undefined> = async (
+export const quickStakingRewardsContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; quickLpUsdcWethStakingRewardsAddress?: string },
 ) => {
   if (!addresses.quickLpUsdcWethStakingRewardsAddress) {
@@ -46,13 +47,12 @@ export const quickStakingRewardsContractGuard: IJob<IDeployedContractGuard[] | u
       config.restartnonce,
     );
 
-    return [
-      {
-        ContractAddress: addresses.quickLpUsdcWethStakingRewardsAddress,
-        GuardName: "QuickStakingRewardsGuard",
-        GuardAddress: quickStakingRewardsGuard.address,
-        Description: "Quick Staking Reward",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.quickLpUsdcWethStakingRewardsAddress,
+      GuardName: "QuickStakingRewardsGuard",
+      GuardAddress: quickStakingRewardsGuard.address,
+      Description: "Quick Staking Reward",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };

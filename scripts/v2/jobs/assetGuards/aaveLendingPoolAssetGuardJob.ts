@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedAssetGuard, IJob, IUpgradeConfig } from "../types";
+import { IJob, IUpgradeConfig } from "../../types";
+import { addOrReplaceGuardInFile } from "../helpers";
 
-export const aaveLendingPoolAssetGuardJob: IJob<IDeployedAssetGuard | undefined> = async (
+export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { assetGuardsFileName: string },
   addresses: { aaveProtocolDataProviderAddress?: string },
 ) => {
   if (!addresses.aaveProtocolDataProviderAddress) {
@@ -47,11 +48,13 @@ export const aaveLendingPoolAssetGuardJob: IJob<IDeployedAssetGuard | undefined>
       config.restartnonce,
     );
 
-    return {
+    const deployedGuard = {
       AssetType: 3,
       GuardName: "AaveLendingPoolAssetGuard",
       GuardAddress: aaveLendingPoolAssetGuard.address,
       Description: "Aave Lending Pool",
     };
+
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
   }
 };

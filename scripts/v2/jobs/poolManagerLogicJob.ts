@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../Helpers";
-import { IJob, IUpgradeConfig } from "./types";
+import { IJob, IUpgradeConfig } from "../types";
 
 export const poolManagerLogicJob: IJob<void> = async (
   config: IUpgradeConfig,

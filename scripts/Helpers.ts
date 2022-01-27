@@ -246,13 +246,12 @@ export const checkBalancerLpAsset = async (
 
 export const getAggregator = async (hre: HardhatRuntimeEnvironment, csvAsset: any) => {
   const aggregatorName = csvAsset["aggregatorName"];
-  let aggregator;
 
   switch (aggregatorName) {
     case "DHedgePoolAggregator":
       // Deploy DHedgePoolAggregator
       const assetAddress = csvAsset["Address"];
-      const { ethers } = require("hardhat");
+      const { ethers } = hre;
       const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
       const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
       await dHedgePoolAggregator.deployed();
@@ -262,15 +261,14 @@ export const getAggregator = async (hre: HardhatRuntimeEnvironment, csvAsset: an
         "contracts/assets/DHedgePoolAggregator.sol:DHedgePoolAggregator",
         [assetAddress],
       );
-      aggregator = dHedgePoolAggregator.address;
-      break;
+      return dHedgePoolAggregator.address;
+    case "USDPriceAggregator":
+      // Deploy USDPriceAggregator
+      const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
+      const usdPriceAggregator = await USDPriceAggregator.deploy();
+      await usdPriceAggregator.deployed();
+      return usdPriceAggregator.address;
     default:
-      aggregator = csvAsset["Chainlink Price Feed"];
+      return csvAsset["Chainlink Price Feed"];
   }
-
-  return aggregator;
 };
-
-// Init contracts data
-export const implementationStorage = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
-export const proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";

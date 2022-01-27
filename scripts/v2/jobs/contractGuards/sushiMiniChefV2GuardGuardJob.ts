@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const sushiMiniChefV2GuardGuardJob: IJob<IDeployedContractGuard[] | undefined> = async (
+export const sushiMiniChefV2GuardGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: {
     protocolDaoAddress: string;
     sushiMiniChefV2Address?: string;
@@ -64,13 +65,12 @@ export const sushiMiniChefV2GuardGuardJob: IJob<IDeployedContractGuard[] | undef
       config.execute,
       config.restartnonce,
     );
-    return [
-      {
-        ContractAddress: addresses.sushiMiniChefV2Address,
-        GuardName: "SushiMiniChefV2Guard",
-        GuardAddress: sushiMiniChefV2Guard.address,
-        Description: "Sushi rewards contract",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.sushiMiniChefV2Address,
+      GuardName: "SushiMiniChefV2Guard",
+      GuardAddress: sushiMiniChefV2Guard.address,
+      Description: "Sushi rewards contract",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };

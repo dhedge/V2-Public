@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const v2RouterContractGuardJob: IJob<IDeployedContractGuard[] | undefined> = async (
+export const v2RouterContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; v2RouterAddresses: string[] },
 ) => {
   if (!addresses.v2RouterAddresses) {
@@ -50,13 +51,14 @@ export const v2RouterContractGuardJob: IJob<IDeployedContractGuard[] | undefined
           config.restartnonce,
         );
 
-        return {
+        const deployedGuard = {
           ContractAddress: routerAddress,
           GuardName: "UniswapV2RouterGuard",
           GuardAddress: uniswapV2RouterGuard.address,
           Description: "UniswapV2RouterGuard for " + routerAddress,
         };
+        await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
       }),
-    );
+    ).then(() => undefined);
   }
 };

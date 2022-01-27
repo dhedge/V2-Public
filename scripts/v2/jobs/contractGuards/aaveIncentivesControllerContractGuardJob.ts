@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const aaveIncentivesControllerContractGuardJob: IJob<IDeployedContractGuard[] | undefined> = async (
+export const aaveIncentivesControllerContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; aaveIncentivesControllerAddress?: string; wmaticTokenAddress?: string },
 ) => {
   if (!addresses.aaveIncentivesControllerAddress) {
@@ -54,13 +55,12 @@ export const aaveIncentivesControllerContractGuardJob: IJob<IDeployedContractGua
       config.execute,
       config.restartnonce,
     );
-    return [
-      {
-        ContractAddress: addresses.aaveIncentivesControllerAddress,
-        GuardName: "AaveIncentivesControllerGuard",
-        GuardAddress: aaveIncentivesControllerGuard.address,
-        Description: "Aave Incentives Controller contract",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.aaveIncentivesControllerAddress,
+      GuardName: "AaveIncentivesControllerGuard",
+      GuardAddress: aaveIncentivesControllerGuard.address,
+      Description: "Aave Incentives Controller contract",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };

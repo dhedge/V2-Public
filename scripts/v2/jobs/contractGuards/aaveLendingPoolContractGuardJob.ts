@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const aaveLendingPoolContractGuardJob: IJob<IDeployedContractGuard[] | undefined> = async (
+export const aaveLendingPoolContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; aaveLendingPoolAddress?: string },
 ) => {
   if (!addresses.aaveLendingPoolAddress) {
@@ -46,13 +47,12 @@ export const aaveLendingPoolContractGuardJob: IJob<IDeployedContractGuard[] | un
       config.restartnonce,
     );
 
-    return [
-      {
-        ContractAddress: addresses.aaveLendingPoolAddress,
-        GuardName: "AaveLendingPoolGuard",
-        GuardAddress: aaveLendingPoolGuard.address,
-        Description: "Aave Lending Pool contract",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.aaveLendingPoolAddress,
+      GuardName: "AaveLendingPoolGuard",
+      GuardAddress: aaveLendingPoolGuard.address,
+      Description: "Aave Lending Pool contract",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };

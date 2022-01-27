@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedAssetGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const erc20AssetGuardJob: IJob<IDeployedAssetGuard | undefined> = async (
+export const erc20AssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { assetGuardsFileName: string },
   addresses: {},
 ) => {
   const ethers = hre.ethers;
@@ -33,11 +34,13 @@ export const erc20AssetGuardJob: IJob<IDeployedAssetGuard | undefined> = async (
       config.restartnonce,
     );
 
-    return {
+    const deployedGuard = {
       AssetType: 0,
       GuardName: "ERC20Guard",
       GuardAddress: erc20Guard.address,
       Description: "ERC20 tokens",
     };
+
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
   }
 };

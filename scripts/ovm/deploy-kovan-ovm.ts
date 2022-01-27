@@ -14,7 +14,6 @@ const addresses: OVMDeployAddress = {
   // https://ogg.scopelift.co/wallet/0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc
   protocolTreasury: "0xef31D75A2f85CfDD9032158A2CEB773C84d79192",
 
-  sUSD: "0xaA5068dC2B3AADE533d3e52C6eeaadC6a8154c57",
   synthetixProxyAddress: "0x0064A673267696049938AA47595dD0B3C2e705A1",
   synthetixAddressResolverAddress: "0xb08b62e1cdfd37eCCd69A9ACe67322CCF801b3A6",
   implementationStorage: "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",

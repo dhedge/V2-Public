@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify, writeCsv } from "../../../Helpers";
-import { INotSureGuard, IJob, IUpgradeConfig } from "../types";
+import { INotSureGuard, IJob, IUpgradeConfig } from "../../types";
 const csv = require("csvtojson");
 
 // JBG69 Not sure what this guard is suppose to do
@@ -9,19 +9,19 @@ export const openAssetContractGuardJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: { assetsFileName?: string; governanceNamesFileName: string },
+  filenames: { externalAssetFileName?: string; governanceNamesFileName: string },
   addresses: {},
 ) => {
   const ethers = hre.ethers;
   const Governance = await hre.artifacts.readArtifact("Governance");
   const governanceABI = new ethers.utils.Interface(Governance.abi);
-  if (!filenames.assetsFileName) {
-    throw new Error("No assetFileName configured");
+  if (!filenames.externalAssetFileName) {
+    throw new Error("No externalAssetFileName configured");
   }
 
   console.log("Will deploy openassetguard");
   if (config.execute) {
-    const fileName = filenames.assetsFileName;
+    const fileName = filenames.externalAssetFileName;
     const csvAssets = await csv().fromFile(fileName);
     let addresses = csvAssets.map((asset: any) => asset.Address);
     const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");

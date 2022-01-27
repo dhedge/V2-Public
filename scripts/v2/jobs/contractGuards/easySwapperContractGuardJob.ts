@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const easySwapperContractGuardJob: IJob<IDeployedContractGuard[] | undefined> = async (
+export const easySwapperContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; dhedgeEasySwapperAddress?: string },
 ) => {
   if (!addresses.dhedgeEasySwapperAddress) {
@@ -41,13 +42,12 @@ export const easySwapperContractGuardJob: IJob<IDeployedContractGuard[] | undefi
       config.restartnonce,
     );
 
-    return [
-      {
-        ContractAddress: addresses.dhedgeEasySwapperAddress,
-        GuardName: "EasySwapperGuard",
-        GuardAddress: easySwapperGuard.address,
-        Description: "Dhedge EasySwapper - allows access to toros pools",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.dhedgeEasySwapperAddress,
+      GuardName: "EasySwapperGuard",
+      GuardAddress: easySwapperGuard.address,
+      Description: "Dhedge EasySwapper - allows access to toros pools",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };

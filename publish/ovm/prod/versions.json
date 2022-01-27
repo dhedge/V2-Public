@@ -32,26 +32,16 @@
       "SynthetixGuard": "0xEFEFCa1f7C5ac491d6fE720E6D6725255290D621",
       "Governance": "0xa9F912c1dB1b844fd96192Ac3B496E9d8F445bc9",
       "USDPriceAggregator": "0x645f8ec14d0940Efd7272ba478c12968e8eB9937",
-      "AssetHandler": {
-        "proxy": "0xBEa170C49036d7917cdA7511B57cAfd41efEDC01",
-        "implementation": "0x2B3779AC26dDDCe403A71E818E4C7491A495B195"
-      },
-      "PoolPerformance": {
-        "proxy": "0x0896A33E351fb11f405d3E9c03f4D4Fc667894a8",
-        "implementation": "0xa3A54bA1572BCc1468789C793bE2d46F38cf11dc"
-      },
-      "PoolManagerLogic": {
-        "proxy": "0x3621f9aAc18a42D2343270849611ea09aAea3e54",
-        "implementation": "0xbc87becd9b2aed3e282d352b94b80045946cf4b9"
-      },
-      "PoolLogic": {
-        "proxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
-        "implementation": "0xfe231f6b46d84f1dd046b4e4b5562a6433f3e914"
-      },
-      "PoolFactory": {
-        "proxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
-        "implementation": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8"
-      }
+      "AssetHandlerProxy": "0xBEa170C49036d7917cdA7511B57cAfd41efEDC01",
+      "AssetHandler": "0x2B3779AC26dDDCe403A71E818E4C7491A495B195",
+      "PoolPerformanceProxy": "0x0896A33E351fb11f405d3E9c03f4D4Fc667894a8",
+      "PoolPerformance": "0xa3A54bA1572BCc1468789C793bE2d46F38cf11dc",
+      "PoolManagerLogicProxy": "0x3621f9aAc18a42D2343270849611ea09aAea3e54",
+      "PoolManagerLogic": "0xbc87becd9b2aed3e282d352b94b80045946cf4b9",
+      "PoolLogicProxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
+      "PoolLogic": "0xfe231f6b46d84f1dd046b4e4b5562a6433f3e914",
+      "PoolFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
+      "PoolFactory": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8"
     }
   }
 }

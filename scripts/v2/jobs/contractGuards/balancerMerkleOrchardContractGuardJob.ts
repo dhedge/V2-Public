@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const balancerMerkleOrchardContractGuardJob: IJob<IDeployedContractGuard[] | undefined> = async (
+export const balancerMerkleOrchardContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; balancerMerkleOrchardAddress?: string },
 ) => {
   if (!addresses.balancerMerkleOrchardAddress) {
@@ -45,13 +46,12 @@ export const balancerMerkleOrchardContractGuardJob: IJob<IDeployedContractGuard[
       config.execute,
       config.restartnonce,
     );
-    return [
-      {
-        ContractAddress: addresses.balancerMerkleOrchardAddress,
-        GuardName: "BalancerMerkleOrchardGuard",
-        GuardAddress: balancerMerkleOrchardGuard.address,
-        Description: "Balancer Merkle Orchard Guard",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.balancerMerkleOrchardAddress,
+      GuardName: "BalancerMerkleOrchardGuard",
+      GuardAddress: balancerMerkleOrchardGuard.address,
+      Description: "Balancer Merkle Orchard Guard",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };

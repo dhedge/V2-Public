@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { checkAsset, checkBalancerLpAsset, getAggregator, hasDuplicates, proposeTx, tryVerify } from "../../Helpers";
-import { IJob, IUpgradeConfig } from "./types";
+import { IJob, IUpgradeConfig } from "../types";
 const csv = require("csvtojson");
 
 export const assetsJob: IJob<void> = async (

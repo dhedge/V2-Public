@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedAssetGuard, IJob, IUpgradeConfig } from "../types";
+import { IDeployedAssetGuard, IJob, IUpgradeConfig } from "../../types";
+import { addOrReplaceGuardInFile } from "../helpers";
 
-export const sushiLpAssetGuard: IJob<IDeployedAssetGuard | undefined> = async (
+export const sushiLpAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { assetGuardsFileName: string },
   addresses: { sushiMiniChefV2Address?: string; protocolDaoAddress: string },
 ) => {
   if (!addresses.sushiMiniChefV2Address) {
@@ -43,11 +44,14 @@ export const sushiLpAssetGuard: IJob<IDeployedAssetGuard | undefined> = async (
       config.execute,
       config.restartnonce,
     );
-    return {
+
+    const deployedGuard = {
       AssetType: 2,
       GuardName: "SushiLPAssetGuard",
       GuardAddress: sushiLPAssetGuard.address,
       Description: "Sushi LP tokens",
     };
+
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
   }
 };

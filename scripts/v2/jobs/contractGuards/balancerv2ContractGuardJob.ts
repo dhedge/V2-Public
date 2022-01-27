@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const balancerv2ContractGuard: IJob<IDeployedContractGuard[] | undefined> = async (
+export const balancerv2ContractGuard: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; balancerV2VaultAddress?: string },
 ) => {
   if (!addresses.balancerV2VaultAddress) {
@@ -46,13 +47,12 @@ export const balancerv2ContractGuard: IJob<IDeployedContractGuard[] | undefined>
       config.execute,
       config.restartnonce,
     );
-    return [
-      {
-        ContractAddress: addresses.balancerV2VaultAddress,
-        GuardName: "BalancerV2Guard",
-        GuardAddress: balancerV2Guard.address,
-        Description: "Balancer V2 Guard",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.balancerV2VaultAddress,
+      GuardName: "BalancerV2Guard",
+      GuardAddress: balancerV2Guard.address,
+      Description: "Balancer V2 Guard",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };

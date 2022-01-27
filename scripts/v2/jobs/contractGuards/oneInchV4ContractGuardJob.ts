@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IDeployedContractGuard, IJob, IUpgradeConfig } from "../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { IJob, IUpgradeConfig } from "../../types";
 
-export const oneInchV4ContractGuard: IJob<IDeployedContractGuard[] | undefined> = async (
+export const oneInchV4ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  filenames: { contractGuardsFileName: string },
   addresses: { protocolDaoAddress: string; oneInchV4RouterAddress?: string },
 ) => {
   if (!addresses.oneInchV4RouterAddress) {
@@ -47,13 +48,12 @@ export const oneInchV4ContractGuard: IJob<IDeployedContractGuard[] | undefined> 
       config.restartnonce,
     );
 
-    return [
-      {
-        ContractAddress: addresses.oneInchV4RouterAddress,
-        GuardName: "OneInchV4Guard",
-        GuardAddress: oneInchV4Guard.address,
-        Description: "OneInch V4 Router",
-      },
-    ];
+    const deployedGuard = {
+      ContractAddress: addresses.oneInchV4RouterAddress,
+      GuardName: "OneInchV4Guard",
+      GuardAddress: oneInchV4Guard.address,
+      Description: "OneInch V4 Router",
+    };
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }
 };
