@@ -15,7 +15,7 @@ import {
   proxyAdminAddress,
   tryVerify,
 } from "../Helpers";
-import { dhedgeEasySwapperAddress } from "../../config/chainData/polygon-data";
+import { dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
 
 const Decimal = require("decimal.js");
 
@@ -143,6 +143,13 @@ task("upgrade-polygon", "Upgrade contracts")
   .addOptionalParam("aavelendingpoolguard", "upgrade AaveLendingPoolGuard", false, types.boolean)
   .addOptionalParam("oneinchv4guard", "upgrade oneInchV4Guard", false, types.boolean)
   .addOptionalParam("governancenames", "upgrade Governance contract address mapping", false, types.boolean)
+  .addOptionalParam("univ3assetguard", "upgrade univ3assetguard", false, types.boolean)
+  .addOptionalParam(
+    "uniswapv3nonfungiblepositionguard",
+    "upgrade uniswapv3nonfungiblepositionguard",
+    false,
+    types.boolean,
+  )
   .setAction(async (taskArgs, hre) => {
     const ethers = hre.ethers;
     const upgrades = hre.upgrades;
@@ -1122,6 +1129,78 @@ task("upgrade-polygon", "Upgrade contracts")
             taskArgs.execute,
             taskArgs.restartnonce,
           );
+        }
+      }
+
+      if (!taskArgs.specific || taskArgs.univ3assetguard) {
+        console.log("Will deploy univ3assetguard");
+        if (taskArgs.execute) {
+          const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");
+          const uniV3AssetGuard = await UniswapV3AssetGuard.deploy(uniswapV3.nonfungiblePositionManager);
+          await uniV3AssetGuard.deployed();
+          console.log("UniswapV3AssetGuard deployed at", uniV3AssetGuard.address);
+
+          versions[newTag].contracts.UniswapV3AssetGuard = uniV3AssetGuard.address;
+
+          await tryVerify(
+            hre,
+            uniV3AssetGuard.address,
+            "contracts/guards/assetGuards/UniswapV3AssetGuard.sol:UniswapV3AssetGuard",
+            [],
+          );
+
+          const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [7, uniV3AssetGuard.address]);
+          await proposeTx(
+            versions[oldTag].contracts.Governance,
+            setAssetGuardABI,
+            "setAssetGuard for UniswapV3AssetGuard",
+            taskArgs.execute,
+          );
+          newAssetGuards.push({
+            AssetType: 7,
+            GuardName: "UniswapV3AssetGuard",
+            GuardAddress: uniV3AssetGuard.address,
+            Description: "Uniswap V3 Asset tokens",
+          });
+        }
+      }
+      if (!taskArgs.specific || taskArgs.uniswapv3nonfungiblepositionguard) {
+        console.log("Will deploy uniswapv3nonfungiblepositionguard");
+        if (taskArgs.execute) {
+          const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory(
+            "UniswapV3NonfungiblePositionGuard",
+          );
+          const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
+            uniswapV3.nonfungiblePositionManager,
+            1,
+          );
+          await uniswapV3NonfungiblePositionGuard.deployed();
+          console.log("UniswapV3NonfungiblePositionGuard deployed at", uniswapV3NonfungiblePositionGuard.address);
+          versions[newTag].contracts.UniswapV3NonfungiblePositionGuard = uniswapV3NonfungiblePositionGuard.address;
+
+          await tryVerify(
+            hre,
+            uniswapV3NonfungiblePositionGuard.address,
+            "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol:UniswapV3NonfungiblePositionGuard",
+            [],
+          );
+
+          const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+            uniswapV3.nonfungiblePositionManager,
+            uniswapV3NonfungiblePositionGuard.address,
+          ]);
+          await proposeTx(
+            versions[oldTag].contracts.Governance,
+            setContractGuardABI,
+            "setContractGuard for uniswapV3NonfungiblePositionGuard",
+            taskArgs.execute,
+          );
+          newContractGuards.push({
+            ContractAddress: uniswapV3.nonfungiblePositionManager,
+            GuardName: "UniswapV3NonfungiblePositionGuard",
+            GuardAddress: uniswapV3NonfungiblePositionGuard.address,
+            Description: "Uniswap V3 Nonfungible Position contract",
+          });
         }
       }
     } catch (e) {
