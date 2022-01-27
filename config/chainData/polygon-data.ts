@@ -62,6 +62,10 @@ export const balancer = {
       weights: [0.2, 0.8],
     },
   },
+  stablePools: {
+    // USDC, TUSD, DAI, USDT
+    BPSP_TUSD: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f",
+  },
 };
 
 // quickswap
@@ -102,6 +106,7 @@ export const assets = {
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
   dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
   ...torosPools,
+  tusd: "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
 };
 
 export const assetsBalanceOfSlot = {
@@ -125,6 +130,7 @@ export const price_feeds = {
   dai: "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D",
   sushi: "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0",
   balancer: "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66",
+  tusd: "0x7C5D415B64312D38c56B54358449d0a4058339d2",
 };
 
 export const toros = {

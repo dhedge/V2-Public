@@ -93,6 +93,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
   const assetBalancer = { asset: assets.balancer, assetType: 0, aggregator: price_feeds.balancer };
   const assetMiMatic = { asset: assets.miMatic, assetType: 0, aggregator: price_feeds.dai };
+  const assetTusd = { asset: assets.tusd, assetType: 0, aggregator: price_feeds.tusd };
 
   // Used in conjunction with the easy swapper
   const torosAssets = await Promise.all(
@@ -113,6 +114,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
     assetSushi,
     assetBalancer,
     assetMiMatic,
+    assetTusd,
     assetLendingPool,
     ...torosAssets,
   ];

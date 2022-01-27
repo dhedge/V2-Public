@@ -94,7 +94,7 @@ const deployBalancerV2LpAggregator = async (factory: string, info: any, hre: Har
   await tryVerify(
     hre,
     balancerV2LpAggregator.address,
-    "contracts/assets/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
+    "contracts/priceAggregators/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
     [
       factory,
       balancerV2Vault,
@@ -111,6 +111,22 @@ const deployBalancerV2LpAggregator = async (factory: string, info: any, hre: Har
     ],
   );
   return balancerV2LpAggregator;
+};
+
+const deployBalancerLpStablePoolAggregator = async (factory: string, pool: string, hre: HardhatRuntimeEnvironment) => {
+  await hre.run("compile:one", { contractName: "BalancerStablePoolAggregator" });
+
+  const BalancerStablePoolAggregator = await hre.ethers.getContractFactory("BalancerStablePoolAggregator");
+
+  const balancerStablePoolAggregator = await BalancerStablePoolAggregator.deploy(factory, pool);
+  await balancerStablePoolAggregator.deployed();
+  await tryVerify(
+    hre,
+    balancerStablePoolAggregator.address,
+    "contracts/assets/BalancerStablePoolAggregator.sol:BalancerStablePoolAggregator",
+    [factory, pool],
+  );
+  return balancerStablePoolAggregator;
 };
 
 task("upgrade-polygon", "Upgrade contracts")
@@ -373,25 +389,48 @@ task("upgrade-polygon", "Upgrade contracts")
             poolFactory,
             assetHandlerAssets,
           );
-          if (!foundInVersions) {
-            console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
-            if (taskArgs.execute) {
-              // Deploy Balancer LP Aggregator
-              console.log("Deploying ", balancerLp.name);
-              const balancerV2Aggregator = await deployBalancerV2LpAggregator(
-                versions[oldTag].contracts.PoolFactoryProxy,
-                balancerLp.data,
-                hre,
-              );
-              console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
-              assetHandlerAssets.push({
-                name: balancerLp.name,
-                asset: balancerLp.data.pool,
-                assetType: balancerLp.assetType,
-                aggregator: balancerV2Aggregator.address,
-                aggregatorName: "BalancerV2LPAggregator",
-              });
-            }
+          if (foundInVersions) continue; // skip if the asset is already deployed
+          if (balancerLp) console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
+          if (!taskArgs.execute) continue; // skip if the `execute` flag is not set
+
+          // Weighted pool
+          if (balancerLp.type === "balancerLpToken") {
+            // Deploy Balancer LP Weighted Pool Aggregator
+            console.log("Deploying ", balancerLp.name);
+            const balancerV2Aggregator = await deployBalancerV2LpAggregator(
+              versions[oldTag].contracts.PoolFactoryProxy,
+              balancerLp.data,
+              hre,
+            );
+            console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
+            assetHandlerAssets.push({
+              name: balancerLp.name,
+              asset: balancerLp.data.pool,
+              assetType: balancerLp.assetType,
+              aggregator: balancerV2Aggregator.address,
+              aggregatorName: "BalancerV2LPAggregator",
+            });
+          }
+
+          // Stable pool
+          if (balancerLp.type === "balancerLpStablePool") {
+            // Deploy Balancer LP Stable Pool Aggregator
+            console.log("Deploying ", balancerLp.name);
+            const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
+              versions[oldTag].contracts.PoolFactoryProxy,
+              balancerLp.data.pool,
+              hre,
+            );
+            console.log(
+              `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator.address}`,
+            );
+            assetHandlerAssets.push({
+              name: balancerLp.name,
+              asset: balancerLp.data.pool,
+              assetType: balancerLp.assetType,
+              aggregator: balancerLpStablePoolAggregator.address,
+              aggregatorName: "BalancerLpStablePoolAggregator",
+            });
           }
         }
 
@@ -953,7 +992,12 @@ task("upgrade-polygon", "Upgrade contracts")
           console.log("EasySwapperGuard deployed at", easySwapperGuard.address);
           versions[newTag].contracts.EasySwapperGuard = easySwapperGuard.address;
 
-          await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", []);
+          await tryVerify(
+            hre,
+            easySwapperGuard.address,
+            "contracts/guards/contractGuards/EasySwapperGuard.sol:EasySwapperGuard",
+            [],
+          );
 
           const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
             dhedgeEasySwapperAddress,
