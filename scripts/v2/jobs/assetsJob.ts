@@ -14,7 +14,6 @@ export const assetsJob: IJob<void> = async (
 ) => {
   const ethers = hre.ethers;
   let assetHandlerAssets = [];
-
   const poolFactoryProxy = versions[config.oldTag].contracts.PoolFactoryProxy;
   const poolFactory = await ethers.getContractAt("PoolFactory", poolFactoryProxy);
 
@@ -31,6 +30,8 @@ export const assetsJob: IJob<void> = async (
   if (await hasDuplicates(csvAssets, "Chainlink Price Feed"))
     throw "Duplicate 'Chainlink Price Feed' field found in assets CSV";
 
+  console.log("existing assets", csvAssets);
+
   const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
   for (const csvAsset of csvAssets) {
     const foundInVersions = await checkAsset(
@@ -39,6 +40,7 @@ export const assetsJob: IJob<void> = async (
       poolFactory,
       assetHandlerAssets,
     );
+
     if (!foundInVersions) {
       const assetType = csvAsset.AssetType;
       switch (assetType) {
@@ -106,11 +108,13 @@ export const assetsJob: IJob<void> = async (
             aggregatorName: csvAsset.aggregatorName,
           });
       }
+    } else {
+      console.log("Found in versions", csvAsset);
     }
   }
 
   // Should refactor not to use require and add types for what a balancerLp is
-  const balancerLps = filenames.balancerConfigFileName ? require(__dirname + filenames.balancerConfigFileName) : [];
+  const balancerLps = filenames.balancerConfigFileName ? require(process.cwd() + filenames.balancerConfigFileName) : [];
   for (const balancerLp of balancerLps) {
     if (!addresses.balancerV2VaultAddress) {
       throw new Error("No balancerV2VaultAddress configured");

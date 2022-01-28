@@ -32,7 +32,7 @@ const switchPolygonOzFile = (isProduction: boolean) => {
 };
 
 export const getDeploymentData = (chainId: number, deployment: "staging" | "production"): DeploymentData => {
-  const sCase = chainId.toString + deployment;
+  const sCase = chainId.toString() + "-" + deployment;
   switch (sCase) {
     case "137-staging":
       switchPolygonOzFile(false);

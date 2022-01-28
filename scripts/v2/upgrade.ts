@@ -87,6 +87,7 @@ upgradeTask.setAction(async (taskArgs, hre) => {
   const ethers = hre.ethers;
   const network = await ethers.provider.getNetwork();
   console.log("network:", network);
+
   if (taskArgs.restartnonce) {
     console.log("Restarting from last submitted nonce.");
   }
@@ -95,10 +96,10 @@ upgradeTask.setAction(async (taskArgs, hre) => {
 
   await hre.run("compile");
 
-  const versions = require(__dirname + filenames.versionsFileName);
+  const versions = require(process.cwd() + filenames.versionsFileName);
   const writeVersions = () => {
     const data = JSON.stringify(versions, null, 2);
-    fs.writeFileSync(filenames.versionsFileName, data);
+    fs.writeFileSync(process.cwd() + filenames.versionsFileName, data);
   };
 
   // TODO: This code needs to be reviewed and refactored
@@ -130,7 +131,15 @@ upgradeTask.setAction(async (taskArgs, hre) => {
         .filter((key) => {
           return !taskArgs.specific || taskArgs[key];
         })
-        .map((key) => jobs[key](taskArgs, hre, versions, filenames, addresses)),
+        .map((key) =>
+          jobs[key](
+            { execute: taskArgs.execute, restartnonce: taskArgs.restartnonce, newTag, oldTag },
+            hre,
+            versions,
+            filenames,
+            addresses,
+          ),
+        ),
     );
   } catch (e) {
     console.error(e);

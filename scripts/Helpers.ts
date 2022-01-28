@@ -9,10 +9,12 @@ import Safe, { EthersAdapter } from "@gnosis.pm/safe-core-sdk";
 import { retryWithDelay } from "./utils";
 import axios from "axios";
 
-const safeAddress = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+// TODO: This needs to be moved out of this file into deployment data
+const safeAddressPolygon = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+const safeAddressOptimism = "0x90b1a66957914EbbE7a8df254c0c1E455972379C";
 // https://github.com/gnosis/safe-deployments/blob/main/src/assets/v1.3.0/multi_send.json#L13
-const multiSendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
-const service = new SafeService("https://safe-transaction.polygon.gnosis.io");
+const multiSendAddressPolygon = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
+const multiSendAddressOptimism = "0x998739BFdAAdde7C933B942a68053933098f9EDa";
 
 let nonce: number;
 
@@ -142,19 +144,48 @@ export const proposeTx = async (
   const ethAdapter = new EthersAdapter({ ethers: ethers, signer: owner1 });
   const chainId: number = await ethAdapter.getChainId();
 
+  let gnosisApiForChain: string;
+  // Todo: refactor this out into deployment data
+  switch (chainId) {
+    case 137:
+      gnosisApiForChain = "https://safe-transaction.polygon.gnosis.io";
+      break;
+    case 10:
+      gnosisApiForChain = "https://safe-transaction.optimism.gnosis.io";
+      break;
+    default:
+      throw new Error("No api for chain");
+  }
+  const service = new SafeService(gnosisApiForChain);
+
   const contractNetworks: any = {
-    [chainId]: {
-      multiSendAddress: multiSendAddress,
+    [137]: {
+      multiSendAddress: multiSendAddressPolygon,
+    },
+    [10]: {
+      multiSendAddress: multiSendAddressOptimism,
     },
   };
 
+  let chainSafeAddress: string;
+  switch (chainId) {
+    case 137:
+      chainSafeAddress = safeAddressPolygon;
+      break;
+    case 10:
+      chainSafeAddress = safeAddressOptimism;
+      break;
+    default:
+      throw new Error("No safe address configured for chain: " + chainId);
+  }
+
   const safeSdk = await Safe.create({
     ethAdapter,
-    safeAddress: safeAddress,
+    safeAddress: chainSafeAddress,
     contractNetworks,
   });
 
-  nonce = nonce ? nonce : await getNonce(safeSdk, chainId, safeAddress, restartFromLastConfirmedNonce);
+  nonce = nonce ? nonce : await getNonce(safeSdk, chainId, chainSafeAddress, restartFromLastConfirmedNonce);
 
   const transaction = {
     to: to,
@@ -184,7 +215,7 @@ export const proposeTx = async (
   console.log("safeTransaction: ", safeTransaction);
 
   await retryWithDelay(
-    async () => await service.proposeTx(safeAddress, txHash, safeTransaction, signature),
+    async () => await service.proposeTx(chainSafeAddress, txHash, safeTransaction, signature),
     "Gnosis safe",
   );
 };
