@@ -42,6 +42,8 @@ jobs:
         run: |
           npx hardhat node --fork $ALCHEMY_URL &
 
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
       - name: Hardhat compile
         run: npx hardhat compile
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
