@@ -7,8 +7,8 @@ export const pauseJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
-  addresses: {},
+  _: {},
+  __: {},
 ) => {
   const ethers = hre.ethers;
 

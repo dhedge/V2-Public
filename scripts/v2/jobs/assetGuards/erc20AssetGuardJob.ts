@@ -9,7 +9,7 @@ export const erc20AssetGuardJob: IJob<void> = async (
   // TODO: This should be types and optimally should not be mutated
   versions: any,
   filenames: { assetGuardsFileName: string },
-  addresses: {},
+  _: {},
 ) => {
   const ethers = hre.ethers;
   const Governance = await hre.artifacts.readArtifact("Governance");

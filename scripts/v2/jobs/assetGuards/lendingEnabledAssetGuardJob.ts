@@ -9,7 +9,7 @@ export const lendingEnabledAssetGuardJob: IJob<void> = async (
   // TODO: This should be types and optimally should not be mutated
   versions: any,
   filenames: { assetGuardsFileName: string },
-  addresses: {},
+  _addresses: {},
 ) => {
   console.log("Will deploy lendingenabledassetguard");
   if (config.execute) {

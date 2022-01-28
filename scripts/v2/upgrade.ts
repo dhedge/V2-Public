@@ -66,10 +66,11 @@ const jobs: { [key: string]: IJob<void> } = {
   governancenames: governanceNamesJob,
 };
 
-const upgradeTask = task("upgrade-polygon", "Upgrade contracts")
+const upgradeTask = task("upgrade", "Upgrade contracts")
   .addParam("production", "run in production environment", false, types.boolean)
   .addParam("restartnonce", "propose transactions", false, types.boolean)
   .addParam("execute", "propose transactions", false, types.boolean)
+  .addParam("specific", "run only specified tasks", false, types.boolean)
   .addOptionalParam(
     "keepversion",
     "keep the previous release published version. don't update it",
@@ -78,8 +79,8 @@ const upgradeTask = task("upgrade-polygon", "Upgrade contracts")
   );
 
 Object.keys(jobs).forEach((job) => {
-  // We make each job a taskArg for hardhat
-  upgradeTask.addOptionalParam(job, undefined, false, types.boolean);
+  // We make each job a taskArg for hardhat :)
+  upgradeTask.addOptionalParam(job, "run " + job, false, types.boolean);
 });
 
 upgradeTask.setAction(async (taskArgs, hre) => {

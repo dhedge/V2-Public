@@ -7,7 +7,7 @@ export const poolPerformanceJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This should be types and optimally should not be mutated
   versions: any,
-  filenames: {},
+  _filenames: {},
   addresses: { proxyAdminAddress: string; protocolDaoAddress: string; implementationStorageAddress: string },
 ) => {
   const ethers = hre.ethers;

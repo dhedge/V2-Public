@@ -9,7 +9,7 @@ export const v2RouterContractGuardJob: IJob<void> = async (
   // TODO: This should be types and optimally should not be mutated
   versions: any,
   filenames: { contractGuardsFileName: string },
-  addresses: { protocolDaoAddress: string; v2RouterAddresses: string[] },
+  addresses: { protocolDaoAddress: string; v2RouterAddresses?: string[] },
 ) => {
   if (!addresses.v2RouterAddresses) {
     console.warn("v2RouterAddresses not configured for v2RouterGuardJob: skipping.");

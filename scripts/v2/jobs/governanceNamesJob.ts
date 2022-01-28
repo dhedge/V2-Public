@@ -9,7 +9,7 @@ export const governanceNamesJob: IJob<void> = async (
   // TODO: This should be types and optimally should not be mutated
   versions: any,
   filenames: { governanceNamesFileName: string },
-  addresses: {},
+  _addresses: {},
 ) => {
   const ethers = hre.ethers;
 

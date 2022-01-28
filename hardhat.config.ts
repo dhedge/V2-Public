@@ -9,7 +9,7 @@ import "solidity-coverage";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/config";
 
-import "./scripts/polygon/upgrade-polygon";
+import "./scripts/v2/upgrade";
 import "./scripts/polygon/verify";
 import "./scripts/ovm/explorer-verify";
 import "./scripts/polygon/dhedgeEasySwapper";
