@@ -6,7 +6,6 @@ import { ovmAddresses, ovmProdFileNames } from "../ovm/deploy-data";
 export interface DeploymentData {
   addresses: IAddresses;
   filenames: IFileNames;
-  versionsFileName: string;
 }
 
 const switchPolygonOzFile = (isProduction: boolean) => {
@@ -40,14 +39,12 @@ export const getDeploymentData = (chainId: number, deployment: "staging" | "prod
       return {
         addresses: polygonAddresses,
         filenames: polygonStagingFileNames,
-        versionsFileName: "../../publish/polygon/staging/versions.json",
       };
     case "137-production":
       switchPolygonOzFile(true);
       return {
         addresses: polygonAddresses,
         filenames: polygonProdFileNames,
-        versionsFileName: "../../publish/polygon/prod/versions.json",
       };
     case "10-staging":
       throw new Error("No staging environment for chainId:" + chainId);
@@ -55,7 +52,6 @@ export const getDeploymentData = (chainId: number, deployment: "staging" | "prod
       return {
         addresses: ovmAddresses,
         filenames: ovmProdFileNames,
-        versionsFileName: "../../publish/ovm/prod/versions.json",
       };
   }
   throw new Error("getDeploymentData: No Case for " + sCase);

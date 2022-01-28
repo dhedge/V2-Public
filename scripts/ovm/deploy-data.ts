@@ -14,6 +14,7 @@ export const ovmAddresses: IAddresses = {
 };
 
 export const ovmProdFileNames: IFileNames = {
+  versionsFileName: "./publish/ovm/prod/versions.json",
   assetsFileName: "./config/ovm-prod/dHEDGE Assets list.csv",
   governanceNamesFileName: "./config/ovm-prod/dHEDGE Governance Names.csv",
   contractGuardsFileName: "./config/ovm-prod/dHEDGE Governance Contract Guards.csv",

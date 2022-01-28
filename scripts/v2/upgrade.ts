@@ -33,13 +33,12 @@ const jobs: { [key: string]: IJob<void> } = {
   pause: pauseJob,
   unpause: unpauseJob,
 
+  // Upgradable
   assets: assetsJob,
   assethandler: assetHandlerJob,
-
   poolfactory: poolFactoryJob,
   poollogic: poolLogicJob,
   poolmanagerlogic: poolManagerLogicJob,
-
   poolperformance: poolPerformanceJob,
 
   // Asset Guards
@@ -67,104 +66,84 @@ const jobs: { [key: string]: IJob<void> } = {
   governancenames: governanceNamesJob,
 };
 
-task("upgrade-polygon", "Upgrade contracts")
-  .addOptionalParam("production", "run in production environment", false, types.boolean)
-  .addOptionalParam("restartnonce", "propose transactions", false, types.boolean)
-  .addOptionalParam("execute", "propose transactions", false, types.boolean)
-  .addOptionalParam("keepversion", "keep the previous release published version. don't update it", false, types.boolean)
-  .addOptionalParam("pause", "pause contract", false, types.boolean)
-  .addOptionalParam("unpause", "unpause contract", false, types.boolean)
-  .addOptionalParam("specific", "propose transactions", false, types.boolean)
-  .addOptionalParam("poolfactory", "upgrade poolFactory", false, types.boolean)
-  .addOptionalParam("assetfandler", "upgrade assetHandler", false, types.boolean)
-  .addOptionalParam("poollogic", "upgrade poolLogic", false, types.boolean)
-  .addOptionalParam("poolmanagerlogic", "upgrade poolManagerLogic", false, types.boolean)
-  .addOptionalParam("poolperformance", "upgrade poolPerformance", false, types.boolean)
-  .addOptionalParam("assets", "deploy new assets", false, types.boolean)
-  .addOptionalParam("aavelendingpoolassetguard", "upgrade aaveLendingPoolAssetGuard", false, types.boolean)
-  .addOptionalParam("sushilpassetguard", "upgrade sushiLPAssetGuard", false, types.boolean)
-  .addOptionalParam("erc20guard", "upgrade erc20Guard", false, types.boolean)
-  .addOptionalParam("lendingenabledassetguard", "upgrade LendingEnabledAssetGuard", false, types.boolean)
-  .addOptionalParam("uniswapv2routerguard", "upgrade uniswapV2RouterGuard", false, types.boolean)
-  .addOptionalParam("openassetguard", "upgrade openAssetGuard", false, types.boolean)
-  .addOptionalParam("quicklpassetguard", "upgrade quickLPAssetGuard", false, types.boolean)
-  .addOptionalParam("balancerv2guard", "upgrade balancerV2Guard", false, types.boolean)
-  .addOptionalParam("balancermerkleorchardguard", "upgrade balancerMerkleOrchardGuard", false, types.boolean)
-  .addOptionalParam("quickstakingrewardsguard", "upgrade quickStakingRewardsGuard", false, types.boolean)
-  .addOptionalParam("sushiminichefv2guard", "upgrade sushiMiniChefV2Guard", false, types.boolean)
-  .addOptionalParam("easyswapperguard", "upgrade easyswapperguard", false, types.boolean)
-  .addOptionalParam("aaveincentivescontrollerguard", "upgrade AaveIncentivesControllerGuard", false, types.boolean)
-  .addOptionalParam("aavelendingpoolguard", "upgrade AaveLendingPoolGuard", false, types.boolean)
-  .addOptionalParam("oneinchv4guard", "upgrade oneInchV4Guard", false, types.boolean)
-  .addOptionalParam("governancenames", "upgrade Governance contract address mapping", false, types.boolean)
-  .setAction(async (taskArgs, hre) => {
-    const ethers = hre.ethers;
-    const network = await ethers.provider.getNetwork();
+const upgradeTask = task("upgrade-polygon", "Upgrade contracts")
+  .addParam("production", "run in production environment", false, types.boolean)
+  .addParam("restartnonce", "propose transactions", false, types.boolean)
+  .addParam("execute", "propose transactions", false, types.boolean)
+  .addOptionalParam(
+    "keepversion",
+    "keep the previous release published version. don't update it",
+    false,
+    types.boolean,
+  );
 
-    const { addresses, filenames, versionsFileName } = getDeploymentData(
-      network.chainId,
-      taskArgs.production ? "production" : "staging",
+Object.keys(jobs).forEach((job) => {
+  // We make each job a taskArg for hardhat
+  upgradeTask.addOptionalParam(job, undefined, false, types.boolean);
+});
+
+upgradeTask.setAction(async (taskArgs, hre) => {
+  const ethers = hre.ethers;
+  const network = await ethers.provider.getNetwork();
+  console.log("network:", network);
+  if (taskArgs.restartnonce) {
+    console.log("Restarting from last submitted nonce.");
+  }
+
+  const { addresses, filenames } = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
+
+  await hre.run("compile");
+
+  const versions = require(__dirname + filenames.versionsFileName);
+  const writeVersions = () => {
+    const data = JSON.stringify(versions, null, 2);
+    fs.writeFileSync(filenames.versionsFileName, data);
+  };
+
+  // TODO: This code needs to be reviewed and refactored
+  const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
+  let newTag: string;
+  // I don't really understand this logic where if were not specifying jobs it doesnt use a new tag?
+  if (!taskArgs.specific || taskArgs.keepversion) {
+    newTag = oldTag;
+    console.log(`Using Old Tag: ${oldTag}`);
+  } else {
+    // update to latest release version
+    newTag = await getTag();
+    console.log(`Using New Tag: ${newTag}`);
+  }
+
+  if (newTag != oldTag) {
+    versions[newTag] = new Object();
+  }
+
+  versions[newTag].contracts = { ...versions[oldTag].contracts };
+  versions[newTag].network = network;
+  versions[newTag].date = new Date().toUTCString();
+
+  // TODO: ^^This code needs to be reviewed and refactored
+
+  try {
+    await Promise.all(
+      Object.keys(jobs)
+        .filter((key) => {
+          return !taskArgs.specific || taskArgs[key];
+        })
+        .map((key) => jobs[key](taskArgs, hre, versions, filenames, addresses)),
     );
-
-    console.log("network:", network);
-    if (![137, 10].includes(network.chainId)) {
-      throw new Error("Aborting: Expected chainId to 137|10. Must supply `--network polygon|optimism`");
-    }
-
-    if (taskArgs.restartnonce) {
-      console.log("Restarting from last submitted nonce.");
-    }
-
-    await hre.run("compile");
-    const versions = require(versionsFileName);
-
-    const writeVersions = () => {
-      const data = JSON.stringify(versions, null, 2);
-      fs.writeFileSync(versionsFileName, data);
-    };
-
-    // TODO: This code needs to be reviewed and refactored
-    const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
-    let newTag: string;
-    if (!taskArgs.specific || taskArgs.keepversion) {
-      newTag = oldTag;
-    } else {
-      // update to latest release version
-      newTag = await getTag();
-    }
-    console.log(`Old Version: ${oldTag}`);
-    console.log(`New Version: ${newTag}`);
-
-    if (newTag != oldTag) {
-      versions[newTag] = new Object();
-    }
-    versions[newTag].contracts = { ...versions[oldTag].contracts };
-    versions[newTag].network = network;
-    versions[newTag].date = new Date().toUTCString();
-
+  } catch (e) {
+    console.error(e);
+    console.log("UPGRADE EXIT UNEXPECTED");
+  } finally {
     // TODO: ^^This code needs to be reviewed and refactored
-
-    try {
-      await Promise.all(
-        Object.keys(jobs)
-          .filter((key) => {
-            return !taskArgs.specific || taskArgs[key];
-          })
-          .map((key) => jobs[key](taskArgs, hre, versions, filenames, addresses)),
-      );
-    } catch (e) {
-      console.error(e);
-      console.log("UPGRADE EXIT UNEXPECTED");
-    } finally {
-      // TODO: ^^This code needs to be reviewed and refactored
-      if (taskArgs.execute) {
-        // only update the files if executing an upgrade
-        console.log("Updating versions.json");
-        // TODO:
-        writeVersions();
-        console.log("Updating csv");
-        // TODO: Shouldn't be using a mutable export/import to pass out this data
-        console.log(nonceLog);
-      }
+    if (taskArgs.execute) {
+      // only update the files if executing an upgrade
+      console.log("Updating versions.json");
+      // TODO:
+      writeVersions();
+      console.log("Updating csv");
+      // TODO: Shouldn't be using a mutable export/import to pass out this data
+      console.log(nonceLog);
     }
-  });
+  }
+});

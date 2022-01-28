@@ -110,7 +110,7 @@ export const assetsJob: IJob<void> = async (
   }
 
   // Should refactor not to use require and add types for what a balancerLp is
-  const balancerLps = filenames.balancerConfigFileName ? require(filenames.balancerConfigFileName) : [];
+  const balancerLps = filenames.balancerConfigFileName ? require(__dirname + filenames.balancerConfigFileName) : [];
   for (const balancerLp of balancerLps) {
     if (!addresses.balancerV2VaultAddress) {
       throw new Error("No balancerV2VaultAddress configured");

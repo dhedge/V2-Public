@@ -18,6 +18,7 @@ export type IJob<T> = (
 
 // File Names
 export interface IFileNames {
+  versionsFileName: string;
   assetsFileName: string;
   governanceNamesFileName: string;
   contractGuardsFileName: string;

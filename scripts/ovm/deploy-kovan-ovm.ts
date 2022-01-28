@@ -1,5 +1,5 @@
 import { OVMDeployAddress, OVMDeployFileNames } from "./deploy-types";
-import { deployOvm } from "./deploy";
+// import { deployOvm } from "./deploy";
 
 const fileNames: OVMDeployFileNames = {
   ovmVersionFile: "./publish/ovm/kovan/versions.json",
@@ -19,4 +19,4 @@ const addresses: OVMDeployAddress = {
   implementationStorage: "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
 };
 
-deployOvm(fileNames, addresses);
+// deployOvm(fileNames, addresses);
