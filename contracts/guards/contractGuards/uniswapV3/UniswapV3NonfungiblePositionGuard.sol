@@ -42,11 +42,10 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "./Path.sol";
 import "../../../utils/TxDataUtils.sol";
 import "../../../interfaces/guards/IGuard.sol";
-import "../../../interfaces/INFTGuard.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
 
-contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, INFTGuard {
+contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
   event Mint(
@@ -89,14 +88,6 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard, INFTGuard {
   constructor(address _nonfungiblePositionManager, uint256 _uniV3PositionsLimit) {
     nonfungiblePositionManager = INonfungiblePositionManager(_nonfungiblePositionManager);
     uniV3PositionsLimit = _uniV3PositionsLimit;
-  }
-
-  /// @notice Receive guard for Uniswap V3 non-fungible Position Manager
-  /// @dev revert if position limit
-  /// @param _poolLogic Pool address
-  function onReceive(address _poolLogic) external view override returns (bool) {
-    require(nonfungiblePositionManager.balanceOf(_poolLogic) <= uniV3PositionsLimit, "too many uniswap v3 positions");
-    return true;
   }
 
   /// @notice Transaction guard for Uniswap V3 non-fungible Position Manager
