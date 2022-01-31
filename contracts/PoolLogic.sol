@@ -76,7 +76,6 @@ import "./interfaces/IHasPoolPerformance.sol";
 import "./interfaces/IHasOwnable.sol";
 import "./interfaces/IHasDaoInfo.sol";
 import "./interfaces/IManaged.sol";
-import "./interfaces/INFTGuard.sol";
 import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
@@ -788,12 +787,6 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     uint256,
     bytes calldata
   ) external view override returns (bytes4) {
-    address guard = IHasGuardInfo(factory).getGuard(msg.sender);
-    require(guard != address(0), "NFT not supported");
-
-    // restrict NFT receive (considering Uniswap V3 Position NFT)
-    INFTGuard(guard).onReceive(address(this));
-
     return this.onERC721Received.selector;
   }
 
