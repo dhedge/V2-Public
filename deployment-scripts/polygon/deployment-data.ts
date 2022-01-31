@@ -48,8 +48,6 @@ export const polygonAddresses: IAddresses = {
 
   dhedgeEasySwapperAddress: dhedgeEasySwapperAddress,
 
-  // TODO: Move to polygon-data
-
   // External Logic Contracts
   balancerV2VaultAddress: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
   balancerMerkleOrchardAddress: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",

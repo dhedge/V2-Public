@@ -7,7 +7,7 @@ const csv = require("csvtojson");
 export const openAssetContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This should be types and optimally should not be mutated
+  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { externalAssetFileName?: string; governanceNamesFileName: string },
   _addresses: {},

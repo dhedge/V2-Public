@@ -6,7 +6,7 @@ import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../
 export const balancerv2ContractGuard: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This should be types and optimally should not be mutated
+  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
   addresses: { balancerV2VaultAddress?: string } & IProposeTxProperties,

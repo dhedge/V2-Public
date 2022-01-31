@@ -8,7 +8,7 @@ import csv from "csvtojson";
 export const assetsJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This should be types and optimally should not be mutated
+  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { assetsFileName?: string; balancerConfigFileName?: string },
   addresses: { balancerV2VaultAddress?: string } & IProposeTxProperties,

@@ -6,7 +6,7 @@ import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../
 export const quickLpAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This should be types and optimally should not be mutated
+  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { assetGuardsFileName: string },
   addresses: { quickStakingRewardsFactoryAddress?: string } & IProposeTxProperties,
