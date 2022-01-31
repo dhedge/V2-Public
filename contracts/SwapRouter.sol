@@ -11,24 +11,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2021 dHEDGE DAO
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// Copyright (c) 2022 dHEDGE DAO
 //
 // SPDX-License-Identifier: MIT
 
@@ -61,20 +44,32 @@ contract SwapRouter is Ownable, IUniswapV2RouterSwapOnly {
   constructor(IUniswapV2Router[] memory _uniV2Routers, ICurveCryptoSwap[] memory _curvePools) Ownable() {
     uniV2Routers = _uniV2Routers;
     curvePools = _curvePools;
+
+    // For Curve pools, map the underlying coins because this mapping doesn't exist in Curve.
+    for (uint256 i = 0; i < _curvePools.length; i++) {
+      // Maximum 10 coins per pool supported (can be adjusted)
+      for (uint256 coinId = 0; coinId < 10; coinId++) {
+        try _curvePools[i].underlying_coins(coinId) returns (address coinAddress) {
+          CurvePoolCoin memory _curvePoolCoin = CurvePoolCoin(address(_curvePools[i]), coinAddress, coinId);
+          _setCurvePoolCoin(_curvePoolCoin);
+          // solhint-disable-next-line no-empty-blocks
+        } catch {}
+      }
+    }
   }
 
-  // ========== MUTATIVE FUNCTIONS ==========
+  // ========== MUTATIVE FUNCTIONS ========== //
 
   // ---------- Owner Functions ---------- //
 
-  function setCurvePoolCoins(CurvePoolCoin[] calldata _curvePoolCoins) external onlyOwner {
+  function setCurvePoolCoins(CurvePoolCoin[] memory _curvePoolCoins) external onlyOwner {
     for (uint256 i = 0; i < _curvePoolCoins.length; i++) {
       setCurvePoolCoin(_curvePoolCoins[i]);
     }
   }
 
-  function setCurvePoolCoin(CurvePoolCoin calldata _curvePoolCoin) public onlyOwner {
-    curvePoolCoin[_curvePoolCoin.curvePool][_curvePoolCoin.token] = _curvePoolCoin.coinId;
+  function setCurvePoolCoin(CurvePoolCoin memory _curvePoolCoin) public onlyOwner {
+    _setCurvePoolCoin(_curvePoolCoin);
   }
 
   // ---------- Public Functions ---------- //
@@ -89,23 +84,25 @@ contract SwapRouter is Ownable, IUniswapV2RouterSwapOnly {
     (uint256 uniV2RouterIndex, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, path);
 
     (uint256 curvePoolIndex, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(amountIn, path);
+    // uniV2BestAmountOut = 0; // TODO: Bypasses Uniswap routing (only for testing)
+    // curveBestAmountOut = 0; // TODO: Bypasses Curve routing (only for testing)
 
     IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
-    IERC20(path[0]).approve(address(uniV2Routers[uniV2RouterIndex]), amountIn);
 
     if (uniV2BestAmountOut > curveBestAmountOut) {
+      // use Uni v2 router
       require(uniV2BestAmountOut > 0, "SwapRouter: invalid routing 01"); // invalid routing with Uni v2 swapExactTokensForTokens
+      IERC20(path[0]).approve(address(uniV2Routers[uniV2RouterIndex]), amountIn);
       amounts = uniV2Routers[uniV2RouterIndex].swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline);
     } else {
+      // Use Curve pool
       require(curveBestAmountOut > 0, "SwapRouter: invalid routing 03"); // invalid routing with Curve swapExactTokensForToken
-      _curveExchange(curvePoolIndex, amountIn, amountOutMin, path);
+      IERC20(path[0]).approve(address(curvePools[curvePoolIndex]), amountIn);
+      _curveExchange(curvePoolIndex, amountIn, curveBestAmountOut, path);
+      amounts = new uint256[](2);
       amounts[0] = amountIn;
       amounts[1] = curveBestAmountOut;
     }
-  }
-
-  function getCoin(uint256 curvePoolIndex, address token) public view returns (uint256 coin) {
-    coin = curvePoolCoin[address(curvePools[curvePoolIndex])][token];
   }
 
   function swapTokensForExactTokens(
@@ -126,18 +123,30 @@ contract SwapRouter is Ownable, IUniswapV2RouterSwapOnly {
 
   // ---------- Internal Functions ---------- //
 
+  function bytesToAddress(bytes memory bys) internal pure returns (address addr) {
+    assembly {
+      addr := mload(add(bys, 20))
+    }
+  }
+
+  function _setCurvePoolCoin(CurvePoolCoin memory _curvePoolCoin) internal {
+    curvePoolCoin[_curvePoolCoin.curvePool][_curvePoolCoin.token] = _curvePoolCoin.coinId;
+  }
+
   function _curveExchange(
     uint256 curvePoolIndex,
     uint256 amountIn,
     uint256 amountOutMin,
     address[] calldata path
   ) internal {
-    uint256 from = getCoin(curvePoolIndex, path[0]);
-    uint256 to = getCoin(curvePoolIndex, path[path.length - 1]);
-    curvePools[curvePoolIndex].exchange_underlying(from, to, amountIn, amountOutMin);
+    ICurveCryptoSwap curvePool = curvePools[curvePoolIndex];
+    uint256 from = curvePoolCoin[address(curvePool)][path[0]];
+    uint256 to = curvePoolCoin[address(curvePool)][path[path.length - 1]];
+
+    curvePool.exchange_underlying(from, to, amountIn, amountOutMin);
   }
 
-  // ========== VIEWS ==========
+  // ========== VIEWS ========== //
 
   function getBestAmountOutUniV2Router(uint256 amountIn, address[] memory path)
     public
@@ -218,7 +227,7 @@ contract SwapRouter is Ownable, IUniswapV2RouterSwapOnly {
       return 0; // CoinId doesn't match Curve setting. Don't use Curve.
     }
 
-    if (curvePool.underlying_coins(from) != path[path.length - 1]) {
+    if (curvePool.underlying_coins(to) != path[path.length - 1]) {
       return 0; // CoinId doesn't match Curve setting. Don't use Curve.
     }
 
