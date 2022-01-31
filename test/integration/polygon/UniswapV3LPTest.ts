@@ -371,36 +371,5 @@ describe("Uniswap V3 LP Test", function () {
       expect(await USDC.balanceOf(logicOwner.address)).gt(usdcBalanceBefore);
       expect(await WETH.balanceOf(logicOwner.address)).gt(wethBalanceBefore);
     });
-
-    it.only("can't receive more position nfts", async () => {
-      await getAccountToken(units(5), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
-      await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
-      await WETH.approve(nonfungiblePositionManager.address, units(5));
-      await USDC.approve(nonfungiblePositionManager.address, units(10000, 5));
-      await nonfungiblePositionManager.mint({
-        token0: assets.usdc,
-        token1: assets.weth,
-        fee: 10000,
-        tickLower: -414000,
-        tickUpper: -253000,
-        amount0Desired: units(2000, 6),
-        amount1Desired: units(1),
-        amount0Min: 0,
-        amount1Min: 0,
-        recipient: logicOwner.address,
-        deadline: deadLine,
-      });
-      tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(logicOwner.address, 0);
-      await expect(
-        nonfungiblePositionManager["safeTransferFrom(address,address,uint256)"](
-          logicOwner.address,
-          poolLogicProxy.address,
-          tokenId,
-        ),
-      ).to.revertedWith("too many uniswap v3 positions");
-
-      await nonfungiblePositionManager.transferFrom(logicOwner.address, poolLogicProxy.address, tokenId);
-      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(2);
-    });
   });
 });
