@@ -62,6 +62,10 @@ export const balancer = {
       weights: [0.2, 0.8],
     },
   },
+  stablePools: {
+    // USDC, TUSD, DAI, USDT
+    BPSP_TUSD: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f",
+  },
 };
 
 // quickswap
@@ -77,22 +81,18 @@ export const quickswap = {
 };
 
 // Curve
-export const curve = {
-  atricrypto3: {
-    address: "0x1d8b86e3D88cDb2d34688e87E72F388Cb541B7C8",
-    coins: [
-      { token: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063", coinId: "0" }, // DAI
-      { token: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", coinId: "1" }, // USDC
-      { token: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", coinId: "2" }, // USDT
-      { token: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", coinId: "3" }, // WBTC
-      { token: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", coinId: "4" }, // WETH
-    ],
-  },
-};
+export const curvePools = ["0x1d8b86e3D88cDb2d34688e87E72F388Cb541B7C8"];
 
 // oneInch
 export const oneinch = {
   v3Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
+};
+
+export const torosPools = {
+  ETHBEAR2X: "0x027da30fadab6202801f97be344e2348a2a92842",
+  ETHBULL3X: "0x460b60565cb73845d56564384ab84bf84c13e47d",
+  BTCBEAR2X: "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
+  BTCBULL3X: "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
 };
 
 export const assets = {
@@ -108,6 +108,8 @@ export const assets = {
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
   dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
+  ...torosPools,
+  tusd: "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
 };
 
 export const assetsBalanceOfSlot = {
@@ -131,6 +133,7 @@ export const price_feeds = {
   dai: "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D",
   sushi: "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0",
   balancer: "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66",
+  tusd: "0x7C5D415B64312D38c56B54358449d0a4058339d2",
 };
 
 export const toros = {
@@ -141,3 +144,5 @@ export const toros = {
     "0x460b60565cb73845d56564384ab84bf84c13e47d", // Ethereum Bull 3x
   ],
 };
+
+export const dhedgeEasySwapperAddress = "0xC3e6d2811f669094d94F7589CaEa69672D93408e";

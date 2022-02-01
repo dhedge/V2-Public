@@ -18,7 +18,6 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -26,22 +25,16 @@ import "./interfaces/curve/ICurveCryptoSwap.sol";
 import "./interfaces/uniswapv2/IUniswapV2Router.sol";
 import "./interfaces/uniswapv2/IUniswapV2RouterSwapOnly.sol";
 
-contract SwapRouter is Ownable, IUniswapV2RouterSwapOnly {
+contract SwapRouter is IUniswapV2RouterSwapOnly {
   using SafeERC20 for IERC20;
 
-  struct CurvePoolCoin {
-    address curvePool;
-    address token;
-    uint256 coinId;
-  }
-
   IUniswapV2Router[] public uniV2Routers;
-  ICurveCryptoSwap[] public curvePools;
+  address[] public curvePools;
 
   // Curve can get the token address from coinId, but not the other way around. Hence this mapping is required from token -> coinId
   mapping(address => mapping(address => uint256)) public curvePoolCoin;
 
-  constructor(IUniswapV2Router[] memory _uniV2Routers, ICurveCryptoSwap[] memory _curvePools) Ownable() {
+  constructor(IUniswapV2Router[] memory _uniV2Routers, address[] memory _curvePools) {
     uniV2Routers = _uniV2Routers;
     curvePools = _curvePools;
 
@@ -56,20 +49,6 @@ contract SwapRouter is Ownable, IUniswapV2RouterSwapOnly {
         } catch {}
       }
     }
-  }
-
-  // ========== MUTATIVE FUNCTIONS ========== //
-
-  // ---------- Owner Functions ---------- //
-
-  function setCurvePoolCoins(CurvePoolCoin[] memory _curvePoolCoins) external onlyOwner {
-    for (uint256 i = 0; i < _curvePoolCoins.length; i++) {
-      setCurvePoolCoin(_curvePoolCoins[i]);
-    }
-  }
-
-  function setCurvePoolCoin(CurvePoolCoin memory _curvePoolCoin) public onlyOwner {
-    _setCurvePoolCoin(_curvePoolCoin);
   }
 
   // ---------- Public Functions ---------- //

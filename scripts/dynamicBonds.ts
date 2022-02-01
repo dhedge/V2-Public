@@ -6,6 +6,7 @@ import axios from "axios";
 
 const { proposeTx, tryVerify, implementationStorage, proxyAdminAddress } = require("./Helpers");
 import { protocolDao } from "../config/chainData/polygon-data";
+import { DynamicBonds } from "../types"; // Unit test fails on Github Actions
 const coingeckoNetwork = "polygon-pos";
 
 // Addresses
@@ -21,101 +22,13 @@ const saleDuration = 60 * 60 * 24 * 5; // 5 days
 
 // Bond option lock durations
 const bondLockDurations = [7, 30, 182, 365]; // in days
-// const bondLockDurations = [1 / (24 * 60), 1 / 24, 1, 7]; // Test in days
+// const bondLockDurations = [1 / (24 * 60), 1 / 24, 1, 7]; // Short durations that can be used for testing
 
 // Bond option discount percentages
-const discountOneWeek = 0.05;
-const discountOneMonth = 0.15;
-const discountSixMonths = 0.3;
-const discountOneYear = 0.45;
-
-task("dynamicBonds", "Deploy Dynamic Bonds contract")
-  .addOptionalParam("production", "run in production environment", false, types.boolean)
-  .addOptionalParam("deploy", "deploy Dynamic Bonds", false, types.boolean)
-  .addOptionalParam("upgrade", "upgrade Dynamic Bonds", false, types.boolean)
-  .addOptionalParam("updateTerms", "update bond terms", false, types.boolean)
-  .addOptionalParam("updateTreasury", "change the treasury address", false, types.boolean)
-  .addOptionalParam("getConfig", "get live contract configuration", false, types.boolean)
-  .setAction(async (taskArgs, hre) => {
-    const ethers = hre.ethers;
-    const upgrades = hre.upgrades;
-    const network = await ethers.provider.getNetwork();
-    console.log("Network:", network.name);
-    await hre.run("compile");
-
-    // Init contracts
-    const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
-    const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
-
-    // Init version
-    const versionFile = taskArgs.production ? "versions" : "staging-versions";
-    const versionPath = `../publish/${network.name}/${versionFile}.json`;
-    const versions = require(versionPath);
-    const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
-    const version = versions[latestVersion];
-    let versionUpdate = false;
-
-    if (taskArgs.getConfig) {
-      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
-      const { depositTokenDecimals } = await getTokenDecimals(hre);
-      await printConfig(dynamicBondsProxy, depositTokenDecimals);
-      await checkPayoutBalance(hre, dynamicBondsProxy);
-    }
-
-    if (taskArgs.updateTerms) {
-      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
-      await setBondTerms(dynamicBondsProxy);
-      await updateBondOptions(hre, dynamicBondsProxy);
-    }
-
-    if (taskArgs.updateTreasury) {
-      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
-      await dynamicBondsProxy.setTreasury(treasury);
-      console.log("Treasury set to:", treasury);
-    }
-
-    if (taskArgs.upgrade) {
-      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
-      const DynamicBonds = await ethers.getContractFactory("DynamicBonds");
-
-      const newDynamicBondsImplementation = await upgrades.prepareUpgrade(dynamicBondsProxy, DynamicBonds);
-      console.log("New DynamicBonds logic deployed to: ", newDynamicBondsImplementation);
-
-      await tryVerify(hre, newDynamicBondsImplementation, "contracts/DynamicBonds.sol:DynamicBonds", []);
-
-      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [
-        dynamicBondsProxy.address,
-        newDynamicBondsImplementation,
-      ]);
-      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Dynamic Bonds", true);
-
-      versions[latestVersion].contracts.DynamicBonds = newDynamicBondsImplementation;
-      versionUpdate = true;
-    }
-
-    if (taskArgs.deploy) {
-      if (versions[latestVersion].contracts.DynamicBondsProxy) throw "Dynamic Bonds contract already deployed";
-
-      const { dynamicBondsProxy, dynamicBondsImplementation } = await deployDynamicBonds(hre);
-      console.log("Dynamic Bonds proxy deployed to", dynamicBondsProxy.address);
-      await setBondTerms(dynamicBondsProxy);
-      await addBondOptions(hre, dynamicBondsProxy);
-      const transferOwnershipTx = await dynamicBondsProxy.transferOwnership(protocolDao);
-      await transferOwnershipTx.wait(5);
-      console.log("Ownership transferred to", protocolDao);
-      versions[latestVersion].contracts.DynamicBondsProxy = dynamicBondsProxy.address;
-      versions[latestVersion].contracts.DynamicBonds = dynamicBondsImplementation.address;
-      versionUpdate = true;
-    }
-
-    if (versionUpdate) {
-      versions[latestVersion].date = new Date().toUTCString();
-      // convert JSON object to string
-      const data = JSON.stringify(versions, null, 2);
-      // write to version file
-      fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
-    }
-  });
+const discountOneWeek = 0.04;
+const discountOneMonth = 0.08;
+const discountSixMonths = 0.15;
+const discountOneYear = 0.28;
 
 const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment) => {
   const ethers = hre.ethers;
@@ -145,14 +58,27 @@ const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment) => {
   return { dynamicBondsProxy, dynamicBondsImplementation };
 };
 
-const setBondTerms = async (dynamicBonds: Contract) => {
+const setBondTerms = async (dynamicBonds: Contract, taskArgs: any) => {
   const timeNow = Math.round(Date.now() / 1000);
   const timeAtSaleEnd = timeNow + saleDuration;
   console.log("-- Set bond terms --");
   console.log("Available payout:", utils.formatEther(salePayoutAvailable), "DHT");
   console.log("Terms expiry:", new Date(timeAtSaleEnd * 1000));
-  await dynamicBonds.setBondTerms(salePayoutAvailable, timeAtSaleEnd);
-  console.log("Bond terms set!");
+  // await dynamicBonds.setBondTerms(salePayoutAvailable, timeAtSaleEnd);
+  const setBondTermsData = dynamicBonds.interface.encodeFunctionData("setBondTerms", [
+    salePayoutAvailable,
+    timeAtSaleEnd,
+  ]);
+  await proposeTx(
+    dynamicBonds.address,
+    setBondTermsData,
+    `setBondTerms in DynamicBonds to:  Available DHT payout: ${utils.formatEther(
+      salePayoutAvailable,
+    )}, Expiry: ${new Date(timeAtSaleEnd * 1000)} `,
+    taskArgs.execute,
+    taskArgs.restartnonce,
+  );
+  console.log("Bond terms proposed!");
 };
 
 const addBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract) => {
@@ -179,7 +105,7 @@ const addBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Cont
   console.log("Bond options added!");
 };
 
-const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract) => {
+const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract, taskArgs: any) => {
   const bondOptionsBefore = await dynamicBonds.bondOptions();
   const bondOptionLength = bondOptionsBefore.length;
   if (bondOptionLength == 0) throw "No bond options added yet";
@@ -203,8 +129,25 @@ const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: C
     i++;
   }
 
-  await dynamicBonds.updateBondOptions([0, 1, 2, 3], bondOptionsNew);
-  console.log("Bond options updated!");
+  // await dynamicBonds.updateBondOptions([0, 1, 2, 3], bondOptionsNew);
+  const updateBondOptionsData = dynamicBonds.interface.encodeFunctionData("updateBondOptions", [
+    [0, 1, 2, 3],
+    bondOptionsNew,
+  ]);
+  await proposeTx(
+    dynamicBonds.address,
+    updateBondOptionsData,
+    `updateBondOptions in DynamicBonds 0: Price: ${bondOptionsNew[0].price.toString()} Days locked: ${
+      bondOptionsNew[0].lockPeriod.toNumber() / 86400
+    }, 1: Price: ${bondOptionsNew[1].price.toString()} Days locked: ${
+      bondOptionsNew[1].lockPeriod.toNumber() / 86400
+    }, 2: Price: ${bondOptionsNew[2].price.toString()} Days locked: ${
+      bondOptionsNew[2].lockPeriod.toNumber() / 86400
+    }, 3: Price: ${bondOptionsNew[3].price.toString()} Days locked: ${bondOptionsNew[3].lockPeriod.toNumber() / 86400}`,
+    taskArgs.execute,
+    taskArgs.restartnonce,
+  );
+  console.log("Bond options proposed!");
 };
 
 const getTokenPrice = async (coingeckoNetwork: string, assetAddress: string) => {
@@ -272,7 +215,7 @@ const checkPayoutBalance = async (hre: HardhatRuntimeEnvironment, dynamicBonds: 
   console.log("DHT balance:", utils.formatEther(payoutBalance));
 };
 
-const getDynamicBondsContract = async (hre: HardhatRuntimeEnvironment, version: any) => {
+const getDynamicBondsContract = async (hre: HardhatRuntimeEnvironment, version: any): Promise<DynamicBonds> => {
   const ethers = hre.ethers;
   const contractName = "DynamicBonds";
   const dynamicBondsProxyAddress = version.contracts["DynamicBondsProxy"];
@@ -340,3 +283,94 @@ const getTokenDecimals = async (hre: HardhatRuntimeEnvironment) => {
 
   return { depositTokenDecimals, payoutTokenDecimals };
 };
+
+task("dynamicBonds", "Deploy Dynamic Bonds contract")
+  .addOptionalParam("restartnonce", "propose transactions", false, types.boolean)
+  .addOptionalParam("execute", "propose transactions", false, types.boolean)
+  .addOptionalParam("production", "run in production environment", false, types.boolean)
+  .addOptionalParam("deploy", "deploy Dynamic Bonds", false, types.boolean)
+  .addOptionalParam("upgrade", "upgrade Dynamic Bonds", false, types.boolean)
+  .addOptionalParam("updateTerms", "update bond terms", false, types.boolean)
+  .addOptionalParam("updateTreasury", "change the treasury address", false, types.boolean)
+  .addOptionalParam("getConfig", "get live contract configuration", false, types.boolean)
+  .setAction(async (taskArgs, hre) => {
+    const ethers = hre.ethers;
+    const upgrades = hre.upgrades;
+    const network = await ethers.provider.getNetwork();
+    console.log("Network:", network.name);
+    await hre.run("compile");
+
+    // Init contracts
+    const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
+    const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
+
+    // Init version
+    const versionFile = taskArgs.production ? "versions" : "staging-versions";
+    const versionPath = `../publish/${network.name}/${versionFile}.json`;
+    const versions = require(versionPath);
+    const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
+    const version = versions[latestVersion];
+    let versionUpdate = false;
+
+    if (taskArgs.getConfig) {
+      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
+      const { depositTokenDecimals } = await getTokenDecimals(hre);
+      await printConfig(dynamicBondsProxy, depositTokenDecimals);
+      await checkPayoutBalance(hre, dynamicBondsProxy);
+    }
+
+    if (taskArgs.updateTerms) {
+      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
+      await updateBondOptions(hre, dynamicBondsProxy, taskArgs); // set bond prices first
+      await setBondTerms(dynamicBondsProxy, taskArgs); // then open for trading with future expiry date
+    }
+
+    if (taskArgs.updateTreasury) {
+      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
+      await dynamicBondsProxy.setTreasury(treasury);
+      console.log("Treasury set to:", treasury);
+    }
+
+    if (taskArgs.upgrade) {
+      const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
+      const DynamicBonds = await ethers.getContractFactory("DynamicBonds");
+
+      const newDynamicBondsImplementation = await upgrades.prepareUpgrade(dynamicBondsProxy, DynamicBonds);
+      console.log("New DynamicBonds logic deployed to: ", newDynamicBondsImplementation);
+
+      await tryVerify(hre, newDynamicBondsImplementation, "contracts/DynamicBonds.sol:DynamicBonds", []);
+
+      const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [
+        dynamicBondsProxy.address,
+        newDynamicBondsImplementation,
+      ]);
+      await proposeTx(proxyAdminAddress, upgradeABI, "Upgrade Dynamic Bonds", taskArgs.execute, taskArgs.restartnonce);
+
+      versions[latestVersion].contracts.DynamicBonds = newDynamicBondsImplementation;
+      versionUpdate = true;
+    }
+
+    if (taskArgs.deploy) {
+      if (versions[latestVersion].contracts.DynamicBondsProxy) throw "Dynamic Bonds contract already deployed";
+
+      const { dynamicBondsProxy, dynamicBondsImplementation } = await deployDynamicBonds(hre);
+      console.log("Dynamic Bonds proxy deployed to", dynamicBondsProxy.address);
+      const transferOwnershipTx = await dynamicBondsProxy.transferOwnership(protocolDao);
+      await transferOwnershipTx.wait(5);
+      console.log("Ownership transferred to", protocolDao);
+      await setBondTerms(dynamicBondsProxy, taskArgs);
+      await addBondOptions(hre, dynamicBondsProxy);
+
+      versions[latestVersion].contracts.DynamicBondsProxy = dynamicBondsProxy.address;
+      versions[latestVersion].contracts.DynamicBonds = dynamicBondsImplementation.address;
+      versionUpdate = true;
+    }
+
+    if (versionUpdate) {
+      versions[latestVersion].date = new Date().toUTCString();
+      // convert JSON object to string
+      const data = JSON.stringify(versions, null, 2);
+      // write to version file
+      fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
+    }
+  });

@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IAggregationRouterV3 {
   struct SwapDescription {
-    IERC20 srcToken;
-    IERC20 dstToken;
+    address srcToken;
+    address dstToken;
     address srcReceiver;
     address dstReceiver;
     uint256 amount;

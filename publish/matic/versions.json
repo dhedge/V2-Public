@@ -1455,6 +1455,41 @@
           "assetType": "2",
           "aggregator": "0xBb504C5F2Baa51d349D055F2F6b943948c6b0966",
           "aggregatorName": ""
+        },
+        {
+          "name": "Balancer LP BPSP-TUSD",
+          "asset": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+          "assetType": 0,
+          "aggregator": "0x8e2C4244B39dc330F07f5b7B1E57588Ed23C848E",
+          "aggregatorName": "BalancerLpStablePoolAggregator"
+        },
+        {
+          "name": "Toros ETHBEAR2X",
+          "asset": "0x027da30fadab6202801f97be344e2348a2a92842",
+          "assetType": "0",
+          "aggregator": "0x7b9C10d8dA65BF3d95D42E6743E33a5a0D730C50",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros ETHBULL3X",
+          "asset": "0x460b60565cb73845d56564384ab84bf84c13e47d",
+          "assetType": "0",
+          "aggregator": "0xc7907E2329341dC8DaF7ECC717dfdC0fD91f171E",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros BTCBEAR2X",
+          "asset": "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
+          "assetType": "0",
+          "aggregator": "0xCbB5033C0Cee8e4D5b14EFD9B702FFaBd09AbB30",
+          "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Toros BTCBULL3X",
+          "asset": "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+          "assetType": "0",
+          "aggregator": "0xaa0A6d91e51Aebfc768ce64a8C3caBfC94A089b1",
+          "aggregatorName": "DHedgePoolAggregator"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
@@ -1484,7 +1519,8 @@
       "PoolPerformance": "0x7d14c9408f56e1aeafd765d5b0b0842c270181c4",
       "DhedgeEasySwapper": "0xC3e6d2811f669094d94F7589CaEa69672D93408e",
       "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
-      "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749"
+      "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
+      "EasySwapperGuard": "0xfB95299134E94466575c4Eff82037448be1AE4Ae"
     },
     "network": {
       "name": "matic",
@@ -1492,6 +1528,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Wed, 22 Dec 2021 03:32:29 GMT"
+    "date": "Mon, 24 Jan 2022 05:53:32 GMT"
   }
 }
