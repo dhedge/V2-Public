@@ -80,6 +80,10 @@ describe("DhedgeEasySwapper", function () {
 
     await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);
     expect(await poolFactory.transferWhitelist(dhedgeEasySwapper.address)).to.be.true;
+    swapRouter.on("Swap", (router: string) => {
+      const isCurve = curvePools[0] == router;
+      console.log("Swap Detected:", isCurve ? "curve" : "unirouter");
+    });
   });
 
   describe("allowedPools", () => {
@@ -331,6 +335,8 @@ describe("DhedgeEasySwapper", function () {
 
         // Withdraw all
         await torosPool.approve(dhedgeEasySwapper.address, balance);
+        const WithdrawToken = await ethers.getContractAt("IERC20", withdrawToken);
+        const beforeFundsReturnedBalance = await WithdrawToken.balanceOf(logicOwner.address);
         // Here I need update this to calculate the withdrawal amount out in withdraw token
         await dhedgeEasySwapper.withdraw(torosPool.address, balance, withdrawToken, 0);
 
@@ -339,8 +345,8 @@ describe("DhedgeEasySwapper", function () {
         expect(balanceAfterWithdraw).to.equal(0);
 
         // Check we received back funds close to the value of what we deposited
-        const WithdrawToken = await ethers.getContractAt("IERC20", withdrawToken);
-        const fundsReturned = await WithdrawToken.balanceOf(logicOwner.address);
+        const afterFundsReturnedBalance = await WithdrawToken.balanceOf(logicOwner.address);
+        const fundsReturned = afterFundsReturnedBalance.sub(beforeFundsReturnedBalance);
 
         const withdrawAmountUSDC = await poolManagerLogicProxy["assetValue(address,uint256)"](
           withdrawToken,

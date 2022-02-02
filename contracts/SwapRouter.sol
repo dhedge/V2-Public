@@ -22,8 +22,6 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "hardhat/console.sol";
-
 import "./interfaces/curve/ICurveCryptoSwap.sol";
 import "./interfaces/uniswapv2/IUniswapV2Router.sol";
 import "./interfaces/uniswapv2/IUniswapV2RouterSwapOnly.sol";
@@ -69,9 +67,6 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
     (IUniswapV2Router router, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, path);
     (ICurveCryptoSwap curvePool, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(amountIn, path);
 
-    // uniV2BestAmountOut = 0; // TODO: Bypasses Uniswap routing (only for testing)
-    // curveBestAmountOut = 0; // TODO: Bypasses Curve routing (only for testing)
-
     IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
 
     if (curveBestAmountOut > uniV2BestAmountOut) {
@@ -83,14 +78,12 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
       amounts = new uint256[](2);
       amounts[0] = amountIn;
       amounts[1] = curveBestAmountOut;
-      console.log("curve>>>>>>>>>");
     } else {
       // use Uni v2 router
       require(uniV2BestAmountOut > 0, "SwapRouter: invalid routing 01"); // invalid routing with Uni v2 swapExactTokensForTokens
       IERC20(path[0]).approve(address(router), amountIn);
       amounts = router.swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline);
       emit Swap(address(router));
-      console.log("uniswap>>>>>>>>>");
     }
   }
 
@@ -108,28 +101,24 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
     (ICurveCryptoSwap curvePool, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(bestAmountIn, path);
 
     IERC20(path[0]).transferFrom(msg.sender, address(this), bestAmountIn);
-
     if (curveBestAmountOut > amountOut) {
       // Use Curve pool
-
       require(curveBestAmountOut > amountOut, "SwapRouter: invalid routing 03"); // invalid routing with Curve
       // Curve doesn't support cost for X amount of something so
       // We take the (cost/amount) = unit cost.
       // totalCost =  amountWanted * unitCost
-      // uint256 amountIn = amountOut.mul(bestAmountIn.mul(10**18).div(curveBestAmountOut).div(10**18));
-      // require(amountInMax > amountIn, "SwapRouter: exceeds max");
-      IERC20(path[0]).approve(address(curvePool), bestAmountIn);
-      _curveExchange(curvePool, bestAmountIn, curveBestAmountOut, path, to);
+      uint256 amountIn = amountOut.mul(bestAmountIn.mul(10**18).div(curveBestAmountOut).div(10**18));
+      require(amountInMax > amountIn, "SwapRouter: exceeds max");
+      IERC20(path[0]).approve(address(curvePool), amountIn);
+      _curveExchange(curvePool, amountIn, amountOut, path, to);
       emit Swap(address(curvePool));
-      console.log("curve>>>>>>>>>");
       amounts = new uint256[](2);
-      amounts[0] = bestAmountIn;
+      amounts[0] = amountIn;
       amounts[1] = amountOut;
     } else {
       IERC20(path[0]).approve(address(router), bestAmountIn);
       amounts = router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
       emit Swap(address(router));
-      console.log("uniswap>>>>>>>>>");
     }
   }
 
