@@ -18,8 +18,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import "hardhat/console.sol";
 
 import "./interfaces/curve/ICurveCryptoSwap.sol";
 import "./interfaces/uniswapv2/IUniswapV2Router.sol";
@@ -27,24 +30,27 @@ import "./interfaces/uniswapv2/IUniswapV2RouterSwapOnly.sol";
 
 contract SwapRouter is IUniswapV2RouterSwapOnly {
   using SafeERC20 for IERC20;
+  using SafeMath for uint256;
+
+  event Swap(address indexed swapRouter);
 
   IUniswapV2Router[] public uniV2Routers;
-  address[] public curvePools;
+  ICurveCryptoSwap[] public curvePools;
 
-  // Curve can get the token address from coinId, but not the other way around. Hence this mapping is required from token -> coinId
+  // CurvePool -> tokenAddress -> coinIndex+1
   mapping(address => mapping(address => uint256)) public curvePoolCoin;
 
-  constructor(IUniswapV2Router[] memory _uniV2Routers, address[] memory _curvePools) {
+  constructor(IUniswapV2Router[] memory _uniV2Routers, ICurveCryptoSwap[] memory _curvePools) {
     uniV2Routers = _uniV2Routers;
     curvePools = _curvePools;
 
     // For Curve pools, map the underlying coins because this mapping doesn't exist in Curve.
     for (uint256 i = 0; i < _curvePools.length; i++) {
       // Maximum 10 coins per pool supported (can be adjusted)
-      for (uint256 coinId = 0; coinId < 10; coinId++) {
-        try _curvePools[i].underlying_coins(coinId) returns (address coinAddress) {
-          CurvePoolCoin memory _curvePoolCoin = CurvePoolCoin(address(_curvePools[i]), coinAddress, coinId);
-          _setCurvePoolCoin(_curvePoolCoin);
+      for (uint256 coinIndex = 0; coinIndex < 10; coinIndex++) {
+        try _curvePools[i].underlying_coins(coinIndex) returns (address coinAddress) {
+          // Use 1 based index so we can check existence later
+          curvePoolCoin[address(_curvePools[i])][coinAddress] = coinIndex + 1;
           // solhint-disable-next-line no-empty-blocks
         } catch {}
       }
@@ -60,27 +66,31 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
     address to,
     uint256 deadline
   ) external override returns (uint256[] memory amounts) {
-    (uint256 uniV2RouterIndex, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, path);
+    (IUniswapV2Router router, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, path);
+    (ICurveCryptoSwap curvePool, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(amountIn, path);
 
-    (uint256 curvePoolIndex, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(amountIn, path);
     // uniV2BestAmountOut = 0; // TODO: Bypasses Uniswap routing (only for testing)
     // curveBestAmountOut = 0; // TODO: Bypasses Curve routing (only for testing)
 
     IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
 
-    if (uniV2BestAmountOut > curveBestAmountOut) {
-      // use Uni v2 router
-      require(uniV2BestAmountOut > 0, "SwapRouter: invalid routing 01"); // invalid routing with Uni v2 swapExactTokensForTokens
-      IERC20(path[0]).approve(address(uniV2Routers[uniV2RouterIndex]), amountIn);
-      amounts = uniV2Routers[uniV2RouterIndex].swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline);
-    } else {
+    if (curveBestAmountOut > uniV2BestAmountOut) {
       // Use Curve pool
       require(curveBestAmountOut > 0, "SwapRouter: invalid routing 03"); // invalid routing with Curve swapExactTokensForToken
-      IERC20(path[0]).approve(address(curvePools[curvePoolIndex]), amountIn);
-      _curveExchange(curvePoolIndex, amountIn, curveBestAmountOut, path);
+      IERC20(path[0]).approve(address(curvePool), amountIn);
+      _curveExchange(curvePool, amountIn, curveBestAmountOut, path, to);
+      emit Swap(address(curvePool));
       amounts = new uint256[](2);
       amounts[0] = amountIn;
       amounts[1] = curveBestAmountOut;
+      console.log("curve>>>>>>>>>");
+    } else {
+      // use Uni v2 router
+      require(uniV2BestAmountOut > 0, "SwapRouter: invalid routing 01"); // invalid routing with Uni v2 swapExactTokensForTokens
+      IERC20(path[0]).approve(address(router), amountIn);
+      amounts = router.swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline);
+      emit Swap(address(router));
+      console.log("uniswap>>>>>>>>>");
     }
   }
 
@@ -91,38 +101,49 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
     address to,
     uint256 deadline
   ) external override returns (uint256[] memory amounts) {
-    (uint256 routerIndex, uint256 bestAmountIn) = getBestAmountInUniV2Router(amountOut, path);
+    (IUniswapV2Router router, uint256 bestAmountIn) = getBestAmountInUniV2Router(amountOut, path);
     require(bestAmountIn > 0, "SwapRouter: invalid routing 02"); // invalid routing with Uni v2 swapTokensForExactTokens
     require(bestAmountIn < uint256(-1), "SwapRouter: invalid routing 021"); // invalid routing with Uni v2 swapTokensForExactTokens
+    require(bestAmountIn < amountInMax, "SwapRouter: invalid routing 022"); // invalid routing with Uni v2 swapTokensForExactTokens
+    (ICurveCryptoSwap curvePool, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(bestAmountIn, path);
 
     IERC20(path[0]).transferFrom(msg.sender, address(this), bestAmountIn);
-    IERC20(path[0]).approve(address(uniV2Routers[routerIndex]), bestAmountIn);
-    amounts = uniV2Routers[routerIndex].swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
-  }
 
-  // ---------- Internal Functions ---------- //
+    if (curveBestAmountOut > amountOut) {
+      // Use Curve pool
 
-  function bytesToAddress(bytes memory bys) internal pure returns (address addr) {
-    assembly {
-      addr := mload(add(bys, 20))
+      require(curveBestAmountOut > amountOut, "SwapRouter: invalid routing 03"); // invalid routing with Curve
+      // Curve doesn't support cost for X amount of something so
+      // We take the (cost/amount) = unit cost.
+      // totalCost =  amountWanted * unitCost
+      // uint256 amountIn = amountOut.mul(bestAmountIn.mul(10**18).div(curveBestAmountOut).div(10**18));
+      // require(amountInMax > amountIn, "SwapRouter: exceeds max");
+      IERC20(path[0]).approve(address(curvePool), bestAmountIn);
+      _curveExchange(curvePool, bestAmountIn, curveBestAmountOut, path, to);
+      emit Swap(address(curvePool));
+      console.log("curve>>>>>>>>>");
+      amounts = new uint256[](2);
+      amounts[0] = bestAmountIn;
+      amounts[1] = amountOut;
+    } else {
+      IERC20(path[0]).approve(address(router), bestAmountIn);
+      amounts = router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
+      emit Swap(address(router));
+      console.log("uniswap>>>>>>>>>");
     }
   }
 
-  function _setCurvePoolCoin(CurvePoolCoin memory _curvePoolCoin) internal {
-    curvePoolCoin[_curvePoolCoin.curvePool][_curvePoolCoin.token] = _curvePoolCoin.coinId;
-  }
-
   function _curveExchange(
-    uint256 curvePoolIndex,
+    ICurveCryptoSwap curvePool,
     uint256 amountIn,
     uint256 amountOutMin,
-    address[] calldata path
+    address[] calldata path,
+    address receipient
   ) internal {
-    ICurveCryptoSwap curvePool = curvePools[curvePoolIndex];
     uint256 from = curvePoolCoin[address(curvePool)][path[0]];
     uint256 to = curvePoolCoin[address(curvePool)][path[path.length - 1]];
 
-    curvePool.exchange_underlying(from, to, amountIn, amountOutMin);
+    curvePool.exchange_underlying(from - 1, to - 1, amountIn, amountOutMin, receipient);
   }
 
   // ========== VIEWS ========== //
@@ -130,14 +151,14 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
   function getBestAmountOutUniV2Router(uint256 amountIn, address[] memory path)
     public
     view
-    returns (uint256 routerIndex, uint256 bestAmountOut)
+    returns (IUniswapV2Router router, uint256 bestAmountOut)
   {
     for (uint256 i = 0; i < uniV2Routers.length; i++) {
       uint256 amount = getAmountOutUniV2(uniV2Routers[i], amountIn, path);
 
       if (amount > bestAmountOut) {
         bestAmountOut = amount;
-        routerIndex = i;
+        router = uniV2Routers[i];
       }
     }
   }
@@ -155,7 +176,7 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
   function getBestAmountInUniV2Router(uint256 amountOut, address[] memory path)
     public
     view
-    returns (uint256 routerIndex, uint256 bestAmountIn)
+    returns (IUniswapV2Router router, uint256 bestAmountIn)
   {
     bestAmountIn = uint256(-1); // first set to largest value to find lowest amountIn
     for (uint256 i = 0; i < uniV2Routers.length; i++) {
@@ -163,7 +184,7 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
 
       if (amount < bestAmountIn && amount > 0) {
         bestAmountIn = amount;
-        routerIndex = i;
+        router = uniV2Routers[i];
       }
     }
   }
@@ -181,14 +202,14 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
   function getBestAmountOutCurvePool(uint256 amountIn, address[] memory path)
     public
     view
-    returns (uint256 poolIndex, uint256 bestAmountOut)
+    returns (ICurveCryptoSwap pool, uint256 bestAmountOut)
   {
     for (uint256 i = 0; i < curvePools.length; i++) {
       uint256 amount = getAmountOutCurve(curvePools[i], amountIn, path);
 
       if (amount > bestAmountOut) {
         bestAmountOut = amount;
-        poolIndex = i;
+        pool = curvePools[i];
       }
     }
   }
@@ -200,16 +221,11 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
   ) public view returns (uint256 amount) {
     uint256 from = curvePoolCoin[address(curvePool)][path[0]];
     uint256 to = curvePoolCoin[address(curvePool)][path[path.length - 1]];
-
-    // Check that the coin mapping matches Curve for correct routing (especially if coinId = 0, which means it might not be set)
-    if (curvePool.underlying_coins(from) != path[0]) {
-      return 0; // CoinId doesn't match Curve setting. Don't use Curve.
+    // If either address don't have a positive index it means their not in this pool
+    if (from == 0 || to == 0) {
+      amount = 0;
+    } else {
+      amount = curvePool.get_dy_underlying(from - 1, to - 1, amountIn).mul(999).div(1000);
     }
-
-    if (curvePool.underlying_coins(to) != path[path.length - 1]) {
-      return 0; // CoinId doesn't match Curve setting. Don't use Curve.
-    }
-
-    amount = curvePool.get_dy_underlying(from, to, amountIn);
   }
 }

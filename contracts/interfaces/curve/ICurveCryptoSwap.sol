@@ -18,6 +18,7 @@ interface ICurveCryptoSwap {
     uint256 j,
     uint256 dx,
     // solhint-disable-next-line var-name-mixedcase
-    uint256 min_dy
+    uint256 min_dy,
+    address receipient
   ) external;
 }
