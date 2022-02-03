@@ -1,11 +1,13 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export interface IUpgradeConfig {
+export interface IUpgradeConfigProposeTx {
   execute: boolean;
   restartnonce: boolean;
+}
+export type IUpgradeConfig = IUpgradeConfigProposeTx & {
   oldTag: string;
   newTag: string;
-}
+};
 
 export type IJob<T> = (
   config: IUpgradeConfig,

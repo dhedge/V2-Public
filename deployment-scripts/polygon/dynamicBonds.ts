@@ -7,6 +7,7 @@ import axios from "axios";
 import { proposeTx, tryVerify } from "../Helpers";
 import { protocolDao } from "../../config/chainData/polygon-data";
 import { DynamicBonds } from "../../types"; // Unit test fails on Github Actions
+import { IUpgradeConfigProposeTx } from "../types";
 import { getDeploymentData, IDeploymentData } from "../upgrade/getDeploymentData";
 const coingeckoNetwork = "polygon-pos";
 
@@ -26,10 +27,10 @@ const bondLockDurations = [7, 30, 182, 365]; // in days
 // const bondLockDurations = [1 / (24 * 60), 1 / 24, 1, 7]; // Short durations that can be used for testing
 
 // Bond option discount percentages
-const discountOneWeek = 0.04;
-const discountOneMonth = 0.08;
-const discountSixMonths = 0.15;
-const discountOneYear = 0.28;
+const discountOneWeek = 0.03;
+const discountOneMonth = 0.07;
+const discountSixMonths = 0.12;
+const discountOneYear = 0.22;
 
 const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment, deploymentData: IDeploymentData) => {
   const ethers = hre.ethers;
@@ -59,7 +60,11 @@ const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment, deploymentData
   return { dynamicBondsProxy, dynamicBondsImplementation };
 };
 
-const setBondTerms = async (dynamicBonds: Contract, taskArgs: any) => {
+const setBondTerms = async (
+  dynamicBonds: Contract,
+  upgradeConfig: IUpgradeConfigProposeTx,
+  deploymentData: IDeploymentData,
+) => {
   const timeNow = Math.round(Date.now() / 1000);
   const timeAtSaleEnd = timeNow + saleDuration;
   console.log("-- Set bond terms --");
@@ -76,8 +81,8 @@ const setBondTerms = async (dynamicBonds: Contract, taskArgs: any) => {
     `setBondTerms in DynamicBonds to:  Available DHT payout: ${utils.formatEther(
       salePayoutAvailable,
     )}, Expiry: ${new Date(timeAtSaleEnd * 1000)} `,
-    taskArgs.execute,
-    taskArgs.restartnonce,
+    upgradeConfig,
+    deploymentData.addresses,
   );
   console.log("Bond terms proposed!");
 };
@@ -106,7 +111,12 @@ const addBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Cont
   console.log("Bond options added!");
 };
 
-const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: Contract, taskArgs: any) => {
+const updateBondOptions = async (
+  hre: HardhatRuntimeEnvironment,
+  dynamicBonds: Contract,
+  upgradeConfig: IUpgradeConfigProposeTx,
+  deploymentData: IDeploymentData,
+) => {
   const bondOptionsBefore = await dynamicBonds.bondOptions();
   const bondOptionLength = bondOptionsBefore.length;
   if (bondOptionLength == 0) throw "No bond options added yet";
@@ -145,8 +155,8 @@ const updateBondOptions = async (hre: HardhatRuntimeEnvironment, dynamicBonds: C
     }, 2: Price: ${bondOptionsNew[2].price.toString()} Days locked: ${
       bondOptionsNew[2].lockPeriod.toNumber() / 86400
     }, 3: Price: ${bondOptionsNew[3].price.toString()} Days locked: ${bondOptionsNew[3].lockPeriod.toNumber() / 86400}`,
-    taskArgs.execute,
-    taskArgs.restartnonce,
+    upgradeConfig,
+    deploymentData.addresses,
   );
   console.log("Bond options proposed!");
 };
@@ -301,6 +311,8 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
     console.log("Network:", network.name);
     await hre.run("compile");
 
+    const upgradeConfig: IUpgradeConfigProposeTx = { execute: taskArgs.execute, restartnonce: taskArgs.restartnonce };
+
     const deploymentData = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
     // Init contracts
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
@@ -321,8 +333,8 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
 
     if (taskArgs.updateTerms) {
       const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
-      await updateBondOptions(hre, dynamicBondsProxy, taskArgs); // set bond prices first
-      await setBondTerms(dynamicBondsProxy, taskArgs); // then open for trading with future expiry date
+      await updateBondOptions(hre, dynamicBondsProxy, upgradeConfig, deploymentData); // set bond prices first
+      await setBondTerms(dynamicBondsProxy, upgradeConfig, deploymentData); // then open for trading with future expiry date
     }
 
     if (taskArgs.updateTreasury) {
@@ -364,7 +376,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
       const transferOwnershipTx = await dynamicBondsProxy.transferOwnership(protocolDao);
       await transferOwnershipTx.wait(5);
       console.log("Ownership transferred to", protocolDao);
-      await setBondTerms(dynamicBondsProxy, taskArgs);
+      await setBondTerms(dynamicBondsProxy, taskArgs, deploymentData);
       await addBondOptions(hre, dynamicBondsProxy);
 
       versions[latestVersion].contracts.DynamicBondsProxy = dynamicBondsProxy.address;

@@ -8,7 +8,7 @@ import { SafeService } from "@gnosis.pm/safe-ethers-adapters";
 import Safe, { EthersAdapter } from "@gnosis.pm/safe-core-sdk";
 import { retryWithDelay } from "./utils";
 import axios from "axios";
-import { IAddresses, IProposeTxProperties, IUpgradeConfig } from "./types";
+import { IProposeTxProperties, IUpgradeConfigProposeTx } from "./types";
 
 let nonce: number;
 
@@ -123,7 +123,7 @@ export const proposeTx = async (
   to: string,
   data: string,
   message: string,
-  config: IUpgradeConfig,
+  config: IUpgradeConfigProposeTx,
   addresses: IProposeTxProperties,
 ) => {
   if (!config.execute) {
