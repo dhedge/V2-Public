@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import fs from "fs";
 import { artifacts, ethers } from "hardhat";
-import { IVersions } from "../../../scripts/ovm/deploy-ovm";
+import { IVersions } from "../../../deployment-scripts/ovm/deploy-ovm";
 import { units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { assets, synthetix as SynthetixData } from "./ovm-data";

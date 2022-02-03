@@ -7,15 +7,14 @@ import "hardhat-gas-reporter";
 import "hardhat-abi-exporter";
 import "solidity-coverage";
 import "@typechain/hardhat";
-import { HardhatUserConfig } from "hardhat/config";
 
-import "./scripts/polygon/upgrade-polygon";
-import "./scripts/polygon/verify";
-import "./scripts/ovm/explorer-verify";
-import "./scripts/polygon/dhedgeEasySwapper";
-import "./scripts/checks/checkConfig";
-import "./scripts/compileOne";
-import "./scripts/dynamicBonds";
+import "./deployment-scripts/upgrade/upgrade";
+
+import "./deployment-scripts/explorer-verify";
+import "./deployment-scripts/polygon/dhedgeEasySwapper";
+import "./deployment-scripts/checks/checkConfig";
+import "./deployment-scripts/compileOne";
+import "./deployment-scripts/polygon/dynamicBonds";
 
 dotenv.config();
 
