@@ -80,10 +80,6 @@ describe("DhedgeEasySwapper", function () {
 
     await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);
     expect(await poolFactory.transferWhitelist(dhedgeEasySwapper.address)).to.be.true;
-    swapRouter.on("Swap", (router: string) => {
-      const isCurve = curvePools[0] == router;
-      console.log("Swap Detected:", isCurve ? "curve" : "unirouter");
-    });
   });
 
   describe("allowedPools", () => {
