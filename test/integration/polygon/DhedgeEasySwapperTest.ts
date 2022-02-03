@@ -257,7 +257,7 @@ describe("DhedgeEasySwapper", function () {
     });
   });
 
-  describe.only("Toros Tests", () => {
+  describe("Toros Tests", () => {
     let snapshot: any;
     beforeEach(async function () {
       snapshot = await ethers.provider.send("evm_snapshot", []);
