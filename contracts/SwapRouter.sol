@@ -50,7 +50,9 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
           // Use 1 based index so we can check existence later
           curvePoolCoin[address(_curvePools[i])][coinAddress] = coinIndex + 1;
           // solhint-disable-next-line no-empty-blocks
-        } catch {}
+        } catch {
+          break;
+        }
       }
     }
   }
@@ -100,7 +102,6 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
     require(bestAmountIn < amountInMax, "SwapRouter: invalid routing 022"); // invalid routing with Uni v2 swapTokensForExactTokens
     (ICurveCryptoSwap curvePool, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(bestAmountIn, path);
 
-    IERC20(path[0]).transferFrom(msg.sender, address(this), bestAmountIn);
     if (curveBestAmountOut > amountOut) {
       // Use Curve pool
       require(curveBestAmountOut > amountOut, "SwapRouter: invalid routing 03"); // invalid routing with Curve
@@ -108,6 +109,7 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
       // We take the (cost/amount) = unit cost.
       // totalCost =  amountWanted * unitCost
       uint256 amountIn = amountOut.mul(bestAmountIn).div(curveBestAmountOut);
+      IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
       require(amountInMax > amountIn, "SwapRouter: exceeds max");
       IERC20(path[0]).approve(address(curvePool), amountIn);
       _curveExchange(curvePool, amountIn, amountOut, path, to);
@@ -116,6 +118,7 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
       amounts[0] = amountIn;
       amounts[1] = amountOut;
     } else {
+      IERC20(path[0]).transferFrom(msg.sender, address(this), bestAmountIn);
       IERC20(path[0]).approve(address(router), bestAmountIn);
       amounts = router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
       emit Swap(address(router));
