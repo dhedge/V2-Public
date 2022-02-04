@@ -107,7 +107,7 @@ contract SwapRouter is IUniswapV2RouterSwapOnly {
       // Curve doesn't support cost for X amount of something so
       // We take the (cost/amount) = unit cost.
       // totalCost =  amountWanted * unitCost
-      uint256 amountIn = amountOut.mul(bestAmountIn.mul(10**18).div(curveBestAmountOut).div(10**18));
+      uint256 amountIn = amountOut.mul(bestAmountIn).div(curveBestAmountOut);
       require(amountInMax > amountIn, "SwapRouter: exceeds max");
       IERC20(path[0]).approve(address(curvePool), amountIn);
       _curveExchange(curvePool, amountIn, amountOut, path, to);
