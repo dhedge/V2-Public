@@ -26,7 +26,7 @@ import "./interfaces/curve/ICurveCryptoSwap.sol";
 import "./interfaces/uniswapv2/IUniswapV2Router.sol";
 import "./interfaces/uniswapv2/IUniswapV2RouterSwapOnly.sol";
 
-contract SwapRouter is IUniswapV2RouterSwapOnly {
+contract DhedgeSwapRouter is IUniswapV2RouterSwapOnly {
   using SafeERC20 for IERC20;
   using SafeMath for uint256;
 
