@@ -73,7 +73,7 @@ contract DhedgeSwapRouter is IUniswapV2RouterSwapOnly {
 
     if (curveBestAmountOut > uniV2BestAmountOut) {
       // Use Curve pool
-      require(curveBestAmountOut > 0, "SwapRouter: invalid routing 03"); // invalid routing with Curve swapExactTokensForToken
+      require(curveBestAmountOut > 0, "SwapRouter: invalid routing 03"); // invalid routing with Curve
       IERC20(path[0]).approve(address(curvePool), amountIn);
       _curveExchange(curvePool, amountIn, curveBestAmountOut, path, to);
       emit Swap(address(curvePool));
@@ -96,11 +96,11 @@ contract DhedgeSwapRouter is IUniswapV2RouterSwapOnly {
     address to,
     uint256 deadline
   ) external override returns (uint256[] memory amounts) {
-    (IUniswapV2Router router, uint256 bestAmountIn) = getBestAmountInUniV2Router(amountOut, path);
-    require(bestAmountIn > 0, "SwapRouter: invalid routing 02"); // invalid routing with Uni v2 swapTokensForExactTokens
-    require(bestAmountIn < uint256(-1), "SwapRouter: invalid routing 021"); // invalid routing with Uni v2 swapTokensForExactTokens
-    require(bestAmountIn < amountInMax, "SwapRouter: invalid routing 022"); // invalid routing with Uni v2 swapTokensForExactTokens
-    (ICurveCryptoSwap curvePool, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(bestAmountIn, path);
+    (IUniswapV2Router router, uint256 uniV2BestAmountIn) = getBestAmountInUniV2Router(amountOut, path);
+    require(uniV2BestAmountIn > 0, "SwapRouter: invalid routing 02"); // invalid routing with Uni v2 swapTokensForExactTokens
+    require(uniV2BestAmountIn < uint256(-1), "SwapRouter: invalid routing 021"); // invalid routing with Uni v2 swapTokensForExactTokens
+    require(uniV2BestAmountIn < amountInMax, "SwapRouter: invalid routing 022"); // invalid routing with Uni v2 swapTokensForExactTokens
+    (ICurveCryptoSwap curvePool, uint256 curveBestAmountOut) = getBestAmountOutCurvePool(uniV2BestAmountIn, path);
 
     if (curveBestAmountOut > amountOut) {
       // Use Curve pool
@@ -108,18 +108,18 @@ contract DhedgeSwapRouter is IUniswapV2RouterSwapOnly {
       // Curve doesn't support cost for X amount of something so
       // We take the (cost/amount) = unit cost.
       // totalCost =  amountWanted * unitCost
-      uint256 amountIn = amountOut.mul(bestAmountIn).div(curveBestAmountOut);
-      IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
-      require(amountInMax > amountIn, "SwapRouter: exceeds max");
-      IERC20(path[0]).approve(address(curvePool), amountIn);
-      _curveExchange(curvePool, amountIn, amountOut, path, to);
+      uint256 curveBestAmountIn = amountOut.mul(uniV2BestAmountIn).div(curveBestAmountOut);
+      IERC20(path[0]).transferFrom(msg.sender, address(this), curveBestAmountIn);
+      require(amountInMax > curveBestAmountIn, "SwapRouter: exceeds max");
+      IERC20(path[0]).approve(address(curvePool), curveBestAmountIn);
+      _curveExchange(curvePool, curveBestAmountIn, amountOut, path, to);
       emit Swap(address(curvePool));
       amounts = new uint256[](2);
-      amounts[0] = amountIn;
+      amounts[0] = curveBestAmountIn;
       amounts[1] = amountOut;
     } else {
-      IERC20(path[0]).transferFrom(msg.sender, address(this), bestAmountIn);
-      IERC20(path[0]).approve(address(router), bestAmountIn);
+      IERC20(path[0]).transferFrom(msg.sender, address(this), uniV2BestAmountIn);
+      IERC20(path[0]).approve(address(router), uniV2BestAmountIn);
       amounts = router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
       emit Swap(address(router));
     }
