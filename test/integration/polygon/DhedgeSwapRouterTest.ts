@@ -79,7 +79,7 @@ describe("DhedgeSwapRouter", () => {
     });
   });
 
-  // Note: We can't test swapTokensForExactTokens with only just curve because it needs a quote from a v2 router to beat
+  // Note: Curve is not used for swapTokensForExactTokens
   describe("swapTokensForExactTokens", () => {
     it("via quickswap", async () => {
       const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router], []);
