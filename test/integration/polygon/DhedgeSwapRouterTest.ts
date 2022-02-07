@@ -11,6 +11,7 @@ describe("DhedgeSwapRouter", () => {
   const swapAmount = units(100, 6);
   let USDC: IERC20, WETH: IERC20;
   let SwapRouter: DhedgeSwapRouter__factory;
+  let snapshot: any;
 
   before(async () => {
     USDC = await ethers.getContractAt("IERC20", assets.usdc);
@@ -19,8 +20,13 @@ describe("DhedgeSwapRouter", () => {
   });
 
   beforeEach(async () => {
+    snapshot = await ethers.provider.send("evm_snapshot", []);
     const [logicOwner] = await ethers.getSigners();
     await getAccountToken(swapAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+  });
+
+  afterEach(async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
   });
 
   describe("swapExactTokensForTokens", () => {
@@ -28,13 +34,6 @@ describe("DhedgeSwapRouter", () => {
       const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router], []);
       await swapRouter.deployed();
 
-      const swapEventListener = new Promise((res) => {
-        swapRouter.on("Swap", async (router: string) => {
-          expect(router).to.equal(quickswap.router);
-          res(undefined);
-        });
-      });
-
       await USDC.approve(swapRouter.address, swapAmount);
       const receiver = ethers.Wallet.createRandom().address;
       await swapRouter.swapExactTokensForTokens(
@@ -45,20 +44,12 @@ describe("DhedgeSwapRouter", () => {
         Math.floor(Date.now() / 1000 + 100000000),
       );
       expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
-      await swapEventListener;
     });
 
     it("via curve", async () => {
       const swapRouter: SwapRouter = await SwapRouter.deploy([], [curvePools[0]]);
       await swapRouter.deployed();
 
-      const swapEventListener = new Promise((res) => {
-        swapRouter.on("Swap", async (router: string) => {
-          expect(router).to.equal(curvePools[0]);
-          res(undefined);
-        });
-      });
-
       await USDC.approve(swapRouter.address, swapAmount);
       const receiver = ethers.Wallet.createRandom().address;
       await swapRouter.swapExactTokensForTokens(
@@ -69,19 +60,12 @@ describe("DhedgeSwapRouter", () => {
         Math.floor(Date.now() / 1000 + 100000000),
       );
       expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
-      await swapEventListener;
     });
 
     it("via all", async () => {
       const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
       await swapRouter.deployed();
 
-      const swapEventListener = new Promise((res) => {
-        swapRouter.on("Swap", async () => {
-          res(undefined);
-        });
-      });
-
       await USDC.approve(swapRouter.address, swapAmount);
       const receiver = ethers.Wallet.createRandom().address;
       await swapRouter.swapExactTokensForTokens(
@@ -92,80 +76,41 @@ describe("DhedgeSwapRouter", () => {
         Math.floor(Date.now() / 1000 + 100000000),
       );
       expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
-      await swapEventListener;
     });
   });
 
+  // Note: We can't test swapTokensForExactTokens with only just curve because it needs a quote from a v2 router to beat
   describe("swapTokensForExactTokens", () => {
     it("via quickswap", async () => {
       const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router], []);
       await swapRouter.deployed();
 
-      const swapEventListener = new Promise((res) => {
-        swapRouter.on("Swap", async (router: string) => {
-          expect(router).to.equal(quickswap.router);
-          res(undefined);
-        });
-      });
-
       await USDC.approve(swapRouter.address, swapAmount);
       const receiver = ethers.Wallet.createRandom().address;
       await swapRouter.swapTokensForExactTokens(
-        0,
+        1,
         swapAmount,
         [assets.usdc, assets.weth],
         receiver,
         Math.floor(Date.now() / 1000 + 100000000),
       );
       expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
-      await swapEventListener;
-    });
-
-    it("via curve", async () => {
-      const swapRouter: SwapRouter = await SwapRouter.deploy([], [curvePools[0]]);
-      await swapRouter.deployed();
-
-      const swapEventListener = new Promise((res) => {
-        swapRouter.on("Swap", async (router: string) => {
-          expect(router).to.equal(curvePools[0]);
-          res(undefined);
-        });
-      });
-
-      await USDC.approve(swapRouter.address, swapAmount);
-      const receiver = ethers.Wallet.createRandom().address;
-      await swapRouter.swapTokensForExactTokens(
-        0,
-        swapAmount,
-        [assets.usdc, assets.weth],
-        receiver,
-        Math.floor(Date.now() / 1000 + 100000000),
-      );
-      expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
-      await swapEventListener;
     });
 
     it("via all", async () => {
       const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
       await swapRouter.deployed();
 
-      const swapEventListener = new Promise((res) => {
-        swapRouter.on("Swap", async () => {
-          res(undefined);
-        });
-      });
-
       await USDC.approve(swapRouter.address, swapAmount);
       const receiver = ethers.Wallet.createRandom().address;
       await swapRouter.swapTokensForExactTokens(
-        0,
+        1,
         swapAmount,
         [assets.usdc, assets.weth],
         receiver,
         Math.floor(Date.now() / 1000 + 100000000),
       );
       expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
-      await swapEventListener;
     });
   });
 });
