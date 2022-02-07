@@ -105,12 +105,9 @@ contract DhedgeSwapRouter is IUniswapV2RouterSwapOnly {
     if (curveBestAmountOut > expectedAmountOut) {
       // Use Curve pool
       require(curveBestAmountOut > expectedAmountOut, "SwapRouter: invalid routing 03"); // invalid routing with Curve
-      // Curve doesn't support cost for X amount of something so
-      // We take the (cost/amount) = unit cost.
-      // totalCost =  amountWanted * unitCost
-      uint256 curveAmountIn = expectedAmountOut.mul(uniBestAmountIn).div(curveBestAmountOut);
+      uint256 curveAmountIn = uniBestAmountIn;
+      require(amountInMax >= curveAmountIn, "SwapRouter: exceeds max");
       IERC20(path[0]).transferFrom(msg.sender, address(this), curveAmountIn);
-      require(amountInMax > curveAmountIn, "SwapRouter: exceeds max");
       IERC20(path[0]).approve(address(curvePool), curveAmountIn);
       _curveExchange(curvePool, curveAmountIn, expectedAmountOut, path, to);
       emit Swap(address(curvePool));

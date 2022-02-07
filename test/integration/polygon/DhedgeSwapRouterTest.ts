@@ -9,13 +9,13 @@ import { getAccountToken } from "../utils/getAccountTokens";
 
 describe("DhedgeSwapRouter", () => {
   const swapAmount = units(100, 6);
-  let USDC: IERC20, WETH: IERC20;
+  let USDC: IERC20, DAI: IERC20;
   let SwapRouter: DhedgeSwapRouter__factory;
   let snapshot: any;
 
   before(async () => {
     USDC = await ethers.getContractAt("IERC20", assets.usdc);
-    WETH = await ethers.getContractAt("IERC20", assets.weth);
+    DAI = await ethers.getContractAt("IERC20", assets.dai);
     SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
   });
 
@@ -39,11 +39,11 @@ describe("DhedgeSwapRouter", () => {
       await swapRouter.swapExactTokensForTokens(
         swapAmount,
         0,
-        [assets.usdc, assets.weth],
+        [assets.usdc, assets.dai],
         receiver,
         Math.floor(Date.now() / 1000 + 100000000),
       );
-      expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
+      expect((await DAI.balanceOf(receiver)).gt(0)).to.be.true;
     });
 
     it("via curve", async () => {
@@ -55,11 +55,11 @@ describe("DhedgeSwapRouter", () => {
       await swapRouter.swapExactTokensForTokens(
         swapAmount,
         0,
-        [assets.usdc, assets.weth],
+        [assets.usdc, assets.dai],
         receiver,
         Math.floor(Date.now() / 1000 + 100000000),
       );
-      expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
+      expect((await DAI.balanceOf(receiver)).gt(0)).to.be.true;
     });
 
     it("via all", async () => {
@@ -71,11 +71,11 @@ describe("DhedgeSwapRouter", () => {
       await swapRouter.swapExactTokensForTokens(
         swapAmount,
         0,
-        [assets.usdc, assets.weth],
+        [assets.usdc, assets.dai],
         receiver,
         Math.floor(Date.now() / 1000 + 100000000),
       );
-      expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
+      expect((await DAI.balanceOf(receiver)).gt(0)).to.be.true;
     });
   });
 
@@ -88,13 +88,13 @@ describe("DhedgeSwapRouter", () => {
       await USDC.approve(swapRouter.address, swapAmount);
       const receiver = ethers.Wallet.createRandom().address;
       await swapRouter.swapTokensForExactTokens(
-        1,
+        swapAmount.div(100).mul(99),
         swapAmount,
-        [assets.usdc, assets.weth],
+        [assets.usdc, assets.dai],
         receiver,
         Math.floor(Date.now() / 1000 + 100000000),
       );
-      expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
+      expect((await DAI.balanceOf(receiver)).gt(0)).to.be.true;
     });
 
     it("via all", async () => {
@@ -104,13 +104,13 @@ describe("DhedgeSwapRouter", () => {
       await USDC.approve(swapRouter.address, swapAmount);
       const receiver = ethers.Wallet.createRandom().address;
       await swapRouter.swapTokensForExactTokens(
-        1,
+        swapAmount.div(100).mul(99),
         swapAmount,
-        [assets.usdc, assets.weth],
+        [assets.usdc, assets.dai],
         receiver,
         Math.floor(Date.now() / 1000 + 100000000),
       );
-      expect((await WETH.balanceOf(receiver)).gt(0)).to.be.true;
+      expect((await DAI.balanceOf(receiver)).gt(0)).to.be.true;
     });
   });
 });
