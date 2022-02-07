@@ -67,7 +67,7 @@ export const polygonAddresses: IAddresses = {
 };
 
 export const polygonStagingFileNames: IFileNames = {
-  versionsFileName: "../../publish/polygon/staging/versions.json",
+  versionsFileName: "./publish/polygon/staging/versions.json",
   assetsFileName: "./config/polygon-staging/dHEDGE Assets list - Polygon Staging.csv",
   governanceNamesFileName: "./config/polygon-staging/dHEDGE Governance Names - Polygon Staging.csv",
   contractGuardsFileName: "./config/polygon-staging/dHEDGE Governance Contract Guards - Polygon Staging.csv",
@@ -77,7 +77,7 @@ export const polygonStagingFileNames: IFileNames = {
 };
 
 export const polygonProdFileNames: IFileNames = {
-  versionsFileName: "../../publish/polygon/prod/versions.json",
+  versionsFileName: "./publish/polygon/prod/versions.json",
   assetsFileName: "./config/polygon-prod/dHEDGE Assets list - Polygon.csv",
   governanceNamesFileName: "./config/polygon-prod/dHEDGE Governance Names - Polygon.csv",
   contractGuardsFileName: "./config/polygon-prod/dHEDGE Governance Contract Guards - Polygon.csv",

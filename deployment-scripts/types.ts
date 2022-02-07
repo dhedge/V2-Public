@@ -4,6 +4,7 @@ export interface IUpgradeConfigProposeTx {
   execute: boolean;
   restartnonce: boolean;
 }
+
 export type IUpgradeConfig = IUpgradeConfigProposeTx & {
   oldTag: string;
   newTag: string;
@@ -104,6 +105,8 @@ export interface IContracts {
   AssetHandler: Address;
   PoolPerformanceProxy: Address;
   PoolPerformance: Address;
+  DynamicBonds?: Address;
+
   SynthetixGuard?: Address;
   ERC20Guard?: Address;
   USDPriceAggregator?: Address;

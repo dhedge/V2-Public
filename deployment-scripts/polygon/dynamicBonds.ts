@@ -7,7 +7,7 @@ import axios from "axios";
 import { proposeTx, tryVerify } from "../Helpers";
 import { protocolDao } from "../../config/chainData/polygon-data";
 import { DynamicBonds } from "../../types"; // Unit test fails on Github Actions
-import { IUpgradeConfigProposeTx } from "../types";
+import { IUpgradeConfigProposeTx, IVersions } from "../types";
 import { getDeploymentData, IDeploymentData } from "../upgrade/getDeploymentData";
 const coingeckoNetwork = "polygon-pos";
 
@@ -319,7 +319,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
     const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
 
     // Init version
-    const versions = require(deploymentData.filenames.versionsFileName);
+    const versions: IVersions = JSON.parse(fs.readFileSync(deploymentData.filenames.versionsFileName, "utf-8"));
     const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
     const version = versions[latestVersion];
     let versionUpdate = false;
