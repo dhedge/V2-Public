@@ -1,11 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export interface IUpgradeConfig {
+export interface IUpgradeConfigProposeTx {
   execute: boolean;
   restartnonce: boolean;
+}
+
+export type IUpgradeConfig = IUpgradeConfigProposeTx & {
   oldTag: string;
   newTag: string;
-}
+};
 
 export type IJob<T> = (
   config: IUpgradeConfig,
@@ -102,6 +105,9 @@ export interface IContracts {
   AssetHandler: Address;
   PoolPerformanceProxy: Address;
   PoolPerformance: Address;
+  DynamicBondsProxy?: Address;
+  DynamicBonds?: Address;
+
   SynthetixGuard?: Address;
   ERC20Guard?: Address;
   USDPriceAggregator?: Address;
