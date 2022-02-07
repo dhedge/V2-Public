@@ -228,7 +228,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
   await oneInchV3Guard.deployed();
 
-  const SwapRouter = await ethers.getContractFactory("SwapRouter");
+  const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
   const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
   await swapRouter.deployed();
 

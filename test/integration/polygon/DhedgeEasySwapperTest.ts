@@ -52,7 +52,7 @@ describe("DhedgeEasySwapper", function () {
     ]);
     await ethers.provider.send("evm_mine", []); // Just mines to the next block
 
-    const SwapRouter = await ethers.getContractFactory("SwapRouter");
+    const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
     const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
     await swapRouter.deployed();
 
