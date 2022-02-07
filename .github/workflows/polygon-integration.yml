@@ -195,3 +195,6 @@ jobs:
       - name: WithdrawSingle Tests
         run: |
           npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
+      - name: DhedgeSwapRouter Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/DhedgeSwapRouterTest.ts --network localhost
