@@ -385,7 +385,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
     }
 
     if (versionUpdate) {
-      versions[latestVersion].date = new Date().toUTCString();
+      versions[latestVersion].lastUpdated = new Date().toUTCString();
       // convert JSON object to string
       const data = JSON.stringify(versions, null, 2);
       // write to version file

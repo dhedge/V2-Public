@@ -105,6 +105,7 @@ export interface IContracts {
   AssetHandler: Address;
   PoolPerformanceProxy: Address;
   PoolPerformance: Address;
+  DynamicBondsProxy?: Address;
   DynamicBonds?: Address;
 
   SynthetixGuard?: Address;
