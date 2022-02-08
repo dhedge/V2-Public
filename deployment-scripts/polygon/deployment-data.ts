@@ -23,11 +23,10 @@ export const switchPolygonOzFile = (isProduction: boolean) => {
   });
 
   process.on("exit", () => {
-    console.log("Process Interrupted, Reverting rename");
+    console.log("Process Exiting, Switching Back Filename");
     if (fs.existsSync(ozExpectedFile)) {
       fs.renameSync(ozExpectedFile, ozEnvFile);
     }
-    console.log("Exiting...");
     // eventually exit
     process.exit(); // Add code if necessary
   });

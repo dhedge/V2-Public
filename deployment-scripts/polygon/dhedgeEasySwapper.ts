@@ -17,7 +17,7 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
 
     // Init version
     const deploymentData = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
-    const versions: IVersions = require(deploymentData.filenames.versionsFileName);
+    const versions: IVersions = JSON.parse(fs.readFileSync(deploymentData.filenames.versionsFileName, "utf-8"));
     const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
     let versionUpdate = false;
 

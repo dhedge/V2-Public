@@ -23,11 +23,14 @@ export const governanceNamesJob: IJob<void> = async (
   console.log("Will deploy governancenames");
   for (const csvGovernanceName of csvGovernanceNames) {
     const name = csvGovernanceName.Name;
-    const destination = csvGovernanceName.Destination;
+    const destination: string = csvGovernanceName.Destination;
     const nameBytes = ethers.utils.formatBytes32String(name);
-    const configuredDestination = await governance.nameToDestination(nameBytes);
-
-    if (configuredDestination === "0x0000000000000000000000000000000000000000") {
+    const configuredDestination = (await governance.nameToDestination(nameBytes)).toLowerCase();
+    if (
+      configuredDestination === "0x0000000000000000000000000000000000000000" ||
+      destination.toLowerCase() != configuredDestination
+    ) {
+      console.log(name, "oldDestination:", configuredDestination, ". New destination:", destination);
       const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [[[nameBytes, destination]]]);
       await proposeTx(
         versions[config.oldTag].contracts.Governance,
