@@ -1,9 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { assets, assetsBalanceOfSlot, curvePools, quickswap, sushi } from "../../../config/chainData/polygon-data";
-import { DhedgeSwapRouter__factory } from "../../../types";
+import { DhedgeSwapRouter, DhedgeSwapRouter__factory } from "../../../types";
 import { IERC20 } from "../../../types/IERC20.d";
-import { SwapRouter } from "../../../types/SwapRouter";
 import { units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
@@ -31,7 +30,7 @@ describe("DhedgeSwapRouter", () => {
 
   describe("swapExactTokensForTokens", () => {
     it("via quickswap", async () => {
-      const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router], []);
+      const swapRouter: DhedgeSwapRouter = await SwapRouter.deploy([quickswap.router], []);
       await swapRouter.deployed();
 
       await USDC.approve(swapRouter.address, swapAmount);
@@ -47,7 +46,7 @@ describe("DhedgeSwapRouter", () => {
     });
 
     it("via curve", async () => {
-      const swapRouter: SwapRouter = await SwapRouter.deploy([], [curvePools[0]]);
+      const swapRouter: DhedgeSwapRouter = await SwapRouter.deploy([], [curvePools[0]]);
       await swapRouter.deployed();
 
       await USDC.approve(swapRouter.address, swapAmount);
@@ -63,7 +62,7 @@ describe("DhedgeSwapRouter", () => {
     });
 
     it("via all", async () => {
-      const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+      const swapRouter: DhedgeSwapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
       await swapRouter.deployed();
 
       await USDC.approve(swapRouter.address, swapAmount);
@@ -82,7 +81,7 @@ describe("DhedgeSwapRouter", () => {
   // Note: Curve is not used for swapTokensForExactTokens
   describe("swapTokensForExactTokens", () => {
     it("via quickswap", async () => {
-      const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router], []);
+      const swapRouter: DhedgeSwapRouter = await SwapRouter.deploy([quickswap.router], []);
       await swapRouter.deployed();
 
       await USDC.approve(swapRouter.address, swapAmount);
@@ -98,7 +97,7 @@ describe("DhedgeSwapRouter", () => {
     });
 
     it("via all", async () => {
-      const swapRouter: SwapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+      const swapRouter: DhedgeSwapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
       await swapRouter.deployed();
 
       await USDC.approve(swapRouter.address, swapAmount);
