@@ -41,6 +41,13 @@ jobs:
 
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
+
+      - name: Run Polygon Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --fork $ALCHEMY_URL &
+
       - name: Hardhat compile
         run: npx hardhat compile
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
@@ -103,14 +110,15 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+
       - name: Run Polygon Fork in background
         env:
           ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
         run: |
           npx hardhat node --fork $ALCHEMY_URL &
 
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
       - name: Hardhat compile
         run: npx hardhat compile
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
@@ -162,14 +170,16 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+
       - name: Run Polygon Fork in background
         env:
           ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
         run: |
           npx hardhat node --fork $ALCHEMY_URL &
 
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
+
       - name: Hardhat compile
         run: npx hardhat compile
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
@@ -185,3 +195,6 @@ jobs:
       - name: WithdrawSingle Tests
         run: |
           npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
+      - name: DhedgeSwapRouter Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/DhedgeSwapRouterTest.ts --network localhost

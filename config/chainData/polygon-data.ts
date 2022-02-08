@@ -80,6 +80,9 @@ export const quickswap = {
   },
 };
 
+// Curve
+export const curvePools = ["0x1d8b86e3D88cDb2d34688e87E72F388Cb541B7C8"];
+
 // oneInch
 export const oneinch = {
   v3Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
@@ -105,8 +108,8 @@ export const assets = {
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
   dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
-  ...torosPools,
   tusd: "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
+  ...torosPools,
 };
 
 export const assetsBalanceOfSlot = {

@@ -44,6 +44,7 @@ export interface ExternalLogicContracts {
 
   quickStakingRewardsFactoryAddress?: string;
   v2RouterAddresses?: string[]; //quickswapRouter, sushiswapV2Router etc etc
+  swapRouterCurvePools?: string[];
   quickLpUsdcWethStakingRewardsAddress?: string;
   aaveIncentivesControllerAddress?: string;
   aaveLendingPoolAddress?: string;
@@ -125,6 +126,9 @@ export interface IContracts {
   LendingEnabledAssetGuard?: Address;
   QuickLPAssetGuard?: Address;
   AaveLendingPoolAssetGuard?: Address;
+
+  DhedgeEasySwapper: Address;
+  DhedgeSwapRouter: Address;
 
   Assets?: { name: string; asset: Address; assetType: string | undefined; aggregator: Address | undefined }[];
 }
