@@ -11,7 +11,6 @@ import {
   quickswap,
   oneinch,
   curvePools,
-  torosPools,
 } from "../../../../config/chainData/polygon-data";
 import { Deployments } from ".";
 
@@ -95,16 +94,6 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const assetMiMatic = { asset: assets.miMatic, assetType: 0, aggregator: price_feeds.dai };
   const assetTusd = { asset: assets.tusd, assetType: 0, aggregator: price_feeds.tusd };
 
-  // Used in conjunction with the easy swapper
-  const torosAssets = await Promise.all(
-    Object.values(torosPools).map(async (torosAddress) => {
-      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
-      const dhedgePoolAggregator = await DHedgePoolAggregator.deploy(torosAddress);
-      await dhedgePoolAggregator.deployed();
-      return { asset: torosAddress, assetType: 0, aggregator: dhedgePoolAggregator.address };
-    }),
-  );
-
   const assetHandlerInitAssets = [
     assetWmatic,
     assetWeth,
@@ -116,7 +105,6 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
     assetMiMatic,
     assetTusd,
     assetLendingPool,
-    ...torosAssets,
   ];
 
   const assetHandler = <AssetHandler>await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
