@@ -36,6 +36,9 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+
       - name: Run EVM Fork in background
         env:
           ALCHEMY_URL: ${{ secrets.EVM_ALCHEMY_URL_INTEGRATION_TEST }}

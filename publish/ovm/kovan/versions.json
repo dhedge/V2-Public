@@ -32,26 +32,16 @@
           "aggregator": "0x03228Ddd04f0FF07cB68F53d164b53Dc2E4362eA"
         }
       ],
-      "AssetHandler": {
-        "proxy": "0xE85d8541C18D99eA0429d778D658a5ec41d344a8",
-        "implementation": "0x8c649efD62e25664A634b0F3F9e9c739CeEd7Ce4"
-      },
-      "PoolPerformance": {
-        "proxy": "0xFE231F6b46D84F1DD046B4E4b5562a6433f3E914",
-        "implementation": "0x6212FFDDe8f24e525264df10A7FfC6D017c8424A"
-      },
-      "PoolLogic": {
-        "proxy": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8",
-        "implementation": "0xd24bc2753240b66e2b602d6dbf2bdaa4873b6251"
-      },
-      "PoolManagerLogic": {
-        "proxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
-        "implementation": "0x645f8ec14d0940efd7272ba478c12968e8eb9937"
-      },
-      "PoolFactory": {
-        "proxy": "0x643ea0B936803A624666Da378d44dC39E1d12534",
-        "implementation": "0x9FEE88a18479bf7f0D41Da03819538AA7A617730"
-      }
+      "AssetHandlerProxy": "0xE85d8541C18D99eA0429d778D658a5ec41d344a8",
+      "AssetHandler": "0x8c649efD62e25664A634b0F3F9e9c739CeEd7Ce4",
+      "PoolPerformanceProxy": "0xFE231F6b46D84F1DD046B4E4b5562a6433f3E914",
+      "PoolPerformance": "0x6212FFDDe8f24e525264df10A7FfC6D017c8424A",
+      "PoolLogicProxy": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8",
+      "PoolLogic": "0xd24bc2753240b66e2b602d6dbf2bdaa4873b6251",
+      "PoolManagerLogicProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
+      "PoolManagerLogic": "0x9FEE88a18479bf7f0D41Da03819538AA7A617730",
+      "PoolFactoryProxy": "0x643ea0B936803A624666Da378d44dC39E1d12534",
+      "PoolFactory": "0x9FEE88a18479bf7f0D41Da03819538AA7A617730"
     }
   }
 }
