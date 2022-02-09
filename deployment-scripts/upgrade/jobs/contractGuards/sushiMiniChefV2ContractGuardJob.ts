@@ -3,7 +3,7 @@ import { proposeTx, tryVerify } from "../../../Helpers";
 import { addOrReplaceGuardInFile } from "../helpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
 
-export const sushiMiniChefV2GuardGuardJob: IJob<void> = async (
+export const sushiMiniChefV2ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
