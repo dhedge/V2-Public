@@ -1,6 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   AssetHandler,
+  DhedgeEasySwapper,
   Governance,
   IERC20,
   PoolFactory,
@@ -22,6 +23,7 @@ export type Deployments = {
   poolManagerLogic: PoolManagerLogic;
   poolPerformance: PoolPerformance;
   sushiMiniChefV2Guard: SushiMiniChefV2Guard;
+  dhedgeEasySwapper: DhedgeEasySwapper;
   assets: {
     [name: string]: IERC20;
   };
