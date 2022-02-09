@@ -167,7 +167,7 @@ describe("Uniswap V3 LP Test", function () {
       poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
     ).to.revertedWith("recipient is not pool");
 
-    // mint success
+    // mint USDC-WETH LP position of 2000 USDC and 1 WETH
     mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
       [
         assets.usdc,
@@ -192,7 +192,7 @@ describe("Uniswap V3 LP Test", function () {
 
     expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
 
-    // try to mint more than positions limit
+    // try to mint one more position
     mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
       [
         assets.usdc,
@@ -215,6 +215,7 @@ describe("Uniswap V3 LP Test", function () {
 
   describe("After position", () => {
     beforeEach(async () => {
+      // mint USDC-WETH LP position of 2000 USDC and 1 WETH
       let mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
         [
           assets.usdc,
@@ -241,6 +242,7 @@ describe("Uniswap V3 LP Test", function () {
     it("Should be able to increase liquidity", async () => {
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
 
+      // increase USDC-WETH LP position by 2000 USDC and 1 WETH
       let increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
         [tokenId, units(2000, 6), units(1), 0, 0, deadLine],
       ]);
@@ -259,6 +261,7 @@ describe("Uniswap V3 LP Test", function () {
     it("Should be able to decrease liquidity", async () => {
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
 
+      // decrease USDC-WETH LP position by 100%
       let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
         [tokenId, positionBefore.liquidity, 0, 0, deadLine],
       ]);
@@ -276,6 +279,7 @@ describe("Uniswap V3 LP Test", function () {
 
     it("Should be able to collect", async () => {
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+      // decrease USDC-WETH LP position by 100%
       let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
         [tokenId, positionBefore.liquidity, 0, 0, deadLine],
       ]);
@@ -307,6 +311,7 @@ describe("Uniswap V3 LP Test", function () {
 
     it("Should be able to burn", async () => {
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+      // decrease USDC-WETH LP position by 100%
       let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
         [tokenId, positionBefore.liquidity, 0, 0, deadLine],
       ]);
@@ -330,6 +335,7 @@ describe("Uniswap V3 LP Test", function () {
 
     it("Should be able to multicall", async () => {
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+      // decrease USDC-WETH LP position by 100%
       let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
         [tokenId, positionBefore.liquidity, 0, 0, deadLine],
       ]);
