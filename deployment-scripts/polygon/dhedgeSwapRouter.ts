@@ -5,7 +5,7 @@ import { tryVerify } from "../Helpers";
 import { IVersions } from "../types";
 import { getDeploymentData } from "../upgrade/getDeploymentData";
 
-task("easySwapper", "dHEDGE Easy Swapper commands")
+task("swapRouter", "dHEDGE Easy Swapper commands")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("execute", "deploy swapRouter", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
@@ -15,10 +15,11 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
 
     // Init version
     const deploymentData = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
-    const versions: IVersions = require(deploymentData.filenames.versionsFileName);
+    const versions: IVersions = JSON.parse(fs.readFileSync(deploymentData.filenames.versionsFileName, "utf-8"));
     const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
     let versionUpdate = false;
 
+    console.log("Will deploy swapRouter");
     if (taskArgs.execute) {
       if (versions[latestVersion].contracts.DhedgeSwapRouter) throw "DhedgeSwapRouter contract already deployed";
 
@@ -36,8 +37,8 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
 
       console.log("DhedgeSwapRouter deployed to: ", dhedgeSwapRouter.address);
       await tryVerify(hre, dhedgeSwapRouter.address, "contracts/DhedgeSwapRouter.sol:DhedgeSwapRouter", [
-        quickswap.router,
-        assets.weth,
+        deploymentData.addresses.v2RouterAddresses || [],
+        deploymentData.addresses.swapRouterCurvePools || [],
       ]);
 
       versions[latestVersion].contracts.DhedgeSwapRouter = dhedgeSwapRouter.address;
