@@ -3,10 +3,20 @@ import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { DhedgeEasySwapper, PoolFactory, PoolManagerLogic } from "../../../types";
+import {
+  aave,
+  assets,
+  assetsBalanceOfSlot,
+  curvePools,
+  quickswap,
+  sushi,
+  torosPools,
+} from "../../../config/chainData/polygon-data";
+import { DhedgeEasySwapper, Governance, PoolFactory, PoolManagerLogic } from "../../../types";
 import { units } from "../../TestHelpers";
-import { aave, assets, assetsBalanceOfSlot, quickswap, torosPools } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
+
+const { toBytes32 } = require("../../TestHelpers");
 
 use(solidity);
 
@@ -24,6 +34,7 @@ describe("DhedgeEasySwapper", function () {
   let logicOwner: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress, feeSink: SignerWithAddress;
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
+  let governance: Governance;
 
   before(async function () {
     [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
@@ -41,8 +52,26 @@ describe("DhedgeEasySwapper", function () {
     ]);
     await ethers.provider.send("evm_mine", []); // Just mines to the next block
 
+    const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
+    const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+    await swapRouter.deployed();
+
+    const governanceAddress = "0x206CbDa3381e7afdF448621b90f549f89555A588";
+    governance = await ethers.getContractAt("Governance", governanceAddress);
+    // // Take over ownership of the governance
+    // const governanceOwner = await ethers.provider.getStorageAt(governance.address, 0);
+    await ethers.provider.send("hardhat_setStorageAt", [
+      governance.address,
+      "0x0",
+      "0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    ]);
+    await ethers.provider.send("evm_mine", []); // Just mines to the next block
+
+    await governance.setAddresses([{ name: toBytes32("swapRouter"), destination: swapRouter.address }]);
+
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
+    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, swapRouter.address, assets.weth);
+    // dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
     await dhedgeEasySwapper.deployed();
 
     // AavelendingPool
@@ -229,6 +258,15 @@ describe("DhedgeEasySwapper", function () {
   });
 
   describe("Toros Tests", () => {
+    let snapshot: any;
+    beforeEach(async function () {
+      snapshot = await ethers.provider.send("evm_snapshot", []);
+      [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
+    });
+    afterEach(async () => {
+      await ethers.provider.send("evm_revert", [snapshot]);
+    });
+
     const createTest = (test: TestCase) => {
       const {
         testName,
@@ -293,6 +331,8 @@ describe("DhedgeEasySwapper", function () {
 
         // Withdraw all
         await torosPool.approve(dhedgeEasySwapper.address, balance);
+        const WithdrawToken = await ethers.getContractAt("IERC20", withdrawToken);
+        const beforeFundsReturnedBalance = await WithdrawToken.balanceOf(logicOwner.address);
         // Here I need update this to calculate the withdrawal amount out in withdraw token
         await dhedgeEasySwapper.withdraw(torosPool.address, balance, withdrawToken, 0);
 
@@ -301,8 +341,8 @@ describe("DhedgeEasySwapper", function () {
         expect(balanceAfterWithdraw).to.equal(0);
 
         // Check we received back funds close to the value of what we deposited
-        const WithdrawToken = await ethers.getContractAt("IERC20", withdrawToken);
-        const fundsReturned = await WithdrawToken.balanceOf(logicOwner.address);
+        const afterFundsReturnedBalance = await WithdrawToken.balanceOf(logicOwner.address);
+        const fundsReturned = afterFundsReturnedBalance.sub(beforeFundsReturnedBalance);
 
         const withdrawAmountUSDC = await poolManagerLogicProxy["assetValue(address,uint256)"](
           withdrawToken,
@@ -337,7 +377,6 @@ describe("DhedgeEasySwapper", function () {
         poolDepositToken: assets.usdc,
         withdrawToken: assets.usdc,
       },
-
       {
         testName: "ETHBEAR2X - can deposit and withdraw - swap in, swap out",
         torosPoolAddress: torosPools.ETHBEAR2X,

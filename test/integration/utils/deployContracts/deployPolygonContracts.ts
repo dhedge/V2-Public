@@ -10,8 +10,7 @@ import {
   balancer,
   quickswap,
   oneinch,
-  dhedgeEasySwapperAddress,
-  torosPools,
+  curvePools,
 } from "../../../../config/chainData/polygon-data";
 import { Deployments } from ".";
 
@@ -93,16 +92,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
   const assetBalancer = { asset: assets.balancer, assetType: 0, aggregator: price_feeds.balancer };
   const assetMiMatic = { asset: assets.miMatic, assetType: 0, aggregator: price_feeds.dai };
-
-  // Used in conjunction with the easy swapper
-  const torosAssets = await Promise.all(
-    Object.values(torosPools).map(async (torosAddress) => {
-      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
-      const dhedgePoolAggregator = await DHedgePoolAggregator.deploy(torosAddress);
-      await dhedgePoolAggregator.deployed();
-      return { asset: torosAddress, assetType: 0, aggregator: dhedgePoolAggregator.address };
-    }),
-  );
+  const assetTusd = { asset: assets.tusd, assetType: 0, aggregator: price_feeds.tusd };
 
   const assetHandlerInitAssets = [
     assetWmatic,
@@ -113,8 +103,8 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
     assetSushi,
     assetBalancer,
     assetMiMatic,
+    assetTusd,
     assetLendingPool,
-    ...torosAssets,
   ];
 
   const assetHandler = <AssetHandler>await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
@@ -226,9 +216,21 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
   await oneInchV3Guard.deployed();
 
+  const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
+  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+  await swapRouter.deployed();
+
   const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
   const easySwapperGuard = await EasySwapperGuard.deploy();
   await easySwapperGuard.deployed();
+
+  const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
+  const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(dao.address, swapRouter.address, assets.weth);
+  await dhedgeEasySwapper.deployed();
+  await dhedgeEasySwapper.setAssetToSkip(aave.lendingPool, true);
+  await dhedgeEasySwapper.setFee(0, 0);
+
+  await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);
 
   await governance.setAssetGuard(0, erc20Guard.address);
   await governance.setAssetGuard(2, sushiLPAssetGuard.address);
@@ -245,9 +247,9 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await governance.setContractGuard(balancer.v2Vault, balancerV2Guard.address);
   await governance.setContractGuard(balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
   await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
-  await governance.setContractGuard(dhedgeEasySwapperAddress, easySwapperGuard.address);
+  await governance.setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
   await governance.setAddresses([
-    { name: toBytes32("swapRouter"), destination: sushi.router },
+    { name: toBytes32("swapRouter"), destination: swapRouter.address },
     { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
     { name: toBytes32("weth"), destination: assets.weth },
     { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
@@ -288,6 +290,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
     poolManagerLogic,
     poolPerformance,
     sushiMiniChefV2Guard,
+    dhedgeEasySwapper,
     assets: {
       WMATIC,
       USDT,
