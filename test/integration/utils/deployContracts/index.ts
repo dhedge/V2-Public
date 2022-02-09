@@ -11,7 +11,7 @@ import {
   SushiMiniChefV2Guard,
 } from "../../../../types";
 
-export type Deployments = {
+export type IDeployments = {
   logicOwner: SignerWithAddress;
   manager: SignerWithAddress;
   dao: SignerWithAddress;

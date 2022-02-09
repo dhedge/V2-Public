@@ -42,6 +42,7 @@ import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IManaged.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 
@@ -80,6 +81,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   {
     bytes4 method = getMethod(data);
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
+    address factory = IPoolManagerLogic(_poolManagerLogic).factory();
 
     if (method == bytes4(keccak256("deposit(address,uint256,address,uint16)"))) {
       address depositAsset = convert32toAddress(getInput(data, 0));
@@ -87,6 +89,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       address onBehalfOf = convert32toAddress(getInput(data, 2));
 
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+
+      require(IHasAssetInfo(factory).getAssetType(depositAsset) == 4, "not lending enabled");
 
       require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(poolManagerLogicAssets.isSupportedAsset(depositAsset), "unsupported deposit asset");
@@ -128,25 +132,22 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       uint256 amount = uint256(getInput(data, 1));
       address onBehalfOf = convert32toAddress(getInput(data, 4));
 
-      IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
+      require(IHasAssetInfo(factory).getAssetType(borrowAsset) == 4, "not borrow enabled");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(to), "aave not enabled");
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(borrowAsset), "unsupported borrow asset");
 
-      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
-      require(poolManagerLogicAssets.isSupportedAsset(borrowAsset), "unsupported borrow asset");
-
-      require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(onBehalfOf == poolLogic, "recipient is not pool");
 
       // limit only one borrow asset
-      IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
-      uint256 length = supportedAssets.length;
-      for (uint256 i = 0; i < length; i++) {
+      IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(_poolManagerLogic).getSupportedAssets();
+      address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
+
+      for (uint256 i = 0; i < supportedAssets.length; i++) {
         if (supportedAssets[i].asset == borrowAsset) {
           continue;
         }
 
         // returns address(0) if it's not supported in aave
-        address factory = IPoolManagerLogic(_poolManagerLogic).factory();
-        address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
         (, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
           .getReserveTokensAddresses(supportedAssets[i].asset);
 

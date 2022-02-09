@@ -42,7 +42,7 @@ import "./interfaces/IHasPausable.sol";
 import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IHasGuardInfo.sol";
-import "./interfaces/IHasGuardInfo.sol";
+import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IERC20Extended.sol";
 import "./interfaces/guards/IAssetGuard.sol";
@@ -66,6 +66,7 @@ contract PoolPerformance is OwnableUpgradeable {
   struct AaveAddresses {
     address aaveProtocolDataProvider;
     address aaveLendingPool;
+    bool supportsAave;
   }
 
   mapping(address => bool) public poolInitialized;
@@ -151,7 +152,9 @@ contract PoolPerformance is OwnableUpgradeable {
       uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
-      if (IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveAddresses.aaveLendingPool)) {
+      if (
+        aaveAddresses.supportsAave && IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 4
+      ) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
           assetAddress
         );
@@ -197,7 +200,6 @@ contract PoolPerformance is OwnableUpgradeable {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     AaveAddresses memory aaveAddresses = _getAaveLendingPoolAndDataProvider(poolAddress);
-    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveAddresses.aaveLendingPool);
 
     InternalExternalValue memory internalExternalValue = InternalExternalValue(0, 0);
 
@@ -219,7 +221,9 @@ contract PoolPerformance is OwnableUpgradeable {
       uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
-      if (supportsAave) {
+      if (
+        aaveAddresses.supportsAave && IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 4
+      ) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
           assetAddress
         );
@@ -286,7 +290,6 @@ contract PoolPerformance is OwnableUpgradeable {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     AaveAddresses memory aaveAddresses = _getAaveLendingPoolAndDataProvider(poolAddress);
-    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveAddresses.aaveLendingPool);
 
     address aToken;
 
@@ -300,7 +303,9 @@ contract PoolPerformance is OwnableUpgradeable {
 
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
-      if (supportsAave) {
+      if (
+        aaveAddresses.supportsAave && IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 4
+      ) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
           assetAddress
         );
@@ -401,15 +406,19 @@ contract PoolPerformance is OwnableUpgradeable {
   {
     address aaveProtocolDataProvider = IGovernance(IPoolFactory(IPoolLogic(poolAddress).factory()).governanceAddress())
       .nameToDestination("aaveProtocolDataProvider");
+
     if (aaveProtocolDataProvider != address(0)) {
+      address aaveLendingPool = ILendingPoolAddressesProvider(
+        IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER()
+      ).getLendingPool();
       return
         AaveAddresses(
           aaveProtocolDataProvider,
-          ILendingPoolAddressesProvider(IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER())
-            .getLendingPool()
+          aaveLendingPool,
+          IHasSupportedAsset(IPoolLogic(poolAddress).poolManagerLogic()).isSupportedAsset(aaveLendingPool)
         );
     } else {
-      return AaveAddresses(address(0), address(0));
+      return AaveAddresses(address(0), address(0), false);
     }
   }
 

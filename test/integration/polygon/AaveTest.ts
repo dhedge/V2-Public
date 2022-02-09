@@ -16,6 +16,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { IDeployments } from "../utils/deployContracts";
+import { BigNumber } from "ethers";
 
 use(solidity);
 
@@ -25,11 +27,17 @@ describe("Polygon Mainnet Aave Test", function () {
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
+  let deployments: IDeployments;
 
+  let snapshot: any;
+  after(async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
+  });
   before(async function () {
+    snapshot = await ethers.provider.send("evm_snapshot", []);
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-    const deployments = await deployPolygonContracts();
+    deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
     DAI = deployments.assets.DAI;
     USDC = deployments.assets.USDC;
@@ -52,6 +60,42 @@ describe("Polygon Mainnet Aave Test", function () {
     await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
 
     await poolFactory.setExitCooldown(0);
+  });
+
+  it.only("Should not be able to borrow non lending enabled assets", async () => {
+    // assert usdt is non lending
+    expect(await deployments.assetHandler.assetTypes(assets.usdt)).to.equal(0);
+
+    const amount = units(100, 6);
+    await poolManagerLogicProxy.connect(manager).changeAssets(
+      [
+        { asset: aave.lendingPool, isDeposit: false },
+        { asset: assets.usdt, isDeposit: false },
+      ],
+      [],
+    );
+    const depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
+
+    // approve usdc for aave
+    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
+    // deposit usdc into aave
+    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
+
+    const borrowABI = iLendingPool.encodeFunctionData("borrow", [
+      assets.usdt,
+      // We can only borrow a fraction of the collateral
+      amount.div(3),
+      2,
+      0,
+      poolLogicProxy.address,
+    ]);
+    // Should no be able to borrow non lending assets
+    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
+    // Simulate trading the borrowed usdt into something else
+    await getAccountToken(BigNumber.from(0), poolLogicProxy.address, assets.usdt, assetsBalanceOfSlot.usdt);
+    // Should not be able to remove assets that have a respective aave debt
+    await poolManagerLogicProxy.connect(manager).changeAssets([], [assets.usdt]);
   });
 
   it("Should be able to deposit usdc and receive amusdc", async () => {
