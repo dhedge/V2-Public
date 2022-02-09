@@ -10,7 +10,6 @@ import {
   balancer,
   quickswap,
   oneinch,
-  dhedgeEasySwapperAddress,
   uniswapV3,
   curvePools,
 } from "../../../../config/chainData/polygon-data";
@@ -270,7 +269,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await governance.setContractGuard(balancer.v2Vault, balancerV2Guard.address);
   await governance.setContractGuard(balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
   await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
-  await governance.setContractGuard(dhedgeEasySwapperAddress, easySwapperGuard.address);
+  await governance.setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
   await governance.setContractGuard(uniswapV3.router, uniswapV3SwapGuard.address);
   await governance.setContractGuard(uniswapV3.nonfungiblePositionManager, uniswapV3NonfungiblePositionGuard.address);
 
