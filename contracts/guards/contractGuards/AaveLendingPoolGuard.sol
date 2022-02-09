@@ -169,9 +169,9 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
-      require(IHasAssetInfo(repayAsset).getAssetType(repayAsset) == 4, "not borrow enabled");
       require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
       require(poolManagerLogicAssets.isSupportedAsset(repayAsset), "unsupported repay asset");
+      require(IHasAssetInfo(factory).getAssetType(repayAsset) == 4, "not borrow enabled");
 
       require(onBehalfOf == poolLogic, "recipient is not pool");
 

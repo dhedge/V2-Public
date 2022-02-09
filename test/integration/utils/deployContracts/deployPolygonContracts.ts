@@ -274,6 +274,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
 
   const VariableWETH = await ethers.getContractAt("IERC20", aave.variableDebtTokens.weth);
   const VariableUSDT = await ethers.getContractAt("IERC20", aave.variableDebtTokens.usdt);
+  const VariableDAI = await ethers.getContractAt("IERC20", aave.variableDebtTokens.dai);
 
   const BALANCERLP_STABLE = await ethers.getContractAt("IERC20", balancer.pools.stablePool.pool);
   const BALANCERLP_WETH_BALANCER = await ethers.getContractAt("IERC20", balancer.pools.bal80weth20.pool);
@@ -306,6 +307,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
       AMWETH,
       VariableWETH,
       VariableUSDT,
+      VariableDAI,
       BALANCERLP_STABLE,
       BALANCERLP_WETH_BALANCER,
     },

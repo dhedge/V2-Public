@@ -333,15 +333,7 @@ describe("Aave Test", function () {
 
         const amount = units(10);
 
-        let repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
-
-        await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, repayABI)).to.be.revertedWith(
-          "non-zero address is required",
-        );
-
-        await expect(
-          poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, repayABI),
-        ).to.be.revertedWith("Guard not found");
+        let repayABI;
 
         repayABI = iLendingPool.encodeFunctionData("repay", [aave.aTokens.dai, amount, 2, poolLogicProxy.address]);
         await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI)).to.be.revertedWith(
@@ -411,14 +403,6 @@ describe("Aave Test", function () {
       it("should be able to swap borrow rate mode", async function () {
         let swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.usdc, 1]);
 
-        await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, swapRateABI)).to.be.revertedWith(
-          "non-zero address is required",
-        );
-
-        await expect(
-          poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, swapRateABI),
-        ).to.be.revertedWith("Guard not found");
-
         swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [aave.aTokens.dai, 1]);
         await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
           "unsupported asset",
@@ -445,14 +429,6 @@ describe("Aave Test", function () {
           assets.usdc,
           poolLogicProxy.address,
         ]);
-
-        await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, rebalanceAPI)).to.be.revertedWith(
-          "non-zero address is required",
-        );
-
-        await expect(
-          poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, rebalanceAPI),
-        ).to.be.revertedWith("Guard not found");
 
         rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
           aave.aTokens.dai,
