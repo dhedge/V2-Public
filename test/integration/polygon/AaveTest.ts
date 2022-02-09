@@ -21,7 +21,7 @@ import { BigNumber } from "ethers";
 
 use(solidity);
 
-describe("Polygon Mainnet Aave Test", function () {
+describe("Aave Test", function () {
   let USDC: IERC20, DAI: IERC20, AMUSDC: IERC20, WMATIC: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
@@ -51,6 +51,7 @@ describe("Polygon Mainnet Aave Test", function () {
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       { asset: assets.weth, isDeposit: true },
+      { asset: assets.usdt, isDeposit: false },
     ]);
     poolLogicProxy = funds.poolLogicProxy;
     poolManagerLogicProxy = funds.poolManagerLogicProxy;
@@ -62,18 +63,12 @@ describe("Polygon Mainnet Aave Test", function () {
     await poolFactory.setExitCooldown(0);
   });
 
-  it.only("Should not be able to borrow non lending enabled assets", async () => {
+  it("Should not be able to borrow non lending enabled assets", async () => {
     // assert usdt is non lending
     expect(await deployments.assetHandler.assetTypes(assets.usdt)).to.equal(0);
 
     const amount = units(100, 6);
-    await poolManagerLogicProxy.connect(manager).changeAssets(
-      [
-        { asset: aave.lendingPool, isDeposit: false },
-        { asset: assets.usdt, isDeposit: false },
-      ],
-      [],
-    );
+    await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aave.lendingPool, isDeposit: false }], []);
     const depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
 
     // approve usdc for aave
@@ -91,7 +86,9 @@ describe("Polygon Mainnet Aave Test", function () {
       poolLogicProxy.address,
     ]);
     // Should no be able to borrow non lending assets
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
+    expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI)).to.be.revertedWith(
+      "not borrow enabled",
+    );
     // Simulate trading the borrowed usdt into something else
     await getAccountToken(BigNumber.from(0), poolLogicProxy.address, assets.usdt, assetsBalanceOfSlot.usdt);
     // Should not be able to remove assets that have a respective aave debt
@@ -120,9 +117,15 @@ describe("Polygon Mainnet Aave Test", function () {
     // add supported assets
     await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aave.lendingPool, isDeposit: false }], []);
 
-    depositABI = iLendingPool.encodeFunctionData("deposit", [aave.aTokens.usdt, amount, poolLogicProxy.address, 0]);
+    // dai is not enabled in this pool
+    depositABI = iLendingPool.encodeFunctionData("deposit", [assets.dai, amount, poolLogicProxy.address, 0]);
     await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
       "unsupported deposit asset",
+    );
+
+    depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdt, amount, poolLogicProxy.address, 0]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
+      "not lending enabled",
     );
 
     depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, assets.usdc, 0]);
@@ -226,7 +229,7 @@ describe("Polygon Mainnet Aave Test", function () {
 
       const lendingPool = ILendingPool__factory.connect(aave.lendingPool, logicOwner);
 
-      let abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.usdt, true]);
+      let abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.dai, true]);
       await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi)).to.be.revertedWith(
         "unsupported asset",
       );
@@ -281,11 +284,6 @@ describe("Polygon Mainnet Aave Test", function () {
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
       ).to.be.revertedWith("Guard not found");
-
-      borrowABI = iLendingPool.encodeFunctionData("borrow", [aave.aTokens.dai, amount, 2, 0, poolLogicProxy.address]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI)).to.be.revertedWith(
-        "unsupported borrow asset",
-      );
 
       await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: assets.dai, isDeposit: false }], []);
 
