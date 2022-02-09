@@ -55,8 +55,8 @@ describe("ManagerFee Test", function () {
     );
     poolLogicProxy = funds.poolLogicProxy;
     poolManagerLogicProxy = await poolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
-    await getAccountToken(units(500, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
-    await getAccountToken(units(500, 6), logicOwner.address, assets.wmatic, assetsBalanceOfSlot.wmatic);
+    await getAccountToken(units(5000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+    await getAccountToken(units(5000, 6), logicOwner.address, assets.wmatic, assetsBalanceOfSlot.wmatic);
   });
 
   it("should be able to deposit", async function () {
@@ -92,6 +92,10 @@ describe("ManagerFee Test", function () {
   });
 
   it("should mint manager fee after 1 day", async () => {
+    // deposit 200 USDC
+    await USDC.approve(poolLogicProxy.address, (200e6).toString());
+    await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
+
     const daoFees = await poolFactory.getDaoFee();
 
     await usdc_price_feed.givenCalldataReturn(
@@ -117,16 +121,13 @@ describe("ManagerFee Test", function () {
       .mul(streamingFeeNumerator)
       .div(10000)
       .div(86400 * 365);
-    const calculatedAvailableFee = tokenPricePreMint.gt(tokenPriceAtLastFeeMint)
-      ? tokenPricePreMint
-          .sub(tokenPriceAtLastFeeMint)
-          .mul(totalSupplyPreMint)
-          .mul(managerFeeNumerator)
-          .div(10000)
-          .div(tokenPricePreMint)
-          .add(streamingFee)
-      : streamingFee;
-
+    const calculatedAvailableFee = tokenPricePreMint
+      .sub(tokenPriceAtLastFeeMint)
+      .mul(totalSupplyPreMint)
+      .mul(managerFeeNumerator)
+      .div(10000)
+      .div(tokenPricePreMint)
+      .add(streamingFee);
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");
     checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
@@ -184,8 +185,21 @@ describe("ManagerFee Test", function () {
   it("should mint manager fee after large deposit (1 year after)", async () => {
     const daoFees = await poolFactory.getDaoFee();
 
+    // deposit 200 USDC
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
     await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
+
+    await usdc_price_feed.givenCalldataReturn(
+      latestRoundDataABI,
+      ethers.utils.solidityPack(
+        ["uint256", "int256", "uint256", "uint256", "uint256"],
+        [0, 110000000, 0, await currentBlockTimestamp(), 0],
+      ),
+    ); // $1.1
+
+    // deposit 2000 USDC
+    await USDC.approve(poolLogicProxy.address, (2000e6).toString());
+    await poolLogicProxy.deposit(assets.usdc, (2000e6).toString());
 
     await usdc_price_feed.givenCalldataReturn(
       latestRoundDataABI,
@@ -210,15 +224,13 @@ describe("ManagerFee Test", function () {
       .mul(streamingFeeNumerator)
       .div(10000)
       .div(86400 * 365);
-    const calculatedAvailableFee = tokenPricePreMint.gt(tokenPriceAtLastFeeMint)
-      ? tokenPricePreMint
-          .sub(tokenPriceAtLastFeeMint)
-          .mul(totalSupplyPreMint)
-          .mul(managerFeeNumerator)
-          .div(10000)
-          .div(tokenPricePreMint)
-          .add(streamingFee)
-      : streamingFee;
+    const calculatedAvailableFee = tokenPricePreMint
+      .sub(tokenPriceAtLastFeeMint)
+      .mul(totalSupplyPreMint)
+      .mul(managerFeeNumerator)
+      .div(10000)
+      .div(tokenPricePreMint)
+      .add(streamingFee);
 
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");
