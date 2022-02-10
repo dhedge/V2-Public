@@ -27,14 +27,13 @@ describe("Polygon Mainnet Aave Test", function () {
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
 
   let snapshot: any;
-  after(async () => {
+  afterEach(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
   });
 
   before(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);
     [logicOwner, manager, dao, user] = await ethers.getSigners();
-    snapshot = await ethers.provider.send("evm_snapshot", []);
 
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
@@ -47,6 +46,7 @@ describe("Polygon Mainnet Aave Test", function () {
   });
 
   beforeEach(async function () {
+    snapshot = await ethers.provider.send("evm_snapshot", []);
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       { asset: assets.weth, isDeposit: true },

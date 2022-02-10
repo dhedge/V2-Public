@@ -56,9 +56,6 @@ jobs:
       - name: AaveTests
         run: |
           npx hardhat test ./test/integration/polygon/AaveTest.ts --network localhost
-      - name: AaveEdgeCase Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/AaveEdgeCaseTest.ts --network localhost
       - name: Balancer Tests
         run: |
           npx hardhat test ./test/integration/polygon/BalancerTest.ts --network localhost
@@ -124,7 +121,9 @@ jobs:
         # if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
-
+        - name: AaveEdgeCase Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/AaveEdgeCaseTest.ts --network localhost
       - name: OneInch Tests
         run: |
           npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
