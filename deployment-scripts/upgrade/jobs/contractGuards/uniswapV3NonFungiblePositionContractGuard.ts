@@ -33,7 +33,7 @@ export const uniswapV3NonFungiblePositionGuard: IJob<void> = async (
       hre,
       uniswapV3NonfungiblePositionGuard.address,
       "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol:UniswapV3NonfungiblePositionGuard",
-      [],
+      [addresses.uniSwapV3NonfungiblePositionManagerAddress, 1],
     );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
@@ -48,6 +48,7 @@ export const uniswapV3NonFungiblePositionGuard: IJob<void> = async (
       config,
       addresses,
     );
+
     const deployedGuard = {
       ContractAddress: addresses.uniSwapV3NonfungiblePositionManagerAddress,
       GuardName: "UniswapV3NonfungiblePositionGuard",

@@ -1691,7 +1691,8 @@
       "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4",
       "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
       "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E",
-      "DhedgeSwapRouter": "0xcc943481A5a07464b16689e895bc9af130f9396a"
+      "DhedgeSwapRouter": "0xcc943481A5a07464b16689e895bc9af130f9396a",
+      "UniswapV3NonfungiblePositionGuard": "0x8C371C6d40E69277Ad9157304E1Cc50Dd5795F05"
     },
     "network": {
       "name": "matic",
@@ -1699,6 +1700,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Tue, 08 Feb 2022 06:28:31 GMT"
+    "lastUpdated": "Thu, 10 Feb 2022 04:47:07 GMT"
   }
 }
