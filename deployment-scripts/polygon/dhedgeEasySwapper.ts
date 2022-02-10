@@ -3,24 +3,25 @@ import fs from "fs";
 import { assets, quickswap, protocolDao, aave, toros } from "../../config/chainData/polygon-data";
 
 import { tryVerify } from "../Helpers";
+import { getDeploymentData } from "../upgrade/getDeploymentData";
+import { IVersions } from "../types";
 const torosLeveragePools = toros.leveragePools;
 
 task("easySwapper", "dHEDGE Easy Swapper commands")
   .addOptionalParam("production", "run in production environment", false, types.boolean)
-  .addOptionalParam("deploy", "deploy Dynamic Bonds", false, types.boolean)
+  .addOptionalParam("execute", "deploy easySwapper", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
     const ethers = hre.ethers;
     const network = await ethers.provider.getNetwork();
     console.log("Network:", network.name);
 
     // Init version
-    const versionFile = taskArgs.production ? "versions" : "staging-versions";
-    const versionPath = `../publish/${network.name}/${versionFile}.json`;
-    const versions = require(versionPath);
+    const deploymentData = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
+    const versions: IVersions = JSON.parse(fs.readFileSync(deploymentData.filenames.versionsFileName, "utf-8"));
     const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
     let versionUpdate = false;
 
-    if (taskArgs.deploy) {
+    if (taskArgs.execute) {
       if (versions[latestVersion].contracts.DhedgeEasySwapper) throw "Easy Swapper contract already deployed";
 
       const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
@@ -46,10 +47,10 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
     }
 
     if (versionUpdate) {
-      versions[latestVersion].date = new Date().toUTCString();
+      versions[latestVersion].lastUpdated = new Date().toUTCString();
       // convert JSON object to string
       const data = JSON.stringify(versions, null, 2);
       // write to version file
-      fs.writeFileSync(`./publish/${network.name}/${versionFile}.json`, data);
+      fs.writeFileSync(deploymentData.filenames.versionsFileName, data);
     }
   });

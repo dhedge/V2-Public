@@ -1,11 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export interface IUpgradeConfig {
+export interface IUpgradeConfigProposeTx {
   execute: boolean;
   restartnonce: boolean;
+}
+
+export type IUpgradeConfig = IUpgradeConfigProposeTx & {
   oldTag: string;
   newTag: string;
-}
+};
 
 export type IJob<T> = (
   config: IUpgradeConfig,
@@ -29,26 +32,29 @@ export interface IFileNames {
 }
 
 export interface ExternalLogicContracts {
-  dhedgeEasySwapperAddress?: string;
+  dhedgeEasySwapperAddress?: Address;
 
-  synthetixProxyAddress?: string;
-  synthetixAddressResolverAddress?: string;
+  synthetixProxyAddress?: Address;
+  synthetixAddressResolverAddress?: Address;
 
-  balancerV2VaultAddress?: string;
-  sushiMiniChefV2Address?: string;
-  balancerMerkleOrchardAddress?: string;
-  aaveProtocolDataProviderAddress?: string;
+  balancerV2VaultAddress?: Address;
+  sushiMiniChefV2Address?: Address;
+  balancerMerkleOrchardAddress?: Address;
+  aaveProtocolDataProviderAddress?: Address;
 
-  quickStakingRewardsFactoryAddress?: string;
+  quickStakingRewardsFactoryAddress?: Address;
   v2RouterAddresses?: string[]; //quickswapRouter, sushiswapV2Router etc etc
-  quickLpUsdcWethStakingRewardsAddress?: string;
-  aaveIncentivesControllerAddress?: string;
-  aaveLendingPoolAddress?: string;
-  oneInchV4RouterAddress?: string;
+  swapRouterCurvePools?: string[];
+  quickLpUsdcWethStakingRewardsAddress?: Address;
+  aaveIncentivesControllerAddress?: Address;
+  aaveLendingPoolAddress?: Address;
+  oneInchV4RouterAddress?: Address;
+
+  uniSwapV3NonfungiblePositionManagerAddress?: Address;
 
   // Token Addresses
-  sushiTokenAddress?: string;
-  wmaticTokenAddress?: string;
+  sushiTokenAddress?: Address;
+  wmaticTokenAddress?: Address;
 }
 
 export interface IDhedgeInternal {
@@ -102,6 +108,10 @@ export interface IContracts {
   AssetHandler: Address;
   PoolPerformanceProxy: Address;
   PoolPerformance: Address;
+  DynamicBondsProxy?: Address;
+  DynamicBonds?: Address;
+
+  // Contract Guards
   SynthetixGuard?: Address;
   ERC20Guard?: Address;
   USDPriceAggregator?: Address;
@@ -115,10 +125,17 @@ export interface IContracts {
   BalancerMerkleOrchardGuard?: Address;
   AaveLendingPoolGuard?: Address;
   AaveIncentivesControllerGuard?: Address;
+  UniswapV3NonfungiblePositionGuard?: Address;
+
+  // Asset Guards
   SushiLPAssetGuard?: Address;
   LendingEnabledAssetGuard?: Address;
   QuickLPAssetGuard?: Address;
   AaveLendingPoolAssetGuard?: Address;
+  UniswapV3AssetGuard?: Address;
+
+  DhedgeEasySwapper: Address;
+  DhedgeSwapRouter: Address;
 
   Assets?: { name: string; asset: Address; assetType: string | undefined; aggregator: Address | undefined }[];
 }

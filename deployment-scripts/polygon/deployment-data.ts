@@ -1,4 +1,4 @@
-import { dhedgeEasySwapperAddress } from "../../config/chainData/polygon-data";
+import { curvePools, dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
 import { IAddresses, IFileNames } from "../types";
 import fs from "fs";
 
@@ -23,11 +23,10 @@ export const switchPolygonOzFile = (isProduction: boolean) => {
   });
 
   process.on("exit", () => {
-    console.log("Process Interrupted, Reverting rename");
+    console.log("Process Exiting, Switching Back Filename");
     if (fs.existsSync(ozExpectedFile)) {
       fs.renameSync(ozExpectedFile, ozEnvFile);
     }
-    console.log("Exiting...");
     // eventually exit
     process.exit(); // Add code if necessary
   });
@@ -61,9 +60,12 @@ export const polygonAddresses: IAddresses = {
   quickLpUsdcWethStakingRewardsAddress: "0x4A73218eF2e820987c59F838906A82455F42D98b",
   oneInchV4RouterAddress: "0x1111111254fb6c44bac0bed2854e76f90643097d",
 
+  swapRouterCurvePools: curvePools,
+
   // Token Addresses
   sushiTokenAddress: "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
   wmaticTokenAddress: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+  uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
 };
 
 export const polygonStagingFileNames: IFileNames = {

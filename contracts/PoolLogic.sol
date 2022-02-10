@@ -50,6 +50,12 @@
 // 17. ExitPool: Balancer exit pool
 // 18. Deposit: EasySwapper Deposit
 // 19. Withdraw: EasySwapper Withdraw
+// 20. Mint: Uniswap V3 Mint position
+// 21. IncreaseLiquidity: Uniswap V3 increase liquidity position
+// 22. DecreaseLiquidity: Uniswap V3 decrease liquidity position
+// 23. Burn: Uniswap V3 Burn position
+// 24. Collect: Uniswap V3 collect fees
+// 25. Multicall: Uniswap V3 Multicall
 
 // SPDX-License-Identifier: BUSL-1.1
 
@@ -77,11 +83,13 @@ import "./utils/AddressHelper.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /// @notice Logic implementation for pool
-contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
+contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
 
@@ -791,6 +799,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       wethBalanceBefore == 0 || wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)),
       "too high slippage"
     );
+  }
+
+  // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
+  function onERC721Received(
+    address,
+    address,
+    uint256,
+    bytes calldata
+  ) external view override returns (bytes4) {
+    return this.onERC721Received.selector;
   }
 
   uint256[49] private __gap;

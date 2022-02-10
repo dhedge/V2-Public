@@ -1690,7 +1690,8 @@
       "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03",
       "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4",
       "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
-      "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E"
+      "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E",
+      "DhedgeSwapRouter": "0xcc943481A5a07464b16689e895bc9af130f9396a"
     },
     "network": {
       "name": "matic",
@@ -1698,6 +1699,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Tue, 18 Jan 2022 02:19:25 GMT"
+    "lastUpdated": "Tue, 08 Feb 2022 06:28:31 GMT"
   }
 }

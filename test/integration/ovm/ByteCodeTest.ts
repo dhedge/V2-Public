@@ -4,8 +4,6 @@ import { Contract, ContractFactory } from "ethers";
 import { ethers, upgrades } from "hardhat";
 import * as versions from "../../../publish/ovm/prod/versions.json";
 
-const { checkAlmostSame } = require("../../TestHelpers");
-
 const isSameBytecode = (creationBytecode: string, runtimeBytecode: string) => {
   const bytecodeB = runtimeBytecode.substring(39);
   const bytecodeSnippet = bytecodeB.substring(0, 100);
@@ -95,7 +93,7 @@ describe("Bytecode Test", function () {
   it("PoolFactory Real Should have matching byte code", async function () {
     const creationBytecode = PoolFactory.bytecode;
 
-    const runtimeBytecode = await ethers.provider.getCode(versions["v2.12.0"].contracts.PoolFactory.implementation);
+    const runtimeBytecode = await ethers.provider.getCode(versions["v2.12.0"].contracts.PoolFactory);
 
     const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
     expect(bytecodeCheck).to.be.true;
@@ -104,7 +102,7 @@ describe("Bytecode Test", function () {
   it("PoolLogic Real Should have matching byte code", async function () {
     const creationBytecode = PoolLogic.bytecode;
 
-    const runtimeBytecode = await ethers.provider.getCode(versions["v2.12.0"].contracts.PoolLogic.implementation);
+    const runtimeBytecode = await ethers.provider.getCode(versions["v2.12.0"].contracts.PoolLogic);
 
     const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
     expect(bytecodeCheck).to.be.true;
@@ -115,7 +113,7 @@ describe("Bytecode Test", function () {
     const creationBytecode = PoolPerformance.bytecode;
     const implementation = await getImplementationAddress(
       ethers.provider,
-      versions["v2.12.0"].contracts.PoolPerformance.proxy,
+      versions["v2.12.0"].contracts.PoolPerformanceProxy,
     );
     const runtimeBytecode = await ethers.provider.getCode(implementation);
 
