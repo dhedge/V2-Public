@@ -426,10 +426,7 @@ describe("Aave Test", function () {
       });
 
       it("should be able to rebalance stable borrow rate", async function () {
-        let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
-          assets.usdc,
-          poolLogicProxy.address,
-        ]);
+        let rebalanceAPI;
 
         rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
           aave.aTokens.dai,
