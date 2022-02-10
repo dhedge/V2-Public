@@ -1,9 +1,7 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
+import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { ethers, upgrades } from "hardhat";
-import { assets, price_feeds } from "./ovm-data";
-import { expect } from "chai";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import * as versions from "../../../publish/ovm/prod/versions.json";
 
 const { checkAlmostSame } = require("../../TestHelpers");

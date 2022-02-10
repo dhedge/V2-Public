@@ -1,20 +1,23 @@
-const { ethers, upgrades, artifacts } = require("hardhat");
-const { expect, use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, units, currentBlockTimestamp } = require("../../TestHelpers");
-const { aave, quickswap, assets, price_feeds } = require("../../../config/chainData/polygon-data");
-
-use(chaiAlmost());
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { expect } from "chai";
+import { Contract } from "ethers";
+import { artifacts, ethers } from "hardhat";
+import { assets, assetsBalanceOfSlot, price_feeds } from "../../../config/chainData/polygon-data";
+import { IERC20, MockContract, PoolFactory } from "../../../types";
+import { checkAlmostSame, currentBlockTimestamp, units } from "../../TestHelpers";
+import { createFund } from "../utils/createFund";
+import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 describe("ManagerFee Test", function () {
-  let WMatic, USDC;
-  let logicOwner, manager, dao, user;
-  let PoolFactory, PoolLogic, PoolManagerLogic;
-  let poolFactory, poolLogic, poolManagerLogic, poolLogicProxy, poolManagerLogicProxy, fundAddress;
-  let usdc_price_feed, latestRoundDataABI;
+  let USDC: IERC20;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress;
+  let poolFactory: PoolFactory, poolManagerLogic: Contract, poolLogicProxy: Contract, poolManagerLogicProxy: Contract;
+  let usdc_price_feed: MockContract;
+  let latestRoundDataABI: string;
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager, dao] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
     usdc_price_feed = await MockContract.deploy();
@@ -30,126 +33,30 @@ describe("ManagerFee Test", function () {
       ),
     ); // $1
 
-    const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-
-    const Governance = await ethers.getContractFactory("Governance");
-    const governance = await Governance.deploy();
-    console.log("governance deployed to:", governance.address);
-
-    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
-    await poolPerformance.deployed();
-
-    PoolLogic = await ethers.getContractFactory("PoolLogic");
-    poolLogic = await PoolLogic.deploy();
-
-    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    poolManagerLogic = await PoolManagerLogic.deploy();
-
-    // Initialize Asset Price Consumer
-    const assetWeth = { asset: assets.weth, assetType: 0, aggregator: price_feeds.eth };
-    const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
     const assetUsdc = { asset: assets.usdc, assetType: 0, aggregator: usdc_price_feed.address };
-    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
 
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
-    await assetHandler.deployed();
-    await assetHandler.setChainlinkTimeout((3600 * 24 * 365 * 10).toString()); // 10 year expiry
-
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      assetHandler.address,
-      dao.address,
-      governance.address,
-    ]);
-    await poolFactory.deployed();
-
-    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
-
-    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-    erc20Guard = await ERC20Guard.deploy();
-    await erc20Guard.deployed();
-
-    await governance.setAssetGuard(0, erc20Guard.address);
-
-    await poolFactory.setExitFee(5, 1000); // 0.5%
+    const deployments = await deployPolygonContracts();
+    USDC = deployments.assets.USDC;
+    deployments.assetHandler.addAssets([assetUsdc]);
+    poolFactory = deployments.poolFactory;
+    poolManagerLogic = deployments.poolManagerLogic;
   });
 
-  it("Should be able to get USDC", async function () {
-    const IWETH = await hre.artifacts.readArtifact("IWETH");
-    WMatic = await ethers.getContractAt(IWETH.abi, assets.wmatic);
-    const IERC20 = await hre.artifacts.readArtifact("IERC20");
-    USDT = await ethers.getContractAt(IERC20.abi, assets.usdt);
-    USDC = await ethers.getContractAt(IERC20.abi, assets.usdc);
-    WETH = await ethers.getContractAt(IERC20.abi, assets.weth);
-    WMATIC = await ethers.getContractAt(IERC20.abi, assets.wmatic);
-    let balance = await ethers.provider.getBalance(logicOwner.address);
-    console.log("Matic balance: ", balance.toString());
-    balance = await WMATIC.balanceOf(logicOwner.address);
-    console.log("WMatic balance: ", balance.toString());
-    const IUniswapV2Router = await hre.artifacts.readArtifact("IUniswapV2Router");
-    const QuickSwapRouter = await ethers.getContractAt(IUniswapV2Router.abi, quickswap.router);
-    // deposit Matic -> WMatic
-    await WMatic.deposit({ value: units(500) });
-    balance = await WMATIC.balanceOf(logicOwner.address);
-    console.log("WMatic balance: ", balance.toString());
-    // WMatic -> USDC
-    await WMatic.approve(quickswap.router, units(500));
-    await QuickSwapRouter.swapExactTokensForTokens(
-      units(500),
-      0,
-      [assets.wmatic, assets.usdc],
-      logicOwner.address,
-      Math.floor(Date.now() / 1000 + 100000000),
-    );
-    balance = await USDC.balanceOf(logicOwner.address);
-    console.log("USDC balance: ", balance.toString());
-  });
-
-  it("Should be able to createFund", async function () {
-    await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
-
-    console.log("Passed poolLogic Init!");
-
-    await poolManagerLogic.initialize(
-      poolFactory.address,
-      manager.address,
-      "Barren Wuffet",
-      poolLogic.address,
-      "1000",
-      "200",
+  beforeEach(async () => {
+    const funds = await createFund(
+      poolFactory,
+      logicOwner,
+      manager,
       [
-        [assets.usdc, true],
-        [assets.weth, true],
+        { asset: assets.usdc, isDeposit: true },
+        { asset: assets.usdt, isDeposit: true },
       ],
+      { performance: ethers.BigNumber.from("5000"), management: ethers.BigNumber.from("200") },
     );
-
-    console.log("Passed poolManagerLogic Init!");
-
-    await poolFactory.createFund(
-      false,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      new ethers.BigNumber.from("200"),
-      [
-        [assets.usdc, true],
-        [assets.usdt, true],
-      ],
-    );
-
-    const deployedFunds = await poolFactory.getDeployedFunds();
-    const deployedFundsLength = deployedFunds.length;
-    expect(deployedFundsLength.toString()).to.equal("1");
-
-    fundAddress = deployedFunds[0];
-
-    poolLogicProxy = await PoolLogic.attach(fundAddress);
-    poolManagerLogicProxy = await PoolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
+    poolLogicProxy = funds.poolLogicProxy;
+    poolManagerLogicProxy = await poolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
+    await getAccountToken(units(5000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+    await getAccountToken(units(5000, 6), logicOwner.address, assets.wmatic, assetsBalanceOfSlot.wmatic);
   });
 
   it("should be able to deposit", async function () {
@@ -185,6 +92,10 @@ describe("ManagerFee Test", function () {
   });
 
   it("should mint manager fee after 1 day", async () => {
+    // deposit 200 USDC
+    await USDC.approve(poolLogicProxy.address, (200e6).toString());
+    await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
+
     const daoFees = await poolFactory.getDaoFee();
 
     await usdc_price_feed.givenCalldataReturn(
@@ -210,16 +121,13 @@ describe("ManagerFee Test", function () {
       .mul(streamingFeeNumerator)
       .div(10000)
       .div(86400 * 365);
-    const calculatedAvailableFee = tokenPricePreMint.gt(tokenPriceAtLastFeeMint)
-      ? tokenPricePreMint
-          .sub(tokenPriceAtLastFeeMint)
-          .mul(totalSupplyPreMint)
-          .mul(managerFeeNumerator)
-          .div(10000)
-          .div(tokenPricePreMint)
-          .add(streamingFee)
-      : streamingFee;
-
+    const calculatedAvailableFee = tokenPricePreMint
+      .sub(tokenPriceAtLastFeeMint)
+      .mul(totalSupplyPreMint)
+      .mul(managerFeeNumerator)
+      .div(10000)
+      .div(tokenPricePreMint)
+      .add(streamingFee);
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");
     checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
@@ -277,8 +185,21 @@ describe("ManagerFee Test", function () {
   it("should mint manager fee after large deposit (1 year after)", async () => {
     const daoFees = await poolFactory.getDaoFee();
 
+    // deposit 200 USDC
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
     await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
+
+    await usdc_price_feed.givenCalldataReturn(
+      latestRoundDataABI,
+      ethers.utils.solidityPack(
+        ["uint256", "int256", "uint256", "uint256", "uint256"],
+        [0, 110000000, 0, await currentBlockTimestamp(), 0],
+      ),
+    ); // $1.1
+
+    // deposit 2000 USDC
+    await USDC.approve(poolLogicProxy.address, (2000e6).toString());
+    await poolLogicProxy.deposit(assets.usdc, (2000e6).toString());
 
     await usdc_price_feed.givenCalldataReturn(
       latestRoundDataABI,
@@ -303,15 +224,13 @@ describe("ManagerFee Test", function () {
       .mul(streamingFeeNumerator)
       .div(10000)
       .div(86400 * 365);
-    const calculatedAvailableFee = tokenPricePreMint.gt(tokenPriceAtLastFeeMint)
-      ? tokenPricePreMint
-          .sub(tokenPriceAtLastFeeMint)
-          .mul(totalSupplyPreMint)
-          .mul(managerFeeNumerator)
-          .div(10000)
-          .div(tokenPricePreMint)
-          .add(streamingFee)
-      : streamingFee;
+    const calculatedAvailableFee = tokenPricePreMint
+      .sub(tokenPriceAtLastFeeMint)
+      .mul(totalSupplyPreMint)
+      .mul(managerFeeNumerator)
+      .div(10000)
+      .div(tokenPricePreMint)
+      .add(streamingFee);
 
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");

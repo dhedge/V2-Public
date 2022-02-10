@@ -2,12 +2,17 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { PoolFactory, PoolLogic__factory, PoolManagerLogic__factory } from "../../../../types";
+import { BigNumber } from "ethers";
 
 export const createFund = async (
   poolFactory: PoolFactory,
   signer: SignerWithAddress,
   manager: SignerWithAddress,
   supportedAssets: { asset: string; isDeposit: boolean }[],
+  fees: { performance: BigNumber; management: BigNumber } = {
+    performance: ethers.BigNumber.from("5000"),
+    management: ethers.BigNumber.from("0"),
+  },
 ) => {
   const deployedFundsBefore = await poolFactory.getDeployedFunds();
 
@@ -17,8 +22,8 @@ export const createFund = async (
     "Barren Wuffet",
     "Test Fund",
     "DHTF",
-    ethers.BigNumber.from("5000"),
-    ethers.BigNumber.from("0"),
+    fees.performance,
+    fees.management,
     supportedAssets,
   );
 

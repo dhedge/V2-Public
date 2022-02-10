@@ -185,3 +185,6 @@ jobs:
       - name: WithdrawSingle Tests
         run: |
           npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
+      - name: Manager Fees
+        run: |
+          npx hardhat test ./test/integration/polygon/ManagerFeeTest.ts --network localhost
