@@ -198,3 +198,6 @@ jobs:
       - name: DhedgeSwapRouter Tests
         run: |
           npx hardhat test ./test/integration/polygon/DhedgeSwapRouterTest.ts --network localhost
+      - name: UniswapV3L Tests
+        run: |
+          npx hardhat test ./test/integration/polygon/UniswapV3LPTest.ts --network localhost
