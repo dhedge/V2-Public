@@ -43,7 +43,7 @@ import "../../../interfaces/IHasGuardInfo.sol";
 import "../../../interfaces/IManaged.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
 
-contract UniswapV3SwapGuard is TxDataUtils, IGuard {
+contract UniswapV3RouterGuard is TxDataUtils, IGuard {
   using Path for bytes;
   using SafeMathUpgradeable for uint256;
 

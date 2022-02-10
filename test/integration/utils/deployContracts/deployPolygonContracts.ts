@@ -231,9 +231,9 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const easySwapperGuard = await EasySwapperGuard.deploy();
   await easySwapperGuard.deployed();
 
-  const UniswapV3SwapGuard = await ethers.getContractFactory("UniswapV3SwapGuard");
-  const uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
-  uniswapV3SwapGuard.deployed();
+  const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
+  const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy();
+  uniswapV3RouterGuard.deployed();
 
   const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");
   const uniV3AssetGuard = await UniswapV3AssetGuard.deploy(uniswapV3.nonfungiblePositionManager);
@@ -270,7 +270,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await governance.setContractGuard(balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
   await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
   await governance.setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
-  await governance.setContractGuard(uniswapV3.router, uniswapV3SwapGuard.address);
+  await governance.setContractGuard(uniswapV3.router, uniswapV3RouterGuard.address);
   await governance.setContractGuard(uniswapV3.nonfungiblePositionManager, uniswapV3NonfungiblePositionGuard.address);
 
   await governance.setAddresses([

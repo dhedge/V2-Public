@@ -21,7 +21,7 @@ let poolFactory,
   poolManagerLogicProxy,
   fundAddress;
 let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
-let synthetixGuard, uniswapV2RouterGuard, uniswapV3SwapGuard, sushiMiniChefV2Guard; // contract guards
+let synthetixGuard, uniswapV2RouterGuard, uniswapV3RouterGuard, sushiMiniChefV2Guard; // contract guards
 let erc20Guard, sushiLPAssetGuard, openAssetGuard; // asset guards
 let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
 let susd, seth, slink;
@@ -284,11 +284,11 @@ describe("PoolFactory", function () {
     uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
     uniswapV2RouterGuard.deployed();
 
-    const UniswapV3SwapGuard = await ethers.getContractFactory(
-      "contracts/guards/contractGuards/uniswapV3/UniswapV3SwapGuard.sol:UniswapV3SwapGuard",
+    const UniswapV3RouterGuard = await ethers.getContractFactory(
+      "contracts/guards/contractGuards/uniswapV3/UniswapV3RouterGuard.sol:UniswapV3RouterGuard",
     );
-    uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
-    uniswapV3SwapGuard.deployed();
+    uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy();
+    uniswapV3RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
@@ -331,7 +331,7 @@ describe("PoolFactory", function () {
     await governance.setAssetGuard(5, quickLPAssetGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
-    await governance.setContractGuard(uniswapV3Router.address, uniswapV3SwapGuard.address);
+    await governance.setContractGuard(uniswapV3Router.address, uniswapV3RouterGuard.address);
     await governance.setContractGuard(oneInchRouter.address, oneInchV3Guard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
     await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
@@ -1302,7 +1302,7 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -1371,7 +1371,7 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({

@@ -67,12 +67,12 @@ describe("Uniswap V3 Test", function () {
     erc20Guard = await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const UniswapV3SwapGuard = await ethers.getContractFactory("UniswapV3SwapGuard");
-    uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
-    uniswapV3SwapGuard.deployed();
+    const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
+    UniswapV3RouterGuard = await UniswapV3RouterGuard.deploy();
+    UniswapV3RouterGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setContractGuard(uniswapV3.router, uniswapV3SwapGuard.address);
+    await governance.setContractGuard(uniswapV3.router, UniswapV3RouterGuard.address);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
   });
@@ -326,7 +326,7 @@ describe("Uniswap V3 Test", function () {
 
   it("should be able to swap tokens - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      UniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -392,7 +392,7 @@ describe("Uniswap V3 Test", function () {
 
   it("should be able to swap tokens - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3SwapGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      UniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
