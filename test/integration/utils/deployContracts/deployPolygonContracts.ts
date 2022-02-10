@@ -154,7 +154,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const balancerV2Aggregator = await deployBalancerV2LpAggregator(poolFactory, balancer.pools.stablePool);
   const balancerLpAsset = {
     asset: balancer.pools.stablePool.pool,
-    assetType: 6,
+    assetType: 0,
     aggregator: balancerV2Aggregator.address,
   };
   await assetHandler.addAssets([balancerLpAsset]);
@@ -162,7 +162,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const balancerV2AggregatorWethBalancer = await deployBalancerV2LpAggregator(poolFactory, balancer.pools.bal80weth20);
   const balancerLpAssetWethBalancer = {
     asset: balancer.pools.bal80weth20.pool,
-    assetType: 6,
+    assetType: 0,
     aggregator: balancerV2AggregatorWethBalancer.address,
   };
   await assetHandler.addAssets([balancerLpAssetWethBalancer]);
