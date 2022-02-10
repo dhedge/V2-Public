@@ -47,6 +47,8 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
   using Path for bytes;
   using SafeMathUpgradeable for uint256;
 
+  // We need the slippage checker added here
+
   /// @notice Transaction guard for UniswavpV3SwapGuard
   /// @dev Parses the manager transaction data to ensure transaction is valid
   /// @param _poolManagerLogic Pool address
@@ -81,6 +83,9 @@ contract UniswapV3SwapGuard is TxDataUtils, IGuard {
       address dstAsset;
       bool hasMultiplePools = path.hasMultiplePools();
       require(hasMultiplePools, "trade invalid");
+
+      // Why do all the path assets need to be supported?
+      // Shouldn't it only be first and last?
 
       // check that all swap path assets are supported
       // srcAsset -> while loop(path assets) -> dstAsset

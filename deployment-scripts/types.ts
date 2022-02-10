@@ -50,6 +50,7 @@ export interface ExternalLogicContracts {
   aaveLendingPoolAddress?: Address;
   oneInchV4RouterAddress?: Address;
 
+  v3RouterAddresses?: string[];
   uniSwapV3NonfungiblePositionManagerAddress?: Address;
 
   // Token Addresses
@@ -126,6 +127,7 @@ export interface IContracts {
   AaveLendingPoolGuard?: Address;
   AaveIncentivesControllerGuard?: Address;
   UniswapV3NonfungiblePositionGuard?: Address;
+  UniswapV3RouterGuard?: Address;
 
   // Asset Guards
   SushiLPAssetGuard?: Address;

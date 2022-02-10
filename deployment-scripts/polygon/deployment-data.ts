@@ -59,13 +59,14 @@ export const polygonAddresses: IAddresses = {
   v2RouterAddresses: ["0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"], //quickswapRouter, sushiswapV2Router etc etc
   quickLpUsdcWethStakingRewardsAddress: "0x4A73218eF2e820987c59F838906A82455F42D98b",
   oneInchV4RouterAddress: "0x1111111254fb6c44bac0bed2854e76f90643097d",
+  uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
+  v3RouterAddresses: [uniswapV3.router],
 
   swapRouterCurvePools: curvePools,
 
   // Token Addresses
   sushiTokenAddress: "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
   wmaticTokenAddress: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
-  uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
 };
 
 export const polygonStagingFileNames: IFileNames = {
