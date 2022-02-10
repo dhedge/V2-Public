@@ -86,6 +86,7 @@ export const uniswapV3 = {
   router: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
   nonfungiblePositionManager: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
 };
+
 // Curve
 export const curvePools = ["0x1d8b86e3D88cDb2d34688e87E72F388Cb541B7C8"];
 

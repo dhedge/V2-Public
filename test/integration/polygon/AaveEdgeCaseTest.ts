@@ -39,7 +39,12 @@ describe("Polygon Mainnet Aave Edge Test", function () {
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
+  let snapshot: any;
+  after(async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
+  });
   before(async function () {
+    let snapshot: any;
     [logicOwner, manager, dao, user] = await ethers.getSigners();
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
