@@ -43,7 +43,7 @@ jobs:
         env:
           ALCHEMY_URL: ${{ secrets.OVM_ALCHEMY_URL_INTEGRATION_TEST }}
         run: |
-          npx hardhat node --fork $ALCHEMY_URL &
+          npx hardhat node --fork $ALCHEMY_URL > log-ovm-integration.log 2>&1 &
 
 
       - name: Hardhat compile
