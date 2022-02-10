@@ -6,6 +6,8 @@
 // 3 = Aave Lending Pool Asset
 // 4 = Lending Enable Asset
 // 5 = Quick LP tokens
+// 6 = Uniswap V3 Asset
+// 7 - Uniswap V3 NFT Position Asset
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;

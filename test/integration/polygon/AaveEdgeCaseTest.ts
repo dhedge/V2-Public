@@ -20,8 +20,7 @@ import { getAccountToken } from "../utils/getAccountTokens";
 use(solidity);
 
 describe("Polygon Mainnet Aave Edge Test", function () {
-  let WMATIC: IERC20,
-    WETH: IERC20,
+  let WETH: IERC20,
     USDC: IERC20,
     USDT: IERC20,
     AMUSDC: IERC20,
@@ -29,21 +28,21 @@ describe("Polygon Mainnet Aave Edge Test", function () {
     VariableUSDT: IERC20,
     VariableWETH: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
-  let poolFactory: PoolFactory,
-    poolLogic: PoolLogic,
-    poolManagerLogic: PoolManagerLogic,
-    poolLogicProxy: PoolLogic,
-    poolManagerLogicProxy: PoolManagerLogic,
-    fundAddress;
+  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
+  let snapshot: any;
+  after(async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
+  });
+
   before(async function () {
+    snapshot = await ethers.provider.send("evm_snapshot", []);
     [logicOwner, manager, dao, user] = await ethers.getSigners();
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
-    WMATIC = deployments.assets.WMATIC;
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;
