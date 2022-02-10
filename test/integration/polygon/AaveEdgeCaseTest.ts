@@ -28,7 +28,7 @@ describe("Polygon Mainnet Aave Edge Test", function () {
     VariableUSDT: IERC20,
     VariableWETH: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
-  let poolFactory: PoolFactory, poolManagerLogicProxy: PoolManagerLogic;
+  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
