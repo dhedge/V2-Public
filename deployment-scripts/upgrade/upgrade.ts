@@ -18,8 +18,9 @@ import { easySwapperContractGuardJob } from "./jobs/contractGuards/easySwapperCo
 import { oneInchV4ContractGuardJob } from "./jobs/contractGuards/oneInchV4ContractGuardJob";
 import { quickStakingRewardsContractGuardJob } from "./jobs/contractGuards/quickStakingRewardsContractGuardJob";
 import { sushiMiniChefV2ContractGuardJob } from "./jobs/contractGuards/sushiMiniChefV2ContractGuardJob";
-import { uniswapV3NonFungiblePositionGuard } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuard";
-import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob";
+import { uniswapV3NonFungiblePositionGuard } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuard"; // TODO: add "Job" to the name for consistency
+import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob"; //quickswapRouter, sushiswapV2Router etc etc
+import { uniswapV3RouterContractGuardJob } from "./jobs/contractGuards/uniswapV3RouterContractGuardJob";
 import { governanceNamesJob } from "./jobs/governanceNamesJob";
 import { openAssetContractGuardJob } from "./jobs/otherWeirdGuards/openAssetContractGuardJob";
 import { pauseJob } from "./jobs/pauseJob";
@@ -50,6 +51,7 @@ const jobs: { [key: string]: IJob<void> } = {
 
   // Contract Guards
   uniswapv2routerguard: v2RouterContractGuardJob,
+  uniswapv3routerguard: uniswapV3RouterContractGuardJob,
   balancerv2guard: balancerv2ContractGuard,
   balancermerkleorchardguard: balancerMerkleOrchardContractGuardJob,
   quickstakingrewardsguard: quickStakingRewardsContractGuardJob,
@@ -90,12 +92,13 @@ Object.keys(jobs).forEach((job) => {
 upgradeTask.setAction(async (taskArgs, hre) => {
   const ethers = hre.ethers;
   const network = await ethers.provider.getNetwork();
-  console.log("network:", network);
+  console.log("Network:", network.name);
 
   if (taskArgs.restartnonce) {
     console.log("Restarting from last submitted nonce.");
   }
 
+  console.log(`${taskArgs.production ? "Production" : "Staging"} environment.`);
   const { addresses, filenames } = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
 
   await hre.run("compile");

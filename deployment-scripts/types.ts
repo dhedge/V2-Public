@@ -44,6 +44,7 @@ export interface ExternalLogicContracts {
 
   quickStakingRewardsFactoryAddress?: Address;
   v2RouterAddresses?: string[]; //quickswapRouter, sushiswapV2Router etc etc
+  uniswapV3RouterAddress?: Address;
   swapRouterCurvePools?: string[];
   quickLpUsdcWethStakingRewardsAddress?: Address;
   aaveIncentivesControllerAddress?: Address;
@@ -95,7 +96,7 @@ export interface INotSureGuard {
   Destination: string;
 }
 
-export type Address = string;
+export type Address = string; // TODO: Could probably harden this type. Maybe Hardhat supports it?
 
 export interface IContracts {
   Governance: Address;
