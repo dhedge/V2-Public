@@ -287,7 +287,7 @@ describe("PoolFactory", function () {
     const UniswapV3RouterGuard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/uniswapV3/UniswapV3RouterGuard.sol:UniswapV3RouterGuard",
     );
-    uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy();
+    uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
     uniswapV3RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory(

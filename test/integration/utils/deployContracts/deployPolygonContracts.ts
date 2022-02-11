@@ -232,7 +232,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await easySwapperGuard.deployed();
 
   const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
-  const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy();
+  const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
   uniswapV3RouterGuard.deployed();
 
   const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");

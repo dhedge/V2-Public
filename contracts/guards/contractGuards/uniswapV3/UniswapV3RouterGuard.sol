@@ -36,6 +36,7 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./Path.sol";
+import "../../../utils/SlippageChecker.sol";
 import "../../../utils/TxDataUtils.sol";
 import "../../../interfaces/guards/IGuard.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";
@@ -43,11 +44,16 @@ import "../../../interfaces/IHasGuardInfo.sol";
 import "../../../interfaces/IManaged.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
 
-contract UniswapV3RouterGuard is TxDataUtils, IGuard {
+contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
   using Path for bytes;
   using SafeMathUpgradeable for uint256;
 
-  // We need the slippage checker added here
+  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
+    SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
+  // solhint-disable-next-line no-empty-blocks
+  {
+
+  }
 
   /// @notice Transaction guard for UniswavpV3SwapGuard
   /// @dev Parses the manager transaction data to ensure transaction is valid
@@ -77,34 +83,17 @@ contract UniswapV3RouterGuard is TxDataUtils, IGuard {
       address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
       uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
       bytes memory path = getBytes(data, 0, offset); // requires an offset due to dynamic Struct/tuple in calldata (abiencoder V2)
-      bytes memory thePool = path.getFirstPool();
-      address srcAsset = thePool.getPoolAddress();
+      address srcAsset = path.getFirstPool().getPoolAddress();
       uint256 srcAmount = uint256(getInput(data, 4));
+      uint256 amountOutMin = uint256(getInput(data, 5));
       address dstAsset;
-      bool hasMultiplePools = path.hasMultiplePools();
-      require(hasMultiplePools, "trade invalid");
-
-      // Why do all the path assets need to be supported?
-      // Shouldn't it only be first and last?
-
-      // check that all swap path assets are supported
-      // srcAsset -> while loop(path assets) -> dstAsset
-      // TODO: consider a better way of doing this
 
       address asset;
 
       // loop through path assets
-      while (hasMultiplePools) {
+      while (path.hasMultiplePools()) {
         path = path.skipToken();
-        bytes memory firstPool = path.getFirstPool();
-        asset = firstPool.getPoolAddress(); // gets asset from swap path
-        hasMultiplePools = path.hasMultiplePools();
-
-        // // TODO: consider enabling a validation of path assets once the total dHedge valid asset universe is big enough
-        // require(
-        //     poolManagerLogic.validateAsset(asset),
-        //     "invalid path asset"
-        // );
+        asset = path.getFirstPool().getPoolAddress(); // gets asset from swap path
       }
 
       // check that destination asset is supported (if it's a valid address)
@@ -117,6 +106,8 @@ contract UniswapV3RouterGuard is TxDataUtils, IGuard {
 
       require(pool == toAddress, "recipient is not pool");
 
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
+
       emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
@@ -127,10 +118,13 @@ contract UniswapV3RouterGuard is TxDataUtils, IGuard {
       address dstAsset = convert32toAddress(getInput(data, 1));
       address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
       uint256 srcAmount = uint256(getInput(data, 5));
+      uint256 amountOutMin = uint256(getInput(data, 6));
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == toAddress, "recipient is not pool");
+
+      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
 
       emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
 

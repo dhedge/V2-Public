@@ -2,14 +2,7 @@ const { ethers, upgrades } = require("hardhat");
 const { expect, use } = require("chai");
 const chaiAlmost = require("chai-almost");
 const { checkAlmostSame } = require("../../TestHelpers");
-const {
-  ZERO_ADDRESS,
-  uniswapV3,
-  aave,
-  assets,
-  price_feeds,
-  sushi,
-} = require("../../../config/chainData/ethereum-data");
+const { ZERO_ADDRESS, uniswapV3, assets, price_feeds, sushi } = require("../../../config/chainData/ethereum-data");
 
 use(chaiAlmost());
 
@@ -68,11 +61,11 @@ describe("Uniswap V3 Test", function () {
     erc20Guard.deployed();
 
     const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
-    UniswapV3RouterGuard = await UniswapV3RouterGuard.deploy();
-    UniswapV3RouterGuard.deployed();
+    uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
+    uniswapV3RouterGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setContractGuard(uniswapV3.router, UniswapV3RouterGuard.address);
+    await governance.setContractGuard(uniswapV3.router, uniswapV3RouterGuard.address);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
   });
@@ -326,7 +319,7 @@ describe("Uniswap V3 Test", function () {
 
   it("should be able to swap tokens - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      UniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -392,7 +385,7 @@ describe("Uniswap V3 Test", function () {
 
   it("should be able to swap tokens - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
-      UniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
