@@ -39,7 +39,6 @@ import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "./Path.sol";
 import "../../../utils/TxDataUtils.sol";
 import "../../../interfaces/guards/IGuard.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";

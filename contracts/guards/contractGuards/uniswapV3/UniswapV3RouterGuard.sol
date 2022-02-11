@@ -15,10 +15,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
+import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
 
-import "./Path.sol";
 import "../../../utils/SlippageChecker.sol";
 import "../../../utils/TxDataUtils.sol";
 import "../../../interfaces/guards/IGuard.sol";
@@ -46,10 +49,10 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
   /// @return isPublic if the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address, // to
-    bytes calldata data
+    address to,
+    bytes memory data
   )
-    external
+    public
     override
     returns (
       uint16 txType, // transaction type
@@ -62,58 +65,96 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
     address pool = poolManagerLogic.poolLogic();
 
-    if (method == bytes4(keccak256("exactInput((bytes,address,uint256,uint256,uint256))"))) {
-      address toAddress = convert32toAddress(getInput(data, 2)); // receiving address of the trade
-      uint256 offset = uint256(getInput(data, 0)).div(32); // dynamic Struct/tuple (abiencoder V2)
-      bytes memory path = getBytes(data, 0, offset); // requires an offset due to dynamic Struct/tuple in calldata (abiencoder V2)
-      address srcAsset = path.getFirstPool().getPoolAddress();
-      uint256 srcAmount = uint256(getInput(data, 4));
-      uint256 amountOutMin = uint256(getInput(data, 5));
-      address dstAsset;
+    if (method == ISwapRouter.exactInput.selector) {
+      ISwapRouter.ExactInputParams memory params = abi.decode(getParams(data), (ISwapRouter.ExactInputParams));
 
-      address asset;
-
-      // loop through path assets
-      while (path.hasMultiplePools()) {
-        path = path.skipToken();
-        asset = path.getFirstPool().getPoolAddress(); // gets asset from swap path
-      }
-
-      // check that destination asset is supported (if it's a valid address)
-      (, dstAsset, ) = path.decodeFirstPool(); // gets the destination asset
-      if (dstAsset == address(0)) {
-        // if the remaining path is just trailing zeros, use the last path asset instead
-        dstAsset = asset;
-      }
+      (address srcAsset, address dstAsset) = _decodePath(params.path);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
-      require(pool == toAddress, "recipient is not pool");
+      require(pool == params.recipient, "recipient is not pool");
 
-      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
+      _checkSlippageLimit(srcAsset, dstAsset, params.amountIn, params.amountOutMinimum, address(poolManagerLogic));
 
-      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-    } else if (
-      method == bytes4(keccak256("exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"))
-    ) {
-      address srcAsset = convert32toAddress(getInput(data, 0));
-      address dstAsset = convert32toAddress(getInput(data, 1));
-      address toAddress = convert32toAddress(getInput(data, 3)); // receiving address of the trade
-      uint256 srcAmount = uint256(getInput(data, 5));
-      uint256 amountOutMin = uint256(getInput(data, 6));
+    } else if (method == ISwapRouter.exactInputSingle.selector) {
+      ISwapRouter.ExactInputSingleParams memory params = abi.decode(
+        getParams(data),
+        (ISwapRouter.ExactInputSingleParams)
+      );
+
+      address srcAsset = params.tokenIn;
+      address dstAsset = params.tokenOut;
 
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
-      require(pool == toAddress, "recipient is not pool");
+      require(pool == params.recipient, "recipient is not pool");
 
-      _checkSlippageLimit(srcAsset, dstAsset, srcAmount, amountOutMin, address(poolManagerLogic));
+      _checkSlippageLimit(srcAsset, dstAsset, params.amountIn, params.amountOutMinimum, address(poolManagerLogic));
 
-      emit ExchangeFrom(pool, srcAsset, srcAmount, dstAsset, block.timestamp);
+      emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
+    } else if (method == ISwapRouter.exactOutput.selector) {
+      ISwapRouter.ExactOutputParams memory params = abi.decode(getParams(data), (ISwapRouter.ExactOutputParams));
+
+      (address srcAsset, address dstAsset) = _decodePath(params.path);
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      require(pool == params.recipient, "recipient is not pool");
+
+      _checkSlippageLimit(srcAsset, dstAsset, params.amountInMaximum, params.amountOut, address(poolManagerLogic));
+
+      emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
+
+      txType = 2; // 'Exchange' type
+    } else if (method == ISwapRouter.exactOutputSingle.selector) {
+      ISwapRouter.ExactOutputSingleParams memory params = abi.decode(
+        getParams(data),
+        (ISwapRouter.ExactOutputSingleParams)
+      );
+
+      address srcAsset = params.tokenIn;
+      address dstAsset = params.tokenOut;
+
+      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+
+      require(pool == params.recipient, "recipient is not pool");
+
+      _checkSlippageLimit(srcAsset, dstAsset, params.amountInMaximum, params.amountOut, address(poolManagerLogic));
+
+      emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
+
+      txType = 2; // 'Exchange' type
+    } else if (method == IMulticall.multicall.selector) {
+      bytes[] memory params = abi.decode(getParams(data), (bytes[]));
+
+      for (uint256 i = 0; i < params.length; i++) {
+        (txType, ) = txGuard(_poolManagerLogic, to, params[i]);
+        require(txType > 0, "invalid transaction");
+      }
+
+      txType = 25; // 'Multicall' type
     }
 
     return (txType, false);
+  }
+
+  function _decodePath(bytes memory path) internal pure returns (address srcAsset, address dstAsset) {
+    (srcAsset, , ) = path.decodeFirstPool();
+
+    address asset;
+    // loop through path assets
+    while (path.hasMultiplePools()) {
+      path = path.skipToken();
+      (asset, , ) = path.decodeFirstPool();
+    }
+    // check that destination asset is supported (if it's a valid address)
+    (, dstAsset, ) = path.decodeFirstPool(); // gets the destination asset
+    if (dstAsset == address(0)) {
+      // if the remaining path is just trailing zeros, use the last path asset instead
+      dstAsset = asset;
+    }
   }
 }

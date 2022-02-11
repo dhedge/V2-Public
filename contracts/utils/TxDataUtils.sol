@@ -34,8 +34,7 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-
-import "./BytesLib.sol";
+import "@uniswap/v3-periphery/contracts/libraries/BytesLib.sol";
 
 contract TxDataUtils {
   using BytesLib for bytes;
