@@ -1660,6 +1660,13 @@
           "assetType": "0",
           "aggregator": "0xE2279b4d0F2fF88A09E47399c4F56a4CFb4BDeDa",
           "aggregatorName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Uniswap V3 NFT Position Manager",
+          "asset": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+          "assetType": "7",
+          "aggregator": "0x42713997f48A7506cAc09C98b8a3723625392F3f",
+          "AggregatorName": "USDPriceAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1701,6 +1708,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Fri, 11 Feb 2022 02:33:20 GMT"
+    "lastUpdated": "Fri, 11 Feb 2022 06:49:29 GMT"
   }
 }
