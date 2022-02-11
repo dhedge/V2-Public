@@ -18,12 +18,12 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
   using SignedSafeMath for int256;
 
   IUniswapV3Pool public immutable pool;
-  address public mainToken; // the token for which to get the TWAP price (eg DHT)
-  address public pairToken;
+  address public immutable mainToken; // the token for which to get the TWAP price (eg DHT)
+  address public immutable pairToken;
   IAggregatorV3Interface public immutable pairTokenUsdAggregator; // Chainlink USD aggregator of pairing token (eg WETH)
-  uint256 public mainTokenUnit; // 1 main token in wei
-  uint256 public pairTokenUnit; // 1 pair token in wei
-  uint32 public updateInterval; // minimum interval for updating oracle
+  uint256 public immutable mainTokenUnit; // 1 main token in wei
+  uint256 public immutable pairTokenUnit; // 1 pair token in wei
+  uint32 public immutable updateInterval; // minimum interval for updating oracle
 
   constructor(
     IUniswapV3Pool _pool,
@@ -32,17 +32,18 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
     uint32 _updateInterval
   ) {
     pool = _pool;
-    mainToken = _mainToken;
     pairTokenUsdAggregator = _pairTokenUsdAggregator;
     updateInterval = _updateInterval;
 
+    mainToken = _mainToken;
     mainTokenUnit = 10**IERC20Extended(_mainToken).decimals();
 
-    pairToken = _pool.token0();
-    if (_mainToken == pairToken) {
-      pairToken = _pool.token1();
+    address _pairToken = _pool.token0();
+    if (_mainToken == _pairToken) {
+      _pairToken = _pool.token1();
     }
-    pairTokenUnit = 10**IERC20Extended(pairToken).decimals();
+    pairToken = _pairToken;
+    pairTokenUnit = 10**IERC20Extended(_pairToken).decimals();
   }
 
   /* ========== VIEWS ========== */
@@ -73,9 +74,10 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
 
     uint256 quoteAmount = OracleLibrary.getQuoteAtTick(tick, uint128(mainTokenUnit), mainToken, pairToken);
 
-    (, int256 usdPrice, , uint256 updatedAt, ) = pairTokenUsdAggregator.latestRoundData(); // This price may only update on deviation
+    int256 pairUsdPrice;
+    (, pairUsdPrice, , updatedAt, ) = pairTokenUsdAggregator.latestRoundData(); // This price may only update on deviation
 
-    answer = usdPrice.mul(int256(quoteAmount)).div(int256(pairTokenUnit));
+    answer = pairUsdPrice.mul(int256(quoteAmount)).div(int256(pairTokenUnit));
 
     return (0, answer, 0, updatedAt, 0);
   }
