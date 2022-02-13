@@ -61,7 +61,6 @@ export const polygonAddresses: IAddresses = {
   quickLpUsdcWethStakingRewardsAddress: "0x4A73218eF2e820987c59F838906A82455F42D98b",
   oneInchV4RouterAddress: "0x1111111254fb6c44bac0bed2854e76f90643097d",
   uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
-  v3RouterAddresses: [uniswapV3.router],
 
   swapRouterCurvePools: curvePools,
 

@@ -51,7 +51,6 @@ export interface ExternalLogicContracts {
   aaveLendingPoolAddress?: Address;
   oneInchV4RouterAddress?: Address;
 
-  v3RouterAddresses?: string[];
   uniSwapV3NonfungiblePositionManagerAddress?: Address;
 
   // Token Addresses
