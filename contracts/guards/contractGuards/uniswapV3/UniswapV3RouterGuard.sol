@@ -18,7 +18,6 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
 
@@ -29,6 +28,7 @@ import "../../../interfaces/IPoolManagerLogic.sol";
 import "../../../interfaces/IHasGuardInfo.sol";
 import "../../../interfaces/IManaged.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
+import "../../../interfaces/uniswapv3/IV3SwapRouter.sol";
 
 contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
   using Path for bytes;
@@ -65,8 +65,8 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
     address pool = poolManagerLogic.poolLogic();
 
-    if (method == ISwapRouter.exactInput.selector) {
-      ISwapRouter.ExactInputParams memory params = abi.decode(getParams(data), (ISwapRouter.ExactInputParams));
+    if (method == IV3SwapRouter.exactInput.selector) {
+      IV3SwapRouter.ExactInputParams memory params = abi.decode(getParams(data), (IV3SwapRouter.ExactInputParams));
 
       (address srcAsset, address dstAsset) = _decodePath(params.path);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
@@ -78,10 +78,10 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
       emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-    } else if (method == ISwapRouter.exactInputSingle.selector) {
-      ISwapRouter.ExactInputSingleParams memory params = abi.decode(
+    } else if (method == IV3SwapRouter.exactInputSingle.selector) {
+      IV3SwapRouter.ExactInputSingleParams memory params = abi.decode(
         getParams(data),
-        (ISwapRouter.ExactInputSingleParams)
+        (IV3SwapRouter.ExactInputSingleParams)
       );
 
       address srcAsset = params.tokenIn;
@@ -96,8 +96,8 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
       emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
-    } else if (method == ISwapRouter.exactOutput.selector) {
-      ISwapRouter.ExactOutputParams memory params = abi.decode(getParams(data), (ISwapRouter.ExactOutputParams));
+    } else if (method == IV3SwapRouter.exactOutput.selector) {
+      IV3SwapRouter.ExactOutputParams memory params = abi.decode(getParams(data), (IV3SwapRouter.ExactOutputParams));
 
       (address srcAsset, address dstAsset) = _decodePath(params.path);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
@@ -109,10 +109,10 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
       emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
 
       txType = 2; // 'Exchange' type
-    } else if (method == ISwapRouter.exactOutputSingle.selector) {
-      ISwapRouter.ExactOutputSingleParams memory params = abi.decode(
+    } else if (method == IV3SwapRouter.exactOutputSingle.selector) {
+      IV3SwapRouter.ExactOutputSingleParams memory params = abi.decode(
         getParams(data),
-        (ISwapRouter.ExactOutputSingleParams)
+        (IV3SwapRouter.ExactOutputSingleParams)
       );
 
       address srcAsset = params.tokenIn;

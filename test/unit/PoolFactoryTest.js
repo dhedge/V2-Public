@@ -1300,7 +1300,7 @@ describe("PoolFactory", function () {
     expect(event.destinationAsset).to.equal(seth);
   });
 
-  it("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
+  it.skip("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
@@ -1321,7 +1321,7 @@ describe("PoolFactory", function () {
 
     const sourceAmount = (100e18).toString();
     const IUniswapV3Router = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router",
+      "contracts/interfaces/uniswapv3/IV3SwapRouter.sol:IV3SwapRouter",
     );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     const exactInputSingleParams = {
@@ -1329,7 +1329,6 @@ describe("PoolFactory", function () {
       tokenOut: seth,
       fee: 10000,
       recipient: poolManagerLogicProxy.address,
-      deadline: 1,
       amountIn: sourceAmount,
       amountOutMinimum: 0,
       sqrtPriceLimitX96: 0,
@@ -1369,7 +1368,7 @@ describe("PoolFactory", function () {
     expect(event.destinationAsset).to.equal(seth);
   });
 
-  it("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
+  it.skip("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     let exchangeEvent = new Promise((resolve, reject) => {
       uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
@@ -1390,7 +1389,7 @@ describe("PoolFactory", function () {
 
     const sourceAmount = (100e18).toString();
     const IUniswapV3Router = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv3/IUniswapV3Router.sol:IUniswapV3Router",
+      "contracts/interfaces/uniswapv3/IV3SwapRouter.sol:IV3SwapRouter",
     );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     // https://etherscan.io/tx/0xa8423934015c7e893e06721bbc01e42b8139b20764b9d23dbcb831e7b18b0e60
@@ -1406,7 +1405,6 @@ describe("PoolFactory", function () {
     const exactInputParams = {
       path: path,
       recipient: poolManagerLogicProxy.address,
-      deadline: 1,
       amountIn: sourceAmount,
       amountOutMinimum: 0,
     };
