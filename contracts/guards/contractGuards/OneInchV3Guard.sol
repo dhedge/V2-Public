@@ -34,7 +34,6 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../../utils/TxDataUtils.sol";
 import "../../utils/SlippageChecker.sol";

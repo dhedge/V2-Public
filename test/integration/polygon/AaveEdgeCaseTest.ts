@@ -33,8 +33,14 @@ describe("Aave Edge Test", function () {
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
+  let snapshot: any;
+  after(async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
+  });
+
   before(async function () {
     [logicOwner, manager] = await ethers.getSigners();
+    snapshot = await ethers.provider.send("evm_snapshot", []);
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
     WETH = deployments.assets.WETH;

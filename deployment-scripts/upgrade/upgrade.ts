@@ -1,33 +1,33 @@
 import fs from "fs";
 import { task, types } from "hardhat/config";
-import { getTag, nonceLog } from "../Helpers";
-import { getDeploymentData } from "./getDeploymentData";
+import { executeInSeries, getTag, nonceLog } from "../Helpers";
 import { IJob, IVersions } from "../types";
-
-import { pauseJob } from "./jobs/pauseJob";
-import { assetsJob } from "./jobs/assetsJob";
-import { poolFactoryJob } from "./jobs/poolFactoryJob";
-import { assetHandlerJob } from "./jobs/assetHandlerJob";
-import { poolLogicJob } from "./jobs/poolLogicJob";
-import { poolPerformanceJob } from "./jobs/poolPerformanceJobs";
-import { aaveLendingPoolContractGuardJob } from "./jobs/contractGuards/aaveLendingPoolContractGuardJob";
-import { sushiLpAssetGuardJob } from "./jobs/assetGuards/sushiLpAssetGuardJob";
-import { poolManagerLogicJob } from "./jobs/poolManagerLogicJob";
+import { getDeploymentData } from "./getDeploymentData";
 import { erc20AssetGuardJob } from "./jobs/assetGuards/erc20AssetGuardJob";
-
-import { quickLpAssetGuardJob } from "./jobs/assetGuards/quickLpAssetGuardJob";
-import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob";
-import { balancerv2ContractGuard } from "./jobs/contractGuards/balancerv2ContractGuardJob";
-import { balancerMerkleOrchardContractGuardJob } from "./jobs/contractGuards/balancerMerkleOrchardContractGuardJob";
-import { openAssetContractGuardJob } from "./jobs/otherWeirdGuards/openAssetContractGuardJob";
-import { quickStakingRewardsContractGuardJob } from "./jobs/contractGuards/quickStakingRewardsContractGuardJob";
-import { sushiMiniChefV2GuardGuardJob } from "./jobs/contractGuards/sushiMiniChefV2GuardGuardJob";
-import { easySwapperContractGuardJob } from "./jobs/contractGuards/easySwapperContractGuardJob";
-import { aaveIncentivesControllerContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerContractGuardJob";
-import { oneInchV4ContractGuardJob } from "./jobs/contractGuards/oneInchV4ContractGuardJob";
-import { governanceNamesJob } from "./jobs/governanceNamesJob";
-import { unpauseJob } from "./jobs/unpauseJob";
 import { lendingEnabledAssetGuardJob } from "./jobs/assetGuards/lendingEnabledAssetGuardJob";
+import { quickLpAssetGuardJob } from "./jobs/assetGuards/quickLpAssetGuardJob";
+import { sushiLpAssetGuardJob } from "./jobs/assetGuards/sushiLpAssetGuardJob";
+import { uniV3AssetGuardJob } from "./jobs/assetGuards/uniV3AssetGuardJob";
+import { assetHandlerJob } from "./jobs/assetHandlerJob";
+import { assetsJob } from "./jobs/assetsJob";
+import { aaveIncentivesControllerContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerContractGuardJob";
+import { aaveLendingPoolContractGuardJob } from "./jobs/contractGuards/aaveLendingPoolContractGuardJob";
+import { balancerMerkleOrchardContractGuardJob } from "./jobs/contractGuards/balancerMerkleOrchardContractGuardJob";
+import { balancerv2ContractGuard } from "./jobs/contractGuards/balancerv2ContractGuardJob";
+import { easySwapperContractGuardJob } from "./jobs/contractGuards/easySwapperContractGuardJob";
+import { oneInchV4ContractGuardJob } from "./jobs/contractGuards/oneInchV4ContractGuardJob";
+import { quickStakingRewardsContractGuardJob } from "./jobs/contractGuards/quickStakingRewardsContractGuardJob";
+import { sushiMiniChefV2ContractGuardJob } from "./jobs/contractGuards/sushiMiniChefV2ContractGuardJob";
+import { uniswapV3NonFungiblePositionGuard } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuard";
+import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob";
+import { governanceNamesJob } from "./jobs/governanceNamesJob";
+import { openAssetContractGuardJob } from "./jobs/otherWeirdGuards/openAssetContractGuardJob";
+import { pauseJob } from "./jobs/pauseJob";
+import { poolFactoryJob } from "./jobs/poolFactoryJob";
+import { poolLogicJob } from "./jobs/poolLogicJob";
+import { poolManagerLogicJob } from "./jobs/poolManagerLogicJob";
+import { poolPerformanceJob } from "./jobs/poolPerformanceJobs";
+import { unpauseJob } from "./jobs/unpauseJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   pause: pauseJob,
@@ -46,17 +46,19 @@ const jobs: { [key: string]: IJob<void> } = {
   erc20guard: erc20AssetGuardJob,
   lendingenabledassetguard: lendingEnabledAssetGuardJob,
   quicklpassetguard: quickLpAssetGuardJob,
+  univ3assetguard: uniV3AssetGuardJob,
 
   // Contract Guards
   uniswapv2routerguard: v2RouterContractGuardJob,
   balancerv2guard: balancerv2ContractGuard,
   balancermerkleorchardguard: balancerMerkleOrchardContractGuardJob,
   quickstakingrewardsguard: quickStakingRewardsContractGuardJob,
-  sushiminichefv2guard: sushiMiniChefV2GuardGuardJob,
+  sushiminichefv2guard: sushiMiniChefV2ContractGuardJob,
   easyswapperguard: easySwapperContractGuardJob,
   aaveincentivescontrollerguard: aaveIncentivesControllerContractGuardJob,
   aavelendingpoolguard: aaveLendingPoolContractGuardJob,
   oneinchv4guard: oneInchV4ContractGuardJob,
+  uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuard,
 
   // Other Weird Guards
   openassetguard: openAssetContractGuardJob,
@@ -130,12 +132,12 @@ upgradeTask.setAction(async (taskArgs, hre) => {
   // TODO: ^^This code needs to be reviewed and refactored
 
   try {
-    await Promise.all(
-      Object.keys(jobs)
-        .filter((key) => {
-          return !taskArgs.specific || taskArgs[key];
-        })
-        .map((key) =>
+    const jobsToRun = Object.keys(jobs)
+      .filter((key) => {
+        return !taskArgs.specific || taskArgs[key];
+      })
+      .map(
+        (key) => () =>
           jobs[key](
             { execute: taskArgs.execute, restartnonce: taskArgs.restartnonce, newTag, oldTag },
             hre,
@@ -143,8 +145,8 @@ upgradeTask.setAction(async (taskArgs, hre) => {
             filenames,
             addresses,
           ),
-        ),
-    );
+      );
+    await executeInSeries(jobsToRun);
   } catch (e) {
     console.error(e);
     console.log("UPGRADE EXIT UNEXPECTED");

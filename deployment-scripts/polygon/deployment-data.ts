@@ -1,4 +1,4 @@
-import { curvePools, dhedgeEasySwapperAddress } from "../../config/chainData/polygon-data";
+import { curvePools, dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
 import { IAddresses, IFileNames } from "../types";
 import fs from "fs";
 
@@ -65,6 +65,7 @@ export const polygonAddresses: IAddresses = {
   // Token Addresses
   sushiTokenAddress: "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
   wmaticTokenAddress: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+  uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
 };
 
 export const polygonStagingFileNames: IFileNames = {

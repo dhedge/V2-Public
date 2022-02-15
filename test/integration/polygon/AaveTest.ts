@@ -29,7 +29,13 @@ describe("Aave Test", function () {
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   let deployments: IDeployments;
 
+  let snapshot: any;
+  afterEach(async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
+  });
+
   before(async function () {
+    snapshot = await ethers.provider.send("evm_snapshot", []);
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
     deployments = await deployPolygonContracts();
