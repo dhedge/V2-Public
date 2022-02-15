@@ -7,7 +7,6 @@ import {
   aave,
   assets,
   assetsBalanceOfSlot,
-  curvePools,
   quickswap,
   sushi,
   torosPools,
@@ -53,7 +52,7 @@ describe("DhedgeEasySwapper", function () {
     await ethers.provider.send("evm_mine", []); // Just mines to the next block
 
     const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
-    const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+    const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], []); // removed curve pools
     await swapRouter.deployed();
 
     const governanceAddress = "0x206CbDa3381e7afdF448621b90f549f89555A588";
