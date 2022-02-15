@@ -167,10 +167,22 @@ contract UniswapV3AssetGuard is ERC20Guard {
 
       // collect fees
       transactions[txCount].to = address(nonfungiblePositionManager);
-      transactions[txCount].txData = abi.encodeWithSelector(
-        INonfungiblePositionManager.collect.selector,
-        INonfungiblePositionManager.CollectParams(tokenId, pool, type(uint128).max, type(uint128).max)
-      );
+      if (decreaseLiquidity.feeAmount0 == 0 && decreaseLiquidity.feeAmount1 == 0) {
+        transactions[txCount].txData = abi.encodeWithSelector(
+          INonfungiblePositionManager.collect.selector,
+          INonfungiblePositionManager.CollectParams(tokenId, pool, type(uint128).max, type(uint128).max)
+        );
+      } else {
+        transactions[txCount].txData = abi.encodeWithSelector(
+          INonfungiblePositionManager.collect.selector,
+          INonfungiblePositionManager.CollectParams(
+            tokenId,
+            pool,
+            uint128(decreaseLiquidity.feeAmount0),
+            uint128(decreaseLiquidity.feeAmount1)
+          )
+        );
+      }
       txCount++;
 
       // We directly transfer the amount of tokens we receive from decreasing by the withdrawers portion.
@@ -179,7 +191,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("transfer(address,uint256)")),
         to, // recipient
-        decreaseLiquidity.amount0
+        decreaseLiquidity.amount0.add(decreaseLiquidity.feeAmount0)
       );
       txCount++;
 
@@ -188,7 +200,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("transfer(address,uint256)")),
         to, // recipient
-        decreaseLiquidity.amount1
+        decreaseLiquidity.amount1.add(decreaseLiquidity.feeAmount1)
       );
       txCount++;
     }
@@ -203,13 +215,19 @@ contract UniswapV3AssetGuard is ERC20Guard {
     address token1;
     uint256 amount0;
     uint256 amount1;
+    uint256 feeAmount0;
+    uint256 feeAmount1;
   }
 
   /// @notice Calculates liquidity withdraw balances
   /// @param tokenId nft position id
   /// @param portion withdraw portion
-  /// @return liquidity withdraw info
-  function _calcDecreaseLiquidity(uint256 tokenId, uint256 portion) internal view returns (DecreaseLiquidity memory) {
+  /// @return decreaseLiquidity withdraw info
+  function _calcDecreaseLiquidity(uint256 tokenId, uint256 portion)
+    internal
+    view
+    returns (DecreaseLiquidity memory decreaseLiquidity)
+  {
     (
       ,
       ,
@@ -225,17 +243,21 @@ contract UniswapV3AssetGuard is ERC20Guard {
 
     ) = nonfungiblePositionManager.positions(tokenId);
 
-    uint128 lpAmount = uint128(portion.mul(liquidity).div(10**18));
+    decreaseLiquidity.token0 = token0;
+    decreaseLiquidity.token1 = token1;
+    decreaseLiquidity.lpAmount = uint128(portion.mul(liquidity).div(10**18));
 
     (int24 tick, ) = OracleLibrary.consult(uniswapV3Factory.getPool(token0, token1, fee), priceUpdateInterval);
 
-    (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
+    (decreaseLiquidity.amount0, decreaseLiquidity.amount1) = LiquidityAmounts.getAmountsForLiquidity(
       TickMath.getSqrtRatioAtTick(tick),
       TickMath.getSqrtRatioAtTick(tickLower),
       TickMath.getSqrtRatioAtTick(tickUpper),
-      lpAmount
+      decreaseLiquidity.lpAmount
     );
 
-    return DecreaseLiquidity(lpAmount, token0, token1, amount0, amount1);
+    (uint256 feeAmount0, uint256 feeAmount1) = nonfungiblePositionManager.fees(tokenId);
+    decreaseLiquidity.feeAmount0 = feeAmount0.mul(portion).div(10**18);
+    decreaseLiquidity.feeAmount1 = feeAmount1.mul(portion).div(10**18);
   }
 }

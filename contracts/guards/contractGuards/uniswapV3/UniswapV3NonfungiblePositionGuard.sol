@@ -185,7 +185,10 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
         getParams(data),
         (INonfungiblePositionManager.CollectParams)
       );
+      (, , address token0, address token1, , , , , , , , ) = nonfungiblePositionManager.positions(param.tokenId);
 
+      require(poolManagerLogicAssets.isSupportedAsset(token0), "unsupported asset: tokenA");
+      require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
       require(pool == param.recipient, "recipient is not pool");
 
       emit Collect(poolManagerLogic.poolLogic(), param.tokenId, param.amount0Max, param.amount1Max, block.timestamp);
