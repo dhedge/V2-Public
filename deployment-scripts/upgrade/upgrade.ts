@@ -1,6 +1,6 @@
 import fs from "fs";
 import { task, types } from "hardhat/config";
-import { getTag, nonceLog } from "../Helpers";
+import { executeInSeries, getTag, nonceLog } from "../Helpers";
 import { IJob, IVersions } from "../types";
 import { getDeploymentData } from "./getDeploymentData";
 import { erc20AssetGuardJob } from "./jobs/assetGuards/erc20AssetGuardJob";
@@ -132,12 +132,12 @@ upgradeTask.setAction(async (taskArgs, hre) => {
   // TODO: ^^This code needs to be reviewed and refactored
 
   try {
-    await Promise.all(
-      Object.keys(jobs)
-        .filter((key) => {
-          return !taskArgs.specific || taskArgs[key];
-        })
-        .map((key) =>
+    const jobsToRun = Object.keys(jobs)
+      .filter((key) => {
+        return !taskArgs.specific || taskArgs[key];
+      })
+      .map(
+        (key) => () =>
           jobs[key](
             { execute: taskArgs.execute, restartnonce: taskArgs.restartnonce, newTag, oldTag },
             hre,
@@ -145,8 +145,8 @@ upgradeTask.setAction(async (taskArgs, hre) => {
             filenames,
             addresses,
           ),
-        ),
-    );
+      );
+    await executeInSeries(jobsToRun);
   } catch (e) {
     console.error(e);
     console.log("UPGRADE EXIT UNEXPECTED");

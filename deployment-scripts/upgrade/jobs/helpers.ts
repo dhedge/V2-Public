@@ -9,8 +9,9 @@ export const addOrReplaceGuardInFile = async <T extends { [k: string]: string | 
   matchKey: keyof T,
 ) => {
   const csvContractGuards: T[] = await csv().fromFile(assetGuardFileName);
-  const withoutExisting = csvContractGuards.map(
+  const withoutExisting = csvContractGuards.filter(
     (existingGuard) => existingGuard[matchKey].toString().toLowerCase() != guard[matchKey].toString().toLowerCase(),
   );
+
   writeCsv([...withoutExisting, guard], assetGuardFileName);
 };
