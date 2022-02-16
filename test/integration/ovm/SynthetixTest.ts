@@ -4,7 +4,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory } from "ethers";
 
 const { checkAlmostSame } = require("../../TestHelpers");
-import { assets, price_feeds, synthetix as SynthetixData } from "./ovm-data";
+import { assets, price_feeds, synthetix as SynthetixData } from "../../../config/chainData/ovm-data";
 import { units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 

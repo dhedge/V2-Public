@@ -2,7 +2,7 @@ import { IAggregatorV3Interface } from "../../../types/IAggregatorV3Interface";
 
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { price_feeds } from "./ovm-data";
+import { price_feeds } from "../../../config/chainData/ovm-data";
 
 describe("SynthPriceAggregator Test", function () {
   let ethUsdAggregator: IAggregatorV3Interface;

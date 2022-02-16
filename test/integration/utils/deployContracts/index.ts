@@ -22,8 +22,8 @@ export type Deployments = {
   poolLogic: PoolLogic;
   poolManagerLogic: PoolManagerLogic;
   poolPerformance: PoolPerformance;
-  sushiMiniChefV2Guard: SushiMiniChefV2Guard;
-  dhedgeEasySwapper: DhedgeEasySwapper;
+  sushiMiniChefV2Guard?: SushiMiniChefV2Guard;
+  dhedgeEasySwapper?: DhedgeEasySwapper;
   assets: {
     [name: string]: IERC20;
   };

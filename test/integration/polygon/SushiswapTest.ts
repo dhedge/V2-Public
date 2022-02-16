@@ -42,7 +42,7 @@ describe("Sushiswap V2 Test", function () {
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
     assetHandler = deployments.assetHandler;
-    sushiMiniChefV2Guard = deployments.sushiMiniChefV2Guard;
+    sushiMiniChefV2Guard = deployments.sushiMiniChefV2Guard!;
     USDC = deployments.assets.USDC;
     SUSHI = deployments.assets.SUSHI;
     WETH = deployments.assets.WETH;

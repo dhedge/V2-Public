@@ -1,230 +1,81 @@
-import { ethers, upgrades, artifacts } from "hardhat";
+import { ethers, artifacts } from "hardhat";
 import { expect } from "chai";
-import { ZERO_ADDRESS, uniswapV3, assets, price_feeds } from "./ovm-data";
+import { ZERO_ADDRESS, uniswapV3, assets } from "../../../config/chainData/ovm-data";
 import {
   AssetHandler,
   IERC20,
-  IV3SwapRouter,
-  IWETH,
+  IERC20__factory,
+  IMulticall__factory,
+  IV3SwapRouter__factory,
   PoolFactory,
-  PoolFactory__factory,
   PoolLogic,
-  PoolLogic__factory,
   PoolManagerLogic,
-  PoolManagerLogic__factory,
 } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getMinAmountOut } from "../utils/getMinAmountOut";
+import { deployOVMContracts } from "../utils/deployContracts/deployOVMContracts";
+import { createFund } from "../utils/createFund";
+import { getAccountToken } from "../utils/getAccountTokens";
+import { units } from "../../TestHelpers";
+import { assetsBalanceOfSlot } from "../../../config/chainData/ovm-data";
+import { Deployments } from "../utils/deployContracts";
 
 describe("Uniswap V3 Swap Router Test", function () {
-  let WETH: IWETH, USDT: IERC20, USDC: IERC20, UniswapRouter: IV3SwapRouter;
+  let deployments: Deployments;
+  let WETH: IERC20, USDT: IERC20, USDC: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
-  let PoolFactory: PoolFactory__factory,
-    PoolLogic: PoolLogic__factory,
-    PoolManagerLogic: PoolManagerLogic__factory,
-    assetHandler: AssetHandler;
-  let poolFactory: PoolFactory,
-    poolLogic: PoolLogic,
-    poolManagerLogic: PoolManagerLogic,
-    poolLogicProxy: PoolLogic,
-    poolManagerLogicProxy: PoolManagerLogic,
-    fundAddress: string;
+  let assetHandler: AssetHandler;
+  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
+  const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
+  const iV3SwapRouter = new ethers.utils.Interface(IV3SwapRouter__factory.abi);
+  const iMulticall = new ethers.utils.Interface(IMulticall__factory.abi);
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-    const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-
-    const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
-    console.log("governance deployed to:", governance.address);
-
-    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
-    await poolPerformance.deployed();
-
-    PoolLogic = await ethers.getContractFactory("PoolLogic");
-    poolLogic = await PoolLogic.deploy();
-
-    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    poolManagerLogic = await PoolManagerLogic.deploy();
-
-    // Initialize Asset Price Consumer
-
-    const assetWeth = { asset: assets.weth, assetType: 0, aggregator: price_feeds.eth };
-    const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
-    const assetUsdc = { asset: assets.usdc, assetType: 0, aggregator: price_feeds.usdc };
-    const assetHandlerInitAssets = [assetWeth, assetUsdt, assetUsdc];
-
-    assetHandler = <AssetHandler>await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
-    await assetHandler.deployed();
-    await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
-
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = <PoolFactory>(
-      await upgrades.deployProxy(PoolFactory, [
-        poolLogic.address,
-        poolManagerLogic.address,
-        assetHandler.address,
-        dao.address,
-        governance.address,
-      ])
-    );
-    await poolFactory.deployed();
-
-    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
-
-    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-    const erc20Guard = await ERC20Guard.deploy();
-    erc20Guard.deployed();
-
-    const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
-    const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
-    uniswapV3RouterGuard.deployed();
-
-    await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setContractGuard(uniswapV3.router, uniswapV3RouterGuard.address);
-
-    await poolFactory.setExitFee(5, 1000); // 0.5%
+    deployments = await deployOVMContracts();
+    poolFactory = deployments.poolFactory;
+    WETH = deployments.assets.WETH;
+    USDC = deployments.assets.USDC;
+    USDT = deployments.assets.USDC;
   });
 
-  it("Should be able to get USDC", async function () {
-    const IWETH = await artifacts.readArtifact("IWETH");
-    WETH = <IWETH>await ethers.getContractAt(IWETH.abi, assets.weth);
-    const IERC20 = await artifacts.readArtifact("IERC20");
-    USDT = <IERC20>await ethers.getContractAt(IERC20.abi, assets.usdt);
-    USDC = <IERC20>await ethers.getContractAt(IERC20.abi, assets.usdc);
-    const IV3SwapRouter = await artifacts.readArtifact("IV3SwapRouter");
-    UniswapRouter = <IV3SwapRouter>await ethers.getContractAt(IV3SwapRouter.abi, uniswapV3.router);
-    // deposit ETH -> WETH
-    await WETH.deposit({ value: (10e18).toString() });
-    // WETH -> USDT
-    let sourceAmount = (5e18).toString();
-    await WETH.approve(uniswapV3.router, (5e18).toString());
-    const exactInputSingleParams = {
-      tokenIn: assets.weth,
-      tokenOut: assets.usdc,
-      fee: 10000,
-      recipient: logicOwner.address,
-      amountIn: sourceAmount,
-      amountOutMinimum: 0,
-      sqrtPriceLimitX96: 0,
-    };
-    await UniswapRouter.exactInputSingle(exactInputSingleParams);
+  beforeEach(async function () {
+    const funds = await createFund(poolFactory, logicOwner, manager, [
+      { asset: assets.usdc, isDeposit: true },
+      { asset: assets.weth, isDeposit: true },
+    ]);
+    poolLogicProxy = funds.poolLogicProxy;
+    poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
-    // const path =
-    //   "0x" +
-    //   assets.weth.substring(2) + // source asset
-    //   "0001f4" + // fee
-    //   assets.usdc.substring(2) + // path asset
-    //   "0001f4" + // fee
-    //   assets.usdt.substring(2); // destination asset
-    // const exactInputParams = {
-    //   path: path,
-    //   recipient: logicOwner.address,
-    //   amountIn: sourceAmount,
-    //   amountOutMinimum: 0,
-    // };
-    // await UniswapRouter.exactInput(exactInputParams);
-  });
+    await getAccountToken(units(5), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
-  it("Should be able to createFund", async function () {
-    await poolFactory.createFund(
-      false,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      ethers.BigNumber.from("5000"),
-      [
-        {
-          asset: assets.usdc,
-          isDeposit: true,
-        },
-        {
-          asset: assets.weth,
-          isDeposit: true,
-        },
-      ],
-    );
+    await USDC.approve(poolLogicProxy.address, units(10000, 6));
+    await poolLogicProxy.deposit(assets.usdc, units(10000, 6));
 
-    let deployedFunds = await poolFactory.getDeployedFunds();
-    let deployedFundsLength = deployedFunds.length;
-    fundAddress = deployedFunds[deployedFundsLength - 1];
-    expect(deployedFundsLength.toString()).to.equal("1");
-
-    let isPool = await poolFactory.isPool(fundAddress);
-    expect(isPool).to.be.true;
-
-    let poolManagerLogicAddress = await poolFactory.getLogic(1);
-    expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
-
-    let poolLogicAddress = await poolFactory.getLogic(2);
-    expect(poolLogicAddress).to.equal(poolLogic.address);
-
-    poolLogicProxy = await PoolLogic.attach(fundAddress);
-    let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
-    poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
-
-    //default assets are supported
-    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-    let numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdc)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(assets.weth)).to.be.true;
-
-    //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdt)).to.be.false;
-  });
-
-  it("should be able to deposit", async function () {
-    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
-    expect(totalFundValue.toString()).to.equal("0");
-
-    await expect(poolLogicProxy.deposit(assets.usdt, (100e6).toString())).to.be.revertedWith("invalid deposit asset");
-
-    // Approve and deposit 100 USDC
-    await USDC.approve(poolLogicProxy.address, (100e6).toString());
-    await poolLogicProxy.deposit(assets.usdc, (100e6).toString());
-
-    // Approve and deposit 5 WETH
-    await WETH.approve(poolLogicProxy.address, (5e18).toString());
-    await poolLogicProxy.deposit(assets.weth, (5e18).toString());
-  });
-
-  it("Should be able to approve", async () => {
-    const IERC20 = await artifacts.readArtifact("IERC20");
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (100e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdt, approveABI)).to.be.revertedWith(
-      "asset not enabled in pool",
-    );
-
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
-      "unsupported spender approval",
-    );
+    await WETH.approve(poolLogicProxy.address, units(5));
+    await poolLogicProxy.deposit(assets.weth, units(5));
 
     // Approve to swap 100 USDC
-    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, (100e6).toString()]);
+    let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(100, 6)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     // Approve to swap 1 WETH
-    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, (1e18).toString()]);
+    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(1)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
+
+    await poolFactory.setExitCooldown(0);
   });
 
-  it("should be able to swap tokens - direct swap", async () => {
+  it("USDC -> WETH: exactInputSingle", async () => {
     const sourceAmount = ethers.BigNumber.from((5e6).toString());
     const minAmountOut = await getMinAmountOut(
-      {
-        assetHandler: assetHandler,
-      } as any,
+      deployments,
       ethers.BigNumber.from(sourceAmount),
       USDC.address,
       WETH.address,
     );
-    const IV3SwapRouter = await artifacts.readArtifact("IV3SwapRouter");
-    const iV3SwapRouter = new ethers.utils.Interface(IV3SwapRouter.abi);
     const exactInputSingleParams = {
       tokenIn: assets.usdc,
       tokenOut: assets.weth,
@@ -263,7 +114,7 @@ describe("Uniswap V3 Swap Router Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, swapABI);
   });
 
-  it("should be able to swap tokens - multi swap", async () => {
+  it("WETH -> USDT: exactInput", async () => {
     await poolManagerLogicProxy.connect(manager).changeAssets(
       [
         {
@@ -276,9 +127,7 @@ describe("Uniswap V3 Swap Router Test", function () {
 
     const sourceAmount = (1e18).toString();
     const minAmountOut = await getMinAmountOut(
-      {
-        assetHandler: assetHandler,
-      } as any,
+      deployments,
       ethers.BigNumber.from(sourceAmount),
       WETH.address,
       USDT.address,
@@ -350,5 +199,28 @@ describe("Uniswap V3 Swap Router Test", function () {
     // succeed swapping direct asset to asset
     swapABI = iV3SwapRouter.encodeFunctionData("exactInput", [exactInputParams]);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, swapABI);
+  });
+
+  it("USDC -> WETH: multicall(exactInputSingle, exactInputSingle)", async () => {
+    const sourceAmount = ethers.BigNumber.from((5e6).toString());
+    const minAmountOut = await getMinAmountOut(
+      deployments,
+      ethers.BigNumber.from(sourceAmount),
+      USDC.address,
+      WETH.address,
+    );
+    const exactInputSingleParams = {
+      tokenIn: assets.usdc,
+      tokenOut: assets.weth,
+      fee: 10000,
+      recipient: poolLogicProxy.address,
+      amountIn: sourceAmount,
+      amountOutMinimum: minAmountOut,
+      sqrtPriceLimitX96: 0,
+    };
+    const swapABI = iV3SwapRouter.encodeFunctionData("exactInputSingle", [exactInputSingleParams]);
+    const multicallABI = iMulticall.encodeFunctionData("multicall", [[swapABI, swapABI]]);
+
+    await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, multicallABI);
   });
 });

@@ -35,7 +35,7 @@ describe("EasySwapperGuard", () => {
 
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
-    dhedgeEasySwapper = deployments.dhedgeEasySwapper;
+    dhedgeEasySwapper = deployments.dhedgeEasySwapper!;
 
     const torosAsset = await createFund(poolFactory, logicOwner, manager, [{ asset: assets.usdc, isDeposit: true }]);
     torosAssetAddress = torosAsset.poolLogicProxy.address;
