@@ -29,6 +29,7 @@ import { poolLogicJob } from "./jobs/poolLogicJob";
 import { poolManagerLogicJob } from "./jobs/poolManagerLogicJob";
 import { poolPerformanceJob } from "./jobs/poolPerformanceJobs";
 import { unpauseJob } from "./jobs/unpauseJob";
+import { aaveLendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveLendingPoolAssetGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   pause: pauseJob,
@@ -42,7 +43,7 @@ const jobs: { [key: string]: IJob<void> } = {
   poolperformance: poolPerformanceJob,
 
   // Asset Guards
-  aavelendingpoolassetguard: aaveLendingPoolContractGuardJob,
+  gs: aaveLendingPoolAssetGuardJob,
   sushilpassetguard: sushiLpAssetGuardJob,
   erc20guard: erc20AssetGuardJob,
   lendingenabledassetguard: lendingEnabledAssetGuardJob,

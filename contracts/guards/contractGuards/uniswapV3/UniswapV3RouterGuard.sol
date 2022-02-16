@@ -29,6 +29,7 @@ import "../../../interfaces/IHasGuardInfo.sol";
 import "../../../interfaces/IManaged.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
 import "../../../interfaces/uniswapv3/IV3SwapRouter.sol";
+import "../../../interfaces/uniswapv3/IMulticallExtended.sol";
 
 contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
   using Path for bytes;
@@ -127,11 +128,12 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
       emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
 
       txType = 2; // 'Exchange' type
-    } else if (method == IMulticall.multicall.selector) {
-      bytes[] memory params = abi.decode(getParams(data), (bytes[]));
+    } else if (method == bytes4(keccak256("multicall(uint256,bytes[])"))) {
+      // function selector doesn't work because of multiple 'multicall' functions
+      (, bytes[] memory transactions) = abi.decode(getParams(data), (uint256, bytes[]));
 
-      for (uint256 i = 0; i < params.length; i++) {
-        (txType, ) = txGuard(_poolManagerLogic, to, params[i]);
+      for (uint256 i = 0; i < transactions.length; i++) {
+        (txType, ) = txGuard(_poolManagerLogic, to, transactions[i]);
         require(txType > 0, "invalid transaction");
       }
 
