@@ -142,11 +142,13 @@ contract PoolPerformance is OwnableUpgradeable {
     InternalExternalValue memory internalExternalValue = InternalExternalValue(0, 0);
 
     address aToken;
-
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      uint16 assetType = IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress);
-      if (assetType == 3 || assetType == 7) {
+      // AaveLendingPool or Univ3Lp
+      if (
+        IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 3 ||
+        IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 7
+      ) {
         continue;
       }
 
@@ -206,7 +208,9 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      if (assetAddress == aaveAddresses.aaveLendingPool) {
+      uint16 assetType = IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress);
+      // AaveLendingPool or Univ3Lp
+      if (assetType == 3 || assetType == 7) {
         continue;
       }
       // One thing to note here is that the impact of the external value is variable
@@ -294,7 +298,9 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      if (assetAddress == aaveAddresses.aaveLendingPool) {
+      uint16 assetType = IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress);
+      // AaveLendingPool or Univ3Lp
+      if (assetType == 3 || assetType == 7) {
         continue;
       }
 
@@ -375,8 +381,9 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-
-      if (assetAddress == aaveAddresses.aaveLendingPool) {
+      uint16 assetType = IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress);
+      // AaveLendingPool or Univ3Lp
+      if (assetType == 3 || assetType == 7) {
         continue;
       }
 
