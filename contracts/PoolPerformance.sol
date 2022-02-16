@@ -226,9 +226,7 @@ contract PoolPerformance is OwnableUpgradeable {
       uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
-      if (
-        aaveAddresses.supportsAave && IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 4
-      ) {
+      if (aaveAddresses.supportsAave && assetType == 4) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
           assetAddress
         );
@@ -310,9 +308,7 @@ contract PoolPerformance is OwnableUpgradeable {
 
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
-      if (
-        aaveAddresses.supportsAave && IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 4
-      ) {
+      if (aaveAddresses.supportsAave && assetType == 4) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
           assetAddress
         );
@@ -377,7 +373,6 @@ contract PoolPerformance is OwnableUpgradeable {
     address poolManagerAddress = IPoolLogic(poolAddress).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerAddress).getSupportedAssets();
     AaveAddresses memory aaveAddresses = _getAaveLendingPoolAndDataProvider(poolAddress);
-    bool supportsAave = IHasSupportedAsset(poolManagerAddress).isSupportedAsset(aaveAddresses.aaveLendingPool);
 
     address aToken;
 
@@ -393,7 +388,7 @@ contract PoolPerformance is OwnableUpgradeable {
 
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
-      if (supportsAave) {
+      if (aaveAddresses.supportsAave && assetType == 4) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
           assetAddress
         );
