@@ -29,7 +29,6 @@ import { poolLogicJob } from "./jobs/poolLogicJob";
 import { poolManagerLogicJob } from "./jobs/poolManagerLogicJob";
 import { poolPerformanceJob } from "./jobs/poolPerformanceJobs";
 import { unpauseJob } from "./jobs/unpauseJob";
-import { aaveLendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveLendingPoolAssetGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   pause: pauseJob,
@@ -43,7 +42,7 @@ const jobs: { [key: string]: IJob<void> } = {
   poolperformance: poolPerformanceJob,
 
   // Asset Guards
-  gs: aaveLendingPoolAssetGuardJob,
+  aavelendingpoolassetguard: aaveLendingPoolContractGuardJob,
   sushilpassetguard: sushiLpAssetGuardJob,
   erc20guard: erc20AssetGuardJob,
   lendingenabledassetguard: lendingEnabledAssetGuardJob,
@@ -52,6 +51,7 @@ const jobs: { [key: string]: IJob<void> } = {
 
   // Contract Guards
   uniswapv2routerguard: v2RouterContractGuardJob,
+  uniswapv3routerguard: uniswapV3RouterContractGuardJob,
   balancerv2guard: balancerv2ContractGuard,
   balancermerkleorchardguard: balancerMerkleOrchardContractGuardJob,
   quickstakingrewardsguard: quickStakingRewardsContractGuardJob,
@@ -60,8 +60,6 @@ const jobs: { [key: string]: IJob<void> } = {
   aaveincentivescontrollerguard: aaveIncentivesControllerContractGuardJob,
   aavelendingpoolguard: aaveLendingPoolContractGuardJob,
   oneinchv4guard: oneInchV4ContractGuardJob,
-
-  uniswapv3routerguard: uniswapV3RouterContractGuardJob,
   uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuard,
 
   // Other Weird Guards
