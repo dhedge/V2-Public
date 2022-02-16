@@ -780,15 +780,5 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
     );
   }
 
-  // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
-  function onERC721Received(
-    address,
-    address,
-    uint256,
-    bytes calldata
-  ) external view override returns (bytes4) {
-    return this.onERC721Received.selector;
-  }
-
   uint256[49] private __gap;
 }
