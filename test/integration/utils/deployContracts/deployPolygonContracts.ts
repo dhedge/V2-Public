@@ -11,7 +11,6 @@ import {
   quickswap,
   oneinch,
   uniswapV3,
-  curvePools,
 } from "../../../../config/chainData/polygon-data";
 import { IDeployments } from ".";
 
@@ -224,7 +223,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   await oneInchV3Guard.deployed();
 
   const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
-  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], []);
   await swapRouter.deployed();
 
   const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
