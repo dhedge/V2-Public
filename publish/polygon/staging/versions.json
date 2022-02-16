@@ -1723,7 +1723,7 @@
       "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
       "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E",
       "UniswapV3NonfungiblePositionGuard": "0x0e54D4Bb4C95a389Cdce6Cbe6e5E67b527142d1C",
-      "UniswapV3RouterGuard": "0x23ef3e1B648BE6119248315349AAEDD9d3746F9c",
+      "UniswapV3RouterGuard": "0x96F1C45DAb737D5ae28Abb30E7aD5c66c8D8Dfc8",
       "UniswapV3AssetGuard": "0x704dA6E3C10b3c13178C8216E79c88C30dFdC8C4",
       "DhedgeSwapRouter": "0x2Fa65bAA0D8E319568AbAda4099631044D79d7aA"
     },
@@ -1733,6 +1733,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 16 Feb 2022 09:28:40 GMT"
+    "lastUpdated": "Wed, 16 Feb 2022 09:35:11 GMT"
   }
 }
