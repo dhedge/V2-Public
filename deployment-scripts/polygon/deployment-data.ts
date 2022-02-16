@@ -62,7 +62,7 @@ export const polygonAddresses: IAddresses = {
   oneInchV4RouterAddress: "0x1111111254fb6c44bac0bed2854e76f90643097d",
   uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
 
-  swapRouterCurvePools: curvePools,
+  swapRouterCurvePools: [], //curvePools, // Curve is always broken atm because of running out of aave rewards
 
   // Token Addresses
   sushiTokenAddress: "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",

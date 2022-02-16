@@ -92,12 +92,15 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     for (uint256 i = 0; i < length; i++) {
       asset = supportedAssets[i].asset;
 
-      (collateralBalance, debtBalance, decimals) = _calculateAaveBalance(pool, asset);
+      // Lending/Borrowing enabled asset
+      if (IHasAssetInfo(factory).getAssetType(asset) == 4) {
+        (collateralBalance, debtBalance, decimals) = _calculateAaveBalance(pool, asset);
 
-      if (collateralBalance != 0 || debtBalance != 0) {
-        tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(asset);
-        totalCollateralInUsd = totalCollateralInUsd.add(tokenPriceInUsd.mul(collateralBalance).div(10**decimals));
-        totalDebtInUsd = totalDebtInUsd.add(tokenPriceInUsd.mul(debtBalance).div(10**decimals));
+        if (collateralBalance != 0 || debtBalance != 0) {
+          tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(asset);
+          totalCollateralInUsd = totalCollateralInUsd.add(tokenPriceInUsd.mul(collateralBalance).div(10**decimals));
+          totalDebtInUsd = totalDebtInUsd.add(tokenPriceInUsd.mul(debtBalance).div(10**decimals));
+        }
       }
     }
 
