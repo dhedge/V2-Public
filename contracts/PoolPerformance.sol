@@ -145,16 +145,15 @@ contract PoolPerformance is OwnableUpgradeable {
 
     for (uint8 i = 0; i < supportedAssets.length; i++) {
       address assetAddress = supportedAssets[i].asset;
-      if (assetAddress == aaveAddresses.aaveLendingPool) {
+      uint16 assetType = IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress);
+      if (assetType == 3 || assetType == 7) {
         continue;
       }
 
       uint256 externalBalance = IPoolManagerLogic(poolManagerAddress).assetBalance(assetAddress);
       // If the pool supports dai and aaveLendingPool, it also supports aDai so we must track that too
       // i.e dai === aDai.
-      if (
-        aaveAddresses.supportsAave && IHasAssetInfo(IPoolLogic(poolAddress).factory()).getAssetType(assetAddress) == 4
-      ) {
+      if (aaveAddresses.supportsAave && assetType == 4) {
         (aToken, , ) = IAaveProtocolDataProvider(aaveAddresses.aaveProtocolDataProvider).getReserveTokensAddresses(
           assetAddress
         );
