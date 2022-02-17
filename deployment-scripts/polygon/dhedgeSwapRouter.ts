@@ -1,6 +1,5 @@
 import fs from "fs";
 import { task, types } from "hardhat/config";
-import { assets, quickswap } from "../../config/chainData/polygon-data";
 import { tryVerify } from "../Helpers";
 import { IVersions } from "../types";
 import { getDeploymentData } from "../upgrade/getDeploymentData";

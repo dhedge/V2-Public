@@ -83,13 +83,11 @@ import "./utils/AddressHelper.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /// @notice Logic implementation for pool
-contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGuardUpgradeable {
+contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
 
@@ -799,16 +797,6 @@ contract PoolLogic is ERC20Upgradeable, IERC721ReceiverUpgradeable, ReentrancyGu
       wethBalanceBefore == 0 || wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)),
       "too high slippage"
     );
-  }
-
-  // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
-  function onERC721Received(
-    address,
-    address,
-    uint256,
-    bytes calldata
-  ) external view override returns (bytes4) {
-    return this.onERC721Received.selector;
   }
 
   uint256[49] private __gap;

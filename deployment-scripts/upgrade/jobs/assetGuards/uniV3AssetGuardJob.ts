@@ -35,7 +35,7 @@ export const uniV3AssetGuardJob: IJob<void> = async (
       hre,
       uniV3AssetGuard.address,
       "contracts/guards/assetGuards/UniswapV3AssetGuard.sol:UniswapV3AssetGuard",
-      [],
+      [addresses.uniSwapV3NonfungiblePositionManagerAddress],
     );
 
     const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [7, uniV3AssetGuard.address]);
@@ -51,7 +51,7 @@ export const uniV3AssetGuardJob: IJob<void> = async (
       AssetType: 7,
       GuardName: "UniswapV3AssetGuard",
       GuardAddress: uniV3AssetGuard.address,
-      Description: "Uniswap V3 Asset tokens",
+      Description: "Uniswap V3 LP positions",
     };
 
     await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
