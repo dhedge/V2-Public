@@ -23,16 +23,23 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
   IAggregatorV3Interface public immutable pairTokenUsdAggregator; // Chainlink USD aggregator of pairing token (eg WETH)
   uint256 public immutable mainTokenUnit; // 1 main token in wei
   uint256 public immutable pairTokenUnit; // 1 pair token in wei
+  int256 public immutable priceLowerLimit; // price lower limit in 8 decimals
+  int256 public immutable priceUpperLimit; // price upper limit in 8 decimals
   uint32 public immutable updateInterval; // minimum interval for updating oracle
 
   constructor(
     IUniswapV3Pool _pool,
     address _mainToken,
     IAggregatorV3Interface _pairTokenUsdAggregator,
+    int256 _priceLowerLimit,
+    int256 _priceUpperLimit,
     uint32 _updateInterval
   ) {
     pool = _pool;
     pairTokenUsdAggregator = _pairTokenUsdAggregator;
+    require(_priceLowerLimit < _priceUpperLimit, "invalid price limit");
+    priceLowerLimit = _priceLowerLimit;
+    priceUpperLimit = _priceUpperLimit;
     updateInterval = _updateInterval;
 
     mainToken = _mainToken;
@@ -78,6 +85,9 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
     (, pairUsdPrice, , updatedAt, ) = pairTokenUsdAggregator.latestRoundData(); // This price may only update on deviation
 
     answer = pairUsdPrice.mul(int256(quoteAmount)).div(int256(pairTokenUnit));
+
+    require(priceLowerLimit > 0 && answer >= priceLowerLimit, "answer exceeds lower limit");
+    require(priceUpperLimit > 0 && answer <= priceUpperLimit, "answer exceeds upper limit");
 
     return (0, answer, 0, updatedAt, 0);
   }

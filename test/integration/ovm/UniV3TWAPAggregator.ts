@@ -11,21 +11,51 @@ use(solidity);
 describe("UniV3TWAPAggregator Test", function () {
   let uniV3TwapAggregator: UniV3TWAPAggregator;
 
-  beforeEach(async function () {
+  it("Check price lower limit", async () => {
     const UniV3TWAPAggregator = await ethers.getContractFactory("UniV3TWAPAggregator");
     uniV3TwapAggregator = await UniV3TWAPAggregator.deploy(
       uniswapV3.pools.susd_dai,
       assets.susd,
       price_feeds.dai,
+      102000000, // $1.02
+      104000000, // $1.04
       60 * 10, // 10 mins update interval
     );
     await uniV3TwapAggregator.deployed();
+
+    await expect(uniV3TwapAggregator.latestRoundData()).to.revertedWith("answer exceeds lower limit");
+  });
+
+  it("Check price upper limit", async () => {
+    const UniV3TWAPAggregator = await ethers.getContractFactory("UniV3TWAPAggregator");
+    uniV3TwapAggregator = await UniV3TWAPAggregator.deploy(
+      uniswapV3.pools.susd_dai,
+      assets.susd,
+      price_feeds.dai,
+      96000000, // $0.96
+      98000000, // $0.98
+      60 * 10, // 10 mins update interval
+    );
+    await uniV3TwapAggregator.deployed();
+
+    await expect(uniV3TwapAggregator.latestRoundData()).to.revertedWith("answer exceeds upper limit");
   });
 
   it("Get sUSD price", async () => {
+    const UniV3TWAPAggregator = await ethers.getContractFactory("UniV3TWAPAggregator");
+    uniV3TwapAggregator = await UniV3TWAPAggregator.deploy(
+      uniswapV3.pools.susd_dai,
+      assets.susd,
+      price_feeds.dai,
+      98000000, // $0.98 lower limit
+      102000000, // $1.02 upper limit
+      60 * 10, // 10 mins update interval
+    );
+    await uniV3TwapAggregator.deployed();
+
     const price = (await uniV3TwapAggregator.latestRoundData()).answer;
-    const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.susd)).toString(), 8);
-    expect(price).to.be.closeTo(priceFromCongecko, price.mul(2).div(100) as any); // 2% diff
+    const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.susd)).toString(), 8);
+    expect(price).to.be.closeTo(priceFromCoingecko, price.mul(2).div(100) as any); // 2% diff
   });
 });
 
