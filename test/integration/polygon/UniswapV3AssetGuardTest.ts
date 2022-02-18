@@ -28,18 +28,18 @@ const mintAsUser = async (nonfungiblePositionManager: INonfungiblePositionManage
   await getAccountToken(units(2000, 6), user.address, assets.usdc, assetsBalanceOfSlot.usdc);
   // Approve nft manager to take tokens
   const usdcContract = await await ethers.getContractAt("IERC20", assets.usdc);
-  await usdcContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(200, 6));
+  await usdcContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(2000, 6).div(2));
   const wethContract = await ethers.getContractAt("IERC20", assets.weth);
-  await wethContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(0.1));
-  // Minting a very small position here relative to the positions that the pool mints
+  await wethContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(1).div(2));
+  // Minting a half position here relative to the positions
   await nonfungiblePositionManager.connect(user).mint({
     token0: assets.usdc,
     token1: assets.weth,
     fee: 10000,
     tickLower: -414400,
     tickUpper: -253200,
-    amount0Desired: units(200, 6),
-    amount1Desired: units(0.1),
+    amount0Desired: units(2000, 6).div(2),
+    amount1Desired: units(1).div(2),
     amount0Min: 0,
     amount1Min: 0,
     recipient: user.address,
