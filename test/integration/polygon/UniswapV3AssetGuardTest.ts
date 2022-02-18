@@ -28,18 +28,18 @@ const mintAsUser = async (nonfungiblePositionManager: INonfungiblePositionManage
   await getAccountToken(units(2000, 6), user.address, assets.usdc, assetsBalanceOfSlot.usdc);
   // Approve nft manager to take tokens
   const usdcContract = await await ethers.getContractAt("IERC20", assets.usdc);
-  await usdcContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(2000, 6));
+  await usdcContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(200, 6));
   const wethContract = await ethers.getContractAt("IERC20", assets.weth);
-  await wethContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(1));
-
+  await wethContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(0.1));
+  // Minting a very small position here relative to the positions that the pool mints
   await nonfungiblePositionManager.connect(user).mint({
     token0: assets.usdc,
     token1: assets.weth,
     fee: 10000,
     tickLower: -414400,
     tickUpper: -253200,
-    amount0Desired: units(2000, 6),
-    amount1Desired: units(1),
+    amount0Desired: units(200, 6),
+    amount1Desired: units(0.1),
     amount0Min: 0,
     amount1Min: 0,
     recipient: user.address,
@@ -77,6 +77,7 @@ describe("UniswapV3AssetGuardTest", function () {
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic;
   let nonfungiblePositionManager: INonfungiblePositionManager;
   let deployments: IDeployments;
+  let user: Wallet;
 
   before(async function () {
     [logicOwner, manager] = await ethers.getSigners();
@@ -107,16 +108,20 @@ describe("UniswapV3AssetGuardTest", function () {
     await poolLogicProxy.deposit(assets.weth, units(3));
 
     await poolFactory.setExitCooldown(0);
+    // We don't use a  getSigners signer here because they're shared across all integration tests
+    user = ethers.Wallet.createRandom().connect(ethers.provider);
+    logicOwner.sendTransaction({
+      to: user.address,
+      value: ethers.utils.parseEther("1"),
+    });
   });
 
   // What we want to test here is if a nft position gets transferred directly
   // to a pool that we only count the first three that the pool mints
   // not matter what order they are created.
   describe("Ensure balance is calculated for first three LP positions", () => {
-    it.only("User mints, manager mints 3x, User direct transfer", async () => {
+    it("User mints, manager mints 3x, User direct transfer", async () => {
       // Setup
-      // We don't use a  getSigners signer here because they're shared across all integration tests
-      const user: Wallet = ethers.Wallet.createRandom();
       await mintAsUser(nonfungiblePositionManager, user);
       await mintAsPool(poolLogicProxy, manager);
       await mintAsPool(poolLogicProxy, manager);
@@ -124,7 +129,7 @@ describe("UniswapV3AssetGuardTest", function () {
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
       const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
-      nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
 
       // Assert
       expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
@@ -134,8 +139,6 @@ describe("UniswapV3AssetGuardTest", function () {
 
     it("Manager mints 3x, User mints, User direct transfer", async () => {
       // Setup
-      // We don't use a  getSigners signer here because they're shared across all integration tests
-      const user: Wallet = ethers.Wallet.createRandom();
       await mintAsPool(poolLogicProxy, manager);
       await mintAsPool(poolLogicProxy, manager);
       await mintAsPool(poolLogicProxy, manager);
@@ -143,7 +146,7 @@ describe("UniswapV3AssetGuardTest", function () {
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
       const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
-      nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
 
       // Assert
       expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
