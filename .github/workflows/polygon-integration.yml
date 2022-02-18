@@ -194,7 +194,7 @@ jobs:
 
   polygon-aave-edge-case:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
-    name: PIT 4
+    name: Polygon Aave Edge Cases
     runs-on: ubuntu-latest
 
     steps:
@@ -244,7 +244,7 @@ jobs:
 
   polygon-aave-tests:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
-    name: PIT 1
+    name: Polygon Aave Tests
     runs-on: ubuntu-latest
 
     steps:
