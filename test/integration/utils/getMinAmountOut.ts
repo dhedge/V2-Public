@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
-import { Deployments } from "../utils/deployContracts";
+import { IDeployments } from "../utils/deployContracts";
 import { units } from "../../TestHelpers";
 
 /**
@@ -13,7 +13,7 @@ import { units } from "../../TestHelpers";
  * @returns
  */
 export const getMinAmountOut = async (
-  deployments: Deployments,
+  deployments: IDeployments,
   amountIn: BigNumber,
   tokenInAddress: string,
   tokenOutAddress: string,
