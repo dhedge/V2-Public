@@ -47,6 +47,7 @@ import "./ERC20Guard.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IERC20Extended.sol";
+import "../contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol";
 
 /// @title Uniswap V3 asset guard
 /// @dev Asset type = 6
@@ -72,10 +73,18 @@ contract UniswapV3AssetGuard is ERC20Guard {
   /// @dev Returns the balance priced in ETH
   /// @param pool The pool logic address
   /// @return balance The total balance of the pool
-  function getBalance(address pool, address) public view override returns (uint256 balance) {
+  function getBalance(address pool, address asset) public view override returns (uint256 balance) {
     address factory = IPoolLogic(pool).factory();
 
-    uint256 length = nonfungiblePositionManager.balanceOf(pool);
+    uint256 length;
+    {
+      UniswapV3NonfungiblePositionGuard guard = UniswapV3NonfungiblePositionGuard(
+        IHasGuardInfo(factory).getGuard(asset)
+      );
+      uint256 nftCount = nonfungiblePositionManager.balanceOf(pool);
+      uint256 limit = guard.uniV3PositionsLimit();
+      length = limit < nftCount ? limit : nftCount;
+    }
     for (uint256 i = 0; i < length; ++i) {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
       (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
