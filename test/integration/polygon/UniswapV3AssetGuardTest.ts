@@ -17,6 +17,7 @@ import { createFund } from "../utils/createFund";
 import { IDeployments } from "../utils/deployContracts";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { utils } from "../utils/utils";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
@@ -105,6 +106,7 @@ describe("UniswapV3AssetGuardTest", function () {
   let nonfungiblePositionManager: INonfungiblePositionManager;
   let deployments: IDeployments;
   let user: Wallet;
+  let snapId: string;
 
   before(async function () {
     [logicOwner, manager] = await ethers.getSigners();
@@ -117,12 +119,8 @@ describe("UniswapV3AssetGuardTest", function () {
     deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
 
-    await getAccountToken(units(6), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
-    await getAccountToken(units(12000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
-  });
-  s;
-
-  beforeEach(async function () {
+    await getAccountToken(units(9), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+    await getAccountToken(units(18000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       { asset: assets.weth, isDeposit: true },
@@ -134,13 +132,20 @@ describe("UniswapV3AssetGuardTest", function () {
     await poolLogicProxy.deposit(assets.usdc, units(6000, 6));
     await deployments.assets.WETH.approve(poolLogicProxy.address, units(3));
     await poolLogicProxy.deposit(assets.weth, units(3));
+  });
 
+  beforeEach(async () => {
+    snapId = await utils.evmTakeSnap();
     // We don't use a getSigners() signer here because they're shared across all integration tests
     user = ethers.Wallet.createRandom().connect(ethers.provider);
     await logicOwner.sendTransaction({
       to: user.address,
       value: ethers.utils.parseEther("1"),
     });
+  });
+
+  afterEach(async () => {
+    await utils.evmRestoreSnap(snapId);
   });
 
   // What we want to test here is if a nft position gets transferred directly
