@@ -316,6 +316,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
     poolPerformance,
     sushiMiniChefV2Guard,
     dhedgeEasySwapper,
+    uniV3AssetGuard,
     assets: {
       WMATIC,
       USDT,

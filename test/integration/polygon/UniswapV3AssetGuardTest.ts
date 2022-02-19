@@ -11,7 +11,6 @@ import {
   INonfungiblePositionManager__factory,
   PoolFactory,
   PoolLogic,
-  PoolManagerLogic,
 } from "../../../types";
 import { units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
@@ -40,6 +39,34 @@ const mintAsUser = async (nonfungiblePositionManager: INonfungiblePositionManage
     tickUpper: -253200,
     amount0Desired: units(2000, 6).div(2),
     amount1Desired: units(1).div(2),
+    amount0Min: 0,
+    amount1Min: 0,
+    recipient: user.address,
+    deadline: deadLine,
+  });
+};
+
+const mintUnsupportedLpAsUser = async (nonfungiblePositionManager: INonfungiblePositionManager, user: Wallet) => {
+  // These assets have to be assets the AssetHandler does not have price feeds for
+  const fraxAddress = "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89";
+  const miMaticAddress = "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1";
+
+  await getAccountToken(units(1, 6), user.address, fraxAddress, 0);
+  await getAccountToken(units(1, 6), user.address, miMaticAddress, 0);
+  // Approve nft manager to take tokens
+  const fraxContract = await await ethers.getContractAt("IERC20", fraxAddress);
+  await fraxContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(1, 6));
+  const mimaticContract = await ethers.getContractAt("IERC20", miMaticAddress);
+  await mimaticContract.connect(user).approve(uniswapV3.nonfungiblePositionManager, units(1, 6));
+
+  await nonfungiblePositionManager.connect(user).mint({
+    token0: fraxAddress,
+    token1: miMaticAddress,
+    fee: 500,
+    tickLower: 276310,
+    tickUpper: 276330,
+    amount0Desired: units(1, 6),
+    amount1Desired: units(1, 6),
     amount0Min: 0,
     amount1Min: 0,
     recipient: user.address,
@@ -93,6 +120,7 @@ describe("UniswapV3AssetGuardTest", function () {
     await getAccountToken(units(6), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
     await getAccountToken(units(12000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
   });
+  s;
 
   beforeEach(async function () {
     const funds = await createFund(poolFactory, logicOwner, manager, [
@@ -107,10 +135,9 @@ describe("UniswapV3AssetGuardTest", function () {
     await deployments.assets.WETH.approve(poolLogicProxy.address, units(3));
     await poolLogicProxy.deposit(assets.weth, units(3));
 
-    await poolFactory.setExitCooldown(0);
-    // We don't use a  getSigners signer here because they're shared across all integration tests
+    // We don't use a getSigners() signer here because they're shared across all integration tests
     user = ethers.Wallet.createRandom().connect(ethers.provider);
-    logicOwner.sendTransaction({
+    await logicOwner.sendTransaction({
       to: user.address,
       value: ethers.utils.parseEther("1"),
     });
@@ -126,12 +153,23 @@ describe("UniswapV3AssetGuardTest", function () {
       await mintAsPool(poolLogicProxy, manager);
       await mintAsPool(poolLogicProxy, manager);
       await mintAsPool(poolLogicProxy, manager);
+
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+      const v3AssetValueBefore = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
       const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
       await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      const v3AssetValueAfter = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
 
       // Assert
+      expect(v3AssetValueBefore.gt(0)).to.be.true;
+      expect(v3AssetValueBefore.eq(v3AssetValueAfter)).to.be.true;
       expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(4);
       expect(await poolLogicProxy.tokenPrice()).to.equal(tokenPriceBefore);
@@ -145,13 +183,44 @@ describe("UniswapV3AssetGuardTest", function () {
       await mintAsUser(nonfungiblePositionManager, user);
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+      const v3AssetValueBefore = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
+      const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
+      await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      const v3AssetValueAfter = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
+
+      // Assert
+      expect(v3AssetValueBefore.gt(0)).to.be.true;
+      expect(v3AssetValueBefore.eq(v3AssetValueAfter)).to.be.true;
+      expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(4);
+      expect(await poolLogicProxy.tokenPrice()).to.equal(tokenPriceBefore);
+    });
+  });
+
+  describe("Unsuppored Assets", () => {
+    // Where ensuring that the transfer of a lp with unsupported assets does not break tokenPrice/withdraw
+    it("cannot break tokenPrice or withdraw", async () => {
+      // Setup
+      await mintUnsupportedLpAsUser(nonfungiblePositionManager, user);
+
+      // Act
+      const tokenPriceBefore = await poolLogicProxy.tokenPrice();
       const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
       await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
 
       // Assert
       expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
-      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(4);
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
       expect(await poolLogicProxy.tokenPrice()).to.equal(tokenPriceBefore);
+      // Can withdraw
+      await poolFactory.setExitCooldown(0);
+      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
     });
   });
 });

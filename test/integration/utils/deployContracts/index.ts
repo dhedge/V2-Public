@@ -9,6 +9,7 @@ import {
   PoolManagerLogic,
   PoolPerformance,
   SushiMiniChefV2Guard,
+  UniswapV3AssetGuard,
 } from "../../../../types";
 
 export type IDeployments = {
@@ -24,6 +25,7 @@ export type IDeployments = {
   poolPerformance: PoolPerformance;
   sushiMiniChefV2Guard: SushiMiniChefV2Guard;
   dhedgeEasySwapper: DhedgeEasySwapper;
+  uniV3AssetGuard: UniswapV3AssetGuard;
   assets: {
     [name: string]: IERC20;
   };

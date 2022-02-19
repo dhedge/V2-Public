@@ -88,6 +88,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     for (uint256 i = 0; i < length; ++i) {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
       (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
+
       // (
       //   uint96 nonce,
       //   address operator,
@@ -116,8 +117,12 @@ contract UniswapV3AssetGuard is ERC20Guard {
     address token,
     uint256 amount
   ) internal view returns (uint256) {
-    uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token);
-    return tokenPriceInUsd.mul(amount).div(10**IERC20Extended(token).decimals());
+    if (IHasAssetInfo(factory).isValidAsset(token)) {
+      uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token);
+      return tokenPriceInUsd.mul(amount).div(10**IERC20Extended(token).decimals());
+    } else {
+      return 0;
+    }
   }
 
   /// @notice Returns decimal of the Aave lending pool asset
