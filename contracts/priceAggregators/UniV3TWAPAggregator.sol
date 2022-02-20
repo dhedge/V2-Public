@@ -86,8 +86,8 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
 
     answer = pairUsdPrice.mul(int256(quoteAmount)).div(int256(pairTokenUnit));
 
-    require(priceLowerLimit > 0 && answer >= priceLowerLimit, "answer exceeds lower limit");
-    require(priceUpperLimit > 0 && answer <= priceUpperLimit, "answer exceeds upper limit");
+    require(priceLowerLimit == 0 || answer >= priceLowerLimit, "answer exceeds lower limit");
+    require(priceUpperLimit == 0 || answer <= priceUpperLimit, "answer exceeds upper limit");
 
     return (0, answer, 0, updatedAt, 0);
   }
