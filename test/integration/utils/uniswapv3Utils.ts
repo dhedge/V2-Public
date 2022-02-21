@@ -112,7 +112,7 @@ export const getCurrentTick = async (token0: Address, token1: Address, fee: numb
  * @param fee Fee of the pool
  * @returns Rounded tick
  */
-export const convertCurrentTick = (currentTick: number, fee: number): number => {
+const convertCurrentTick = (currentTick: number, fee: number): number => {
   const tickMod = currentTick % (fee / 50);
   return currentTick - tickMod;
 };
