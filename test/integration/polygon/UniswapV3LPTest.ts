@@ -1,23 +1,14 @@
 import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
+import { expect } from "chai";
 import { checkAlmostSame, units } from "../../TestHelpers";
+import { assets, assetsBalanceOfSlot, uniswapV3 } from "../../../config/chainData/polygon-data";
 import {
-  ZERO_ADDRESS,
-  sushi,
-  aave,
-  assets,
-  assetsBalanceOfSlot,
-  uniswapV3,
-} from "../../../config/chainData/polygon-data";
-import {
-  IAaveIncentivesController__factory,
   IERC20,
   IERC20__factory,
-  ILendingPool__factory,
   IMulticall__factory,
   INonfungiblePositionManager,
   INonfungiblePositionManager__factory,
+  IV3SwapRouter__factory,
   PoolFactory,
   PoolLogic,
   PoolManagerLogic,
@@ -27,38 +18,42 @@ import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonCo
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { BigNumber } from "ethers";
-
-use(solidity);
+import { getMinAmountOut } from "../utils/getMinAmountOut";
+import { IDeployments } from "../utils/deployContracts";
 
 const deadLine = Math.floor(Date.now() / 1000 + 100000000);
 
 describe("Uniswap V3 LP Test", function () {
-  let USDC: IERC20, WETH: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let deployments: IDeployments;
+  let USDC: IERC20, USDT: IERC20, WETH: IERC20;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   let nonfungiblePositionManager: INonfungiblePositionManager, tokenId: BigNumber;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
   const iMulticall = new ethers.utils.Interface(IMulticall__factory.abi);
+  const iV3SwapRouter = new ethers.utils.Interface(IV3SwapRouter__factory.abi);
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
 
     nonfungiblePositionManager = await ethers.getContractAt(
       "INonfungiblePositionManager",
       uniswapV3.nonfungiblePositionManager,
     );
 
-    const deployments = await deployPolygonContracts();
+    deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
+    USDT = deployments.assets.USDT;
   });
 
   beforeEach(async function () {
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       { asset: assets.weth, isDeposit: true },
+      { asset: assets.usdt, isDeposit: true },
     ]);
     poolLogicProxy = funds.poolLogicProxy;
     poolManagerLogicProxy = funds.poolManagerLogicProxy;
@@ -71,12 +66,13 @@ describe("Uniswap V3 LP Test", function () {
     await WETH.approve(poolLogicProxy.address, units(5));
     await poolLogicProxy.deposit(assets.weth, units(5));
 
-    // Approve to swap 100 USDC
     let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, units(10000, 6)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
-
-    // Approve to swap 1 WETH
     approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, units(5)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
+    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(10000, 6)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
+    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(5)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
     await poolFactory.setExitCooldown(0);
@@ -215,7 +211,7 @@ describe("Uniswap V3 LP Test", function () {
 
   describe("After position", () => {
     beforeEach(async () => {
-      // mint USDC-WETH LP position of 2000 USDC and 1 WETH
+      // mint USDC-WETH LP position of 10000 USDC and 5 WETH
       let mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
         [
           assets.usdc,
@@ -223,8 +219,8 @@ describe("Uniswap V3 LP Test", function () {
           10000,
           -414400,
           -253200,
-          units(2000, 6),
-          units(1),
+          units(10000, 6),
+          units(5),
           0,
           0,
           poolLogicProxy.address,
@@ -277,6 +273,15 @@ describe("Uniswap V3 LP Test", function () {
       expect(positionAfter.liquidity).to.equal(0);
     });
 
+    it("Fail to collect fees with wrong receiver", async () => {
+      let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        [tokenId, poolManagerLogicProxy.address, units(10000), units(10000)],
+      ]);
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, collectABI),
+      ).to.revertedWith("recipient is not pool");
+    });
+
     it("Should be able to collect", async () => {
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
       // decrease USDC-WETH LP position by 100%
@@ -285,15 +290,7 @@ describe("Uniswap V3 LP Test", function () {
       ]);
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
 
-      // try to collect fees with wrong receiver
-      let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
-        [tokenId, poolManagerLogicProxy.address, units(10000), units(10000)],
-      ]);
-      await expect(
-        poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, collectABI),
-      ).to.revertedWith("recipient is not pool");
-
-      collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+      const collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
         [tokenId, poolLogicProxy.address, units(10000), units(10000)],
       ]);
 
@@ -307,6 +304,46 @@ describe("Uniswap V3 LP Test", function () {
       const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
       expect(usdcBalanceAfter.gt(usdcBalanceBefore) || wethBalanceAfter.gt(wethBalanceBefore)).to.true;
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+    });
+
+    it("fail to collect fee after disabling assets", async () => {
+      const usdcSwapAmount = await poolManagerLogicProxy.assetBalance(USDC.address);
+      let minAmountOut = await getMinAmountOut(deployments, usdcSwapAmount, USDC.address, USDT.address);
+      let exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
+        [
+          USDC.address, // from
+          USDT.address, // to
+          500, // 0.05% fee
+          poolLogicProxy.address,
+          usdcSwapAmount,
+          minAmountOut,
+          0,
+        ],
+      ]);
+      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
+
+      const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+      // decrease USDC-WETH LP position by 100%
+      let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        [tokenId, positionBefore.liquidity, 0, 0, deadLine],
+      ]);
+      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
+
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [WETH.address]);
+
+      // try to collect fees with wrong receiver
+      let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        [tokenId, poolManagerLogicProxy.address, units(10000), units(10000)],
+      ]);
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, collectABI),
+      ).to.revertedWith("unsupported asset: tokenB");
+
+      await poolManagerLogicProxy.connect(manager).changeAssets([], [USDC.address]);
+
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, collectABI),
+      ).to.revertedWith("unsupported asset: tokenA");
     });
 
     it("Should be able to burn", async () => {

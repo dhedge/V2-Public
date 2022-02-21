@@ -18,7 +18,7 @@ import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonCo
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { BigNumber } from "ethers";
-import { Deployments } from "../utils/deployContracts";
+import { IDeployments } from "../utils/deployContracts";
 import { getMinAmountOut } from "../utils/getMinAmountOut";
 
 use(solidity);
@@ -31,7 +31,7 @@ describe("Uniswap V3 Swap Router Test", function () {
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const IV3SwapRouter = new ethers.utils.Interface(IV3SwapRouter__factory.abi);
   const iMulticall = new ethers.utils.Interface(IMulticallExtended__factory.abi);
-  let deployments: Deployments;
+  let deployments: IDeployments;
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
