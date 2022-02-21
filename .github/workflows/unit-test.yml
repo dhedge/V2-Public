@@ -41,9 +41,19 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Typechain Types Cache
+        uses: actions/cache@v2
+        id: typechain-cache
+        with:
+          path: "types"
+          key: types-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            types-
+
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
-        if: steps.hardhat-cache.outputs.cache-hit != 'true'
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
+
       - name: Hardhat compile
         run: npx hardhat compile
         if: steps.hardhat-cache.outputs.cache-hit != 'true'
