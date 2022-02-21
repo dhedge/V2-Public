@@ -51,9 +51,10 @@ jobs:
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
 
-      - name: Synthetix Tests
+      - name: SynthetixTest
         run: |
           npx hardhat test ./test/integration/ovm/SynthetixTest.ts --network localhost
-      - name: SynthPriceAggregator Tests
+
+      - name: SynthPriceAggregatorTest
         run: |
           npx hardhat test ./test/integration/ovm/SynthPriceAggregatorTest.ts --network localhost

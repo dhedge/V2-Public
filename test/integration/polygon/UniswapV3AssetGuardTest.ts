@@ -130,16 +130,16 @@ describe("UniswapV3AssetGuardTest", function () {
     await poolLogicProxy.deposit(assets.usdc, units(6000, 6));
     await deployments.assets.WETH.approve(poolLogicProxy.address, units(3));
     await poolLogicProxy.deposit(assets.weth, units(3));
-  });
-
-  beforeEach(async () => {
-    snapId = await utils.evmTakeSnap();
     // We don't use a getSigners() signer here because they're shared across all integration tests
     user = ethers.Wallet.createRandom().connect(ethers.provider);
     await logicOwner.sendTransaction({
       to: user.address,
       value: ethers.utils.parseEther("1"),
     });
+  });
+
+  beforeEach(async () => {
+    snapId = await utils.evmTakeSnap();
   });
 
   afterEach(async () => {

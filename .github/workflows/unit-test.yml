@@ -43,8 +43,9 @@ jobs:
 
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
       - name: Hardhat compile
         run: npx hardhat compile
-        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
       - name: Run test
         run: npm run test:unit
