@@ -7,97 +7,14 @@ import { ethers } from "hardhat";
 import { describe, it } from "mocha";
 
 import { assets, assetsBalanceOfSlot, uniswapV3 } from "../../../config/chainData/polygon-data";
-import {
-  IERC20__factory,
-  INonfungiblePositionManager,
-  INonfungiblePositionManager__factory,
-  PoolFactory,
-  PoolLogic,
-  AssetHandler,
-} from "../../../types";
+import { INonfungiblePositionManager, PoolFactory, PoolLogic, AssetHandler } from "../../../types";
 import { units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
 import { IDeployments } from "../utils/deployContracts";
 import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { utils } from "../utils/utils";
-import { Address } from "../../../deployment-scripts/types";
-import { getCurrentTick } from "../utils/uniswapv3Utils";
-
-const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
-const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
-const deadLine = Math.floor(Date.now() / 1000 + 100000000);
-
-interface uniV3LpMintSettings {
-  token0: Address;
-  token1: Address;
-  fee: number;
-  amount0: BigNumber;
-  amount1: BigNumber;
-  tickLower: number;
-  tickUpper: number;
-}
-
-const mintAsUser = async (
-  nonfungiblePositionManager: INonfungiblePositionManager,
-  user: Wallet,
-  mintSettings: uniV3LpMintSettings,
-) => {
-  const token0 = mintSettings.token0;
-  const token1 = mintSettings.token1;
-  const fee = mintSettings.fee;
-  const amount0 = mintSettings.amount0;
-  const amount1 = mintSettings.amount1;
-  const tickLower = mintSettings.tickLower;
-  const tickUpper = mintSettings.tickUpper;
-
-  await getAccountToken(amount0, user.address, token0, 0);
-  await getAccountToken(amount1, user.address, token1, 0);
-  // Approve nft manager to take tokens
-  const token0Contract = await ethers.getContractAt("IERC20", token0);
-  await token0Contract.connect(user).approve(uniswapV3.nonfungiblePositionManager, amount0);
-  const token1Contract = await ethers.getContractAt("IERC20", token1);
-  await token1Contract.connect(user).approve(uniswapV3.nonfungiblePositionManager, amount1);
-
-  await nonfungiblePositionManager.connect(user).mint({
-    token0,
-    token1,
-    fee,
-    tickLower,
-    tickUpper,
-    amount0Desired: amount0,
-    amount1Desired: amount1,
-    amount0Min: 0,
-    amount1Min: 0,
-    recipient: user.address,
-    deadline: deadLine,
-  });
-};
-
-const mintAsPool = async (poolLogicProxy: PoolLogic, manager: SignerWithAddress) => {
-  let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, units(2000, 6)]);
-  await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
-  approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, units(1)]);
-  await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
-
-  let mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
-    [
-      assets.usdc,
-      assets.weth,
-      10000,
-      -414400,
-      -253200,
-      units(2000, 6),
-      units(1),
-      0,
-      0,
-      poolLogicProxy.address,
-      deadLine,
-    ],
-  ]);
-
-  await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI);
-};
+import { getCurrentTick, mintLpAsPool, mintLpAsUser, UniV3LpMintSettings } from "../utils/uniswapv3Utils";
 
 describe("UniswapV3AssetGuardTest", function () {
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
@@ -159,7 +76,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const fee = 500;
       const tick = await getCurrentTick(token0, token1, fee);
       const tickSpacing = fee / 50;
-      const mintSettings: uniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -168,10 +85,10 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: tick - tickSpacing,
         tickUpper: tick + tickSpacing,
       };
-      await mintAsUser(nonfungiblePositionManager, user, mintSettings);
-      await mintAsPool(poolLogicProxy, manager);
-      await mintAsPool(poolLogicProxy, manager);
-      await mintAsPool(poolLogicProxy, manager);
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -201,7 +118,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const fee = 500;
       const tick = await getCurrentTick(token0, token1, fee);
       const tickSpacing = fee / 50;
-      const mintSettings: uniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -210,10 +127,10 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: tick - tickSpacing,
         tickUpper: tick + tickSpacing,
       };
-      await mintAsPool(poolLogicProxy, manager);
-      await mintAsPool(poolLogicProxy, manager);
-      await mintAsPool(poolLogicProxy, manager);
-      await mintAsUser(nonfungiblePositionManager, user, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -248,7 +165,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const fee = 500;
       const tick = await getCurrentTick(token0, token1, fee);
       const tickSpacing = fee / 50;
-      const mintSettings: uniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -257,7 +174,7 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: tick - tickSpacing,
         tickUpper: tick + tickSpacing,
       };
-      await mintAsUser(nonfungiblePositionManager, user, mintSettings);
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
       await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes due to TWAP on pricing. TODO: remove if we decide to not use the TWAP
       await ethers.provider.send("evm_mine", []);
 
@@ -290,7 +207,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const fee = 500;
       const currentTick = await getCurrentTick(token0, token1, fee);
       const tickSpacing = fee / 50;
-      const mintSettings: uniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -299,7 +216,7 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: currentTick - tickSpacing,
         tickUpper: currentTick + tickSpacing,
       };
-      await mintAsUser(nonfungiblePositionManager, user, mintSettings);
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
       await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes due to TWAP on pricing. TODO: remove if we decide to not use the TWAP
       await ethers.provider.send("evm_mine", []);
 

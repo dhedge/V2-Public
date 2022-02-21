@@ -1,9 +1,93 @@
 import { ethers } from "hardhat";
 import { abi as uniswapV3FactoryAbi } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
 import { abi as uniswapV3PoolAbi } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
+import type { Wallet } from "ethers";
 
+import {
+  IERC20__factory,
+  INonfungiblePositionManager,
+  INonfungiblePositionManager__factory,
+  PoolLogic,
+} from "../../../types";
+import { getAccountToken } from "./getAccountTokens";
 import { Address } from "../../../deployment-scripts/types";
 import { uniswapV3 } from "../../../config/chainData/polygon-data";
+
+const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
+const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
+const deadLine = Math.floor(Date.now() / 1000 + 100000000);
+export interface UniV3LpMintSettings {
+  token0: Address;
+  token1: Address;
+  fee: number;
+  amount0: BigNumber;
+  amount1: BigNumber;
+  tickLower: number;
+  tickUpper: number;
+}
+
+export const mintLpAsUser = async (
+  nonfungiblePositionManager: INonfungiblePositionManager,
+  user: Wallet,
+  mintSettings: UniV3LpMintSettings,
+) => {
+  const token0 = mintSettings.token0;
+  const token1 = mintSettings.token1;
+  const fee = mintSettings.fee;
+  const amount0 = mintSettings.amount0;
+  const amount1 = mintSettings.amount1;
+  const tickLower = mintSettings.tickLower;
+  const tickUpper = mintSettings.tickUpper;
+
+  await getAccountToken(amount0, user.address, token0, 0);
+  await getAccountToken(amount1, user.address, token1, 0);
+  // Approve nft manager to take tokens
+  const token0Contract = await ethers.getContractAt("IERC20", token0);
+  await token0Contract.connect(user).approve(uniswapV3.nonfungiblePositionManager, amount0);
+  const token1Contract = await ethers.getContractAt("IERC20", token1);
+  await token1Contract.connect(user).approve(uniswapV3.nonfungiblePositionManager, amount1);
+
+  await nonfungiblePositionManager.connect(user).mint({
+    token0,
+    token1,
+    fee,
+    tickLower,
+    tickUpper,
+    amount0Desired: amount0,
+    amount1Desired: amount1,
+    amount0Min: 0,
+    amount1Min: 0,
+    recipient: user.address,
+    deadline: deadLine,
+  });
+};
+
+export const mintLpAsPool = async (
+  poolLogicProxy: PoolLogic,
+  manager: SignerWithAddress,
+  mintSettings: UniV3LpMintSettings,
+) => {
+  const token0 = mintSettings.token0;
+  const token1 = mintSettings.token1;
+  const fee = mintSettings.fee;
+  const amount0 = mintSettings.amount0;
+  const amount1 = mintSettings.amount1;
+  const tickLower = mintSettings.tickLower;
+  const tickUpper = mintSettings.tickUpper;
+
+  const approve0ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount0]);
+  await poolLogicProxy.connect(manager).execTransaction(token0, approve0ABI);
+  const approve1ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount1]);
+  await poolLogicProxy.connect(manager).execTransaction(token1, approve1ABI);
+
+  const mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
+    [token0, token1, fee, tickLower, tickUpper, amount0, amount1, 0, 0, poolLogicProxy.address, deadLine],
+  ]);
+
+  await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI);
+};
 
 /**
  * Gets tick of Uniswap v3 pool
