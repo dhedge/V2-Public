@@ -36,11 +36,13 @@ describe("Aave Edge Test", function () {
   let snapshot: any;
   after(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
+    await ethers.provider.send("evm_mine", []);
   });
 
   before(async function () {
     [logicOwner, manager] = await ethers.getSigners();
     snapshot = await ethers.provider.send("evm_snapshot", []);
+    await ethers.provider.send("evm_mine", []);
     const deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
     WETH = deployments.assets.WETH;

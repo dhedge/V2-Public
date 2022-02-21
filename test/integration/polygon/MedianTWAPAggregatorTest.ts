@@ -1,13 +1,12 @@
-import { ethers, artifacts } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, assert, use } from "chai";
-import axios from "axios";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
-import { getAccountToken } from "../utils/getAccountTokens";
-import { units } from "../../TestHelpers";
+import axios from "axios";
+import { assert, expect, use } from "chai";
+import { solidity } from "ethereum-waffle";
+import { artifacts, ethers } from "hardhat";
 import { assets, assetsBalanceOfSlot, price_feeds, sushi } from "../../../config/chainData/polygon-data";
-import { MedianTWAPAggregator, IUniswapV2Router__factory } from "../../../types";
+import { MedianTWAPAggregator } from "../../../types";
+import { units } from "../../TestHelpers";
+import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
 
@@ -18,6 +17,7 @@ describe("Median TWAP Oracle Test", function () {
 
   beforeEach(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);
+    await ethers.provider.send("evm_mine", []);
     [logicOwner, other] = await ethers.getSigners();
     const MedianTWAPAggregator = await ethers.getContractFactory("MedianTWAPAggregator");
     dhedgeMedianTwapAggregator = await MedianTWAPAggregator.deploy(
@@ -35,13 +35,16 @@ describe("Median TWAP Oracle Test", function () {
 
   afterEach(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
+    await ethers.provider.send("evm_mine", []);
   });
 
   it("check update interval", async () => {
     await dhedgeMedianTwapAggregator.update();
     await ethers.provider.send("evm_increaseTime", [200]);
+    await ethers.provider.send("evm_mine", []);
     await expect(dhedgeMedianTwapAggregator.update()).to.revertedWith("period is not passed");
     await ethers.provider.send("evm_increaseTime", [800]);
+    await ethers.provider.send("evm_mine", []);
     await dhedgeMedianTwapAggregator.update();
   });
 

@@ -45,9 +45,11 @@ describe("Aave Test", function () {
   let snapshot: any;
   afterEach(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
+    await ethers.provider.send("evm_mine", []);
   });
   beforeEach(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);
+    await ethers.provider.send("evm_mine", []);
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       { asset: assets.weth, isDeposit: true },
