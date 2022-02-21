@@ -75,7 +75,7 @@ describe("Uniswap V3 LP Test", function () {
     await poolFactory.setExitCooldown(0);
   });
 
-  it.only("Should be able to add liquidity", async () => {
+  it("Should be able to add liquidity", async () => {
     // try to mint before enabling nft position asset
     const token0 = assets.usdc;
     const token1 = assets.weth;
@@ -106,8 +106,8 @@ describe("Uniswap V3 LP Test", function () {
     mintSettings.token0 = assets.usdc;
     mintSettings.token1 = assets.miMatic;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenB");
-    mintSettings.token1 = assets.weth;
 
+    mintSettings.token1 = assets.weth;
     // try to mint with wrong receiver
     const mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
       [
@@ -143,26 +143,25 @@ describe("Uniswap V3 LP Test", function () {
 
   describe("After position", () => {
     beforeEach(async () => {
-      // mint USDC-WETH LP position of 2000 USDC and 1 WETH
-      let mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
-        [
-          assets.usdc,
-          assets.weth,
-          10000,
-          -414400,
-          -253200,
-          units(2000, 6),
-          units(1),
-          0,
-          0,
-          poolLogicProxy.address,
-          deadLine,
-        ],
-      ]);
+      const token0 = assets.usdc;
+      const token1 = assets.weth;
+      const fee = 500;
+      const tick = await getCurrentTick(token0, token1, fee);
+      const tickSpacing = fee / 50;
+      let mintSettings: UniV3LpMintSettings = {
+        token0,
+        token1,
+        fee,
+        amount0: units(2000, 6),
+        amount1: units(1),
+        tickLower: tick - tickSpacing,
+        tickUpper: tick + tickSpacing,
+      };
+
       await poolManagerLogicProxy
         .connect(manager)
         .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
 
       tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(poolLogicProxy.address, 0);
     });
