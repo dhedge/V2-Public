@@ -254,8 +254,7 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: tick + tickSpacing,
       };
       await mintAsUser(nonfungiblePositionManager, user, mintSettings);
-      await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes
-      await ethers.provider.send("evm_mine", []);
+      await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes due to TWAP on pricing. TODO: remove if we decide to not use the TWAP
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -296,7 +295,7 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: currentTick + tickSpacing,
       };
       await mintAsUser(nonfungiblePositionManager, user, mintSettings);
-      await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes
+      await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes due to TWAP on pricing. TODO: remove if we decide to not use the TWAP
       await ethers.provider.send("evm_mine", []);
 
       // Act
