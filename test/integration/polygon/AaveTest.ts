@@ -469,6 +469,7 @@ describe("Aave Test", function () {
         const incentivesController = IAaveIncentivesController__factory.connect(aave.incentivesController, logicOwner);
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24 * 10]); // add 10 day
+        await ethers.provider.send("evm_mine", []);
 
         const amount = units(10);
         const repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
@@ -478,6 +479,7 @@ describe("Aave Test", function () {
         await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI);
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24 * 10]); // add 10 day
+        await ethers.provider.send("evm_mine", []);
 
         const remainingRewardsBefore = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
         expect(remainingRewardsBefore).to.be.gt(0);
