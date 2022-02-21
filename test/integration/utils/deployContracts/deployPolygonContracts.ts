@@ -87,7 +87,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
   const assetSushi = { asset: assets.sushi, assetType: 0, aggregator: price_feeds.sushi };
   const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
-  const assetWeth = { asset: assets.weth, assetType: 4, aggregator: price_feeds.eth };
+  const assetWeth = { asset: assets.weth, assetType: 4, aggregator: price_feeds.eth }; // Lending enabled
   const assetDai = { asset: assets.dai, assetType: 4, aggregator: price_feeds.dai }; // Lending enabled
   const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
   const assetBalancer = { asset: assets.balancer, assetType: 0, aggregator: price_feeds.balancer };

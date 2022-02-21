@@ -115,10 +115,10 @@ export const assets = {
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
   dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
   tusd: "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
+  miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
   // Unsupported assets:
   xsgd: "0x769434dca303597c8fc4997bf3dab233e961eda2",
   frax: "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89",
-  miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
   ...torosPools,
 };
 

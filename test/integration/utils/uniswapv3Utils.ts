@@ -15,6 +15,7 @@ import { uniswapV3 } from "../../../config/chainData/polygon-data";
 export const getCurrentTick = async (token0: Address, token1: Address, fee: number): Promise<number> => {
   const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3.factory);
   const poolAddress = await factory.getPool(token0, token1, fee);
+  if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
   const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);
   const currentTick = parseInt((await pool.slot0()).tick);
   const tick = convertCurrentTick(currentTick, fee);

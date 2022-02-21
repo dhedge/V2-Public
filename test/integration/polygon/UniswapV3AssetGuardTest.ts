@@ -13,6 +13,7 @@ import {
   INonfungiblePositionManager__factory,
   PoolFactory,
   PoolLogic,
+  AssetHandler,
 } from "../../../types";
 import { units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
@@ -100,7 +101,7 @@ const mintAsPool = async (poolLogicProxy: PoolLogic, manager: SignerWithAddress)
 
 describe("UniswapV3AssetGuardTest", function () {
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
-  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic;
+  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, assetHandler: AssetHandler;
   let nonfungiblePositionManager: INonfungiblePositionManager;
   let deployments: IDeployments;
   let user: Wallet;
@@ -116,6 +117,7 @@ describe("UniswapV3AssetGuardTest", function () {
 
     deployments = await deployPolygonContracts();
     poolFactory = deployments.poolFactory;
+    assetHandler = deployments.assetHandler;
 
     await getAccountToken(units(9), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
     await getAccountToken(units(18000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
@@ -237,8 +239,10 @@ describe("UniswapV3AssetGuardTest", function () {
 
   describe("Unsuppored Assets", () => {
     // Where ensuring that the transfer of a lp with unsupported assets does not break tokenPrice/withdraw
-    it.only("tokenPrice and withdraw works if both LP assets are unsupported", async () => {
+    it("tokenPrice and withdraw works if both LP assets are unsupported", async () => {
       // Mint Uniswap v3 LP
+      await assetHandler.removeAsset(assets.frax); // Remove LP assets first
+      await assetHandler.removeAsset(assets.miMatic);
       const token0 = assets.frax; // unsupported asset
       const token1 = assets.miMatic; // unsupported asset
       const fee = 500;
@@ -255,6 +259,7 @@ describe("UniswapV3AssetGuardTest", function () {
       };
       await mintAsUser(nonfungiblePositionManager, user, mintSettings);
       await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes due to TWAP on pricing. TODO: remove if we decide to not use the TWAP
+      await ethers.provider.send("evm_mine", []);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -309,7 +314,7 @@ describe("UniswapV3AssetGuardTest", function () {
       expect(totalFundValueBeforeWithdraw).to.gt(0);
       expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-      expect(tokenPriceAfter).to.gt(tokenPriceBefore); // TODO: Should this be "eq" or "gt"?
+      expect(tokenPriceAfter).to.gt(tokenPriceBefore); // Assumes the LP value should be counted
 
       // Can withdraw
       await poolFactory.setExitCooldown(0);
