@@ -237,7 +237,7 @@ describe("UniswapV3AssetGuardTest", function () {
 
   describe("Unsuppored Assets", () => {
     // Where ensuring that the transfer of a lp with unsupported assets does not break tokenPrice/withdraw
-    it("tokenPrice and withdraw works if both LP assets are unsupported", async () => {
+    it.only("tokenPrice and withdraw works if both LP assets are unsupported", async () => {
       // Mint Uniswap v3 LP
       const token0 = assets.frax; // unsupported asset
       const token1 = assets.miMatic; // unsupported asset
