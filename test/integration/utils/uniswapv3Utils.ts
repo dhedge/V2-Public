@@ -64,10 +64,18 @@ export const mintLpAsUser = async (
   });
 };
 
+/**
+ * Mints Uni v3 LP for the pool from the manager
+ * @param poolLogicProxy poolLogicProxy contract
+ * @param manager Manager address
+ * @param mintSettings LP configuration
+ * @param approveTokens Approval of underlying tokens for transfer
+ */
 export const mintLpAsPool = async (
   poolLogicProxy: PoolLogic,
   manager: SignerWithAddress,
   mintSettings: UniV3LpMintSettings,
+  approveTokens = false,
 ) => {
   const token0 = mintSettings.token0;
   const token1 = mintSettings.token1;
@@ -77,10 +85,12 @@ export const mintLpAsPool = async (
   const tickLower = mintSettings.tickLower;
   const tickUpper = mintSettings.tickUpper;
 
-  const approve0ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount0]);
-  await poolLogicProxy.connect(manager).execTransaction(token0, approve0ABI);
-  const approve1ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount1]);
-  await poolLogicProxy.connect(manager).execTransaction(token1, approve1ABI);
+  if (approveTokens) {
+    const approve0ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount0]);
+    await poolLogicProxy.connect(manager).execTransaction(token0, approve0ABI);
+    const approve1ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount1]);
+    await poolLogicProxy.connect(manager).execTransaction(token1, approve1ABI);
+  }
 
   const mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
     [token0, token1, fee, tickLower, tickUpper, amount0, amount1, 0, 0, poolLogicProxy.address, deadLine],

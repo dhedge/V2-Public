@@ -86,9 +86,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: tick + tickSpacing,
       };
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -127,9 +127,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: tick - tickSpacing,
         tickUpper: tick + tickSpacing,
       };
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
 
       // Act
@@ -175,8 +175,6 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: tick + tickSpacing,
       };
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
-      await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes due to TWAP on pricing. TODO: remove if we decide to not use the TWAP
-      await ethers.provider.send("evm_mine", []);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -217,8 +215,6 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: currentTick + tickSpacing,
       };
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
-      await ethers.provider.send("evm_increaseTime", [60 * 3]); // 3 minutes due to TWAP on pricing. TODO: remove if we decide to not use the TWAP
-      await ethers.provider.send("evm_mine", []);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
