@@ -86,9 +86,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: tick + tickSpacing,
       };
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -127,9 +127,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: tick - tickSpacing,
         tickUpper: tick + tickSpacing,
       };
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
 
       // Act
