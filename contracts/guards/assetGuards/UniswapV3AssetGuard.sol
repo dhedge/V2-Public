@@ -232,6 +232,6 @@ contract UniswapV3AssetGuard is ERC20Guard {
 
     (uint256 feeAmount0, uint256 feeAmount1) = nonfungiblePositionManager.fees(tokenId);
     decreaseLiquidity.amount0 = decreaseLiquidity.amount0.add(feeAmount0.mul(portion).div(10**18));
-    decreaseLiquidity.amount1 = decreaseLiquidity.amount0.add(feeAmount1.mul(portion).div(10**18));
+    decreaseLiquidity.amount1 = decreaseLiquidity.amount1.add(feeAmount1.mul(portion).div(10**18));
   }
 }

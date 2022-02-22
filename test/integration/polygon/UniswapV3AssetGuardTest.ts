@@ -233,9 +233,9 @@ describe("UniswapV3AssetGuardTest", function () {
       await poolFactory.setExitCooldown(0);
       await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address)); // TODO: Currently fails on withdrawal with ERC20: transfer amount exceeds balance
 
-      // Assert that all pool value is withdrawn
+      // Assert that all pool value is withdrawn (consider the manager fee & dao fees)
       const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
-      expect(totalFundValueAfterWithdraw).to.equal(0);
+      expect(totalFundValueAfterWithdraw).lt(totalFundValueBeforeWithdraw.div(10)); // less than 10% (consider the manager fee & dao fees)
     });
   });
 });
