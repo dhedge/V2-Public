@@ -235,7 +235,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   uniswapV3RouterGuard.deployed();
 
   const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");
-  const uniV3AssetGuard = await UniswapV3AssetGuard.deploy(uniswapV3.nonfungiblePositionManager);
+  const uniV3AssetGuard = await UniswapV3AssetGuard.deploy();
   await uniV3AssetGuard.deployed();
 
   const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
