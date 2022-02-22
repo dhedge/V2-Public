@@ -6,7 +6,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "date": "Tue, 07 Dec 2021 03:35:55 GMT",
+    "date": "Mon, 21 Feb 2022 00:22:46 GMT",
     "contracts": [
       {
         "pool": "0x3e5f7e9e7dc3bc3086ccebd5eb59a0a4a29d881b",
@@ -39,6 +39,10 @@
       {
         "pool": "0xa375d23a751124359568f3a22576528bD1C8C3e3",
         "dhtTwapOracle": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E"
+      },
+      {
+        "pool": "0x160532d2536175d65c03b97b0630a9802c274dad",
+        "maiTwapOracle": "0x33248d41454dD8DFE5360cF00fFe6C380160e468"
       }
     ]
   }
