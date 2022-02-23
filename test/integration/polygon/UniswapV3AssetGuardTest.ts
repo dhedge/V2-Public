@@ -38,11 +38,17 @@ describe("UniswapV3AssetGuardTest", function () {
 
     await getAccountToken(units(9), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
     await getAccountToken(units(18000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
-    const funds = await createFund(poolFactory, logicOwner, manager, [
-      { asset: assets.usdc, isDeposit: true },
-      { asset: assets.weth, isDeposit: true },
-      { asset: uniswapV3.nonfungiblePositionManager, isDeposit: false },
-    ]);
+    const funds = await createFund(
+      poolFactory,
+      logicOwner,
+      manager,
+      [
+        { asset: assets.usdc, isDeposit: true },
+        { asset: assets.weth, isDeposit: true },
+        { asset: uniswapV3.nonfungiblePositionManager, isDeposit: false },
+      ],
+      0, // 0% performance fee
+    );
     poolLogicProxy = funds.poolLogicProxy;
 
     await deployments.assets.USDC.approve(poolLogicProxy.address, units(6000, 6));
@@ -219,9 +225,17 @@ describe("UniswapV3AssetGuardTest", function () {
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
       const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
+      const totalFundValueBeforeTransfer = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
       await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
       const tokenPriceAfter = await poolLogicProxy.tokenPrice();
       const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+
+      console.log(
+        "totalFundValueBeforeTransfer:",
+        totalFundValueBeforeTransfer.toString(),
+        "totalFundValueBeforeWithdraw:",
+        totalFundValueBeforeWithdraw.toString(),
+      );
 
       // Assert
       expect(totalFundValueBeforeWithdraw).to.gt(0);
@@ -235,7 +249,7 @@ describe("UniswapV3AssetGuardTest", function () {
 
       // Assert that all pool value is withdrawn (consider the manager fee & dao fees)
       const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
-      expect(totalFundValueAfterWithdraw).lt(totalFundValueBeforeWithdraw.div(10)); // less than 10% (consider the manager fee & dao fees)
+      expect(totalFundValueAfterWithdraw).eq(0); // there are no manager fees minted (performance fee set to 0)
     });
   });
 });

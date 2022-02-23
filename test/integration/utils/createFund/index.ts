@@ -8,6 +8,7 @@ export const createFund = async (
   signer: SignerWithAddress,
   manager: SignerWithAddress,
   supportedAssets: { asset: string; isDeposit: boolean }[],
+  performanceFee = 5000,
 ) => {
   const deployedFundsBefore = await poolFactory.getDeployedFunds();
 
@@ -17,7 +18,7 @@ export const createFund = async (
     "Barren Wuffet",
     "Test Fund",
     "DHTF",
-    ethers.BigNumber.from("5000"),
+    ethers.BigNumber.from(performanceFee),
     supportedAssets,
   );
 
