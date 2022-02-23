@@ -98,24 +98,20 @@ describe("Uniswap V3 LP Test", function () {
       tickUpper: tick + tickSpacing,
     };
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("asset not enabled in pool");
-    console.log("here");
     await poolManagerLogicProxy
       .connect(manager)
       .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
 
-    console.log("here");
     // try to mint with unsupported token0
     mintSettings.token0 = assets.miMatic;
     mintSettings.token1 = assets.usdc;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenA");
 
-    console.log("here");
     // try to mint with unsupported token1
     mintSettings.token0 = assets.usdc;
     mintSettings.token1 = assets.miMatic;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenB");
 
-    console.log("here");
     mintSettings.token1 = assets.weth;
     // try to mint with wrong receiver
     const mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
@@ -137,19 +133,22 @@ describe("Uniswap V3 LP Test", function () {
       poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
     ).to.revertedWith("recipient is not pool");
 
-    console.log("here");
     // mint USDC-WETH LP position of 2000 USDC and 1 WETH
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
     await mintLpAsPool(poolLogicProxy, manager, mintSettings);
     const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
-    console.log("here");
     checkAlmostSame(totalFundValueAfter, totalFundValueBefore);
     expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
 
-    console.log("here");
     mintSettings.tickLower = tick - tickSpacing * 2;
     mintSettings.tickUpper = tick + tickSpacing * 2;
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+    mintSettings.tickLower = tick - tickSpacing * 3;
+    mintSettings.tickUpper = tick + tickSpacing * 3;
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+    mintSettings.tickLower = tick - tickSpacing * 4;
+    mintSettings.tickUpper = tick + tickSpacing * 4;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("too many uniswap v3 positions");
   });
 
@@ -250,34 +249,8 @@ describe("Uniswap V3 LP Test", function () {
     });
 
     it("fail to collect fee after disabling assets", async () => {
-      const usdcSwapAmount = await poolManagerLogicProxy.assetBalance(USDC.address);
-      let minAmountOut = await getMinAmountOut(deployments, usdcSwapAmount, USDC.address, USDT.address);
-      let exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
-        [
-          USDC.address, // from
-          USDT.address, // to
-          500, // 0.05% fee
-          poolLogicProxy.address,
-          usdcSwapAmount,
-          minAmountOut,
-          0,
-        ],
-      ]);
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
-      const wethSwapAmount = await poolManagerLogicProxy.assetBalance(WETH.address);
-      minAmountOut = await getMinAmountOut(deployments, wethSwapAmount, WETH.address, USDT.address);
-      exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
-        [
-          WETH.address, // from
-          USDT.address, // to
-          500, // 0.05% fee
-          poolLogicProxy.address,
-          wethSwapAmount,
-          minAmountOut,
-          0,
-        ],
-      ]);
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
+      await getAccountToken(ethers.constants.Zero, poolLogicProxy.address, assets.usdc, assetsBalanceOfSlot.usdc);
+      await getAccountToken(ethers.constants.Zero, poolLogicProxy.address, assets.weth, assetsBalanceOfSlot.weth);
 
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
       // decrease USDC-WETH LP position by 100%
