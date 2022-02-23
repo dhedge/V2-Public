@@ -44,7 +44,9 @@
     "verify:polygon": "hardhat run ./scripts/verify.js --network polygon",
     "verify:ovm": "hardhat explorerVerify --network ovm",
     "dynamicbonds:polygon:getconfig": "npx hardhat dynamicBonds --get-config true --production true --network polygon",
-    "dynamicbonds:polygon:updateterms": "npx hardhat dynamicBonds --update-terms true --production true --network polygon"
+    "dynamicbonds:polygon:updateterms": "npx hardhat dynamicBonds --update-terms true --production true --network polygon",
+    "compile-types": "npx hardhat --config hardhat.config-compile.ts typechain",
+    "postinstall": "npm compile-types"
   },
   "author": "dHEDGE Team",
   "license": "ISC",
