@@ -225,17 +225,9 @@ describe("UniswapV3AssetGuardTest", function () {
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
       const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
-      const totalFundValueBeforeTransfer = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
       await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
       const tokenPriceAfter = await poolLogicProxy.tokenPrice();
       const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
-
-      console.log(
-        "totalFundValueBeforeTransfer:",
-        totalFundValueBeforeTransfer.toString(),
-        "totalFundValueBeforeWithdraw:",
-        totalFundValueBeforeWithdraw.toString(),
-      );
 
       // Assert
       expect(totalFundValueBeforeWithdraw).to.gt(0);
@@ -245,9 +237,9 @@ describe("UniswapV3AssetGuardTest", function () {
 
       // Can withdraw
       await poolFactory.setExitCooldown(0);
-      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address)); // TODO: Currently fails on withdrawal with ERC20: transfer amount exceeds balance
+      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
 
-      // Assert that all pool value is withdrawn (consider the manager fee & dao fees)
+      // Assert that all pool value is withdrawn
       const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
       expect(totalFundValueAfterWithdraw).eq(0); // there are no manager fees minted (performance fee set to 0)
     });

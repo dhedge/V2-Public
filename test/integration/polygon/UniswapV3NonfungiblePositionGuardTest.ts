@@ -53,11 +53,17 @@ describe("Uniswap V3 LP Test", function () {
   });
 
   beforeEach(async function () {
-    const funds = await createFund(poolFactory, logicOwner, manager, [
-      { asset: assets.usdc, isDeposit: true },
-      { asset: assets.weth, isDeposit: true },
-      { asset: assets.usdt, isDeposit: true },
-    ]);
+    const funds = await createFund(
+      poolFactory,
+      logicOwner,
+      manager,
+      [
+        { asset: assets.usdc, isDeposit: true },
+        { asset: assets.weth, isDeposit: true },
+        { asset: assets.usdt, isDeposit: true },
+      ],
+      0, // 0% performance fee
+    );
     poolLogicProxy = funds.poolLogicProxy;
     poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
@@ -138,7 +144,7 @@ describe("Uniswap V3 LP Test", function () {
     await mintLpAsPool(poolLogicProxy, manager, mintSettings);
     const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
-    checkAlmostSame(totalFundValueAfter, totalFundValueBefore);
+    checkAlmostSame(totalFundValueAfter, totalFundValueBefore, 0.01);
     expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
 
     mintSettings.tickLower = tick - tickSpacing * 2;
@@ -189,7 +195,7 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, increaseLiquidityABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.01);
 
       const positionAfter = await nonfungiblePositionManager.positions(tokenId);
 
@@ -208,7 +214,7 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.01);
 
       const positionAfter = await nonfungiblePositionManager.positions(tokenId);
 
@@ -245,7 +251,7 @@ describe("Uniswap V3 LP Test", function () {
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
       expect(usdcBalanceAfter.gt(usdcBalanceBefore) || wethBalanceAfter.gt(wethBalanceBefore)).to.true;
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.01);
     });
 
     it("fail to collect fee after disabling assets", async () => {
@@ -295,7 +301,7 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, burnABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.01);
 
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
     });
@@ -326,21 +332,35 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, multicallABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.01);
 
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
     });
 
     it("Should be able to withdraw", async () => {
-      const shares = await poolLogicProxy.balanceOf(logicOwner.address);
+      const sharesBefore = await poolLogicProxy.balanceOf(logicOwner.address);
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
       const usdcBalanceBefore = await USDC.balanceOf(logicOwner.address);
       const wethBalanceBefore = await WETH.balanceOf(logicOwner.address);
 
-      await poolLogicProxy.withdraw(shares.div(2));
+      // Half 50% withdrawal from pool
+      await poolLogicProxy.withdraw(sharesBefore.div(2));
+      const sharesAfterHalfWithdrawal = await poolLogicProxy.balanceOf(logicOwner.address);
+      const totalFundValueAfterHalfWithdrawal = await poolManagerLogicProxy.totalFundValue();
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2));
+      checkAlmostSame(sharesAfterHalfWithdrawal, sharesBefore.div(2), 0.01);
+      checkAlmostSame(totalFundValueAfterHalfWithdrawal, totalFundValueBefore.div(2), 0.01);
+      expect(await USDC.balanceOf(logicOwner.address)).gt(usdcBalanceBefore);
+      expect(await WETH.balanceOf(logicOwner.address)).gt(wethBalanceBefore);
+
+      // Full 100% withdrawal from pool
+      await poolLogicProxy.withdraw(sharesAfterHalfWithdrawal);
+      const sharesAfterFullWithdrawal = await poolLogicProxy.balanceOf(logicOwner.address);
+      const totalFundValueAfterFullWithdrawal = await poolManagerLogicProxy.totalFundValue();
+
+      expect(sharesAfterFullWithdrawal).eq(0);
+      expect(totalFundValueAfterFullWithdrawal).eq(0);
       expect(await USDC.balanceOf(logicOwner.address)).gt(usdcBalanceBefore);
       expect(await WETH.balanceOf(logicOwner.address)).gt(wethBalanceBefore);
     });
