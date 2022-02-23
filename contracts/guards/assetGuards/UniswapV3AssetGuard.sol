@@ -79,13 +79,10 @@ contract UniswapV3AssetGuard is ERC20Guard {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
       (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
 
-      (, int24 tickCurrent, , , , , ) = IUniswapV3Pool(
+      (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
         IUniswapV3Factory(nonfungiblePositionManager.factory()).getPool(token0, token1, fee)
       ).slot0();
-      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(
-        tokenId,
-        TickMath.getSqrtRatioAtTick(tickCurrent)
-      );
+      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, sqrtPriceX96);
 
       balance = balance.add(_assetValue(factory, token0, amount0)).add(_assetValue(factory, token1, amount1));
     }
@@ -219,10 +216,10 @@ contract UniswapV3AssetGuard is ERC20Guard {
 
     decreaseLiquidity.lpAmount = uint128(portion.mul(liquidity).div(10**18));
 
-    (, int24 tickCurrent, , , , , ) = IUniswapV3Pool(uniswapV3Factory.getPool(token0, token1, fee)).slot0();
+    (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(uniswapV3Factory.getPool(token0, token1, fee)).slot0();
 
     (decreaseLiquidity.amount0, decreaseLiquidity.amount1) = LiquidityAmounts.getAmountsForLiquidity(
-      TickMath.getSqrtRatioAtTick(tickCurrent),
+      sqrtPriceX96,
       TickMath.getSqrtRatioAtTick(tickLower),
       TickMath.getSqrtRatioAtTick(tickUpper),
       decreaseLiquidity.lpAmount
