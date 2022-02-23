@@ -239,10 +239,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   await uniV3AssetGuard.deployed();
 
   const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
-  const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
-    uniswapV3.nonfungiblePositionManager,
-    3,
-  );
+  const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(3);
   await uniswapV3NonfungiblePositionGuard.deployed();
   const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
   const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(dao.address, swapRouter.address, assets.weth);

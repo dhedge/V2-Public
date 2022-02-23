@@ -23,10 +23,7 @@ export const uniswapV3NonFungiblePositionGuard: IJob<void> = async (
     const Governance = await hre.artifacts.readArtifact("Governance");
     const governanceABI = new ethers.utils.Interface(Governance.abi);
     const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
-    const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
-      addresses.uniSwapV3NonfungiblePositionManagerAddress,
-      MAX_NUMBER_LP_POSITIONS,
-    );
+    const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(MAX_NUMBER_LP_POSITIONS);
     await uniswapV3NonfungiblePositionGuard.deployed();
     console.log("UniswapV3NonfungiblePositionGuard deployed at", uniswapV3NonfungiblePositionGuard.address);
     versions[config.newTag].contracts.UniswapV3NonfungiblePositionGuard = uniswapV3NonfungiblePositionGuard.address;
