@@ -144,23 +144,21 @@ contract UniswapV3AssetGuard is ERC20Guard {
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
       DecreaseLiquidity memory decreaseLiquidity = _calcDecreaseLiquidity(nonfungiblePositionManager, tokenId, portion);
 
-      if (decreaseLiquidity.lpAmount == 0) {
-        continue;
+      if (decreaseLiquidity.lpAmount != 0) {
+        // decrease liquidity
+        transactions[txCount].to = address(nonfungiblePositionManager);
+        transactions[txCount].txData = abi.encodeWithSelector(
+          INonfungiblePositionManager.decreaseLiquidity.selector,
+          INonfungiblePositionManager.DecreaseLiquidityParams(
+            tokenId,
+            decreaseLiquidity.lpAmount,
+            0,
+            0,
+            type(uint256).max
+          )
+        );
+        txCount++;
       }
-
-      // decrease liquidity
-      transactions[txCount].to = address(nonfungiblePositionManager);
-      transactions[txCount].txData = abi.encodeWithSelector(
-        INonfungiblePositionManager.decreaseLiquidity.selector,
-        INonfungiblePositionManager.DecreaseLiquidityParams(
-          tokenId,
-          decreaseLiquidity.lpAmount,
-          0,
-          0,
-          type(uint256).max
-        )
-      );
-      txCount++;
 
       // collect fees
       if (decreaseLiquidity.amount0 != 0 || decreaseLiquidity.amount1 != 0) {
