@@ -87,7 +87,7 @@ describe("Uniswap V3 LP Test", function () {
     await poolFactory.setExitCooldown(0);
   });
 
-  it("Should be able to add liquidity", async () => {
+  it("Can't mint position if nft position is not enabled", async () => {
     // try to mint before enabling nft position asset
     const token0 = assets.usdc;
     const token1 = assets.weth;
@@ -104,6 +104,24 @@ describe("Uniswap V3 LP Test", function () {
       tickUpper: tick + tickSpacing,
     };
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("asset not enabled in pool");
+  });
+
+  it("Can't mint position with unsupported assets", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    let mintSettings: UniV3LpMintSettings = {
+      token0,
+      token1,
+      fee,
+      amount0: units(2000, 6),
+      amount1: units(1),
+      tickLower: tick - tickSpacing,
+      tickUpper: tick + tickSpacing,
+    };
     await poolManagerLogicProxy
       .connect(manager)
       .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
@@ -117,18 +135,29 @@ describe("Uniswap V3 LP Test", function () {
     mintSettings.token0 = assets.usdc;
     mintSettings.token1 = assets.miMatic;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenB");
+  });
 
-    mintSettings.token1 = assets.weth;
+  it("Can't mint position with invalid receiver address", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    await poolManagerLogicProxy
+      .connect(manager)
+      .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
+
     // try to mint with wrong receiver
     const mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
       [
-        mintSettings.token0,
-        mintSettings.token1,
-        mintSettings.fee,
-        mintSettings.tickLower,
-        mintSettings.tickUpper,
-        mintSettings.amount0,
-        mintSettings.amount1,
+        token0,
+        token1,
+        fee,
+        tick - tickSpacing,
+        tick + tickSpacing,
+        units(2000, 6),
+        units(1),
         0,
         0,
         poolManagerLogicProxy.address,
@@ -138,6 +167,63 @@ describe("Uniswap V3 LP Test", function () {
     await expect(
       poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
     ).to.revertedWith("recipient is not pool");
+  });
+
+  it("Can't mint more than 3 positions (check position count limit)", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    let mintSettings: UniV3LpMintSettings = {
+      token0,
+      token1,
+      fee,
+      amount0: units(2000, 6),
+      amount1: units(1),
+      tickLower: tick - tickSpacing,
+      tickUpper: tick + tickSpacing,
+    };
+    await poolManagerLogicProxy
+      .connect(manager)
+      .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
+
+    // mint USDC-WETH LP position of 2000 USDC and 1 WETH
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+
+    mintSettings.tickLower = tick - tickSpacing * 2;
+    mintSettings.tickUpper = tick + tickSpacing * 2;
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+
+    mintSettings.tickLower = tick - tickSpacing * 3;
+    mintSettings.tickUpper = tick + tickSpacing * 3;
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+
+    mintSettings.tickLower = tick - tickSpacing * 4;
+    mintSettings.tickUpper = tick + tickSpacing * 4;
+    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("too many uniswap v3 positions");
+  });
+
+  it("Should mint a position", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    let mintSettings: UniV3LpMintSettings = {
+      token0,
+      token1,
+      fee,
+      amount0: units(2000, 6),
+      amount1: units(1),
+      tickLower: tick - tickSpacing,
+      tickUpper: tick + tickSpacing,
+    };
+    await poolManagerLogicProxy
+      .connect(manager)
+      .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
 
     // mint USDC-WETH LP position of 2000 USDC and 1 WETH
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
@@ -146,16 +232,6 @@ describe("Uniswap V3 LP Test", function () {
 
     checkAlmostSame(totalFundValueAfter, totalFundValueBefore, 0.01);
     expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-
-    mintSettings.tickLower = tick - tickSpacing * 2;
-    mintSettings.tickUpper = tick + tickSpacing * 2;
-    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-    mintSettings.tickLower = tick - tickSpacing * 3;
-    mintSettings.tickUpper = tick + tickSpacing * 3;
-    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
-    mintSettings.tickLower = tick - tickSpacing * 4;
-    mintSettings.tickUpper = tick + tickSpacing * 4;
-    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("too many uniswap v3 positions");
   });
 
   describe("After position", () => {
