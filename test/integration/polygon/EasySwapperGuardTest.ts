@@ -24,7 +24,7 @@ describe("EasySwapperGuard", () => {
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic;
   let DhedgeEasySwapperInterface: Interface;
   let dhedgeEasySwapper: DhedgeEasySwapper;
-  let torosassetAddress: string;
+  let torosAssetAddress: string;
 
   let snapshot: any;
   before(async () => {
@@ -38,18 +38,18 @@ describe("EasySwapperGuard", () => {
     dhedgeEasySwapper = deployments.dhedgeEasySwapper;
 
     const torosAsset = await createFund(poolFactory, logicOwner, manager, [{ asset: assets.usdc, isDeposit: true }]);
-    torosassetAddress = torosAsset.poolLogicProxy.address;
+    torosAssetAddress = torosAsset.poolLogicProxy.address;
     // If the pool is empty than we can't get a price
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
-    await USDC.approve(torosassetAddress, units(500, 6));
+    await USDC.approve(torosAssetAddress, units(500, 6));
     await torosAsset.poolLogicProxy.deposit(assets.usdc, units(500, 6));
 
-    await dhedgeEasySwapper.setPoolAllowed(torosassetAddress, true);
+    await dhedgeEasySwapper.setPoolAllowed(torosAssetAddress, true);
 
     const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
-    const dhedgePoolAggregator = await DHedgePoolAggregator.deploy(torosassetAddress);
+    const dhedgePoolAggregator = await DHedgePoolAggregator.deploy(torosAssetAddress);
     await dhedgePoolAggregator.deployed();
-    deployments.assetHandler.addAsset(torosassetAddress, 0, dhedgePoolAggregator.address);
+    deployments.assetHandler.addAsset(torosAssetAddress, 0, dhedgePoolAggregator.address);
   });
   after(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
@@ -64,7 +64,7 @@ describe("EasySwapperGuard", () => {
     const fund = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       // Note: we're enabling the torosAsset as an asset of this pool
-      { asset: torosassetAddress, isDeposit: true },
+      { asset: torosAssetAddress, isDeposit: true },
     ]);
 
     poolLogicProxy = fund.poolLogicProxy;
@@ -81,7 +81,7 @@ describe("EasySwapperGuard", () => {
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const depositEncoded = DhedgeEasySwapperInterface.encodeFunctionData("deposit", [
-      torosassetAddress,
+      torosAssetAddress,
       assets.usdc,
       units(500, 6),
       assets.usdc,
@@ -95,17 +95,17 @@ describe("EasySwapperGuard", () => {
       await poolLogicProxy.poolManagerLogic(),
       logicOwner,
     );
-    const torosBalance = await poolManagerLogicProxy.assetBalance(torosassetAddress);
+    const torosBalance = await poolManagerLogicProxy.assetBalance(torosAssetAddress);
     expect(torosBalance.gt(0)).to.be.true;
 
     // Check token price is $1
     expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100) as any);
 
     let approveTorosABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, torosBalance]);
-    await poolLogicProxy.connect(manager).execTransaction(torosassetAddress, approveTorosABI);
+    await poolLogicProxy.connect(manager).execTransaction(torosAssetAddress, approveTorosABI);
 
     const withdrawEncoded = DhedgeEasySwapperInterface.encodeFunctionData("withdraw", [
-      torosassetAddress,
+      torosAssetAddress,
       torosBalance,
       assets.usdc,
       0,
@@ -116,7 +116,7 @@ describe("EasySwapperGuard", () => {
     await ethers.provider.send("evm_increaseTime", [3600]); // 1 hour
     await poolLogicProxy.connect(manager).execTransaction(dhedgeEasySwapper.address, withdrawEncoded);
 
-    const torosBalanceAfterWithdraw = await poolManagerLogicProxy.assetBalance(torosassetAddress);
+    const torosBalanceAfterWithdraw = await poolManagerLogicProxy.assetBalance(torosAssetAddress);
     expect(torosBalanceAfterWithdraw).to.equal(0);
 
     // Check token price is 98c to $1.02
@@ -138,10 +138,10 @@ describe("EasySwapperGuard", () => {
     );
 
     // Remove toros pool from supported assets
-    await poolManagerLogicProxy.connect(manager).changeAssets([], [torosassetAddress]);
+    await poolManagerLogicProxy.connect(manager).changeAssets([], [torosAssetAddress]);
 
     const depositEncoded = DhedgeEasySwapperInterface.encodeFunctionData("deposit", [
-      torosassetAddress,
+      torosAssetAddress,
       assets.usdc,
       units(500, 6),
       assets.usdc,
@@ -164,7 +164,7 @@ describe("EasySwapperGuard", () => {
     await poolManagerLogicProxy.connect(manager).changeAssets([], [assets.usdc]);
 
     const withdrawEncoded = DhedgeEasySwapperInterface.encodeFunctionData("withdraw", [
-      torosassetAddress,
+      torosAssetAddress,
       1,
       assets.usdc,
       0,
