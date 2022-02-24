@@ -90,15 +90,15 @@ export interface IDeployedAssetGuard {
 }
 
 export interface IDeployedContractGuard {
-  ContractAddress: string;
+  contractAddress: string;
   guardName: string;
   guardAddress: string;
   description: string;
 }
 
 export interface INotSureGuard {
-  Name: string;
-  Destination: string;
+  name: string;
+  destination: string;
 }
 
 export type Address = string;

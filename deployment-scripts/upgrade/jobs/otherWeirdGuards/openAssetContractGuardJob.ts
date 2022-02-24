@@ -46,14 +46,14 @@ export const openAssetContractGuardJob: IJob<void> = async (
       addresses,
     );
     const openAssetGuardRecord: INotSureGuard = {
-      Name: "openAssetGuard",
-      Destination: openAssetGuard.address,
+      name: "openAssetGuard",
+      destination: openAssetGuard.address,
     };
     const csvGovernanceNames = await csv().fromFile(filenames.governanceNamesFileName);
 
     // Filter out any existing guard
     const withoutOpenAssetGuard = csvGovernanceNames.map(
-      (csvGovernanceName: INotSureGuard) => csvGovernanceName.Name != openAssetGuardRecord.Name,
+      (csvGovernanceName: INotSureGuard) => csvGovernanceName.name != openAssetGuardRecord.name,
     );
 
     writeCsv([...withoutOpenAssetGuard, openAssetGuardRecord], filenames.governanceNamesFileName);

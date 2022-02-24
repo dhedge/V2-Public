@@ -50,7 +50,7 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
         if (csvContractGuard.guardName == name) {
           guardFound = true;
           const deployedGuard = contracts[name];
-          const governanceContractGuard = await governance.contractGuards(csvContractGuard.ContractAddress);
+          const governanceContractGuard = await governance.contractGuards(csvContractGuard.contractAddress);
           const csvContractGuardAddress = csvContractGuard.guardAddress;
           const guardDescription = csvContractGuard.description;
 
@@ -72,16 +72,16 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
 
   // Check Governance nameToDestination mappings match the CSV
   for (const csvName of csvNames) {
-    const destinationAddress = await governance.nameToDestination(toBytes32(csvName.Name));
+    const destinationAddress = await governance.nameToDestination(toBytes32(csvName.name));
 
     assert(
-      csvName.Destination.toLowerCase() == destinationAddress.toLowerCase(),
+      csvName.destination.toLowerCase() == destinationAddress.toLowerCase(),
       `${
-        csvName.Name
-      } Governance namesToDestination mapping doesn't match Names CSV. Governance contract: ${destinationAddress.toLowerCase()}, CSV: ${csvName.Destination.toLowerCase()}`,
+        csvName.name
+      } Governance namesToDestination mapping doesn't match Names CSV. Governance contract: ${destinationAddress.toLowerCase()}, CSV: ${csvName.destination.toLowerCase()}`,
     );
 
-    console.log(`nameToDestination ${csvName.Name} mapping ok`);
+    console.log(`nameToDestination ${csvName.name} mapping ok`);
   }
 
   console.log("Governance checks complete!");

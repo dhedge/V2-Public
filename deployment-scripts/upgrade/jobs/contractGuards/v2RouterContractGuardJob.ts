@@ -52,12 +52,12 @@ export const v2RouterContractGuardJob: IJob<void> = async (
         );
 
         const deployedGuard = {
-          ContractAddress: routerAddress,
+          contractAddress: routerAddress,
           guardName: "UniswapV2RouterGuard",
           guardAddress: uniswapV2RouterGuard.address,
           description: "UniswapV2RouterGuard for " + routerAddress,
         };
-        await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
+        await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
       }),
     ).then(() => undefined);
   }

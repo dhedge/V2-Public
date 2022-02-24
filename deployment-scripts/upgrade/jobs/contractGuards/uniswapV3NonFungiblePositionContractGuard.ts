@@ -50,12 +50,12 @@ export const uniswapV3NonFungiblePositionGuard: IJob<void> = async (
     );
 
     const deployedGuard = {
-      ContractAddress: addresses.uniSwapV3NonfungiblePositionManagerAddress,
+      contractAddress: addresses.uniSwapV3NonfungiblePositionManagerAddress,
       guardName: "UniswapV3NonfungiblePositionGuard",
       guardAddress: uniswapV3NonfungiblePositionGuard.address,
       description: "Uniswap V3 Nonfungible Position contract",
     };
 
-    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
   }
 };

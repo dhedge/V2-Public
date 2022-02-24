@@ -56,11 +56,11 @@ export const aaveIncentivesControllerContractGuardJob: IJob<void> = async (
       addresses,
     );
     const deployedGuard = {
-      ContractAddress: addresses.aaveIncentivesControllerAddress,
+      contractAddress: addresses.aaveIncentivesControllerAddress,
       guardName: "AaveIncentivesControllerGuard",
       guardAddress: aaveIncentivesControllerGuard.address,
       description: "Aave Incentives Controller contract",
     };
-    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
   }
 };
