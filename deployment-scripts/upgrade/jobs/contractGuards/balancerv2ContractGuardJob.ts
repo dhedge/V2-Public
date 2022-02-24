@@ -49,9 +49,9 @@ export const balancerv2ContractGuard: IJob<void> = async (
     );
     const deployedGuard = {
       ContractAddress: addresses.balancerV2VaultAddress,
-      GuardName: "BalancerV2Guard",
-      GuardAddress: balancerV2Guard.address,
-      Description: "Balancer V2 Guard",
+      guardName: "BalancerV2Guard",
+      guardAddress: balancerV2Guard.address,
+      description: "Balancer V2 Guard",
     };
     await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }

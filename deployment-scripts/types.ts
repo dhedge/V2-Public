@@ -84,16 +84,16 @@ export type IAddresses = IProposeTxProperties & ExternalLogicContracts & sUSDUni
 
 export interface IDeployedAssetGuard {
   assetType: number;
-  GuardName: string;
-  GuardAddress: string;
-  Description: string;
+  guardName: string;
+  guardAddress: string;
+  description: string;
 }
 
 export interface IDeployedContractGuard {
   ContractAddress: string;
-  GuardName: string;
-  GuardAddress: string;
-  Description: string;
+  guardName: string;
+  guardAddress: string;
+  description: string;
 }
 
 export interface INotSureGuard {

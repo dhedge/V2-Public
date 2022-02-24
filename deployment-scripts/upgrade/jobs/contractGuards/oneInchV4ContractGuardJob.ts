@@ -50,9 +50,9 @@ export const oneInchV4ContractGuardJob: IJob<void> = async (
 
     const deployedGuard = {
       ContractAddress: addresses.oneInchV4RouterAddress,
-      GuardName: "OneInchV4Guard",
-      GuardAddress: oneInchV4Guard.address,
-      Description: "OneInch V4 Router",
+      guardName: "OneInchV4Guard",
+      guardAddress: oneInchV4Guard.address,
+      description: "OneInch V4 Router",
     };
     await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }

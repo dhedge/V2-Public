@@ -64,7 +64,7 @@ const jobs: { [key: string]: IJob<void> } = {
   // Other Weird Guards
   openassetguard: openAssetContractGuardJob,
 
-  // Oracles
+  // Oracles/Aggregators
   sUSDUniV3TWAPAggregator: sUSDUniV3TWAPAggregatorJob,
 
   // Governance

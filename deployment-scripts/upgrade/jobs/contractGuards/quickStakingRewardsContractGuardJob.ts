@@ -49,9 +49,9 @@ export const quickStakingRewardsContractGuardJob: IJob<void> = async (
 
     const deployedGuard = {
       ContractAddress: addresses.quickLpUsdcWethStakingRewardsAddress,
-      GuardName: "QuickStakingRewardsGuard",
-      GuardAddress: quickStakingRewardsGuard.address,
-      Description: "Quick Staking Reward",
+      guardName: "QuickStakingRewardsGuard",
+      guardAddress: quickStakingRewardsGuard.address,
+      description: "Quick Staking Reward",
     };
     await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }

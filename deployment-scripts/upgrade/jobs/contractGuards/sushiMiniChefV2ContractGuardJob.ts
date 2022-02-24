@@ -67,9 +67,9 @@ export const sushiMiniChefV2ContractGuardJob: IJob<void> = async (
     );
     const deployedGuard = {
       ContractAddress: addresses.sushiMiniChefV2Address,
-      GuardName: "SushiMiniChefV2Guard",
-      GuardAddress: sushiMiniChefV2Guard.address,
-      Description: "Sushi rewards contract",
+      guardName: "SushiMiniChefV2Guard",
+      guardAddress: sushiMiniChefV2Guard.address,
+      description: "Sushi rewards contract",
     };
     await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
   }

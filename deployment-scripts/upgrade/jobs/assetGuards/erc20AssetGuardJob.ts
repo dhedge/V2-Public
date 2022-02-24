@@ -36,11 +36,11 @@ export const erc20AssetGuardJob: IJob<void> = async (
 
     const deployedGuard = {
       assetType: 0,
-      GuardName: "ERC20Guard",
-      GuardAddress: erc20Guard.address,
-      Description: "ERC20 tokens",
+      guardName: "ERC20Guard",
+      guardAddress: erc20Guard.address,
+      description: "ERC20 tokens",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
   }
 };

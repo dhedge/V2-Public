@@ -49,11 +49,11 @@ export const uniV3AssetGuardJob: IJob<void> = async (
 
     const deployedGuard = {
       assetType: 7,
-      GuardName: "UniswapV3AssetGuard",
-      GuardAddress: uniV3AssetGuard.address,
-      Description: "Uniswap V3 LP positions",
+      guardName: "UniswapV3AssetGuard",
+      guardAddress: uniV3AssetGuard.address,
+      description: "Uniswap V3 LP positions",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
   }
 };

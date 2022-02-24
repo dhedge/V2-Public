@@ -24,11 +24,11 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
       let guardFound = false;
 
       for (const csvAssetGuard of csvAssetGuards) {
-        if (csvAssetGuard.GuardName == name) {
+        if (csvAssetGuard.guardName == name) {
           guardFound = true;
           const deployedGuard = contracts[name];
           const governanceAssetGuard = await governance.assetGuards(csvAssetGuard.assetType);
-          const csvAssetGuardAddress = csvAssetGuard.GuardAddress;
+          const csvAssetGuardAddress = csvAssetGuard.guardAddress;
 
           assert(
             deployedGuard == governanceAssetGuard,
@@ -47,12 +47,12 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
       let guardFound = false;
 
       for (const csvContractGuard of csvContractGuards) {
-        if (csvContractGuard.GuardName == name) {
+        if (csvContractGuard.guardName == name) {
           guardFound = true;
           const deployedGuard = contracts[name];
           const governanceContractGuard = await governance.contractGuards(csvContractGuard.ContractAddress);
-          const csvContractGuardAddress = csvContractGuard.GuardAddress;
-          const guardDescription = csvContractGuard.Description;
+          const csvContractGuardAddress = csvContractGuard.guardAddress;
+          const guardDescription = csvContractGuard.description;
 
           assert(
             deployedGuard == governanceContractGuard,

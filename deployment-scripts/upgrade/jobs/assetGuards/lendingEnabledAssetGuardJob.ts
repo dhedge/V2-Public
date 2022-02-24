@@ -40,10 +40,10 @@ export const lendingEnabledAssetGuardJob: IJob<void> = async (
     );
     const deployedGuard = {
       assetType: 4,
-      GuardName: "LendingEnabledAssetGuard",
-      GuardAddress: lendingEnabledAssetGuard.address,
-      Description: "Lending Enabled Asset tokens",
+      guardName: "LendingEnabledAssetGuard",
+      guardAddress: lendingEnabledAssetGuard.address,
+      description: "Lending Enabled Asset tokens",
     };
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
   }
 };

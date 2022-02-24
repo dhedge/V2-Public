@@ -53,9 +53,9 @@ export const v2RouterContractGuardJob: IJob<void> = async (
 
         const deployedGuard = {
           ContractAddress: routerAddress,
-          GuardName: "UniswapV2RouterGuard",
-          GuardAddress: uniswapV2RouterGuard.address,
-          Description: "UniswapV2RouterGuard for " + routerAddress,
+          guardName: "UniswapV2RouterGuard",
+          guardAddress: uniswapV2RouterGuard.address,
+          description: "UniswapV2RouterGuard for " + routerAddress,
         };
         await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
       }),
