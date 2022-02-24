@@ -147,7 +147,7 @@ export interface IContracts {
   DhedgeEasySwapper: Address;
   DhedgeSwapRouter: Address;
 
-  Assets?: CSVAsset[];
+  Assets?: ICSVAsset[];
 }
 
 type OracleName =
@@ -157,13 +157,13 @@ type OracleName =
   | "UniV2LPAggregator"
   | "BalancerV2LPAggregator";
 
-export type CSVAsset = {
+export interface ICSVAsset {
   assetType: number;
   oracleName: OracleName;
   oracleAddress: Address;
   assetAddress: Address;
   assetName: string;
-};
+}
 
 export type IVersions = {
   [version: string]: {
@@ -175,11 +175,3 @@ export type IVersions = {
     contracts: IContracts;
   };
 };
-
-export interface ICSVAsset {
-  assetName: string;
-  Address: Address;
-  assetType: string;
-  oracleAddress?: string;
-  oracleName?: string;
-}

@@ -1,4 +1,4 @@
-assetName,Address,assetType,oracleAddress,oracleName
+assetName,assetAddress,assetType,oracleAddress,oracleName
 USD Coin,0x2791bca1f2de4661ed88a30c99a7a9449aa84174,4,0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7,
 Tether USD,0xc2132d05d31c914a87c6611c10748aeb04b58e8f,4,0x0A6513e40db6EB1b165753AD52E80663aeA50545,
 Dai USD,0x8f3cf7ad23cd3cadbd9735aff958023239c6a063,4,0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D,

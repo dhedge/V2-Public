@@ -22,7 +22,7 @@ export const getTag = async () => {
   return result.stdout.trim();
 };
 
-export const hasDuplicates = async (array: any, key: any) => {
+export const hasDuplicates = async <T extends Object>(array: T[], key: keyof T) => {
   const valueArr = array.map(function (item: any) {
     return item[key];
   });

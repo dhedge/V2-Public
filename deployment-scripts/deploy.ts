@@ -5,7 +5,7 @@ import fs from "fs";
 import csv from "csvtojson";
 
 import { assert } from "chai";
-import { IAddresses, IContracts, ICSVAsset, IVersions } from "./types";
+import { ICSVAsset, IAddresses, IContracts, IVersions } from "./types";
 import { IDeploymentData } from "./upgrade/getDeploymentData";
 
 const { getTag } = require("../Helpers");
@@ -95,28 +95,22 @@ export async function deploy(deploymentData: IDeploymentData) {
       await assetHandler.deployed();
 
       const csvAssets: ICSVAsset[] = await csv().fromFile(filenames.assetsFileName);
-      const assetHandlers = csvAssets.map((asset) => {
+      const assetHandlers: ICSVAsset[] = csvAssets.map((asset) => {
         if (asset.oracleAddress) {
-          return {
-            name: asset.assetName,
-            asset: asset.Address,
-            assetType: asset.assetType,
-            aggregator: asset.oracleAddress,
-          };
+          return asset;
         }
         if (asset.oracleName == "USDPriceAggregator") {
           return {
-            name: asset.assetName,
-            asset: asset.Address,
-            assetType: asset.assetType,
-            aggregator: versions[tag].contracts.USDPriceAggregator,
+            ...asset,
+            oracleAddress: versions[tag].contracts.USDPriceAggregator || "",
+            oracleName: "USDPriceAggregator",
           };
         }
         throw new Error("No code path for this asset");
       });
 
       const allAssets = [...assetHandlers];
-      allAssets.forEach((asset) => console.log("Adding Asset: ", asset.name));
+      allAssets.forEach((asset) => console.log("Adding Asset: ", asset.assetName));
 
       await assetHandler.addAssets(allAssets);
       await assetHandler.transferOwnership(addresses.protocolDaoAddress);

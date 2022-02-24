@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { checkBalancerLpAsset, hasDuplicates, proposeTx, tryVerify } from "../../Helpers";
-import { CSVAsset, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
+import { ICSVAsset, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
 
 // Todo: Combine csvAssets and Balancer Assets into one JSON file (move away from csv)
 export const assetsJob: IJob<void> = async (
@@ -15,7 +15,7 @@ export const assetsJob: IJob<void> = async (
   addresses: { balancerV2VaultAddress?: string } & IProposeTxProperties,
 ) => {
   const ethers = hre.ethers;
-  let newOracles: CSVAsset[] = [];
+  let newOracles: ICSVAsset[] = [];
 
   // look up to check if csvAsset is in the current versions
   const fileName = filenames.assetsFileName;
@@ -23,10 +23,10 @@ export const assetsJob: IJob<void> = async (
     throw new Error("No assetFileName configured");
   }
 
-  const csvAssets: CSVAsset[] = await csv().fromFile(fileName);
+  const csvAssets: ICSVAsset[] = await csv().fromFile(fileName);
 
   // Check for any accidental duplicate addresses or price feeds in the CSV
-  if (await hasDuplicates(csvAssets, "Address")) throw "Duplicate 'Address' field found in assets CSV";
+  if (await hasDuplicates(csvAssets, "assetAddress")) throw "Duplicate 'Address' field found in assets CSV";
   if (await hasDuplicates(csvAssets, "oracleAddress")) throw "Duplicate 'oracleAddress' field found in assets CSV";
 
   for (const csvAsset of [...csvAssets]) {
@@ -103,9 +103,9 @@ export const assetsJob: IJob<void> = async (
 
 export const getOracle = async (
   hre: HardhatRuntimeEnvironment,
-  csvAsset: CSVAsset,
+  csvAsset: ICSVAsset,
   versions: IVersions,
-): Promise<CSVAsset> => {
+): Promise<ICSVAsset> => {
   const oracleAddress = await getOracleAddress(hre, csvAsset, versions);
   return {
     ...csvAsset,
@@ -115,7 +115,7 @@ export const getOracle = async (
 
 const getOracleAddress = async (
   hre: HardhatRuntimeEnvironment,
-  csvAsset: CSVAsset,
+  csvAsset: ICSVAsset,
   versions: IVersions,
 ): Promise<string> => {
   const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
