@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v2
         id: node-cache
         with:
-          path: '**/node_modules'
+          path: "**/node_modules"
           key: npm-v2-${{ hashFiles('**/package-lock.json') }}
           restore-keys: npm-v2-
       - name: Install dependencies
@@ -55,7 +55,6 @@ jobs:
         run: |
           npx hardhat node --fork $ALCHEMY_URL > log-ovm-integration.log 2>&1 &
 
-
       - name: Hardhat compile
         run: npx hardhat compile
 
@@ -68,3 +67,6 @@ jobs:
       - name: SynthPriceAggregatorTest
         run: |
           npx hardhat test ./test/integration/ovm/SynthPriceAggregatorTest.ts --network localhost
+      - name: UniV3TWAPAggregator Tests
+        run: |
+          npx hardhat test ./test/integration/ovm/UniV3TWAPAggregator.ts --network localhost
