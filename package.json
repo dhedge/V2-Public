@@ -9,7 +9,6 @@
   "scripts": {
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "prettier -l --write \"contracts/**/*.sol\" \"test/**/*.js\" \"test/**/*.ts\" \"scripts/**/*.js\"",
-    "fork:evm": "hardhat node --fork $(grep ALCHEMY_EVM_URL .env | cut -d '=' -f2)$(grep ALCHEMY_EVM_KEY .env | cut -d '=' -f2)",
     "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
     "fork:arbitrum": "hardhat node --fork $(grep ARBITRUM_URL .env | cut -d '=' -f2)",
     "fork:mumbai": "hardhat node --fork https://rpc-mumbai.maticvigil.com/v1/$(grep MATIC_KEY .env | cut -d '=' -f2)",
@@ -44,7 +43,9 @@
     "verify:polygon": "hardhat run ./scripts/verify.js --network polygon",
     "verify:ovm": "hardhat explorerVerify --network ovm",
     "dynamicbonds:polygon:getconfig": "npx hardhat dynamicBonds --get-config true --production true --network polygon",
-    "dynamicbonds:polygon:updateterms": "npx hardhat dynamicBonds --update-terms true --production true --network polygon"
+    "dynamicbonds:polygon:updateterms": "npx hardhat dynamicBonds --update-terms true --production true --network polygon",
+    "compile-types": "npx hardhat --config hardhat.config-compile.ts typechain",
+    "postinstall": "npm compile-types"
   },
   "author": "dHEDGE Team",
   "license": "ISC",

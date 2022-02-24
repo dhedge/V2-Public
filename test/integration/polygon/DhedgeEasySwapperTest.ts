@@ -7,7 +7,6 @@ import {
   aave,
   assets,
   assetsBalanceOfSlot,
-  curvePools,
   quickswap,
   sushi,
   torosPools,
@@ -53,7 +52,7 @@ describe("DhedgeEasySwapper", function () {
     await ethers.provider.send("evm_mine", []); // Just mines to the next block
 
     const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
-    const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+    const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], []); // removed curve pools
     await swapRouter.deployed();
 
     const governanceAddress = "0x206CbDa3381e7afdF448621b90f549f89555A588";
@@ -174,6 +173,7 @@ describe("DhedgeEasySwapper", function () {
       const balance = await torosPool.connect(user1).balanceOf(user1.address);
       // Withdraw
       await ethers.provider.send("evm_increaseTime", [3600]); // 1 hour
+      await ethers.provider.send("evm_mine", []);
       await expect(torosPool.connect(user1).withdraw(balance)).to.be.revertedWith("cooldown active");
     });
   });
@@ -208,6 +208,7 @@ describe("DhedgeEasySwapper", function () {
       const balanceUser2 = await torosPool.balanceOf(user2.address);
 
       await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+      await ethers.provider.send("evm_mine", []);
 
       // Withdraw all
       await torosPool.approve(dhedgeEasySwapper.address, balanceLogicOwner);
@@ -252,6 +253,7 @@ describe("DhedgeEasySwapper", function () {
       await dhedgeEasySwapper.withdraw(torosPool.address, balanceLogicOwner, withdrawToken, 0);
 
       await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+      await ethers.provider.send("evm_mine", []);
       await torosPool.connect(user2).approve(dhedgeEasySwapper.address, balanceUser2);
       await dhedgeEasySwapper.connect(user2).withdraw(torosPool.address, balanceUser2, withdrawToken, 0);
     });
@@ -261,10 +263,12 @@ describe("DhedgeEasySwapper", function () {
     let snapshot: any;
     beforeEach(async function () {
       snapshot = await ethers.provider.send("evm_snapshot", []);
+      await ethers.provider.send("evm_mine", []);
       [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
     });
     afterEach(async () => {
       await ethers.provider.send("evm_revert", [snapshot]);
+      await ethers.provider.send("evm_mine", []);
     });
 
     const createTest = (test: TestCase) => {
@@ -328,6 +332,7 @@ describe("DhedgeEasySwapper", function () {
         expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(0);
 
         await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+        await ethers.provider.send("evm_mine", []);
 
         // Withdraw all
         await torosPool.approve(dhedgeEasySwapper.address, balance);

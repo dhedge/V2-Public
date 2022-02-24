@@ -1,7 +1,126 @@
-name: Polygon Integration Tests
+name: Polygon IntegrationTest
 on: [push]
 
 jobs:
+  polygon-aave-edge-case:
+    if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    name: Polygon Aave Edge Cases
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Node module cache
+        uses: actions/cache@v2
+        id: node-cache
+        with:
+          path: "**/node_modules"
+          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-v2-
+      - name: Install dependencies
+        run: npm ci
+        if: steps.node-cache.outputs.cache-hit != 'true'
+      - name: Hardhat artifact cache
+        uses: actions/cache@v2
+        id: hardhat-cache
+        with:
+          path: "artifacts"
+          key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            artifacts-
+
+      - name: Typechain Types Cache
+        uses: actions/cache@v2
+        id: typechain-cache
+        with:
+          path: "types"
+          key: types-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            types-
+
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
+      - name: Run Polygon Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --fork $ALCHEMY_URL > log-polygon-integration.log 2>&1 &
+
+      - name: Hardhat compile
+        run: npx hardhat compile
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
+
+      # The AaveEdge Casttest are extremely brittle and often fail in CI seperating them
+      - name: AaveEdgeCaseTest
+        run: |
+          npx hardhat test ./test/integration/polygon/AaveEdgeCaseTest.ts --network localhost
+
+
+  polygon-aave-tests:
+    if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    name: Polygon AaveTest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Node module cache
+        uses: actions/cache@v2
+        id: node-cache
+        with:
+          path: "**/node_modules"
+          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-v2-
+      - name: Install dependencies
+        run: npm ci
+        if: steps.node-cache.outputs.cache-hit != 'true'
+      - name: Hardhat artifact cache
+        uses: actions/cache@v2
+        id: hardhat-cache
+        with:
+          path: "artifacts"
+          key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            artifacts-
+
+      - name: Typechain Types Cache
+        uses: actions/cache@v2
+        id: typechain-cache
+        with:
+          path: "types"
+          key: types-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            types-
+
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
+
+      - name: Run Polygon Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --fork $ALCHEMY_URL > log-polygon-integration.log 2>&1 &
+
+
+      - name: Hardhat compile
+        run: npx hardhat compile
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
+
+      # We run these separately because then it fails faster AND you can tell immediately whichtest failed via github
+      - name: AaveTests
+        run: |
+          npx hardhat test ./test/integration/polygon/AaveTest.ts --network localhost
+
   polygon-integration1:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: PIT 1
@@ -33,9 +152,18 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Typechain Types Cache
+        uses: actions/cache@v2
+        id: typechain-cache
+        with:
+          path: "types"
+          key: types-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            types-
+
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
-
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
       - name: Run Polygon Fork in background
         env:
           ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
@@ -45,29 +173,53 @@ jobs:
 
       - name: Hardhat compile
         run: npx hardhat compile
-        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
-      # We run these separately because then it fails faster AND you can tell immediately which tests failed via githu
-      - name: Balancer Tests
+      # We run these separately because then it fails faster AND you can tell immediately whichtest failed via githu
+      - name: BalancerTest
         run: |
           npx hardhat test ./test/integration/polygon/BalancerTest.ts --network localhost
-      - name: DHedgePoolAggregator Tests
+
+      - name: Balancer RewardsTest
+        run: |
+          npx hardhat test ./test/integration/polygon/BalancerRewardsTest.ts --network localhost
+
+      - name: BalancerStablePoolAggregatorTest
+        run: |
+          npx hardhat test ./test/integration/polygon/BalancerStablePoolAggregatorTest.ts --network localhost
+
+      - name: DhedgeEasySwapper
+        run: |
+          npx hardhat test ./test/integration/polygon/DhedgeEasySwapperTest.ts --network localhost
+
+      - name: DHedgePoolAggregatorTest
         run: |
           npx hardhat test ./test/integration/polygon/DHedgePoolAggregatorTest.ts --network localhost
-      - name: DhedgeSwap Tests
+
+      - name: DHedgePoolPriceOracleTest
+        run: |
+          npx hardhat test ./test/integration/polygon/DHedgePoolPriceOracleTest.ts --network localhost
+
+      - name: DhedgeSwapRouterTest
+        run: |
+          npx hardhat test ./test/integration/polygon/DhedgeSwapRouterTest.ts --network localhost
+
+      - name: DhedgeSwapTest
         run: |
           npx hardhat test ./test/integration/polygon/DhedgeSwapTest.ts --network localhost
-      - name: EarlyExit Tests
+
+      - name: EarlyExitTest
         run: |
           npx hardhat test ./test/integration/polygon/EarlyExitTest.ts --network localhost
-      - name: ETHCrossAggregatorTest Tests
+      - name: EasySwapperGuardTest
+        run: |
+          npx hardhat test ./test/integration/polygon/EasySwapperGuardTest.ts --network localhost
+
+      - name: ETHCrossAggregatorTestTest
         run: |
           npx hardhat test ./test/integration/polygon/ETHCrossAggregatorTest.ts --network localhost
-      - name: LendingEnabledAssetGuard Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/LendingEnabledAssetGuardTest.ts --network localhost
 
-  # Polygon tests are current split in 3 because they use more than 10k matic together... its also faster
+  # Polygontest are current split in 3 because they use more than 10k matic together... its also faster
   polygon-integration2:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: PIT 2
@@ -99,9 +251,18 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Typechain Types Cache
+        uses: actions/cache@v2
+        id: typechain-cache
+        with:
+          path: "types"
+          key: types-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            types-
+
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
-
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
       - name: Run Polygon Fork in background
         env:
           ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
@@ -110,24 +271,39 @@ jobs:
 
       - name: Hardhat compile
         run: npx hardhat compile
-        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
-      # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
+      # We run these separately because then it fails faster AND you can tell immediately whichtest failed via github
+      - name: LendingEnabledAssetGuardTest
+        run: |
+          npx hardhat test ./test/integration/polygon/LendingEnabledAssetGuardTest.ts --network localhost
+      - name: MedianTWAPAggregatorTest
+        run: |
+          npx hardhat test ./test/integration/polygon/MedianTWAPAggregatorTest.ts --network localhost
 
-      - name: OneInch Tests
+      - name: OneInchTest
         run: |
           npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
-      - name: PoolPerformance Tests
+
+
+      - name: OneInchTest
+        run: |
+          npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
+
+
+      - name: PoolPerformanceTest
         run: |
           npx hardhat test ./test/integration/polygon/PoolPerformanceTest.ts --network localhost
-      - name: Quickswap Tests
+
+      - name: QuickswapTest
         run: |
           npx hardhat test ./test/integration/polygon/QuickswapTest.ts --network localhost
-      - name: Sushiswap Tests
+
+      - name: SushiswapTest
         run: |
           npx hardhat test ./test/integration/polygon/SushiswapTest.ts --network localhost
 
-# Polygon tests are current split in 3 because they use more than 10k matic together... its also faster
+# Polygontest are current split in 3 because they use more than 10k matic together... its also faster
   polygon-integration3:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: PIT 3
@@ -159,8 +335,18 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Typechain Types Cache
+        uses: actions/cache@v2
+        id: typechain-cache
+        with:
+          path: "types"
+          key: types-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            types-
+
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
 
       - name: Run Polygon Fork in background
         env:
@@ -171,123 +357,27 @@ jobs:
 
       - name: Hardhat compile
         run: npx hardhat compile
-        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
+        if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
-      # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
+      # We run these separately because then it fails faster AND you can tell immediately whichtest failed via github
 
-      - name: DhedgeEasySwapper
-        run: |
-          npx hardhat test ./test/integration/polygon/DhedgeEasySwapperTest.ts --network localhost
-      - name: EasySwapperGuard Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/EasySwapperGuardTest.ts --network localhost
-      - name: WithdrawSingle Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
-      - name: DhedgeSwapRouter Tests
-        run: |
-          npx hardhat test ./test/integration/polygon/DhedgeSwapRouterTest.ts --network localhost
-      - name: UniswapV3L Tests
+      - name: UniswapV3LPTest
         run: |
           npx hardhat test ./test/integration/polygon/UniswapV3LPTest.ts --network localhost
 
-
-  polygon-aave-edge-case:
-    if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
-    name: PIT 4
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-      - name: Set up node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
-      - name: Node module cache
-        uses: actions/cache@v2
-        id: node-cache
-        with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
-      - name: Hardhat artifact cache
-        uses: actions/cache@v2
-        id: hardhat-cache
-        with:
-          path: "artifacts"
-          key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
-          restore-keys: |
-            artifacts-
-
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-
-      - name: Run Polygon Fork in background
-        env:
-          ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
+      - name: UniswapV3AssetGuardTest
         run: |
-          npx hardhat node --fork $ALCHEMY_URL > log-polygon-integration.log 2>&1 &
-
-
-      - name: Hardhat compile
-        run: npx hardhat compile
-        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
-
-      # The AaveEdge Cast tests are extremely brittle and often fail in CI seperating them
-      - name: AaveEdgeCase Tests
+          npx hardhat test ./test/integration/polygon/UniswapV3AssetGuardTest.ts --network localhost
+      - name: UniswapV3SwapRouterGuardTest
         run: |
-          npx hardhat test ./test/integration/polygon/AaveEdgeCaseTest.ts --network localhost
+          npx hardhat test ./test/integration/polygon/UniswapV3SwapRouterGuardTest.ts --network localhost
 
-  polygon-aave-tests:
-    if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
-    name: PIT 1
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-      - name: Set up node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
-      - name: Node module cache
-        uses: actions/cache@v2
-        id: node-cache
-        with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
-      - name: Hardhat artifact cache
-        uses: actions/cache@v2
-        id: hardhat-cache
-        with:
-          path: "artifacts"
-          key: artifacts-${{ hashFiles('contracts/**/*.sol') }}
-          restore-keys: |
-            artifacts-
-
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-
-      - name: Run Polygon Fork in background
-        env:
-          ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
+      - name: WithdrawSingleTest
         run: |
-          npx hardhat node --fork $ALCHEMY_URL > log-polygon-integration.log 2>&1 &
+          npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
 
-
-      - name: Hardhat compile
-        run: npx hardhat compile
-        # if: steps.hardhat-cache.outputs.cache-hit != 'true'
-
-      # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
-      - name: AaveTests
+      - name: WithdrawToTest
         run: |
-          npx hardhat test ./test/integration/polygon/AaveTest.ts --network localhost
+          npx hardhat test ./test/integration/polygon/WithdrawToTest.ts --network localhost
+
+

@@ -11,9 +11,8 @@ import {
   quickswap,
   oneinch,
   uniswapV3,
-  curvePools,
 } from "../../../../config/chainData/polygon-data";
-import { Deployments } from ".";
+import { IDeployments } from ".";
 
 const deployBalancerV2LpAggregator = async (
   poolFactory: PoolFactory,
@@ -61,7 +60,7 @@ const deployBalancerV2LpAggregator = async (
   );
 };
 
-export const deployPolygonContracts = async (): Promise<Deployments> => {
+export const deployPolygonContracts = async (): Promise<IDeployments> => {
   const [logicOwner, manager, dao, user] = await ethers.getSigners();
 
   const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
@@ -85,10 +84,10 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const usdPriceAggregator = await USDPriceAggregator.deploy();
   // Initialize Asset Price Consumer
   const assetWmatic = { asset: assets.wmatic, assetType: 0, aggregator: price_feeds.matic };
-  const assetWeth = { asset: assets.weth, assetType: 0, aggregator: price_feeds.eth };
   const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
   const assetSushi = { asset: assets.sushi, assetType: 0, aggregator: price_feeds.sushi };
   const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
+  const assetWeth = { asset: assets.weth, assetType: 4, aggregator: price_feeds.eth }; // Lending enabled
   const assetDai = { asset: assets.dai, assetType: 4, aggregator: price_feeds.dai }; // Lending enabled
   const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
   const assetBalancer = { asset: assets.balancer, assetType: 0, aggregator: price_feeds.balancer };
@@ -224,7 +223,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   await oneInchV3Guard.deployed();
 
   const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
-  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], curvePools);
+  const swapRouter = await SwapRouter.deploy([quickswap.router, sushi.router], []);
   await swapRouter.deployed();
 
   const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
@@ -242,7 +241,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
   const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
   const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
     uniswapV3.nonfungiblePositionManager,
-    1,
+    3,
   );
   await uniswapV3NonfungiblePositionGuard.deployed();
   const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
@@ -299,6 +298,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
 
   const VariableWETH = await ethers.getContractAt("IERC20", aave.variableDebtTokens.weth);
   const VariableUSDT = await ethers.getContractAt("IERC20", aave.variableDebtTokens.usdt);
+  const VariableDAI = await ethers.getContractAt("IERC20", aave.variableDebtTokens.dai);
 
   const BALANCERLP_STABLE = await ethers.getContractAt("IERC20", balancer.pools.stablePool.pool);
   const BALANCERLP_WETH_BALANCER = await ethers.getContractAt("IERC20", balancer.pools.bal80weth20.pool);
@@ -316,6 +316,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
     poolPerformance,
     sushiMiniChefV2Guard,
     dhedgeEasySwapper,
+    uniV3AssetGuard,
     assets: {
       WMATIC,
       USDT,
@@ -331,6 +332,7 @@ export const deployPolygonContracts = async (): Promise<Deployments> => {
       AMWETH,
       VariableWETH,
       VariableUSDT,
+      VariableDAI,
       BALANCERLP_STABLE,
       BALANCERLP_WETH_BALANCER,
     },
