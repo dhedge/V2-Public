@@ -198,7 +198,7 @@ export const checkBalancerLpAsset = async (
   for (const asset of contracts.Assets) {
     if (balancerLp.name === asset.name) {
       // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
-      const assetType = parseInt(await poolFactory.getassetType(balancerLp.address));
+      const assetType = parseInt(await poolFactory.getAssetType(balancerLp.address));
 
       if (assetType !== balancerLp.assetType) {
         console.log(`${balancerLp.name} asset type update from ${assetType} to ${balancerLp.assetType}`);
