@@ -57,7 +57,7 @@ export const sUSDUniV3TWAPAggregatorJob: IJob<void> = async (
       {
         assetAddress: addresses.sUSDAddress,
         oracleAddress: uniV3TWAPAggregator.address,
-        oracleName: "UniV3TWAPAggregator",
+        oracleName: "susdUniV3TWAPAggregator",
       },
     ];
   }
