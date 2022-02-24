@@ -25,7 +25,7 @@ export const uniV3AssetGuardJob: IJob<void> = async (
     const governanceABI = new ethers.utils.Interface(Governance.abi);
 
     const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");
-    const uniV3AssetGuard = await UniswapV3AssetGuard.deploy(addresses.uniSwapV3NonfungiblePositionManagerAddress);
+    const uniV3AssetGuard = await UniswapV3AssetGuard.deploy();
     await uniV3AssetGuard.deployed();
     console.log("UniswapV3AssetGuard deployed at", uniV3AssetGuard.address);
 

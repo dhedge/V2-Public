@@ -53,11 +53,17 @@ describe("Uniswap V3 LP Test", function () {
   });
 
   beforeEach(async function () {
-    const funds = await createFund(poolFactory, logicOwner, manager, [
-      { asset: assets.usdc, isDeposit: true },
-      { asset: assets.weth, isDeposit: true },
-      { asset: assets.usdt, isDeposit: true },
-    ]);
+    const funds = await createFund(
+      poolFactory,
+      logicOwner,
+      manager,
+      [
+        { asset: assets.usdc, isDeposit: true },
+        { asset: assets.weth, isDeposit: true },
+        { asset: assets.usdt, isDeposit: true },
+      ],
+      0, // 0% performance fee
+    );
     poolLogicProxy = funds.poolLogicProxy;
     poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
@@ -81,7 +87,7 @@ describe("Uniswap V3 LP Test", function () {
     await poolFactory.setExitCooldown(0);
   });
 
-  it("Should be able to add liquidity", async () => {
+  it("Can't mint position if nft position is not enabled", async () => {
     // try to mint before enabling nft position asset
     const token0 = assets.usdc;
     const token1 = assets.weth;
@@ -98,7 +104,24 @@ describe("Uniswap V3 LP Test", function () {
       tickUpper: tick + tickSpacing,
     };
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("asset not enabled in pool");
+  });
 
+  it("Can't mint position with unsupported assets", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    let mintSettings: UniV3LpMintSettings = {
+      token0,
+      token1,
+      fee,
+      amount0: units(2000, 6),
+      amount1: units(1),
+      tickLower: tick - tickSpacing,
+      tickUpper: tick + tickSpacing,
+    };
     await poolManagerLogicProxy
       .connect(manager)
       .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
@@ -112,18 +135,29 @@ describe("Uniswap V3 LP Test", function () {
     mintSettings.token0 = assets.usdc;
     mintSettings.token1 = assets.miMatic;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenB");
+  });
 
-    mintSettings.token1 = assets.weth;
+  it("Can't mint position with invalid receiver address", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    await poolManagerLogicProxy
+      .connect(manager)
+      .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
+
     // try to mint with wrong receiver
     const mintABI = iNonfungiblePositionManager.encodeFunctionData("mint", [
       [
-        mintSettings.token0,
-        mintSettings.token1,
-        mintSettings.fee,
-        mintSettings.tickLower,
-        mintSettings.tickUpper,
-        mintSettings.amount0,
-        mintSettings.amount1,
+        token0,
+        token1,
+        fee,
+        tick - tickSpacing,
+        tick + tickSpacing,
+        units(2000, 6),
+        units(1),
         0,
         0,
         poolManagerLogicProxy.address,
@@ -133,18 +167,71 @@ describe("Uniswap V3 LP Test", function () {
     await expect(
       poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI),
     ).to.revertedWith("recipient is not pool");
+  });
+
+  it("Can't mint more than 3 positions (check position count limit)", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    let mintSettings: UniV3LpMintSettings = {
+      token0,
+      token1,
+      fee,
+      amount0: units(2000, 6),
+      amount1: units(1),
+      tickLower: tick - tickSpacing,
+      tickUpper: tick + tickSpacing,
+    };
+    await poolManagerLogicProxy
+      .connect(manager)
+      .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
+
+    // mint USDC-WETH LP position of 2000 USDC and 1 WETH
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+
+    mintSettings.tickLower = tick - tickSpacing * 2;
+    mintSettings.tickUpper = tick + tickSpacing * 2;
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+
+    mintSettings.tickLower = tick - tickSpacing * 3;
+    mintSettings.tickUpper = tick + tickSpacing * 3;
+    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+
+    mintSettings.tickLower = tick - tickSpacing * 4;
+    mintSettings.tickUpper = tick + tickSpacing * 4;
+    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("too many uniswap v3 positions");
+  });
+
+  it("Should mint a position", async () => {
+    // try to mint before enabling nft position asset
+    const token0 = assets.usdc;
+    const token1 = assets.weth;
+    const fee = 500;
+    const tick = await getCurrentTick(token0, token1, fee);
+    const tickSpacing = fee / 50;
+    let mintSettings: UniV3LpMintSettings = {
+      token0,
+      token1,
+      fee,
+      amount0: units(2000, 6),
+      amount1: units(1),
+      tickLower: tick - tickSpacing,
+      tickUpper: tick + tickSpacing,
+    };
+    await poolManagerLogicProxy
+      .connect(manager)
+      .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
 
     // mint USDC-WETH LP position of 2000 USDC and 1 WETH
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
     await mintLpAsPool(poolLogicProxy, manager, mintSettings);
     const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
-    checkAlmostSame(totalFundValueAfter, totalFundValueBefore);
+    checkAlmostSame(totalFundValueAfter, totalFundValueBefore, 0.000001);
     expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-
-    mintSettings.tickLower = tick - tickSpacing * 2;
-    mintSettings.tickUpper = tick + tickSpacing * 2;
-    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("too many uniswap v3 positions");
   });
 
   describe("After position", () => {
@@ -184,14 +271,14 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, increaseLiquidityABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
 
       const positionAfter = await nonfungiblePositionManager.positions(tokenId);
 
       expect(positionBefore.liquidity).to.lt(positionAfter.liquidity);
     });
 
-    it("Should be able to decrease liquidity", async () => {
+    it("Check price change after decreasing liquidity to zero (no collect)", async () => {
       const positionBefore = await nonfungiblePositionManager.positions(tokenId);
 
       // decrease USDC-WETH LP position by 100%
@@ -200,14 +287,48 @@ describe("Uniswap V3 LP Test", function () {
       ]);
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+      const tokenPriceBefore = await poolLogicProxy.tokenPrice();
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
+      checkAlmostSame(await poolLogicProxy.tokenPrice(), tokenPriceBefore, 0.000001);
 
       const positionAfter = await nonfungiblePositionManager.positions(tokenId);
 
       expect(positionAfter.liquidity).to.equal(0);
+    });
+
+    it("Check withdraw after decreasing liquidity to zero (no collect)", async () => {
+      const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+
+      // decrease USDC-WETH LP position by 100%
+      let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        [tokenId, positionBefore.liquidity, 0, 0, deadLine],
+      ]);
+
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+      const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+
+      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
+
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
+      checkAlmostSame(await poolLogicProxy.tokenPrice(), tokenPriceBefore, 0.000001);
+
+      const positionAfter = await nonfungiblePositionManager.positions(tokenId);
+      expect(positionAfter.liquidity).to.equal(0);
+
+      const usdcBalanceBefore = await USDC.balanceOf(logicOwner.address);
+      const wethBalanceBefore = await WETH.balanceOf(logicOwner.address);
+
+      // Full 100% withdrawal from pool
+      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
+
+      expect(await poolLogicProxy.balanceOf(logicOwner.address)).to.eq(0);
+      expect(await poolManagerLogicProxy.totalFundValue()).to.eq(0);
+
+      expect(await USDC.balanceOf(logicOwner.address)).closeTo(usdcBalanceBefore.add(units(10000, 6)), 1);
+      expect(await WETH.balanceOf(logicOwner.address)).closeTo(wethBalanceBefore.add(units(5)), 1);
     });
 
     it("Fail to collect fees with wrong receiver", async () => {
@@ -240,31 +361,12 @@ describe("Uniswap V3 LP Test", function () {
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
       expect(usdcBalanceAfter.gt(usdcBalanceBefore) || wethBalanceAfter.gt(wethBalanceBefore)).to.true;
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
     });
 
     it("fail to collect fee after disabling assets", async () => {
-      const usdcSwapAmount = await poolManagerLogicProxy.assetBalance(USDC.address);
-      let minAmountOut = await getMinAmountOut(deployments, usdcSwapAmount, USDC.address, USDT.address);
-      let exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
-        [
-          USDC.address, // from
-          USDT.address, // to
-          500, // 0.05% fee
-          poolLogicProxy.address,
-          usdcSwapAmount,
-          minAmountOut,
-          0,
-        ],
-      ]);
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
-
-      const positionBefore = await nonfungiblePositionManager.positions(tokenId);
-      // decrease USDC-WETH LP position by 100%
-      let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
-        [tokenId, positionBefore.liquidity, 0, 0, deadLine],
-      ]);
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
+      await getAccountToken(ethers.constants.Zero, poolLogicProxy.address, assets.usdc, assetsBalanceOfSlot.usdc);
+      await getAccountToken(ethers.constants.Zero, poolLogicProxy.address, assets.weth, assetsBalanceOfSlot.weth);
 
       await poolManagerLogicProxy.connect(manager).changeAssets([], [WETH.address]);
 
@@ -302,7 +404,7 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, burnABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
 
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
     });
@@ -333,21 +435,47 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, multicallABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
 
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
     });
 
     it("Should be able to withdraw", async () => {
-      const shares = await poolLogicProxy.balanceOf(logicOwner.address);
-
+      const sharesBefore = await poolLogicProxy.balanceOf(logicOwner.address);
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
       const usdcBalanceBefore = await USDC.balanceOf(logicOwner.address);
       const wethBalanceBefore = await WETH.balanceOf(logicOwner.address);
 
-      await poolLogicProxy.withdraw(shares.div(2));
+      // First decrease half the liquidity and move it to the fees to ensure both liquidity and fees get withdrawn correctly
+      const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+      // decrease USDC-WETH LP position by 50%
+      let decreaseLiquidityCalldata = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        [tokenId, ethers.BigNumber.from(positionBefore.liquidity).div(2), 0, 0, deadLine],
+      ]);
+      await poolLogicProxy
+        .connect(manager)
+        .execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityCalldata);
+      const totalFundValueAfterDecreaseLiquidity = await poolManagerLogicProxy.totalFundValue();
+      // Assert that fund value is unchanged
+      checkAlmostSame(totalFundValueBefore, totalFundValueAfterDecreaseLiquidity, 0.000001);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2));
+      // Half 50% withdrawal from pool
+      await poolLogicProxy.withdraw(sharesBefore.div(2));
+      const sharesAfterHalfWithdrawal = await poolLogicProxy.balanceOf(logicOwner.address);
+      const totalFundValueAfterHalfWithdrawal = await poolManagerLogicProxy.totalFundValue();
+
+      checkAlmostSame(sharesAfterHalfWithdrawal, sharesBefore.div(2), 0.000001);
+      checkAlmostSame(totalFundValueAfterHalfWithdrawal, totalFundValueBefore.div(2), 0.000001);
+      expect(await USDC.balanceOf(logicOwner.address)).gt(usdcBalanceBefore);
+      expect(await WETH.balanceOf(logicOwner.address)).gt(wethBalanceBefore);
+
+      // Full 100% withdrawal from pool
+      await poolLogicProxy.withdraw(sharesAfterHalfWithdrawal);
+      const sharesAfterFullWithdrawal = await poolLogicProxy.balanceOf(logicOwner.address);
+      const totalFundValueAfterFullWithdrawal = await poolManagerLogicProxy.totalFundValue();
+
+      expect(sharesAfterFullWithdrawal).eq(0);
+      expect(totalFundValueAfterFullWithdrawal).eq(0);
       expect(await USDC.balanceOf(logicOwner.address)).gt(usdcBalanceBefore);
       expect(await WETH.balanceOf(logicOwner.address)).gt(wethBalanceBefore);
     });
