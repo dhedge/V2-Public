@@ -48,7 +48,7 @@ export const uniV3AssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      AssetType: 7,
+      assetType: 7,
       GuardName: "UniswapV3AssetGuard",
       GuardAddress: uniV3AssetGuard.address,
       Description: "Uniswap V3 LP positions",

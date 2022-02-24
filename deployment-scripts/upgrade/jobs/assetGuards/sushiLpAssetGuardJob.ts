@@ -46,7 +46,7 @@ export const sushiLpAssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      AssetType: 2,
+      assetType: 2,
       GuardName: "SushiLPAssetGuard",
       GuardAddress: sushiLPAssetGuard.address,
       Description: "Sushi LP tokens",

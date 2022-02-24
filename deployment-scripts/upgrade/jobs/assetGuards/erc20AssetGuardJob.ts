@@ -35,7 +35,7 @@ export const erc20AssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      AssetType: 0,
+      assetType: 0,
       GuardName: "ERC20Guard",
       GuardAddress: erc20Guard.address,
       Description: "ERC20 tokens",

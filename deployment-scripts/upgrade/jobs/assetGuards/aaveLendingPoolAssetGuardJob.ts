@@ -49,7 +49,7 @@ export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      AssetType: 3,
+      assetType: 3,
       GuardName: "AaveLendingPoolAssetGuard",
       GuardAddress: aaveLendingPoolAssetGuard.address,
       Description: "Aave Lending Pool",

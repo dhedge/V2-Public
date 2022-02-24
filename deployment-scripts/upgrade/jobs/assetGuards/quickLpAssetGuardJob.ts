@@ -46,7 +46,7 @@ export const quickLpAssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      AssetType: 5,
+      assetType: 5,
       GuardName: "QuickLPAssetGuard",
       GuardAddress: quickLPAssetGuard.address,
       Description: "Quick LP tokens",

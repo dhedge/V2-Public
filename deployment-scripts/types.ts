@@ -57,6 +57,13 @@ export interface ExternalLogicContracts {
   wmaticTokenAddress?: Address;
 }
 
+export interface sUSDUniV3TWAPAggregatorProperties {
+  // For sUSDUniV3TWAPAggregator
+  sUSDAddress?: Address;
+  sUSDDaiUniV3PoolAddress?: Address;
+  daiChainlinkoracleAddress?: Address;
+}
+
 export interface IDhedgeInternal {
   // Dhedge
   protocolDaoAddress: string;
@@ -73,10 +80,10 @@ export type IProposeTxProperties = IDhedgeInternal & {
 };
 
 // Addresses
-export type IAddresses = IProposeTxProperties & ExternalLogicContracts;
+export type IAddresses = IProposeTxProperties & ExternalLogicContracts & sUSDUniV3TWAPAggregatorProperties;
 
 export interface IDeployedAssetGuard {
-  AssetType: number;
+  assetType: number;
   GuardName: string;
   GuardAddress: string;
   Description: string;
@@ -134,11 +141,29 @@ export interface IContracts {
   AaveLendingPoolAssetGuard?: Address;
   UniswapV3AssetGuard?: Address;
 
+  // Oracles
+  Oracles?: { assetAddress: Address; oracleAddress: Address; oracleName: string }[];
+
   DhedgeEasySwapper: Address;
   DhedgeSwapRouter: Address;
 
-  Assets?: { name: string; asset: Address; assetType: string | undefined; aggregator: Address | undefined }[];
+  Assets?: CSVAsset[];
 }
+
+type OracleName =
+  | "DHedgePoolAggregator"
+  | "USDPriceAggregator"
+  | "DeployedOracle"
+  | "UniV2LPAggregator"
+  | "BalancerV2LPAggregator";
+
+export type CSVAsset = {
+  assetType: number;
+  oracleName: OracleName;
+  oracleAddress: Address;
+  assetAddress: Address;
+  assetName: string;
+};
 
 export type IVersions = {
   [version: string]: {
@@ -152,9 +177,9 @@ export type IVersions = {
 };
 
 export interface ICSVAsset {
-  AssetName: string;
+  assetName: string;
   Address: Address;
-  AssetType: string;
-  ChainlinkPriceFeed?: string;
-  AggregatorName?: string;
+  assetType: string;
+  oracleAddress?: string;
+  oracleName?: string;
 }

@@ -1,2 +1,2 @@
-AssetType,GuardName,GuardAddress,Description
+assetType,GuardName,GuardAddress,Description
 0,ERC20Guard,0x6212FFDDe8f24e525264df10A7FfC6D017c8424A,ERC20 tokens

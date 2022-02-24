@@ -39,7 +39,7 @@ export const lendingEnabledAssetGuardJob: IJob<void> = async (
       addresses,
     );
     const deployedGuard = {
-      AssetType: 4,
+      assetType: 4,
       GuardName: "LendingEnabledAssetGuard",
       GuardAddress: lendingEnabledAssetGuard.address,
       Description: "Lending Enabled Asset tokens",

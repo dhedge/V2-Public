@@ -24,7 +24,7 @@
     "tag": "v2.0.0-rc.3",
     "network": {
       "chainId": 80001,
-      "name": "unknown"
+      "assetName": "unknown"
     },
     "date": "Wed, 16 Jun 2021 15:34:13 GMT",
     "contracts": {
@@ -59,7 +59,7 @@
     },
     "network": {
       "chainId": 80001,
-      "name": "mumbai"
+      "assetName": "mumbai"
     },
     "date": "Mon, 28 Jun 2021 15:21:17 GMT"
   }

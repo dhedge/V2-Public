@@ -27,12 +27,12 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
         if (csvAssetGuard.GuardName == name) {
           guardFound = true;
           const deployedGuard = contracts[name];
-          const governanceAssetGuard = await governance.assetGuards(csvAssetGuard.AssetType);
+          const governanceAssetGuard = await governance.assetGuards(csvAssetGuard.assetType);
           const csvAssetGuardAddress = csvAssetGuard.GuardAddress;
 
           assert(
             deployedGuard == governanceAssetGuard,
-            `Asset guard ${name} deployment doesn't match Governance setting. Governance contract: ${governanceAssetGuard}, Versions deployment: ${deployedGuard}, Asset Type should be ${csvAssetGuard.AssetType}`,
+            `Asset guard ${name} deployment doesn't match Governance setting. Governance contract: ${governanceAssetGuard}, Versions deployment: ${deployedGuard}, Asset Type should be ${csvAssetGuard.assetType}`,
           );
           assert(
             governanceAssetGuard == csvAssetGuardAddress,

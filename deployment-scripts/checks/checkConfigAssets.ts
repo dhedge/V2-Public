@@ -39,7 +39,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
     for (const asset of assets) {
       if (csvAsset.Address === asset.asset) foundInVersions = true;
     }
-    assert(foundInVersions, `Couldn't find ${csvAsset["AssetName"]} address in published versions.json list.`);
+    assert(foundInVersions, `Couldn't find ${csvAsset["assetName"]} address in published versions.json list.`);
   }
 
   // Check for any new assets in the Balancer JSON config
@@ -60,7 +60,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   for (const asset of assets) {
     const assetAddress = asset.asset;
     const assetPrice = parseInt(await (await poolFactoryProxy.getAssetPrice(assetAddress)).toString());
-    const assetType = parseInt(await (await poolFactoryProxy.getAssetType(assetAddress)).toString());
+    const assetType = parseInt(await (await poolFactoryProxy.getassetType(assetAddress)).toString());
 
     assert(assetPrice > 0, `${asset.name} price is not above 0`);
     assert(
@@ -75,8 +75,8 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
       if (csvAsset.Address == assetAddress) {
         foundInCsv = true;
         assert(
-          assetType == parseInt(csvAsset.AssetType),
-          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.AssetType}, Contract assetType = ${assetType}`,
+          assetType == parseInt(csvAsset.assetType),
+          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
@@ -85,8 +85,8 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
       if (csvAsset.Address == assetAddress) {
         foundInCsv = true;
         assert(
-          assetType == parseInt(csvAsset.AssetType),
-          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.AssetType}, Contract assetType = ${assetType}`,
+          assetType == parseInt(csvAsset.assetType),
+          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
@@ -97,7 +97,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
         foundInCsv = true;
         assert(
           assetType == parseInt(balancerLp.assetType),
-          `${asset.name} assetType mismatch. Balancer LP JSON assetType = ${balancerLp.AssetType}, Contract assetType = ${assetType}`,
+          `${asset.name} assetType mismatch. Balancer LP JSON assetType = ${balancerLp.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
@@ -159,7 +159,7 @@ const checkBalancerLpAsset = async (
   const BalancerV2LPAggregator = await artifacts.readArtifact("BalancerV2LPAggregator");
   const aggregator = await ethers.getContractAt(BalancerV2LPAggregator.abi, balancerLPAggregator);
   const poolTokens = (await balancerV2Vault.getPoolTokens(balancerLp.data.poolId))[0];
-  const assetType = parseInt(await poolFactoryProxy.getAssetType(balancerLp.address));
+  const assetType = parseInt(await poolFactoryProxy.getassetType(balancerLp.address));
 
   // check Balancer LP asset type configuration
   assert(assetType === balancerLp.assetType, `${balancerLp.name} deployed asset type mismatch with configuration.`);

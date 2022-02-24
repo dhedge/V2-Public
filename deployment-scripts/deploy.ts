@@ -96,19 +96,19 @@ export async function deploy(deploymentData: IDeploymentData) {
 
       const csvAssets: ICSVAsset[] = await csv().fromFile(filenames.assetsFileName);
       const assetHandlers = csvAssets.map((asset) => {
-        if (asset.ChainlinkPriceFeed) {
+        if (asset.oracleAddress) {
           return {
-            name: asset.AssetName,
+            name: asset.assetName,
             asset: asset.Address,
-            assetType: asset.AssetType,
-            aggregator: asset.ChainlinkPriceFeed,
+            assetType: asset.assetType,
+            aggregator: asset.oracleAddress,
           };
         }
-        if (asset.AggregatorName == "USDPriceAggregator") {
+        if (asset.oracleName == "USDPriceAggregator") {
           return {
-            name: asset.AssetName,
+            name: asset.assetName,
             asset: asset.Address,
-            assetType: asset.AssetType,
+            assetType: asset.assetType,
             aggregator: versions[tag].contracts.USDPriceAggregator,
           };
         }

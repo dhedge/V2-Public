@@ -76,14 +76,14 @@ export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntim
 
   // Check asset aggregators
   for (const asset of contracts.Assets) {
-    if (asset.AggregatorName) {
-      const contract = (await ethers.getContractFactory(asset.AggregatorName)) as unknown as Contract;
+    if (asset.oracleName) {
+      const contract = (await ethers.getContractFactory(asset.oracleName)) as unknown as Contract;
       const creationBytecode = contract.bytecode;
       const runtimeBytecode = await ethers.provider.getCode(asset.aggregator);
       const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
       if (runtimeBytecode.length < 10)
-        bytecodeErrors.push(`Missing bytecode in deployed address for ${asset.AggregatorName}`);
-      if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${asset.AggregatorName}`);
+        bytecodeErrors.push(`Missing bytecode in deployed address for ${asset.oracleName}`);
+      if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${asset.oracleName}`);
     }
   }
 
