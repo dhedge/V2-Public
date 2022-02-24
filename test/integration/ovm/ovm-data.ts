@@ -19,4 +19,12 @@ export const price_feeds = {
   eth: "0xA969bEB73d918f6100163Cd0fba3C586C269bee1",
   link: "0x74d6B50283AC1D651f9Afdc33521e4c1E3332b78",
   btc: "0xc326371d4D866C6Ff522E69298e36Fe75797D358",
+  dai: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
+};
+
+// uniswap V3
+export const uniswapV3 = {
+  pools: {
+    susd_dai: "0xadb35413ec50e0afe41039eac8b930d313e94fa4",
+  },
 };

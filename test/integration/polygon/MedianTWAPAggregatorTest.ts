@@ -98,8 +98,8 @@ describe("Median TWAP Oracle Test", function () {
     await dhedgeMedianTwapAggregator.update();
 
     const price = (await dhedgeMedianTwapAggregator.latestRoundData()).answer;
-    const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.dht)).toString(), 8);
-    expect(price).to.be.closeTo(priceFromCongecko, price.mul(5).div(100) as any); // 3% diff
+    const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.dht)).toString(), 8);
+    expect(price).to.be.closeTo(priceFromCoingecko, price.mul(5).div(100) as any); // 3% diff
   });
 
   it("Get WETH price", async () => {
@@ -122,8 +122,8 @@ describe("Median TWAP Oracle Test", function () {
     await wethMedianTwapAggregator.update();
 
     const price = (await wethMedianTwapAggregator.latestRoundData()).answer;
-    const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.weth)).toString(), 8);
-    expect(price).to.be.closeTo(priceFromCongecko, price.mul(3).div(100) as any); // 3% diff
+    const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.weth)).toString(), 8);
+    expect(price).to.be.closeTo(priceFromCoingecko, price.mul(3).div(100) as any); // 3% diff
   });
 
   it("Get USDC price", async () => {
@@ -146,8 +146,8 @@ describe("Median TWAP Oracle Test", function () {
     await usdcMedianTwapAggregator.update();
 
     const price = (await usdcMedianTwapAggregator.latestRoundData()).answer;
-    const priceFromCongecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.usdc)).toString(), 8);
-    expect(price).to.be.closeTo(priceFromCongecko, price.mul(3).div(100) as any); // 3% diff
+    const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.usdc)).toString(), 8);
+    expect(price).to.be.closeTo(priceFromCoingecko, price.mul(3).div(100) as any); // 3% diff
   });
 
   it("Stale TWAP price expiry", async () => {
