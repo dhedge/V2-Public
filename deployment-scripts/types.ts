@@ -61,7 +61,7 @@ export interface sUSDUniV3TWAPAggregatorProperties {
   // For sUSDUniV3TWAPAggregator
   sUSDAddress?: Address;
   sUSDDaiUniV3PoolAddress?: Address;
-  daiChainlinkoracleAddress?: Address;
+  daiChainlinkOracleAddress?: Address;
 }
 
 export interface IDhedgeInternal {

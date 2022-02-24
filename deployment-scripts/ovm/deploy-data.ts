@@ -23,7 +23,7 @@ export const ovmProdAddresses: IAddresses = {
   // For sUSDUniV3TWAPAggregator
   sUSDAddress: "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
   sUSDDaiUniV3PoolAddress: "0xadb35413ec50e0afe41039eac8b930d313e94fa4",
-  daiChainlinkoracleAddress: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
+  daiChainlinkOracleAddress: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
 };
 
 export const ovmProdFileNames: IFileNames = {

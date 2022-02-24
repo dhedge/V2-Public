@@ -17,7 +17,7 @@ export const sUSDUniV3TWAPAggregatorJob: IJob<void> = async (
   addresses: IProposeTxProperties & sUSDUniV3TWAPAggregatorProperties,
 ) => {
   const ethers = hre.ethers;
-  if (!addresses.sUSDAddress || !addresses.sUSDDaiUniV3PoolAddress || !addresses.daiChainlinkoracleAddress) {
+  if (!addresses.sUSDAddress || !addresses.sUSDDaiUniV3PoolAddress || !addresses.daiChainlinkOracleAddress) {
     throw new Error("Missing Configuration for sUSDUniV3TWAPAggregatorJob");
   }
 
@@ -28,7 +28,7 @@ export const sUSDUniV3TWAPAggregatorJob: IJob<void> = async (
     const uniV3TWAPAggregator = await UniV3TWAPAggregator.deploy(
       addresses.sUSDDaiUniV3PoolAddress,
       addresses.sUSDAddress,
-      addresses.daiChainlinkoracleAddress,
+      addresses.daiChainlinkOracleAddress,
       98000000, // $0.98 lower limit
       102000000, // $1.02 upper limit
       60 * 10, // 10 mins update interval
@@ -45,7 +45,7 @@ export const sUSDUniV3TWAPAggregatorJob: IJob<void> = async (
       [
         addresses.sUSDDaiUniV3PoolAddress,
         addresses.sUSDAddress,
-        addresses.daiChainlinkoracleAddress,
+        addresses.daiChainlinkOracleAddress,
         98000000, // $0.98 lower limit
         102000000, // $1.02 upper limit
         60 * 10, // 10 mins update interval
