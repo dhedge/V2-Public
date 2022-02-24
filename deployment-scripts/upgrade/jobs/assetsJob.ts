@@ -152,6 +152,20 @@ const getOracleAddress = async (
 
       await sushiLPAggregator.deployed();
       return sushiLPAggregator.address;
+    case "SynthPriceAggregator":
+      const susdPriceAggregator = versions[latestVersion].contracts.Oracles?.find(
+        (x) => x.oracleName == "susdUniV3TWAPAggregator",
+      );
+      if (!susdPriceAggregator) {
+        throw new Error("assetsJob.getOracleAddress.SynthPriceAggregator");
+      }
+      const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
+      const synthPriceAggregator = await SynthPriceAggregator.deploy(
+        susdPriceAggregator.oracleAddress,
+        csvAsset.oracleAddress,
+      );
+      synthPriceAggregator.deployed();
+      return synthPriceAggregator.address;
     case "DeployedOracle":
       if (csvAsset.oracleAddress) {
         return csvAsset.oracleAddress;
