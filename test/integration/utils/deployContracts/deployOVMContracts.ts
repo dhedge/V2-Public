@@ -2,9 +2,9 @@ import { ethers, upgrades } from "hardhat";
 import { AssetHandler, PoolFactory, PoolPerformance } from "../../../../types";
 import { toBytes32 } from "../../../TestHelpers";
 import { assets, price_feeds, uniswapV3 } from "../../../../config/chainData/ovm-data";
-import { Deployments } from ".";
+import { IDeployments } from ".";
 
-export const deployOVMContracts = async (): Promise<Deployments> => {
+export const deployOVMContracts = async (): Promise<IDeployments> => {
   const [logicOwner, manager, dao, user] = await ethers.getSigners();
 
   const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
@@ -60,10 +60,6 @@ export const deployOVMContracts = async (): Promise<Deployments> => {
   const erc20Guard = await ERC20Guard.deploy();
   await erc20Guard.deployed();
 
-  const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
-  const openAssetGuard = await OpenAssetGuard.deploy([]);
-  await openAssetGuard.deployed();
-
   const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
   const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
   await uniswapV3RouterGuard.deployed();
@@ -85,10 +81,7 @@ export const deployOVMContracts = async (): Promise<Deployments> => {
   await governance.setContractGuard(uniswapV3.router, uniswapV3RouterGuard.address);
   await governance.setContractGuard(uniswapV3.nonfungiblePositionManager, uniswapV3NonfungiblePositionGuard.address);
 
-  await governance.setAddresses([
-    { name: toBytes32("weth"), destination: assets.weth },
-    { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
-  ]);
+  await governance.setAddresses([{ name: toBytes32("weth"), destination: assets.weth }]);
 
   await poolFactory.setExitFee(5, 1000); // 0.5%
 
@@ -107,6 +100,7 @@ export const deployOVMContracts = async (): Promise<Deployments> => {
     poolLogic,
     poolManagerLogic,
     poolPerformance,
+    uniV3AssetGuard,
     assets: {
       USDT,
       USDC,

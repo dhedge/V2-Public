@@ -18,10 +18,10 @@ import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { units } from "../../TestHelpers";
 import { assetsBalanceOfSlot } from "../../../config/chainData/ovm-data";
-import { Deployments } from "../utils/deployContracts";
+import { IDeployments } from "../utils/deployContracts";
 
 describe("Uniswap V3 Swap Router Test", function () {
-  let deployments: Deployments;
+  let deployments: IDeployments;
   let WETH: IERC20, USDT: IERC20, USDC: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
   let assetHandler: AssetHandler;
