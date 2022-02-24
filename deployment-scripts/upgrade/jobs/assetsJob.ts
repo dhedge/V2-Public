@@ -153,7 +153,6 @@ const getOracleAddress = async (
       await sushiLPAggregator.deployed();
       return sushiLPAggregator.address;
     case "DeployedOracle":
-      // Deploy USDPriceAggregator
       if (csvAsset.oracleAddress) {
         return csvAsset.oracleAddress;
       }
