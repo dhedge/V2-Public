@@ -32,7 +32,7 @@ export const sUSDUniV3TWAPAggregatorJob: IJob<void> = async (
       98000000, // $0.98 lower limit
       102000000, // $1.02 upper limit
       60 * 10, // 10 mins update interval
-    ); // 10 minute update interval, 5% volatility trip
+    );
     await uniV3TWAPAggregator.deployed();
 
     // wait 5 confirmations before verifying
