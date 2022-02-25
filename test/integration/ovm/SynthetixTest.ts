@@ -3,16 +3,17 @@ import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory } from "ethers";
 
-const { checkAlmostSame } = require("../../TestHelpers");
 import { assets, price_feeds, synthetix as SynthetixData } from "./ovm-data";
-import { units } from "../../TestHelpers";
+import { checkAlmostSame, units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { createFund } from "../utils/createFund";
+import { PoolFactory, PoolFactory__factory } from "../../../types";
 
 describe("Synthetix Test", function () {
   let susdProxy: Contract, sethProxy: Contract, synthetix: Contract, synthetixGuard: Contract;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
-  let PoolFactory: ContractFactory, PoolLogic: ContractFactory, PoolManagerLogic: ContractFactory;
-  let poolFactory: Contract,
+  let PoolFactory: PoolFactory__factory, PoolLogic: ContractFactory, PoolManagerLogic: ContractFactory;
+  let poolFactory: PoolFactory,
     poolLogic: Contract,
     poolManagerLogic: Contract,
     poolLogicProxy: Contract,
@@ -53,13 +54,15 @@ describe("Synthetix Test", function () {
     await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year
 
     PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.deployProxy(PoolFactory, [
-      poolLogic.address,
-      poolManagerLogic.address,
-      assetHandler.address,
-      dao.address,
-      governance.address,
-    ]);
+    poolFactory = <PoolFactory>(
+      await upgrades.deployProxy(PoolFactory, [
+        poolLogic.address,
+        poolManagerLogic.address,
+        assetHandler.address,
+        dao.address,
+        governance.address,
+      ])
+    );
     await poolFactory.deployed();
     await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
@@ -87,127 +90,18 @@ describe("Synthetix Test", function () {
     const sUSDProxy_target_tokenState = "0x92bac115d89ca17fd02ed9357ceca32842acb4c2";
     await getAccountToken(units(500), logicOwner.address, sUSDProxy_target_tokenState, 3);
     expect(await susdProxy.balanceOf(logicOwner.address)).to.equal(units(500));
-  });
-
-  it("Should be able to createFund", async function () {
-    await poolLogic.initialize(poolFactory.address, false, "Test Fund", "DHTF");
-
-    console.log("Passed poolLogic Init!");
-
-    await poolManagerLogic.initialize(
-      poolFactory.address,
-      manager.address,
-      "Barren Wuffet",
-      poolLogic.address,
-      "1000",
+    const fund = await createFund(
+      poolFactory,
+      logicOwner,
+      manager,
       [
-        [assets.susd, true],
-        [assets.seth, true],
+        { asset: assets.susd, isDeposit: true },
+        { asset: assets.seth, isDeposit: true },
       ],
+      0,
     );
-
-    console.log("Passed poolManagerLogic Init!");
-
-    let fundCreatedEvent = new Promise((resolve, reject) => {
-      poolFactory.on(
-        "FundCreated",
-        (
-          fundAddress,
-          isPoolPrivate,
-          fundName,
-          managerName,
-          manager,
-          time,
-          managerFeeNumerator,
-          managerFeeDenominator,
-          event,
-        ) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress: fundAddress,
-            isPoolPrivate: isPoolPrivate,
-            fundName: fundName,
-            // fundSymbol: fundSymbol,
-            managerName: managerName,
-            manager: manager,
-            time: time,
-            managerFeeNumerator: managerFeeNumerator,
-            managerFeeDenominator: managerFeeDenominator,
-          });
-        },
-      );
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
-    });
-
-    await expect(
-      poolFactory.createFund(
-        false,
-        manager.address,
-        "Barren Wuffet",
-        "Test Fund",
-        "DHTF",
-        ethers.BigNumber.from("6000"),
-        [
-          [assets.susd, true],
-          [assets.seth, true],
-        ],
-      ),
-    ).to.be.revertedWith("invalid manager fee");
-
-    await poolFactory.createFund(
-      false,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      ethers.BigNumber.from("5000"),
-      [
-        [assets.susd, true],
-        [assets.seth, true],
-      ],
-    );
-
-    let event: any = await fundCreatedEvent;
-
-    fundAddress = event.fundAddress;
-    expect(event.isPoolPrivate).to.be.false;
-    expect(event.fundName).to.equal("Test Fund");
-    // expect(event.fundSymbol).to.equal("DHTF");
-    expect(event.managerName).to.equal("Barren Wuffet");
-    expect(event.manager).to.equal(manager.address);
-    expect(event.managerFeeNumerator.toString()).to.equal("5000");
-    expect(event.managerFeeDenominator.toString()).to.equal("10000");
-
-    let deployedFunds = await poolFactory.getDeployedFunds();
-    let deployedFundsLength = deployedFunds.length;
-    expect(deployedFundsLength.toString()).to.equal("1");
-
-    let isPool = await poolFactory.isPool(fundAddress);
-    expect(isPool).to.be.true;
-
-    let poolManagerLogicAddress = await poolFactory.getLogic(1);
-    expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
-
-    let poolLogicAddress = await poolFactory.getLogic(2);
-    expect(poolLogicAddress).to.equal(poolLogic.address);
-
-    poolLogicProxy = await PoolLogic.attach(fundAddress);
-    let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
-    poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
-
-    //default assets are supported
-    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-    let numberOfSupportedAssets = supportedAssets.length;
-    expect(numberOfSupportedAssets).to.eq(2);
-    expect(await poolManagerLogicProxy.isSupportedAsset(assets.susd)).to.be.true;
-    expect(await poolManagerLogicProxy.isSupportedAsset(assets.seth)).to.be.true;
-
-    //Other assets are not supported
-    expect(await poolManagerLogicProxy.isSupportedAsset(assets.slink)).to.be.false;
+    poolLogicProxy = fund.poolLogicProxy;
+    poolManagerLogicProxy = fund.poolManagerLogicProxy;
   });
 
   it("should be able to deposit", async function () {
@@ -404,6 +298,7 @@ describe("Synthetix Test", function () {
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
     let event: any = await withdrawalEvent;
+    console.log(event);
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
     checkAlmostSame(event.valueWithdrawn, totalFundValue.div(2));
