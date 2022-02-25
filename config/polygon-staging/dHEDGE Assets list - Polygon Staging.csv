@@ -54,3 +54,4 @@ Toros ETHBEAR2X,0x027da30fadab6202801f97be344e2348a2a92842,0,,DHedgePoolAggregat
 Toros ETHBULL3X,0x460b60565cb73845d56564384ab84bf84c13e47d,0,,DHedgePoolAggregator
 Toros BTCBEAR2X,0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada,0,,DHedgePoolAggregator
 Toros BTCBULL3X,0xdb88ab5b485b38edbeef866314f9e49d095bce39,0,,DHedgePoolAggregator
+Uniswap V3 NFT Position Manager,0xC36442b4a4522E871399CD717aBDD847Ab11FE88,7,,USDPriceAggregator
