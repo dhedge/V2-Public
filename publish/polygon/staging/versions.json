@@ -1691,6 +1691,20 @@
           "asset": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
           "assetType": "4",
           "aggregator": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be"
+        },
+        {
+          "name": "MiMatic",
+          "asset": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+          "assetType": "0",
+          "aggregator": "0x33248d41454dD8DFE5360cF00fFe6C380160e468",
+          "AggregatorName": "MedianTWAPAggregator"
+        },
+        {
+          "name": "Balancer LP BPSP",
+          "asset": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+          "assetType": 0,
+          "aggregator": "0xD7F4D1Da563Bc9849527c68501576139a496D2dc",
+          "aggregatorName": "BalancerLpStablePoolAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1733,6 +1747,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 16 Feb 2022 09:35:11 GMT"
+    "lastUpdated": "Thu, 24 Feb 2022 12:28:55 GMT"
   }
 }
