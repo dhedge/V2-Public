@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { Address, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
+import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
 
 export const uniV3AssetGuardJob: IJob<void> = async (
@@ -9,15 +9,8 @@ export const uniV3AssetGuardJob: IJob<void> = async (
   // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { assetGuardsFileName: string },
-  addresses: {
-    sushiMiniChefV2Address?: Address;
-    uniSwapV3NonfungiblePositionManagerAddress?: Address;
-  } & IProposeTxProperties,
+  addresses: IProposeTxProperties,
 ) => {
-  if (!addresses.uniSwapV3NonfungiblePositionManagerAddress) {
-    throw new Error("No config for uniSwapV3NonfungiblePositionManagerAddress");
-  }
-
   console.log("Will deploy univ3assetguard");
   if (config.execute) {
     const ethers = hre.ethers;
@@ -35,10 +28,13 @@ export const uniV3AssetGuardJob: IJob<void> = async (
       hre,
       uniV3AssetGuard.address,
       "contracts/guards/assetGuards/UniswapV3AssetGuard.sol:UniswapV3AssetGuard",
-      [addresses.uniSwapV3NonfungiblePositionManagerAddress],
+      [],
     );
-
-    const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [7, uniV3AssetGuard.address]);
+    const assetHandlerAssetType = 7;
+    const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
+      assetHandlerAssetType,
+      uniV3AssetGuard.address,
+    ]);
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
       setAssetGuardABI,
