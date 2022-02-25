@@ -87,7 +87,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   const assetUsdt = { asset: assets.usdt, assetType: 0, aggregator: price_feeds.usdt };
   const assetSushi = { asset: assets.sushi, assetType: 0, aggregator: price_feeds.sushi };
   const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
-  const assetWeth = { asset: assets.weth, assetType: 4, aggregator: price_feeds.eth };
+  const assetWeth = { asset: assets.weth, assetType: 4, aggregator: price_feeds.eth }; // Lending enabled
   const assetDai = { asset: assets.dai, assetType: 4, aggregator: price_feeds.dai }; // Lending enabled
   const assetUsdc = { asset: assets.usdc, assetType: 4, aggregator: price_feeds.usdc }; // Lending enabled
   const assetBalancer = { asset: assets.balancer, assetType: 0, aggregator: price_feeds.balancer };
@@ -230,19 +230,16 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   const easySwapperGuard = await EasySwapperGuard.deploy();
   await easySwapperGuard.deployed();
 
-  const UniswapV3SwapGuard = await ethers.getContractFactory("UniswapV3SwapGuard");
-  const uniswapV3SwapGuard = await UniswapV3SwapGuard.deploy();
-  uniswapV3SwapGuard.deployed();
+  const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
+  const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
+  uniswapV3RouterGuard.deployed();
 
   const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");
-  const uniV3AssetGuard = await UniswapV3AssetGuard.deploy(uniswapV3.nonfungiblePositionManager);
+  const uniV3AssetGuard = await UniswapV3AssetGuard.deploy();
   await uniV3AssetGuard.deployed();
 
   const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
-  const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
-    uniswapV3.nonfungiblePositionManager,
-    1,
-  );
+  const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(3);
   await uniswapV3NonfungiblePositionGuard.deployed();
   const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
   const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(dao.address, swapRouter.address, assets.weth);
@@ -269,7 +266,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   await governance.setContractGuard(balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
   await governance.setContractGuard(oneinch.v3Router, oneInchV3Guard.address);
   await governance.setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
-  await governance.setContractGuard(uniswapV3.router, uniswapV3SwapGuard.address);
+  await governance.setContractGuard(uniswapV3.router, uniswapV3RouterGuard.address);
   await governance.setContractGuard(uniswapV3.nonfungiblePositionManager, uniswapV3NonfungiblePositionGuard.address);
 
   await governance.setAddresses([
@@ -316,6 +313,7 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
     poolPerformance,
     sushiMiniChefV2Guard,
     dhedgeEasySwapper,
+    uniV3AssetGuard,
     assets: {
       WMATIC,
       USDT,

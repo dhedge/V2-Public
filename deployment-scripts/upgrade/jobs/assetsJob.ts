@@ -42,6 +42,8 @@ export const assetsJob: IJob<void> = async (
 
     if (!foundInVersions) {
       const assetType = csvAsset.AssetType;
+      let usdPriceAggregatorAddress;
+
       switch (assetType) {
         case "2":
           console.log("Will deploy asset", csvAsset["AssetName"]);
@@ -71,13 +73,30 @@ export const assetsJob: IJob<void> = async (
             break;
           }
 
-          let usdPriceAggregatorAddress;
           if (!csvAsset["ChainlinkPriceFeed"]) {
-            // Deploy USDPriceAggregator
-            const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-            const usdPriceAggregator = await USDPriceAggregator.deploy();
-            await usdPriceAggregator.deployed();
-            usdPriceAggregatorAddress = usdPriceAggregator.address;
+            usdPriceAggregatorAddress = await deployUsdPriceAggregator(hre);
+          } else {
+            // Use configured USDPriceAggregator
+            usdPriceAggregatorAddress = csvAsset["ChainlinkPriceFeed"];
+          }
+
+          console.log("USDPriceAggregator deployed at", usdPriceAggregatorAddress);
+          assetHandlerAssets.push({
+            name: csvAsset["AssetName"],
+            asset: csvAsset.Address,
+            assetType: assetType,
+            aggregator: usdPriceAggregatorAddress,
+            AggregatorName: csvAsset.AggregatorName,
+          });
+          break;
+        case "7":
+          console.log("Will deploy asset", csvAsset["AssetName"]);
+          if (!config.execute) {
+            break;
+          }
+
+          if (!csvAsset["ChainlinkPriceFeed"]) {
+            usdPriceAggregatorAddress = await deployUsdPriceAggregator(hre);
           } else {
             // Use configured USDPriceAggregator
             usdPriceAggregatorAddress = csvAsset["ChainlinkPriceFeed"];
@@ -271,4 +290,21 @@ const deployBalancerLpStablePoolAggregator = async (hre: HardhatRuntimeEnvironme
     [factory, pool],
   );
   return balancerStablePoolAggregator;
+};
+
+const deployUsdPriceAggregator = async (hre: HardhatRuntimeEnvironment) => {
+  // Deploy USDPriceAggregator
+  const USDPriceAggregator = await hre.ethers.getContractFactory("USDPriceAggregator");
+  const usdPriceAggregator = await USDPriceAggregator.deploy();
+  await usdPriceAggregator.deployed();
+  const usdPriceAggregatorAddress = usdPriceAggregator.address;
+
+  await tryVerify(
+    hre,
+    usdPriceAggregatorAddress,
+    "contracts/priceAggregators/USDPriceAggregator.sol:USDPriceAggregator",
+    [],
+  );
+
+  return usdPriceAggregatorAddress;
 };

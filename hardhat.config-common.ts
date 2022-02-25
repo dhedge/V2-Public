@@ -58,6 +58,10 @@ export default {
   },
   mocha: {
     timeout: 0,
+    // JHM: During integration tests we sometimes get
+    // ProviderError: Errors encountered in param 1: Invalid value "0x02e5dda5c51be531e95b2e5b22389b23cd39a929c1a594052162ebe432d897e9" supplied to : QUANTITY
+    // Usually retrying the test works
+    retries: 2,
   },
   abiExporter: {
     path: "./abi",
@@ -69,12 +73,11 @@ export default {
       "PoolLogic",
       "PoolManagerLogic",
       "AssetHandler",
-      "UniswapV3SwapGuard",
+      "UniswapV3RouterGuard",
       "ERC20Guard",
       "SynthetixGuard",
       "AaveLendingPoolGuard",
       "UniswapV2RouterGuard",
-      "UniswapV3SwapGuard",
       "SushiMiniChefV2Guard",
       "QuickStakingRewardsGuard",
       "Managed",
