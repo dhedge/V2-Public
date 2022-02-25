@@ -153,9 +153,9 @@ export const assetsJob: IJob<void> = async (
           // Deploy Balancer LP Stable Pool Aggregator
           console.log("Deploying ", balancerLp.name);
           const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
+            hre,
             poolFactoryProxy,
             balancerLp.data.pool,
-            hre,
           );
           console.log(
             `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator.address}`,
