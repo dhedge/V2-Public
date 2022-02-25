@@ -257,7 +257,7 @@ const deployBalancerV2LpAggregator = async (
   return balancerV2LpAggregator;
 };
 
-const deployBalancerLpStablePoolAggregator = async (factory: string, pool: string, hre: HardhatRuntimeEnvironment) => {
+const deployBalancerLpStablePoolAggregator = async (hre: HardhatRuntimeEnvironment, factory: string, pool: string) => {
   await hre.run("compile:one", { contractName: "BalancerStablePoolAggregator" });
 
   const BalancerStablePoolAggregator = await hre.ethers.getContractFactory("BalancerStablePoolAggregator");
