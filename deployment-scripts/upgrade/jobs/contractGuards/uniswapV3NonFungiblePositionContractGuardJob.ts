@@ -5,7 +5,7 @@ import { Address, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "
 
 const MAX_NUMBER_LP_POSITIONS = 3;
 
-export const uniswapV3NonFungiblePositionGuard: IJob<void> = async (
+export const uniswapV3NonFungiblePositionGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
@@ -23,10 +23,7 @@ export const uniswapV3NonFungiblePositionGuard: IJob<void> = async (
     const Governance = await hre.artifacts.readArtifact("Governance");
     const governanceABI = new ethers.utils.Interface(Governance.abi);
     const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
-    const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
-      addresses.uniSwapV3NonfungiblePositionManagerAddress,
-      MAX_NUMBER_LP_POSITIONS,
-    );
+    const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(MAX_NUMBER_LP_POSITIONS);
     await uniswapV3NonfungiblePositionGuard.deployed();
     console.log("UniswapV3NonfungiblePositionGuard deployed at", uniswapV3NonfungiblePositionGuard.address);
     versions[config.newTag].contracts.UniswapV3NonfungiblePositionGuard = uniswapV3NonfungiblePositionGuard.address;
@@ -35,7 +32,7 @@ export const uniswapV3NonFungiblePositionGuard: IJob<void> = async (
       hre,
       uniswapV3NonfungiblePositionGuard.address,
       "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol:UniswapV3NonfungiblePositionGuard",
-      [addresses.uniSwapV3NonfungiblePositionManagerAddress, MAX_NUMBER_LP_POSITIONS],
+      [MAX_NUMBER_LP_POSITIONS],
     );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [

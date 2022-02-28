@@ -13,8 +13,10 @@ describe("DHedgePoolPriceOracle", function () {
   let poolLogic: Contract;
 
   beforeEach(async function () {
-    const DhedgePoolPriceOracle: ContractFactory = await ethers.getContractFactory("DHedgePoolPriceOracle");
-    dhedgePoolPriceOracle = await DhedgePoolPriceOracle.deploy(poolAddress, decimals);
+    const BalancerDHedgePoolPriceOracle: ContractFactory = await ethers.getContractFactory(
+      "BalancerDHedgePoolPriceOracle",
+    );
+    dhedgePoolPriceOracle = await BalancerDHedgePoolPriceOracle.deploy(poolAddress, decimals);
     await dhedgePoolPriceOracle.deployed();
     const PoolLogic: ContractFactory = await ethers.getContractFactory("PoolLogic");
     // TODO: deploy a new pool and seed it with funds. Can be done after Integration test refactor.
@@ -23,7 +25,7 @@ describe("DHedgePoolPriceOracle", function () {
 
   // Checks id pool address is set
   it("price should  be the same as token price", async () => {
-    const priceFromOracle = await dhedgePoolPriceOracle.getPrice();
+    const priceFromOracle = await dhedgePoolPriceOracle.getRate();
     console.log("price from oracle ", priceFromOracle.toString());
     const tokenPrice = await poolLogic.tokenPrice();
     console.log("token Price ", tokenPrice.toString());

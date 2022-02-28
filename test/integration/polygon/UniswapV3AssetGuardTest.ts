@@ -38,11 +38,17 @@ describe("UniswapV3AssetGuardTest", function () {
 
     await getAccountToken(units(9), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
     await getAccountToken(units(18000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
-    const funds = await createFund(poolFactory, logicOwner, manager, [
-      { asset: assets.usdc, isDeposit: true },
-      { asset: assets.weth, isDeposit: true },
-      { asset: uniswapV3.nonfungiblePositionManager, isDeposit: false },
-    ]);
+    const funds = await createFund(
+      poolFactory,
+      logicOwner,
+      manager,
+      [
+        { asset: assets.usdc, isDeposit: true },
+        { asset: assets.weth, isDeposit: true },
+        { asset: uniswapV3.nonfungiblePositionManager, isDeposit: false },
+      ],
+      0, // 0% performance fee
+    );
     poolLogicProxy = funds.poolLogicProxy;
 
     await deployments.assets.USDC.approve(poolLogicProxy.address, units(6000, 6));
@@ -111,6 +117,48 @@ describe("UniswapV3AssetGuardTest", function () {
       expect(await poolLogicProxy.tokenPrice()).to.equal(tokenPriceBefore);
     });
 
+    it("User mints, manager mints 3x, User direct transfer [out-range]", async () => {
+      // Mint Uniswap v3 LP
+      const token0 = assets.usdc;
+      const token1 = assets.weth;
+      const fee = 500;
+      const tick = await getCurrentTick(token0, token1, fee);
+      const tickSpacing = fee / 50;
+      const mintSettings: UniV3LpMintSettings = {
+        token0,
+        token1,
+        fee,
+        amount0: units(2000, 6),
+        amount1: units(1),
+        tickLower: tick - tickSpacing * 2,
+        tickUpper: tick - tickSpacing,
+      };
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+
+      // Act
+      const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+      const v3AssetValueBefore = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
+      const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
+      await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      const v3AssetValueAfter = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
+
+      // Assert
+      expect(v3AssetValueBefore.gt(0)).to.be.true;
+      expect(v3AssetValueBefore.eq(v3AssetValueAfter)).to.be.true;
+      expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(4);
+      expect(await poolLogicProxy.tokenPrice()).to.equal(tokenPriceBefore);
+    });
+
     it("Manager mints 3x, User mints, User direct transfer", async () => {
       // Mint Uniswap v3 LP
       const token0 = assets.usdc;
@@ -126,6 +174,48 @@ describe("UniswapV3AssetGuardTest", function () {
         amount1: units(1),
         tickLower: tick - tickSpacing,
         tickUpper: tick + tickSpacing,
+      };
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
+
+      // Act
+      const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+      const v3AssetValueBefore = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
+      const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
+      await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      const v3AssetValueAfter = await deployments.uniV3AssetGuard.getBalance(
+        poolLogicProxy.address,
+        nonfungiblePositionManager.address,
+      );
+
+      // Assert
+      expect(v3AssetValueBefore.gt(0)).to.be.true;
+      expect(v3AssetValueBefore.eq(v3AssetValueAfter)).to.be.true;
+      expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(4);
+      expect(await poolLogicProxy.tokenPrice()).to.equal(tokenPriceBefore);
+    });
+
+    it("Manager mints 3x, User mints, User direct transfer [out-range]", async () => {
+      // Mint Uniswap v3 LP
+      const token0 = assets.usdc;
+      const token1 = assets.weth;
+      const fee = 500;
+      const tick = await getCurrentTick(token0, token1, fee);
+      const tickSpacing = fee / 50;
+      const mintSettings: UniV3LpMintSettings = {
+        token0,
+        token1,
+        fee,
+        amount0: units(2000, 6),
+        amount1: units(1),
+        tickLower: tick - tickSpacing * 2,
+        tickUpper: tick - tickSpacing,
       };
       await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
       await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
@@ -198,6 +288,48 @@ describe("UniswapV3AssetGuardTest", function () {
       expect(totalFundValueAfterWithdraw).to.equal(0);
     });
 
+    it("tokenPrice and withdraw works if both LP assets are unsupported [out-range]", async () => {
+      // Mint Uniswap v3 LP
+      await assetHandler.removeAsset(assets.frax); // Remove LP assets first
+      await assetHandler.removeAsset(assets.miMatic);
+      const token0 = assets.frax; // unsupported asset
+      const token1 = assets.miMatic; // unsupported asset
+      const fee = 500;
+      const tick = await getCurrentTick(token0, token1, fee);
+      const tickSpacing = fee / 50;
+      const mintSettings: UniV3LpMintSettings = {
+        token0,
+        token1,
+        fee,
+        amount0: units(1),
+        amount1: units(1),
+        tickLower: tick - tickSpacing * 2,
+        tickUpper: tick - tickSpacing,
+      };
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
+
+      // Act
+      const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+      const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
+      await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      const tokenPriceAfter = await poolLogicProxy.tokenPrice();
+      const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+
+      // Assert
+      expect(totalFundValueBeforeWithdraw).to.gt(0);
+      expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
+      expect(tokenPriceAfter).to.equal(tokenPriceBefore); // TODO: Currently fails because tokenPriceAfter is higher for some reason
+
+      // Can withdraw
+      await poolFactory.setExitCooldown(0);
+      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
+
+      // Assert that all pool value is withdrawn
+      const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+      expect(totalFundValueAfterWithdraw).to.equal(0);
+    });
+
     it("tokenPrice and withdraw works if one LP asset is unsupported", async () => {
       // Mint Uniswap v3 LP
       const token0 = assets.xsgd; // unsupported asset
@@ -231,11 +363,51 @@ describe("UniswapV3AssetGuardTest", function () {
 
       // Can withdraw
       await poolFactory.setExitCooldown(0);
-      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address)); // TODO: Currently fails on withdrawal with ERC20: transfer amount exceeds balance
+      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
 
       // Assert that all pool value is withdrawn
       const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
-      expect(totalFundValueAfterWithdraw).to.equal(0);
+      expect(totalFundValueAfterWithdraw).eq(0); // there are no manager fees minted (performance fee set to 0)
+    });
+
+    it("tokenPrice and withdraw works if one LP asset is unsupported [out-range]", async () => {
+      // Mint Uniswap v3 LP
+      const token0 = assets.xsgd; // unsupported asset
+      const token1 = assets.weth; // supported asset
+      const fee = 500;
+      const currentTick = await getCurrentTick(token0, token1, fee);
+      const tickSpacing = fee / 50;
+      const mintSettings: UniV3LpMintSettings = {
+        token0,
+        token1,
+        fee,
+        amount0: units(1),
+        amount1: units(1),
+        tickLower: currentTick - tickSpacing * 2,
+        tickUpper: currentTick - tickSpacing,
+      };
+      await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
+
+      // Act
+      const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+      const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
+      await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
+      const tokenPriceAfter = await poolLogicProxy.tokenPrice();
+      const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+
+      // Assert
+      expect(totalFundValueBeforeWithdraw).to.gt(0);
+      expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
+      expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
+      expect(tokenPriceAfter).to.gt(tokenPriceBefore); // Assumes the LP value should be counted
+
+      // Can withdraw
+      await poolFactory.setExitCooldown(0);
+      await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
+
+      // Assert that all pool value is withdrawn
+      const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+      expect(totalFundValueAfterWithdraw).eq(0); // there are no manager fees minted (performance fee set to 0)
     });
   });
 });

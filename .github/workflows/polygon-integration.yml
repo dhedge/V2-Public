@@ -60,7 +60,6 @@ jobs:
         run: |
           npx hardhat test ./test/integration/polygon/AaveEdgeCaseTest.ts --network localhost
 
-
   polygon-aave-tests:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: Polygon AaveTest
@@ -110,7 +109,6 @@ jobs:
           ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
         run: |
           npx hardhat node --fork $ALCHEMY_URL > log-polygon-integration.log 2>&1 &
-
 
       - name: Hardhat compile
         run: npx hardhat compile
@@ -169,7 +167,6 @@ jobs:
           ALCHEMY_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
         run: |
           npx hardhat node --fork $ALCHEMY_URL > log-polygon-integration.log 2>&1 &
-
 
       - name: Hardhat compile
         run: npx hardhat compile
@@ -285,11 +282,9 @@ jobs:
         run: |
           npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
 
-
       - name: OneInchTest
         run: |
           npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
-
 
       - name: PoolPerformanceTest
         run: |
@@ -303,7 +298,7 @@ jobs:
         run: |
           npx hardhat test ./test/integration/polygon/SushiswapTest.ts --network localhost
 
-# Polygontest are current split in 3 because they use more than 10k matic together... its also faster
+  # Polygontest are current split in 3 because they use more than 10k matic together... its also faster
   polygon-integration3:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: PIT 3
@@ -354,16 +349,15 @@ jobs:
         run: |
           npx hardhat node --fork $ALCHEMY_URL > log-polygon-integration.log 2>&1 &
 
-
       - name: Hardhat compile
         run: npx hardhat compile
         if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
       # We run these separately because then it fails faster AND you can tell immediately whichtest failed via github
 
-      - name: UniswapV3LPTest
+      - name: UniswapV3NonfungiblePositionGuardTest
         run: |
-          npx hardhat test ./test/integration/polygon/UniswapV3LPTest.ts --network localhost
+          npx hardhat test ./test/integration/polygon/UniswapV3NonfungiblePositionGuardTest.ts --network localhost
 
       - name: UniswapV3AssetGuardTest
         run: |
@@ -379,5 +373,3 @@ jobs:
       - name: WithdrawToTest
         run: |
           npx hardhat test ./test/integration/polygon/WithdrawToTest.ts --network localhost
-
-

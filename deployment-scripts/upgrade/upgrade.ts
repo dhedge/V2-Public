@@ -18,7 +18,7 @@ import { easySwapperContractGuardJob } from "./jobs/contractGuards/easySwapperCo
 import { oneInchV4ContractGuardJob } from "./jobs/contractGuards/oneInchV4ContractGuardJob";
 import { quickStakingRewardsContractGuardJob } from "./jobs/contractGuards/quickStakingRewardsContractGuardJob";
 import { sushiMiniChefV2ContractGuardJob } from "./jobs/contractGuards/sushiMiniChefV2ContractGuardJob";
-import { uniswapV3NonFungiblePositionGuard } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuard"; // TODO: add "Job" to the name for consistency
+import { uniswapV3NonFungiblePositionGuardJob } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuardJob";
 import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob"; //quickswapRouter, sushiswapV2Router etc etc
 import { uniswapV3RouterContractGuardJob } from "./jobs/contractGuards/uniswapV3RouterContractGuardJob";
 import { governanceNamesJob } from "./jobs/governanceNamesJob";
@@ -60,7 +60,7 @@ const jobs: { [key: string]: IJob<void> } = {
   aaveincentivescontrollerguard: aaveIncentivesControllerContractGuardJob,
   aavelendingpoolguard: aaveLendingPoolContractGuardJob,
   oneinchv4guard: oneInchV4ContractGuardJob,
-  uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuard,
+  uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuardJob,
 
   // Other Weird Guards
   openassetguard: openAssetContractGuardJob,

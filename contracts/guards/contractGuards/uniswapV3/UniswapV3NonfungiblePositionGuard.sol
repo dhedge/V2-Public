@@ -80,12 +80,10 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
   event Burn(address fundAddress, uint256 tokenId, uint256 time);
   event Collect(address fundAddress, uint256 tokenId, uint128 amount0Max, uint128 amount1Max, uint256 time);
 
-  INonfungiblePositionManager public nonfungiblePositionManager;
   // uniswap v3 liquidity position count limit
   uint256 public uniV3PositionsLimit;
 
-  constructor(address _nonfungiblePositionManager, uint256 _uniV3PositionsLimit) {
-    nonfungiblePositionManager = INonfungiblePositionManager(_nonfungiblePositionManager);
+  constructor(uint256 _uniV3PositionsLimit) {
     uniV3PositionsLimit = _uniV3PositionsLimit;
   }
 
@@ -108,6 +106,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
     )
   {
     bytes4 method = getMethod(data);
+    INonfungiblePositionManager nonfungiblePositionManager = INonfungiblePositionManager(to);
 
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
