@@ -1121,12 +1121,6 @@
           "aggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945"
         },
         {
-          "name": "Chainlink",
-          "asset": "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39",
-          "assetType": "0",
-          "aggregator": "0xd9FFdb71EbE7496cC440152d43986Aae0AB76665"
-        },
-        {
           "name": "Synthetix",
           "asset": "0x50b728d8d964fd00c2d0aad81718b71311fef68a",
           "assetType": "0",
@@ -1137,18 +1131,6 @@
           "asset": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
           "assetType": "4",
           "aggregator": "0x72484B12719E23115761D5DA1646945632979bB6"
-        },
-        {
-          "name": "Sushi",
-          "asset": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
-          "assetType": "0",
-          "aggregator": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0"
-        },
-        {
-          "name": "CRV",
-          "asset": "0x172370d5cd63279efa6d502dab29171933a610af",
-          "assetType": "0",
-          "aggregator": "0x336584C8E6Dc19637A5b36206B1c79923111b405"
         },
         {
           "name": "Sushi LP USDC-DAI",
@@ -1245,12 +1227,6 @@
           "asset": "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
           "assetType": "3",
           "aggregator": "0x7A6B761836012842d304C7e4d836F226e2b52eA9"
-        },
-        {
-          "name": "Balancer",
-          "asset": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
-          "assetType": "0",
-          "aggregator": "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66"
         },
         {
           "name": "Balancer LP WMATIC-USDC-WETH-BAL",
@@ -1363,13 +1339,6 @@
           "asset": "0xcd353f79d9fade311fc3119b841e1f456b54e858",
           "assetType": "2",
           "aggregator": "0x692D43274A6F20f1Dac1578B31C5B5438eb1eD9C",
-          "aggregatorName": ""
-        },
-        {
-          "name": "Aavegotchi",
-          "asset": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
-          "assetType": "0",
-          "aggregator": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be",
           "aggregatorName": ""
         },
         {
