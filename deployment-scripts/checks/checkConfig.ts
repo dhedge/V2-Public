@@ -16,9 +16,7 @@ task("checkConfig", "Check deployed contracts")
   .addOptionalParam("governance", "check governance", false, types.boolean)
   .addOptionalParam("bytecode", "check bytecode", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
-    console.log("hre.network.name:", hre.network.name);
     const environment = taskArgs.environment || hre.network.name;
-    console.log("environment:", environment);
     const version = taskArgs.v;
     const notSpecific = !taskArgs.specific;
     const initializeData = await init(environment, version, hre);
