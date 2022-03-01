@@ -142,5 +142,17 @@
     "data": {
       "pool": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f"
     }
+  },
+  {
+    "name": "Balancer LP BPSP",
+    "symbol": "BLP",
+    "type": "balancerLpStablePool",
+    "address": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+    "assetType": 0,
+    "precision": 18,
+    "link": "https://polygonscan.com/address/0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+    "data": {
+      "pool": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42"
+    }
   }
 ]

@@ -1288,24 +1288,6 @@
           "oracleAddress": "0xbF90A5D9B6EE9019028dbFc2a9E50056d5252894"
         },
         {
-          "assetName": "Aave",
-          "assetAddress": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
-          "assetType": "0",
-          "oracleAddress": "0x72484B12719E23115761D5DA1646945632979bB6"
-        },
-        {
-          "assetName": "Sushi",
-          "assetAddress": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
-          "assetType": "0",
-          "oracleAddress": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0"
-        },
-        {
-          "assetName": "CRV",
-          "assetAddress": "0x172370d5cd63279efa6d502dab29171933a610af",
-          "assetType": "4",
-          "oracleAddress": "0x336584C8E6Dc19637A5b36206B1c79923111b405"
-        },
-        {
           "assetName": "Sushi LP USDC-DAI",
           "assetAddress": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
           "assetType": "2",
@@ -1529,13 +1511,6 @@
           "oracleName": ""
         },
         {
-          "assetName": "Aavegotchi",
-          "assetAddress": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
-          "assetType": "0",
-          "oracleAddress": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be",
-          "oracleName": ""
-        },
-        {
           "assetName": "Wrapped UST Token",
           "assetAddress": "0x692597b009d13c4049a947cab2239b7d6517875f",
           "assetType": "0",
@@ -1660,6 +1635,51 @@
           "assetType": "0",
           "oracleAddress": "0xE2279b4d0F2fF88A09E47399c4F56a4CFb4BDeDa",
           "oracleName": "DHedgePoolAggregator"
+        },
+        {
+          "name": "Uniswap V3 NFT Position Manager",
+          "asset": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+          "assetType": "7",
+          "aggregator": "0x42713997f48A7506cAc09C98b8a3723625392F3f",
+          "AggregatorName": "USDPriceAggregator"
+        },
+        {
+          "name": "Aave",
+          "asset": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
+          "assetType": "4",
+          "aggregator": "0x72484B12719E23115761D5DA1646945632979bB6"
+        },
+        {
+          "name": "Sushi",
+          "asset": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
+          "assetType": "4",
+          "aggregator": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0"
+        },
+        {
+          "name": "Balancer",
+          "asset": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
+          "assetType": "4",
+          "aggregator": "0xd106b538f2a868c28ca1ec7e298c3325e0251d66"
+        },
+        {
+          "name": "Aavegotchi",
+          "asset": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+          "assetType": "4",
+          "aggregator": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be"
+        },
+        {
+          "name": "MiMatic",
+          "asset": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+          "assetType": "0",
+          "aggregator": "0x33248d41454dD8DFE5360cF00fFe6C380160e468",
+          "AggregatorName": "MedianTWAPAggregator"
+        },
+        {
+          "name": "Balancer LP BPSP",
+          "asset": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+          "assetType": 0,
+          "aggregator": "0xD7F4D1Da563Bc9849527c68501576139a496D2dc",
+          "aggregatorName": "BalancerLpStablePoolAggregator"
         }
       ],
       "Oracles": [
@@ -1721,8 +1741,8 @@
       "UniswapV2RouterGuard": "0xef18E8271aA2B9657F17D3Fdefa9734aae9897ee",
       "SushiMiniChefV2Guard": "0x340c299d9Bc1196933278886280de26907d231f1",
       "SushiLPAssetGuard": "0x1D7f482F2bE2783b635cc03F14E1821db5a4C8c7",
-      "AaveLendingPoolAssetGuard": "0xBE67bF29B92b4CabDB324e32C2c221791D54eb01",
-      "AaveLendingPoolGuard": "0x5Ea7ffE8699DF0b7eFb8d2523a57F0C9F97D7BA2",
+      "AaveLendingPoolAssetGuard": "0xa2dA62b7080D225c70376BCdcF4d94467915A903",
+      "AaveLendingPoolGuard": "0x6f0433989cab7e16986DB15117889F3F5026254f",
       "LendingEnabledAssetGuard": "0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6",
       "AaveIncentivesControllerGuard": "0xeE315011c5709360e5006835ECC033AebdD3F0da",
       "OpenAssetGuard": "0x8cfA65f17A2d34C42Dd12BA30035Ce69B616FC89",
@@ -1730,7 +1750,7 @@
       "QuickStakingRewardsGuard": "0x9DcfCf12E1D93A42C092008f70dC5C8Fd73C6460",
       "OneInchV3Guard": "0xa389D040C0809b3069BA5b073469413152c2EBdF",
       "PoolPerformanceProxy": "0x54aBc5d37261f00d6e5483f8b0b364936DcA345d",
-      "PoolPerformance": "0x97967D1ec91d9104c4Fb4BFa0c6FBF6eC1e0F323",
+      "PoolPerformance": "0xc7556f18fE98Af87d3d82AC9ccb5967e087789fc",
       "BalancerV2Guard": "0xe048300AF8359D0e8e8b27E1C931AF49ba1BA6eA",
       "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
@@ -1738,8 +1758,10 @@
       "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4",
       "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
       "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E",
-      "DhedgeSwapRouter": "0xcc943481A5a07464b16689e895bc9af130f9396a",
-      "UniswapV3NonfungiblePositionGuard": "0x8C371C6d40E69277Ad9157304E1Cc50Dd5795F05"
+      "UniswapV3NonfungiblePositionGuard": "0x11cEA0E483690b80F92cA7ca162343C89c04B552",
+      "UniswapV3RouterGuard": "0x16FcD638cB1b6ed0D9C15C9B98a6C85453a4FA6A",
+      "UniswapV3AssetGuard": "0xD5A3eBcce55d71d97e0b24352B23F2b5744031A9",
+      "DhedgeSwapRouter": "0x2Fa65bAA0D8E319568AbAda4099631044D79d7aA"
     },
     "network": {
       "assetName": "matic",
@@ -1747,6 +1769,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 10 Feb 2022 04:47:07 GMT"
+    "lastUpdated": "Fri, 25 Feb 2022 04:26:20 GMT"
   }
 }

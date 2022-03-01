@@ -65,22 +65,46 @@ export const assetsJob: IJob<void> = async (
     if (!foundInVersions) {
       console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
       if (config.execute) {
-        // Deploy Balancer LP Aggregator
-        console.log("Deploying ", balancerLp.name);
-        const balancerV2Aggregator = await deployBalancerV2LpAggregator(
-          addresses.balancerV2VaultAddress,
-          versions[config.oldTag].contracts.PoolFactoryProxy,
-          balancerLp.data,
-          hre,
-        );
-        console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
-        newOracles.push({
-          assetName: balancerLp.name,
-          assetAddress: balancerLp.data.pool,
-          assetType: balancerLp.assetType,
-          oracleAddress: balancerV2Aggregator.address,
-          oracleName: "BalancerV2LPAggregator",
-        });
+        // Weighted pool
+        if (balancerLp.type === "balancerLpToken") {
+          // Deploy Balancer LP Aggregator
+          console.log("Deploying ", balancerLp.name);
+          const balancerV2Aggregator = await deployBalancerV2LpAggregator(
+            addresses.balancerV2VaultAddress,
+            poolFactoryProxy,
+            balancerLp.data,
+            hre,
+          );
+          console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
+          newOracles.push({
+            assetName: balancerLp.name,
+            assetAddress: balancerLp.data.pool,
+            assetType: balancerLp.assetType,
+            oracleAddress: balancerV2Aggregator.address,
+            oracleName: "BalancerV2LPAggregator",
+          });
+        }
+
+        // Stable pool
+        if (balancerLp.type === "balancerLpStablePool") {
+          // Deploy Balancer LP Stable Pool Aggregator
+          console.log("Deploying ", balancerLp.name);
+          const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
+            hre,
+            poolFactoryProxy,
+            balancerLp.data.pool,
+          );
+          console.log(
+            `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator.address}`,
+          );
+          newOracles.push({
+            assetName: balancerLp.name,
+            assetAddress: balancerLp.data.pool,
+            assetType: balancerLp.assetType,
+            oracleAddress: balancerLpStablePoolAggregator.address,
+            oracleName: "BalancerLpStablePoolAggregator",
+          });
+        }
       }
     }
   }
@@ -250,4 +274,37 @@ const deployBalancerV2LpAggregator = async (
     ],
   );
   return balancerV2LpAggregator;
+};
+
+const deployBalancerLpStablePoolAggregator = async (hre: HardhatRuntimeEnvironment, factory: string, pool: string) => {
+  await hre.run("compile:one", { contractName: "BalancerStablePoolAggregator" });
+
+  const BalancerStablePoolAggregator = await hre.ethers.getContractFactory("BalancerStablePoolAggregator");
+
+  const balancerStablePoolAggregator = await BalancerStablePoolAggregator.deploy(factory, pool);
+  await balancerStablePoolAggregator.deployed();
+  await tryVerify(
+    hre,
+    balancerStablePoolAggregator.address,
+    "contracts/assets/BalancerStablePoolAggregator.sol:BalancerStablePoolAggregator",
+    [factory, pool],
+  );
+  return balancerStablePoolAggregator;
+};
+
+const deployUsdPriceAggregator = async (hre: HardhatRuntimeEnvironment) => {
+  // Deploy USDPriceAggregator
+  const USDPriceAggregator = await hre.ethers.getContractFactory("USDPriceAggregator");
+  const usdPriceAggregator = await USDPriceAggregator.deploy();
+  await usdPriceAggregator.deployed();
+  const usdPriceAggregatorAddress = usdPriceAggregator.address;
+
+  await tryVerify(
+    hre,
+    usdPriceAggregatorAddress,
+    "contracts/priceAggregators/USDPriceAggregator.sol:USDPriceAggregator",
+    [],
+  );
+
+  return usdPriceAggregatorAddress;
 };

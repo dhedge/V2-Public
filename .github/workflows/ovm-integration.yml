@@ -36,8 +36,18 @@ jobs:
           restore-keys: |
             artifacts-
 
+      - name: Typechain Types Cache
+        uses: actions/cache@v2
+        id: typechain-cache
+        with:
+          path: "types"
+          key: types-${{ hashFiles('contracts/**/*.sol') }}
+          restore-keys: |
+            types-
+
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
 
       - name: Run EVM Fork in background
         env:
@@ -50,10 +60,11 @@ jobs:
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
 
-      - name: Synthetix Tests
+      - name: SynthetixTest
         run: |
           npx hardhat test ./test/integration/ovm/SynthetixTest.ts --network localhost
-      - name: SynthPriceAggregator Tests
+
+      - name: SynthPriceAggregatorTest
         run: |
           npx hardhat test ./test/integration/ovm/SynthPriceAggregatorTest.ts --network localhost
       - name: UniV3TWAPAggregator Tests

@@ -8,6 +8,7 @@ import { lendingEnabledAssetGuardJob } from "./jobs/assetGuards/lendingEnabledAs
 import { quickLpAssetGuardJob } from "./jobs/assetGuards/quickLpAssetGuardJob";
 import { sushiLpAssetGuardJob } from "./jobs/assetGuards/sushiLpAssetGuardJob";
 import { uniV3AssetGuardJob } from "./jobs/assetGuards/uniV3AssetGuardJob";
+import { aaveLendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveLendingPoolAssetGuardJob";
 import { assetHandlerJob } from "./jobs/assetHandlerJob";
 import { assetsJob } from "./jobs/assetsJob";
 import { aaveIncentivesControllerContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerContractGuardJob";
@@ -18,8 +19,9 @@ import { easySwapperContractGuardJob } from "./jobs/contractGuards/easySwapperCo
 import { oneInchV4ContractGuardJob } from "./jobs/contractGuards/oneInchV4ContractGuardJob";
 import { quickStakingRewardsContractGuardJob } from "./jobs/contractGuards/quickStakingRewardsContractGuardJob";
 import { sushiMiniChefV2ContractGuardJob } from "./jobs/contractGuards/sushiMiniChefV2ContractGuardJob";
-import { uniswapV3NonFungiblePositionGuard } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuard";
-import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob";
+import { uniswapV3NonFungiblePositionGuardJob } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuardJob";
+import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob"; //quickswapRouter, sushiswapV2Router etc etc
+import { uniswapV3RouterContractGuardJob } from "./jobs/contractGuards/uniswapV3RouterContractGuardJob";
 import { governanceNamesJob } from "./jobs/governanceNamesJob";
 import { sUSDUniV3TWAPAggregatorJob } from "./jobs/oracles/sUSDUniV3TWAPAggregatorJob";
 import { openAssetContractGuardJob } from "./jobs/otherWeirdGuards/openAssetContractGuardJob";
@@ -42,7 +44,7 @@ const jobs: { [key: string]: IJob<void> } = {
   poolperformance: poolPerformanceJob,
 
   // Asset Guards
-  aavelendingpoolassetguard: aaveLendingPoolContractGuardJob,
+  aavelendingpoolassetguard: aaveLendingPoolAssetGuardJob,
   sushilpassetguard: sushiLpAssetGuardJob,
   erc20guard: erc20AssetGuardJob,
   lendingenabledassetguard: lendingEnabledAssetGuardJob,
@@ -51,6 +53,7 @@ const jobs: { [key: string]: IJob<void> } = {
 
   // Contract Guards
   uniswapv2routerguard: v2RouterContractGuardJob,
+  uniswapv3routerguard: uniswapV3RouterContractGuardJob,
   balancerv2guard: balancerv2ContractGuard,
   balancermerkleorchardguard: balancerMerkleOrchardContractGuardJob,
   quickstakingrewardsguard: quickStakingRewardsContractGuardJob,
@@ -59,7 +62,7 @@ const jobs: { [key: string]: IJob<void> } = {
   aaveincentivescontrollerguard: aaveIncentivesControllerContractGuardJob,
   aavelendingpoolguard: aaveLendingPoolContractGuardJob,
   oneinchv4guard: oneInchV4ContractGuardJob,
-  uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuard,
+  uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuardJob,
 
   // Other Weird Guards
   openassetguard: openAssetContractGuardJob,
@@ -94,12 +97,13 @@ Object.keys(jobs).forEach((job) => {
 upgradeTask.setAction(async (taskArgs, hre) => {
   const ethers = hre.ethers;
   const network = await ethers.provider.getNetwork();
-  console.log("network:", network);
+  console.log("Network:", network.name);
 
   if (taskArgs.restartnonce) {
     console.log("Restarting from last submitted nonce.");
   }
 
+  console.log(`${taskArgs.production ? "Production" : "Staging"} environment.`);
   const { addresses, filenames } = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
 
   await hre.run("compile");

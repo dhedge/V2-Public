@@ -45,9 +45,11 @@ describe("Aave Test", function () {
   let snapshot: any;
   afterEach(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
+    await ethers.provider.send("evm_mine", []);
   });
   beforeEach(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);
+    await ethers.provider.send("evm_mine", []);
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       { asset: assets.weth, isDeposit: true },
@@ -469,6 +471,7 @@ describe("Aave Test", function () {
         const incentivesController = IAaveIncentivesController__factory.connect(aave.incentivesController, logicOwner);
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24 * 10]); // add 10 day
+        await ethers.provider.send("evm_mine", []);
 
         const amount = units(10);
         const repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
@@ -478,6 +481,7 @@ describe("Aave Test", function () {
         await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI);
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24 * 10]); // add 10 day
+        await ethers.provider.send("evm_mine", []);
 
         const remainingRewardsBefore = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
         expect(remainingRewardsBefore).to.be.gt(0);
