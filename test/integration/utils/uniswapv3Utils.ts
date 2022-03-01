@@ -32,6 +32,7 @@ export const mintLpAsUser = async (
   nonfungiblePositionManager: INonfungiblePositionManager,
   user: Wallet,
   mintSettings: UniV3LpMintSettings,
+  assetSlots = [0, 0],
 ) => {
   const token0 = mintSettings.token0;
   const token1 = mintSettings.token1;
@@ -41,8 +42,8 @@ export const mintLpAsUser = async (
   const tickLower = mintSettings.tickLower;
   const tickUpper = mintSettings.tickUpper;
 
-  await getAccountToken(amount0, user.address, token0, 0);
-  await getAccountToken(amount1, user.address, token1, 0);
+  await getAccountToken(amount0, user.address, token0, assetSlots[0]);
+  await getAccountToken(amount1, user.address, token1, assetSlots[1]);
   // Approve nft manager to take tokens
   const token0Contract = await ethers.getContractAt("IERC20", token0);
   await token0Contract.connect(user).approve(uniswapV3.nonfungiblePositionManager, amount0);

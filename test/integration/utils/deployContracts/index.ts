@@ -11,6 +11,7 @@ import {
   PoolPerformance,
   SushiMiniChefV2Guard,
   UniswapV3AssetGuard,
+  UniswapV3RouterGuard,
 } from "../../../../types";
 import { toBytes32 } from "../../../TestHelpers";
 import * as polygonData from "../../../../config/chainData/polygon-data";
@@ -33,6 +34,7 @@ export type IDeployments = {
   sushiMiniChefV2Guard?: SushiMiniChefV2Guard;
   dhedgeEasySwapper?: DhedgeEasySwapper;
   uniV3AssetGuard: UniswapV3AssetGuard;
+  uniswapV3RouterGuard: UniswapV3RouterGuard;
   assets: {
     [name: string]: IERC20;
   };
@@ -114,6 +116,8 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const USDT = await ethers.getContractAt("IERC20", ovmData.assets.usdt);
     const USDC = await ethers.getContractAt("IERC20", ovmData.assets.usdc);
     const WETH = await ethers.getContractAt("IERC20", ovmData.assets.weth);
+    const SUSD = await ethers.getContractAt("IERC20", ovmData.assets.susd);
+    const DAI = await ethers.getContractAt("IERC20", ovmData.assets.dai);
 
     return {
       logicOwner,
@@ -127,10 +131,13 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       poolManagerLogic,
       poolPerformance,
       uniV3AssetGuard,
+      uniswapV3RouterGuard,
       assets: {
         USDT,
         USDC,
         WETH,
+        DAI,
+        SUSD,
       },
     };
   } else {
@@ -292,6 +299,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       sushiMiniChefV2Guard,
       dhedgeEasySwapper,
       uniV3AssetGuard,
+      uniswapV3RouterGuard,
       assets: {
         WMATIC,
         USDT,

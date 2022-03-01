@@ -20,7 +20,7 @@ import { deployContracts, IDeployments } from "../utils/deployContracts";
 
 describe("Uniswap V3 Swap Router Test", function () {
   let deployments: IDeployments;
-  let WETH: IERC20, USDT: IERC20, USDC: IERC20;
+  let USDT: IERC20, USDC: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
@@ -32,50 +32,47 @@ describe("Uniswap V3 Swap Router Test", function () {
 
     deployments = await deployContracts("ovm");
     poolFactory = deployments.poolFactory;
-    WETH = deployments.assets.WETH;
+    USDT = deployments.assets.USDT;
     USDC = deployments.assets.USDC;
-    USDT = deployments.assets.USDC;
-
-    await deployments.uniswapV3RouterGuard.setSlippageLimit("30", "100"); // slippage limit to 30%
   });
 
   beforeEach(async function () {
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
-      { asset: assets.weth, isDeposit: true },
+      { asset: assets.usdt, isDeposit: true },
     ]);
     poolLogicProxy = funds.poolLogicProxy;
     poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
-    await getAccountToken(units(5), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+    await getAccountToken(units(5), logicOwner.address, assets.usdt, assetsBalanceOfSlot.usdt);
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
     await USDC.approve(poolLogicProxy.address, units(10000, 6));
     await poolLogicProxy.deposit(assets.usdc, units(10000, 6));
 
-    await WETH.approve(poolLogicProxy.address, units(5));
-    await poolLogicProxy.deposit(assets.weth, units(5));
+    await USDT.approve(poolLogicProxy.address, units(10000, 6));
+    await poolLogicProxy.deposit(assets.usdt, units(10000, 6));
 
     // Approve to swap 100 USDC
     let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(100, 6)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
-    // Approve to swap 1 WETH
-    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(1)]);
-    await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
+    // Approve to swap 100 USDT
+    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(100, 6)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.usdt, approveABI);
 
     await poolFactory.setExitCooldown(0);
   });
 
-  it("Should be able to swap USDC to WETH", async () => {
+  it("Should be able to swap USDC to USDT", async () => {
     const usdcSwapAmount = units(100, 6); // 100 USDC
 
-    const minAmountOut = await getMinAmountOut(deployments, usdcSwapAmount, USDC.address, WETH.address);
+    const minAmountOut = await getMinAmountOut(deployments, usdcSwapAmount, USDC.address, USDT.address);
 
     let exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
       [
         USDC.address, // from
-        WETH.address, // to
+        USDT.address, // to
         500, // 0.05% fee
         poolLogicProxy.address,
         usdcSwapAmount,
@@ -91,18 +88,18 @@ describe("Uniswap V3 Swap Router Test", function () {
     checkAlmostSame(totalFundValueAfter, totalFundValueBefore);
   });
 
-  it("Should be able to swap WETH to USDC", async () => {
-    const ethSwapAmount = units(1, 18); // 1 ETH
+  it("Should be able to swap USDT to USDC", async () => {
+    const usdtSwapAmount = units(100, 6); // 100 USDT
 
-    const minAmountOut = await getMinAmountOut(deployments, ethSwapAmount, WETH.address, USDC.address, 80);
+    const minAmountOut = await getMinAmountOut(deployments, usdtSwapAmount, USDT.address, USDC.address);
 
     const exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
       [
-        WETH.address, // from
+        USDT.address, // from
         USDC.address, // to
         500, // 0.05% fee
         poolLogicProxy.address,
-        ethSwapAmount,
+        usdtSwapAmount,
         minAmountOut,
         0,
       ],
@@ -116,17 +113,17 @@ describe("Uniswap V3 Swap Router Test", function () {
   });
 
   it("Should be able to swap with Multicall", async () => {
-    const ethSwapAmount = units(1, 18); // 1 ETH
+    const usdtSwapAmount = units(100, 6); // 100 USDT
 
-    const minAmountOut = await getMinAmountOut(deployments, ethSwapAmount, WETH.address, USDC.address, 80);
+    const minAmountOut = await getMinAmountOut(deployments, usdtSwapAmount, USDT.address, USDC.address);
 
     const exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
       [
-        WETH.address, // from
+        USDT.address, // from
         USDC.address, // to
         500, // 0.05% fee
         poolLogicProxy.address,
-        ethSwapAmount,
+        usdtSwapAmount,
         minAmountOut,
         0,
       ],

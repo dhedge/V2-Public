@@ -16,12 +16,16 @@ export const assets = {
   usdc: "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
   usdt: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
   weth: "0x4200000000000000000000000000000000000006",
+  dai: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+  wbtc: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
 };
 
 export const assetsBalanceOfSlot = {
   usdc: 0,
   usdt: 0,
+  dai: 2,
   weth: 3,
+  wbtc: 0,
 };
 
 export const price_feeds = {
@@ -35,6 +39,7 @@ export const price_feeds = {
 
 // uniswap V3
 export const uniswapV3 = {
+  factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
   router: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
   nonfungiblePositionManager: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
   pools: {
