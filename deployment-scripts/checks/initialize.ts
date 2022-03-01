@@ -132,34 +132,34 @@ const getEnvironmentFiles = async (environment: string) => {
 
   switch (environment) {
     case "polygon":
-      versionsFileName = "../../publish/matic/versions.json";
-      balancerLpsFileName = "../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json";
+      versionsFileName = "../../publish/polygon/prod/versions.json";
+      balancerLpsFileName = "../../config/polygon-prod/dHEDGE Asset list - Polygon Balancer LP.json";
       // CSV
-      assetsFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
-      namesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
-      assetGuardsFileName = "./config/prod/dHEDGE Governance Asset Guards - Polygon.csv";
-      contractGuardsFileName = "./config/prod/dHEDGE Governance Contract Guards - Polygon.csv";
+      assetsFileName = "./config/polygon-prod/dHEDGE Assets list - Polygon.csv";
+      namesFileName = "./config/polygon-prod/dHEDGE Governance Names - Polygon.csv";
+      assetGuardsFileName = "./config/polygon-prod/dHEDGE Governance Asset Guards - Polygon.csv";
+      contractGuardsFileName = "./config/polygon-prod/dHEDGE Governance Contract Guards - Polygon.csv";
       break;
 
     case "staging":
-      versionsFileName = "../../publish/matic/staging-versions.json";
-      balancerLpsFileName = "../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
+      versionsFileName = "../../publish/polygon/staging/versions.json";
+      balancerLpsFileName = "../../config/polygon-staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
       // CSV
-      assetsFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
-      namesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";
-      assetGuardsFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
-      contractGuardsFileName = "./config/staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
+      assetsFileName = "./config/polygon-staging/dHEDGE Assets list - Polygon Staging.csv";
+      namesFileName = "./config/polygon-staging/dHEDGE Governance Names - Polygon Staging.csv";
+      assetGuardsFileName = "./config/polygon-staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
+      contractGuardsFileName = "./config/polygon-staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
       break;
 
     case "ovm":
       versionsFileName = "../../publish/ovm/prod/versions.json";
       balancerLpsFileName = undefined;
       // CSV
-      assetsFileName = "./config/prod-ovm/assets/Chainlink Assets.csv";
-      usdPriceAggregatorAssetsFileName = "./config/prod-ovm/assets/USDPriceAggregator Assets.csv";
+      assetsFileName = "./config/ovm-prod/assets/Chainlink Assets.csv";
+      usdPriceAggregatorAssetsFileName = "./config/ovm-prod/assets/USDPriceAggregator Assets.csv";
       namesFileName = undefined;
-      assetGuardsFileName = "./config/prod-ovm/dHEDGE Governance Asset Guards.csv";
-      contractGuardsFileName = "./config/prod-ovm/dHEDGE Governance Contract Guards.csv";
+      assetGuardsFileName = "./config/ovm-prod/dHEDGE Governance Asset Guards.csv";
+      contractGuardsFileName = "./config/ovm-prod/dHEDGE Governance Contract Guards.csv";
       break;
 
     default:

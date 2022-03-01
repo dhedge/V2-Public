@@ -37,7 +37,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   for (const csvAsset of csvAssets) {
     let foundInVersions = false;
     for (const asset of assets) {
-      if (csvAsset.Address === asset.asset) foundInVersions = true;
+      if (csvAsset.assetAddress === asset.asset) foundInVersions = true;
     }
     assert(foundInVersions, `Couldn't find ${csvAsset.assetName} address in published versions.json list.`);
   }
@@ -45,11 +45,11 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   // Check for any new assets in the Balancer JSON config
   if (balancerV2Vault) {
     for (const balancerLp of balancerLps) {
+      console.log("Checking", balancerLp.name);
       let foundInVersions = false;
       for (const asset of assets) {
-        if (balancerLp.address === asset.asset) {
+        if (balancerLp.address.toLowerCase() === asset.asset.toLowerCase()) {
           foundInVersions = true;
-          console.log("Checking", balancerLp.name);
           await checkBalancerLpAsset(hre, balancerLp, balancerV2Vault, poolFactoryProxy, assetHandlerProxy);
         }
       }
@@ -59,8 +59,8 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
 
   for (const asset of assets) {
     const assetAddress = asset.asset;
-    const assetPrice = parseInt(await (await poolFactoryProxy.getAssetPrice(assetAddress)).toString());
-    const assetType = parseInt(await (await poolFactoryProxy.getAssetType(assetAddress)).toString());
+    const assetPrice = parseInt((await poolFactoryProxy.getAssetPrice(assetAddress)).toString());
+    const assetType = parseInt((await poolFactoryProxy.getAssetType(assetAddress)).toString());
 
     assert(assetPrice > 0, `${asset.name} price is not above 0`);
     assert(
@@ -72,7 +72,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
 
     // Reverse check Asset CSV config
     for (const csvAsset of csvAssets) {
-      if (csvAsset.Address == assetAddress) {
+      if (csvAsset.assetAddress == assetAddress) {
         foundInCsv = true;
         assert(
           assetType == parseInt(csvAsset.assetType),
@@ -82,7 +82,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
     }
 
     for (const csvAsset of csvUSDPriceAggregatorAssets) {
-      if (csvAsset.Address == assetAddress) {
+      if (csvAsset.assetAddress == assetAddress) {
         foundInCsv = true;
         assert(
           assetType == parseInt(csvAsset.assetType),
@@ -158,35 +158,36 @@ const checkBalancerLpAsset = async (
   const balancerLPAggregator = await assetHandlerProxy.priceAggregators(balancerLp.address);
   const BalancerV2LPAggregator = await artifacts.readArtifact("BalancerV2LPAggregator");
   const aggregator = await ethers.getContractAt(BalancerV2LPAggregator.abi, balancerLPAggregator);
-  const poolTokens = (await balancerV2Vault.getPoolTokens(balancerLp.data.poolId))[0];
+  const BalancerV2Pool = await artifacts.readArtifact("IBalancerPool");
+  const pool = await ethers.getContractAt(BalancerV2Pool.abi, balancerLp.address);
+  const poolId = await pool.getPoolId();
+  const poolTokens = (await balancerV2Vault.getPoolTokens(poolId))[0];
   const assetType = parseInt(await poolFactoryProxy.getAssetType(balancerLp.address));
 
   // check Balancer LP asset type configuration
   assert(assetType === balancerLp.assetType, `${balancerLp.name} deployed asset type mismatch with configuration.`);
 
-  // check Balancer LP token configuration
-  assert(
-    poolTokens.length === balancerLp.data.tokens.length,
-    `${balancerLp.name} pool tokens length mismatch with configuration.`,
-  );
-
   // get token weights
-  const pool = await ethers.getContractAt(
-    [
-      {
-        inputs: [],
-        name: "getNormalizedWeights",
-        outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
-        stateMutability: "view",
-        type: "function",
-      },
-    ],
-    balancerLp.address,
-  );
   let weights;
   if (balancerLp.type === "balancerLpToken") {
-    // weighted pool - set weights
+    // check Balancer LP token configuration
+    assert(
+      poolTokens.length === balancerLp.data.tokens.length,
+      `${balancerLp.name} pool tokens length mismatch with configuration.`,
+    );
     try {
+      const pool = await ethers.getContractAt(
+        [
+          {
+            inputs: [],
+            name: "getNormalizedWeights",
+            outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+            stateMutability: "view",
+            type: "function",
+          },
+        ],
+        balancerLp.address,
+      );
       weights = await pool.getNormalizedWeights();
     } catch (error) {
       console.warn("Could not fetch normalized weights, using 50/50");
@@ -196,39 +197,42 @@ const checkBalancerLpAsset = async (
 
   // pool token checks
   for (let i = 0; i < poolTokens.length; i++) {
-    assert(
-      poolTokens[i].toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
-      `${balancerLp.name} pool token address mismatch with configuration.`,
-    );
     const aggregatorPoolToken = await aggregator.tokens(i);
     assert(
-      aggregatorPoolToken.toLowerCase() === balancerLp.data.tokens[i].toLowerCase(),
+      aggregatorPoolToken.toLowerCase() === poolTokens[i].toLowerCase(),
       `${balancerLp.name} pool token address mismatch with deployment.`,
     );
 
     // check token decimals
     const IERC20 = await artifacts.readArtifact("IERC20Extended");
     const token = await ethers.getContractAt(IERC20.abi, poolTokens[i]);
+    let aggregatorTokenDecimals;
+    try {
+      aggregatorTokenDecimals = await aggregator.tokenDecimals(i);
+    } catch {
+      // the old Balancer LP aggregator used `decimals` function for storing the underlying token decimals, not `tokenDecimals`
+      const oldAggregator = await ethers.getContractAt(
+        [
+          {
+            inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+            name: "decimals",
+            outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+            stateMutability: "view",
+            type: "function",
+          },
+        ],
+        aggregator.address,
+      );
+      aggregatorTokenDecimals = await oldAggregator.decimals(i);
+    }
     const decimals = await token.decimals();
-    assert(
-      decimals === balancerLp.data.decimals[i],
-      `${balancerLp.name} pool token ${poolTokens[i]} decimals mismatch with configuration.`,
-    );
-    const tokenDecimals = await token.decimals();
-    assert(
-      tokenDecimals === balancerLp.data.decimals[i],
-      `${balancerLp.name} pool token decimals mismatch with deployment.`,
-    );
+    assert(decimals === aggregatorTokenDecimals, `${balancerLp.name} pool token decimals mismatch with deployment.`);
 
     if (balancerLp.type === "balancerLpToken") {
       // weighted pool - check token weight
-      assert(
-        weights[i] / 1e18 === balancerLp.data.weights[i],
-        `${balancerLp.name} pool token ${poolTokens[i]} weights mismatch with configuration.`,
-      );
       const aggregatorPoolWeights = await aggregator.weights(i);
       assert(
-        aggregatorPoolWeights / 1e18 === balancerLp.data.weights[i],
+        aggregatorPoolWeights / 1e18 === weights[i] / 1e18,
         `${balancerLp.name} pool token weights mismatch with deployment.`,
       );
     }
