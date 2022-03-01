@@ -3,7 +3,9 @@ import { assert } from "chai";
 import csv from "csvtojson";
 import { Contract } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+
 import { InitType } from "./initialize";
+import { ICSVAsset } from "../types";
 
 const approxEq = (v1: number, v2: number, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
 
@@ -37,7 +39,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   for (const csvAsset of csvAssets) {
     let foundInVersions = false;
     for (const asset of assets) {
-      if (csvAsset.assetAddress === asset.asset) foundInVersions = true;
+      if (csvAsset.assetAddress === asset.assetAddress) foundInVersions = true;
     }
     assert(foundInVersions, `Couldn't find ${csvAsset.assetName} address in published versions.json list.`);
   }
@@ -48,7 +50,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
       console.log("Checking", balancerLp.name);
       let foundInVersions = false;
       for (const asset of assets) {
-        if (balancerLp.address.toLowerCase() === asset.asset.toLowerCase()) {
+        if (balancerLp.address.toLowerCase() === asset.assetAddress.toLowerCase()) {
           foundInVersions = true;
           await checkBalancerLpAsset(hre, balancerLp, balancerV2Vault, poolFactoryProxy, assetHandlerProxy);
         }
@@ -58,14 +60,14 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   }
 
   for (const asset of assets) {
-    const assetAddress = asset.asset;
+    const assetAddress = asset.assetAddress;
     const assetPrice = parseInt((await poolFactoryProxy.getAssetPrice(assetAddress)).toString());
     const assetType = parseInt((await poolFactoryProxy.getAssetType(assetAddress)).toString());
 
-    assert(assetPrice > 0, `${asset.name} price is not above 0`);
+    assert(assetPrice > 0, `${asset.assetName} price is not above 0`);
     assert(
       assetType == parseInt(asset.assetType),
-      `${asset.name} assetType mismatch. Deployed version ${version} assetType = ${asset.assetType}, Contract assetType = ${assetType}`,
+      `${asset.assetName} assetType mismatch. Deployed version ${version} assetType = ${asset.assetType}, Contract assetType = ${assetType}`,
     );
 
     let foundInCsv = false;
@@ -76,7 +78,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
         foundInCsv = true;
         assert(
           assetType == parseInt(csvAsset.assetType),
-          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
+          `${asset.assetName} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
@@ -86,25 +88,25 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
         foundInCsv = true;
         assert(
           assetType == parseInt(csvAsset.assetType),
-          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
+          `${asset.assetName} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
 
     // Reverse check Balancer LP JSON config
     for (const balancerLp of balancerLps) {
-      if (balancerLp.address === asset.asset) {
+      if (balancerLp.address === asset.assetAddress) {
         foundInCsv = true;
         assert(
           assetType == parseInt(balancerLp.assetType),
-          `${asset.name} assetType mismatch. Balancer LP JSON assetType = ${balancerLp.assetType}, Contract assetType = ${assetType}`,
+          `${asset.assetName} assetType mismatch. Balancer LP JSON assetType = ${balancerLp.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
 
     assert(
       foundInCsv,
-      `Couldn't find ${asset.name} address in the Assets CSV, USD Assets CSV or Balancer JSON config.`,
+      `Couldn't find ${asset.assetName} address in the Assets CSV, USD Assets CSV or Balancer JSON config.`,
     );
 
     // Check primitive asset prices against Coingecko (correct price oracle config)
@@ -113,8 +115,8 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
 
     // Skip Coingecko price checks for some assets that don't exist on Coingecko
     const checkCoingeckoPrice =
-      !asset.name.includes("Balancer LP") &&
-      !asset.name.includes("dUSD") &&
+      !asset.assetName.includes("Balancer LP") &&
+      !asset.assetName.includes("dUSD") &&
       (assetType == 0 || assetType == 1 || assetType == 4)
         ? true
         : false;
@@ -126,19 +128,19 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
         coingeckoAssetPriceUsd = data[assetAddress.toLowerCase()].usd;
 
         console.log(
-          `${asset.name} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
+          `${asset.assetName} Asset type: ${assetType}, Asset price: ${assetPriceUsd}, Coingecko price: ${coingeckoAssetPriceUsd}`,
         );
 
         if (!approxEq(assetPriceUsd, coingeckoAssetPriceUsd)) {
           console.warn(
-            `WARNING: ${asset.name} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
+            `WARNING: ${asset.assetName} price doesn't match Coingecko. dHEDGE price ${assetPriceUsd}, Coingecko price ${coingeckoAssetPriceUsd}`,
           );
         }
       } catch (err: unknown) {
         if (err instanceof Error) {
-          console.error(`WARNING: Error getting Coingecko price for ${asset.name}: ${err.message}`);
+          console.error(`WARNING: Error getting Coingecko price for ${asset.assetName}: ${err.message}`);
         }
-        console.warn(`${asset.name} dHEDGE price ${assetPriceUsd}, Coingecko price N/A`);
+        console.warn(`${asset.assetName} dHEDGE price ${assetPriceUsd}, Coingecko price N/A`);
       }
     }
   }
