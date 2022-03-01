@@ -8,6 +8,7 @@ import { lendingEnabledAssetGuardJob } from "./jobs/assetGuards/lendingEnabledAs
 import { quickLpAssetGuardJob } from "./jobs/assetGuards/quickLpAssetGuardJob";
 import { sushiLpAssetGuardJob } from "./jobs/assetGuards/sushiLpAssetGuardJob";
 import { uniV3AssetGuardJob } from "./jobs/assetGuards/uniV3AssetGuardJob";
+import { aaveLendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveLendingPoolAssetGuardJob";
 import { assetHandlerJob } from "./jobs/assetHandlerJob";
 import { assetsJob } from "./jobs/assetsJob";
 import { aaveIncentivesControllerContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerContractGuardJob";
@@ -42,7 +43,7 @@ const jobs: { [key: string]: IJob<void> } = {
   poolperformance: poolPerformanceJob,
 
   // Asset Guards
-  aavelendingpoolassetguard: aaveLendingPoolContractGuardJob,
+  aavelendingpoolassetguard: aaveLendingPoolAssetGuardJob,
   sushilpassetguard: sushiLpAssetGuardJob,
   erc20guard: erc20AssetGuardJob,
   lendingenabledassetguard: lendingEnabledAssetGuardJob,
