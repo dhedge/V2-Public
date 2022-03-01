@@ -162,10 +162,7 @@ const getOracleAddress = async (
         return csvAsset.oracleAddress;
       }
 
-      const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-      const usdPriceAggregator = await USDPriceAggregator.deploy();
-      await usdPriceAggregator.deployed();
-      return usdPriceAggregator.address;
+      return deployUsdPriceAggregator(hre);
 
     case "UniV2LPAggregator":
       const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");

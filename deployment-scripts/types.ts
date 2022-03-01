@@ -158,7 +158,8 @@ type OracleName =
   | "DeployedOracle"
   | "UniV2LPAggregator"
   | "BalancerV2LPAggregator"
-  | "SynthPriceAggregator";
+  | "SynthPriceAggregator"
+  | "BalancerLpStablePoolAggregator";
 
 export interface ICSVAsset {
   assetType: number;
