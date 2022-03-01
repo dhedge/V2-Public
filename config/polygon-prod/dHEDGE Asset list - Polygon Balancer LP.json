@@ -154,5 +154,27 @@
     "data": {
       "pool": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42"
     }
+  },
+  {
+    "name": "Balancer LP USDC-SNX-GRT-WETH",
+    "type": "balancerLpToken",
+    "address": "0x4E7f40cD37CEE710f5e87AD72959d30ef8a01A5D",
+    "assetType": 0,
+    "data": {
+      "pool": "0x4E7f40cD37CEE710f5e87AD72959d30ef8a01A5D",
+      "poolId": "0x4e7f40cd37cee710f5e87ad72959d30ef8a01a5d00010000000000000000000b",
+      "tokens": ["0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",	"0xbF90A5D9B6EE9019028dbFc2a9E50056d5252894",	"0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410",	"0xF9680D99D6C9589e2a93a78A04A279e509205945"],
+      "decimals": [8,8,8,8],
+      "weights": [0.25,0.25,0.25,0.25]
+    }
+  },
+  {
+    "name": "Balancer LP WBTC-renBTC",
+    "type": "balancerLpStablePool",
+    "address": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
+    "assetType": 0,
+    "data": {
+      "pool": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56"
+    }
   }
 ]
