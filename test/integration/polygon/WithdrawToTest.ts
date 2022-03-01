@@ -1,21 +1,13 @@
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
-import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
+import { use } from "chai";
+import { checkAlmostSame, units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import {
-  IBalancerV2Vault__factory,
-  IERC20,
-  IERC20__factory,
-  IUniswapV2Router__factory,
-  PoolFactory,
-  PoolLogic,
-  PoolManagerLogic,
-} from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { IERC20, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
 import { createFund } from "../utils/createFund";
-import { assets, assetsBalanceOfSlot, quickswap } from "../../../config/chainData/polygon-data";
+import { assets, assetsBalanceOfSlot } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 
 use(solidity);
 
@@ -23,13 +15,10 @@ describe("WithdrawTo Test", function () {
   let WETH: IERC20, USDC: IERC20, QuickLPUSDCWETH: IERC20, QUICK: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
-  const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
-  const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
-  const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault__factory.abi);
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     WETH = deployments.assets.WETH;
@@ -57,7 +46,7 @@ describe("WithdrawTo Test", function () {
     const userBalanceBefore = await USDC.balanceOf(user.address);
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
-    ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
+    await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
     await poolLogicProxy.withdrawTo(user.address, withdrawAmount);
 
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);

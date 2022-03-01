@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { BigNumber } from "ethers";
 
 import { checkAlmostSame, units } from "../../TestHelpers";
-import { assets, assetsBalanceOfSlot, uniswapV3 } from "../../../config/chainData/polygon-data";
+import { assets, assetsBalanceOfSlot, uniswapV3 } from "../../../config/chainData/ovm-data";
 import {
   IERC20,
   IERC20__factory,
@@ -40,7 +40,7 @@ describe("Uniswap V3 LP Test", function () {
       uniswapV3.nonfungiblePositionManager,
     );
 
-    deployments = await deployContracts("polygon");
+    deployments = await deployContracts("ovm");
     poolFactory = deployments.poolFactory;
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
@@ -122,13 +122,13 @@ describe("Uniswap V3 LP Test", function () {
       .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
 
     // try to mint with unsupported token0
-    mintSettings.token0 = assets.miMatic;
+    mintSettings.token0 = assets.slink;
     mintSettings.token1 = assets.usdc;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenA");
 
     // try to mint with unsupported token1
     mintSettings.token0 = assets.usdc;
-    mintSettings.token1 = assets.miMatic;
+    mintSettings.token1 = assets.slink;
     await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenB");
   });
 

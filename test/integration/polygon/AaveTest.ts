@@ -13,10 +13,9 @@ import {
   PoolManagerLogic,
 } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
-import { IDeployments } from "../utils/deployContracts";
+import { deployContracts, IDeployments } from "../utils/deployContracts";
 import { BigNumber } from "ethers";
 
 use(solidity);
@@ -32,7 +31,7 @@ describe("Aave Test", function () {
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-    deployments = await deployPolygonContracts();
+    deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     DAI = deployments.assets.DAI;
     USDC = deployments.assets.USDC;

@@ -14,11 +14,11 @@ import {
   PoolManagerLogic,
   SushiMiniChefV2Guard,
 } from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { assets, assetsBalanceOfSlot, sushi } from "../../../config/chainData/polygon-data";
 import { BigNumber } from "ethers";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 
 use(solidity);
 
@@ -39,7 +39,7 @@ describe("Sushiswap V2 Test", function () {
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     assetHandler = deployments.assetHandler;
     sushiMiniChefV2Guard = deployments.sushiMiniChefV2Guard!;

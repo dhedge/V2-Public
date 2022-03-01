@@ -11,10 +11,10 @@ import {
   DhedgeEasySwapper,
 } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { Interface } from "@ethersproject/abi";
 import { createFund } from "../utils/createFund/index";
+import { deployContracts } from "../utils/deployContracts";
 
 const oneDollar = units(1);
 
@@ -33,7 +33,7 @@ describe("EasySwapperGuard", () => {
     DhedgeEasySwapperInterface = await new ethers.utils.Interface(DhedgeEasySwapper__factory.abi);
     USDC = await ethers.getContractAt("IERC20", assets.usdc);
 
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     dhedgeEasySwapper = deployments.dhedgeEasySwapper!;
 

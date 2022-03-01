@@ -4,10 +4,10 @@ import { expect, use } from "chai";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { IERC20, IERC20__factory, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { assets, assetsBalanceOfSlot, oneinch, ZERO_ADDRESS } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 const axios = require("axios");
 
 use(solidity);
@@ -21,7 +21,7 @@ describe("OneInch V3 Test", function () {
   before(async function () {
     [logicOwner, manager, dao] = await ethers.getSigners();
 
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     WMATIC = deployments.assets.WMATIC;
     USDC = deployments.assets.USDC;

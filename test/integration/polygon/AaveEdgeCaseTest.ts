@@ -14,7 +14,7 @@ import {
 } from "../../../types";
 import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { deployContracts } from "../utils/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
@@ -43,7 +43,7 @@ describe("Aave Edge Test", function () {
     [logicOwner, manager] = await ethers.getSigners();
     snapshot = await ethers.provider.send("evm_snapshot", []);
     await ethers.provider.send("evm_mine", []);
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;

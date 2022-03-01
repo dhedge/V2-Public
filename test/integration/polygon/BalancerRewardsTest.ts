@@ -4,10 +4,10 @@ import { expect, use } from "chai";
 import { units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { IBalancerMerkleOrchard__factory, IERC20, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { assets, assetsBalanceOfSlot, balancer } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 
 use(solidity);
 
@@ -19,7 +19,7 @@ describe("Balancer V2 Rewards Claiming Test", function () {
 
   beforeEach(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;

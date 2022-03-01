@@ -14,11 +14,10 @@ import {
   PoolManagerLogic,
 } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { BigNumber } from "ethers";
-import { IDeployments } from "../utils/deployContracts";
+import { deployContracts, IDeployments } from "../utils/deployContracts";
 import { getMinAmountOut } from "../utils/getMinAmountOut";
 
 use(solidity);
@@ -38,7 +37,7 @@ describe("Uniswap V3 Swap Router Test", function () {
 
     v3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-    deployments = await deployPolygonContracts();
+    deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;

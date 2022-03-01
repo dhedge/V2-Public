@@ -1,5 +1,4 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
 import type { Wallet } from "ethers";
 import {} from "@nomiclabs/hardhat-ethers";
 import { expect } from "chai";
@@ -10,8 +9,7 @@ import { assets, assetsBalanceOfSlot, uniswapV3 } from "../../../config/chainDat
 import { INonfungiblePositionManager, PoolFactory, PoolLogic, AssetHandler } from "../../../types";
 import { units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
-import { IDeployments } from "../utils/deployContracts";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { deployContracts, IDeployments } from "../utils/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { utils } from "../utils/utils";
 import { getCurrentTick, mintLpAsPool, mintLpAsUser, UniV3LpMintSettings } from "../utils/uniswapv3Utils";
@@ -32,7 +30,7 @@ describe("UniswapV3AssetGuardTest", function () {
       uniswapV3.nonfungiblePositionManager,
     );
 
-    deployments = await deployPolygonContracts();
+    deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     assetHandler = deployments.assetHandler;
 
