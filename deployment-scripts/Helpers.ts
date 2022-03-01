@@ -22,7 +22,7 @@ export const getTag = async () => {
   return result.stdout.trim();
 };
 
-export const hasDuplicates = async (array: any, key: any) => {
+export const hasDuplicates = async <T extends Object>(array: T[], key: keyof T) => {
   const valueArr = array.map(function (item: any) {
     return item[key];
   });
@@ -189,32 +189,6 @@ export const proposeTx = async (
   );
 };
 
-export const checkAsset = async (csvAsset: any, contracts: any, poolFactory: any, assetHandlerAssets: any) => {
-  for (const asset of contracts.Assets) {
-    // if (csvAsset["AssetName"] === "Sushi") sushiToken = csvAsset.Address;
-    // if (csvAsset["AssetName"] === "Wrapped Matic") wmatic = csvAsset.Address;
-    if (csvAsset["Address"].toLowerCase() === asset.asset.toLowerCase()) {
-      // console.log(`csvAsset: ${csvAsset["AssetName"]} is already in the current contracts.Assets`);
-      const assetType = parseInt(await poolFactory.getAssetType(csvAsset.Address));
-
-      if (assetType !== parseInt(csvAsset.AssetType)) {
-        console.log(`${csvAsset["AssetName"]} asset type update from ${assetType} to ${csvAsset.AssetType}`);
-        assetHandlerAssets.push({
-          name: csvAsset["AssetName"],
-          asset: csvAsset.Address,
-          assetType: csvAsset.AssetType,
-          aggregator: csvAsset["ChainlinkPriceFeed"],
-        });
-      }
-
-      const foundInVersions = true;
-      return foundInVersions;
-    }
-  }
-  const foundInVersions = false;
-  return foundInVersions;
-};
-
 export const checkBalancerLpAsset = async (
   balancerLp: any,
   contracts: any,
@@ -242,35 +216,6 @@ export const checkBalancerLpAsset = async (
   }
   const foundInVersions = false;
   return foundInVersions;
-};
-
-export const getAggregator = async (hre: HardhatRuntimeEnvironment, csvAsset: any) => {
-  const AggregatorName = csvAsset["AggregatorName"];
-
-  switch (AggregatorName) {
-    case "DHedgePoolAggregator":
-      // Deploy DHedgePoolAggregator
-      const assetAddress = csvAsset["Address"];
-      const { ethers } = hre;
-      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
-      const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
-      await dHedgePoolAggregator.deployed();
-      await tryVerify(
-        hre,
-        dHedgePoolAggregator.address,
-        "contracts/priceAggregators/DHedgePoolAggregator.sol:DHedgePoolAggregator",
-        [assetAddress],
-      );
-      return dHedgePoolAggregator.address;
-    case "USDPriceAggregator":
-      // Deploy USDPriceAggregator
-      const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-      const usdPriceAggregator = await USDPriceAggregator.deploy();
-      await usdPriceAggregator.deployed();
-      return usdPriceAggregator.address;
-    default:
-      return csvAsset["ChainlinkPriceFeed"];
-  }
 };
 
 export const executeInSeries = <T>(providers: (() => Promise<T>)[]): Promise<T[]> => {

@@ -1,10 +1,11 @@
-import Decimal from "decimal.js";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { checkAsset, checkBalancerLpAsset, getAggregator, hasDuplicates, proposeTx, tryVerify } from "../../Helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
-import fs from "fs";
 import csv from "csvtojson";
+import Decimal from "decimal.js";
+import fs from "fs";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { checkBalancerLpAsset, hasDuplicates, proposeTx, tryVerify } from "../../Helpers";
+import { ICSVAsset, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
 
+// Todo: Combine csvAssets and Balancer Assets into one JSON file (move away from csv)
 export const assetsJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
@@ -14,9 +15,7 @@ export const assetsJob: IJob<void> = async (
   addresses: { balancerV2VaultAddress?: string } & IProposeTxProperties,
 ) => {
   const ethers = hre.ethers;
-  let assetHandlerAssets = [];
-  const poolFactoryProxy = versions[config.oldTag].contracts.PoolFactoryProxy;
-  const poolFactory = await ethers.getContractAt("PoolFactory", poolFactoryProxy);
+  let newOracles: ICSVAsset[] = [];
 
   // look up to check if csvAsset is in the current versions
   const fileName = filenames.assetsFileName;
@@ -24,107 +23,24 @@ export const assetsJob: IJob<void> = async (
     throw new Error("No assetFileName configured");
   }
 
-  const csvAssets = await csv().fromFile(fileName);
+  const csvAssets: ICSVAsset[] = await csv().fromFile(fileName);
 
   // Check for any accidental duplicate addresses or price feeds in the CSV
-  if (await hasDuplicates(csvAssets, "Address")) throw "Duplicate 'Address' field found in assets CSV";
-  if (await hasDuplicates(csvAssets, "ChainlinkPriceFeed"))
-    throw "Duplicate 'ChainlinkPriceFeed' field found in assets CSV";
+  if (await hasDuplicates(csvAssets, "assetAddress")) throw "Duplicate 'Address' field found in assets CSV";
+  if (await hasDuplicates(csvAssets, "oracleAddress")) throw "Duplicate 'oracleAddress' field found in assets CSV";
 
-  const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
-  for (const csvAsset of csvAssets) {
-    const foundInVersions = await checkAsset(
-      csvAsset,
-      versions[config.oldTag].contracts,
-      poolFactory,
-      assetHandlerAssets,
+  for (const csvAsset of [...csvAssets]) {
+    // TODO: We don't redeploy any assets that are already configure in Versions.json if the configuration changes
+    // For now, to redeploy an asset, delete it manually from versions.json.
+    const foundInVersions = versions[config.newTag].contracts.Assets?.some((x) =>
+      csvAssets.some((y) => x.assetAddress.toLowerCase() == y.assetAddress.toLowerCase()),
     );
 
     if (!foundInVersions) {
-      const assetType = csvAsset.AssetType;
-      let usdPriceAggregatorAddress;
-
-      switch (assetType) {
-        case "2":
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-
-          // Deploy Sushi LP Aggregator
-          console.log("Deploying ", csvAsset["AssetName"]);
-          const sushiLPAggregator = await SushiLPAggregator.deploy(
-            csvAsset.Address,
-            versions[config.oldTag].contracts.PoolFactoryProxy,
-          );
-          await sushiLPAggregator.deployed();
-          console.log(`${csvAsset["AssetName"]} SushiLPAggregator deployed at ${sushiLPAggregator.address}`);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: sushiLPAggregator.address,
-            AggregatorName: csvAsset.AggregatorName,
-          });
-          break;
-        case "3":
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-
-          if (!csvAsset["ChainlinkPriceFeed"]) {
-            usdPriceAggregatorAddress = await deployUsdPriceAggregator(hre);
-          } else {
-            // Use configured USDPriceAggregator
-            usdPriceAggregatorAddress = csvAsset["ChainlinkPriceFeed"];
-          }
-
-          console.log("USDPriceAggregator deployed at", usdPriceAggregatorAddress);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: usdPriceAggregatorAddress,
-            AggregatorName: csvAsset.AggregatorName,
-          });
-          break;
-        case "7":
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-
-          if (!csvAsset["ChainlinkPriceFeed"]) {
-            usdPriceAggregatorAddress = await deployUsdPriceAggregator(hre);
-          } else {
-            // Use configured USDPriceAggregator
-            usdPriceAggregatorAddress = csvAsset["ChainlinkPriceFeed"];
-          }
-
-          console.log("USDPriceAggregator deployed at", usdPriceAggregatorAddress);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: usdPriceAggregatorAddress,
-            AggregatorName: csvAsset.AggregatorName,
-          });
-          break;
-        default:
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-          console.log(`Adding new asset to AssetHandler: ${csvAsset["AssetName"]}`);
-          const aggregator = await getAggregator(hre, csvAsset);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: aggregator,
-            AggregatorName: csvAsset.AggregatorName,
-          });
+      console.log("Will Deploy Asset:", csvAsset);
+      if (config.execute) {
+        const oracle = await getOracle(hre, csvAsset, versions);
+        newOracles.push(oracle);
       }
     }
   }
@@ -133,6 +49,8 @@ export const assetsJob: IJob<void> = async (
   const balancerLps = filenames.balancerConfigFileName
     ? JSON.parse(fs.readFileSync(filenames.balancerConfigFileName, "utf-8"))
     : [];
+  const poolFactoryProxy = versions[config.oldTag].contracts.PoolFactoryProxy;
+  const poolFactory = await ethers.getContractAt("PoolFactory", poolFactoryProxy);
 
   for (const balancerLp of balancerLps) {
     if (!addresses.balancerV2VaultAddress) {
@@ -142,7 +60,7 @@ export const assetsJob: IJob<void> = async (
       balancerLp,
       versions[config.oldTag].contracts,
       poolFactory,
-      assetHandlerAssets,
+      newOracles,
     );
     if (!foundInVersions) {
       console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
@@ -158,12 +76,12 @@ export const assetsJob: IJob<void> = async (
             hre,
           );
           console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
-          assetHandlerAssets.push({
-            name: balancerLp.name,
-            asset: balancerLp.data.pool,
+          newOracles.push({
+            assetName: balancerLp.name,
+            assetAddress: balancerLp.data.pool,
             assetType: balancerLp.assetType,
-            aggregator: balancerV2Aggregator.address,
-            AggregatorName: "BalancerV2LPAggregator",
+            oracleAddress: balancerV2Aggregator.address,
+            oracleName: "BalancerV2LPAggregator",
           });
         }
 
@@ -179,12 +97,12 @@ export const assetsJob: IJob<void> = async (
           console.log(
             `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator.address}`,
           );
-          assetHandlerAssets.push({
-            name: balancerLp.name,
-            asset: balancerLp.data.pool,
+          newOracles.push({
+            assetName: balancerLp.name,
+            assetAddress: balancerLp.data.pool,
             assetType: balancerLp.assetType,
-            aggregator: balancerLpStablePoolAggregator.address,
-            aggregatorName: "BalancerLpStablePoolAggregator",
+            oracleAddress: balancerLpStablePoolAggregator.address,
+            oracleName: "BalancerLpStablePoolAggregator",
           });
         }
       }
@@ -193,9 +111,9 @@ export const assetsJob: IJob<void> = async (
 
   const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
   const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
-  const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
+  const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [newOracles]);
 
-  if (assetHandlerAssets.length > 0) {
+  if (newOracles.length > 0) {
     await proposeTx(
       versions[config.oldTag].contracts.AssetHandlerProxy,
       addAssetsABI,
@@ -203,10 +121,89 @@ export const assetsJob: IJob<void> = async (
       config,
       addresses,
     );
-    versions[config.newTag].contracts.Assets = [
-      ...(versions[config.newTag].contracts.Assets || []),
-      ...assetHandlerAssets,
-    ];
+    versions[config.newTag].contracts.Assets = [...(versions[config.newTag].contracts.Assets || []), ...newOracles];
+  }
+};
+
+export const getOracle = async (
+  hre: HardhatRuntimeEnvironment,
+  csvAsset: ICSVAsset,
+  versions: IVersions,
+): Promise<ICSVAsset> => {
+  const oracleAddress = await getOracleAddress(hre, csvAsset, versions);
+  return {
+    ...csvAsset,
+    oracleAddress,
+  };
+};
+
+const getOracleAddress = async (
+  hre: HardhatRuntimeEnvironment,
+  csvAsset: ICSVAsset,
+  versions: IVersions,
+): Promise<string> => {
+  const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
+  switch (csvAsset.oracleName) {
+    case "DHedgePoolAggregator":
+      const { ethers } = hre;
+      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
+      const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(csvAsset.assetAddress);
+      await dHedgePoolAggregator.deployed();
+      await tryVerify(
+        hre,
+        dHedgePoolAggregator.address,
+        "contracts/priceAggregators/DHedgePoolAggregator.sol:DHedgePoolAggregator",
+        [csvAsset.assetAddress],
+      );
+      return dHedgePoolAggregator.address;
+    case "USDPriceAggregator":
+      // Deploy USDPriceAggregator
+      if (csvAsset.oracleAddress) {
+        return csvAsset.oracleAddress;
+      }
+
+      return deployUsdPriceAggregator(hre);
+
+    case "UniV2LPAggregator":
+      const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
+      const sushiLPAggregator = await SushiLPAggregator.deploy(
+        csvAsset.assetAddress,
+        versions[latestVersion].contracts.PoolFactoryProxy,
+      );
+
+      await sushiLPAggregator.deployed();
+      return sushiLPAggregator.address;
+    case "SynthPriceAggregator":
+      const susdPriceAggregator = versions[latestVersion].contracts.Oracles?.find(
+        (x) => x.oracleName == "susdUniV3TWAPAggregator",
+      );
+      if (!susdPriceAggregator) {
+        throw new Error("assetsJob.getOracleAddress.SynthPriceAggregator");
+      }
+      const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
+      const synthPriceAggregator = await SynthPriceAggregator.deploy(
+        susdPriceAggregator.oracleAddress,
+        csvAsset.oracleAddress,
+      );
+      synthPriceAggregator.deployed();
+      return synthPriceAggregator.address;
+    case "DeployedOracle":
+      if (csvAsset.oracleAddress) {
+        return csvAsset.oracleAddress;
+      }
+      const deployedOracle = versions[latestVersion].contracts.Oracles?.find(
+        (oracle) => oracle.assetAddress == csvAsset.assetAddress,
+      );
+      if (!deployedOracle) {
+        throw new Error("assetsJob.getOracleAddress.DeployedOracle: No oracle found in versions.json");
+      }
+
+      return deployedOracle.oracleAddress;
+    default:
+      if (!csvAsset.oracleAddress) {
+        throw new Error("assetsJob.getOracleAddress.default: No oracle address for: " + csvAsset.assetAddress);
+      }
+      return csvAsset.oracleAddress;
   }
 };
 

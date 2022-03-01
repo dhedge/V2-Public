@@ -39,7 +39,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
     for (const asset of assets) {
       if (csvAsset.Address === asset.asset) foundInVersions = true;
     }
-    assert(foundInVersions, `Couldn't find ${csvAsset["AssetName"]} address in published versions.json list.`);
+    assert(foundInVersions, `Couldn't find ${csvAsset.assetName} address in published versions.json list.`);
   }
 
   // Check for any new assets in the Balancer JSON config
@@ -75,8 +75,8 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
       if (csvAsset.Address == assetAddress) {
         foundInCsv = true;
         assert(
-          assetType == parseInt(csvAsset.AssetType),
-          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.AssetType}, Contract assetType = ${assetType}`,
+          assetType == parseInt(csvAsset.assetType),
+          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
@@ -85,8 +85,8 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
       if (csvAsset.Address == assetAddress) {
         foundInCsv = true;
         assert(
-          assetType == parseInt(csvAsset.AssetType),
-          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.AssetType}, Contract assetType = ${assetType}`,
+          assetType == parseInt(csvAsset.assetType),
+          `${asset.name} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }
@@ -97,7 +97,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
         foundInCsv = true;
         assert(
           assetType == parseInt(balancerLp.assetType),
-          `${asset.name} assetType mismatch. Balancer LP JSON assetType = ${balancerLp.AssetType}, Contract assetType = ${assetType}`,
+          `${asset.name} assetType mismatch. Balancer LP JSON assetType = ${balancerLp.assetType}, Contract assetType = ${assetType}`,
         );
       }
     }

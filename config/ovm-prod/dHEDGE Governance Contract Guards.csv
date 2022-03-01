@@ -1,2 +1,2 @@
-ContractAddress,GuardName,GuardAddress,Description
+contractAddress,guardName,guardAddress,description
 0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4,SynthetixGuard,0xEFEFCa1f7C5ac491d6fE720E6D6725255290D621,Synthetix Guard

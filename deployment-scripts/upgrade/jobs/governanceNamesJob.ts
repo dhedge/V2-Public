@@ -22,8 +22,8 @@ export const governanceNamesJob: IJob<void> = async (
 
   console.log("Will deploy governancenames");
   for (const csvGovernanceName of csvGovernanceNames) {
-    const name = csvGovernanceName.Name;
-    const destination: string = csvGovernanceName.Destination;
+    const name = csvGovernanceName.name;
+    const destination: string = csvGovernanceName.destination;
     const nameBytes = ethers.utils.formatBytes32String(name);
     const configuredDestination = (await governance.nameToDestination(nameBytes)).toLowerCase();
     if (

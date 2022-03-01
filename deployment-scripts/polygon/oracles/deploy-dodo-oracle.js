@@ -32,7 +32,11 @@ const main = async () => {
       "contracts/oracles/DodoDHedgePoolPriceOracle.sol:DodoDHedgePoolPriceOracle",
       [pool, decimals],
     );
-    contracts.push({ pool, dodoOracle: dHedgePoolPriceOracle.address });
+    contracts.Oracles.push({
+      assetAddress: pool,
+      oracleAddress: dHedgePoolPriceOracle.address,
+      oracleName: "DodoDHedgePoolPriceOracle",
+    });
   }
 
   const tag = Object.keys(versions)[Object.keys(versions).length - 1];
