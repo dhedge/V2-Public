@@ -31,7 +31,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   console.log("Checking assets..");
 
   const assets = versions[version].contracts.Assets;
-  const csvAssets = await csv().fromFile(assetsFileName);
+  const csvAssets: ICSVAsset[] = await csv().fromFile(assetsFileName);
   const csvUSDPriceAggregatorAssets =
     (usdPriceAggregatorAssetsFileName && (await csv().fromFile(usdPriceAggregatorAssetsFileName))) || [];
 
@@ -77,7 +77,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
       if (csvAsset.assetAddress == assetAddress) {
         foundInCsv = true;
         assert(
-          assetType == parseInt(csvAsset.assetType),
+          assetType == csvAsset.assetType,
           `${asset.assetName} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }
