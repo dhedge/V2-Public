@@ -5,7 +5,6 @@ import { checkFactory } from "./checkConfigFactory";
 import { checkGovernance } from "./checkConfigGovernance";
 import { checkAssets } from "./checkConfigAssets";
 import { checkBytecode } from "./checkConfigBytecode";
-import env from "hardhat";
 
 task("checkConfig", "Check deployed contracts")
   .addOptionalParam("environment", "staging or prod", undefined, types.string)
