@@ -1135,8 +1135,6 @@
         {
           "assetName": "Sushi LP USDC-DAI",
           "assetAddress": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
-          "name": "Sushi LP USDC-DAI",
-          "asset": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
           "assetType": "2",
           "oracleAddress": "0x4dA292111E93F603936cAEbf9Cc6b24B513d5323"
         },
@@ -1500,16 +1498,16 @@
         },
         {
           "assetName": "MiMatic",
-          "asset": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+          "assetAddress": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
           "assetType": "0",
-          "assetAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468",
+          "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468",
           "oracleName": "MedianTWAPAggregator"
         },
         {
           "assetName": "Balancer LP BPSP",
-          "asset": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+          "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
           "assetType": 0,
-          "assetAddress": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8",
+          "oracleAddress": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8",
           "oracleName": "BalancerLpStablePoolAggregator"
         }
       ],
