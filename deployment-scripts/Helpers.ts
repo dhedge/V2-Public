@@ -29,7 +29,11 @@ export const hasDuplicates = async <T extends Object>(array: T[], key: keyof T) 
 
   const isDuplicate = valueArr.some(function (item: any, idx: number) {
     if (!item) return false;
-    return valueArr.indexOf(item) != idx;
+    const isDup = valueArr.indexOf(item) != idx;
+    if (isDup) {
+      console.warn("Duplicate found", item);
+    }
+    return isDup;
   });
 
   return isDuplicate;
@@ -187,35 +191,6 @@ export const proposeTx = async (
     async () => await service.proposeTx(chainSafeAddress, txHash, safeTransaction, signature),
     "Gnosis safe",
   );
-};
-
-export const checkBalancerLpAsset = async (
-  balancerLp: any,
-  contracts: any,
-  poolFactory: any,
-  assetHandlerAssets: any,
-) => {
-  for (const asset of contracts.Assets) {
-    if (balancerLp.name === asset.name) {
-      // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
-      const assetType = parseInt(await poolFactory.getAssetType(balancerLp.address));
-
-      if (assetType !== balancerLp.assetType) {
-        console.log(`${balancerLp.name} asset type update from ${assetType} to ${balancerLp.assetType}`);
-        assetHandlerAssets.push({
-          name: balancerLp.name,
-          asset: balancerLp.data.pool,
-          assetType: balancerLp.assetType,
-          aggregator: asset.aggregator,
-        });
-      }
-
-      const foundInVersions = true;
-      return foundInVersions;
-    }
-  }
-  const foundInVersions = false;
-  return foundInVersions;
 };
 
 export const executeInSeries = <T>(providers: (() => Promise<T>)[]): Promise<T[]> => {

@@ -2,8 +2,22 @@ import csv from "csvtojson";
 import Decimal from "decimal.js";
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { checkBalancerLpAsset, hasDuplicates, proposeTx, tryVerify } from "../../Helpers";
+import { hasDuplicates, proposeTx, tryVerify } from "../../Helpers";
 import { ICSVAsset, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
+
+interface IBalancerAsset {
+  name: string;
+  oracleName: "BalancerV2LPAggregator" | "BalancerLpStablePoolAggregator";
+  address: string;
+  assetType: number;
+  data: {
+    pool: string;
+    poolId: string;
+    tokens: string[];
+    decimals: number[];
+    weights: number[];
+  };
+}
 
 // Todo: Combine csvAssets and Balancer Assets into one JSON file (move away from csv)
 export const assetsJob: IJob<void> = async (
@@ -46,27 +60,27 @@ export const assetsJob: IJob<void> = async (
   }
 
   // Should refactor not to use require and add types for what a balancerLp is
-  const balancerLps = filenames.balancerConfigFileName
+  const balancerLps: IBalancerAsset[] = filenames.balancerConfigFileName
     ? JSON.parse(fs.readFileSync(filenames.balancerConfigFileName, "utf-8"))
     : [];
   const poolFactoryProxy = versions[config.oldTag].contracts.PoolFactoryProxy;
-  const poolFactory = await ethers.getContractAt("PoolFactory", poolFactoryProxy);
 
   for (const balancerLp of balancerLps) {
     if (!addresses.balancerV2VaultAddress) {
       throw new Error("No balancerV2VaultAddress configured");
     }
-    const foundInVersions = await checkBalancerLpAsset(
-      balancerLp,
-      versions[config.oldTag].contracts,
-      poolFactory,
-      newOracles,
+
+    const foundInVersions = versions[config.newTag].contracts.Assets?.some((x) =>
+      balancerLps.some((y) => {
+        return x.assetAddress.toLowerCase() == y.address.toLowerCase() && x.oracleName == y.oracleName;
+      }),
     );
+
     if (!foundInVersions) {
       console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
       if (config.execute) {
         // Weighted pool
-        if (balancerLp.type === "balancerLpToken") {
+        if (balancerLp.oracleName === "BalancerV2LPAggregator") {
           // Deploy Balancer LP Aggregator
           console.log("Deploying ", balancerLp.name);
           const balancerV2Aggregator = await deployBalancerV2LpAggregator(
@@ -86,7 +100,7 @@ export const assetsJob: IJob<void> = async (
         }
 
         // Stable pool
-        if (balancerLp.type === "balancerLpStablePool") {
+        if (balancerLp.oracleName === "BalancerLpStablePoolAggregator") {
           // Deploy Balancer LP Stable Pool Aggregator
           console.log("Deploying ", balancerLp.name);
           const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
@@ -254,7 +268,7 @@ const deployBalancerV2LpAggregator = async (
   await tryVerify(
     hre,
     balancerV2LpAggregator.address,
-    "contracts/assets/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
+    "contracts/priceAggregators/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
     [
       factory,
       balancerV2VaultAddress,
@@ -283,7 +297,7 @@ const deployBalancerLpStablePoolAggregator = async (hre: HardhatRuntimeEnvironme
   await tryVerify(
     hre,
     balancerStablePoolAggregator.address,
-    "contracts/assets/BalancerStablePoolAggregator.sol:BalancerStablePoolAggregator",
+    "contracts/priceAggregators/BalancerStablePoolAggregator.sol:BalancerStablePoolAggregator",
     [factory, pool],
   );
   return balancerStablePoolAggregator;

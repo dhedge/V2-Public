@@ -1469,48 +1469,48 @@
           "oracleName": "DHedgePoolAggregator"
         },
         {
-          "name": "Chainlink",
-          "asset": "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39",
+          "assetName": "Chainlink",
+          "assetAddress": "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39",
           "assetType": "4",
-          "aggregator": "0xd9FFdb71EbE7496cC440152d43986Aae0AB76665"
+          "oracleAddress": "0xd9FFdb71EbE7496cC440152d43986Aae0AB76665"
         },
         {
-          "name": "Sushi",
-          "asset": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
+          "assetName": "Sushi",
+          "assetAddress": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
           "assetType": "4",
-          "aggregator": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0"
+          "oracleAddress": "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0"
         },
         {
-          "name": "CRV",
-          "asset": "0x172370d5cd63279efa6d502dab29171933a610af",
+          "assetName": "CRV",
+          "assetAddress": "0x172370d5cd63279efa6d502dab29171933a610af",
           "assetType": "4",
-          "aggregator": "0x336584C8E6Dc19637A5b36206B1c79923111b405"
+          "oracleAddress": "0x336584C8E6Dc19637A5b36206B1c79923111b405"
         },
         {
-          "name": "Balancer",
-          "asset": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
+          "assetName": "Balancer",
+          "assetAddress": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
           "assetType": "4",
-          "aggregator": "0xd106b538f2a868c28ca1ec7e298c3325e0251d66"
+          "oracleAddress": "0xd106b538f2a868c28ca1ec7e298c3325e0251d66"
         },
         {
-          "name": "Aavegotchi",
-          "asset": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+          "assetName": "Aavegotchi",
+          "assetAddress": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
           "assetType": "4",
-          "aggregator": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be"
+          "oracleAddress": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be"
         },
         {
-          "name": "MiMatic",
+          "assetName": "MiMatic",
           "asset": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
           "assetType": "0",
-          "aggregator": "0x33248d41454dD8DFE5360cF00fFe6C380160e468",
-          "AggregatorName": "MedianTWAPAggregator"
+          "assetAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468",
+          "oracleName": "MedianTWAPAggregator"
         },
         {
-          "name": "Balancer LP BPSP",
+          "assetName": "Balancer LP BPSP",
           "asset": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
           "assetType": 0,
-          "aggregator": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8",
-          "aggregatorName": "BalancerLpStablePoolAggregator"
+          "assetAddress": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8",
+          "oracleName": "BalancerLpStablePoolAggregator"
         }
       ],
       "Oracles": [
