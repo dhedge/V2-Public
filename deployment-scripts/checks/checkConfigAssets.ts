@@ -157,24 +157,19 @@ const checkBalancerLpAsset = async (
       poolTokens.length === balancerLp.data.tokens.length,
       `${balancerLp.name} pool tokens length mismatch with configuration.`,
     );
-    try {
-      const pool = await ethers.getContractAt(
-        [
-          {
-            inputs: [],
-            name: "getNormalizedWeights",
-            outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
-            stateMutability: "view",
-            type: "function",
-          },
-        ],
-        balancerLp.address,
-      );
-      weights = await pool.getNormalizedWeights();
-    } catch (error) {
-      console.warn("Could not fetch normalized weights, using 50/50");
-      weights = ["500000000000000000", "500000000000000000"];
-    }
+    const pool = await ethers.getContractAt(
+      [
+        {
+          inputs: [],
+          name: "getNormalizedWeights",
+          outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+          stateMutability: "view",
+          type: "function",
+        },
+      ],
+      balancerLp.address,
+    );
+    weights = await pool.getNormalizedWeights();
   }
 
   // pool token checks
