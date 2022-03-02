@@ -30,13 +30,14 @@ export const hasDuplicates = <T extends Object>(array: T[], key: keyof T) => {
     .filter(Boolean)
     .map((x) => JSON.stringify(x).toLowerCase());
 
-  console.log(valueArr);
+  const dups = valueArr.filter((item, index) => valueArr.indexOf(item) !== index);
 
-  const hasDup = new Set(valueArr).size != valueArr.length;
-  if (hasDup) {
-    console.log(valueArr.sort());
+  if (dups.length) {
+    console.log("Duplicates", dups);
+    return true;
+  } else {
+    return false;
   }
-  return hasDup;
 };
 
 export const isSameBytecode = (creationBytecode: string, runtimeBytecode: string) => {
