@@ -29,7 +29,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   for (const csvAsset of csvAssets) {
     let foundInVersions = false;
     for (const asset of assets) {
-      if (csvAsset.assetAddress === asset.assetAddress) foundInVersions = true;
+      if (csvAsset.assetAddress.toLowerCase() === asset.assetAddress.toLowerCase()) foundInVersions = true;
     }
     assert(foundInVersions, `Couldn't find ${csvAsset.assetName} address in published versions.json list.`);
   }
@@ -75,7 +75,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
 
     // Reverse check Balancer LP JSON config
     for (const balancerLp of balancerLps) {
-      if (balancerLp.address === asset.assetAddress) {
+      if (balancerLp.address.toLowerCase() === asset.assetAddress.toLowerCase()) {
         foundInCsv = true;
         assert(
           assetType == parseInt(balancerLp.assetType),
