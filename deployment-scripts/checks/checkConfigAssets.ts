@@ -16,24 +16,14 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   // asset_platforms
   const coingeckoNetwork = network.name == "polygon" ? "polygon-pos" : "optimistic-ethereum";
 
-  const {
-    versions,
-    version,
-    assetsFileName,
-    usdPriceAggregatorAssetsFileName,
-    balancerLps,
-    poolFactoryProxy,
-    balancerV2Vault,
-    assetHandlerProxy,
-  } = initializeData;
+  const { versions, version, assetsFileName, balancerLps, poolFactoryProxy, balancerV2Vault, assetHandlerProxy } =
+    initializeData;
 
   // Check Assets settings against latest Assets CSV file
   console.log("Checking assets..");
 
   const assets = versions[version].contracts.Assets;
   const csvAssets: ICSVAsset[] = await csv().fromFile(assetsFileName);
-  const csvUSDPriceAggregatorAssets =
-    (usdPriceAggregatorAssetsFileName && (await csv().fromFile(usdPriceAggregatorAssetsFileName))) || [];
 
   // Check for any new assets in the asset CSV config
   for (const csvAsset of csvAssets) {
@@ -78,16 +68,6 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
         foundInCsv = true;
         assert(
           assetType == csvAsset.assetType,
-          `${asset.assetName} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
-        );
-      }
-    }
-
-    for (const csvAsset of csvUSDPriceAggregatorAssets) {
-      if (csvAsset.assetAddress == assetAddress) {
-        foundInCsv = true;
-        assert(
-          assetType == parseInt(csvAsset.assetType),
           `${asset.assetName} assetType mismatch. CSV assetType = ${csvAsset.assetType}, Contract assetType = ${assetType}`,
         );
       }

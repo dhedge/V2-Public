@@ -2,6 +2,8 @@ import ProxyAdmin from "@openzeppelin/contracts/build/contracts/ProxyAdmin.json"
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { getTag } from "../Helpers";
+import { polygonProdFileNames, polygonStagingFileNames } from "../polygon/deployment-data";
+import { ovmProdFileNames } from "../ovm/deploy-data";
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 export type InitType = Awaited<ReturnType<typeof init>>;
@@ -17,7 +19,6 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
-    usdPriceAggregatorAssetsFileName,
   } = await getEnvironmentFiles(environment);
 
   const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress } =
@@ -95,7 +96,6 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
     balancerLps,
     balancerV2Vault,
     namesFileName,
-    usdPriceAggregatorAssetsFileName,
     assetGuardsFileName,
     contractGuardsFileName,
     versions,
@@ -122,44 +122,37 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
 };
 
 const getEnvironmentFiles = async (environment: string) => {
-  let versionsFileName,
-    assetsFileName,
-    balancerLpsFileName,
-    namesFileName,
-    assetGuardsFileName,
-    contractGuardsFileName,
-    usdPriceAggregatorAssetsFileName;
+  let versionsFileName, assetsFileName, balancerLpsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
 
   switch (environment) {
     case "polygon":
-      versionsFileName = "../../publish/polygon/prod/versions.json";
-      balancerLpsFileName = "../../config/polygon-prod/dHEDGE Asset list - Polygon Balancer LP.json";
+      versionsFileName = "../../publish/polygon/prod/versions.json"; // the polygonProdFileNames path didn't work
+      balancerLpsFileName = "../../config/polygon-prod/dHEDGE Asset list - Polygon Balancer LP.json"; // the polygonProdFileNames path didn't work
       // CSV
-      assetsFileName = "./config/polygon-prod/dHEDGE Assets list - Polygon.csv";
-      namesFileName = "./config/polygon-prod/dHEDGE Governance Names - Polygon.csv";
-      assetGuardsFileName = "./config/polygon-prod/dHEDGE Governance Asset Guards - Polygon.csv";
-      contractGuardsFileName = "./config/polygon-prod/dHEDGE Governance Contract Guards - Polygon.csv";
+      assetsFileName = polygonProdFileNames.assetsFileName;
+      namesFileName = polygonProdFileNames.governanceNamesFileName;
+      assetGuardsFileName = polygonProdFileNames.assetGuardsFileName;
+      contractGuardsFileName = polygonProdFileNames.contractGuardsFileName;
       break;
 
     case "staging":
       versionsFileName = "../../publish/polygon/staging/versions.json";
       balancerLpsFileName = "../../config/polygon-staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
       // CSV
-      assetsFileName = "./config/polygon-staging/dHEDGE Assets list - Polygon Staging.csv";
-      namesFileName = "./config/polygon-staging/dHEDGE Governance Names - Polygon Staging.csv";
-      assetGuardsFileName = "./config/polygon-staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
-      contractGuardsFileName = "./config/polygon-staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
+      assetsFileName = polygonStagingFileNames.assetsFileName;
+      namesFileName = polygonStagingFileNames.governanceNamesFileName;
+      assetGuardsFileName = polygonStagingFileNames.assetGuardsFileName;
+      contractGuardsFileName = polygonStagingFileNames.contractGuardsFileName;
       break;
 
     case "ovm":
       versionsFileName = "../../publish/ovm/prod/versions.json";
       balancerLpsFileName = undefined;
       // CSV
-      assetsFileName = "./config/ovm-prod/assets/Chainlink Assets.csv";
-      usdPriceAggregatorAssetsFileName = "./config/ovm-prod/assets/USDPriceAggregator Assets.csv";
-      namesFileName = undefined;
-      assetGuardsFileName = "./config/ovm-prod/dHEDGE Governance Asset Guards.csv";
-      contractGuardsFileName = "./config/ovm-prod/dHEDGE Governance Contract Guards.csv";
+      assetsFileName = ovmProdFileNames.assetsFileName;
+      namesFileName = ovmProdFileNames.governanceNamesFileName;
+      assetGuardsFileName = ovmProdFileNames.assetGuardsFileName;
+      contractGuardsFileName = ovmProdFileNames.contractGuardsFileName;
       break;
 
     default:
@@ -172,7 +165,6 @@ const getEnvironmentFiles = async (environment: string) => {
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
-    usdPriceAggregatorAssetsFileName,
   };
 };
 
@@ -204,7 +196,7 @@ const getEnvironmentContracts = async (environment: string) => {
       break;
 
     default:
-      throw "Invalid environment input. Should be 'prod' or 'staging'.";
+      throw "Invalid environment input.";
   }
   return { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress };
 };
