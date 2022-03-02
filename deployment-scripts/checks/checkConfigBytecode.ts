@@ -5,6 +5,7 @@ import { InitType } from "./initialize";
 import { Contract } from "ethers";
 
 import { isSameBytecode } from "../Helpers";
+import { IContracts } from "../types";
 
 export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntimeEnvironment) => {
   const { ethers } = hre;
@@ -58,16 +59,11 @@ export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntim
 
   const bytecodeErrors = [];
   for (const contract of contractsArray) {
-    let contractAddress;
-    if (contracts[contract.name] && contracts[contract.name].proxy) {
-      contractAddress = await getImplementationAddress(ethers.provider, contracts[contract.name].proxy);
-    } else {
-      contractAddress = contracts[contract.name];
-    }
+    const contractAddress = contracts[contract.name as keyof IContracts];
 
     if (contractAddress) {
       const creationBytecode = contract.contract.bytecode;
-      const runtimeBytecode = await ethers.provider.getCode(contractAddress);
+      const runtimeBytecode = await ethers.provider.getCode(contractAddress as string);
       const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
       if (runtimeBytecode.length < 10) bytecodeErrors.push(`Missing bytecode in deployed address for ${contract.name}`);
       if (!bytecodeCheck) bytecodeErrors.push(`Bytecode difference found for ${contract.name}`);
@@ -79,7 +75,7 @@ export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntim
     if (asset.oracleName) {
       const contract = (await ethers.getContractFactory(asset.oracleName)) as unknown as Contract;
       const creationBytecode = contract.bytecode;
-      const runtimeBytecode = await ethers.provider.getCode(asset.aggregator);
+      const runtimeBytecode = await ethers.provider.getCode(asset.oracleAddress);
       const bytecodeCheck = isSameBytecode(creationBytecode, runtimeBytecode);
       if (runtimeBytecode.length < 10)
         bytecodeErrors.push(`Missing bytecode in deployed address for ${asset.oracleName}`);

@@ -1,6 +1,8 @@
 import ProxyAdmin from "@openzeppelin/contracts/build/contracts/ProxyAdmin.json";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import fs from "fs";
 
+import { IVersions } from "../types";
 import { getTag } from "../Helpers";
 import { polygonProdFileNames, polygonStagingFileNames } from "../polygon/deployment-data";
 import { ovmProdFileNames } from "../ovm/deploy-data";
@@ -24,8 +26,8 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
   const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress } =
     await getEnvironmentContracts(environment);
 
-  const versions = require(versionsFileName);
-  const balancerLps = balancerLpsFileName ? require(balancerLpsFileName) : [];
+  const versions: IVersions = JSON.parse(fs.readFileSync(versionsFileName, "utf-8"));
+  const balancerLps = balancerLpsFileName ? JSON.parse(fs.readFileSync(balancerLpsFileName, "utf-8")) : [];
   let version;
   const signer = (await ethers.getSigners())[0];
   if (!deployedVersion) {
@@ -56,28 +58,29 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
   const proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdmin.abi, signer);
   contracts["ProxyAdmin"] = proxyAdminAddress;
 
-  const poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy || contracts.PoolFactory.proxy);
+  const poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy);
   const poolFactoryAddress = await proxyAdmin.getProxyImplementation(poolFactoryProxy.address);
   const poolFactory = PoolFactory.attach(poolFactoryAddress);
   contracts["PoolFactory"] = poolFactoryAddress;
 
-  const assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy || contracts.AssetHandler.proxy);
+  const assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy);
   const assetHandlerAddress = await proxyAdmin.getProxyImplementation(assetHandlerProxy.address);
   const assetHandler = AssetHandler.attach(assetHandlerAddress);
   contracts["AssetHandler"] = assetHandlerAddress;
 
   const governance = Governance.attach(contracts.Governance);
   const sushiLPAssetGuard = contracts.SushiLPAssetGuard && SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
-  const quickLPAssetGuard = contracts.SushiLPAssetGuard && QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
+  let quickLPAssetGuard;
+  if (contracts.QuickLPAssetGuard) {
+    quickLPAssetGuard = contracts.SushiLPAssetGuard && QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
+  }
 
-  const poolLogic = PoolLogic.attach(
-    (contracts.PoolLogic && contracts.PoolLogic.implementation) || contracts.PoolLogic,
-  );
+  const poolLogic = PoolLogic.attach((contracts.PoolLogic && contracts.PoolLogic) || contracts.PoolLogic);
   const poolManagerLogic = PoolManagerLogic.attach(
-    (contracts.PoolManagerLogic && contracts.PoolManagerLogic.implementation) || contracts.PoolManagerLogic,
+    (contracts.PoolManagerLogic && contracts.PoolManagerLogic) || contracts.PoolManagerLogic,
   );
   const openAssetGuard = contracts.OpenAssetGuard && OpenAssetGuard.attach(contracts.OpenAssetGuard);
-  const oneInchV3Guard = contracts.OneInchV3Guard && OpenAssetGuard.attach(contracts.OneInchV3Guard);
+  const oneInchV4Guard = contracts.OneInchV4Guard && OpenAssetGuard.attach(contracts.OneInchV4Guard);
   const balancerV2Guard = contracts.BalancerV2Guard && OpenAssetGuard.attach(contracts.BalancerV2Guard);
 
   const IBalancerV2Vault = await artifacts.readArtifact("IBalancerV2Vault");
@@ -117,7 +120,7 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
     poolLogic,
     poolManagerLogic,
     openAssetGuard,
-    oneInchV3Guard,
+    oneInchV4Guard,
   };
 };
 
@@ -126,8 +129,8 @@ const getEnvironmentFiles = async (environment: string) => {
 
   switch (environment) {
     case "polygon":
-      versionsFileName = "../../publish/polygon/prod/versions.json"; // the polygonProdFileNames path didn't work
-      balancerLpsFileName = "../../config/polygon-prod/dHEDGE Asset list - Polygon Balancer LP.json"; // the polygonProdFileNames path didn't work
+      versionsFileName = polygonProdFileNames.versionsFileName;
+      balancerLpsFileName = polygonProdFileNames.balancerConfigFileName;
       // CSV
       assetsFileName = polygonProdFileNames.assetsFileName;
       namesFileName = polygonProdFileNames.governanceNamesFileName;
@@ -136,8 +139,8 @@ const getEnvironmentFiles = async (environment: string) => {
       break;
 
     case "staging":
-      versionsFileName = "../../publish/polygon/staging/versions.json";
-      balancerLpsFileName = "../../config/polygon-staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
+      versionsFileName = polygonStagingFileNames.versionsFileName;
+      balancerLpsFileName = polygonStagingFileNames.balancerConfigFileName;
       // CSV
       assetsFileName = polygonStagingFileNames.assetsFileName;
       namesFileName = polygonStagingFileNames.governanceNamesFileName;

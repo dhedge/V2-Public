@@ -56,7 +56,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
 
     assert(assetPrice > 0, `${asset.assetName} price is not above 0`);
     assert(
-      assetType == parseInt(asset.assetType),
+      assetType == asset.assetType,
       `${asset.assetName} assetType mismatch. Deployed version ${version} assetType = ${asset.assetType}, Contract assetType = ${assetType}`,
     );
 

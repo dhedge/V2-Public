@@ -4,6 +4,7 @@ import { assert } from "chai";
 import csv from "csvtojson";
 
 import { toBytes32 } from "../Helpers";
+import { IContracts } from "../types";
 
 export const checkGovernance = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
   const { namesFileName, assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;
@@ -26,7 +27,7 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
       for (const csvAssetGuard of csvAssetGuards) {
         if (csvAssetGuard.guardName == name) {
           guardFound = true;
-          const deployedGuard = contracts[name];
+          const deployedGuard = contracts[name as keyof IContracts];
           const governanceAssetGuard = await governance.assetGuards(csvAssetGuard.assetType);
           const csvAssetGuardAddress = csvAssetGuard.guardAddress;
 
@@ -49,7 +50,7 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
       for (const csvContractGuard of csvContractGuards) {
         if (csvContractGuard.guardName == name) {
           guardFound = true;
-          const deployedGuard = contracts[name];
+          const deployedGuard = contracts[name as keyof IContracts];
           const governanceContractGuard = await governance.contractGuards(csvContractGuard.contractAddress);
           const csvContractGuardAddress = csvContractGuard.guardAddress;
           const guardDescription = csvContractGuard.description;
