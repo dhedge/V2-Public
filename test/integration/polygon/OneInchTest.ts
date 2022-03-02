@@ -23,7 +23,7 @@ describe("OneInch V3 Test", function () {
 
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
-    WMATIC = deployments.assets.WMATIC;
+    WMATIC = deployments.assets.WMATIC!;
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;
 

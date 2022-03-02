@@ -36,7 +36,27 @@ export type IDeployments = {
   uniV3AssetGuard: UniswapV3AssetGuard;
   uniswapV3RouterGuard: UniswapV3RouterGuard;
   assets: {
-    [name: string]: IERC20;
+    USDT: IERC20;
+    USDC: IERC20;
+    WETH: IERC20;
+    DAI: IERC20;
+
+    WMATIC?: IERC20;
+    SUSHI?: IERC20;
+    QUICK?: IERC20;
+    BALANCER?: IERC20;
+    SUSD?: IERC20;
+
+    SushiLPUSDCWETH?: IERC20;
+    QuickLPUSDCWETH?: IERC20;
+    BALANCERLP_STABLE?: IERC20;
+    BALANCERLP_WETH_BALANCER?: IERC20;
+
+    AMUSDC?: IERC20;
+    AMWETH?: IERC20;
+    VariableWETH?: IERC20;
+    VariableUSDT?: IERC20;
+    VariableDAI?: IERC20;
   };
 };
 
@@ -303,8 +323,8 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       assets: {
         WMATIC,
         USDT,
-        DAI,
         USDC,
+        DAI,
         WETH,
         SUSHI,
         QUICK,

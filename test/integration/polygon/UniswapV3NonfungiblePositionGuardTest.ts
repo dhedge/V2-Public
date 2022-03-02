@@ -87,7 +87,7 @@ describe("Uniswap V3 LP Test", function () {
     const token0 = assets.usdc;
     const token1 = assets.weth;
     const fee = 500;
-    const tick = await getCurrentTick(token0, token1, fee);
+    const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
     const tickSpacing = fee / 50;
     let mintSettings: UniV3LpMintSettings = {
       token0,
@@ -98,7 +98,9 @@ describe("Uniswap V3 LP Test", function () {
       tickLower: tick - tickSpacing,
       tickUpper: tick + tickSpacing,
     };
-    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("asset not enabled in pool");
+    await expect(
+      mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings),
+    ).to.revertedWith("asset not enabled in pool");
   });
 
   it("Can't mint position with unsupported assets", async () => {
@@ -106,7 +108,7 @@ describe("Uniswap V3 LP Test", function () {
     const token0 = assets.usdc;
     const token1 = assets.weth;
     const fee = 500;
-    const tick = await getCurrentTick(token0, token1, fee);
+    const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
     const tickSpacing = fee / 50;
     let mintSettings: UniV3LpMintSettings = {
       token0,
@@ -124,12 +126,16 @@ describe("Uniswap V3 LP Test", function () {
     // try to mint with unsupported token0
     mintSettings.token0 = assets.miMatic;
     mintSettings.token1 = assets.usdc;
-    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenA");
+    await expect(
+      mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings),
+    ).to.revertedWith("unsupported asset: tokenA");
 
     // try to mint with unsupported token1
     mintSettings.token0 = assets.usdc;
     mintSettings.token1 = assets.miMatic;
-    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("unsupported asset: tokenB");
+    await expect(
+      mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings),
+    ).to.revertedWith("unsupported asset: tokenB");
   });
 
   it("Can't mint position with invalid receiver address", async () => {
@@ -137,7 +143,7 @@ describe("Uniswap V3 LP Test", function () {
     const token0 = assets.usdc;
     const token1 = assets.weth;
     const fee = 500;
-    const tick = await getCurrentTick(token0, token1, fee);
+    const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
     const tickSpacing = fee / 50;
     await poolManagerLogicProxy
       .connect(manager)
@@ -169,7 +175,7 @@ describe("Uniswap V3 LP Test", function () {
     const token0 = assets.usdc;
     const token1 = assets.weth;
     const fee = 500;
-    const tick = await getCurrentTick(token0, token1, fee);
+    const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
     const tickSpacing = fee / 50;
     let mintSettings: UniV3LpMintSettings = {
       token0,
@@ -185,19 +191,21 @@ describe("Uniswap V3 LP Test", function () {
       .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
 
     // mint USDC-WETH LP position of 2000 USDC and 1 WETH
-    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+    await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings);
 
     mintSettings.tickLower = tick - tickSpacing * 2;
     mintSettings.tickUpper = tick + tickSpacing * 2;
-    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+    await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings);
 
     mintSettings.tickLower = tick - tickSpacing * 3;
     mintSettings.tickUpper = tick + tickSpacing * 3;
-    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+    await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings);
 
     mintSettings.tickLower = tick - tickSpacing * 4;
     mintSettings.tickUpper = tick + tickSpacing * 4;
-    await expect(mintLpAsPool(poolLogicProxy, manager, mintSettings)).to.revertedWith("too many uniswap v3 positions");
+    await expect(
+      mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings),
+    ).to.revertedWith("too many uniswap v3 positions");
   });
 
   it("Should mint a position", async () => {
@@ -205,7 +213,7 @@ describe("Uniswap V3 LP Test", function () {
     const token0 = assets.usdc;
     const token1 = assets.weth;
     const fee = 500;
-    const tick = await getCurrentTick(token0, token1, fee);
+    const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
     const tickSpacing = fee / 50;
     let mintSettings: UniV3LpMintSettings = {
       token0,
@@ -222,7 +230,7 @@ describe("Uniswap V3 LP Test", function () {
 
     // mint USDC-WETH LP position of 2000 USDC and 1 WETH
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-    await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+    await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings);
     const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
     checkAlmostSame(totalFundValueAfter, totalFundValueBefore, 0.000001);
@@ -234,7 +242,7 @@ describe("Uniswap V3 LP Test", function () {
       const token0 = assets.usdc;
       const token1 = assets.weth;
       const fee = 500;
-      const tick = await getCurrentTick(token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -249,7 +257,7 @@ describe("Uniswap V3 LP Test", function () {
       await poolManagerLogicProxy
         .connect(manager)
         .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings);
 
       tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(poolLogicProxy.address, 0);
     });

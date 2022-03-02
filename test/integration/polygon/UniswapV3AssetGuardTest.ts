@@ -78,7 +78,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.usdc;
       const token1 = assets.weth;
       const fee = 500;
-      const tick = await getCurrentTick(token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,
@@ -90,9 +90,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: tick + tickSpacing,
       };
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -120,7 +120,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.usdc;
       const token1 = assets.weth;
       const fee = 500;
-      const tick = await getCurrentTick(token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,
@@ -132,9 +132,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickUpper: tick - tickSpacing,
       };
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
 
       // Act
       const tokenPriceBefore = await poolLogicProxy.tokenPrice();
@@ -162,7 +162,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.usdc;
       const token1 = assets.weth;
       const fee = 500;
-      const tick = await getCurrentTick(token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,
@@ -173,9 +173,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: tick - tickSpacing,
         tickUpper: tick + tickSpacing,
       };
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
 
       // Act
@@ -204,7 +204,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.usdc;
       const token1 = assets.weth;
       const fee = 500;
-      const tick = await getCurrentTick(token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,
@@ -215,9 +215,9 @@ describe("UniswapV3AssetGuardTest", function () {
         tickLower: tick - tickSpacing * 2,
         tickUpper: tick - tickSpacing,
       };
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
-      await mintLpAsPool(poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+      await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
       await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
 
       // Act
@@ -251,7 +251,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.frax; // unsupported asset
       const token1 = assets.miMatic; // unsupported asset
       const fee = 500;
-      const tick = await getCurrentTick(token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,
@@ -293,7 +293,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.frax; // unsupported asset
       const token1 = assets.miMatic; // unsupported asset
       const fee = 500;
-      const tick = await getCurrentTick(token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,
@@ -333,7 +333,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.xsgd; // unsupported asset
       const token1 = assets.weth; // supported asset
       const fee = 500;
-      const currentTick = await getCurrentTick(token0, token1, fee);
+      const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,
@@ -373,7 +373,7 @@ describe("UniswapV3AssetGuardTest", function () {
       const token0 = assets.xsgd; // unsupported asset
       const token1 = assets.weth; // supported asset
       const fee = 500;
-      const currentTick = await getCurrentTick(token0, token1, fee);
+      const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
       const mintSettings: UniV3LpMintSettings = {
         token0,

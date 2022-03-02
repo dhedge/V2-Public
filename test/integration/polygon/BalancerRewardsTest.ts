@@ -24,7 +24,7 @@ describe("Balancer V2 Rewards Claiming Test", function () {
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;
     WETH = deployments.assets.WETH;
-    BALANCER = deployments.assets.BALANCER;
+    BALANCER = deployments.assets.BALANCER!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);

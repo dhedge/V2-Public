@@ -34,7 +34,7 @@ describe("DHedgePoolAggregator Test", function () {
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
-    WMATIC = deployments.assets.WMATIC;
+    WMATIC = deployments.assets.WMATIC!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 

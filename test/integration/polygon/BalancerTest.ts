@@ -37,9 +37,9 @@ describe("Balancer V2 Test", function () {
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;
     WETH = deployments.assets.WETH;
-    BALANCER = deployments.assets.BALANCER;
-    BALANCERLP_STABLE = deployments.assets.BALANCERLP_STABLE;
-    BALANCERLP_WETH_BALANCER = deployments.assets.BALANCERLP_WETH_BALANCER;
+    BALANCER = deployments.assets.BALANCER!;
+    BALANCERLP_STABLE = deployments.assets.BALANCERLP_STABLE!;
+    BALANCERLP_WETH_BALANCER = deployments.assets.BALANCERLP_WETH_BALANCER!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);

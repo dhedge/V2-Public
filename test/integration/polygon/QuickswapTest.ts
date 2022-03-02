@@ -35,8 +35,8 @@ describe("Quickswap V2 Test", function () {
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     WETH = deployments.assets.WETH;
-    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH;
-    QUICK = deployments.assets.QUICK;
+    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH!;
+    QUICK = deployments.assets.QUICK!;
 
     await deployments.assetHandler.removeAsset(assets.wmatic);
 

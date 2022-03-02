@@ -22,8 +22,8 @@ describe("WithdrawTo Test", function () {
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     WETH = deployments.assets.WETH;
-    QUICK = deployments.assets.QUICK;
-    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH;
+    QUICK = deployments.assets.QUICK!;
+    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);

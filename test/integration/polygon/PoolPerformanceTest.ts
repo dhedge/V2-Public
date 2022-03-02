@@ -37,8 +37,8 @@ describe("PoolPerformance", function () {
 
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
-    AMUSDC = deployments.assets.AMUSDC;
-    AMWETH = deployments.assets.AMWETH;
+    AMUSDC = deployments.assets.AMUSDC!;
+    AMWETH = deployments.assets.AMWETH!;
 
     await getAccountToken(units(6000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 

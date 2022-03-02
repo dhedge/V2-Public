@@ -48,10 +48,10 @@ describe("Aave Edge Test", function () {
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
     DAI = deployments.assets.DAI;
-    AMUSDC = deployments.assets.AMUSDC;
-    AMWETH = deployments.assets.AMWETH;
-    VariableWETH = deployments.assets.VariableWETH;
-    VariableDAI = deployments.assets.VariableDAI;
+    AMUSDC = deployments.assets.AMUSDC!;
+    AMWETH = deployments.assets.AMWETH!;
+    VariableWETH = deployments.assets.VariableWETH!;
+    VariableDAI = deployments.assets.VariableDAI!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);

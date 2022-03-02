@@ -44,10 +44,10 @@ describe("Sushiswap V2 Test", function () {
     assetHandler = deployments.assetHandler;
     sushiMiniChefV2Guard = deployments.sushiMiniChefV2Guard!;
     USDC = deployments.assets.USDC;
-    SUSHI = deployments.assets.SUSHI;
+    SUSHI = deployments.assets.SUSHI!;
     WETH = deployments.assets.WETH;
-    WMATIC = deployments.assets.WMATIC;
-    SushiLPUSDCWETH = deployments.assets.SushiLPUSDCWETH;
+    WMATIC = deployments.assets.WMATIC!;
+    SushiLPUSDCWETH = deployments.assets.SushiLPUSDCWETH!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 

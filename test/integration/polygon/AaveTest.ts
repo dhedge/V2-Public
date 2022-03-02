@@ -35,8 +35,8 @@ describe("Aave Test", function () {
     poolFactory = deployments.poolFactory;
     DAI = deployments.assets.DAI;
     USDC = deployments.assets.USDC;
-    WMATIC = deployments.assets.WMATIC;
-    AMUSDC = deployments.assets.AMUSDC;
+    WMATIC = deployments.assets.WMATIC!;
+    AMUSDC = deployments.assets.AMUSDC!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
   });
