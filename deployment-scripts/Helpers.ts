@@ -22,21 +22,21 @@ export const getTag = async () => {
   return result.stdout.trim();
 };
 
-export const hasDuplicates = async <T extends Object>(array: T[], key: keyof T) => {
-  const valueArr = array.map(function (item: any) {
-    return item[key];
-  });
+export const hasDuplicates = <T extends Object>(array: T[], key: keyof T) => {
+  const valueArr = array
+    .map(function (item: any) {
+      return item[key];
+    })
+    .filter(Boolean)
+    .map((x) => JSON.stringify(x).toLowerCase());
 
-  const isDuplicate = valueArr.some(function (item: any, idx: number) {
-    if (!item) return false;
-    const isDup = valueArr.indexOf(item) != idx;
-    if (isDup) {
-      console.warn("Duplicate found", item);
-    }
-    return isDup;
-  });
+  console.log(valueArr);
 
-  return isDuplicate;
+  const hasDup = new Set(valueArr).size != valueArr.length;
+  if (hasDup) {
+    console.log(valueArr.sort());
+  }
+  return hasDup;
 };
 
 export const isSameBytecode = (creationBytecode: string, runtimeBytecode: string) => {

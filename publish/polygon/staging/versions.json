@@ -1483,13 +1483,6 @@
           "oracleName": "BalancerV2LPAggregator"
         },
         {
-          "assetName": "Balancer LP USDC-dUSD",
-          "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
-          "assetType": 0,
-          "oracleAddress": "0xc3C893C224A95999DCa9Cd9bD264e87A6C01fC75",
-          "oracleName": "BalancerV2LPAggregator"
-        },
-        {
           "assetName": "dHEDGE DAO",
           "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
           "assetType": "0",
@@ -1600,13 +1593,6 @@
           "assetType": 0,
           "oracleAddress": "0x355Df4C5c2430C1dB86077aD88D33a5D7ACB90b7",
           "oracleName": "BalancerLpStablePoolAggregator"
-        },
-        {
-          "assetName": "Balancer LP BP-BTC-SP",
-          "assetAddress": "0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
-          "assetType": 0,
-          "oracleAddress": "0x988C3677C8AF84c2b7Ac1C6DC12b5648Fd54C190",
-          "oracleName": "BalancerV2LPAggregator"
         },
         {
           "assetName": "Toros ETHBEAR2X",
@@ -1751,6 +1737,20 @@
           "assetType": "2",
           "oracleAddress": "0x9d5b47AdA676Cee9f6190F833554d03B5054D0b3",
           "oracleName": "UniV2LPAggregator"
+        },
+        {
+          "assetName": "Balancer LP USDC-dUSD",
+          "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+          "assetType": 0,
+          "oracleAddress": "0x6b1163D89588F2480c5cA13E11Da2789B369DdD1",
+          "oracleName": "BalancerLpStablePoolAggregator"
+        },
+        {
+          "assetName": "Balancer LP WBTC-renBTC",
+          "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
+          "assetType": 0,
+          "oracleAddress": "0x80523D712a49eBE36A985F36625F7023b8137f5B",
+          "oracleName": "BalancerLpStablePoolAggregator"
         }
       ],
       "Oracles": [
@@ -1840,6 +1840,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 02 Mar 2022 01:11:26 GMT"
+    "lastUpdated": "Wed, 02 Mar 2022 04:38:23 GMT"
   }
 }

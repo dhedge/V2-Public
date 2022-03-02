@@ -1,14 +1,13 @@
 import csv from "csvtojson";
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { AssetHandlerInterface } from "../../../types/AssetHandler";
 import { hasDuplicates, proposeTx } from "../../Helpers";
 import { ICSVAsset, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
 import {
+  deployBalancerLpStablePoolAggregator,
+  deployBalancerV2LpAggregator,
   getOracle,
   IBalancerAsset,
-  deployBalancerV2LpAggregator,
-  deployBalancerLpStablePoolAggregator,
 } from "./assetsJobHelpers";
 
 // Todo: Combine csvAssets and Balancer Assets into one JSON file (move away from csv)
@@ -33,8 +32,8 @@ export const assetsJob: IJob<void> = async (
   const csvAssets: ICSVAsset[] = await csv().fromFile(fileName);
 
   // Check for any accidental duplicate addresses or price feeds in the CSV
-  if (await hasDuplicates(csvAssets, "assetAddress")) throw "Duplicate 'Address' field found in assets CSV";
-  if (await hasDuplicates(csvAssets, "oracleAddress")) throw "Duplicate 'oracleAddress' field found in assets CSV";
+  if (hasDuplicates(csvAssets, "assetAddress")) throw "Duplicate 'Address' field found in assets CSV";
+  if (hasDuplicates(csvAssets, "oracleAddress")) throw "Duplicate 'oracleAddress' field found in assets CSV";
 
   for (const csvAsset of [...csvAssets]) {
     // TODO: We don't redeploy any assets that are already configure in Versions.json if the configuration changes

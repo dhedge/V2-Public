@@ -1048,13 +1048,6 @@
           "assetType": 0,
           "oracleAddress": "0x67F44A03B6cffd2Fe1aC86a55eCd8e031cB94aDE",
           "oracleName": "BalancerV2LPAggregator"
-        },
-        {
-          "assetName": "Balancer LP USDC-dUSD",
-          "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
-          "assetType": 0,
-          "oracleAddress": "0xF85f2428EAD81959E612a4400e850e7bF22CD697",
-          "oracleName": "BalancerV2LPAggregator"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
@@ -1311,13 +1304,6 @@
           "assetAddress": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
           "assetType": 0,
           "oracleAddress": "0x67F44A03B6cffd2Fe1aC86a55eCd8e031cB94aDE",
-          "oracleName": "BalancerV2LPAggregator"
-        },
-        {
-          "assetName": "Balancer LP USDC-dUSD",
-          "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
-          "assetType": 0,
-          "oracleAddress": "0xF85f2428EAD81959E612a4400e850e7bF22CD697",
           "oracleName": "BalancerV2LPAggregator"
         },
         {
