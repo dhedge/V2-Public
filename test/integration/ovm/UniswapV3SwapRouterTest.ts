@@ -35,8 +35,6 @@ describe("Uniswap V3 Swap Router Test", function () {
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDC;
-
-    await deployments.uniswapV3RouterGuard.setSlippageLimit("30", "100"); // slippage limit to 30%
   });
 
   beforeEach(async function () {
@@ -76,7 +74,7 @@ describe("Uniswap V3 Swap Router Test", function () {
       [
         USDC.address, // from
         WETH.address, // to
-        500, // 0.05% fee
+        3000, // 0.3% fee
         poolLogicProxy.address,
         usdcSwapAmount,
         minAmountOut,
@@ -94,13 +92,13 @@ describe("Uniswap V3 Swap Router Test", function () {
   it("Should be able to swap WETH to USDC", async () => {
     const ethSwapAmount = units(1, 18); // 1 ETH
 
-    const minAmountOut = await getMinAmountOut(deployments, ethSwapAmount, WETH.address, USDC.address, 80);
+    const minAmountOut = await getMinAmountOut(deployments, ethSwapAmount, WETH.address, USDC.address);
 
     const exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
       [
         WETH.address, // from
         USDC.address, // to
-        500, // 0.05% fee
+        3000, // 0.3% fee
         poolLogicProxy.address,
         ethSwapAmount,
         minAmountOut,
@@ -118,13 +116,13 @@ describe("Uniswap V3 Swap Router Test", function () {
   it("Should be able to swap with Multicall", async () => {
     const ethSwapAmount = units(1, 18); // 1 ETH
 
-    const minAmountOut = await getMinAmountOut(deployments, ethSwapAmount, WETH.address, USDC.address, 80);
+    const minAmountOut = await getMinAmountOut(deployments, ethSwapAmount, WETH.address, USDC.address);
 
     const exactInputSingleCalldata = iV3SwapRouter.encodeFunctionData("exactInputSingle", [
       [
         WETH.address, // from
         USDC.address, // to
-        500, // 0.05% fee
+        3000, // 0.3% fee
         poolLogicProxy.address,
         ethSwapAmount,
         minAmountOut,
