@@ -1397,12 +1397,6 @@
           "oracleName": "UniV2LPAggregator"
         },
         {
-          "assetName": "Balancer",
-          "assetAddress": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
-          "assetType": "0",
-          "oracleAddress": "0xd106b538f2a868c28ca1ec7e298c3325e0251d66"
-        },
-        {
           "assetName": "Balancer LP WMATIC-USDC-WETH-BAL",
           "assetAddress": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
           "assetType": 0,

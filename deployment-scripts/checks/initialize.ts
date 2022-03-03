@@ -1,7 +1,11 @@
 import ProxyAdmin from "@openzeppelin/contracts/build/contracts/ProxyAdmin.json";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import fs from "fs";
 
+import { IVersions } from "../types";
 import { getTag } from "../Helpers";
+import { polygonProdFileNames, polygonStagingFileNames } from "../polygon/deployment-data";
+import { ovmProdFileNames } from "../ovm/deploy-data";
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 export type InitType = Awaited<ReturnType<typeof init>>;
@@ -17,14 +21,13 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
-    usdPriceAggregatorAssetsFileName,
   } = await getEnvironmentFiles(environment);
 
   const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress } =
     await getEnvironmentContracts(environment);
 
-  const versions = require(versionsFileName);
-  const balancerLps = balancerLpsFileName ? require(balancerLpsFileName) : [];
+  const versions: IVersions = JSON.parse(fs.readFileSync(versionsFileName, "utf-8"));
+  const balancerLps = balancerLpsFileName ? JSON.parse(fs.readFileSync(balancerLpsFileName, "utf-8")) : [];
   let version;
   const signer = (await ethers.getSigners())[0];
   if (!deployedVersion) {
@@ -55,28 +58,29 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
   const proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdmin.abi, signer);
   contracts["ProxyAdmin"] = proxyAdminAddress;
 
-  const poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy || contracts.PoolFactory.proxy);
+  const poolFactoryProxy = PoolFactoryProxy.attach(contracts.PoolFactoryProxy);
   const poolFactoryAddress = await proxyAdmin.getProxyImplementation(poolFactoryProxy.address);
   const poolFactory = PoolFactory.attach(poolFactoryAddress);
   contracts["PoolFactory"] = poolFactoryAddress;
 
-  const assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy || contracts.AssetHandler.proxy);
+  const assetHandlerProxy = AssetHandler.attach(contracts.AssetHandlerProxy);
   const assetHandlerAddress = await proxyAdmin.getProxyImplementation(assetHandlerProxy.address);
   const assetHandler = AssetHandler.attach(assetHandlerAddress);
   contracts["AssetHandler"] = assetHandlerAddress;
 
   const governance = Governance.attach(contracts.Governance);
   const sushiLPAssetGuard = contracts.SushiLPAssetGuard && SushiLPAssetGuard.attach(contracts.SushiLPAssetGuard);
-  const quickLPAssetGuard = contracts.SushiLPAssetGuard && QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
+  let quickLPAssetGuard;
+  if (contracts.QuickLPAssetGuard) {
+    quickLPAssetGuard = contracts.SushiLPAssetGuard && QuickLPAssetGuard.attach(contracts.QuickLPAssetGuard);
+  }
 
-  const poolLogic = PoolLogic.attach(
-    (contracts.PoolLogic && contracts.PoolLogic.implementation) || contracts.PoolLogic,
-  );
+  const poolLogic = PoolLogic.attach((contracts.PoolLogic && contracts.PoolLogic) || contracts.PoolLogic);
   const poolManagerLogic = PoolManagerLogic.attach(
-    (contracts.PoolManagerLogic && contracts.PoolManagerLogic.implementation) || contracts.PoolManagerLogic,
+    (contracts.PoolManagerLogic && contracts.PoolManagerLogic) || contracts.PoolManagerLogic,
   );
   const openAssetGuard = contracts.OpenAssetGuard && OpenAssetGuard.attach(contracts.OpenAssetGuard);
-  const oneInchV3Guard = contracts.OneInchV3Guard && OpenAssetGuard.attach(contracts.OneInchV3Guard);
+  const oneInchV4Guard = contracts.OneInchV4Guard && OpenAssetGuard.attach(contracts.OneInchV4Guard);
   const balancerV2Guard = contracts.BalancerV2Guard && OpenAssetGuard.attach(contracts.BalancerV2Guard);
 
   const IBalancerV2Vault = await artifacts.readArtifact("IBalancerV2Vault");
@@ -95,7 +99,6 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
     balancerLps,
     balancerV2Vault,
     namesFileName,
-    usdPriceAggregatorAssetsFileName,
     assetGuardsFileName,
     contractGuardsFileName,
     versions,
@@ -117,49 +120,42 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
     poolLogic,
     poolManagerLogic,
     openAssetGuard,
-    oneInchV3Guard,
+    oneInchV4Guard,
   };
 };
 
 const getEnvironmentFiles = async (environment: string) => {
-  let versionsFileName,
-    assetsFileName,
-    balancerLpsFileName,
-    namesFileName,
-    assetGuardsFileName,
-    contractGuardsFileName,
-    usdPriceAggregatorAssetsFileName;
+  let versionsFileName, assetsFileName, balancerLpsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
 
   switch (environment) {
     case "polygon":
-      versionsFileName = "../../publish/matic/versions.json";
-      balancerLpsFileName = "../../config/prod/dHEDGE Asset list - Polygon Balancer LP.json";
+      versionsFileName = polygonProdFileNames.versionsFileName;
+      balancerLpsFileName = polygonProdFileNames.balancerConfigFileName;
       // CSV
-      assetsFileName = "./config/prod/dHEDGE Assets list - Polygon.csv";
-      namesFileName = "./config/prod/dHEDGE Governance Names - Polygon.csv";
-      assetGuardsFileName = "./config/prod/dHEDGE Governance Asset Guards - Polygon.csv";
-      contractGuardsFileName = "./config/prod/dHEDGE Governance Contract Guards - Polygon.csv";
+      assetsFileName = polygonProdFileNames.assetsFileName;
+      namesFileName = polygonProdFileNames.governanceNamesFileName;
+      assetGuardsFileName = polygonProdFileNames.assetGuardsFileName;
+      contractGuardsFileName = polygonProdFileNames.contractGuardsFileName;
       break;
 
     case "staging":
-      versionsFileName = "../../publish/matic/staging-versions.json";
-      balancerLpsFileName = "../../config/staging/dHEDGE Asset list - Polygon Balancer LP Staging.json";
+      versionsFileName = polygonStagingFileNames.versionsFileName;
+      balancerLpsFileName = polygonStagingFileNames.balancerConfigFileName;
       // CSV
-      assetsFileName = "./config/staging/dHEDGE Assets list - Polygon Staging.csv";
-      namesFileName = "./config/staging/dHEDGE Governance Names - Polygon Staging.csv";
-      assetGuardsFileName = "./config/staging/dHEDGE Governance Asset Guards - Polygon Staging.csv";
-      contractGuardsFileName = "./config/staging/dHEDGE Governance Contract Guards - Polygon Staging.csv";
+      assetsFileName = polygonStagingFileNames.assetsFileName;
+      namesFileName = polygonStagingFileNames.governanceNamesFileName;
+      assetGuardsFileName = polygonStagingFileNames.assetGuardsFileName;
+      contractGuardsFileName = polygonStagingFileNames.contractGuardsFileName;
       break;
 
     case "ovm":
       versionsFileName = "../../publish/ovm/prod/versions.json";
       balancerLpsFileName = undefined;
       // CSV
-      assetsFileName = "./config/prod-ovm/assets/Chainlink Assets.csv";
-      usdPriceAggregatorAssetsFileName = "./config/prod-ovm/assets/USDPriceAggregator Assets.csv";
-      namesFileName = undefined;
-      assetGuardsFileName = "./config/prod-ovm/dHEDGE Governance Asset Guards.csv";
-      contractGuardsFileName = "./config/prod-ovm/dHEDGE Governance Contract Guards.csv";
+      assetsFileName = ovmProdFileNames.assetsFileName;
+      namesFileName = ovmProdFileNames.governanceNamesFileName;
+      assetGuardsFileName = ovmProdFileNames.assetGuardsFileName;
+      contractGuardsFileName = ovmProdFileNames.contractGuardsFileName;
       break;
 
     default:
@@ -172,7 +168,6 @@ const getEnvironmentFiles = async (environment: string) => {
     namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
-    usdPriceAggregatorAssetsFileName,
   };
 };
 
@@ -204,7 +199,7 @@ const getEnvironmentContracts = async (environment: string) => {
       break;
 
     default:
-      throw "Invalid environment input. Should be 'prod' or 'staging'.";
+      throw "Invalid environment input.";
   }
   return { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress };
 };

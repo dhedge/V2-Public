@@ -118,6 +118,7 @@ export interface IContracts {
   PoolPerformance: Address;
   DynamicBondsProxy?: Address;
   DynamicBonds?: Address;
+  ProxyAdmin?: Address;
 
   // Contract Guards
   SynthetixGuard?: Address;
@@ -149,7 +150,7 @@ export interface IContracts {
   DhedgeEasySwapper: Address;
   DhedgeSwapRouter: Address;
 
-  Assets?: ICSVAsset[];
+  Assets: ICSVAsset[];
 }
 
 type OracleName =

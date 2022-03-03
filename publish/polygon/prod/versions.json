@@ -1222,12 +1222,6 @@
           "oracleAddress": "0x7A6B761836012842d304C7e4d836F226e2b52eA9"
         },
         {
-          "assetName": "Balancer",
-          "assetAddress": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
-          "assetType": "0",
-          "oracleAddress": "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66"
-        },
-        {
           "assetName": "Balancer LP WMATIC-USDC-WETH-BAL",
           "assetAddress": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
           "assetType": "0",
