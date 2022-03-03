@@ -1566,14 +1566,15 @@
       "DhedgeEasySwapper": "0xC3e6d2811f669094d94F7589CaEa69672D93408e",
       "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
-      "EasySwapperGuard": "0xfB95299134E94466575c4Eff82037448be1AE4Ae"
+      "EasySwapperGuard": "0xfB95299134E94466575c4Eff82037448be1AE4Ae",
+      "DhedgeSwapRouter": "0x2Fa65bAA0D8E319568AbAda4099631044D79d7aA"
     },
     "network": {
-      "assetName": "matic",
+      "name": "matic",
       "chainId": 137,
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Mon, 28 Feb 2022 04:50:28 GMT"
+    "lastUpdated": "Thu, 03 Mar 2022 04:53:29 GMT"
   }
 }
