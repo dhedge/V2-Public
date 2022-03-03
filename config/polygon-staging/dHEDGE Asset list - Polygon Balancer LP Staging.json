@@ -1,12 +1,9 @@
 [
   {
     "name": "Balancer LP WMATIC-USDC-WETH-BAL",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
+    "oracleName": "BalancerV2LPAggregator",
     "address": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
     "data": {
       "pool": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
       "poolId": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875000100000000000000000002",
@@ -22,12 +19,9 @@
   },
   {
     "name": "Balancer LP WETH-BAL",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
+    "oracleName": "BalancerV2LPAggregator",
     "address": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0x7eb878107af0440f9e776f999ce053d277c8aca8",
     "data": {
       "pool": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
       "poolId": "0x7eb878107af0440f9e776f999ce053d277c8aca800020000000000000000002f",
@@ -38,12 +32,9 @@
   },
   {
     "name": "Balancer LP USDC-LINK-WETH-BAL-AAVE",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
+    "oracleName": "BalancerV2LPAggregator",
     "address": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0x36128d5436d2d70cab39c9af9cce146c38554ff0",
     "data": {
       "pool": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
       "poolId": "0x36128d5436d2d70cab39c9af9cce146c38554ff0000100000000000000000008",
@@ -60,12 +51,9 @@
   },
   {
     "name": "Balancer LP WBTC-USDC-WETH",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
+    "oracleName": "BalancerV2LPAggregator",
     "address": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0x03cd191f589d12b0582a99808cf19851e468e6b5",
     "data": {
       "pool": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
       "poolId": "0x03cd191f589d12b0582a99808cf19851e468e6b500010000000000000000000a",
@@ -80,12 +68,9 @@
   },
   {
     "name": "Balancer LP LINK-WETH-BAL-AAVE",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
+    "oracleName": "BalancerV2LPAggregator",
     "address": "0xce66904b68f1f070332cbc631de7ee98b650b499",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0xce66904b68f1f070332cbc631de7ee98b650b499",
     "data": {
       "pool": "0xce66904b68f1f070332cbc631de7ee98b650b499",
       "poolId": "0xce66904b68f1f070332cbc631de7ee98b650b499000100000000000000000009",
@@ -101,12 +86,9 @@
   },
   {
     "name": "Balancer LP WBTC-WETH",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
+    "oracleName": "BalancerV2LPAggregator",
     "address": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
     "data": {
       "pool": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
       "poolId": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae9500020000000000000000005a",
@@ -116,59 +98,39 @@
     }
   },
   {
-    "name": "Balancer LP USDC-dUSD",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
-    "address": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
-    "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
-    "data": {
-      "pool": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
-      "poolId": "0x5028497af0c9a54ea8c6d42a054c0341b9fc616800020000000000000000007b",
-      "tokens": ["0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", "0xbAe28251B2a4E621aA7e20538c06DEe010Bc06DE"],
-      "decimals": [6, 18],
-      "weights": [0.5, 0.5]
-    }
-  },
-  {
     "name": "Balancer LP BPSP-TUSD",
-    "symbol": "BLP",
-    "type": "balancerLpStablePool",
+    "oracleName": "BalancerLpStablePoolAggregator",
     "address": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
     "data": {
       "pool": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f"
     }
   },
   {
-    "name": "Balancer LP BP-BTC-SP",
-    "symbol": "BLP",
-    "type": "balancerLpToken",
-    "address": "0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
+    "name": "Balancer LP BPSP",
+    "oracleName": "BalancerLpStablePoolAggregator",
+    "address": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
     "data": {
-      "pool": "0xFeadd389a5c427952D8fdb8057D6C8ba1156cC56",
-      "poolId": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc5600020000000000000000001e",
-      "tokens": ["0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", "0xDBf31dF14B66535aF65AaC99C32e9eA844e14501"],
-      "decimals": [8, 8],
-      "weights": [0.5, 0.5]
+      "pool": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42"
     }
   },
   {
-    "name": "Balancer LP BPSP",
-    "symbol": "BLP",
-    "type": "balancerLpStablePool",
-    "address": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+    "name": "Balancer LP WBTC-renBTC",
+    "oracleName": "BalancerLpStablePoolAggregator",
+    "address": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
     "assetType": 0,
-    "precision": 18,
-    "link": "https://polygonscan.com/address/0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
     "data": {
-      "pool": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42"
+      "pool": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56"
+    }
+  },
+  {
+    "name": "Balancer LP USDC-dUSD",
+    "oracleName": "BalancerLpStablePoolAggregator",
+    "address": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+    "assetType": 0,
+    "data": {
+      "pool": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168"
     }
   }
 ]
