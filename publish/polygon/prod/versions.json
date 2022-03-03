@@ -1567,6 +1567,13 @@
           "assetType": 0,
           "oracleAddress": "0x98AcE0cA833de98B396497A906Da47D3ea711AC0",
           "oracleName": "BalancerLpStablePoolAggregator"
+        },
+        {
+          "assetName": "Uniswap V3 NFT Position Manager",
+          "assetAddress": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+          "assetType": "7",
+          "oracleAddress": "0x97e4C7204fc43627EeE4694C3Dd3c6819217E035",
+          "oracleName": "USDPriceAggregator"
         }
       ],
       "Oracles": [
@@ -1656,6 +1663,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 03 Mar 2022 05:56:39 GMT"
+    "lastUpdated": "Thu, 03 Mar 2022 22:40:32 GMT"
   }
 }

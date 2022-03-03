@@ -113,7 +113,6 @@ export const assetsJob: IJob<void> = async (
     }
   }
 
-  console.log("AssetsJob: Proposing New Assets");
   const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
   const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
   // We need to convert them into the
@@ -128,6 +127,7 @@ export const assetsJob: IJob<void> = async (
   const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHanderAssets]);
 
   if (newOracles.length > 0) {
+    console.log("AssetsJob: Proposing New Assets");
     await proposeTx(
       versions[config.oldTag].contracts.AssetHandlerProxy,
       addAssetsABI,
