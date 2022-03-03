@@ -3492,55 +3492,55 @@
             "contract": "Initializable",
             "label": "_initialized",
             "type": "t_bool",
-            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:25"
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
           },
           {
             "contract": "Initializable",
             "label": "_initializing",
             "type": "t_bool",
-            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:30"
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
           },
           {
             "contract": "ContextUpgradeable",
             "label": "__gap",
             "type": "t_array(t_uint256)50_storage",
-            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:31"
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
           },
           {
             "contract": "OwnableUpgradeable",
             "label": "_owner",
             "type": "t_address",
-            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:20"
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
           },
           {
             "contract": "OwnableUpgradeable",
             "label": "__gap",
             "type": "t_array(t_uint256)49_storage",
-            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:74"
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
           },
           {
             "contract": "PoolPerformance",
             "label": "poolInitialized",
             "type": "t_mapping(t_address,t_bool)",
-            "src": "contracts\\PoolPerformance.sol:72"
+            "src": "contracts/PoolPerformance.sol:72"
           },
           {
             "contract": "PoolPerformance",
             "label": "internalBalancesMap",
             "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
-            "src": "contracts\\PoolPerformance.sol:73"
+            "src": "contracts/PoolPerformance.sol:73"
           },
           {
             "contract": "PoolPerformance",
             "label": "internalValueFactorMap",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "contracts\\PoolPerformance.sol:77"
+            "src": "contracts/PoolPerformance.sol:77"
           },
           {
             "contract": "PoolPerformance",
             "label": "enabled",
             "type": "t_bool",
-            "src": "contracts\\PoolPerformance.sol:79"
+            "src": "contracts/PoolPerformance.sol:79"
           }
         ],
         "types": {
