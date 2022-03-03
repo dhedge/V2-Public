@@ -104,7 +104,6 @@ const getNonce = async (
   safeAddress: string,
   restartFromLastConfirmedNonce: boolean,
 ) => {
-  return 205;
   const lastConfirmedNonce = await safeSdk.getNonce();
   if (restartFromLastConfirmedNonce) {
     console.log("GetNonce: Starting from LAST CONFIRMED NONCE: ", lastConfirmedNonce);
