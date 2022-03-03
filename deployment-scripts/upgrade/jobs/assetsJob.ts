@@ -236,20 +236,12 @@ const deployBalancerV2LpAggregator = async (
 
   const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
 
-  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(
-    factory,
-    balancerV2VaultAddress,
-    info.pool,
-    info.tokens,
-    info.decimals,
-    info.weights.map((w: any) => new Decimal(w).mul(ether).toFixed(0)),
-    [
-      "50000000000000000", // maxPriceDeviation: 0.05
-      K,
-      "100000000", // powerPrecision
-      matrix, // approximationMatrix
-    ] as any,
-  );
+  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(factory, balancerV2VaultAddress, info.pool, [
+    "50000000000000000", // maxPriceDeviation: 0.05
+    K,
+    "100000000", // powerPrecision
+    matrix, // approximationMatrix
+  ] as any);
   await balancerV2LpAggregator.deployed();
   await tryVerify(
     hre,
@@ -259,9 +251,6 @@ const deployBalancerV2LpAggregator = async (
       factory,
       balancerV2VaultAddress,
       info.pool,
-      info.tokens,
-      info.decimals,
-      info.weights.map((w: any) => new Decimal(w).mul(ether).toFixed(0)),
       [
         "50000000000000000", // maxPriceDeviation: 0.05
         K,

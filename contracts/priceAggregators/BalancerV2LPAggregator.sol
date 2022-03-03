@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
-import "../interfaces/balancer/IBalancerPool.sol";
+import "../interfaces/balancer/IBalancerWeightedPool.sol";
 import "../interfaces/balancer/IBalancerV2Vault.sol";
 import "../interfaces/IERC20Extended.sol"; // includes decimals()
 import "../interfaces/IHasAssetInfo.sol";
@@ -32,7 +32,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
 
   address public factory;
   IBalancerV2Vault public vault;
-  IBalancerPool public pool;
+  IBalancerWeightedPool public pool;
   bytes32 public poolId;
   address[] public tokens;
   uint8[] public tokenDecimals;
@@ -42,19 +42,26 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
   constructor(
     address _factory,
     IBalancerV2Vault _vault,
-    IBalancerPool _pool,
-    address[] memory _tokens,
-    uint8[] memory _decimals,
-    uint256[] memory _weights,
+    IBalancerWeightedPool _pool,
     PriceDeviationParams memory _params
   ) {
     require(_factory != address(0), "_factory address cannot be 0");
     require(address(_vault) != address(0), "_vault address cannot be 0");
     require(address(_pool) != address(0), "_pool address cannot be 0");
 
-    uint256 length = _tokens.length;
-    require(length == _decimals.length, "Invalid decimals length");
-    require(length == _weights.length, "Invalid weights length");
+    factory = _factory;
+    vault = _vault;
+    pool = _pool;
+    poolId = _pool.getPoolId();
+
+    (tokens, , ) = vault.getPoolTokens(poolId);
+    weights = pool.getNormalizedWeights();
+
+    uint256 length = tokens.length;
+    for (uint256 i = 0; i < length; i++) {
+      tokenDecimals.push(IERC20Extended(tokens[i]).decimals());
+    }
+
     require(_params.maxPriceDeviation < BalancerLib.BONE, "Invalid Price Deviation");
     require(_params.powerPrecision >= 1 && _params.powerPrecision <= BalancerLib.BONE, "Invalid Power Precision");
     require(
@@ -62,13 +69,6 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
       "Invalid Approx Matrix"
     );
 
-    factory = _factory;
-    pool = _pool;
-    vault = _vault;
-    poolId = _pool.getPoolId();
-    tokens = _tokens;
-    tokenDecimals = _decimals;
-    weights = _weights;
     params = _params;
   }
 

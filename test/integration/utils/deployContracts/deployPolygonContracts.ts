@@ -44,20 +44,12 @@ const deployBalancerV2LpAggregator = async (
   }
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
-  return await BalancerV2LPAggregator.deploy(
-    poolFactory.address,
-    balancer.v2Vault,
-    info.pool,
-    info.tokens,
-    info.decimals,
-    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
-    {
-      maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
-      K,
-      powerPrecision: "100000000", // powerPrecision
-      approximationMatrix: matrix, // approximationMatrix
-    },
-  );
+  return await BalancerV2LPAggregator.deploy(poolFactory.address, balancer.v2Vault, info.pool, {
+    maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
+    K,
+    powerPrecision: "100000000", // powerPrecision
+    approximationMatrix: matrix, // approximationMatrix
+  });
 };
 
 export const deployPolygonContracts = async (): Promise<IDeployments> => {
@@ -150,7 +142,12 @@ export const deployPolygonContracts = async (): Promise<IDeployments> => {
   await assetHandler.addAssets([assetQuickLPWethUsdc]);
 
   // Deploy Balancer LP Aggregator
-  const balancerV2Aggregator = await deployBalancerV2LpAggregator(poolFactory, balancer.pools.stablePool);
+  const BalancerStablePoolAggregator = await ethers.getContractFactory("BalancerStablePoolAggregator");
+  const balancerV2Aggregator = await BalancerStablePoolAggregator.deploy(
+    poolFactory.address,
+    balancer.pools.stablePool.pool,
+  );
+  await balancerV2Aggregator.deployed();
   const balancerLpAsset = {
     asset: balancer.pools.stablePool.pool,
     assetType: 0,
