@@ -144,7 +144,7 @@ export const UniswapV3AssetGuardTest = (
     });
 
     describe.only("Pricing is manipulation resistant", () => {
-      [bothSupportedNonStablePair].forEach((pair) => {
+      [bothSupportedPair, bothSupportedNonStablePair].forEach((pair) => {
         it(`Using pair: ${pair.token0}-${pair.token1}`, async () => {
           await poolManagerLogicProxy.connect(manager).changeAssets(
             [
@@ -182,9 +182,9 @@ export const UniswapV3AssetGuardTest = (
           // Act
           const tokenPriceBefore = await poolLogicProxy.tokenPrice();
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
-          const [token0Balance, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
+          const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
           // We dump 2x extra liquidity on one side, draining the other side
-          const amountIn = token0Balance.mul(2);
+          const amountIn = token0Liquidity.mul(2);
           await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
           await approveToken(logicOwner, swapRouter.address, pair.token0, amountIn);
 
@@ -199,8 +199,14 @@ export const UniswapV3AssetGuardTest = (
           });
 
           // Assert
-          const [token0BalanceAfter, __] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
-          expect(token0BalanceAfter > token0Balance).to.be.true;
+          const [token0LiquidityAfter, __] = await getV3LpBalances(
+            uniswapV3.factory,
+            pair.token0,
+            pair.token1,
+            pair.fee,
+          );
+          // Probably need to assert here that the pool has been manipulated
+          expect(token0LiquidityAfter > token0Liquidity).to.be.true;
           const tokenPriceAfter = await poolLogicProxy.tokenPrice();
           console.log(tokenPriceBefore.toString(), tokenPriceAfter.toString(), tokenPriceAfter >= tokenPriceBefore);
           expect(tokenPriceAfter).to.be.closeTo(tokenPriceBefore, tokenPriceBefore.div(100) as unknown as number);
