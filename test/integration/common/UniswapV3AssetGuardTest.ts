@@ -46,11 +46,6 @@ export const UniswapV3AssetGuardTest = (
     token1Slot?: number;
   },
 ) => {
-  // assets[0] = weth // supported
-  // assets[1] = usdc // supported
-  // assets[2] = frax // unsupported
-  // assets[3] = miMatic // unsupported
-  // assets[4] = xsgd // unsupported
   describe("UniswapV3AssetGuardTest", function () {
     let logicOwner: SignerWithAddress, manager: SignerWithAddress;
     let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, assetHandler: AssetHandler;
