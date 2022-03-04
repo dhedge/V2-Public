@@ -1489,6 +1489,84 @@
           "assetType": 0,
           "oracleAddress": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8",
           "oracleName": "BalancerLpStablePoolAggregator"
+        },
+        {
+          "assetName": "DODO bird",
+          "assetAddress": "0xe4bf2864ebec7b7fdf6eeca9bacae7cdfdaffe78",
+          "assetType": "0",
+          "oracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
+        },
+        {
+          "assetName": "MAKER DAO",
+          "assetAddress": "0x6f7C932e7684666C9fd1d44527765433e01fF61d",
+          "assetType": "0",
+          "oracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
+        },
+        {
+          "assetName": "The Sandbox",
+          "assetAddress": "0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683",
+          "assetType": "0",
+          "oracleAddress": "0x3D49406EDd4D52Fb7FFd25485f32E073b529C924"
+        },
+        {
+          "assetName": "Graph Token",
+          "assetAddress": "0x5fe2b58c013d7601147dcdd68c143a77499f5531",
+          "assetType": "0",
+          "oracleAddress": "0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410"
+        },
+        {
+          "assetName": "Kyber Network Crystal v2",
+          "assetAddress": "0x1c954e8fe737f99f68fa1ccda3e51ebdb291948c",
+          "assetType": "0",
+          "oracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2"
+        },
+        {
+          "assetName": "Rai Reflex Index",
+          "assetAddress": "0x00e5646f60ac6fb446f621d146b6e1886f002905",
+          "assetType": "0",
+          "oracleAddress": "0x7f45273fD7C644714825345670414Ea649b50b16"
+        },
+        {
+          "assetName": "Sushi LP MKR-WETH",
+          "assetAddress": "0xbf61e1d82bd440cb9da11d325c046f029a663890",
+          "assetType": "2",
+          "oracleAddress": "0xd3Cf43962499d32a9a157Fe749A0Da3ae471e64e",
+          "oracleName": "UniV2LPAggregator"
+        },
+        {
+          "assetName": "Sushi LP MKR-DAI",
+          "assetAddress": "0x5e8f882dd0d062e2d81bcbe4ec61d7aeabf80c74",
+          "assetType": "2",
+          "oracleAddress": "0x39a464c7816dDbbc4AAE6b22955cf7B6aE0bDA7f",
+          "oracleName": "UniV2LPAggregator"
+        },
+        {
+          "assetName": "Sushi LP GRT-WETH",
+          "assetAddress": "0x1ceda73c034218255f50ef8a2c282e6b4c301d60",
+          "assetType": "2",
+          "oracleAddress": "0xa6b4980bF9C31820D72AdF7f1D3886049859eEA8",
+          "oracleName": "UniV2LPAggregator"
+        },
+        {
+          "assetName": "Sushi LP USDC-miMATIC",
+          "assetAddress": "0x8ceed6619aeffd5476315b90eb081485da2aebca",
+          "assetType": "2",
+          "oracleAddress": "0xF69836cb5eE2E5988848C541c31c0321F1Df210d",
+          "oracleName": "UniV2LPAggregator"
+        },
+        {
+          "assetName": "Balancer LP WBTC-renBTC",
+          "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
+          "assetType": 0,
+          "oracleAddress": "0xffF58887963f23B54BdC14F688385b76281845b3",
+          "oracleName": "BalancerLpStablePoolAggregator"
+        },
+        {
+          "assetName": "Balancer LP USDC-dUSD",
+          "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+          "assetType": 0,
+          "oracleAddress": "0x98AcE0cA833de98B396497A906Da47D3ea711AC0",
+          "oracleName": "BalancerLpStablePoolAggregator"
         }
       ],
       "Oracles": [
@@ -1578,6 +1656,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 03 Mar 2022 05:42:13 GMT"
+    "lastUpdated": "Thu, 03 Mar 2022 05:56:39 GMT"
   }
 }
