@@ -80,15 +80,22 @@ const getOracleAddress = async (
         csvAsset.oracleAddress,
       );
       synthPriceAggregator.deployed();
+      await tryVerify(
+        hre,
+        synthPriceAggregator.address,
+        "contracts/priceAggregators/SynthPriceAggregator.sol:SynthPriceAggregator",
+        [susdPriceAggregator.oracleAddress, csvAsset.oracleAddress],
+      );
       return synthPriceAggregator.address;
     case "DeployedOracle":
       if (csvAsset.oracleAddress) {
         return csvAsset.oracleAddress;
       }
       const deployedOracle = versions[latestVersion].contracts.Oracles?.find(
-        (oracle) => oracle.assetAddress == csvAsset.assetAddress,
+        (oracle) => oracle.assetAddress.toLowerCase() == csvAsset.assetAddress.toLowerCase(),
       );
       if (!deployedOracle) {
+        console.log(versions[latestVersion].contracts.Oracles);
         throw new Error("assetsJob.getOracleAddress.DeployedOracle: No oracle found in versions.json");
       }
 

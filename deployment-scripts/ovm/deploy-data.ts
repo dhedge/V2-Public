@@ -1,4 +1,4 @@
-import { assets, synthetix } from "../../test/integration/ovm/ovm-data";
+import { assets, synthetix, uniswapV3 } from "../../config/chainData/ovm-data";
 import { IAddresses, IFileNames } from "../types";
 
 export const ovmProdAddresses: IAddresses = {
@@ -24,6 +24,9 @@ export const ovmProdAddresses: IAddresses = {
   sUSDAddress: "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
   sUSDDaiUniV3PoolAddress: "0xadb35413ec50e0afe41039eac8b930d313e94fa4",
   daiChainlinkOracleAddress: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
+
+  uniswapV3RouterAddress: uniswapV3.router,
+  uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
 };
 
 export const ovmProdFileNames: IFileNames = {

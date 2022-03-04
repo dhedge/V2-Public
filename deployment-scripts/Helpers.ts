@@ -22,13 +22,11 @@ export const getTag = async () => {
   return result.stdout.trim();
 };
 
-export const hasDuplicates = <T extends Object>(array: T[], key: keyof T) => {
+export const hasDuplicates = <T extends Object>(array: T[], keyCreator: (v: T) => string) => {
   const valueArr = array
-    .map(function (item: any) {
-      return item[key];
-    })
+    .map(keyCreator)
     .filter(Boolean)
-    .map((x) => JSON.stringify(x).toLowerCase());
+    .map((x) => x.toLowerCase());
 
   const dups = valueArr.filter((item, index) => valueArr.indexOf(item) !== index);
 
