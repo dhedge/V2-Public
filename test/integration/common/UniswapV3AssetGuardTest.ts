@@ -206,10 +206,27 @@ export const UniswapV3AssetGuardTest = (
             pair.fee,
           );
           // Probably need to assert here that the pool has been manipulated
-          expect(token0LiquidityAfter > token0Liquidity).to.be.true;
           const tokenPriceAfter = await poolLogicProxy.tokenPrice();
-          console.log(tokenPriceBefore.toString(), tokenPriceAfter.toString(), tokenPriceAfter >= tokenPriceBefore);
+          console.log(
+            "tokenPrice before",
+            tokenPriceBefore.toString(),
+            "tokenPrice after",
+            tokenPriceAfter.toString(),
+            "after higher ",
+            tokenPriceAfter >= tokenPriceBefore,
+          );
+          console.log(
+            "liq before: ",
+            token0Liquidity.toString(),
+            "liq after: ",
+            token0LiquidityAfter.toString(),
+            "more after",
+            token0LiquidityAfter.gt(token0Liquidity),
+          );
+          383532382811441966124;
+          1150597148434325898372;
           expect(tokenPriceAfter).to.be.closeTo(tokenPriceBefore, tokenPriceBefore.div(100) as unknown as number);
+          expect(token0LiquidityAfter.gt(token0Liquidity)).to.be.true;
         });
       });
     });

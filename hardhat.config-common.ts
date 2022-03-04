@@ -61,7 +61,7 @@ export default {
     // JHM: During integration tests we sometimes get
     // ProviderError: Errors encountered in param 1: Invalid value "0x02e5dda5c51be531e95b2e5b22389b23cd39a929c1a594052162ebe432d897e9" supplied to : QUANTITY
     // Usually retrying the test works
-    retries: 2,
+    retries: 0,
   },
   abiExporter: {
     path: "./abi",
