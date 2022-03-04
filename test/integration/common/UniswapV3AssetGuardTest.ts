@@ -184,7 +184,8 @@ export const UniswapV3AssetGuardTest = (
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
           const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
           // We dump 2x extra liquidity on one side, draining the other side
-          const amountIn = token0Liquidity.mul(2);
+          const LIQUIDITY_MULTIPLIER = 10;
+          const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
           await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
           await approveToken(logicOwner, swapRouter.address, pair.token0, amountIn);
 
