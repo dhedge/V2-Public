@@ -20,7 +20,8 @@ UniswapV3AssetGuardTest(
     token1: assets.dai,
     amount0: units(1, 8).div(100),
     amount1: units(400),
-    token1Slot: 2,
+    token0Slot: assetsBalanceOfSlot.wbtc,
+    token1Slot: assetsBalanceOfSlot.dai,
   },
   {
     fee: 3000,
@@ -28,5 +29,16 @@ UniswapV3AssetGuardTest(
     token1: assets.usdc,
     amount0: units(1, 8).div(100),
     amount1: units(400, 6),
+    token0Slot: assetsBalanceOfSlot.wbtc,
+    token1Slot: assetsBalanceOfSlot.usdc,
+  },
+  {
+    fee: 3000,
+    token0: assets.weth,
+    token1: assets.usdc,
+    amount0: units(1),
+    amount1: units(2000, 6),
+    token0Slot: assetsBalanceOfSlot.weth,
+    token1Slot: assetsBalanceOfSlot.usdc,
   },
 );

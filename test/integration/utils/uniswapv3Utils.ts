@@ -13,6 +13,7 @@ import {
 } from "../../../types";
 import { getAccountToken } from "./getAccountTokens";
 import { Address } from "../../../deployment-scripts/types";
+import { IUniswapV3Pool__factory } from "../../../types/factories/IUniswapV3Pool__factory";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
@@ -131,4 +132,25 @@ export const getCurrentTick = async (
 const convertCurrentTick = (currentTick: number, fee: number): number => {
   const tickMod = currentTick % (fee / 50);
   return currentTick - tickMod;
+};
+
+/**
+ * Gets tick of Uniswap v3 pool
+ * @param token0 Token0 of pool
+ * @param token1 Token1 of pool
+ * @param fee Fee of pool
+ * @returns Current rounded tick of pool
+ */
+export const getV3LpBalances = async (
+  uniswapV3Factory: Address,
+  token0: Address,
+  token1: Address,
+  fee: number,
+): Promise<[BigNumber, BigNumber]> => {
+  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
+  const poolAddress = await factory.getPool(token0, token1, fee);
+  const Token0 = await ethers.getContractAt("IERC20", token0);
+  const Token1 = await ethers.getContractAt("IERC20", token1);
+
+  return [await Token0.balanceOf(poolAddress), await Token1.balanceOf(poolAddress)];
 };

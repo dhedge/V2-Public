@@ -1,15 +1,27 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import type { Wallet, BigNumber } from "ethers";
 import { expect } from "chai";
+import type { BigNumber, Wallet } from "ethers";
 import { ethers } from "hardhat";
 import { describe, it } from "mocha";
-
-import { INonfungiblePositionManager, PoolFactory, PoolLogic, AssetHandler, IERC20 } from "../../../types";
+import {
+  AssetHandler,
+  INonfungiblePositionManager,
+  IV3SwapRouter,
+  PoolFactory,
+  PoolLogic,
+  PoolManagerLogic,
+} from "../../../types";
 import { createFund } from "../utils/createFund";
 import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
-import { getAccountToken } from "../utils/getAccountTokens";
+import { approveToken, getAccountToken } from "../utils/getAccountTokens";
+import {
+  getCurrentTick,
+  getV3LpBalances,
+  mintLpAsPool,
+  mintLpAsUser,
+  UniV3LpMintSettings,
+} from "../utils/uniswapv3Utils";
 import { utils } from "../utils/utils";
-import { getCurrentTick, mintLpAsPool, mintLpAsUser, UniV3LpMintSettings } from "../utils/uniswapv3Utils";
 
 export const UniswapV3AssetGuardTest = (
   network: NETWORK,
@@ -33,8 +45,8 @@ export const UniswapV3AssetGuardTest = (
     token1: string;
     amount0: BigNumber;
     amount1: BigNumber;
-    token0Slot?: number;
-    token1Slot?: number;
+    token0Slot: number;
+    token1Slot: number;
   },
   token0UnsupportedPair: {
     fee: number;
@@ -42,13 +54,25 @@ export const UniswapV3AssetGuardTest = (
     token1: string;
     amount0: BigNumber;
     amount1: BigNumber;
-    token0Slot?: number;
-    token1Slot?: number;
+    token0Slot: number;
+    token1Slot: number;
+  },
+  bothSupportedNonStablePair: {
+    fee: number;
+    token0: string;
+    token1: string;
+    amount0: BigNumber;
+    amount1: BigNumber;
+    token0Slot: number;
+    token1Slot: number;
   },
 ) => {
   describe("UniswapV3AssetGuardTest", function () {
     let logicOwner: SignerWithAddress, manager: SignerWithAddress;
-    let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, assetHandler: AssetHandler;
+    let poolFactory: PoolFactory,
+      poolLogicProxy: PoolLogic,
+      assetHandler: AssetHandler,
+      poolManagerLogicProxy: PoolManagerLogic;
     let deployments: IDeployments;
     let nonfungiblePositionManager: INonfungiblePositionManager;
     let user: Wallet;
@@ -79,6 +103,7 @@ export const UniswapV3AssetGuardTest = (
         bothSupportedPair.token1,
         bothSupportedPair.token1Slot,
       );
+
       const funds = await createFund(
         poolFactory,
         logicOwner,
@@ -91,6 +116,7 @@ export const UniswapV3AssetGuardTest = (
         0, // 0% performance fee
       );
       poolLogicProxy = funds.poolLogicProxy;
+      poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
       await (
         await ethers.getContractAt("IERC20", bothSupportedPair.token0)
@@ -100,6 +126,7 @@ export const UniswapV3AssetGuardTest = (
         await ethers.getContractAt("IERC20", bothSupportedPair.token1)
       ).approve(poolLogicProxy.address, bothSupportedPair.amount1.mul(3));
       await poolLogicProxy.deposit(bothSupportedPair.token1, bothSupportedPair.amount1.mul(3));
+
       // We don't use a getSigners() signer here because they're shared across all integration tests
       user = ethers.Wallet.createRandom().connect(ethers.provider);
       await logicOwner.sendTransaction({
@@ -114,6 +141,71 @@ export const UniswapV3AssetGuardTest = (
 
     afterEach(async () => {
       await utils.evmRestoreSnap(snapId);
+    });
+
+    describe.only("Pricing is manipulation resistant", () => {
+      [bothSupportedNonStablePair].forEach((pair) => {
+        it(`Using pair: ${pair.token0}-${pair.token1}`, async () => {
+          await poolManagerLogicProxy.connect(manager).changeAssets(
+            [
+              { asset: pair.token0, isDeposit: true },
+              { asset: pair.token1, isDeposit: true },
+            ],
+            [],
+          );
+
+          await getAccountToken(pair.amount0, logicOwner.address, pair.token0, pair.token0Slot);
+          await getAccountToken(pair.amount1, logicOwner.address, pair.token1, pair.token1Slot);
+
+          await approveToken(logicOwner, poolLogicProxy.address, pair.token0, pair.amount0);
+          await poolLogicProxy.deposit(pair.token0, pair.amount0);
+          await approveToken(logicOwner, poolLogicProxy.address, pair.token1, pair.amount1);
+          await poolLogicProxy.deposit(pair.token1, pair.amount1);
+
+          // Mint Uniswap v3 LP
+          const token0 = pair.token0;
+          const token1 = pair.token1;
+          const fee = pair.fee;
+          const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+          const tickSpacing = fee / 50;
+          const mintSettings: UniV3LpMintSettings = {
+            token0,
+            token1,
+            fee,
+            amount0: pair.amount0,
+            amount1: pair.amount1,
+            tickLower: tick - tickSpacing,
+            tickUpper: tick + tickSpacing,
+          };
+          await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+
+          // Act
+          const tokenPriceBefore = await poolLogicProxy.tokenPrice();
+          const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
+          const [token0Balance, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
+          // We dump 2x extra liquidity on one side, draining the other side
+          const amountIn = token0Balance.mul(2);
+          await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
+          await approveToken(logicOwner, swapRouter.address, pair.token0, amountIn);
+
+          await swapRouter.exactInputSingle({
+            tokenIn: pair.token0,
+            tokenOut: pair.token1,
+            amountIn,
+            amountOutMinimum: 0,
+            fee: pair.fee,
+            recipient: logicOwner.address,
+            sqrtPriceLimitX96: 0,
+          });
+
+          // Assert
+          const [token0BalanceAfter, __] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
+          expect(token0BalanceAfter > token0Balance).to.be.true;
+          const tokenPriceAfter = await poolLogicProxy.tokenPrice();
+          console.log(tokenPriceBefore.toString(), tokenPriceAfter.toString(), tokenPriceAfter >= tokenPriceBefore);
+          expect(tokenPriceAfter).to.be.closeTo(tokenPriceBefore, tokenPriceBefore.div(100) as unknown as number);
+        });
+      });
     });
 
     // What we want to test here is if a nft position gets transferred directly

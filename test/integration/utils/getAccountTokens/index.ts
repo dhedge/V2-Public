@@ -1,5 +1,6 @@
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 export const toBytes32 = (bn: BigNumber) => {
   return ethers.utils.hexlify(ethers.utils.zeroPad(bn.toHexString(), 32));
@@ -21,4 +22,8 @@ export const getAccountTokens = async (amount: BigNumber, tokenAddress: string, 
   for (const signer of signers) {
     await getAccountToken(amount, signer.address, tokenAddress, slot);
   }
+};
+
+export const approveToken = async (as: SignerWithAddress, address: string, token: string, amount: BigNumber) => {
+  return (await ethers.getContractAt("IERC20", token)).connect(as).approve(address, amount);
 };
