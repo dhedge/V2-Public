@@ -10,8 +10,6 @@ UniswapV3PureTest(uniswapV3, {
   amount1: units(2900, 6),
   token0Slot: assetsBalanceOfSlot.weth,
   token1Slot: assetsBalanceOfSlot.usdc,
-  token0PriceInUSD: 2_834,
-  token1PriceInUSD: 1,
   token0Decimals: 18,
   token1Decimals: 6,
 });

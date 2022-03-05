@@ -14,6 +14,7 @@ import {
 import { getAccountToken } from "./getAccountTokens";
 import { Address } from "../../../deployment-scripts/types";
 import { IUniswapV3Pool__factory } from "../../../types/factories/IUniswapV3Pool__factory";
+import { units } from "../../TestHelpers";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
@@ -121,6 +122,24 @@ export const getCurrentTick = async (
   const currentTick = parseInt((await pool.slot0()).tick);
   const tick = convertCurrentTick(currentTick, fee);
   return tick;
+};
+
+//ethereum.stackexchange.com/questions/98685/computing-the-uniswap-v3-pair-price-from-q64-96-number
+export const getCurrentPrice = async (
+  uniswapV3Factory: Address,
+  token0: Address,
+  token1: Address,
+  fee: number,
+): Promise<BigNumber> => {
+  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
+  const poolAddress = await factory.getPool(token0, token1, fee);
+  if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
+  const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);
+  const sqrtPriceX96: BigNumber = (await pool.slot0()).sqrtPriceX96;
+  return sqrtPriceX96
+    .mul(sqrtPriceX96)
+    .mul(units(1))
+    .shr(96 * 2);
 };
 
 /**

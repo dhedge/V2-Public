@@ -6,7 +6,13 @@ import { describe, it } from "mocha";
 import { INonfungiblePositionManager, IV3SwapRouter } from "../../../types";
 import { units } from "../../TestHelpers";
 import { approveToken, getAccountToken, getBalance } from "../utils/getAccountTokens";
-import { getCurrentTick, getV3LpBalances, mintLpAsUser, UniV3LpMintSettings } from "../utils/uniswapv3Utils";
+import {
+  getCurrentPrice,
+  getCurrentTick,
+  getV3LpBalances,
+  mintLpAsUser,
+  UniV3LpMintSettings,
+} from "../utils/uniswapv3Utils";
 import { utils } from "../utils/utils";
 
 export const UniswapV3PureTest = (
@@ -23,8 +29,6 @@ export const UniswapV3PureTest = (
     amount1: BigNumber;
     token0Slot: number;
     token1Slot: number;
-    token0PriceInUSD: number;
-    token1PriceInUSD: number;
     token0Decimals: number;
     token1Decimals: number;
   },
@@ -73,6 +77,10 @@ export const UniswapV3PureTest = (
           const token1 = pair.token1;
           const fee = pair.fee;
           const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+          console.log("Current Tick", tick);
+          const token0Price = await getCurrentPrice(uniswapV3.factory, token0, token1, fee);
+          const token0PriceInUSD = token0Price.div(units(1, pair.token1Decimals));
+          console.log("Token0 Price in Token1", token0PriceInUSD.toString());
           const tickSpacing = fee / 50;
           const mintSettings: UniV3LpMintSettings = {
             token0,
@@ -90,16 +98,16 @@ export const UniswapV3PureTest = (
           const costToMintToken0 = token0BalanceBeforeLP.sub(await getBalance(logicOwner.address, token0));
           const costToMintToken1 = token1BalanceBeforeLP.sub(await getBalance(logicOwner.address, token1));
 
-          const price = (amount: BigNumber, decimals: number, price: number) => {
+          const price = (amount: BigNumber, decimals: number, price: BigNumber) => {
             return amount.mul(price).div(ethers.BigNumber.from(10).pow(decimals));
           };
 
-          const priceLp0 = price(costToMintToken0, pair.token0Decimals, pair.token0PriceInUSD);
+          const priceLp0 = price(costToMintToken0, pair.token0Decimals, token0PriceInUSD);
           console.log("Token0 amount0", pair.amount0.toString());
           console.log("Token0 actualc", costToMintToken0.toString());
           console.log("Token0 price$$", priceLp0.toString());
 
-          const priceLp1 = price(costToMintToken1, pair.token1Decimals, pair.token1PriceInUSD);
+          const priceLp1 = price(costToMintToken1, pair.token1Decimals, ethers.BigNumber.from(1));
           console.log("Token1 amount0", pair.amount1.toString());
           console.log("Token1 actualc", costToMintToken1.toString());
           console.log("Token1 price$$", priceLp1.toString());
@@ -107,15 +115,16 @@ export const UniswapV3PureTest = (
           console.log("Total Cost", lpCost.toString());
 
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
+
           const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
 
           const LIQUIDITY_MULTIPLIER = 10;
-          console.log("Getting one side of pair", LIQUIDITY_MULTIPLIER, "x", token0Liquidity.toString());
+          console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
           const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
           await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
           await approveToken(logicOwner, swapRouter.address, pair.token0, amountIn);
 
-          console.log("Dumping one side of pair");
+          console.log("Exchanging", LIQUIDITY_MULTIPLIER, "x token0 liquidity for token1");
           await swapRouter.exactInputSingle({
             tokenIn: pair.token0,
             tokenOut: pair.token1,
@@ -152,10 +161,10 @@ export const UniswapV3PureTest = (
           const returnedToUser0 = (await getBalance(logicOwner.address, token0)).sub(token0BalanceBeforeDecreaseLP);
           const returnedToUser1 = (await getBalance(logicOwner.address, token1)).sub(token1BalanceBeforeDecreaseLP);
 
-          const returnedLp0 = price(returnedToUser0, pair.token0Decimals, pair.token0PriceInUSD);
+          const returnedLp0 = price(returnedToUser0, pair.token0Decimals, token0PriceInUSD);
           console.log("Token0 Returned", returnedToUser0.toString(), returnedLp0.toString());
 
-          const returnedLp1 = price(returnedToUser1, pair.token1Decimals, pair.token1PriceInUSD);
+          const returnedLp1 = price(returnedToUser1, pair.token1Decimals, ethers.BigNumber.from(1));
           console.log("Token1 Returned", returnedToUser1.toString(), returnedLp1.toString());
 
           const totalReturned = returnedLp0.add(returnedLp1);
