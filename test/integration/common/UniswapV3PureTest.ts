@@ -88,8 +88,8 @@ export const UniswapV3PureTest = (
             fee,
             amount0: pair.amount0,
             amount1: pair.amount1,
-            tickLower: tick - tickSpacing * 1000,
-            tickUpper: tick + tickSpacing * 1000,
+            tickLower: tick - tickSpacing * 5000,
+            tickUpper: tick + tickSpacing * 5000,
           };
           const token0BalanceBeforeLP = await getBalance(logicOwner.address, token0);
           const token1BalanceBeforeLP = await getBalance(logicOwner.address, token1);
@@ -170,7 +170,7 @@ export const UniswapV3PureTest = (
           const totalReturned = returnedLp0.add(returnedLp1);
           console.log("Total Returned", totalReturned.toString());
           console.log("Cost:Return", lpCost.toString(), ":", totalReturned.toString());
-          console.log("LPer Made money?", lpCost < totalReturned);
+          console.log("LPer Made money?", lpCost.lt(totalReturned));
         }).timeout(30000);
       });
     });
