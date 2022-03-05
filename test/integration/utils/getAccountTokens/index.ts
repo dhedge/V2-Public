@@ -27,3 +27,7 @@ export const getAccountTokens = async (amount: BigNumber, tokenAddress: string, 
 export const approveToken = async (as: SignerWithAddress, address: string, token: string, amount: BigNumber) => {
   return (await ethers.getContractAt("IERC20", token)).connect(as).approve(address, amount);
 };
+
+export const getBalance = async (address: string, token: string) => {
+  return (await ethers.getContractAt("IERC20", token)).balanceOf(address);
+};

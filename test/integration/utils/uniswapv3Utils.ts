@@ -30,7 +30,7 @@ export interface UniV3LpMintSettings {
 
 export const mintLpAsUser = async (
   nonfungiblePositionManager: INonfungiblePositionManager,
-  user: Wallet,
+  user: Wallet | SignerWithAddress,
   mintSettings: UniV3LpMintSettings,
   assetSlots = [0, 0],
 ) => {
