@@ -109,16 +109,12 @@ export const UniswapV3PureTest = (
         };
 
         const priceLp0 = price(costToMintToken0, pair.token0Decimals, token0PriceInUSD);
-        console.log("Token0 amount0", pair.amount0.toString());
-        console.log("Token0 actualc", costToMintToken0.toString());
-        console.log("Token0 price$$", priceLp0.toString());
-
         const priceLp1 = price(costToMintToken1, pair.token1Decimals, ethers.BigNumber.from(1));
-        console.log("Token1 amount0", pair.amount1.toString());
-        console.log("Token1 actualc", costToMintToken1.toString());
-        console.log("Token1 price$$", priceLp1.toString());
         const lpCost = priceLp0.add(priceLp1);
-        console.log("Total Cost", lpCost.toString());
+        console.log("Token0:Token1 in", pair.amount0.toString(), ":", pair.amount1.toString());
+        console.log("Token0:Token1 taken", costToMintToken0.toString(), ":", costToMintToken1.toString());
+        console.log("Token0:Token1 cost$$", priceLp0.toString(), ":", priceLp1.toString());
+        console.log("Total LP Cost", lpCost.toString());
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
@@ -189,8 +185,8 @@ export const UniswapV3PureTest = (
         const totalReturned = returnedLp0.add(returnedLp1);
         console.log("Total Returned", totalReturned.toString());
         console.log("Cost:Return", lpCost.toString(), ":", totalReturned.toString());
-        console.log("LPer Made money?", lpCost < totalReturned);
-        expect(lpCost < totalReturned).to.be.true;
+        console.log("LPer lost money?", lpCost.gt(totalReturned));
+        expect(lpCost.gt(totalReturned)).to.be.false;
       }).timeout(30000);
 
       it("Swing trade (aka flashloan) cannot steal from lpers", async () => {
@@ -224,16 +220,12 @@ export const UniswapV3PureTest = (
         };
 
         const priceLp0 = price(costToMintToken0, pair.token0Decimals, token0PriceInUSD);
-        console.log("Token0 amount0", pair.amount0.toString());
-        console.log("Token0 actualc", costToMintToken0.toString());
-        console.log("Token0 price$$", priceLp0.toString());
-
         const priceLp1 = price(costToMintToken1, pair.token1Decimals, ethers.BigNumber.from(1));
-        console.log("Token1 amount0", pair.amount1.toString());
-        console.log("Token1 actualc", costToMintToken1.toString());
-        console.log("Token1 price$$", priceLp1.toString());
         const lpCost = priceLp0.add(priceLp1);
-        console.log("Total Cost", lpCost.toString());
+        console.log("Token0:Token1 in", pair.amount0.toString(), ":", pair.amount1.toString());
+        console.log("Token0:Token1 taken", costToMintToken0.toString(), ":", costToMintToken1.toString());
+        console.log("Token0:Token1 cost$$", priceLp0.toString(), ":", priceLp1.toString());
+        console.log("Total LP Cost", lpCost.toString());
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
@@ -328,7 +320,7 @@ export const UniswapV3PureTest = (
         const totalReturned = returnedLp0.add(returnedLp1);
         console.log("Total Returned", totalReturned.toString());
         console.log("Cost:Return", lpCost.toString(), ":", totalReturned.toString());
-        console.log("LPer Made money?", lpCost < totalReturned);
+        console.log("LPer lost money?", lpCost.gt(totalReturned));
         console.log(
           "The difference here is the fees around:",
           pair.fee / 10000,
@@ -336,7 +328,225 @@ export const UniswapV3PureTest = (
           (pair.fee * 2) / 10000,
           "% of the volume traded through the pool",
         );
-        expect(lpCost < totalReturned).to.be.true;
+        expect(lpCost.gt(totalReturned)).to.be.false;
+      }).timeout(30000);
+
+      it.only("LP out of range, only token0", async () => {
+        const pair = bothSupportedNonStablePair;
+        const tick = await getCurrentTickImproved(uniswapV3.factory, pair);
+        console.log("Current Tick", tick);
+        const token0Price = await getCurrentPrice(uniswapV3.factory, pair);
+        const token0PriceInUSD = token0Price.div(units(1, pair.token1Decimals));
+        console.log("Token0 Price in Token1", token0Price.toString());
+        console.log("Token0 Price in Token1 whole unit", token0PriceInUSD.toString());
+
+        // out of range
+        // Will create LP position with only token0 (WETH)
+        const tickRange = {
+          tickLower: tick + 50000,
+          tickUpper: 887270,
+        };
+        console.log("Tick range", tickRange);
+        const mintSettings: UniV3LpMintSettings = { ...pair, ...tickRange };
+        const token0BalanceBeforeLP = await getBalance(logicOwner.address, pair.token0);
+        const token1BalanceBeforeLP = await getBalance(logicOwner.address, pair.token1);
+        await mintLpAsUser(nonfungiblePositionManager, logicOwner, mintSettings);
+
+        const costToMintToken0 = token0BalanceBeforeLP.sub(await getBalance(logicOwner.address, pair.token0));
+        const costToMintToken1 = token1BalanceBeforeLP.sub(await getBalance(logicOwner.address, pair.token1));
+
+        const price = (amount: BigNumber, decimals: number, price: BigNumber) => {
+          return amount.mul(price).div(ethers.BigNumber.from(10).pow(decimals));
+        };
+
+        const priceLp0 = price(costToMintToken0, pair.token0Decimals, token0PriceInUSD);
+        const priceLp1 = price(costToMintToken1, pair.token1Decimals, ethers.BigNumber.from(1));
+        const lpCost = priceLp0.add(priceLp1);
+        console.log("Token0:Token1 in", pair.amount0.toString(), ":", pair.amount1.toString());
+        console.log("Token0:Token1 taken", costToMintToken0.toString(), ":", costToMintToken1.toString());
+        console.log("Token0:Token1 cost$$", priceLp0.toString(), ":", priceLp1.toString());
+        console.log("Total LP Cost", lpCost.toString());
+
+        const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
+
+        const [token0Liquidity, _] = await getV3LpBalancesImproved(uniswapV3.factory, pair);
+
+        const LIQUIDITY_MULTIPLIER = 10;
+        console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
+        const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
+        await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
+        await approveToken(logicOwner, swapRouter.address, pair.token0, amountIn);
+
+        console.log("Exchanging", LIQUIDITY_MULTIPLIER, "x token0 liquidity for token1");
+        await swapRouter.exactInputSingle({
+          tokenIn: pair.token0,
+          tokenOut: pair.token1,
+          amountIn,
+          amountOutMinimum: 0,
+          fee: pair.fee,
+          recipient: logicOwner.address,
+          sqrtPriceLimitX96: 0,
+        });
+
+        const token0PriceAfterSwap = await getCurrentPrice(uniswapV3.factory, pair);
+        const token0PriceInUSDAfterSwap = token0PriceAfterSwap.div(units(1, pair.token1Decimals));
+        // This is proving the swap mangled the ratios and changed the tick
+        console.log("Tick after swap", await getCurrentTickImproved(uniswapV3.factory, pair));
+        console.log("Uniswap price of Token0 in token1 after exchange", token0PriceAfterSwap.toString());
+        // this can be < 1 whole unit and therefore will be 0 as a bigNumber
+        console.log(
+          "Uniswap price of Token0 in token1 after exchange whole unit",
+          token0PriceInUSDAfterSwap.toString(),
+        );
+        console.log("^^The price has not changed anywhere else except on uniswap");
+        console.log("Chainlink price is still", token0PriceInUSD.toString());
+
+        expect(await nonfungiblePositionManager.balanceOf(logicOwner.address)).to.equal(1);
+        const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(logicOwner.address, 0);
+        const position = await nonfungiblePositionManager.positions(tokenId);
+
+        const token0BalanceBeforeDecreaseLP = await getBalance(logicOwner.address, pair.token0);
+        const token1BalanceBeforeDecreaseLP = await getBalance(logicOwner.address, pair.token1);
+
+        console.log("Decreasing liquidity");
+        await nonfungiblePositionManager.connect(logicOwner).decreaseLiquidity({
+          liquidity: position.liquidity,
+          tokenId: tokenId,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: Math.floor(Date.now() / 1000 + 100000000),
+        });
+        console.log("Collecting");
+        await nonfungiblePositionManager.connect(logicOwner).collect({
+          tokenId,
+          recipient: logicOwner.address,
+          amount0Max: units(1000000),
+          amount1Max: units(1000000),
+        });
+
+        const returnedToUser0 = (await getBalance(logicOwner.address, pair.token0)).sub(token0BalanceBeforeDecreaseLP);
+        const returnedToUser1 = (await getBalance(logicOwner.address, pair.token1)).sub(token1BalanceBeforeDecreaseLP);
+
+        const returnedLp0 = price(returnedToUser0, pair.token0Decimals, token0PriceInUSD);
+        console.log("Token0 Returned", returnedToUser0.toString(), returnedLp0.toString());
+
+        const returnedLp1 = price(returnedToUser1, pair.token1Decimals, ethers.BigNumber.from(1));
+        console.log("Token1 Returned", returnedToUser1.toString(), returnedLp1.toString());
+
+        const totalReturned = returnedLp0.add(returnedLp1);
+        console.log("Total Returned", totalReturned.toString());
+        console.log("Cost:Return", lpCost.toString(), ":", totalReturned.toString());
+        console.log("LPer lost money?", lpCost.gt(totalReturned));
+        expect(lpCost.gt(totalReturned)).to.be.false;
+      }).timeout(30000);
+
+      it("LP out of range, only token1", async () => {
+        const pair = bothSupportedNonStablePair;
+        const tick = await getCurrentTickImproved(uniswapV3.factory, pair);
+        console.log("Current Tick", tick);
+        const token0Price = await getCurrentPrice(uniswapV3.factory, pair);
+        const token0PriceInUSD = token0Price.div(units(1, pair.token1Decimals));
+        console.log("Token0 Price in Token1", token0Price.toString());
+        console.log("Token0 Price in Token1 whole unit", token0PriceInUSD.toString());
+
+        // out of range
+        // Will create LP position with only token1 (USDC)
+        const tickRange = {
+          tickLower: -887270,
+          tickUpper: tick - 50000,
+        };
+        console.log("Tick range", tickRange);
+        const mintSettings: UniV3LpMintSettings = { ...pair, ...tickRange };
+        const token0BalanceBeforeLP = await getBalance(logicOwner.address, pair.token0);
+        const token1BalanceBeforeLP = await getBalance(logicOwner.address, pair.token1);
+        await mintLpAsUser(nonfungiblePositionManager, logicOwner, mintSettings);
+
+        const costToMintToken0 = token0BalanceBeforeLP.sub(await getBalance(logicOwner.address, pair.token0));
+        const costToMintToken1 = token1BalanceBeforeLP.sub(await getBalance(logicOwner.address, pair.token1));
+
+        const price = (amount: BigNumber, decimals: number, price: BigNumber) => {
+          return amount.mul(price).div(ethers.BigNumber.from(10).pow(decimals));
+        };
+
+        const priceLp0 = price(costToMintToken0, pair.token0Decimals, token0PriceInUSD);
+        const priceLp1 = price(costToMintToken1, pair.token1Decimals, ethers.BigNumber.from(1));
+        const lpCost = priceLp0.add(priceLp1);
+        console.log("Token0:Token1 in", pair.amount0.toString(), ":", pair.amount1.toString());
+        console.log("Token0:Token1 taken", costToMintToken0.toString(), ":", costToMintToken1.toString());
+        console.log("Token0:Token1 cost$$", priceLp0.toString(), ":", priceLp1.toString());
+        console.log("Total LP Cost", lpCost.toString());
+
+        const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
+
+        const [token0Liquidity, _] = await getV3LpBalancesImproved(uniswapV3.factory, pair);
+
+        const LIQUIDITY_MULTIPLIER = 10;
+        console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
+        const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
+        await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
+        await approveToken(logicOwner, swapRouter.address, pair.token0, amountIn);
+
+        console.log("Exchanging", LIQUIDITY_MULTIPLIER, "x token0 liquidity for token1");
+        await swapRouter.exactInputSingle({
+          tokenIn: pair.token0,
+          tokenOut: pair.token1,
+          amountIn,
+          amountOutMinimum: 0,
+          fee: pair.fee,
+          recipient: logicOwner.address,
+          sqrtPriceLimitX96: 0,
+        });
+
+        const token0PriceAfterSwap = await getCurrentPrice(uniswapV3.factory, pair);
+        const token0PriceInUSDAfterSwap = token0PriceAfterSwap.div(units(1, pair.token1Decimals));
+        // This is proving the swap mangled the ratios and changed the tick
+        console.log("Tick after swap", await getCurrentTickImproved(uniswapV3.factory, pair));
+        console.log("Uniswap price of Token0 in token1 after exchange", token0PriceAfterSwap.toString());
+        // this can be < 1 whole unit and therefore will be 0 as a bigNumber
+        console.log(
+          "Uniswap price of Token0 in token1 after exchange whole unit",
+          token0PriceInUSDAfterSwap.toString(),
+        );
+        console.log("^^The price has not changed anywhere else except on uniswap");
+        console.log("Chainlink price is still", token0PriceInUSD.toString());
+
+        expect(await nonfungiblePositionManager.balanceOf(logicOwner.address)).to.equal(1);
+        const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(logicOwner.address, 0);
+        const position = await nonfungiblePositionManager.positions(tokenId);
+
+        const token0BalanceBeforeDecreaseLP = await getBalance(logicOwner.address, pair.token0);
+        const token1BalanceBeforeDecreaseLP = await getBalance(logicOwner.address, pair.token1);
+
+        console.log("Decreasing liquidity");
+        await nonfungiblePositionManager.connect(logicOwner).decreaseLiquidity({
+          liquidity: position.liquidity,
+          tokenId: tokenId,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: Math.floor(Date.now() / 1000 + 100000000),
+        });
+        console.log("Collecting");
+        await nonfungiblePositionManager.connect(logicOwner).collect({
+          tokenId,
+          recipient: logicOwner.address,
+          amount0Max: units(1000000),
+          amount1Max: units(1000000),
+        });
+
+        const returnedToUser0 = (await getBalance(logicOwner.address, pair.token0)).sub(token0BalanceBeforeDecreaseLP);
+        const returnedToUser1 = (await getBalance(logicOwner.address, pair.token1)).sub(token1BalanceBeforeDecreaseLP);
+
+        const returnedLp0 = price(returnedToUser0, pair.token0Decimals, token0PriceInUSD);
+        console.log("Token0 Returned", returnedToUser0.toString(), returnedLp0.toString());
+
+        const returnedLp1 = price(returnedToUser1, pair.token1Decimals, ethers.BigNumber.from(1));
+        console.log("Token1 Returned", returnedToUser1.toString(), returnedLp1.toString());
+
+        const totalReturned = returnedLp0.add(returnedLp1);
+        console.log("Total Returned", totalReturned.toString());
+        console.log("Cost:Return", lpCost.toString(), ":", totalReturned.toString());
+        console.log("LPer lost money?", lpCost.gt(totalReturned));
+        expect(lpCost.gt(totalReturned)).to.be.false;
       }).timeout(30000);
     });
   });
