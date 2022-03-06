@@ -190,3 +190,10 @@ export const getV3LpBalances = async (
 
   return [await Token0.balanceOf(poolAddress), await Token1.balanceOf(poolAddress)];
 };
+
+export const getV3LpBalancesImproved = async (
+  uniswapV3Factory: Address,
+  params: { token0: Address; token1: Address; fee: number },
+): Promise<[BigNumber, BigNumber]> => {
+  return getV3LpBalances(uniswapV3Factory, params.token0, params.token1, params.fee);
+};

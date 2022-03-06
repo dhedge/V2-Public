@@ -10,11 +10,11 @@ import {
   getCurrentPrice,
   getCurrentTickImproved,
   getV3LpBalances,
+  getV3LpBalancesImproved,
   mintLpAsUser,
   UniV3LpMintSettings,
 } from "../utils/uniswapv3Utils";
 import { utils } from "../utils/utils";
-import { addOrReplaceGuardInFile } from "../../../deployment-scripts/upgrade/jobs/helpers";
 
 export const UniswapV3PureTest = (
   uniswapV3: {
@@ -96,10 +96,7 @@ export const UniswapV3PureTest = (
           tickUpper: 887270,
         };
         console.log("Tick range", tickRange);
-        const mintSettings: UniV3LpMintSettings = {
-          ...pair,
-          ...tickRange,
-        };
+        const mintSettings: UniV3LpMintSettings = { ...pair, ...tickRange };
         const token0BalanceBeforeLP = await getBalance(logicOwner.address, pair.token0);
         const token1BalanceBeforeLP = await getBalance(logicOwner.address, pair.token1);
         await mintLpAsUser(nonfungiblePositionManager, logicOwner, mintSettings);
@@ -125,7 +122,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
+        const [token0Liquidity, _] = await getV3LpBalancesImproved(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
@@ -213,10 +210,7 @@ export const UniswapV3PureTest = (
           tickUpper: 887270,
         };
         console.log("Tick range", tickRange);
-        const mintSettings: UniV3LpMintSettings = {
-          ...pair,
-          ...tickRange,
-        };
+        const mintSettings: UniV3LpMintSettings = { ...pair, ...tickRange };
 
         const token0BalanceBeforeLP = await getBalance(logicOwner.address, pair.token0);
         const token1BalanceBeforeLP = await getBalance(logicOwner.address, pair.token1);
