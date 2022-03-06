@@ -124,13 +124,30 @@ export const getCurrentTick = async (
   return tick;
 };
 
+/**
+ * Gets tick of Uniswap v3 pool
+ * @param token0 Token0 of pool
+ * @param token1 Token1 of pool
+ * @param fee Fee of pool
+ * @returns Current rounded tick of pool
+ */
+export const getCurrentTickImproved = async (
+  uniswapV3Factory: Address,
+  params: {
+    token0: Address;
+    token1: Address;
+    fee: number;
+  },
+): Promise<number> => {
+  return getCurrentTick(uniswapV3Factory, params.token0, params.token1, params.fee);
+};
+
 //ethereum.stackexchange.com/questions/98685/computing-the-uniswap-v3-pair-price-from-q64-96-number
 export const getCurrentPrice = async (
   uniswapV3Factory: Address,
-  token0: Address,
-  token1: Address,
-  fee: number,
+  params: { token0: Address; token1: Address; fee: number },
 ): Promise<BigNumber> => {
+  const { token0, token1, fee } = params;
   const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
   const poolAddress = await factory.getPool(token0, token1, fee);
   if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
