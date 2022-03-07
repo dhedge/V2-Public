@@ -4,48 +4,55 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { describe, it } from "mocha";
 
-import { INonfungiblePositionManager, PoolFactory, PoolLogic, AssetHandler, IERC20 } from "../../../types";
+import { INonfungiblePositionManager, PoolFactory, PoolLogic, AssetHandler } from "../../../types";
 import { createFund } from "../utils/createFund";
 import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { utils } from "../utils/utils";
 import { getCurrentTick, mintLpAsPool, mintLpAsUser, UniV3LpMintSettings } from "../utils/uniswapv3Utils";
 
-export const UniswapV3AssetGuardTest = (
-  network: NETWORK,
+interface IUniswapV3AssetGuardTestParameters {
+  network: NETWORK;
   uniswapV3: {
     factory: string;
     router: string;
     nonfungiblePositionManager: string;
-  },
-  bothSupportedPair: {
-    fee: number;
-    token0: string;
-    token1: string;
-    amount0: BigNumber;
-    amount1: BigNumber;
-    token0Slot: number;
-    token1Slot: number;
-  },
-  bothUnsupportedPair: {
-    fee: number;
-    token0: string;
-    token1: string;
-    amount0: BigNumber;
-    amount1: BigNumber;
-    token0Slot?: number;
-    token1Slot?: number;
-  },
-  token0UnsupportedPair: {
-    fee: number;
-    token0: string;
-    token1: string;
-    amount0: BigNumber;
-    amount1: BigNumber;
-    token0Slot?: number;
-    token1Slot?: number;
-  },
-) => {
+  };
+  pairs: {
+    bothSupportedPair: {
+      fee: number;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+      token0Slot: number;
+      token1Slot: number;
+    };
+    bothUnsupportedPair: {
+      fee: number;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+      token0Slot?: number;
+      token1Slot?: number;
+    };
+    token0UnsupportedPair: {
+      fee: number;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+      token0Slot?: number;
+      token1Slot?: number;
+    };
+  };
+}
+
+export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParameters) => {
+  const { network, uniswapV3, pairs } = params;
+  const { bothSupportedPair, bothUnsupportedPair, token0UnsupportedPair } = pairs;
+
   describe("UniswapV3AssetGuardTest", function () {
     let logicOwner: SignerWithAddress, manager: SignerWithAddress;
     let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, assetHandler: AssetHandler;
