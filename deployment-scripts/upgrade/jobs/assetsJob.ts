@@ -1,10 +1,16 @@
-import Decimal from "decimal.js";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { checkAsset, checkBalancerLpAsset, getAggregator, hasDuplicates, proposeTx, tryVerify } from "../../Helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
-import fs from "fs";
 import csv from "csvtojson";
+import fs from "fs";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { hasDuplicates, proposeTx } from "../../Helpers";
+import { ICSVAsset, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
+import {
+  deployBalancerLpStablePoolAggregator,
+  deployBalancerV2LpAggregator,
+  getOracle,
+  IBalancerAsset,
+} from "./assetsJobHelpers";
 
+// Todo: Combine csvAssets and Balancer Assets into one JSON file (move away from csv)
 export const assetsJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
@@ -13,10 +19,9 @@ export const assetsJob: IJob<void> = async (
   filenames: { assetsFileName?: string; balancerConfigFileName?: string },
   addresses: { balancerV2VaultAddress?: string } & IProposeTxProperties,
 ) => {
+  console.log("Running Assets Job");
   const ethers = hre.ethers;
-  let assetHandlerAssets = [];
-  const poolFactoryProxy = versions[config.oldTag].contracts.PoolFactoryProxy;
-  const poolFactory = await ethers.getContractAt("PoolFactory", poolFactoryProxy);
+  let newOracles: ICSVAsset[] = [];
 
   // look up to check if csvAsset is in the current versions
   const fileName = filenames.assetsFileName;
@@ -24,131 +29,48 @@ export const assetsJob: IJob<void> = async (
     throw new Error("No assetFileName configured");
   }
 
-  const csvAssets = await csv().fromFile(fileName);
+  const csvAssets: ICSVAsset[] = await csv().fromFile(fileName);
 
   // Check for any accidental duplicate addresses or price feeds in the CSV
-  if (await hasDuplicates(csvAssets, "Address")) throw "Duplicate 'Address' field found in assets CSV";
-  if (await hasDuplicates(csvAssets, "ChainlinkPriceFeed"))
-    throw "Duplicate 'ChainlinkPriceFeed' field found in assets CSV";
+  if (hasDuplicates(csvAssets, "assetAddress")) throw "Duplicate 'Address' field found in assets CSV";
+  if (hasDuplicates(csvAssets, "oracleAddress")) throw "Duplicate 'oracleAddress' field found in assets CSV";
 
-  const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
-  for (const csvAsset of csvAssets) {
-    const foundInVersions = await checkAsset(
-      csvAsset,
-      versions[config.oldTag].contracts,
-      poolFactory,
-      assetHandlerAssets,
+  for (const csvAsset of [...csvAssets]) {
+    // TODO: We don't redeploy any assets that are already configure in Versions.json if the configuration changes
+    // For now, to redeploy an asset, delete it manually from versions.json.
+    const foundInVersions = versions[config.newTag].contracts.Assets?.some(
+      (x) => x.assetAddress.toLowerCase() == csvAsset.assetAddress.toLowerCase(),
     );
 
     if (!foundInVersions) {
-      const assetType = csvAsset.AssetType;
-      let usdPriceAggregatorAddress;
-
-      switch (assetType) {
-        case "2":
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-
-          // Deploy Sushi LP Aggregator
-          console.log("Deploying ", csvAsset["AssetName"]);
-          const sushiLPAggregator = await SushiLPAggregator.deploy(
-            csvAsset.Address,
-            versions[config.oldTag].contracts.PoolFactoryProxy,
-          );
-          await sushiLPAggregator.deployed();
-          console.log(`${csvAsset["AssetName"]} SushiLPAggregator deployed at ${sushiLPAggregator.address}`);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: sushiLPAggregator.address,
-            AggregatorName: csvAsset.AggregatorName,
-          });
-          break;
-        case "3":
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-
-          if (!csvAsset["ChainlinkPriceFeed"]) {
-            usdPriceAggregatorAddress = await deployUsdPriceAggregator(hre);
-          } else {
-            // Use configured USDPriceAggregator
-            usdPriceAggregatorAddress = csvAsset["ChainlinkPriceFeed"];
-          }
-
-          console.log("USDPriceAggregator deployed at", usdPriceAggregatorAddress);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: usdPriceAggregatorAddress,
-            AggregatorName: csvAsset.AggregatorName,
-          });
-          break;
-        case "7":
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-
-          if (!csvAsset["ChainlinkPriceFeed"]) {
-            usdPriceAggregatorAddress = await deployUsdPriceAggregator(hre);
-          } else {
-            // Use configured USDPriceAggregator
-            usdPriceAggregatorAddress = csvAsset["ChainlinkPriceFeed"];
-          }
-
-          console.log("USDPriceAggregator deployed at", usdPriceAggregatorAddress);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: usdPriceAggregatorAddress,
-            AggregatorName: csvAsset.AggregatorName,
-          });
-          break;
-        default:
-          console.log("Will deploy asset", csvAsset["AssetName"]);
-          if (!config.execute) {
-            break;
-          }
-          console.log(`Adding new asset to AssetHandler: ${csvAsset["AssetName"]}`);
-          const aggregator = await getAggregator(hre, csvAsset);
-          assetHandlerAssets.push({
-            name: csvAsset["AssetName"],
-            asset: csvAsset.Address,
-            assetType: assetType,
-            aggregator: aggregator,
-            AggregatorName: csvAsset.AggregatorName,
-          });
+      console.log("Will Deploy Asset:", csvAsset);
+      if (config.execute) {
+        const oracle = await getOracle(hre, csvAsset, versions);
+        newOracles.push(oracle);
       }
     }
   }
 
   // Should refactor not to use require and add types for what a balancerLp is
-  const balancerLps = filenames.balancerConfigFileName
+  const balancerLps: IBalancerAsset[] = filenames.balancerConfigFileName
     ? JSON.parse(fs.readFileSync(filenames.balancerConfigFileName, "utf-8"))
     : [];
+  const poolFactoryProxy = versions[config.oldTag].contracts.PoolFactoryProxy;
 
   for (const balancerLp of balancerLps) {
     if (!addresses.balancerV2VaultAddress) {
       throw new Error("No balancerV2VaultAddress configured");
     }
-    const foundInVersions = await checkBalancerLpAsset(
-      balancerLp,
-      versions[config.oldTag].contracts,
-      poolFactory,
-      assetHandlerAssets,
+
+    const foundInVersions = versions[config.newTag].contracts.Assets?.some(
+      (x) => balancerLp.address.toLowerCase() == x.assetAddress.toLowerCase(),
     );
+
     if (!foundInVersions) {
       console.log("Will deploy Balancer V2 LP asset", balancerLp.name);
       if (config.execute) {
         // Weighted pool
-        if (balancerLp.type === "balancerLpToken") {
+        if (balancerLp.oracleName === "BalancerV2LPAggregator") {
           // Deploy Balancer LP Aggregator
           console.log("Deploying ", balancerLp.name);
           const balancerV2Aggregator = await deployBalancerV2LpAggregator(
@@ -157,18 +79,18 @@ export const assetsJob: IJob<void> = async (
             balancerLp.data,
             hre,
           );
-          console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator.address}`);
-          assetHandlerAssets.push({
-            name: balancerLp.name,
-            asset: balancerLp.data.pool,
+          console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator}`);
+          newOracles.push({
+            assetName: balancerLp.name,
+            assetAddress: balancerLp.data.pool,
             assetType: balancerLp.assetType,
-            aggregator: balancerV2Aggregator.address,
-            AggregatorName: "BalancerV2LPAggregator",
+            oracleAddress: balancerV2Aggregator,
+            oracleName: "BalancerV2LPAggregator",
           });
         }
 
         // Stable pool
-        if (balancerLp.type === "balancerLpStablePool") {
+        if (balancerLp.oracleName === "BalancerLpStablePoolAggregator") {
           // Deploy Balancer LP Stable Pool Aggregator
           console.log("Deploying ", balancerLp.name);
           const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
@@ -177,25 +99,35 @@ export const assetsJob: IJob<void> = async (
             balancerLp.data.pool,
           );
           console.log(
-            `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator.address}`,
+            `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator}`,
           );
-          assetHandlerAssets.push({
-            name: balancerLp.name,
-            asset: balancerLp.data.pool,
+          newOracles.push({
+            assetName: balancerLp.name,
+            assetAddress: balancerLp.data.pool,
             assetType: balancerLp.assetType,
-            aggregator: balancerLpStablePoolAggregator.address,
-            aggregatorName: "BalancerLpStablePoolAggregator",
+            oracleAddress: balancerLpStablePoolAggregator,
+            oracleName: "BalancerLpStablePoolAggregator",
           });
         }
       }
     }
   }
 
+  console.log("AssetsJob: Proposing New Assets");
   const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
   const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
-  const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHandlerAssets]);
+  // We need to convert them into the
+  const assetHanderAssets: { asset: string; assetType: number; aggregator: string }[] = newOracles.map((x) => {
+    return {
+      asset: x.assetAddress,
+      assetType: x.assetType,
+      aggregator: x.oracleAddress,
+    };
+  });
 
-  if (assetHandlerAssets.length > 0) {
+  const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHanderAssets]);
+
+  if (newOracles.length > 0) {
     await proposeTx(
       versions[config.oldTag].contracts.AssetHandlerProxy,
       addAssetsABI,
@@ -203,108 +135,6 @@ export const assetsJob: IJob<void> = async (
       config,
       addresses,
     );
-    versions[config.newTag].contracts.Assets = [
-      ...(versions[config.newTag].contracts.Assets || []),
-      ...assetHandlerAssets,
-    ];
+    versions[config.newTag].contracts.Assets = [...(versions[config.newTag].contracts.Assets || []), ...newOracles];
   }
-};
-
-const deployBalancerV2LpAggregator = async (
-  balancerV2VaultAddress: string,
-  factory: string,
-  info: any,
-  hre: HardhatRuntimeEnvironment,
-) => {
-  const ether = "1000000000000000000";
-  const divisor = info.weights.reduce((acc: any, w: any, i: any) => {
-    if (i == 0) {
-      return new Decimal(w).pow(w);
-    }
-    return acc.mul(new Decimal(w).pow(w));
-  }, new Decimal("0"));
-
-  const K = new Decimal(ether).div(divisor).toFixed(0);
-
-  let matrix = [];
-  for (let i = 1; i <= 20; i++) {
-    const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
-    for (let j = 0; j < info.weights.length; j++) {
-      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
-    }
-    matrix.push(elements);
-  }
-
-  await hre.run("compile:one", { contractName: "BalancerV2LPAggregator" });
-
-  const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
-
-  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(
-    factory,
-    balancerV2VaultAddress,
-    info.pool,
-    info.tokens,
-    info.decimals,
-    info.weights.map((w: any) => new Decimal(w).mul(ether).toFixed(0)),
-    [
-      "50000000000000000", // maxPriceDeviation: 0.05
-      K,
-      "100000000", // powerPrecision
-      matrix, // approximationMatrix
-    ] as any,
-  );
-  await balancerV2LpAggregator.deployed();
-  await tryVerify(
-    hre,
-    balancerV2LpAggregator.address,
-    "contracts/assets/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
-    [
-      factory,
-      balancerV2VaultAddress,
-      info.pool,
-      info.tokens,
-      info.decimals,
-      info.weights.map((w: any) => new Decimal(w).mul(ether).toFixed(0)),
-      [
-        "50000000000000000", // maxPriceDeviation: 0.05
-        K,
-        "100000000", // powerPrecision
-        matrix, // approximationMatrix
-      ],
-    ],
-  );
-  return balancerV2LpAggregator;
-};
-
-const deployBalancerLpStablePoolAggregator = async (hre: HardhatRuntimeEnvironment, factory: string, pool: string) => {
-  await hre.run("compile:one", { contractName: "BalancerStablePoolAggregator" });
-
-  const BalancerStablePoolAggregator = await hre.ethers.getContractFactory("BalancerStablePoolAggregator");
-
-  const balancerStablePoolAggregator = await BalancerStablePoolAggregator.deploy(factory, pool);
-  await balancerStablePoolAggregator.deployed();
-  await tryVerify(
-    hre,
-    balancerStablePoolAggregator.address,
-    "contracts/assets/BalancerStablePoolAggregator.sol:BalancerStablePoolAggregator",
-    [factory, pool],
-  );
-  return balancerStablePoolAggregator;
-};
-
-const deployUsdPriceAggregator = async (hre: HardhatRuntimeEnvironment) => {
-  // Deploy USDPriceAggregator
-  const USDPriceAggregator = await hre.ethers.getContractFactory("USDPriceAggregator");
-  const usdPriceAggregator = await USDPriceAggregator.deploy();
-  await usdPriceAggregator.deployed();
-  const usdPriceAggregatorAddress = usdPriceAggregator.address;
-
-  await tryVerify(
-    hre,
-    usdPriceAggregatorAddress,
-    "contracts/priceAggregators/USDPriceAggregator.sol:USDPriceAggregator",
-    [],
-  );
-
-  return usdPriceAggregatorAddress;
 };

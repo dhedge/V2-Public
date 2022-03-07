@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
 import { addOrReplaceGuardInFile } from "../helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, Address } from "../../../types";
+import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, Address, IDeployedContractGuard } from "../../../types";
 
 export const uniswapV3RouterContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -47,12 +47,12 @@ export const uniswapV3RouterContractGuardJob: IJob<void> = async (
       addresses,
     );
 
-    const deployedGuard = {
-      ContractAddress: addresses.uniswapV3RouterAddress,
-      GuardName: "UniswapV3RouterGuard",
-      GuardAddress: uniswapV3RouterGuard.address,
-      Description: "Uniswap V3 Router guard",
+    const deployedGuard: IDeployedContractGuard = {
+      contractAddress: addresses.uniswapV3RouterAddress,
+      guardName: "UniswapV3RouterGuard",
+      guardAddress: uniswapV3RouterGuard.address,
+      description: "Uniswap V3 Router guard",
     };
-    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
   }
 };

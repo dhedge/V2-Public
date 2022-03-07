@@ -1,4 +1,4 @@
-AssetType,GuardName,GuardAddress,Description
+assetType,guardName,guardAddress,description
 0,ERC20Guard,0x296Ae47463d474198e797C61c19D2493208b72F9,ERC20 tokens
 2,SushiLPAssetGuard,0x1D7f482F2bE2783b635cc03F14E1821db5a4C8c7,Sushi LP tokens
 4,LendingEnabledAssetGuard,0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6,Lending Enabled Asset tokens
