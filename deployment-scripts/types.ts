@@ -83,14 +83,15 @@ export type IProposeTxProperties = IDhedgeInternal & {
 // Addresses
 export type IAddresses = IProposeTxProperties & ExternalLogicContracts & sUSDUniV3TWAPAggregatorProperties;
 
-export interface IDeployedAssetGuard {
+type RecordNumberString = Record<string, number | string>;
+export interface IDeployedAssetGuard extends RecordNumberString {
   assetType: number;
   guardName: string;
   guardAddress: string;
   description: string;
 }
 
-export interface IDeployedContractGuard {
+export interface IDeployedContractGuard extends RecordNumberString {
   contractAddress: string;
   guardName: string;
   guardAddress: string;
@@ -118,6 +119,7 @@ export interface IContracts {
   PoolPerformance: Address;
   DynamicBondsProxy?: Address;
   DynamicBonds?: Address;
+  ProxyAdmin?: Address;
 
   // Contract Guards
   SynthetixGuard?: Address;
@@ -149,7 +151,7 @@ export interface IContracts {
   DhedgeEasySwapper: Address;
   DhedgeSwapRouter: Address;
 
-  Assets?: ICSVAsset[];
+  Assets: ICSVAsset[];
 }
 
 type OracleName =
@@ -161,7 +163,7 @@ type OracleName =
   | "SynthPriceAggregator"
   | "BalancerLpStablePoolAggregator";
 
-export interface ICSVAsset {
+export interface ICSVAsset extends RecordNumberString {
   assetType: number;
   oracleName: OracleName;
   oracleAddress: Address;

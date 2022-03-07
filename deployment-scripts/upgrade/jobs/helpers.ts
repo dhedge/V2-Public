@@ -1,9 +1,10 @@
 import { writeCsv } from "../../Helpers";
+import { IDeployedAssetGuard, IDeployedContractGuard } from "../../types";
 
 // TODO: replace require with import
 const csv = require("csvtojson");
 
-export const addOrReplaceGuardInFile = async <T extends { [k: string]: string | number }>(
+export const addOrReplaceGuardInFile = async <T extends IDeployedContractGuard | IDeployedAssetGuard>(
   assetGuardFileName: string,
   guard: T,
   matchKey: keyof T,
