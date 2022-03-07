@@ -104,6 +104,7 @@ export const mintLpAsPool = async (
 
 /**
  * Gets tick of Uniswap v3 pool
+ * @param uniswapV3Factory Uniswap v3 Factory address
  * @param token0 Token0 of pool
  * @param token1 Token1 of pool
  * @param fee Fee of pool
@@ -140,6 +141,31 @@ export const getCurrentTickImproved = async (
   },
 ): Promise<number> => {
   return getCurrentTick(uniswapV3Factory, params.token0, params.token1, params.fee);
+};
+
+/**
+ * Gets sqrtPriceX96 of Uniswap v3 pool
+ * @param uniswapV3Factory Uniswap v3 Factory address
+ * @param params Pool parameters
+ * @returns
+ */
+export const getCurrentSqrtPriceX96 = async (
+  uniswapV3Factory: Address,
+  params: {
+    token0: Address;
+    token1: Address;
+    fee: number;
+  },
+): Promise<number> => {
+  const token0 = params.token0;
+  const token1 = params.token1;
+  const fee = params.fee;
+  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
+  const poolAddress = await factory.getPool(token0, token1, fee);
+  if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
+  const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);
+  const currentSqrtPriceX96 = parseInt((await pool.slot0()).sqrtPriceX96);
+  return currentSqrtPriceX96;
 };
 
 //ethereum.stackexchange.com/questions/98685/computing-the-uniswap-v3-pair-price-from-q64-96-number

@@ -16,6 +16,7 @@ import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts
 import { approveToken, getAccountToken } from "../utils/getAccountTokens";
 import {
   getCurrentTick,
+  getCurrentSqrtPriceX96,
   getV3LpBalances,
   mintLpAsPool,
   mintLpAsUser,
@@ -143,77 +144,6 @@ export const UniswapV3AssetGuardTest = (
       await utils.evmRestoreSnap(snapId);
     });
 
-    describe.only("Pricing is manipulation resistant", () => {
-      [bothSupportedNonStablePair].forEach((pair) => {
-        it(`Using pair: ${pair.token0}-${pair.token1}`, async () => {
-          // Mint Uniswap v3 LP
-          const token0 = pair.token0;
-          const token1 = pair.token1;
-          const fee = pair.fee;
-          const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
-          const tickSpacing = (fee / 50) * 1000;
-          const mintSettings: UniV3LpMintSettings = {
-            token0,
-            token1,
-            fee,
-            amount0: pair.amount0,
-            amount1: pair.amount1,
-            tickLower: tick - tickSpacing,
-            tickUpper: tick + tickSpacing,
-          };
-          await mintLpAsUser(nonfungiblePositionManager, user, mintSettings);
-
-          const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
-          const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
-          // We dump 2x extra liquidity on one side, draining the other side
-          const LIQUIDITY_MULTIPLIER = 10;
-          const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
-          await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
-          await approveToken(logicOwner, swapRouter.address, pair.token0, amountIn);
-
-          await swapRouter.exactInputSingle({
-            tokenIn: pair.token0,
-            tokenOut: pair.token1,
-            amountIn,
-            amountOutMinimum: 0,
-            fee: pair.fee,
-            recipient: logicOwner.address,
-            sqrtPriceLimitX96: 0,
-          });
-
-          // Assert
-          const [token0LiquidityAfter, __] = await getV3LpBalances(
-            uniswapV3.factory,
-            pair.token0,
-            pair.token1,
-            pair.fee,
-          );
-          // Probably need to assert here that the pool has been manipulated
-          const tokenPriceAfter = await poolLogicProxy.tokenPrice();
-          console.log(
-            "tokenPrice before",
-            tokenPriceBefore.toString(),
-            "tokenPrice after",
-            tokenPriceAfter.toString(),
-            "after higher ",
-            tokenPriceAfter >= tokenPriceBefore,
-          );
-          console.log(
-            "liq before: ",
-            token0Liquidity.toString(),
-            "liq after: ",
-            token0LiquidityAfter.toString(),
-            "more after",
-            token0LiquidityAfter.gt(token0Liquidity),
-          );
-          383532382811441966124;
-          1150597148434325898372;
-          expect(tokenPriceAfter).to.be.closeTo(tokenPriceBefore, tokenPriceBefore.div(100) as unknown as number);
-          expect(token0LiquidityAfter.gt(token0Liquidity)).to.be.true;
-        });
-      });
-    });
-
     describe("Pricing is manipulation resistant", () => {
       [bothSupportedPair, bothSupportedNonStablePair].forEach((pair) => {
         it(`Using pair: ${pair.token0}-${pair.token1}`, async () => {
@@ -238,19 +168,22 @@ export const UniswapV3AssetGuardTest = (
           const token1 = pair.token1;
           const fee = pair.fee;
           const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
-          const tickSpacing = (fee / 50) * 1000;
+          const tickRange = (fee / 50) * 1000;
           const mintSettings: UniV3LpMintSettings = {
             token0,
             token1,
             fee,
             amount0: pair.amount0,
             amount1: pair.amount1,
-            tickLower: tick - tickSpacing,
-            tickUpper: tick + tickSpacing,
+            tickLower: tick - tickRange,
+            tickUpper: tick + tickRange,
           };
+
           await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
 
           // Act
+          const poolParams = { token0, token1, fee };
+          const sqrtPriceX96Before = await getCurrentSqrtPriceX96(uniswapV3.factory, poolParams);
           const tokenPriceBefore = await poolLogicProxy.tokenPrice();
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
           const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
@@ -278,6 +211,8 @@ export const UniswapV3AssetGuardTest = (
             pair.fee,
           );
           // Probably need to assert here that the pool has been manipulated
+          const sqrtPriceX96After = await getCurrentSqrtPriceX96(uniswapV3.factory, poolParams);
+          console.log("sqrtPriceX96 before", sqrtPriceX96Before.toString(), "after", sqrtPriceX96After.toString());
           const tokenPriceAfter = await poolLogicProxy.tokenPrice();
           console.log(
             "tokenPrice before",
@@ -295,9 +230,8 @@ export const UniswapV3AssetGuardTest = (
             "more after",
             token0LiquidityAfter.gt(token0Liquidity),
           );
-          383532382811441966124;
-          1150597148434325898372;
-          expect(tokenPriceAfter).to.be.closeTo(tokenPriceBefore, tokenPriceBefore.div(100) as unknown as number);
+
+          expect(tokenPriceAfter).to.be.closeTo(tokenPriceBefore, tokenPriceBefore.div(1000) as unknown as number);
           expect(token0LiquidityAfter.gt(token0Liquidity)).to.be.true;
         });
       });
@@ -600,7 +534,7 @@ export const UniswapV3AssetGuardTest = (
         expect(totalFundValueBeforeWithdraw).to.gt(0);
         expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
         expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-        expect(tokenPriceAfter).to.gt(tokenPriceBefore); // Assumes the LP value should be counted
+        expect(tokenPriceAfter).to.eq(tokenPriceBefore); // Assumes the LP value is not counted
 
         // Can withdraw
         await poolFactory.setExitCooldown(0);
@@ -643,7 +577,7 @@ export const UniswapV3AssetGuardTest = (
         expect(totalFundValueBeforeWithdraw).to.gt(0);
         expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
         expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-        expect(tokenPriceAfter).to.gt(tokenPriceBefore); // Assumes the LP value should be counted
+        expect(tokenPriceAfter).to.eq(tokenPriceBefore); // Assumes the LP value is not counted
 
         // Can withdraw
         await poolFactory.setExitCooldown(0);

@@ -47,16 +47,25 @@ import "./ERC20Guard.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IERC20Extended.sol";
+import "../../utils/DhedgeMath.sol";
 import "../contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol";
 
 /// @title Uniswap V3 asset guard
 /// @dev Asset type = 6
 contract UniswapV3AssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
+  using SafeMathUpgradeable for uint160;
   using PositionValue for INonfungiblePositionManager;
 
   // Number of seconds in the past from which to calculate the time-weighted means
   uint32 public priceUpdateInterval = 2 minutes;
+
+  struct UniV3PoolParams {
+    address token0;
+    address token1;
+    uint24 fee;
+    uint160 sqrtPriceX96;
+  }
 
   /// @notice Returns the pool position of Uniswap v3
   /// @dev Returns the balance priced in ETH
@@ -76,16 +85,54 @@ contract UniswapV3AssetGuard is ERC20Guard {
       length = limit < nftCount ? limit : nftCount;
     }
     for (uint256 i = 0; i < length; ++i) {
+      UniV3PoolParams memory poolParams;
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
-      (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
+      (, , poolParams.token0, poolParams.token1, poolParams.fee, , , , , , , ) = nonfungiblePositionManager.positions(
+        tokenId
+      );
 
-      (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-        IUniswapV3Factory(nonfungiblePositionManager.factory()).getPool(token0, token1, fee)
+      // If either of the underlying LP tokens are unsupported, then skip the NFT
+      if (
+        !IHasAssetInfo(factory).isValidAsset(poolParams.token0) ||
+        !IHasAssetInfo(factory).isValidAsset(poolParams.token1)
+      ) {
+        continue;
+      }
+
+      // Get a fair sqrtPriceX96 from asset price oracles
+      (uint256 fairPrice0, uint256 fairPrice1) = _getTokenPricesRatio(factory, poolParams.token0, poolParams.token1);
+      uint160 fairSqrtPriceX96 = uint160(DhedgeMath.sqrt((fairPrice0 << 192).div(fairPrice1)));
+
+      (poolParams.sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
+        IUniswapV3Factory(nonfungiblePositionManager.factory()).getPool(
+          poolParams.token0,
+          poolParams.token1,
+          poolParams.fee
+        )
       ).slot0();
-      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, sqrtPriceX96);
 
-      balance = balance.add(_assetValue(factory, token0, amount0)).add(_assetValue(factory, token1, amount1));
+      // Check that fair price is close to actual
+      if (poolParams.sqrtPriceX96 > fairSqrtPriceX96) {
+        require(poolParams.sqrtPriceX96.sub(fairSqrtPriceX96) < fairSqrtPriceX96.div(400), "uni v3 LP price mismatch"); // 0.25% difference
+      } else {
+        require(fairSqrtPriceX96.sub(poolParams.sqrtPriceX96) < fairSqrtPriceX96.div(400), "uni v3 LP price mismatch"); // 0.25% difference
+      }
+
+      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, fairSqrtPriceX96);
+
+      balance = balance.add(_assetValue(factory, poolParams.token0, amount0)).add(
+        _assetValue(factory, poolParams.token1, amount1)
+      );
     }
+  }
+
+  function _getTokenPricesRatio(
+    address factory,
+    address token0,
+    address token1
+  ) internal view returns (uint256 token0Ratio, uint256 token1Ratio) {
+    token0Ratio = IHasAssetInfo(factory).getAssetPrice(token0).mul(10**IERC20Extended(token1).decimals()).div(10**18);
+    token1Ratio = IHasAssetInfo(factory).getAssetPrice(token1).mul(10**IERC20Extended(token0).decimals()).div(10**18);
   }
 
   function _assetValue(
