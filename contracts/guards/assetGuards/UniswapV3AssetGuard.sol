@@ -129,7 +129,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
   /// @param factory dHEDGE Factory address
   /// @param token0 Uni pool token0
   /// @param token1 Uni pool token1
-  /// @return Square root price as a Q64.96
+  /// @return sqrtPriceX96 square root price as a Q64.96
   function _getFairSqrtPriceX96(
     address factory,
     address token0,
@@ -140,7 +140,20 @@ contract UniswapV3AssetGuard is ERC20Guard {
     uint8 token0Decimals = IERC20Extended(token0).decimals();
     uint8 token1Decimals = IERC20Extended(token1).decimals();
     uint256 priceRatio = token0Price.mul(10**token1Decimals).div(token1Price);
+
+    // Overflow protection for the price ratio shift left
+    bool overflowProtection;
+    if (priceRatio > 10**18) {
+      overflowProtection = true;
+      priceRatio = priceRatio.div(10**10); // decrease 10 decimals
+    }
+    require(priceRatio <= 10**18 && priceRatio > 1000, "Uni v3 price ratio out of bounds");
+
     sqrtPriceX96 = uint160(DhedgeMath.sqrt((priceRatio << 192).div(10**token0Decimals)));
+
+    if (overflowProtection) {
+      sqrtPriceX96 = uint160(sqrtPriceX96.mul(10**5)); // increase 5 decimals (revert adjustment)
+    }
   }
 
   function _assetValue(
