@@ -117,7 +117,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
         "Uni v3 LP price mismatch"
       );
 
-      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, fairSqrtPriceX96);
+      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, poolParams.sqrtPriceX96);
 
       balance = balance.add(_assetValue(factory, poolParams.token0, amount0)).add(
         _assetValue(factory, poolParams.token1, amount1)
