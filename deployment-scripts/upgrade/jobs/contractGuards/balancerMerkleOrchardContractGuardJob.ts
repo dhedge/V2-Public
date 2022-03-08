@@ -47,11 +47,11 @@ export const balancerMerkleOrchardContractGuardJob: IJob<void> = async (
       addresses,
     );
     const deployedGuard = {
-      ContractAddress: addresses.balancerMerkleOrchardAddress,
-      GuardName: "BalancerMerkleOrchardGuard",
-      GuardAddress: balancerMerkleOrchardGuard.address,
-      Description: "Balancer Merkle Orchard Guard",
+      contractAddress: addresses.balancerMerkleOrchardAddress,
+      guardName: "BalancerMerkleOrchardGuard",
+      guardAddress: balancerMerkleOrchardGuard.address,
+      description: "Balancer Merkle Orchard Guard",
     };
-    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
   }
 };

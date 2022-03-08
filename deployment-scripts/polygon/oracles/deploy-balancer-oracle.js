@@ -27,7 +27,11 @@ const main = async () => {
       "contracts/oracles/BalancerDHedgePoolPriceOracle.sol:BalancerDHedgePoolPriceOracle",
       [pool, decimals],
     );
-    contracts.push({ pool, balancerOracle: dHedgePoolPriceOracle.address });
+    contracts.Oracles.push({
+      assetAddress: pool,
+      oracleAddress: dHedgePoolPriceOracle.address,
+      oracleName: "BalancerDHedgePoolPriceOracle",
+    });
   }
 
   const tag = Object.keys(versions)[Object.keys(versions).length - 1];

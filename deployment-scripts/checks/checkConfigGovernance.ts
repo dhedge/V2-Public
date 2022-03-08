@@ -4,6 +4,7 @@ import { assert } from "chai";
 import csv from "csvtojson";
 
 import { toBytes32 } from "../Helpers";
+import { IContracts } from "../types";
 
 export const checkGovernance = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
   const { namesFileName, assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;
@@ -24,15 +25,15 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
       let guardFound = false;
 
       for (const csvAssetGuard of csvAssetGuards) {
-        if (csvAssetGuard.GuardName == name) {
+        if (csvAssetGuard.guardName == name) {
           guardFound = true;
-          const deployedGuard = contracts[name];
-          const governanceAssetGuard = await governance.assetGuards(csvAssetGuard.AssetType);
-          const csvAssetGuardAddress = csvAssetGuard.GuardAddress;
+          const deployedGuard = contracts[name as keyof IContracts];
+          const governanceAssetGuard = await governance.assetGuards(csvAssetGuard.assetType);
+          const csvAssetGuardAddress = csvAssetGuard.guardAddress;
 
           assert(
             deployedGuard == governanceAssetGuard,
-            `Asset guard ${name} deployment doesn't match Governance setting. Governance contract: ${governanceAssetGuard}, Versions deployment: ${deployedGuard}, Asset Type should be ${csvAssetGuard.AssetType}`,
+            `Asset guard ${name} deployment doesn't match Governance setting. Governance contract: ${governanceAssetGuard}, Versions deployment: ${deployedGuard}, Asset Type should be ${csvAssetGuard.assetType}`,
           );
           assert(
             governanceAssetGuard == csvAssetGuardAddress,
@@ -47,12 +48,12 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
       let guardFound = false;
 
       for (const csvContractGuard of csvContractGuards) {
-        if (csvContractGuard.GuardName == name) {
+        if (csvContractGuard.guardName == name) {
           guardFound = true;
-          const deployedGuard = contracts[name];
-          const governanceContractGuard = await governance.contractGuards(csvContractGuard.ContractAddress);
-          const csvContractGuardAddress = csvContractGuard.GuardAddress;
-          const guardDescription = csvContractGuard.Description;
+          const deployedGuard = contracts[name as keyof IContracts];
+          const governanceContractGuard = await governance.contractGuards(csvContractGuard.contractAddress);
+          const csvContractGuardAddress = csvContractGuard.guardAddress;
+          const guardDescription = csvContractGuard.description;
 
           assert(
             deployedGuard == governanceContractGuard,
@@ -72,16 +73,16 @@ export const checkGovernance = async (initializeData: InitType, _: HardhatRuntim
 
   // Check Governance nameToDestination mappings match the CSV
   for (const csvName of csvNames) {
-    const destinationAddress = await governance.nameToDestination(toBytes32(csvName.Name));
+    const destinationAddress = await governance.nameToDestination(toBytes32(csvName.name));
 
     assert(
-      csvName.Destination.toLowerCase() == destinationAddress.toLowerCase(),
+      csvName.destination.toLowerCase() == destinationAddress.toLowerCase(),
       `${
-        csvName.Name
-      } Governance namesToDestination mapping doesn't match Names CSV. Governance contract: ${destinationAddress.toLowerCase()}, CSV: ${csvName.Destination.toLowerCase()}`,
+        csvName.name
+      } Governance namesToDestination mapping doesn't match Names CSV. Governance contract: ${destinationAddress.toLowerCase()}, CSV: ${csvName.destination.toLowerCase()}`,
     );
 
-    console.log(`nameToDestination ${csvName.Name} mapping ok`);
+    console.log(`nameToDestination ${csvName.name} mapping ok`);
   }
 
   console.log("Governance checks complete!");

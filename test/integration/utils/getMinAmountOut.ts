@@ -1,19 +1,19 @@
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
-import { IDeployments } from "../utils/deployContracts";
 import { units } from "../../TestHelpers";
+import { AssetHandler } from "../../../types";
 
 /**
  * Gets a minimum amount out for swaps to pass Chainlink slippage checker
- * @param deployments
+ * @param assetHandler
  * @param amountIn
  * @param tokenInAddress
  * @param tokenOutAddress
  * @returns
  */
 export const getMinAmountOut = async (
-  deployments: IDeployments,
+  assetHandler: AssetHandler,
   amountIn: BigNumber,
   tokenInAddress: string,
   tokenOutAddress: string,
@@ -21,8 +21,8 @@ export const getMinAmountOut = async (
 ): Promise<BigNumber> => {
   const tokenIn = await ethers.getContractAt("IERC20Extended", tokenInAddress);
   const tokenOut = await ethers.getContractAt("IERC20Extended", tokenOutAddress);
-  const tokenInPrice = await deployments.assetHandler.getUSDPrice(tokenIn.address);
-  const tokenOutPrice = await deployments.assetHandler.getUSDPrice(tokenOut.address);
+  const tokenInPrice = await assetHandler.getUSDPrice(tokenIn.address);
+  const tokenOutPrice = await assetHandler.getUSDPrice(tokenOut.address);
 
   const tokenInDecimals = await tokenIn.decimals();
   const tokenOutDecimals = await tokenOut.decimals();

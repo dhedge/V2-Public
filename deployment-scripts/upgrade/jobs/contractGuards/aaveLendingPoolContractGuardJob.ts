@@ -48,11 +48,11 @@ export const aaveLendingPoolContractGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      ContractAddress: addresses.aaveLendingPoolAddress,
-      GuardName: "AaveLendingPoolGuard",
-      GuardAddress: aaveLendingPoolGuard.address,
-      Description: "Aave Lending Pool contract",
+      contractAddress: addresses.aaveLendingPoolAddress,
+      guardName: "AaveLendingPoolGuard",
+      guardAddress: aaveLendingPoolGuard.address,
+      description: "Aave Lending Pool contract",
     };
-    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
   }
 };
