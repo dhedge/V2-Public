@@ -110,12 +110,12 @@ contract UniswapV3AssetGuard is ERC20Guard {
         )
       ).slot0();
 
-      // Check that fair price is close to current pool price
-      if (poolParams.sqrtPriceX96 > fairSqrtPriceX96) {
-        require(poolParams.sqrtPriceX96.sub(fairSqrtPriceX96) < fairSqrtPriceX96.div(400), "Uni v3 LP price mismatch"); // 0.25% difference
-      } else {
-        require(fairSqrtPriceX96.sub(poolParams.sqrtPriceX96) < fairSqrtPriceX96.div(400), "Uni v3 LP price mismatch"); // 0.25% difference
-      }
+      // Check that fair price is close to current pool price (0.25% threshold)
+      require(
+        poolParams.sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.div(400)) &&
+          fairSqrtPriceX96 < poolParams.sqrtPriceX96.add(fairSqrtPriceX96.div(400)),
+        "Uni v3 LP price mismatch"
+      );
 
       (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, fairSqrtPriceX96);
 
