@@ -68,7 +68,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
   }
 
   /// @notice Returns the pool position of Uniswap v3
-  /// @dev Returns the balance priced in ETH
+  /// @dev Returns the balance priced in USD
   /// @param pool The pool logic address
   /// @return balance The total balance of the pool
   function getBalance(address pool, address asset) public view override returns (uint256 balance) {
@@ -100,8 +100,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       }
 
       // Get a fair sqrtPriceX96 from asset price oracles
-      (uint256 fairPrice0, uint256 fairPrice1) = _getTokenPricesRatio(factory, poolParams.token0, poolParams.token1);
-      uint160 fairSqrtPriceX96 = uint160(DhedgeMath.sqrt((fairPrice0 << 192).div(fairPrice1)));
+      uint160 fairSqrtPriceX96 = _getFairSqrtPriceX96(factory, poolParams.token0, poolParams.token1);
 
       (poolParams.sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
         IUniswapV3Factory(nonfungiblePositionManager.factory()).getPool(
@@ -111,11 +110,11 @@ contract UniswapV3AssetGuard is ERC20Guard {
         )
       ).slot0();
 
-      // Check that fair price is close to actual
+      // Check that fair price is close to current pool price
       if (poolParams.sqrtPriceX96 > fairSqrtPriceX96) {
-        require(poolParams.sqrtPriceX96.sub(fairSqrtPriceX96) < fairSqrtPriceX96.div(400), "uni v3 LP price mismatch"); // 0.25% difference
+        require(poolParams.sqrtPriceX96.sub(fairSqrtPriceX96) < fairSqrtPriceX96.div(400), "Uni v3 LP price mismatch"); // 0.25% difference
       } else {
-        require(fairSqrtPriceX96.sub(poolParams.sqrtPriceX96) < fairSqrtPriceX96.div(400), "uni v3 LP price mismatch"); // 0.25% difference
+        require(fairSqrtPriceX96.sub(poolParams.sqrtPriceX96) < fairSqrtPriceX96.div(400), "Uni v3 LP price mismatch"); // 0.25% difference
       }
 
       (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, fairSqrtPriceX96);
@@ -126,13 +125,22 @@ contract UniswapV3AssetGuard is ERC20Guard {
     }
   }
 
-  function _getTokenPricesRatio(
+  /// @notice Returns the Uni pool square root price based on underlying oracle prices
+  /// @param factory dHEDGE Factory address
+  /// @param token0 Uni pool token0
+  /// @param token1 Uni pool token1
+  /// @return Square root price as a Q64.96
+  function _getFairSqrtPriceX96(
     address factory,
     address token0,
     address token1
-  ) internal view returns (uint256 token0Ratio, uint256 token1Ratio) {
-    token0Ratio = IHasAssetInfo(factory).getAssetPrice(token0).mul(10**IERC20Extended(token1).decimals()).div(10**18);
-    token1Ratio = IHasAssetInfo(factory).getAssetPrice(token1).mul(10**IERC20Extended(token0).decimals()).div(10**18);
+  ) internal view returns (uint160 sqrtPriceX96) {
+    uint256 token0Price = IHasAssetInfo(factory).getAssetPrice(token0);
+    uint256 token1Price = IHasAssetInfo(factory).getAssetPrice(token1);
+    uint8 token0Decimals = IERC20Extended(token0).decimals();
+    uint8 token1Decimals = IERC20Extended(token1).decimals();
+    uint256 priceRatio = token0Price.mul(10**token1Decimals).div(token1Price);
+    sqrtPriceX96 = uint160(DhedgeMath.sqrt((priceRatio << 192).div(10**token0Decimals)));
   }
 
   function _assetValue(
