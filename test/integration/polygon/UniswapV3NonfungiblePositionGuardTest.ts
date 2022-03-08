@@ -233,7 +233,7 @@ describe("Uniswap V3 LP Test", function () {
     await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings);
     const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
-    checkAlmostSame(totalFundValueAfter, totalFundValueBefore, 0.000001);
+    checkAlmostSame(totalFundValueAfter, totalFundValueBefore, 0.001);
     expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
   });
 
@@ -274,7 +274,7 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, increaseLiquidityABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.001);
 
       const positionAfter = await nonfungiblePositionManager.positions(tokenId);
 
@@ -294,8 +294,8 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
-      checkAlmostSame(await poolLogicProxy.tokenPrice(), tokenPriceBefore, 0.000001);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.001);
+      checkAlmostSame(await poolLogicProxy.tokenPrice(), tokenPriceBefore, 0.001);
 
       const positionAfter = await nonfungiblePositionManager.positions(tokenId);
 
@@ -315,8 +315,8 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
-      checkAlmostSame(await poolLogicProxy.tokenPrice(), tokenPriceBefore, 0.000001);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.001);
+      checkAlmostSame(await poolLogicProxy.tokenPrice(), tokenPriceBefore, 0.001);
 
       const positionAfter = await nonfungiblePositionManager.positions(tokenId);
       expect(positionAfter.liquidity).to.equal(0);
@@ -364,7 +364,7 @@ describe("Uniswap V3 LP Test", function () {
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
       expect(usdcBalanceAfter.gt(usdcBalanceBefore) || wethBalanceAfter.gt(wethBalanceBefore)).to.true;
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.001);
     });
 
     it("fail to collect fee after disabling assets", async () => {
@@ -407,7 +407,7 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, burnABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.001);
 
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
     });
@@ -438,7 +438,7 @@ describe("Uniswap V3 LP Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, multicallABI);
 
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.001);
 
       expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(0);
     });
@@ -460,15 +460,15 @@ describe("Uniswap V3 LP Test", function () {
         .execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityCalldata);
       const totalFundValueAfterDecreaseLiquidity = await poolManagerLogicProxy.totalFundValue();
       // Assert that fund value is unchanged
-      checkAlmostSame(totalFundValueBefore, totalFundValueAfterDecreaseLiquidity, 0.000001);
+      checkAlmostSame(totalFundValueBefore, totalFundValueAfterDecreaseLiquidity, 0.001);
 
       // Half 50% withdrawal from pool
       await poolLogicProxy.withdraw(sharesBefore.div(2));
       const sharesAfterHalfWithdrawal = await poolLogicProxy.balanceOf(logicOwner.address);
       const totalFundValueAfterHalfWithdrawal = await poolManagerLogicProxy.totalFundValue();
 
-      checkAlmostSame(sharesAfterHalfWithdrawal, sharesBefore.div(2), 0.000001);
-      checkAlmostSame(totalFundValueAfterHalfWithdrawal, totalFundValueBefore.div(2), 0.000001);
+      checkAlmostSame(sharesAfterHalfWithdrawal, sharesBefore.div(2), 0.001);
+      checkAlmostSame(totalFundValueAfterHalfWithdrawal, totalFundValueBefore.div(2), 0.001);
       expect(await USDC.balanceOf(logicOwner.address)).gt(usdcBalanceBefore);
       expect(await WETH.balanceOf(logicOwner.address)).gt(wethBalanceBefore);
 
