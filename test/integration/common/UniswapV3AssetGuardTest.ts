@@ -150,7 +150,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
       await utils.evmRestoreSnap(snapId);
     });
 
-    describe.only("Pricing is manipulation resistant", () => {
+    describe("Pricing is manipulation resistant", () => {
       [bothSupportedPair, bothSupportedNonStablePair].forEach((pair) => {
         it(`Using pair: ${pair.token0}-${pair.token1}`, async () => {
           await poolManagerLogicProxy.connect(manager).changeAssets(
