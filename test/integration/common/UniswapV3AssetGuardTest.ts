@@ -25,50 +25,57 @@ import {
 } from "../utils/uniswapv3Utils";
 import { utils } from "../utils/utils";
 
-export const UniswapV3AssetGuardTest = (
-  network: NETWORK,
+interface IUniswapV3AssetGuardTestParameters {
+  network: NETWORK;
   uniswapV3: {
     factory: string;
     router: string;
     nonfungiblePositionManager: string;
-  },
-  bothSupportedPair: {
-    fee: number;
-    token0: string;
-    token1: string;
-    amount0: BigNumber;
-    amount1: BigNumber;
-    token0Slot: number;
-    token1Slot: number;
-  },
-  bothUnsupportedPair: {
-    fee: number;
-    token0: string;
-    token1: string;
-    amount0: BigNumber;
-    amount1: BigNumber;
-    token0Slot: number;
-    token1Slot: number;
-  },
-  token0UnsupportedPair: {
-    fee: number;
-    token0: string;
-    token1: string;
-    amount0: BigNumber;
-    amount1: BigNumber;
-    token0Slot: number;
-    token1Slot: number;
-  },
-  bothSupportedNonStablePair: {
-    fee: number;
-    token0: string;
-    token1: string;
-    amount0: BigNumber;
-    amount1: BigNumber;
-    token0Slot: number;
-    token1Slot: number;
-  },
-) => {
+  };
+  pairs: {
+    bothSupportedPair: {
+      fee: number;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+      token0Slot: number;
+      token1Slot: number;
+    };
+    bothUnsupportedPair: {
+      fee: number;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+      token0Slot?: number;
+      token1Slot?: number;
+    };
+    token0UnsupportedPair: {
+      fee: number;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+      token0Slot?: number;
+      token1Slot?: number;
+    };
+    bothSupportedNonStablePair: {
+      fee: number;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+      token0Slot: number;
+      token1Slot: number;
+    };
+  };
+}
+
+export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParameters) => {
+  const { network, uniswapV3, pairs } = params;
+  const { bothSupportedPair, bothUnsupportedPair, token0UnsupportedPair, bothSupportedNonStablePair } = pairs;
+
   describe("UniswapV3AssetGuardTest", function () {
     let logicOwner: SignerWithAddress, manager: SignerWithAddress;
     let poolFactory: PoolFactory,
@@ -178,9 +185,9 @@ export const UniswapV3AssetGuardTest = (
           };
 
           await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
+          const tokenPriceBefore = await poolLogicProxy.tokenPrice();
 
           // Act
-          const tokenPriceBefore = await poolLogicProxy.tokenPrice();
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
           const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
           // We dump 2x extra liquidity on one side, draining the other side

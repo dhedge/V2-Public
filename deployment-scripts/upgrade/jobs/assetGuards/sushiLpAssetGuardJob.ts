@@ -46,12 +46,12 @@ export const sushiLpAssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      AssetType: 2,
-      GuardName: "SushiLPAssetGuard",
-      GuardAddress: sushiLPAssetGuard.address,
-      Description: "Sushi LP tokens",
+      assetType: 2,
+      guardName: "SushiLPAssetGuard",
+      guardAddress: sushiLPAssetGuard.address,
+      description: "Sushi LP tokens",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
   }
 };

@@ -35,7 +35,11 @@ const main = async () => {
     [usdc_mai, mai, usdc_oracle, 600, 5],
   );
 
-  versions[tag].contracts.push({ pool: usdc_mai, maiTwapOracle: dhedgeMedianTwapAggregator.address });
+  versions[tag].contracts.Oracles.push({
+    assetAddress: usdc_mai,
+    oracleAddress: dhedgeMedianTwapAggregator.address,
+    oracleName: "MaiMedianTWAPAggregator",
+  });
 
   // convert JSON object to string
   const data = JSON.stringify(versions, null, 2);

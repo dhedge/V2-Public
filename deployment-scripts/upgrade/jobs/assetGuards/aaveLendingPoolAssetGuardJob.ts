@@ -49,12 +49,12 @@ export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      AssetType: 3,
-      GuardName: "AaveLendingPoolAssetGuard",
-      GuardAddress: aaveLendingPoolAssetGuard.address,
-      Description: "Aave Lending Pool",
+      assetType: 3,
+      guardName: "AaveLendingPoolAssetGuard",
+      guardAddress: aaveLendingPoolAssetGuard.address,
+      description: "Aave Lending Pool",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "GuardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
   }
 };

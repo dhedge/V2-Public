@@ -4,28 +4,28 @@
     "contracts": {
       "Assets": [
         {
-          "name": "Synth sUSD",
-          "asset": "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+          "assetName": "Synth sUSD",
+          "assetAddress": "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
           "assetType": 0,
-          "aggregator": "0x645f8ec14d0940Efd7272ba478c12968e8eB9937"
+          "oracleAddress": "0x645f8ec14d0940Efd7272ba478c12968e8eB9937"
         },
         {
-          "name": "Synth sETH",
-          "asset": "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
+          "assetName": "Synth sETH",
+          "assetAddress": "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
           "assetType": "0",
-          "aggregator": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
+          "oracleAddress": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
         },
         {
-          "name": "Synth sBTC",
-          "asset": "0x298B9B95708152ff6968aafd889c6586e9169f1D",
+          "assetName": "Synth sBTC",
+          "assetAddress": "0x298B9B95708152ff6968aafd889c6586e9169f1D",
           "assetType": "0",
-          "aggregator": "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593"
+          "oracleAddress": "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593"
         },
         {
-          "name": "Synth sLINK",
-          "asset": "0xc5Db22719A06418028A40A9B5E9A7c02959D0d08",
+          "assetName": "Synth sLINK",
+          "assetAddress": "0xc5Db22719A06418028A40A9B5E9A7c02959D0d08",
           "assetType": "0",
-          "aggregator": "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450"
+          "oracleAddress": "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450"
         }
       ],
       "ERC20Guard": "0x6212FFDDe8f24e525264df10A7FfC6D017c8424A",
@@ -45,7 +45,7 @@
     },
     "network": {
       "chainId": 10,
-      "name": "unknown"
+      "assetName": "unknown"
     },
     "date": "Fri, 28 Jan 2022 06:32:00 GMT"
   }
