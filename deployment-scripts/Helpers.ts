@@ -159,7 +159,9 @@ export const proposeTx = async (
     contractNetworks,
   });
 
-  nonce = nonce ? nonce : await getNonce(safeSdk, chainId, chainSafeAddress, config.restartnonce);
+  nonce = nonce
+    ? nonce
+    : await retryWithDelay(() => getNonce(safeSdk, chainId, chainSafeAddress, config.restartnonce), "Gnosis Get Nonce");
 
   const transaction = {
     to: to,
@@ -188,10 +190,7 @@ export const proposeTx = async (
   // console.log("approveTxResponse", approveTxResponse);
   console.log("safeTransaction: ", safeTransaction);
 
-  await retryWithDelay(
-    async () => await service.proposeTx(chainSafeAddress, txHash, safeTransaction, signature),
-    "Gnosis safe",
-  );
+  await retryWithDelay(() => service.proposeTx(chainSafeAddress, txHash, safeTransaction, signature), "Gnosis safe");
 };
 
 export const executeInSeries = <T>(providers: (() => Promise<T>)[]): Promise<T[]> => {

@@ -65,3 +65,4 @@ Sushi LP MKR-WETH,0xbf61e1d82bd440cb9da11d325c046f029a663890,2,,UniV2LPAggregato
 Sushi LP MKR-DAI,0x5e8f882dd0d062e2d81bcbe4ec61d7aeabf80c74,2,,UniV2LPAggregator
 Sushi LP GRT-WETH,0x1ceda73c034218255f50ef8a2c282e6b4c301d60,2,,UniV2LPAggregator
 Sushi LP USDC-miMATIC,0x8ceed6619aeffd5476315b90eb081485da2aebca,2,,UniV2LPAggregator
+Uniswap V3 NFT Position Manager,0xC36442b4a4522E871399CD717aBDD847Ab11FE88,7,,USDPriceAggregator
