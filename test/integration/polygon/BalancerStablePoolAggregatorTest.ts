@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { units } from "../../TestHelpers";
 import { balancer } from "../../../config/chainData/polygon-data";
 import { BalancerStablePoolAggregator, PoolFactory } from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { deployContracts } from "../utils/deployContracts";
 
 describe("Balancer Stable Pool Aggregator Test", function () {
   let logicOwner: SignerWithAddress, other: SignerWithAddress;
@@ -13,7 +13,7 @@ describe("Balancer Stable Pool Aggregator Test", function () {
   let poolFactory: PoolFactory;
 
   before(async function () {
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
   });
 

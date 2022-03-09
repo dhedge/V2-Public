@@ -13,7 +13,6 @@ import {
 } from "../../../types";
 import { getAccountToken } from "./getAccountTokens";
 import { Address } from "../../../deployment-scripts/types";
-import { uniswapV3 } from "../../../config/chainData/polygon-data";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
@@ -32,6 +31,7 @@ export const mintLpAsUser = async (
   nonfungiblePositionManager: INonfungiblePositionManager,
   user: Wallet,
   mintSettings: UniV3LpMintSettings,
+  assetSlots = [0, 0],
 ) => {
   const token0 = mintSettings.token0;
   const token1 = mintSettings.token1;
@@ -41,13 +41,13 @@ export const mintLpAsUser = async (
   const tickLower = mintSettings.tickLower;
   const tickUpper = mintSettings.tickUpper;
 
-  await getAccountToken(amount0, user.address, token0, 0);
-  await getAccountToken(amount1, user.address, token1, 0);
+  await getAccountToken(amount0, user.address, token0, assetSlots[0]);
+  await getAccountToken(amount1, user.address, token1, assetSlots[1]);
   // Approve nft manager to take tokens
   const token0Contract = await ethers.getContractAt("IERC20", token0);
-  await token0Contract.connect(user).approve(uniswapV3.nonfungiblePositionManager, amount0);
+  await token0Contract.connect(user).approve(nonfungiblePositionManager.address, amount0);
   const token1Contract = await ethers.getContractAt("IERC20", token1);
-  await token1Contract.connect(user).approve(uniswapV3.nonfungiblePositionManager, amount1);
+  await token1Contract.connect(user).approve(nonfungiblePositionManager.address, amount1);
 
   await nonfungiblePositionManager.connect(user).mint({
     token0,
@@ -72,6 +72,7 @@ export const mintLpAsUser = async (
  * @param approveTokens Approval of underlying tokens for transfer
  */
 export const mintLpAsPool = async (
+  nonfungiblePositionManager: Address,
   poolLogicProxy: PoolLogic,
   manager: SignerWithAddress,
   mintSettings: UniV3LpMintSettings,
@@ -86,9 +87,9 @@ export const mintLpAsPool = async (
   const tickUpper = mintSettings.tickUpper;
 
   if (approveTokens) {
-    const approve0ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount0]);
+    const approve0ABI = iERC20.encodeFunctionData("approve", [nonfungiblePositionManager, amount0]);
     await poolLogicProxy.connect(manager).execTransaction(token0, approve0ABI);
-    const approve1ABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, amount1]);
+    const approve1ABI = iERC20.encodeFunctionData("approve", [nonfungiblePositionManager, amount1]);
     await poolLogicProxy.connect(manager).execTransaction(token1, approve1ABI);
   }
 
@@ -96,7 +97,7 @@ export const mintLpAsPool = async (
     [token0, token1, fee, tickLower, tickUpper, amount0, amount1, 0, 0, poolLogicProxy.address, deadLine],
   ]);
 
-  await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, mintABI);
+  await poolLogicProxy.connect(manager).execTransaction(nonfungiblePositionManager, mintABI);
 };
 
 /**
@@ -106,8 +107,13 @@ export const mintLpAsPool = async (
  * @param fee Fee of pool
  * @returns Current rounded tick of pool
  */
-export const getCurrentTick = async (token0: Address, token1: Address, fee: number): Promise<number> => {
-  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3.factory);
+export const getCurrentTick = async (
+  uniswapV3Factory: Address,
+  token0: Address,
+  token1: Address,
+  fee: number,
+): Promise<number> => {
+  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
   const poolAddress = await factory.getPool(token0, token1, fee);
   if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
   const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);

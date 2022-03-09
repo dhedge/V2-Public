@@ -5,7 +5,7 @@ import { units } from "../../TestHelpers";
 import { assets } from "../../../config/chainData/polygon-data";
 import { IWETH, PoolFactory, PoolLogic, PoolLogic__factory } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { deployContracts } from "../utils/deployContracts";
 
 use(solidity);
 
@@ -18,7 +18,7 @@ describe.skip("Early Exit Fee", function () {
 
   beforeEach(async function () {
     [logicOwner, manager, dao] = await ethers.getSigners();
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
 
     WMATIC = await ethers.getContractAt("IWETH", assets.wmatic);

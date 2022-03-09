@@ -4,7 +4,6 @@ import { expect, use } from "chai";
 import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
-  IBalancerV2Vault__factory,
   IERC20,
   IERC20__factory,
   IUniswapV2Router__factory,
@@ -12,10 +11,10 @@ import {
   PoolLogic,
   PoolManagerLogic,
 } from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { assets, assetsBalanceOfSlot, quickswap } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 
 use(solidity);
 
@@ -25,16 +24,15 @@ describe("WithdrawSingle Test", function () {
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
-  const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault__factory.abi);
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     WETH = deployments.assets.WETH;
-    QUICK = deployments.assets.QUICK;
-    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH;
+    QUICK = deployments.assets.QUICK!;
+    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
