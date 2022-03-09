@@ -105,9 +105,7 @@ export const mintLpAsPool = async (
 /**
  * Gets tick of Uniswap v3 pool
  * @param uniswapV3Factory Uniswap v3 Factory address
- * @param token0 Token0 of pool
- * @param token1 Token1 of pool
- * @param fee Fee of pool
+ * @param params Pool parameters
  * @returns Current rounded tick of pool
  */
 export const getCurrentTick = async (
@@ -196,8 +194,7 @@ const convertCurrentTick = (currentTick: number, fee: number): number => {
 /**
  * Gets tick of Uniswap v3 pool
  * @param token0 Token0 of pool
- * @param token1 Token1 of pool
- * @param fee Fee of pool
+ * @param params Pool parameters
  * @returns Current rounded tick of pool
  */
 export const getV3LpBalances = async (

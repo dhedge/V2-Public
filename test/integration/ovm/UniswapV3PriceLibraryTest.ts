@@ -9,13 +9,13 @@ const assetPairs: IV3AssetPair[] = [
   },
   {
     fee: 500,
-    token0: assets.weth,
-    token1: assets.usdc,
+    token0: assets.usdc,
+    token1: assets.weth,
   },
   {
     fee: 500,
-    token0: assets.dai,
-    token1: assets.usdc,
+    token0: assets.usdc,
+    token1: assets.dai,
   },
 ];
 
