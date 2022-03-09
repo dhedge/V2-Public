@@ -14,6 +14,9 @@ library UniswapV3PriceLibrary {
   using SafeMathUpgradeable for uint160;
   using SafeMathUpgradeable for uint256;
 
+  // Oracle sqrt price threshold in basis points
+  uint16 private bpThreshold = 25;
+
   /// @notice Assets the v3 pool price for the assets given is within 0.25% of oracle price
   /// @param dhedgeFactory dHEDGE Factory address
   /// @param uniswapV3Factory UniswapV3 Factory
@@ -36,8 +39,8 @@ library UniswapV3PriceLibrary {
 
     // Check that fair price is close to current pool price (0.25% threshold)
     require(
-      sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.div(400)) &&
-        fairSqrtPriceX96 < sqrtPriceX96.add(fairSqrtPriceX96.div(400)),
+      sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.mul(bpThreshold).div(10000)) &&
+        fairSqrtPriceX96 < sqrtPriceX96.add(fairSqrtPriceX96.mul(bpThreshold).div(10000)),
       "Uni v3 LP price mismatch"
     );
   }

@@ -56,9 +56,6 @@ contract UniswapV3AssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
   using PositionValue for INonfungiblePositionManager;
 
-  // Number of seconds in the past from which to calculate the time-weighted means
-  uint32 public priceUpdateInterval = 2 minutes;
-
   struct UniV3PoolParams {
     address token0;
     address token1;
