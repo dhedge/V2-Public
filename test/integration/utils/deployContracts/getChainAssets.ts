@@ -11,13 +11,14 @@ const deployBalancerV2LpAggregator = async (
   info: {
     pool: string;
     poolId: string;
-    tokens: string[];
-    decimals: number[];
-    weights: number[];
   },
 ) => {
+  const weights: Decimal[] = (
+    await (await ethers.getContractAt("IBalancerWeightedPool", info.pool)).getNormalizedWeights()
+  ).map((w) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
+
   const ether = "1000000000000000000";
-  const divisor = info.weights.reduce((acc, w, i) => {
+  const divisor = weights.reduce((acc, w, i) => {
     if (i == 0) {
       return new Decimal(w).pow(w);
     }
@@ -29,8 +30,8 @@ const deployBalancerV2LpAggregator = async (
   let matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
-    for (let j = 0; j < info.weights.length; j++) {
-      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+    for (let j = 0; j < weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(weights[j]).times(ether).toFixed(0));
     }
     matrix.push(elements);
   }

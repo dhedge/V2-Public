@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../Helpers";
 import { Address, ICSVAsset, IVersions } from "../../types";
@@ -6,9 +7,6 @@ import { Address, ICSVAsset, IVersions } from "../../types";
 export interface IBalancerData {
   pool: string;
   poolId: string;
-  tokens: string[];
-  decimals: number[];
-  weights: number[];
 }
 
 export interface IBalancerAsset {
@@ -107,8 +105,12 @@ export const deployBalancerV2LpAggregator = async (
   info: IBalancerData,
   hre: HardhatRuntimeEnvironment,
 ): Promise<Address> => {
+  const weights: Decimal[] = (
+    await (await ethers.getContractAt("IBalancerWeightedPool", info.pool)).getNormalizedWeights()
+  ).map((w) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
+
   const ether = "1000000000000000000";
-  const divisor = info.weights.reduce((acc: any, w: any, i: any) => {
+  const divisor = weights.reduce((acc: any, w: any, i: any) => {
     if (i == 0) {
       return new Decimal(w).pow(w);
     }
@@ -120,8 +122,8 @@ export const deployBalancerV2LpAggregator = async (
   let matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
-    for (let j = 0; j < info.weights.length; j++) {
-      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+    for (let j = 0; j < weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(weights[j]).times(ether).toFixed(0));
     }
     matrix.push(elements);
   }
