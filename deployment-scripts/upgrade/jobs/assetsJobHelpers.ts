@@ -1,5 +1,4 @@
 import Decimal from "decimal.js";
-import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../Helpers";
 import { Address, ICSVAsset, IVersions } from "../../types";
@@ -106,8 +105,8 @@ export const deployBalancerV2LpAggregator = async (
   hre: HardhatRuntimeEnvironment,
 ): Promise<Address> => {
   const weights: Decimal[] = (
-    await (await ethers.getContractAt("IBalancerWeightedPool", info.pool)).getNormalizedWeights()
-  ).map((w) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
+    await (await hre.ethers.getContractAt("IBalancerWeightedPool", info.pool)).getNormalizedWeights()
+  ).map((w) => new Decimal(w.toString()).div(hre.ethers.utils.parseEther("1").toString()));
 
   const ether = "1000000000000000000";
   const divisor = weights.reduce((acc: any, w: any, i: any) => {
