@@ -3,7 +3,7 @@ import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import axios from "axios";
 
-import { uniswapV3, assets, price_feeds } from "./ovm-data";
+import { uniswapV3, assets, price_feeds } from "../../../config/chainData/ovm-data";
 import { UniV3TWAPAggregator } from "../../../types";
 
 use(solidity);

@@ -1,4 +1,4 @@
-import { assets, synthetix } from "../../test/integration/ovm/ovm-data";
+import { assets, synthetix } from "../../config/chainData/ovm-data";
 import { IAddresses, IFileNames } from "../types";
 
 export const ovmProdAddresses: IAddresses = {

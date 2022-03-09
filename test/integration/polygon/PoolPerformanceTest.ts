@@ -6,7 +6,7 @@ import { artifacts, ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Interface } from "@ethersproject/abi";
 import { getAccountToken } from "../utils/getAccountTokens";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { deployContracts } from "../utils/deployContracts";
 
 const { BigNumber } = ethers;
 
@@ -31,14 +31,14 @@ describe("PoolPerformance", function () {
   before(async function () {
     [logicOwner, manager, dao] = await ethers.getSigners();
 
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     poolPerformance = deployments.poolPerformance;
 
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
-    AMUSDC = deployments.assets.AMUSDC;
-    AMWETH = deployments.assets.AMWETH;
+    AMUSDC = deployments.assets.AMUSDC!;
+    AMWETH = deployments.assets.AMWETH!;
 
     await getAccountToken(units(6000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
