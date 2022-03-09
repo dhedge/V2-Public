@@ -8,12 +8,11 @@ import { units } from "../../TestHelpers";
 import { approveToken, getAccountToken, getBalance } from "../utils/getAccountTokens";
 import {
   getCurrentPrice,
-  getCurrentTickImproved,
+  getCurrentTick,
   getV3LpBalances,
-  getV3LpBalancesImproved,
   mintLpAsUser,
   UniV3LpMintSettings,
-} from "../utils/uniswapv3Utils";
+} from "../utils/uniswapV3Utils";
 import { utils } from "../utils/utils";
 
 export const UniswapV3PureTest = (
@@ -81,7 +80,7 @@ export const UniswapV3PureTest = (
       // The deeper the liquidity the higher the cost.
       it("One directional trade cannot steal", async () => {
         const pair = bothSupportedNonStablePair;
-        const tick = await getCurrentTickImproved(uniswapV3.factory, pair);
+        const tick = await getCurrentTick(uniswapV3.factory, pair);
         console.log("Current Tick", tick);
         const token0Price = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSD = token0Price.div(units(1, pair.token1Decimals));
@@ -118,7 +117,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, _] = await getV3LpBalancesImproved(uniswapV3.factory, pair);
+        const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
@@ -140,7 +139,7 @@ export const UniswapV3PureTest = (
         const token0PriceAfterSwap = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSDAfterSwap = token0PriceAfterSwap.div(units(1, pair.token1Decimals));
         // This is proving the swap mangled the ratios and changed the tick
-        console.log("Tick after swap", await getCurrentTickImproved(uniswapV3.factory, pair));
+        console.log("Tick after swap", await getCurrentTick(uniswapV3.factory, pair));
         console.log("Uniswap price of Token0 in token1 after exchange", token0PriceAfterSwap.toString());
         // this can be < 1 whole unit and therefore will be 0 as a bigNumber
         console.log(
@@ -191,7 +190,7 @@ export const UniswapV3PureTest = (
 
       it("Swing trade (aka flashloan) cannot steal from lpers", async () => {
         const pair = bothSupportedNonStablePair;
-        const tick = await getCurrentTickImproved(uniswapV3.factory, pair);
+        const tick = await getCurrentTick(uniswapV3.factory, pair);
         console.log("Current Tick", tick);
         const token0Price = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSD = token0Price.div(units(1, pair.token1Decimals));
@@ -229,12 +228,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, token1Liquidity] = await getV3LpBalances(
-          uniswapV3.factory,
-          pair.token0,
-          pair.token1,
-          pair.fee,
-        );
+        const [token0Liquidity, token1Liquidity] = await getV3LpBalances(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
@@ -256,7 +250,7 @@ export const UniswapV3PureTest = (
         const token0PriceAfterSwap = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSDAfterSwap = token0PriceAfterSwap.div(units(1, pair.token1Decimals));
         // This is proving the swap mangled the ratios and changed the tick
-        console.log("Tick after swap", await getCurrentTickImproved(uniswapV3.factory, pair));
+        console.log("Tick after swap", await getCurrentTick(uniswapV3.factory, pair));
         console.log("Uniswap price of Token0 in token1 after exchange", token0PriceAfterSwap.toString());
         // this can be < 1 whole unit and therefore will be 0 as a bigNumber
         console.log(
@@ -333,7 +327,7 @@ export const UniswapV3PureTest = (
 
       it.only("LP out of range, only token0", async () => {
         const pair = bothSupportedNonStablePair;
-        const tick = await getCurrentTickImproved(uniswapV3.factory, pair);
+        const tick = await getCurrentTick(uniswapV3.factory, pair);
         console.log("Current Tick", tick);
         const token0Price = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSD = token0Price.div(units(1, pair.token1Decimals));
@@ -369,7 +363,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, _] = await getV3LpBalancesImproved(uniswapV3.factory, pair);
+        const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
@@ -391,7 +385,7 @@ export const UniswapV3PureTest = (
         const token0PriceAfterSwap = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSDAfterSwap = token0PriceAfterSwap.div(units(1, pair.token1Decimals));
         // This is proving the swap mangled the ratios and changed the tick
-        console.log("Tick after swap", await getCurrentTickImproved(uniswapV3.factory, pair));
+        console.log("Tick after swap", await getCurrentTick(uniswapV3.factory, pair));
         console.log("Uniswap price of Token0 in token1 after exchange", token0PriceAfterSwap.toString());
         // this can be < 1 whole unit and therefore will be 0 as a bigNumber
         console.log(
@@ -442,7 +436,7 @@ export const UniswapV3PureTest = (
 
       it("LP out of range, only token1", async () => {
         const pair = bothSupportedNonStablePair;
-        const tick = await getCurrentTickImproved(uniswapV3.factory, pair);
+        const tick = await getCurrentTick(uniswapV3.factory, pair);
         console.log("Current Tick", tick);
         const token0Price = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSD = token0Price.div(units(1, pair.token1Decimals));
@@ -478,7 +472,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, _] = await getV3LpBalancesImproved(uniswapV3.factory, pair);
+        const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
@@ -500,7 +494,7 @@ export const UniswapV3PureTest = (
         const token0PriceAfterSwap = await getCurrentPrice(uniswapV3.factory, pair);
         const token0PriceInUSDAfterSwap = token0PriceAfterSwap.div(units(1, pair.token1Decimals));
         // This is proving the swap mangled the ratios and changed the tick
-        console.log("Tick after swap", await getCurrentTickImproved(uniswapV3.factory, pair));
+        console.log("Tick after swap", await getCurrentTick(uniswapV3.factory, pair));
         console.log("Uniswap price of Token0 in token1 after exchange", token0PriceAfterSwap.toString());
         // this can be < 1 whole unit and therefore will be 0 as a bigNumber
         console.log(

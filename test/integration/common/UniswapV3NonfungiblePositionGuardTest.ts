@@ -15,7 +15,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
-import { getCurrentTick, mintLpAsPool, UniV3LpMintSettings } from "../utils/uniswapv3Utils";
+import { getCurrentTick, mintLpAsPool, UniV3LpMintSettings } from "../utils/uniswapV3Utils";
 import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
 
 const deadLine = Math.floor(Date.now() / 1000 + 100000000);
@@ -142,7 +142,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -163,7 +163,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -204,7 +204,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       await poolManagerLogicProxy
         .connect(manager)
@@ -236,7 +236,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -274,7 +274,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -303,7 +303,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         let mintSettings: UniV3LpMintSettings = {
           token0,
