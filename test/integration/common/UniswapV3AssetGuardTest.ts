@@ -18,6 +18,7 @@ import { approveToken, getAccountToken } from "../utils/getAccountTokens";
 import {
   getCurrentTick,
   getCurrentSqrtPriceX96,
+  getOracleSqrtPriceX96,
   getV3LpBalances,
   mintLpAsPool,
   mintLpAsUser,
@@ -171,6 +172,14 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           await approveToken(logicOwner, poolLogicProxy.address, pair.token1, pair.amount1);
           await poolLogicProxy.deposit(pair.token1, pair.amount1);
 
+          const poolSqrtPriceX96 = await getCurrentSqrtPriceX96(uniswapV3.factory, pair);
+          const oracleSqrtPriceX96 = await getOracleSqrtPriceX96(poolFactory, pair);
+          console.log(
+            "Square root price deviation from oracle:",
+            (poolSqrtPriceX96.mul(100000).div(oracleSqrtPriceX96).toNumber() - 100000) / 1000,
+            "%",
+          );
+
           // Mint Uniswap v3 LP
           const tick = await getCurrentTick(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
           const tickRange = (pair.fee / 50) * 1000;
@@ -190,7 +199,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           // Act
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
           const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
-          // We dump 2x extra liquidity on one side, draining the other side
+          // We dump extra liquidity on one side, draining the other side
           const LIQUIDITY_MULTIPLIER = 10;
           const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
           await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
@@ -493,6 +502,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         // Mint Uniswap v3 LP
         const token0 = token0UnsupportedPair.token0; // unsupported asset
         const token1 = token0UnsupportedPair.token1; // supported asset
+        await assetHandler.removeAsset(token0);
         const fee = token0UnsupportedPair.fee;
         const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
         const tickSpacing = fee / 50;
@@ -536,6 +546,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         // Mint Uniswap v3 LP
         const token0 = token0UnsupportedPair.token0; // unsupported asset
         const token1 = token0UnsupportedPair.token1; // supported asset
+        await assetHandler.removeAsset(token0);
         const fee = token0UnsupportedPair.fee;
         const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
         const tickSpacing = fee / 50;

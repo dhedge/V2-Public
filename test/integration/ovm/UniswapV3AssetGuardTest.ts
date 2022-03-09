@@ -31,7 +31,7 @@ uniswapV3AssetGuardTest({
       amount1: units(400, 6),
     },
     bothSupportedNonStablePair: {
-      fee: 500,
+      fee: 3000,
       token0: assets.weth,
       token1: assets.usdc,
       amount0: units(1),

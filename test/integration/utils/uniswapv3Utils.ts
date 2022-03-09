@@ -3,6 +3,7 @@ import { abi as uniswapV3FactoryAbi } from "@uniswap/v3-core/artifacts/contracts
 import { abi as uniswapV3PoolAbi } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
+import bn from "bignumber.js";
 import type { Wallet } from "ethers";
 
 import {
@@ -10,6 +11,7 @@ import {
   INonfungiblePositionManager,
   INonfungiblePositionManager__factory,
   PoolLogic,
+  PoolFactory,
 } from "../../../types";
 import { getAccountToken } from "./getAccountTokens";
 import { Address } from "../../../deployment-scripts/types";
@@ -145,6 +147,42 @@ export const getCurrentTickImproved = async (
 
 /**
  * Gets sqrtPriceX96 of Uniswap v3 pool
+ * @param poolFactory dHEDGE Factory address
+ * @param params Pool parameters
+ * @returns
+ */
+export const getOracleSqrtPriceX96 = async (
+  poolFactory: PoolFactory,
+  params: {
+    token0: Address;
+    token1: Address;
+  },
+): Promise<BigNumber> => {
+  const token0 = params.token0;
+  const token1 = params.token1;
+  const Token0 = await ethers.getContractAt("IERC20Extended", token0);
+  const Token1 = await ethers.getContractAt("IERC20Extended", token1);
+
+  const token0Price = await poolFactory.getAssetPrice(token0);
+  const token1Price = await poolFactory.getAssetPrice(token1);
+  const token0PriceNorm = token0Price
+    .mul(BigNumber.from(10).pow(await Token1.decimals()))
+    .div(BigNumber.from(10).pow(18));
+  const token1PriceNorm = token1Price
+    .mul(BigNumber.from(10).pow(await Token0.decimals()))
+    .div(BigNumber.from(10).pow(18));
+
+  const priceRatioX192 = token0PriceNorm.shl(192).div(token1PriceNorm);
+  const oracleSqrtPriceX96 = sqrt(priceRatioX192);
+  return oracleSqrtPriceX96;
+};
+
+function sqrt(value: BigNumber): BigNumber {
+  return BigNumber.from(new bn(value.toString()).sqrt().toFixed(0));
+}
+
+/**
+ * Gets sqrtPriceX96 of Uniswap v3 pool
  * @param uniswapV3Factory Uniswap v3 Factory address
  * @param params Pool parameters
  * @returns
@@ -156,7 +194,7 @@ export const getCurrentSqrtPriceX96 = async (
     token1: Address;
     fee: number;
   },
-): Promise<number> => {
+): Promise<BigNumber> => {
   const token0 = params.token0;
   const token1 = params.token1;
   const fee = params.fee;
@@ -164,7 +202,7 @@ export const getCurrentSqrtPriceX96 = async (
   const poolAddress = await factory.getPool(token0, token1, fee);
   if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
   const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);
-  const currentSqrtPriceX96 = parseInt((await pool.slot0()).sqrtPriceX96);
+  const currentSqrtPriceX96 = (await pool.slot0()).sqrtPriceX96;
   return currentSqrtPriceX96;
 };
 
