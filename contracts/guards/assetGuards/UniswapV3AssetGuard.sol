@@ -57,8 +57,8 @@ contract UniswapV3AssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint160;
   using PositionValue for INonfungiblePositionManager;
 
-  // Number of seconds in the past from which to calculate the time-weighted means
-  uint32 public priceUpdateInterval = 2 minutes;
+  // Oracle sqrt price threshold in basis points
+  uint16 private bpThreshold = 25;
 
   struct UniV3PoolParams {
     address token0;
@@ -110,10 +110,10 @@ contract UniswapV3AssetGuard is ERC20Guard {
         )
       ).slot0();
 
-      // Check that fair price is close to current pool price (0.25% threshold)
+      // Check that fair price is close to current pool price
       require(
-        poolParams.sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.div(400)) &&
-          fairSqrtPriceX96 < poolParams.sqrtPriceX96.add(fairSqrtPriceX96.div(400)),
+        poolParams.sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.mul(bpThreshold).div(10000)) &&
+          fairSqrtPriceX96 < poolParams.sqrtPriceX96.add(fairSqrtPriceX96.mul(bpThreshold).div(10000)),
         "Uni v3 LP price mismatch"
       );
 
