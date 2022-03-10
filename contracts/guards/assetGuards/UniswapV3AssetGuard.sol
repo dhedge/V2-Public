@@ -48,6 +48,7 @@ import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IERC20Extended.sol";
 import "../contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol";
+import "../../utils/uniswap/UniswapV3PriceLibrary.sol";
 
 /// @title Uniswap V3 asset guard
 /// @dev Asset type = 6
@@ -55,11 +56,15 @@ contract UniswapV3AssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
   using PositionValue for INonfungiblePositionManager;
 
-  // Number of seconds in the past from which to calculate the time-weighted means
-  uint32 public priceUpdateInterval = 2 minutes;
+  struct UniV3PoolParams {
+    address token0;
+    address token1;
+    uint24 fee;
+    uint160 sqrtPriceX96;
+  }
 
   /// @notice Returns the pool position of Uniswap v3
-  /// @dev Returns the balance priced in ETH
+  /// @dev Returns the balance priced in USD
   /// @param pool The pool logic address
   /// @return balance The total balance of the pool
   function getBalance(address pool, address asset) public view override returns (uint256 balance) {
@@ -76,15 +81,33 @@ contract UniswapV3AssetGuard is ERC20Guard {
       length = limit < nftCount ? limit : nftCount;
     }
     for (uint256 i = 0; i < length; ++i) {
+      UniV3PoolParams memory poolParams;
       uint256 tokenId = nonfungiblePositionManager.tokenOfOwnerByIndex(pool, i);
-      (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(tokenId);
+      (, , poolParams.token0, poolParams.token1, poolParams.fee, , , , , , , ) = nonfungiblePositionManager.positions(
+        tokenId
+      );
 
-      (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-        IUniswapV3Factory(nonfungiblePositionManager.factory()).getPool(token0, token1, fee)
-      ).slot0();
-      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, sqrtPriceX96);
+      // If either of the underlying LP tokens are unsupported, then skip the NFT
+      if (
+        !IHasAssetInfo(factory).isValidAsset(poolParams.token0) ||
+        !IHasAssetInfo(factory).isValidAsset(poolParams.token1)
+      ) {
+        continue;
+      }
 
-      balance = balance.add(_assetValue(factory, token0, amount0)).add(_assetValue(factory, token1, amount1));
+      poolParams.sqrtPriceX96 = UniswapV3PriceLibrary.assertFairPrice(
+        factory,
+        nonfungiblePositionManager.factory(),
+        poolParams.token0,
+        poolParams.token1,
+        poolParams.fee
+      );
+
+      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, poolParams.sqrtPriceX96);
+
+      balance = balance.add(_assetValue(factory, poolParams.token0, amount0)).add(
+        _assetValue(factory, poolParams.token1, amount1)
+      );
     }
   }
 

@@ -4,6 +4,7 @@ import { BigNumber } from "ethers";
 
 import { checkAlmostSame, units } from "../../TestHelpers";
 import {
+  ERC20Asset,
   IERC20__factory,
   IMulticall__factory,
   INonfungiblePositionManager,
@@ -15,8 +16,8 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
-import { getCurrentTick, mintLpAsPool, UniV3LpMintSettings } from "../utils/uniswapv3Utils";
-import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
+import { getCurrentTick, mintLpAsPool, UniV3LpMintSettings } from "../utils/uniV3Utils";
+import { deployContracts, IAssetSetting, IDeployments, NETWORK } from "../utils/deployContracts";
 
 const deadLine = Math.floor(Date.now() / 1000 + 100000000);
 
@@ -67,6 +68,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
     let logicOwner: SignerWithAddress, manager: SignerWithAddress;
     let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
     let nonfungiblePositionManager: INonfungiblePositionManager, tokenId: BigNumber;
+    let testSupportedAsset: ERC20Asset;
     const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
     const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
     const iMulticall = new ethers.utils.Interface(IMulticall__factory.abi);
@@ -81,6 +83,18 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
 
       deployments = await deployContracts(network);
       poolFactory = deployments.poolFactory;
+
+      const TestAsset = await ethers.getContractFactory("ERC20Asset");
+      testSupportedAsset = await TestAsset.deploy("Test", "TST");
+      await testSupportedAsset.deployed();
+
+      const testAggregator: string = await deployments.assetHandler.priceAggregators(bothSupportedPair.token0);
+      const testSupportedAssetSetting: IAssetSetting = {
+        asset: testSupportedAsset.address,
+        assetType: 0,
+        aggregator: testAggregator, // any aggregator is ok for the test asset
+      };
+      await deployments.assetHandler.addAssets([testSupportedAssetSetting]);
     });
 
     beforeEach(async function () {
@@ -91,6 +105,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         [
           { asset: bothSupportedPair.token0, isDeposit: true },
           { asset: bothSupportedPair.token1, isDeposit: true },
+          { asset: testSupportedAsset.address, isDeposit: true },
         ],
         0, // 0% performance fee
       );
@@ -109,6 +124,8 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         bothSupportedPair.token1,
         bothSupportedPair.token1Slot,
       );
+
+      await getAccountToken(bothSupportedPair.amount0.mul(3), logicOwner.address, testSupportedAsset.address, 0);
 
       await (
         await ethers.getContractAt("IERC20", bothSupportedPair.token0)
@@ -142,7 +159,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -163,7 +180,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -204,7 +221,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       await poolManagerLogicProxy
         .connect(manager)
@@ -231,12 +248,35 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       ).to.revertedWith("recipient is not pool");
     });
 
+    it("Can't mint position in a pool with no liquidity", async () => {
+      // try to mint before enabling nft position asset
+      const token0 = testSupportedAsset.address; // supported asset with no liquidity
+      const token1 = bothSupportedPair.token1;
+      const fee = bothSupportedPair.fee;
+      const tickSpacing = fee / 50;
+      let mintSettings: UniV3LpMintSettings = {
+        token0,
+        token1,
+        fee,
+        amount0: bothSupportedPair.amount0,
+        amount1: bothSupportedPair.amount1,
+        tickLower: 0,
+        tickUpper: tickSpacing,
+      };
+      await poolManagerLogicProxy
+        .connect(manager)
+        .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: false }], []);
+
+      await expect(mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings)).to
+        .reverted;
+    });
+
     it("Can't mint more than 3 positions (check position count limit)", async () => {
       // try to mint before enabling nft position asset
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -274,7 +314,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token0 = bothSupportedPair.token0;
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
-      const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
       const tickSpacing = fee / 50;
       let mintSettings: UniV3LpMintSettings = {
         token0,
@@ -303,7 +343,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         let mintSettings: UniV3LpMintSettings = {
           token0,

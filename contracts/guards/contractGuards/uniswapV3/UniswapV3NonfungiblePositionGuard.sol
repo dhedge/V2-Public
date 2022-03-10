@@ -40,8 +40,10 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../../../utils/TxDataUtils.sol";
+import "../../../utils/uniswap/UniswapV3PriceLibrary.sol";
 import "../../../interfaces/guards/IGuard.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";
+import "../../../interfaces/IPoolLogic.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
@@ -122,8 +124,15 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(param.token1), "unsupported asset: tokenB");
 
       require(nonfungiblePositionManager.balanceOf(pool) < uniV3PositionsLimit, "too many uniswap v3 positions");
-
       require(pool == param.recipient, "recipient is not pool");
+
+      UniswapV3PriceLibrary.assertFairPrice(
+        IPoolLogic(pool).factory(),
+        nonfungiblePositionManager.factory(),
+        param.token0,
+        param.token1,
+        param.fee
+      );
 
       emit Mint(
         poolManagerLogic.poolLogic(),
