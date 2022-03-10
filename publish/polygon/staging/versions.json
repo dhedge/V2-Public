@@ -1823,9 +1823,9 @@
       "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4",
       "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
       "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E",
-      "UniswapV3NonfungiblePositionGuard": "0x11cEA0E483690b80F92cA7ca162343C89c04B552",
+      "UniswapV3NonfungiblePositionGuard": "0x7218cB1Df9c40095C7203DC50f511a246f039086",
       "UniswapV3RouterGuard": "0x16FcD638cB1b6ed0D9C15C9B98a6C85453a4FA6A",
-      "UniswapV3AssetGuard": "0xD5A3eBcce55d71d97e0b24352B23F2b5744031A9",
+      "UniswapV3AssetGuard": "0x5AA258597bd1a2B0850652a2389264a37382B916",
       "DhedgeSwapRouter": "0x2Fa65bAA0D8E319568AbAda4099631044D79d7aA"
     },
     "network": {
@@ -1834,6 +1834,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 02 Mar 2022 04:55:44 GMT"
+    "lastUpdated": "Thu, 10 Mar 2022 06:13:30 GMT"
   }
 }
