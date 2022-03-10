@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -25,7 +26,7 @@ export const openAssetContractGuardJob: IJob<void> = async (
   if (config.execute) {
     const fileName = filenames.externalAssetFileName;
     const csvAssets = await csv().fromFile(fileName);
-    const addresses = csvAssets.map((asset) => asset.Address);
+    const addresses: any = csvAssets.map((asset) => asset.Address);
     const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
     const openAssetGuard = await OpenAssetGuard.deploy(addresses);
     await openAssetGuard.deployed();
