@@ -3,17 +3,12 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../Helpers";
 import { Address, ICSVAsset, IVersions } from "../../types";
 
-export interface IBalancerData {
-  pool: string;
-  poolId: string;
-}
-
 export interface IBalancerAsset {
   name: string;
   oracleName: "BalancerV2LPAggregator" | "BalancerLpStablePoolAggregator";
   address: string;
   assetType: number;
-  data: IBalancerData;
+  pool: string;
 }
 
 export const getOracle = async (
@@ -101,11 +96,11 @@ const getOracleAddress = async (
 export const deployBalancerV2LpAggregator = async (
   balancerV2VaultAddress: string,
   factory: string,
-  info: IBalancerData,
+  pool: string,
   hre: HardhatRuntimeEnvironment,
 ): Promise<Address> => {
   const weights: Decimal[] = (
-    await (await hre.ethers.getContractAt("IBalancerWeightedPool", info.pool)).getNormalizedWeights()
+    await (await hre.ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights()
   ).map((w) => new Decimal(w.toString()).div(hre.ethers.utils.parseEther("1").toString()));
 
   const ether = "1000000000000000000";
@@ -131,7 +126,7 @@ export const deployBalancerV2LpAggregator = async (
 
   const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
 
-  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(factory, balancerV2VaultAddress, info.pool, [
+  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(factory, balancerV2VaultAddress, pool, [
     "50000000000000000", // maxPriceDeviation: 0.05
     K,
     "100000000", // powerPrecision
@@ -146,7 +141,7 @@ export const deployBalancerV2LpAggregator = async (
     [
       factory,
       balancerV2VaultAddress,
-      info.pool,
+      pool,
       [
         "50000000000000000", // maxPriceDeviation: 0.05
         K,

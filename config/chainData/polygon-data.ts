@@ -40,18 +40,12 @@ export const balancer = {
   v2Vault: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
   merkleOrchard: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",
   pools: {
-    // USDC, DAI, miMatic, USDT
-    stablePool: {
-      pool: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
-      poolId: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012",
-    },
     // WETH, BALANCER
-    bal80weth20: {
-      pool: "0x7EB878107Af0440F9E776f999CE053D277c8Aca8",
-      poolId: "0x7eb878107af0440f9e776f999ce053d277c8aca800020000000000000000002f",
-    },
+    bal80weth20: "0x7EB878107Af0440F9E776f999CE053D277c8Aca8",
   },
   stablePools: {
+    // USDC, DAI, miMatic, USDT
+    BPSP: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
     // USDC, TUSD, DAI, USDT
     BPSP_TUSD: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f",
   },

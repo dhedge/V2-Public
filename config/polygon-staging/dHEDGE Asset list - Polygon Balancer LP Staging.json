@@ -4,95 +4,69 @@
     "oracleName": "BalancerV2LPAggregator",
     "address": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
     "assetType": 0,
-    "data": {
-      "pool": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
-      "poolId": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875000100000000000000000002"
-    }
+    "pool": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875"
   },
   {
     "name": "Balancer LP WETH-BAL",
     "oracleName": "BalancerV2LPAggregator",
     "address": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
     "assetType": 0,
-    "data": {
-      "pool": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
-      "poolId": "0x7eb878107af0440f9e776f999ce053d277c8aca800020000000000000000002f"
-    }
+    "pool": "0x7eb878107af0440f9e776f999ce053d277c8aca8"
   },
   {
     "name": "Balancer LP USDC-LINK-WETH-BAL-AAVE",
     "oracleName": "BalancerV2LPAggregator",
     "address": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
     "assetType": 0,
-    "data": {
-      "pool": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
-      "poolId": "0x36128d5436d2d70cab39c9af9cce146c38554ff0000100000000000000000008"
-    }
+    "pool": "0x36128d5436d2d70cab39c9af9cce146c38554ff0"
   },
   {
     "name": "Balancer LP WBTC-USDC-WETH",
     "oracleName": "BalancerV2LPAggregator",
     "address": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
     "assetType": 0,
-    "data": {
-      "pool": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
-      "poolId": "0x03cd191f589d12b0582a99808cf19851e468e6b500010000000000000000000a"
-    }
+    "pool": "0x03cd191f589d12b0582a99808cf19851e468e6b5"
   },
   {
     "name": "Balancer LP LINK-WETH-BAL-AAVE",
     "oracleName": "BalancerV2LPAggregator",
     "address": "0xce66904b68f1f070332cbc631de7ee98b650b499",
     "assetType": 0,
-    "data": {
-      "pool": "0xce66904b68f1f070332cbc631de7ee98b650b499",
-      "poolId": "0xce66904b68f1f070332cbc631de7ee98b650b499000100000000000000000009"
-    }
+    "pool": "0xce66904b68f1f070332cbc631de7ee98b650b499"
   },
   {
     "name": "Balancer LP WBTC-WETH",
     "oracleName": "BalancerV2LPAggregator",
     "address": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
     "assetType": 0,
-    "data": {
-      "pool": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
-      "poolId": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae9500020000000000000000005a"
-    }
+    "pool": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95"
   },
   {
     "name": "Balancer LP BPSP-TUSD",
     "oracleName": "BalancerLpStablePoolAggregator",
     "address": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
     "assetType": 0,
-    "data": {
-      "pool": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f"
-    }
+    "pool": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f"
   },
   {
     "name": "Balancer LP BPSP",
     "oracleName": "BalancerLpStablePoolAggregator",
     "address": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
     "assetType": 0,
-    "data": {
-      "pool": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42"
-    }
+    "pool": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42"
   },
   {
     "name": "Balancer LP WBTC-renBTC",
     "oracleName": "BalancerLpStablePoolAggregator",
     "address": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
     "assetType": 0,
-    "data": {
-      "pool": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56"
-    }
+    "pool": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56"
   },
   {
     "name": "Balancer LP USDC-dUSD",
     "oracleName": "BalancerLpStablePoolAggregator",
     "address": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
     "assetType": 0,
-    "data": {
-      "pool": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168"
-    }
+    "pool": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168"
   }
 ]

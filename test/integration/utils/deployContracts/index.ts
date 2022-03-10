@@ -302,8 +302,8 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const VariableUSDT = await ethers.getContractAt("IERC20", polygonData.aave.variableDebtTokens.usdt);
     const VariableDAI = await ethers.getContractAt("IERC20", polygonData.aave.variableDebtTokens.dai);
 
-    const BALANCERLP_STABLE = await ethers.getContractAt("IERC20", polygonData.balancer.pools.stablePool.pool);
-    const BALANCERLP_WETH_BALANCER = await ethers.getContractAt("IERC20", polygonData.balancer.pools.bal80weth20.pool);
+    const BALANCERLP_STABLE = await ethers.getContractAt("IERC20", polygonData.balancer.stablePools.BPSP);
+    const BALANCERLP_WETH_BALANCER = await ethers.getContractAt("IERC20", polygonData.balancer.pools.bal80weth20);
 
     return {
       logicOwner,

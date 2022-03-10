@@ -5,16 +5,9 @@ import * as polygonData from "../../../../config/chainData/polygon-data";
 import * as ovmData from "../../../../config/chainData/ovm-data";
 import { NETWORK, IAssetSetting } from ".";
 
-const deployBalancerV2LpAggregator = async (
-  poolFactory: PoolFactory,
-  v2Vault: string,
-  info: {
-    pool: string;
-    poolId: string;
-  },
-) => {
+const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, v2Vault: string, pool: string) => {
   const weights: Decimal[] = (
-    await (await ethers.getContractAt("IBalancerWeightedPool", info.pool)).getNormalizedWeights()
+    await (await ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights()
   ).map((w) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
 
   const ether = "1000000000000000000";
@@ -37,7 +30,7 @@ const deployBalancerV2LpAggregator = async (
   }
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
-  return await BalancerV2LPAggregator.deploy(poolFactory.address, v2Vault, info.pool, {
+  return await BalancerV2LPAggregator.deploy(poolFactory.address, v2Vault, pool, {
     maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
     K,
     powerPrecision: "100000000", // powerPrecision
@@ -95,11 +88,11 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
     const BalancerStablePoolAggregator = await ethers.getContractFactory("BalancerStablePoolAggregator");
     const balancerV2Aggregator = await BalancerStablePoolAggregator.deploy(
       poolFactory.address,
-      polygonData.balancer.pools.stablePool.pool,
+      polygonData.balancer.stablePools.BPSP,
     );
     await balancerV2Aggregator.deployed();
     const balancerLpAsset = {
-      asset: polygonData.balancer.pools.stablePool.pool,
+      asset: polygonData.balancer.stablePools.BPSP,
       assetType: 0,
       aggregator: balancerV2Aggregator.address,
     };
@@ -110,7 +103,7 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       polygonData.balancer.pools.bal80weth20,
     );
     const balancerLpAssetWethBalancer = {
-      asset: polygonData.balancer.pools.bal80weth20.pool,
+      asset: polygonData.balancer.pools.bal80weth20,
       assetType: 0,
       aggregator: balancerV2AggregatorWethBalancer.address,
     };
