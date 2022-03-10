@@ -135,14 +135,14 @@
           "oracleName": "susdUniV3TWAPAggregator"
         }
       ],
-      "UniswapV3AssetGuard": "0x650F42EFa6E90162874F28EEB20Ef5e4B9DD8c35",
-      "UniswapV3NonfungiblePositionGuard": "0x7Da191fC84e4d0bDba96365226bF22Fdc22A1741",
+      "UniswapV3AssetGuard": "0x9a6d482c81F2D7b520Fa52AAC3b7614Af7000Caf",
+      "UniswapV3NonfungiblePositionGuard": "0x17C39280F075B17ccaD807B67B910c13697c9050",
       "UniswapV3RouterGuard": "0xf2d2a22591E7c8fD6a7ec29a1E557e10e3bB2B9c"
     },
     "network": {
       "chainId": 10,
       "name": "unknown"
     },
-    "lastUpdated": "Fri, 04 Mar 2022 00:24:33 GMT"
+    "lastUpdated": "Thu, 10 Mar 2022 06:35:51 GMT"
   }
 }
