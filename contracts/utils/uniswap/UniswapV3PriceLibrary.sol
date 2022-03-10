@@ -31,11 +31,12 @@ library UniswapV3PriceLibrary {
     address token1,
     uint24 fee
   ) internal view returns (uint160 sqrtPriceX96) {
-    (sqrtPriceX96, , , , , , ) = IUniswapV3Pool(IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, fee))
-      .slot0();
+    IUniswapV3Pool uniPool = IUniswapV3Pool(IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, fee));
+    (sqrtPriceX96, , , , , , ) = uniPool.slot0();
 
     // Get a fair sqrtPriceX96 from asset price oracles
-    uint160 fairSqrtPriceX96 = getFairSqrtPriceX96(dhedgeFactory, token0, token1);
+    // We pass the tokens in the same order as the pool is configured
+    uint160 fairSqrtPriceX96 = getFairSqrtPriceX96(dhedgeFactory, uniPool.token0(), uniPool.token1());
 
     // Check that fair price is close to current pool price (0.25% threshold)
     require(
