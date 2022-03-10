@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Artifact } from "hardhat/types";
 
 import { updateChainlinkAggregators } from "../TestHelpers";
-import { MockContract } from "../../types";
+import { MockContract, PoolLogic__factory } from "../../types";
 import { Interface } from "@ethersproject/abi";
 
 const { BigNumber } = ethers;
@@ -19,7 +19,7 @@ const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000
 
 describe("PoolFactory", function () {
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, investor: SignerWithAddress;
-  let poolFactory: Contract, PoolLogic: Contract, poolLogicProxy: Contract, poolPerformance: Contract;
+  let PoolLogic: PoolLogic__factory, poolFactory: Contract, poolLogicProxy: Contract, poolPerformance: Contract;
 
   let IERC20: Artifact, iERC20: Interface;
   let synthetixGuard; // contract guards
@@ -105,7 +105,7 @@ describe("PoolFactory", function () {
     await poolPerformance.deployed();
     await poolPerformance.enable();
 
-    const PoolLogic = await ethers.getContractFactory("PoolLogic");
+    PoolLogic = await ethers.getContractFactory("PoolLogic");
     const poolLogic = await PoolLogic.deploy();
 
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
