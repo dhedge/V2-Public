@@ -16,7 +16,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
-import { getCurrentTick, mintLpAsPool, UniV3LpMintSettings } from "../utils/uniswapV3Utils";
+import { getCurrentTick, mintLpAsPool, UniV3LpMintSettings } from "../utils/uniV3Utils";
 import { deployContracts, IAssetSetting, IDeployments, NETWORK } from "../utils/deployContracts";
 
 const deadLine = Math.floor(Date.now() / 1000 + 100000000);

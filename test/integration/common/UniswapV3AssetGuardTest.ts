@@ -23,7 +23,7 @@ import {
   mintLpAsPool,
   mintLpAsUser,
   UniV3LpMintSettings,
-} from "../utils/uniswapV3Utils";
+} from "../utils/uniV3Utils";
 import { utils } from "../utils/utils";
 
 interface IUniswapV3AssetGuardTestParameters {

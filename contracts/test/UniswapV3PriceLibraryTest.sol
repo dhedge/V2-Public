@@ -10,7 +10,7 @@ contract UniswapV3PriceLibraryTest {
     address token0,
     address token1,
     uint24 fee
-  ) public {
+  ) public view {
     UniswapV3PriceLibrary.assertFairPrice(dhedgeFactory, uniswapV3Factory, token0, token1, fee);
   }
 }

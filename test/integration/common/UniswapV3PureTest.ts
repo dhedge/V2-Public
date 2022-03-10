@@ -12,7 +12,7 @@ import {
   getV3LpBalances,
   mintLpAsUser,
   UniV3LpMintSettings,
-} from "../utils/uniswapV3Utils";
+} from "../utils/uniV3Utils";
 import { utils } from "../utils/utils";
 
 export const UniswapV3PureTest = (

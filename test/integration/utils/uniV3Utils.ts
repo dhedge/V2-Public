@@ -1,22 +1,20 @@
-import { ethers } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { abi as uniswapV3FactoryAbi } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
 import { abi as uniswapV3PoolAbi } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
 import bn from "bignumber.js";
 import type { Wallet } from "ethers";
-
+import { BigNumber } from "ethers";
+import { ethers } from "hardhat";
+import { Address } from "../../../deployment-scripts/types";
 import {
   IERC20__factory,
   INonfungiblePositionManager,
   INonfungiblePositionManager__factory,
-  PoolLogic,
   PoolFactory,
+  PoolLogic,
 } from "../../../types";
-import { getAccountToken } from "./getAccountTokens";
-import { Address } from "../../../deployment-scripts/types";
-import { IUniswapV3Pool__factory } from "../../../types/factories/IUniswapV3Pool__factory";
 import { units } from "../../TestHelpers";
+import { getAccountToken } from "./getAccountTokens";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
