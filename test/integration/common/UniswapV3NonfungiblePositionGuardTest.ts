@@ -144,7 +144,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const fee = bothSupportedPair.fee;
       const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
-      let mintSettings: UniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -165,7 +165,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const fee = bothSupportedPair.fee;
       const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
-      let mintSettings: UniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -238,7 +238,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const fee = bothSupportedPair.fee;
       const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
-      let mintSettings: UniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -276,7 +276,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const fee = bothSupportedPair.fee;
       const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
       const tickSpacing = fee / 50;
-      let mintSettings: UniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,
@@ -305,7 +305,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         const fee = bothSupportedPair.fee;
         const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
         const tickSpacing = fee / 50;
-        let mintSettings: UniV3LpMintSettings = {
+        const mintSettings: UniV3LpMintSettings = {
           token0,
           token1,
           fee,
@@ -327,7 +327,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         const positionBefore = await nonfungiblePositionManager.positions(tokenId);
 
         // increase USDC-WETH LP position by 2000 USDC and 1 WETH
-        let increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
+        const increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
           [tokenId, units(2000, 6), units(1), 0, 0, deadLine],
         ]);
 
@@ -348,7 +348,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         const positionBefore = await nonfungiblePositionManager.positions(tokenId);
 
         // decrease USDC-WETH LP position by 100%
-        let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        const decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
           [tokenId, positionBefore.liquidity, 0, 0, deadLine],
         ]);
 
@@ -371,7 +371,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         const positionBefore = await nonfungiblePositionManager.positions(tokenId);
 
         // decrease USDC-WETH LP position by 100%
-        let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        const decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
           [tokenId, positionBefore.liquidity, 0, 0, deadLine],
         ]);
 
@@ -410,7 +410,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       });
 
       it("Fail to collect fees with wrong receiver", async () => {
-        let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        const collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
           [tokenId, poolManagerLogicProxy.address, units(10000), units(10000)],
         ]);
         await expect(
@@ -421,7 +421,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       it("Should be able to collect", async () => {
         const positionBefore = await nonfungiblePositionManager.positions(tokenId);
         // decrease USDC-WETH LP position by 100%
-        let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        const decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
           [tokenId, positionBefore.liquidity, 0, 0, deadLine],
         ]);
         await poolLogicProxy
@@ -478,7 +478,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         await poolManagerLogicProxy.connect(manager).changeAssets([], [bothSupportedPair.token1]);
 
         // try to collect fees with wrong receiver
-        let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        const collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
           [tokenId, poolManagerLogicProxy.address, units(10000), units(10000)],
         ]);
         await expect(
@@ -495,19 +495,19 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       it("Should be able to burn", async () => {
         const positionBefore = await nonfungiblePositionManager.positions(tokenId);
         // decrease USDC-WETH LP position by 100%
-        let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        const decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
           [tokenId, positionBefore.liquidity, 0, 0, deadLine],
         ]);
         await poolLogicProxy
           .connect(manager)
           .execTransaction(uniswapV3.nonfungiblePositionManager, decreaseLiquidityABI);
 
-        let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        const collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
           [tokenId, poolLogicProxy.address, units(10000), units(10000)],
         ]);
         await poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, collectABI);
 
-        let burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
+        const burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
 
         const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
@@ -521,16 +521,16 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       it("Should be able to multicall", async () => {
         const positionBefore = await nonfungiblePositionManager.positions(tokenId);
         // decrease USDC-WETH LP position by 100%
-        let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        const decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
           [tokenId, positionBefore.liquidity, 0, 0, deadLine],
         ]);
 
-        let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+        const collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
           [tokenId, poolLogicProxy.address, units(10000), units(10000)],
         ]);
-        let wrongABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, units(10000, 6)]);
+        const wrongABI = iERC20.encodeFunctionData("approve", [uniswapV3.nonfungiblePositionManager, units(10000, 6)]);
 
-        let burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
+        const burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
 
         // try multicall with bad transaction
         let multicallABI = iMulticall.encodeFunctionData("multicall", [[decreaseLiquidityABI, wrongABI, burnABI]]);
@@ -562,7 +562,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         // First decrease half the liquidity and move it to the fees to ensure both liquidity and fees get withdrawn correctly
         const positionBefore = await nonfungiblePositionManager.positions(tokenId);
         // decrease USDC-WETH LP position by 50%
-        let decreaseLiquidityCalldata = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+        const decreaseLiquidityCalldata = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
           [tokenId, ethers.BigNumber.from(positionBefore.liquidity).div(2), 0, 0, deadLine],
         ]);
         await poolLogicProxy

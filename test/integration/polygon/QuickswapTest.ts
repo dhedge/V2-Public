@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
@@ -22,7 +23,7 @@ use(solidity);
 
 describe("Quickswap V2 Test", function () {
   let WMATIC: IWETH, WETH: IERC20, USDC: IERC20, QuickLPUSDCWETH: IERC20, QUICK: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
@@ -30,7 +31,7 @@ describe("Quickswap V2 Test", function () {
   const iStakingRewards = new ethers.utils.Interface(IStakingRewards__factory.abi);
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager, user] = await ethers.getSigners();
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
@@ -214,7 +215,7 @@ describe("Quickswap V2 Test", function () {
 
   it("should be able to withdraw", async function () {
     // Withdraw 50%
-    let withdrawAmount = units(100);
+    const withdrawAmount = units(100);
 
     await poolFactory.setExitCooldown(0);
 
@@ -318,7 +319,7 @@ describe("Quickswap V2 Test", function () {
       poolLogicProxy.connect(manager).execTransaction(quickswap.router, removeLiquidityAbi),
     ).to.be.revertedWith("UniswapV2Router: EXPIRED");
 
-    let approveABI = iERC20.encodeFunctionData("approve", [quickswap.router, liquidity]);
+    const approveABI = iERC20.encodeFunctionData("approve", [quickswap.router, liquidity]);
     await poolLogicProxy.connect(manager).execTransaction(quickswap.pools.usdc_weth.address, approveABI);
 
     removeLiquidityAbi = iUniswapV2Router.encodeFunctionData("removeLiquidity", [
@@ -366,7 +367,7 @@ describe("Quickswap V2 Test", function () {
   // Removed OpenAssetGuard - needs to be reinstated securely
   it.skip("Should be able to swap non-supported asset", async () => {
     const sourceAmount = units(100);
-    let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
+    const swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
       [assets.wmatic, assets.weth],
@@ -385,7 +386,7 @@ describe("Quickswap V2 Test", function () {
   // Removed OpenAssetGuard - needs to be reinstated securely
   it.skip("Should be able to swap non-supported asset (routing)", async () => {
     const sourceAmount = units(100);
-    let swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
+    const swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
       0,
       [assets.wmatic, assets.quick, assets.weth],
@@ -404,10 +405,10 @@ describe("Quickswap V2 Test", function () {
   it("should be able to stake lp(USDC/WETH) on quickswap.", async () => {
     const liquidity = await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address);
 
-    let approveABI = iERC20.encodeFunctionData("approve", [quickswap.pools.usdc_weth.stakingRewards, liquidity]);
+    const approveABI = iERC20.encodeFunctionData("approve", [quickswap.pools.usdc_weth.stakingRewards, liquidity]);
     await poolLogicProxy.connect(manager).execTransaction(quickswap.pools.usdc_weth.address, approveABI);
 
-    let stakeABI = iStakingRewards.encodeFunctionData("stake", [liquidity]);
+    const stakeABI = iStakingRewards.encodeFunctionData("stake", [liquidity]);
 
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
     expect(liquidity).to.gt(0);
@@ -420,7 +421,7 @@ describe("Quickswap V2 Test", function () {
 
   // Doesn't seem to be getting any rewards
   it.skip("should be able to claim rewards from quickswap.", async () => {
-    let claimABI = iStakingRewards.encodeFunctionData("getReward", []);
+    const claimABI = iStakingRewards.encodeFunctionData("getReward", []);
 
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
     expect(await QUICK.balanceOf(poolLogicProxy.address)).to.equal(0);
@@ -433,7 +434,7 @@ describe("Quickswap V2 Test", function () {
 
   it("should be able to withdraw lp(USDC/WETH) on quickswap.", async () => {
     const liquidity = await poolManagerLogicProxy.assetBalance(quickswap.pools.usdc_weth.address);
-    let withdrawABI = iStakingRewards.encodeFunctionData("withdraw", [liquidity]);
+    const withdrawABI = iStakingRewards.encodeFunctionData("withdraw", [liquidity]);
 
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
     expect(await QuickLPUSDCWETH.balanceOf(poolLogicProxy.address)).to.equal(0);

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { units } from "../../TestHelpers";
@@ -26,7 +28,7 @@ describe("EasySwapperGuard", () => {
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let torosAssetAddress: string;
 
-  let snapshot: any;
+  let snapshot: unknown;
   before(async () => {
     snapshot = await ethers.provider.send("evm_snapshot", []);
     [logicOwner, manager] = await ethers.getSigners();
@@ -77,7 +79,7 @@ describe("EasySwapperGuard", () => {
     // Check token price is $1
     expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100) as any);
 
-    let approveABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, units(500, 6)]);
+    const approveABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, units(500, 6)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const depositEncoded = DhedgeEasySwapperInterface.encodeFunctionData("deposit", [
@@ -101,7 +103,7 @@ describe("EasySwapperGuard", () => {
     // Check token price is $1
     expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100) as any);
 
-    let approveTorosABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, torosBalance]);
+    const approveTorosABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, torosBalance]);
     await poolLogicProxy.connect(manager).execTransaction(torosAssetAddress, approveTorosABI);
 
     const withdrawEncoded = DhedgeEasySwapperInterface.encodeFunctionData("withdraw", [

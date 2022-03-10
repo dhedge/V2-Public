@@ -108,7 +108,7 @@ export const deployBalancerV2LpAggregator = async (
   hre: HardhatRuntimeEnvironment,
 ): Promise<Address> => {
   const ether = "1000000000000000000";
-  const divisor = info.weights.reduce((acc: any, w: any, i: any) => {
+  const divisor = info.weights.reduce((acc, w, i) => {
     if (i == 0) {
       return new Decimal(w).pow(w);
     }
@@ -117,7 +117,7 @@ export const deployBalancerV2LpAggregator = async (
 
   const K = new Decimal(ether).div(divisor).toFixed(0);
 
-  let matrix = [];
+  const matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
     for (let j = 0; j < info.weights.length; j++) {
@@ -134,13 +134,13 @@ export const deployBalancerV2LpAggregator = async (
     info.pool,
     info.tokens,
     info.decimals,
-    info.weights.map((w: any) => new Decimal(w).mul(ether).toFixed(0)),
-    [
-      "50000000000000000", // maxPriceDeviation: 0.05
+    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+    {
+      maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
       K,
-      "100000000", // powerPrecision
-      matrix, // approximationMatrix
-    ] as any,
+      powerPrecision: "100000000", // powerPrecision
+      approximationMatrix: matrix, // approximationMatrix
+    },
   );
   await balancerV2LpAggregator.deployed();
 
@@ -154,13 +154,13 @@ export const deployBalancerV2LpAggregator = async (
       info.pool,
       info.tokens,
       info.decimals,
-      info.weights.map((w: any) => new Decimal(w).mul(ether).toFixed(0)),
-      [
-        "50000000000000000", // maxPriceDeviation: 0.05
+      info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+      {
+        maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
         K,
-        "100000000", // powerPrecision
-        matrix, // approximationMatrix
-      ],
+        powerPrecision: "100000000", // powerPrecision
+        approximationMatrix: matrix, // approximationMatrix
+      },
     ],
   );
   return balancerV2LpAggregator.address;

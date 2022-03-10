@@ -9,6 +9,7 @@
   "scripts": {
     "lint": "solhint \"contracts/**/*.sol\" && eslint .",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
+    "lint:fix": "solhint \"contracts/**/*.sol\" && eslint . --fix",
     "prettier": "prettier -l --write . '**/*.{js,ts,json}'",
     "fork:polygon": "hardhat node --fork $(grep ALCHEMY_POLYGON_URL .env | cut -d '=' -f2)$(grep ALCHEMY_POLYGON_KEY .env | cut -d '=' -f2)",
     "fork:arbitrum": "hardhat node --fork $(grep ARBITRUM_URL .env | cut -d '=' -f2)",

@@ -35,7 +35,7 @@ export const balancerMerkleOrchardContractGuardJob: IJob<void> = async (
       [],
     );
 
-    let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+    const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
       addresses.balancerMerkleOrchardAddress,
       balancerMerkleOrchardGuard.address,
     ]);

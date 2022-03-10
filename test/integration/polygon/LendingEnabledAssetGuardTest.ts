@@ -7,8 +7,8 @@ import { solidity } from "ethereum-waffle";
 const { BigNumber } = ethers;
 use(solidity);
 
-const { toBytes32, units } = require("../../TestHelpers");
-const { sushi, aave, assets, price_feeds } = require("../../../config/chainData/polygon-data");
+import { toBytes32, units } from "../../TestHelpers";
+import { sushi, aave, assets, price_feeds } from "../../../config/chainData/polygon-data";
 
 describe("LendingEnabledAssetGuard", function () {
   let USDC: Contract, WMatic: Contract;
@@ -139,17 +139,17 @@ describe("LendingEnabledAssetGuard", function () {
     const IERC20 = await artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     // approve usdc
-    let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const ILendingPool = await artifacts.readArtifact("ILendingPool");
     const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
     // deposit
-    let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
+    const depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
     await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
     const poolManagerLogicProxy = await PoolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
-    let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+    const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
     expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal((0).toString());
     expect(await poolManagerLogicManagerProxy.assetBalance(assets.usdc)).to.be.equal((0).toString());

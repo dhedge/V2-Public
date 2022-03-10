@@ -26,7 +26,7 @@ const deployBalancerV2LpAggregator = async (
 
   const K = new Decimal(ether).div(divisor).toFixed(0);
 
-  let matrix = [];
+  const matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
     for (let j = 0; j < info.weights.length; j++) {

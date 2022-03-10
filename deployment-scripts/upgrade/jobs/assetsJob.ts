@@ -21,7 +21,7 @@ export const assetsJob: IJob<void> = async (
 ) => {
   console.log("Running Assets Job");
   const ethers = hre.ethers;
-  let newOracles: ICSVAsset[] = [];
+  const newOracles: ICSVAsset[] = [];
 
   // look up to check if csvAsset is in the current versions
   const fileName = filenames.assetsFileName;

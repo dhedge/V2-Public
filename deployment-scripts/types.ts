@@ -171,13 +171,15 @@ export interface ICSVAsset extends RecordNumberString {
   assetName: string;
 }
 
-export type IVersions = {
-  [version: string]: {
-    network: {
-      chainId: number;
-      name: string;
-    };
-    lastUpdated: string;
-    contracts: IContracts;
+export type IVersion = {
+  network: {
+    chainId: number;
+    name: string;
   };
+  lastUpdated: string;
+  contracts: IContracts;
+};
+
+export type IVersions = {
+  [version: string]: IVersion;
 };

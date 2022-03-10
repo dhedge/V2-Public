@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
@@ -33,7 +34,7 @@ describe("Aave Edge Test", function () {
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
-  let snapshot: any;
+  let snapshot: unknown;
   after(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
     await ethers.provider.send("evm_mine", []);
@@ -84,7 +85,7 @@ describe("Aave Edge Test", function () {
     await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aave.lendingPool, isDeposit: false }], []);
 
     // approve usdc
-    let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -117,7 +118,7 @@ describe("Aave Edge Test", function () {
     await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aave.lendingPool, isDeposit: false }], []);
 
     // approve weth
-    let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
     const amwethBalanceBefore = await AMWETH.balanceOf(poolLogicProxy.address);
@@ -168,7 +169,7 @@ describe("Aave Edge Test", function () {
     await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: assets.weth, isDeposit: false }], []);
 
     // Withdraw 40%
-    let withdrawAmount = (await poolLogicProxy.totalSupply()).mul(40).div(100);
+    const withdrawAmount = (await poolLogicProxy.totalSupply()).mul(40).div(100);
 
     const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
     const daiBalanceBefore = ethers.BigNumber.from(await DAI.balanceOf(logicOwner.address));
@@ -272,7 +273,7 @@ describe("Aave Edge Test", function () {
 
     const amount = units(10000); // max / full repayment
 
-    let repayABI = iLendingPool.encodeFunctionData("repay", [assets.weth, amount, 2, poolLogicProxy.address]);
+    const repayABI = iLendingPool.encodeFunctionData("repay", [assets.weth, amount, 2, poolLogicProxy.address]);
 
     // approve weth
     const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);

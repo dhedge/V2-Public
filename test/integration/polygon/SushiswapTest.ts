@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
@@ -24,7 +26,7 @@ use(solidity);
 
 describe("Sushiswap V2 Test", function () {
   let WMATIC: IERC20, WETH: IERC20, USDC: IERC20, SushiLPUSDCWETH: IERC20, SUSHI: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory,
     poolLogicProxy: PoolLogic,
     poolManagerLogicProxy: PoolManagerLogic,
@@ -37,7 +39,7 @@ describe("Sushiswap V2 Test", function () {
   const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager, , user] = await ethers.getSigners();
 
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
@@ -149,7 +151,7 @@ describe("Sushiswap V2 Test", function () {
 
   it("should be able to withdraw", async function () {
     // Withdraw 50%
-    let withdrawAmount = units(100);
+    const withdrawAmount = units(100);
 
     await poolFactory.setExitCooldown(0);
 
@@ -166,7 +168,7 @@ describe("Sushiswap V2 Test", function () {
         poolLogicProxy.address,
       ]);
 
-      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      const approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
       await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
       await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
     };
@@ -270,7 +272,7 @@ describe("Sushiswap V2 Test", function () {
       // enable WMATIC token in pool
       await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: assets.wmatic, isDeposit: false }], []);
 
-      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      const approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
       await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
 
       await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
@@ -406,7 +408,7 @@ describe("Sushiswap V2 Test", function () {
         availableLpToken,
         poolLogicProxy.address,
       ]);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      const approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
       await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
       await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
 
@@ -600,9 +602,6 @@ describe("Sushiswap V2 Test", function () {
       const eventWithdrawal: any = await withdrawalEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
-      const expectedWithdrawAmount = availableLpToken
-        .mul(ethers.BigNumber.from(withdrawAmount))
-        .div(ethers.BigNumber.from(totalSupply));
       const expectedFundValueAfter = totalFundValue.sub(valueWithdrawn);
 
       expect(await SUSHI.balanceOf(logicOwner.address)).to.be.gt(sushiBalanceBefore);

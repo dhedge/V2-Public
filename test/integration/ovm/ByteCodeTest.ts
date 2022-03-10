@@ -29,12 +29,12 @@ describe("Bytecode Test", function () {
   let poolFactory: Contract, poolLogic: Contract, poolManagerLogic: Contract, poolPerformance: Contract;
 
   before(async function () {
-    const [_, __, dao] = await ethers.getSigners();
+    const [, , dao] = await ethers.getSigners();
 
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
     const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
+    const governance = await Governance.deploy();
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
     poolPerformance = await upgrades.deployProxy(PoolPerformance);

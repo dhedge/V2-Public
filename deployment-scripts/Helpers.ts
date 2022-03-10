@@ -1,30 +1,35 @@
-import util from "util";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { exec } from "child_process";
 import fs from "fs";
-const execProm = util.promisify(exec);
-import stringify from "csv-stringify/lib/sync";
-import { SafeService } from "@gnosis.pm/safe-ethers-adapters";
-import Safe, { EthersAdapter } from "@gnosis.pm/safe-core-sdk";
-import { retryWithDelay } from "./utils";
+import util from "util";
 import axios from "axios";
+import { exec } from "child_process";
+import { Input } from "csv-stringify";
+import stringify from "csv-stringify/lib/sync";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { SafeService } from "@gnosis.pm/safe-ethers-adapters";
+import Safe, { ContractNetworksConfig, EthersAdapter } from "@gnosis.pm/safe-core-sdk";
 import { IProposeTxProperties, IUpgradeConfigProposeTx } from "./types";
+import { retryWithDelay } from "./utils";
+
+const execProm = util.promisify(exec);
 
 let nonce: number;
 
-export const nonceLog = new Array();
+export const nonceLog: {
+  nonce: number;
+  message: string;
+}[] = [];
 
 export const getTag = async () => {
   try {
     await execProm("git pull --tags");
   } catch {}
-  let result = await execProm("git tag | sort -V | tail -1");
+  const result = await execProm("git tag | sort -V | tail -1");
   return result.stdout.trim();
 };
 
-export const hasDuplicates = <T extends Object>(array: T[], key: keyof T) => {
+export const hasDuplicates = <T extends Record<string, unknown>>(array: T[], key: keyof T) => {
   const valueArr = array
-    .map(function (item: any) {
+    .map(function (item) {
       return item[key];
     })
     .filter(Boolean)
@@ -64,7 +69,7 @@ export const tryVerify = async (
   hre: HardhatRuntimeEnvironment,
   address: string,
   path: string,
-  constructorArguments: any[],
+  constructorArguments: unknown[],
 ) => {
   await retryWithDelay(async () => {
     try {
@@ -73,7 +78,7 @@ export const tryVerify = async (
         contract: path,
         constructorArguments: constructorArguments,
       });
-    } catch (e: any) {
+    } catch (e) {
       if (e.message.toLowerCase().includes("constructor arguments exceeds max accepted")) {
         // This error may be to do with the compiler, "constructor arguments exceeds max accepted (10k chars) length"
         // Possibly because the contract should have been compiled in isolation before deploying ie "compile:one"
@@ -87,13 +92,14 @@ export const tryVerify = async (
   }, "Try Verify Failed: " + address);
 };
 
-export const writeCsv = (data: any, fileName: string) => {
+export const writeCsv = (data: Input, fileName: string) => {
   const output = stringify(data, { header: true });
   fs.writeFileSync(fileName, output);
 };
 
 /// Converts a string into a hex representation of bytes32
 export const toBytes32 = (key: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { ethers } = require("hardhat");
   return ethers.utils.formatBytes32String(key);
 };
@@ -113,7 +119,7 @@ const getNonce = async (
   const safeTxApi = `https://safe-client.gnosis.io/v1/chains/${chainId}/safes/${safeAddress}/transactions/queued`;
   const response = await axios.get(safeTxApi);
   const results = response.data.results.reverse();
-  const last = results.find((r: any) => r.type === "TRANSACTION");
+  const last = results.find((r: { type: string }) => r.type === "TRANSACTION");
   if (!last) {
     console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", lastConfirmedNonce);
     return lastConfirmedNonce;
@@ -137,6 +143,7 @@ export const proposeTx = async (
   }
 
   // Initialize the Safe SDK
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { ethers } = require("hardhat");
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
@@ -145,13 +152,15 @@ export const proposeTx = async (
 
   const service = new SafeService(addresses.gnosisApi);
 
-  const contractNetworks: any = {
+  const contractNetworks: ContractNetworksConfig = {
     [chainId]: {
       multiSendAddress: addresses.gnosisMultiSendAddress,
+      safeMasterCopyAddress: "",
+      safeProxyFactoryAddress: "",
     },
   };
 
-  let chainSafeAddress: string = addresses.protocolDaoAddress;
+  const chainSafeAddress: string = addresses.protocolDaoAddress;
 
   const safeSdk = await Safe.create({
     ethAdapter,
