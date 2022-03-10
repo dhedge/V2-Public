@@ -95,7 +95,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
         continue;
       }
 
-      UniswapV3PriceLibrary.assertFairPrice(
+      poolParams.sqrtPriceX96 = UniswapV3PriceLibrary.assertFairPrice(
         factory,
         nonfungiblePositionManager.factory(),
         poolParams.token0,

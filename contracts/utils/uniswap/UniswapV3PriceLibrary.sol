@@ -23,19 +23,19 @@ library UniswapV3PriceLibrary {
   /// @param token0 Uni pool token0
   /// @param token1 Uni pool token1
   /// @param fee fee of the target pool
+  /// @return sqrtPriceX96 square root price as a Q64.96
   function assertFairPrice(
     address dhedgeFactory,
     address uniswapV3Factory,
     address token0,
     address token1,
     uint24 fee
-  ) internal view {
+  ) internal view returns (uint160 sqrtPriceX96) {
+    (sqrtPriceX96, , , , , , ) = IUniswapV3Pool(IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, fee))
+      .slot0();
+
     // Get a fair sqrtPriceX96 from asset price oracles
     uint160 fairSqrtPriceX96 = getFairSqrtPriceX96(dhedgeFactory, token0, token1);
-
-    (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-      IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, fee)
-    ).slot0();
 
     // Check that fair price is close to current pool price (0.25% threshold)
     require(
