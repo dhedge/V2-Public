@@ -8,7 +8,6 @@ export interface IBalancerAsset {
   oracleName: "BalancerV2LPAggregator" | "BalancerLpStablePoolAggregator";
   address: string;
   assetType: number;
-  pool: string;
 }
 
 export const getOracle = async (
@@ -102,6 +101,7 @@ export const deployBalancerV2LpAggregator = async (
   const weights: Decimal[] = (
     await (await hre.ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights()
   ).map((w) => new Decimal(w.toString()).div(hre.ethers.utils.parseEther("1").toString()));
+  console.log("BalancerV2LPAggregator ", pool, " : ", weights.toString());
 
   const ether = "1000000000000000000";
   const divisor = weights.reduce((acc: any, w: any, i: any) => {
@@ -121,8 +121,6 @@ export const deployBalancerV2LpAggregator = async (
     }
     matrix.push(elements);
   }
-
-  await hre.run("compile:one", { contractName: "BalancerV2LPAggregator" });
 
   const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
 
