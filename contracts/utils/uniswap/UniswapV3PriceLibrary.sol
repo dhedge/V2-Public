@@ -47,6 +47,7 @@ library UniswapV3PriceLibrary {
   }
 
   /// @notice Returns the Uni pool square root price based on underlying oracle prices
+  /// @dev note token0 and token1 must be in the same order as the uni pool we're comparing too
   /// @param factory dHEDGE Factory address
   /// @param token0 Uni pool token0
   /// @param token1 Uni pool token1
@@ -64,6 +65,7 @@ library UniswapV3PriceLibrary {
   }
 
   /// @notice Returns the Uni pool square root price based on prices and token decimals
+  /// @dev note token0 and token1 must be in the same order as the uni pool we're comparing too
   /// @param token0Price Chainlink Price of token0
   /// @param token1Price Chainlink Price of token1
   /// @param token0Decimals The erc20 tokens decimals

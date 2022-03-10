@@ -1,9 +1,7 @@
-import { expect, use } from "chai";
 import { ethers } from "hardhat";
 import { describe } from "mocha";
 import { Address } from "../../../deployment-scripts/types";
 import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
-import { getSqrtPrice } from "../utils/uniswapV3Utils";
 
 export interface IV3AssetPair {
   token0: Address;
@@ -29,19 +27,6 @@ export const uniswapV3PriceLibraryTest = (testParams: {
         const UniswapV3PriceLibraryTest = await ethers.getContractFactory("UniswapV3PriceLibraryTest");
         const uniswapV3PriceLibraryTest = await UniswapV3PriceLibraryTest.deploy();
         await uniswapV3PriceLibraryTest.deployed();
-
-        const uniSqrt = await getSqrtPrice(uniswapV3Factory, assetPair);
-        console.log("uni", uniSqrt.toString());
-
-        const fairSqrt = await uniswapV3PriceLibraryTest.getFairSqrtPriceX96(
-          deployments.poolFactory.address,
-          assetPair.token0,
-          assetPair.token1,
-        );
-        console.log("far", fairSqrt.toString());
-
-        // 0.25%
-        expect(fairSqrt).to.be.closeTo(uniSqrt, uniSqrt.div(400) as unknown as number);
 
         await uniswapV3PriceLibraryTest.assertFairPrice(
           deployments.poolFactory.address,
