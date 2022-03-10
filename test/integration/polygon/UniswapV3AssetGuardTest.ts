@@ -32,11 +32,11 @@ uniswapV3AssetGuardTest({
     bothSupportedNonStablePair: {
       fee: 3000,
       token0: assets.weth,
-      token1: assets.usdc,
+      token1: assets.dai,
       amount0: units(1),
-      amount1: units(2000, 6),
+      amount1: units(2000),
       token0Slot: assetsBalanceOfSlot.weth,
-      token1Slot: assetsBalanceOfSlot.usdc,
+      token1Slot: assetsBalanceOfSlot.dai,
     },
   },
 });

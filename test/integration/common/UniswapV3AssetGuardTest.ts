@@ -11,16 +11,19 @@ import {
   PoolLogic,
   PoolManagerLogic,
 } from "../../../types";
+import { units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
 import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
 import { approveToken, getAccountToken } from "../utils/getAccountTokens";
 import {
+  getCurrentSqrtPriceX96,
   getCurrentTick,
+  getOracleSqrtPriceX96,
   getV3LpBalances,
   mintLpAsPool,
   mintLpAsUser,
   UniV3LpMintSettings,
-} from "../utils/uniswapv3Utils";
+} from "../utils/uniV3Utils";
 import { utils } from "../utils/utils";
 
 interface IUniswapV3AssetGuardTestParameters {
@@ -169,25 +172,33 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           await approveToken(logicOwner, poolLogicProxy.address, pair.token1, pair.amount1);
           await poolLogicProxy.deposit(pair.token1, pair.amount1);
 
+          const poolSqrtPriceX96 = await getCurrentSqrtPriceX96(uniswapV3.factory, pair);
+          const oracleSqrtPriceX96 = await getOracleSqrtPriceX96(poolFactory, pair);
+          console.log(
+            "Square root price deviation from oracle:",
+            (poolSqrtPriceX96.mul(100000).div(oracleSqrtPriceX96).toNumber() - 100000) / 1000,
+            "%",
+          );
+
           // Mint Uniswap v3 LP
-          const token0 = pair.token0;
-          const token1 = pair.token1;
-          const fee = pair.fee;
+          const tick = await getCurrentTick(uniswapV3.factory, pair);
+          const tickRange = (pair.fee / 50) * 1000;
           const mintSettings: UniV3LpMintSettings = {
-            token0,
-            token1,
-            fee,
+            token0: pair.token0,
+            token1: pair.token1,
+            fee: pair.fee,
             amount0: pair.amount0,
             amount1: pair.amount1,
-            tickLower: -887270,
-            tickUpper: 887270,
+            tickLower: tick - tickRange,
+            tickUpper: tick + tickRange,
           };
+
           await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings, true);
           const tokenPriceBefore = await poolLogicProxy.tokenPrice();
 
           // Act
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
-          const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
+          const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
           // We dump 2x extra liquidity on one side, draining the other side
           const LIQUIDITY_MULTIPLIER = 10;
           const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
@@ -205,31 +216,13 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           });
 
           // Assert
-          const tokenPriceAfter = await poolLogicProxy.tokenPrice();
-          const [token0LiquidityAfter, __] = await getV3LpBalances(
-            uniswapV3.factory,
-            pair.token0,
-            pair.token1,
-            pair.fee,
-          );
-          // Probably need to assert here that the pool has been manipulated
-          console.log(
-            "tokenPrice before",
-            tokenPriceBefore.toString(),
-            "tokenPrice after",
-            tokenPriceAfter.toString(),
-            "after higher ",
-            tokenPriceAfter >= tokenPriceBefore,
-          );
-          console.log(
-            "liq before: ",
-            token0Liquidity.toString(),
-            "liq after: ",
-            token0LiquidityAfter.toString(),
-            "more after",
-            token0LiquidityAfter.gt(token0Liquidity),
-          );
-          expect(tokenPriceAfter.gte(tokenPriceBefore));
+          const [token0LiquidityAfter, __] = await getV3LpBalances(uniswapV3.factory, pair);
+          // console.log("tokenPrice before", tokenPriceBefore.toString());
+          // console.log("liq before: ", token0Liquidity.toString(), "liq after: ", token0LiquidityAfter.toString());
+
+          // Assert that the pool has been manipulated
+          await expect(poolLogicProxy.tokenPrice()).to.be.revertedWith("Uni v3 LP price mismatch");
+          expect(tokenPriceBefore).to.be.closeTo(units(1), tokenPriceBefore.div(1000).toNumber());
           expect(token0LiquidityAfter.gt(token0Liquidity)).to.be.true;
         });
       });
@@ -244,7 +237,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -286,7 +279,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -328,7 +321,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -370,7 +363,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -417,7 +410,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothUnsupportedPair.token0; // unsupported asset
         const token1 = bothUnsupportedPair.token1; // unsupported asset
         const fee = bothUnsupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothUnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -444,7 +437,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         expect(totalFundValueBeforeWithdraw).to.gt(0);
         expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
         expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-        expect(tokenPriceAfter).to.equal(tokenPriceBefore); // TODO: Currently fails because tokenPriceAfter is higher for some reason
+        expect(tokenPriceAfter).to.equal(tokenPriceBefore);
 
         // Can withdraw
         await poolFactory.setExitCooldown(0);
@@ -462,7 +455,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothUnsupportedPair.token0; // unsupported asset
         const token1 = bothUnsupportedPair.token1; // unsupported asset
         const fee = bothUnsupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothUnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -489,7 +482,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         expect(totalFundValueBeforeWithdraw).to.gt(0);
         expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
         expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-        expect(tokenPriceAfter).to.equal(tokenPriceBefore); // TODO: Currently fails because tokenPriceAfter is higher for some reason
+        expect(tokenPriceAfter).to.equal(tokenPriceBefore);
 
         // Can withdraw
         await poolFactory.setExitCooldown(0);
@@ -504,8 +497,9 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         // Mint Uniswap v3 LP
         const token0 = token0UnsupportedPair.token0; // unsupported asset
         const token1 = token0UnsupportedPair.token1; // supported asset
+        await assetHandler.removeAsset(token0);
         const fee = token0UnsupportedPair.fee;
-        const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const currentTick = await getCurrentTick(uniswapV3.factory, token0UnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -532,7 +526,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         expect(totalFundValueBeforeWithdraw).to.gt(0);
         expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
         expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-        expect(tokenPriceAfter).to.gt(tokenPriceBefore); // Assumes the LP value should be counted
+        expect(tokenPriceAfter).to.eq(tokenPriceBefore); // Assumes the LP value is not counted
 
         // Can withdraw
         await poolFactory.setExitCooldown(0);
@@ -547,8 +541,9 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         // Mint Uniswap v3 LP
         const token0 = token0UnsupportedPair.token0; // unsupported asset
         const token1 = token0UnsupportedPair.token1; // supported asset
+        await assetHandler.removeAsset(token0);
         const fee = token0UnsupportedPair.fee;
-        const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const currentTick = await getCurrentTick(uniswapV3.factory, token0UnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -575,7 +570,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         expect(totalFundValueBeforeWithdraw).to.gt(0);
         expect(await nonfungiblePositionManager.balanceOf(user.address)).to.equal(0);
         expect(await nonfungiblePositionManager.balanceOf(poolLogicProxy.address)).to.equal(1);
-        expect(tokenPriceAfter).to.gt(tokenPriceBefore); // Assumes the LP value should be counted
+        expect(tokenPriceAfter).to.eq(tokenPriceBefore); // Assumes the LP value is not counted
 
         // Can withdraw
         await poolFactory.setExitCooldown(0);
