@@ -16,14 +16,14 @@ import { createFund } from "../utils/createFund";
 import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
 import { approveToken, getAccountToken } from "../utils/getAccountTokens";
 import {
-  getCurrentTick,
   getCurrentSqrtPriceX96,
+  getCurrentTick,
   getOracleSqrtPriceX96,
   getV3LpBalances,
   mintLpAsPool,
   mintLpAsUser,
   UniV3LpMintSettings,
-} from "../utils/uniswapv3Utils";
+} from "../utils/uniV3Utils";
 import { utils } from "../utils/utils";
 
 interface IUniswapV3AssetGuardTestParameters {
@@ -181,7 +181,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           );
 
           // Mint Uniswap v3 LP
-          const tick = await getCurrentTick(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
+          const tick = await getCurrentTick(uniswapV3.factory, pair);
           const tickRange = (pair.fee / 50) * 1000;
           const mintSettings: UniV3LpMintSettings = {
             token0: pair.token0,
@@ -198,8 +198,8 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
 
           // Act
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
-          const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair.token0, pair.token1, pair.fee);
-          // We dump extra liquidity on one side, draining the other side
+          const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
+          // We dump 2x extra liquidity on one side, draining the other side
           const LIQUIDITY_MULTIPLIER = 10;
           const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
           await getAccountToken(amountIn, logicOwner.address, pair.token0, pair.token0Slot);
@@ -216,12 +216,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           });
 
           // Assert
-          const [token0LiquidityAfter, __] = await getV3LpBalances(
-            uniswapV3.factory,
-            pair.token0,
-            pair.token1,
-            pair.fee,
-          );
+          const [token0LiquidityAfter, __] = await getV3LpBalances(uniswapV3.factory, pair);
           // console.log("tokenPrice before", tokenPriceBefore.toString());
           // console.log("liq before: ", token0Liquidity.toString(), "liq after: ", token0LiquidityAfter.toString());
 
@@ -242,7 +237,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -284,7 +279,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -326,7 +321,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -368,7 +363,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothSupportedPair.token0;
         const token1 = bothSupportedPair.token1;
         const fee = bothSupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -415,7 +410,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothUnsupportedPair.token0; // unsupported asset
         const token1 = bothUnsupportedPair.token1; // unsupported asset
         const fee = bothUnsupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothUnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -460,7 +455,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token0 = bothUnsupportedPair.token0; // unsupported asset
         const token1 = bothUnsupportedPair.token1; // unsupported asset
         const fee = bothUnsupportedPair.fee;
-        const tick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const tick = await getCurrentTick(uniswapV3.factory, bothUnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -504,7 +499,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token1 = token0UnsupportedPair.token1; // supported asset
         await assetHandler.removeAsset(token0);
         const fee = token0UnsupportedPair.fee;
-        const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const currentTick = await getCurrentTick(uniswapV3.factory, token0UnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,
@@ -548,7 +543,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const token1 = token0UnsupportedPair.token1; // supported asset
         await assetHandler.removeAsset(token0);
         const fee = token0UnsupportedPair.fee;
-        const currentTick = await getCurrentTick(uniswapV3.factory, token0, token1, fee);
+        const currentTick = await getCurrentTick(uniswapV3.factory, token0UnsupportedPair);
         const tickSpacing = fee / 50;
         const mintSettings: UniV3LpMintSettings = {
           token0,

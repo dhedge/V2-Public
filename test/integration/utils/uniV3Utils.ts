@@ -1,22 +1,20 @@
-import { ethers } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { abi as uniswapV3FactoryAbi } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
 import { abi as uniswapV3PoolAbi } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
 import bn from "bignumber.js";
 import type { Wallet } from "ethers";
-
+import { BigNumber } from "ethers";
+import { ethers } from "hardhat";
+import { Address } from "../../../deployment-scripts/types";
 import {
   IERC20__factory,
   INonfungiblePositionManager,
   INonfungiblePositionManager__factory,
-  PoolLogic,
   PoolFactory,
+  PoolLogic,
 } from "../../../types";
-import { getAccountToken } from "./getAccountTokens";
-import { Address } from "../../../deployment-scripts/types";
-import { IUniswapV3Pool__factory } from "../../../types/factories/IUniswapV3Pool__factory";
 import { units } from "../../TestHelpers";
+import { getAccountToken } from "./getAccountTokens";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 const iNonfungiblePositionManager = new ethers.utils.Interface(INonfungiblePositionManager__factory.abi);
@@ -107,34 +105,10 @@ export const mintLpAsPool = async (
 /**
  * Gets tick of Uniswap v3 pool
  * @param uniswapV3Factory Uniswap v3 Factory address
- * @param token0 Token0 of pool
- * @param token1 Token1 of pool
- * @param fee Fee of pool
+ * @param params Pool parameters
  * @returns Current rounded tick of pool
  */
 export const getCurrentTick = async (
-  uniswapV3Factory: Address,
-  token0: Address,
-  token1: Address,
-  fee: number,
-): Promise<number> => {
-  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
-  const poolAddress = await factory.getPool(token0, token1, fee);
-  if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
-  const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);
-  const currentTick = parseInt((await pool.slot0()).tick);
-  const tick = convertCurrentTick(currentTick, fee);
-  return tick;
-};
-
-/**
- * Gets tick of Uniswap v3 pool
- * @param token0 Token0 of pool
- * @param token1 Token1 of pool
- * @param fee Fee of pool
- * @returns Current rounded tick of pool
- */
-export const getCurrentTickImproved = async (
   uniswapV3Factory: Address,
   params: {
     token0: Address;
@@ -142,7 +116,13 @@ export const getCurrentTickImproved = async (
     fee: number;
   },
 ): Promise<number> => {
-  return getCurrentTick(uniswapV3Factory, params.token0, params.token1, params.fee);
+  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
+  const poolAddress = await factory.getPool(params.token0, params.token1, params.fee);
+  if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
+  const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);
+  const currentTick = parseInt((await pool.slot0()).tick);
+  const tick = convertCurrentTick(currentTick, params.fee);
+  return tick;
 };
 
 /**
@@ -223,6 +203,19 @@ export const getCurrentPrice = async (
     .shr(96 * 2);
 };
 
+export const getSqrtPrice = async (
+  uniswapV3Factory: Address,
+  params: { token0: Address; token1: Address; fee: number },
+): Promise<BigNumber> => {
+  const { token0, token1, fee } = params;
+  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
+  const poolAddress = await factory.getPool(token0, token1, fee);
+  if (poolAddress === "0x0000000000000000000000000000000000000000") throw new Error("Invalid pool");
+  const pool = await ethers.getContractAt(uniswapV3PoolAbi, poolAddress);
+  const sqrtPriceX96: BigNumber = (await pool.slot0()).sqrtPriceX96;
+  return sqrtPriceX96;
+};
+
 /**
  * Converts current pool tick to be rounded to nearest tick edge
  * @param currentTick Current tick of pool
@@ -237,27 +230,17 @@ const convertCurrentTick = (currentTick: number, fee: number): number => {
 /**
  * Gets tick of Uniswap v3 pool
  * @param token0 Token0 of pool
- * @param token1 Token1 of pool
- * @param fee Fee of pool
+ * @param params Pool parameters
  * @returns Current rounded tick of pool
  */
 export const getV3LpBalances = async (
   uniswapV3Factory: Address,
-  token0: Address,
-  token1: Address,
-  fee: number,
-): Promise<[BigNumber, BigNumber]> => {
-  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
-  const poolAddress = await factory.getPool(token0, token1, fee);
-  const Token0 = await ethers.getContractAt("IERC20", token0);
-  const Token1 = await ethers.getContractAt("IERC20", token1);
-
-  return [await Token0.balanceOf(poolAddress), await Token1.balanceOf(poolAddress)];
-};
-
-export const getV3LpBalancesImproved = async (
-  uniswapV3Factory: Address,
   params: { token0: Address; token1: Address; fee: number },
 ): Promise<[BigNumber, BigNumber]> => {
-  return getV3LpBalances(uniswapV3Factory, params.token0, params.token1, params.fee);
+  const factory = await ethers.getContractAt(uniswapV3FactoryAbi, uniswapV3Factory);
+  const poolAddress = await factory.getPool(params.token0, params.token1, params.fee);
+  const Token0 = await ethers.getContractAt("IERC20", params.token0);
+  const Token1 = await ethers.getContractAt("IERC20", params.token1);
+
+  return [await Token0.balanceOf(poolAddress), await Token1.balanceOf(poolAddress)];
 };

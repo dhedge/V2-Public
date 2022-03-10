@@ -47,18 +47,14 @@ import "./ERC20Guard.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IERC20Extended.sol";
-import "../../utils/DhedgeMath.sol";
 import "../contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol";
+import "../../utils/uniswap/UniswapV3PriceLibrary.sol";
 
 /// @title Uniswap V3 asset guard
 /// @dev Asset type = 6
 contract UniswapV3AssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
-  using SafeMathUpgradeable for uint160;
   using PositionValue for INonfungiblePositionManager;
-
-  // Oracle sqrt price threshold in basis points
-  uint16 private bpThreshold = 25;
 
   struct UniV3PoolParams {
     address token0;
@@ -99,22 +95,12 @@ contract UniswapV3AssetGuard is ERC20Guard {
         continue;
       }
 
-      // Get a fair sqrtPriceX96 from asset price oracles
-      uint160 fairSqrtPriceX96 = _getFairSqrtPriceX96(factory, poolParams.token0, poolParams.token1);
-
-      (poolParams.sqrtPriceX96, , , , , , ) = IUniswapV3Pool(
-        IUniswapV3Factory(nonfungiblePositionManager.factory()).getPool(
-          poolParams.token0,
-          poolParams.token1,
-          poolParams.fee
-        )
-      ).slot0();
-
-      // Check that fair price is close to current pool price
-      require(
-        poolParams.sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.mul(bpThreshold).div(10000)) &&
-          fairSqrtPriceX96 < poolParams.sqrtPriceX96.add(fairSqrtPriceX96.mul(bpThreshold).div(10000)),
-        "Uni v3 LP price mismatch"
+      poolParams.sqrtPriceX96 = UniswapV3PriceLibrary.assertFairPrice(
+        factory,
+        nonfungiblePositionManager.factory(),
+        poolParams.token0,
+        poolParams.token1,
+        poolParams.fee
       );
 
       (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, poolParams.sqrtPriceX96);
@@ -122,37 +108,6 @@ contract UniswapV3AssetGuard is ERC20Guard {
       balance = balance.add(_assetValue(factory, poolParams.token0, amount0)).add(
         _assetValue(factory, poolParams.token1, amount1)
       );
-    }
-  }
-
-  /// @notice Returns the Uni pool square root price based on underlying oracle prices
-  /// @param factory dHEDGE Factory address
-  /// @param token0 Uni pool token0
-  /// @param token1 Uni pool token1
-  /// @return sqrtPriceX96 square root price as a Q64.96
-  function _getFairSqrtPriceX96(
-    address factory,
-    address token0,
-    address token1
-  ) internal view returns (uint160 sqrtPriceX96) {
-    uint256 token0Price = IHasAssetInfo(factory).getAssetPrice(token0);
-    uint256 token1Price = IHasAssetInfo(factory).getAssetPrice(token1);
-    uint8 token0Decimals = IERC20Extended(token0).decimals();
-    uint8 token1Decimals = IERC20Extended(token1).decimals();
-    uint256 priceRatio = token0Price.mul(10**token1Decimals).div(token1Price);
-
-    // Overflow protection for the price ratio shift left
-    bool overflowProtection;
-    if (priceRatio > 10**18) {
-      overflowProtection = true;
-      priceRatio = priceRatio.div(10**10); // decrease 10 decimals
-    }
-    require(priceRatio <= 10**18 && priceRatio > 1000, "Uni v3 price ratio out of bounds");
-
-    sqrtPriceX96 = uint160(DhedgeMath.sqrt((priceRatio << 192).div(10**token0Decimals)));
-
-    if (overflowProtection) {
-      sqrtPriceX96 = uint160(sqrtPriceX96.mul(10**5)); // increase 5 decimals (revert adjustment)
     }
   }
 
