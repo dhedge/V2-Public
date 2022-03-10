@@ -16,7 +16,9 @@ import { createFund } from "../utils/createFund";
 import { deployContracts, IDeployments, NETWORK } from "../utils/deployContracts";
 import { approveToken, getAccountToken } from "../utils/getAccountTokens";
 import {
+  getCurrentSqrtPriceX96,
   getCurrentTick,
+  getOracleSqrtPriceX96,
   getV3LpBalances,
   mintLpAsPool,
   mintLpAsUser,
