@@ -12,10 +12,10 @@ import {
   PoolLogic,
   PoolManagerLogic,
 } from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { assets, assetsBalanceOfSlot, quickswap } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 
 use(solidity);
 
@@ -31,10 +31,10 @@ describe("DHedgePoolAggregator Test", function () {
 
   before(async function () {
     [logicOwner, manager, dao] = await ethers.getSigners();
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
-    WMATIC = deployments.assets.WMATIC;
+    WMATIC = deployments.assets.WMATIC!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 

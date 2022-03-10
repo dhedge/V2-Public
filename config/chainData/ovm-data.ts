@@ -16,18 +16,22 @@ export const assets = {
   usdc: "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
   usdt: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
   weth: "0x4200000000000000000000000000000000000006",
+  dai: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+  wbtc: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
 };
 
 export const assetsBalanceOfSlot = {
   usdc: 0,
   usdt: 0,
   weth: 3,
+  dai: 2,
+  wbtc: 0,
 };
 
 export const price_feeds = {
-  eth: "0xA969bEB73d918f6100163Cd0fba3C586C269bee1",
-  link: "0x74d6B50283AC1D651f9Afdc33521e4c1E3332b78",
-  btc: "0xc326371d4D866C6Ff522E69298e36Fe75797D358",
+  eth: "0x13e3Ee699D1909E989722E753853AE30b17e08c5",
+  link: "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450",
+  btc: "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593",
   dai: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
   usdc: "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3",
   usdt: "0xECef79E109e997bCA29c1c0897ec9d7b03647F5E",
@@ -35,6 +39,7 @@ export const price_feeds = {
 
 // uniswap V3
 export const uniswapV3 = {
+  factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
   router: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
   nonfungiblePositionManager: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
   pools: {

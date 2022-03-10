@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory } from "ethers";
 
-import { assets, price_feeds, synthetix as SynthetixData } from "./ovm-data";
+import { assets, price_feeds, synthetix as SynthetixData } from "../../../config/chainData/ovm-data";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { createFund } from "../utils/createFund";
