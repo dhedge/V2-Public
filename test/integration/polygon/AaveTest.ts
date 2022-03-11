@@ -110,11 +110,6 @@ describe("Aave Test", function () {
       poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, depositABI),
     ).to.be.revertedWith("Guard not found");
 
-    depositABI = iLendingPool.encodeFunctionData("deposit", [aave.aTokens.usdt, amount, poolLogicProxy.address, 0]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
-      "asset not enabled in pool",
-    );
-
     // add supported assets
     await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aave.lendingPool, isDeposit: false }], []);
 

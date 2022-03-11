@@ -172,7 +172,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       };
       await expect(
         mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings),
-      ).to.revertedWith("asset not enabled in pool");
+      ).to.revertedWith("uniswap asset not enabled");
     });
 
     it("Can't mint position with unsupported assets", async () => {

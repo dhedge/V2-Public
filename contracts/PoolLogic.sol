@@ -499,7 +499,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     address contractGuard = IHasGuardInfo(factory).getContractGuard(to);
     address assetGuard = IHasGuardInfo(factory).getAssetGuard(to);
-    bool isSupportedAsset = IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to);
 
     uint16 txType;
     bool isPublic;
@@ -509,7 +508,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       require(assetGuard != address(0), "Guard not found");
 
       // only asset guard is available
-      require(isSupportedAsset, "asset not enabled in pool");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
     }
 
     if (txType == 0) {
