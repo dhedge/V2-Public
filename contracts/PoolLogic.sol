@@ -506,6 +506,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     if (contractGuard != address(0)) {
       (txType, isPublic) = IGuard(contractGuard).txGuard(poolManagerLogic, to, data);
     } else {
+      require(assetGuard != address(0), "Guard not found");
+
       // only asset guard is available
       require(isSupportedAsset, "asset not enabled in pool");
     }
