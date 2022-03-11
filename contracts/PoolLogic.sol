@@ -497,23 +497,22 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
     poolPerformance.recordExternalValue(address(this));
 
-    address guard = IHasGuardInfo(factory).getGuard(to);
+    address contractGuard = IHasGuardInfo(factory).getContractGuard(to);
     address assetGuard = IHasGuardInfo(factory).getAssetGuard(to);
     bool isSupportedAsset = IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to);
 
-    if (guard == assetGuard) {
+    uint16 txType;
+    bool isPublic;
+    if (contractGuard != address(0)) {
+      (txType, isPublic) = IGuard(contractGuard).txGuard(poolManagerLogic, to, data);
+    } else {
       // only asset guard is available
       require(isSupportedAsset, "asset not enabled in pool");
     }
 
-    (uint16 txType, bool isPublic) = IGuard(guard).txGuard(poolManagerLogic, to, data);
-
-    if (guard != assetGuard && assetGuard != address(0) && txType == 0) {
-      // if contract guard is not compatible and asset guard is available
-      if (isSupportedAsset) {
-        // only if asset is enabled
-        (txType, isPublic) = IGuard(assetGuard).txGuard(poolManagerLogic, to, data);
-      }
+    if (txType == 0) {
+      // contract guard is not available
+      (txType, isPublic) = IGuard(assetGuard).txGuard(poolManagerLogic, to, data);
     }
 
     require(txType > 0, "invalid transaction");
