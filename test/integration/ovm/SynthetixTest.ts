@@ -1,87 +1,30 @@
-import { ethers, artifacts, upgrades } from "hardhat";
+import { ethers, artifacts } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Contract, ContractFactory } from "ethers";
+import { Contract } from "ethers";
 
-import { assets, price_feeds, synthetix as SynthetixData } from "../../../config/chainData/ovm-data";
+import { PoolFactory } from "../../../types";
+import { assets, synthetix as SynthetixData } from "../../../config/chainData/ovm-data";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { createFund } from "../utils/createFund";
-import { PoolFactory, PoolFactory__factory } from "../../../types";
+import { deployContracts, IDeployments } from "../utils/deployContracts";
 
 describe("Synthetix Test", function () {
+  let deployments: IDeployments;
   let susdProxy: Contract, sethProxy: Contract, synthetix: Contract, synthetixGuard: Contract;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
-  let PoolFactory: PoolFactory__factory, PoolLogic: ContractFactory, PoolManagerLogic: ContractFactory;
-  let poolFactory: PoolFactory,
-    poolLogic: Contract,
-    poolManagerLogic: Contract,
-    poolLogicProxy: Contract,
-    poolManagerLogicProxy: Contract,
-    fundAddress: string;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
+  let poolFactory: PoolFactory, poolLogicProxy: Contract, poolManagerLogicProxy: Contract;
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
+    deployments = await deployContracts("ovm");
 
-    const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-
-    const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
-    console.log("governance deployed to:", governance.address);
-
-    const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
-    const poolPerformance = await upgrades.deployProxy(PoolPerformance);
-    await poolPerformance.deployed();
-
-    PoolLogic = await ethers.getContractFactory("PoolLogic");
-    poolLogic = await PoolLogic.deploy();
-
-    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-    poolManagerLogic = await PoolManagerLogic.deploy();
-
-    const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-    const usdPriceAggregator = await USDPriceAggregator.deploy();
-    console.log("USDPriceAggregator deployed at ", usdPriceAggregator.address);
-
-    // Initialize Asset Price Consumer
-    const assetSusd = { asset: assets.susd, assetType: 1, aggregator: usdPriceAggregator.address };
-    const assetSeth = { asset: assets.seth, assetType: 1, aggregator: price_feeds.eth };
-    const assetSlink = { asset: assets.slink, assetType: 1, aggregator: price_feeds.link };
-    const assetHandlerInitAssets = [assetSusd, assetSeth, assetSlink];
-
-    const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
-    await assetHandler.deployed();
-    await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year
-
-    PoolFactory = await ethers.getContractFactory("PoolFactory");
-    poolFactory = <PoolFactory>(
-      await upgrades.deployProxy(PoolFactory, [
-        poolLogic.address,
-        poolManagerLogic.address,
-        assetHandler.address,
-        dao.address,
-        governance.address,
-      ])
-    );
-    await poolFactory.deployed();
-    await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+    poolFactory = deployments.poolFactory;
+    synthetixGuard = deployments.synthetixGuard!;
 
     const ISynthetix = await artifacts.readArtifact("ISynthetix");
     synthetix = await ethers.getContractAt(ISynthetix.abi, assets.snxProxy);
-
-    const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
-    synthetixGuard = await SynthetixGuard.deploy(SynthetixData.addressResolver);
-    synthetixGuard.deployed();
-
-    const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-    const erc20Guard = await ERC20Guard.deploy();
-    erc20Guard.deployed();
-
-    await governance.setAssetGuard(0, erc20Guard.address);
-    await governance.setAssetGuard(1, erc20Guard.address);
-    await governance.setContractGuard(synthetix.address, synthetixGuard.address);
-
-    await poolFactory.setExitFee(5, 1000); // 0.5%
 
     const ISynthAddressProxy = await artifacts.readArtifact("ISynthAddressProxy");
     susdProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.susd);
@@ -102,69 +45,15 @@ describe("Synthetix Test", function () {
     );
     poolLogicProxy = fund.poolLogicProxy;
     poolManagerLogicProxy = fund.poolManagerLogicProxy;
-  });
 
-  it("should be able to deposit", async function () {
-    let depositEvent = new Promise((resolve, reject) => {
-      poolLogicProxy.on(
-        "Deposit",
-        (
-          fundAddress,
-          investor,
-          assetDeposited,
-          amountDeposited,
-          valueDeposited,
-          fundTokensReceived,
-          totalInvestorFundTokens,
-          fundValue,
-          totalSupply,
-          time,
-          event,
-        ) => {
-          event.removeListener();
-
-          resolve({
-            fundAddress: fundAddress,
-            investor: investor,
-            assetDeposited: assetDeposited,
-            amountDeposited: amountDeposited,
-            valueDeposited: valueDeposited,
-            fundTokensReceived: fundTokensReceived,
-            totalInvestorFundTokens: totalInvestorFundTokens,
-            fundValue: fundValue,
-            totalSupply: totalSupply,
-            time: time,
-          });
-        },
-      );
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
-    });
-
-    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
-    expect(totalFundValue.toString()).to.equal("0");
-
-    await expect(poolLogicProxy.deposit(assets.slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
-
-    await susdProxy.approve(poolLogicProxy.address, (100e18).toString());
-    await poolLogicProxy.deposit(assets.susd, (100e18).toString());
-    let event: any = await depositEvent;
-
-    expect(event.fundAddress).to.equal(poolLogicProxy.address);
-    expect(event.investor).to.equal(logicOwner.address);
-    checkAlmostSame(event.valueDeposited, (100e18).toString());
-    checkAlmostSame(event.fundTokensReceived, (100e18).toString());
-    checkAlmostSame(event.totalInvestorFundTokens, (100e18).toString());
-    checkAlmostSame(event.fundValue, (100e18).toString());
-    checkAlmostSame(event.totalSupply, (100e18).toString());
+    await susdProxy.approve(poolLogicProxy.address, units(500));
+    await poolLogicProxy.deposit(assets.susd, units(500));
   });
 
   it("Should be able to approve", async () => {
     const IERC20 = await artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [assets.susd, (100e18).toString()]);
+    let approveABI = iERC20.encodeFunctionData("approve", [assets.susd, units(100)]);
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.slink, approveABI)).to.be.revertedWith(
       "asset not enabled in pool",
     );
@@ -173,7 +62,7 @@ describe("Synthetix Test", function () {
       "unsupported spender approval",
     );
 
-    approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, (100e18).toString()]);
+    approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, units(100)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
   });
 
@@ -200,7 +89,7 @@ describe("Synthetix Test", function () {
     });
 
     const sourceKey = SynthetixData.susdKey;
-    const sourceAmount = (100e18).toString();
+    const sourceAmount = units(100);
     const destinationKey = SynthetixData.sethKey;
     const daoAddress = await poolFactory.owner();
     const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
@@ -247,7 +136,7 @@ describe("Synthetix Test", function () {
 
     let event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(assets.susd);
-    expect(event.sourceAmount).to.equal((100e18).toString());
+    expect(event.sourceAmount).to.equal(units(100));
     expect(event.destinationAsset).to.equal(assets.seth);
   });
 
@@ -298,7 +187,6 @@ describe("Synthetix Test", function () {
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
     let event: any = await withdrawalEvent;
-    console.log(event);
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
     checkAlmostSame(event.valueWithdrawn, totalFundValue.div(2));

@@ -35,6 +35,7 @@ export const price_feeds = {
   dai: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
   usdc: "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3",
   usdt: "0xECef79E109e997bCA29c1c0897ec9d7b03647F5E",
+  snx: "0x38D2f492B4Ef886E71D111c592c9338374e1bd8d",
 };
 
 // uniswap V3

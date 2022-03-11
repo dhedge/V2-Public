@@ -496,15 +496,26 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     IPoolPerformance poolPerformance = IPoolPerformance(IHasPoolPerformance(factory).poolPerformanceAddress());
     poolPerformance.recordExternalValue(address(this));
-    // ^^ once we are past this check we know the external balances are legit.
-    address guard = IHasGuardInfo(factory).getGuard(to);
 
-    if (IHasAssetInfo(factory).isValidAsset(to)) {
-      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
+    address guard = IHasGuardInfo(factory).getGuard(to);
+    address assetGuard = IHasGuardInfo(factory).getAssetGuard(to);
+    bool isSupportedAsset = IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to);
+
+    if (guard == assetGuard) {
+      // only asset guard is available
+      require(isSupportedAsset, "asset not enabled in pool");
     }
 
-    // to pass the guard, the data must return a transaction type. refer to header for transaction types
     (uint16 txType, bool isPublic) = IGuard(guard).txGuard(poolManagerLogic, to, data);
+
+    if (guard != assetGuard && assetGuard != address(0) && txType == 0) {
+      // if contract guard is not compatible and asset guard is available
+      if (isSupportedAsset) {
+        // only if asset is enabled
+        (txType, isPublic) = IGuard(assetGuard).txGuard(poolManagerLogic, to, data);
+      }
+    }
+
     require(txType > 0, "invalid transaction");
     // solhint-disable-next-line reason-string
     require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
