@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { IAssetOracle } from "./deploy-asset-oracles";
-import { tryVerify } from "../Helpers";
+import { IAssetOracle } from "./deployAssetOracles";
+import { tryVerify } from "../../../Helpers";
 
 export const deployUniV2TwapOracle = async (hre: HardhatRuntimeEnvironment, twapOracle: IAssetOracle) => {
   const ethers = hre.ethers;

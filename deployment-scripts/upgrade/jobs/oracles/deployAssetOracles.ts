@@ -2,8 +2,8 @@ import { task, types } from "hardhat/config";
 import fs from "fs";
 
 import { deployUniV2TwapOracle } from "./deployUniV2TwapOracle";
-import { getDeploymentData } from "../upgrade/getDeploymentData";
-import { IVersions } from "../types";
+import { getDeploymentData } from "../../getDeploymentData";
+import { IVersions } from "../../../types";
 
 export interface IAssetOracle {
   name: string;
