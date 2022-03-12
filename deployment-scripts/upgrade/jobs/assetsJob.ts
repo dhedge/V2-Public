@@ -76,13 +76,13 @@ export const assetsJob: IJob<void> = async (
           const balancerV2Aggregator = await deployBalancerV2LpAggregator(
             addresses.balancerV2VaultAddress,
             poolFactoryProxy,
-            balancerLp.data,
+            balancerLp.address,
             hre,
           );
           console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator}`);
           newOracles.push({
             assetName: balancerLp.name,
-            assetAddress: balancerLp.data.pool,
+            assetAddress: balancerLp.address,
             assetType: balancerLp.assetType,
             oracleAddress: balancerV2Aggregator,
             oracleName: "BalancerV2LPAggregator",
@@ -96,14 +96,14 @@ export const assetsJob: IJob<void> = async (
           const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
             hre,
             poolFactoryProxy,
-            balancerLp.data.pool,
+            balancerLp.address,
           );
           console.log(
             `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator}`,
           );
           newOracles.push({
             assetName: balancerLp.name,
-            assetAddress: balancerLp.data.pool,
+            assetAddress: balancerLp.address,
             assetType: balancerLp.assetType,
             oracleAddress: balancerLpStablePoolAggregator,
             oracleName: "BalancerLpStablePoolAggregator",
