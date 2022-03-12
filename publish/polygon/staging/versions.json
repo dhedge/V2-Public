@@ -1749,49 +1749,22 @@
       ],
       "Oracles": [
         {
-          "assetAddress": "0x3e5f7e9e7dc3bc3086ccebd5eb59a0a4a29d881b",
-          "oracleName": "dodoOracle",
-          "oracleAddress": "0x888C6700cCe889043E15B76D6868A2C7F78aED6D"
-        },
-        {
-          "assetAddress": "0xc8fa09426ce1aeac1bc28751f1f6c8d74fa53f3c",
-          "oracleName": "dodoOracle",
-          "oracleAddress": "0x6045d506B7AB9aD8036686BdD0a24e6fA063Dab4"
-        },
-        {
-          "assetAddress": "0xcc940b5c6136994bed41bff5d88b170929921e9e",
-          "oracleName": "dodoOracle",
-          "oracleAddress": "0x6da3B7D6c59Cdf8087FcEebef9F50E44c7e28e04"
-        },
-        {
-          "assetAddress": "0xf4b3a195587d2735b656b7ffe9060f478faf1b32",
-          "oracleName": "dodoOracle",
-          "oracleAddress": "0x97f1D9A3a90DA6c711c64Cf609637d9b7F0633f3"
-        },
-        {
-          "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
-          "oracleName": "balancerOracle",
-          "oracleAddress": "0x703FEAcab4F7b7B8ac8a42F04C6eDCa60e415Bd4"
-        },
-        {
-          "assetAddress": "0xa375d23a751124359568f3a22576528bD1C8C3e3",
-          "oracleName": "dhtTwapOracle",
-          "oracleAddress": "0x5C530b3e0552184C6c283973FCFFc89A6d0EA3F0"
-        },
-        {
-          "assetAddress": "0xa375d23a751124359568f3a22576528bD1C8C3e3",
-          "oracleName": "dhtTwapOracle",
-          "oracleAddress": "0xb5Ed15B15414918DC8870272E5dBCc63FCFD8E2D"
-        },
-        {
-          "assetAddress": "0xa375d23a751124359568f3a22576528bD1C8C3e3",
-          "oracleName": "dhtTwapOracle",
+          "name": "DHT TWAP Oracle",
+          "oracleName": "MedianTWAPAggregator",
+          "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
           "oracleAddress": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E"
         },
         {
-          "assetAddress": "0x160532d2536175d65c03b97b0630a9802c274dad",
-          "oracleName": "maiTwapOracle",
+          "name": "MAI TWAP Oracle",
+          "oracleName": "MedianTWAPAggregator",
+          "assetAddress": "0xa3fa99a148fa48d14ed51d610c367c61876997f1",
           "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468"
+        },
+        {
+          "name": "QI TWAP Oracle",
+          "oracleName": "MedianTWAPAggregator",
+          "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
+          "oracleAddress": "0xBbA786dBbE67879B7D3B2696aBF3DFbA50e95949"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1834,6 +1807,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 02 Mar 2022 04:55:44 GMT"
+    "lastUpdated": "Sat, 12 Mar 2022 03:00:45 GMT"
   }
 }
