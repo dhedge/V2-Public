@@ -29,6 +29,7 @@ export interface IFileNames {
 
   balancerConfigFileName?: string;
   externalAssetFileName?: string;
+  assetOracleConfigFileName?: string;
 }
 
 export interface ExternalLogicContracts {

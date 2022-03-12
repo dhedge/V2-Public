@@ -16,6 +16,7 @@ import "./deployment-scripts/polygon/dhedgeSwapRouter";
 import "./deployment-scripts/checks/checkConfig";
 import "./deployment-scripts/compileOne";
 import "./deployment-scripts/polygon/dynamicBonds";
+import "./deployment-scripts/oracles/deploy-asset-oracles";
 
 dotenv.config();
 
