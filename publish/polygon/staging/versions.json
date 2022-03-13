@@ -1749,6 +1749,12 @@
       ],
       "Oracles": [
         {
+          "name": "dUSD Oracle for Balancer LP",
+          "oracleName": "BalancerDHedgePoolPriceOracle",
+          "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
+          "oracleAddress": "0x703FEAcab4F7b7B8ac8a42F04C6eDCa60e415Bd4"
+        },
+        {
           "name": "DHT TWAP Oracle",
           "oracleType": "MedianTWAPAggregator",
           "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
