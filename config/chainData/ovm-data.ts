@@ -23,8 +23,8 @@ export const assets = {
 export const assetsBalanceOfSlot = {
   usdc: 0,
   usdt: 0,
-  dai: 2,
   weth: 3,
+  dai: 2,
   wbtc: 0,
 };
 

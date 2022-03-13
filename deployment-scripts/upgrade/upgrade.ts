@@ -68,7 +68,7 @@ const jobs: { [key: string]: IJob<void> } = {
   openassetguard: openAssetContractGuardJob,
 
   // Oracles/Aggregators
-  sUSDUniV3TWAPAggregator: sUSDUniV3TWAPAggregatorJob,
+  susduniv3twapaggregator: sUSDUniV3TWAPAggregatorJob,
 
   // Governance
   governancenames: governanceNamesJob,

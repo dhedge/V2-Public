@@ -1626,9 +1626,9 @@
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
       "EasySwapperGuard": "0xfB95299134E94466575c4Eff82037448be1AE4Ae",
       "DhedgeSwapRouter": "0x2Fa65bAA0D8E319568AbAda4099631044D79d7aA",
-      "UniswapV3AssetGuard": "0x8c7CCB78F6b97965747971d955Fb8a6757EefFDb",
+      "UniswapV3AssetGuard": "0x94b21Fe98B2836Ee8d3e7C8392D417266b4B4EF0",
       "UniswapV3RouterGuard": "0x144cB6CdE4C4a6df5c20e78BB68cf598Fb887265",
-      "UniswapV3NonfungiblePositionGuard": "0xeBcc567dB8B7264380Ec29Df077761816127470E"
+      "UniswapV3NonfungiblePositionGuard": "0x63d7aF8FE96b7D7E1624A9760C3EBF8Ae65BEdE1"
     },
     "network": {
       "name": "matic",
@@ -1636,6 +1636,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 03 Mar 2022 22:40:32 GMT"
+    "lastUpdated": "Thu, 10 Mar 2022 06:19:33 GMT"
   }
 }

@@ -32,8 +32,10 @@ export const assetsJob: IJob<void> = async (
   const csvAssets: ICSVAsset[] = await csv().fromFile(fileName);
 
   // Check for any accidental duplicate addresses or price feeds in the CSV
-  if (hasDuplicates(csvAssets, "assetAddress")) throw "Duplicate 'Address' field found in assets CSV";
-  if (hasDuplicates(csvAssets, "oracleAddress")) throw "Duplicate 'oracleAddress' field found in assets CSV";
+  if (hasDuplicates(csvAssets, (x) => x.assetAddress)) throw "Duplicate 'Address' field found in assets CSV";
+  // Synth BTC and wBtc have same oracle BTC
+  if (hasDuplicates(csvAssets, (x) => x.oracleAddress + x.assetAddress))
+    throw "Duplicate 'oracleAddress' field found in assets CSV";
 
   for (const csvAsset of [...csvAssets]) {
     // TODO: We don't redeploy any assets that are already configure in Versions.json if the configuration changes
@@ -76,13 +78,13 @@ export const assetsJob: IJob<void> = async (
           const balancerV2Aggregator = await deployBalancerV2LpAggregator(
             addresses.balancerV2VaultAddress,
             poolFactoryProxy,
-            balancerLp.data,
+            balancerLp.address,
             hre,
           );
           console.log(`${balancerLp.name} BalancerV2LPAggregator deployed at ${balancerV2Aggregator}`);
           newOracles.push({
             assetName: balancerLp.name,
-            assetAddress: balancerLp.data.pool,
+            assetAddress: balancerLp.address,
             assetType: balancerLp.assetType,
             oracleAddress: balancerV2Aggregator,
             oracleName: "BalancerV2LPAggregator",
@@ -96,14 +98,14 @@ export const assetsJob: IJob<void> = async (
           const balancerLpStablePoolAggregator = await deployBalancerLpStablePoolAggregator(
             hre,
             poolFactoryProxy,
-            balancerLp.data.pool,
+            balancerLp.address,
           );
           console.log(
             `${balancerLp.name} deployBalancerStablePoolAggregator deployed at ${balancerLpStablePoolAggregator}`,
           );
           newOracles.push({
             assetName: balancerLp.name,
-            assetAddress: balancerLp.data.pool,
+            assetAddress: balancerLp.address,
             assetType: balancerLp.assetType,
             oracleAddress: balancerLpStablePoolAggregator,
             oracleName: "BalancerLpStablePoolAggregator",
