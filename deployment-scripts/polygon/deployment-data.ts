@@ -77,7 +77,6 @@ export const polygonStagingFileNames: IFileNames = {
   assetGuardsFileName: "./config/polygon-staging/dHEDGE Governance Asset Guards - Polygon Staging.csv",
   balancerConfigFileName: "./config/polygon-staging/dHEDGE Asset list - Polygon Balancer LP Staging.json",
   externalAssetFileName: "./config/polygon-staging/dHEDGE Assets list - Polygon External Staging.csv",
-  assetOracleConfigFileName: "./config/polygon-staging/dHEDGE Asset Oracles.json",
 };
 
 export const polygonProdFileNames: IFileNames = {
@@ -88,5 +87,4 @@ export const polygonProdFileNames: IFileNames = {
   assetGuardsFileName: "./config/polygon-prod/dHEDGE Governance Asset Guards - Polygon.csv",
   balancerConfigFileName: "./config/polygon-prod/dHEDGE Asset list - Polygon Balancer LP.json",
   externalAssetFileName: "./config/polygon-prod/dHEDGE Assets list - Polygon External.csv",
-  assetOracleConfigFileName: "./config/polygon-prod/dHEDGE Asset Oracles.json",
 };

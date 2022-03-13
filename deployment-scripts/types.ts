@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { TAssetConfig } from "./upgrade/jobs/oracles/oracleTypes";
 
 export interface IUpgradeConfigProposeTx {
   execute: boolean;
@@ -29,7 +30,6 @@ export interface IFileNames {
 
   balancerConfigFileName?: string;
   externalAssetFileName?: string;
-  assetOracleConfigFileName?: string;
 }
 
 export interface ExternalLogicContracts {
@@ -59,13 +59,6 @@ export interface ExternalLogicContracts {
   wmaticTokenAddress?: Address;
 }
 
-export interface sUSDUniV3TWAPAggregatorProperties {
-  // For sUSDUniV3TWAPAggregator
-  sUSDAddress?: Address;
-  sUSDDaiUniV3PoolAddress?: Address;
-  daiChainlinkOracleAddress?: Address;
-}
-
 export interface IDhedgeInternal {
   // Dhedge
   protocolDaoAddress: string;
@@ -82,7 +75,7 @@ export type IProposeTxProperties = IDhedgeInternal & {
 };
 
 // Addresses
-export type IAddresses = IProposeTxProperties & ExternalLogicContracts & sUSDUniV3TWAPAggregatorProperties;
+export type IAddresses = IProposeTxProperties & ExternalLogicContracts;
 
 type RecordNumberString = Record<string, number | string>;
 export interface IDeployedAssetGuard extends RecordNumberString {
@@ -146,31 +139,30 @@ export interface IContracts {
   AaveLendingPoolAssetGuard?: Address;
   UniswapV3AssetGuard?: Address;
 
-  // Oracles
-  Oracles?: { assetAddress: Address; oracleAddress: Address; oracleName: string }[];
-
   DhedgeEasySwapper: Address;
   DhedgeSwapRouter: Address;
 
-  Assets: ICSVAsset[];
+  Assets: TDeployedAsset[];
 }
 
-type OracleName =
+export type TDeployedAsset = TAssetConfig & { oracleAddress: string };
+
+export interface IDeployedOracle {
+  assetAddress: Address;
+  oracleAddress: Address;
+  oracleType: string;
+}
+
+export type OracleType =
+  | "ChainlinkAggregator"
   | "DHedgePoolAggregator"
   | "USDPriceAggregator"
-  | "DeployedOracle"
   | "UniV2LPAggregator"
   | "BalancerV2LPAggregator"
   | "SynthPriceAggregator"
-  | "BalancerLpStablePoolAggregator";
-
-export interface ICSVAsset extends RecordNumberString {
-  assetType: number;
-  oracleName: OracleName;
-  oracleAddress: Address;
-  assetAddress: Address;
-  assetName: string;
-}
+  | "BalancerLpStablePoolAggregator"
+  | "MedianTWAPAggregator"
+  | "UniV3TWAPAggregator";
 
 export type IVersions = {
   [version: string]: {

@@ -1003,77 +1003,77 @@
           "assetAddress": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
           "assetType": "2",
           "oracleAddress": "0xCD9537EE38A7d33106423197b05ebaf977eCa386",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP USDC-USDT",
           "assetAddress": "0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001",
           "assetType": "2",
           "oracleAddress": "0xa99CD5A68E2d06A944Be7eb9812fd114a8dF5e43",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-DAI",
           "assetAddress": "0x6ff62bfb8c12109e8000935a6de54dad83a4f39f",
           "assetType": "2",
           "oracleAddress": "0xcB5974894fd98F14D914DCCA207e77610FEc92E2",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-USDT",
           "assetAddress": "0xc2755915a85c6f6c1c0f3a86ac8c058f11caa9c9",
           "assetType": "2",
           "oracleAddress": "0x2DF72868c90A4DBb2d49B94D38F05f3c237D257a",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP USDC-WETH",
           "assetAddress": "0x34965ba0ac2451a34a0471f04cca3f990b8dea27",
           "assetType": "2",
           "oracleAddress": "0x0531BEBbF617654febB1FAd88EF2C7A1cA379DA7",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP SNX-WETH",
           "assetAddress": "0x116ff0d1caa91a6b94276b3471f33dbeb52073e7",
           "assetType": "2",
           "oracleAddress": "0x3feE405C646b7B3355A3C02d86ad6F070D4164ac",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP LINK-WETH",
           "assetAddress": "0x74d23f21f780ca26b47db16b0504f2e3832b9321",
           "assetType": "2",
           "oracleAddress": "0xE9cd5690B5F526D7c73eD9192B075FC39d4DC08A",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WBTC-WETH",
           "assetAddress": "0xe62ec2e799305e0d367b0cc3ee2cda135bf89816",
           "assetType": "2",
           "oracleAddress": "0x228D1bB551d9e2C85D4b514108ED2a480e9eBe76",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WMATIC-WETH",
           "assetAddress": "0xc4e595acdd7d12fec385e5da5d43160e8a0bac0e",
           "assetType": "2",
           "oracleAddress": "0xE9A38F4636799f95248fAEfF547b2930fa4227dD",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-AAVE",
           "assetAddress": "0x2813d43463c374a680f235c428fb1d7f08de0b69",
           "assetType": "2",
           "oracleAddress": "0x1A2D51763DbfF46eDdcB3Dc2191770216a1CBF87",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-CRV",
           "assetAddress": "0x396e655c309676caf0acf4607a868e0cded876db",
           "assetType": "2",
           "oracleAddress": "0x5D3Ff64f93Bc2577653206607B80108C7Bc90837",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Aave Lending Pool",
@@ -1098,14 +1098,14 @@
           "assetAddress": "0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca",
           "assetType": "2",
           "oracleAddress": "0x86D8026eC6777ced83860e418Db45bA480271eA8",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP FRAX-USDC",
           "assetAddress": "0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0",
           "assetType": "2",
           "oracleAddress": "0xC26291C08FeBAD7394e981c569839De8e008B6E4",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Balancer",
@@ -1184,21 +1184,21 @@
           "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
           "assetType": "0",
           "oracleAddress": "0xC016387a497CA090F8b6107c88F47030E61d6763",
-          "oracleName": "DHedgePoolAggregator"
+          "oracleType": "DHedgePoolAggregator"
         },
         {
           "assetName": "Balancer LP WBTC-WETH",
           "assetAddress": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
           "assetType": 0,
           "oracleAddress": "0x605AfA2Aa6571Da603F5163373Af8e20C9A262cc",
-          "oracleName": "BalancerV2LPAggregator"
+          "oracleType": "BalancerV2LPAggregator"
         },
         {
           "assetName": "Balancer LP USDC-dUSD",
           "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
           "assetType": 0,
           "oracleAddress": "0xc3C893C224A95999DCa9Cd9bD264e87A6C01fC75",
-          "oracleName": "BalancerV2LPAggregator"
+          "oracleType": "BalancerV2LPAggregator"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -1292,77 +1292,77 @@
           "assetAddress": "0xcd578f016888b57f1b1e3f887f392f0159e26747",
           "assetType": "2",
           "oracleAddress": "0xCD9537EE38A7d33106423197b05ebaf977eCa386",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP USDC-USDT",
           "assetAddress": "0x4b1f1e2435a9c96f7330faea190ef6a7c8d70001",
           "assetType": "2",
           "oracleAddress": "0xa99CD5A68E2d06A944Be7eb9812fd114a8dF5e43",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-DAI",
           "assetAddress": "0x6ff62bfb8c12109e8000935a6de54dad83a4f39f",
           "assetType": "2",
           "oracleAddress": "0xcB5974894fd98F14D914DCCA207e77610FEc92E2",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-USDT",
           "assetAddress": "0xc2755915a85c6f6c1c0f3a86ac8c058f11caa9c9",
           "assetType": "2",
           "oracleAddress": "0x2DF72868c90A4DBb2d49B94D38F05f3c237D257a",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP USDC-WETH",
           "assetAddress": "0x34965ba0ac2451a34a0471f04cca3f990b8dea27",
           "assetType": "2",
           "oracleAddress": "0x0531BEBbF617654febB1FAd88EF2C7A1cA379DA7",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP SNX-WETH",
           "assetAddress": "0x116ff0d1caa91a6b94276b3471f33dbeb52073e7",
           "assetType": "2",
           "oracleAddress": "0x3feE405C646b7B3355A3C02d86ad6F070D4164ac",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP LINK-WETH",
           "assetAddress": "0x74d23f21f780ca26b47db16b0504f2e3832b9321",
           "assetType": "2",
           "oracleAddress": "0xE9cd5690B5F526D7c73eD9192B075FC39d4DC08A",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WBTC-WETH",
           "assetAddress": "0xe62ec2e799305e0d367b0cc3ee2cda135bf89816",
           "assetType": "2",
           "oracleAddress": "0x228D1bB551d9e2C85D4b514108ED2a480e9eBe76",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WMATIC-WETH",
           "assetAddress": "0xc4e595acdd7d12fec385e5da5d43160e8a0bac0e",
           "assetType": "2",
           "oracleAddress": "0xE9A38F4636799f95248fAEfF547b2930fa4227dD",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-AAVE",
           "assetAddress": "0x2813d43463c374a680f235c428fb1d7f08de0b69",
           "assetType": "2",
           "oracleAddress": "0x1A2D51763DbfF46eDdcB3Dc2191770216a1CBF87",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP WETH-CRV",
           "assetAddress": "0x396e655c309676caf0acf4607a868e0cded876db",
           "assetType": "2",
           "oracleAddress": "0x5D3Ff64f93Bc2577653206607B80108C7Bc90837",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Aave Lending Pool",
@@ -1387,14 +1387,14 @@
           "assetAddress": "0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca",
           "assetType": "2",
           "oracleAddress": "0x86D8026eC6777ced83860e418Db45bA480271eA8",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP FRAX-USDC",
           "assetAddress": "0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0",
           "assetType": "2",
           "oracleAddress": "0xC26291C08FeBAD7394e981c569839De8e008B6E4",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Balancer LP WMATIC-USDC-WETH-BAL",
@@ -1467,161 +1467,161 @@
           "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
           "assetType": "0",
           "oracleAddress": "0xC016387a497CA090F8b6107c88F47030E61d6763",
-          "oracleName": "DHedgePoolAggregator"
+          "oracleType": "DHedgePoolAggregator"
         },
         {
           "assetName": "Balancer LP WBTC-WETH",
           "assetAddress": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
           "assetType": 0,
           "oracleAddress": "0x605AfA2Aa6571Da603F5163373Af8e20C9A262cc",
-          "oracleName": "BalancerV2LPAggregator"
+          "oracleType": "BalancerV2LPAggregator"
         },
         {
           "assetName": "dHEDGE DAO",
           "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
           "assetType": "0",
           "oracleAddress": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E",
-          "oracleName": "MedianTWAPAggregator"
+          "oracleType": "MedianTWAPAggregator"
         },
         {
           "assetName": "Sushi LP DHT-WETH",
           "assetAddress": "0xa375d23a751124359568f3a22576528bd1c8c3e3",
           "assetType": "2",
           "oracleAddress": "0x2eb4669a820e2570AC953C512263857aE6ED5832",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sushi LP WMATIC-USDC",
           "assetAddress": "0xcd353f79d9fade311fc3119b841e1f456b54e858",
           "assetType": "2",
           "oracleAddress": "0xc52696F35462480C173c4631214A1D8542f24F28",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Wrapped UST Token",
           "assetAddress": "0x692597b009d13c4049a947cab2239b7d6517875f",
           "assetType": "0",
           "oracleAddress": "0x2D455E55e8Ad3BA965E3e95e7AaB7dF1C671af19",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "TrueUSD",
           "assetAddress": "0x2e1ad108ff1d8c782fcbbb89aad783ac49586756",
           "assetType": "0",
           "oracleAddress": "0x7C5D415B64312D38c56B54358449d0a4058339d2",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "renBTC",
           "assetAddress": "0xdbf31df14b66535af65aac99c32e9ea844e14501",
           "assetType": "0",
           "oracleAddress": "0xc907E116054Ad103354f2D350FD2514433D57F6f",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Solana",
           "assetAddress": "0x7DfF46370e9eA5f0Bad3C4E29711aD50062EA7A4",
           "assetType": "0",
           "oracleAddress": "0x10C8264C0935b3B9870013e057f330Ff3e9C56dC",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Nexo",
           "assetAddress": "0x41b3966b4ff7b427969ddf5da3627d6aeae9a48e",
           "assetType": "0",
           "oracleAddress": "0x666bb13b3ED3816504E8c30D0F9B9C16b371774b",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sushi LP WBTC-renBTC",
           "assetAddress": "0x24619c126cC93C6Dfb2cF4eCC5D4d7CFCe73c97D",
           "assetType": "2",
           "oracleAddress": "0xBD82AF6bB1078Ba798651a057b48B4A345297Ca6",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sushi LP USDC-TUSD",
           "assetAddress": "0x4AB66a7138F50Db9B7aDaF8CE8aFB3F638B22f7f",
           "assetType": "2",
           "oracleAddress": "0x2a4578df4f7046c53Ba562E746B9b5312efdb6a2",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sush LP WMATIC-GHST",
           "assetAddress": "0xf69e93771F11AECd8E554aA165C3Fe7fd811530c",
           "assetType": "2",
           "oracleAddress": "0x399164858855dd6736eB52F2a08EAe9A5A2b96bA",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sushi LP WETH-YFI",
           "assetAddress": "0xdfa3ddd1807db8e4b4851d2e5421374e433a2983",
           "assetType": "2",
           "oracleAddress": "0xdB38Dd1584736ED125d8b73E4ce890CD0B994618",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sushi LP WETH-COMP",
           "assetAddress": "0x9021A31062A1D9C9C35d632Ed54a9d923e46809F",
           "assetType": "2",
           "oracleAddress": "0xF69D764Aaa1F99415966f76DcE52BF6775Ba1918",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sushi LP WETH-MANA",
           "assetAddress": "0xc48AE82ca34C63887b975F20ABA91a38f2a900B8",
           "assetType": "2",
           "oracleAddress": "0x321535294D38D5F4DE5F0Ea8c41c013023270aFE",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Sushi LP WETH-UNI",
           "assetAddress": "0xc56060aF39152C614fA67E169c0DD1809a886e4F",
           "assetType": "2",
           "oracleAddress": "0xcb682967d0c6642ed1eB91A1cc4942Fae1C9F1Db",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "Balancer LP BPSP-TUSD",
           "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
           "assetType": 0,
           "oracleAddress": "0x355Df4C5c2430C1dB86077aD88D33a5D7ACB90b7",
-          "oracleName": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerLpStablePoolAggregator"
         },
         {
           "assetName": "Toros ETHBEAR2X",
           "assetAddress": "0x027da30fadab6202801f97be344e2348a2a92842",
           "assetType": "0",
           "oracleAddress": "0x5218e7aEe91e3705579C37C63f9a1506aA18fC7b",
-          "oracleName": "DHedgePoolAggregator"
+          "oracleType": "DHedgePoolAggregator"
         },
         {
           "assetName": "Toros ETHBULL3X",
           "assetAddress": "0x460b60565cb73845d56564384ab84bf84c13e47d",
           "assetType": "0",
           "oracleAddress": "0x39a950506b8CF6caf2300cF52d0DDC79a9BdE41c",
-          "oracleName": "DHedgePoolAggregator"
+          "oracleType": "DHedgePoolAggregator"
         },
         {
           "assetName": "Toros BTCBEAR2X",
           "assetAddress": "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
           "assetType": "0",
           "oracleAddress": "0xb3505BF6a294F1fB3960DC1718bc9832e79A579d",
-          "oracleName": "DHedgePoolAggregator"
+          "oracleType": "DHedgePoolAggregator"
         },
         {
           "assetName": "Toros BTCBULL3X",
           "assetAddress": "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
           "assetType": "0",
           "oracleAddress": "0xE2279b4d0F2fF88A09E47399c4F56a4CFb4BDeDa",
-          "oracleName": "DHedgePoolAggregator"
+          "oracleType": "DHedgePoolAggregator"
         },
         {
           "assetName": "Uniswap V3 NFT Position Manager",
           "assetAddress": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
           "assetType": "7",
           "oracleAddress": "0x42713997f48A7506cAc09C98b8a3723625392F3f",
-          "oracleName": "USDPriceAggregator"
+          "oracleType": "USDPriceAggregator"
         },
         {
           "assetName": "Aave",
@@ -1652,21 +1652,21 @@
           "assetAddress": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
           "assetType": "0",
           "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468",
-          "oracleName": "MedianTWAPAggregator"
+          "oracleType": "MedianTWAPAggregator"
         },
         {
           "assetName": "Balancer LP BPSP",
           "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
           "assetType": 0,
           "oracleAddress": "0xD7F4D1Da563Bc9849527c68501576139a496D2dc",
-          "oracleName": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerLpStablePoolAggregator"
         },
         {
           "assetName": "CRV",
           "assetAddress": "0x172370d5cd63279efa6d502dab29171933a610af",
           "assetType": "4",
           "oracleAddress": "0x336584C8E6Dc19637A5b36206B1c79923111b405",
-          "oracleName": ""
+          "oracleType": ""
         },
         {
           "assetName": "DODO bird",
@@ -1709,60 +1709,60 @@
           "assetAddress": "0xbf61e1d82bd440cb9da11d325c046f029a663890",
           "assetType": "2",
           "oracleAddress": "0x5C5526E4228145296bB5a96227388c4450f8f699",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP MKR-DAI",
           "assetAddress": "0x5e8f882dd0d062e2d81bcbe4ec61d7aeabf80c74",
           "assetType": "2",
           "oracleAddress": "0xe60d3758f337731a8c518022A9777Bc244d67Fc3",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP GRT-WETH",
           "assetAddress": "0x1ceda73c034218255f50ef8a2c282e6b4c301d60",
           "assetType": "2",
           "oracleAddress": "0x03E92d4D54Ca28817a02e5F01Eb106dd4E3B8dba",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Sushi LP USDC-miMATIC",
           "assetAddress": "0x8ceed6619aeffd5476315b90eb081485da2aebca",
           "assetType": "2",
           "oracleAddress": "0x9d5b47AdA676Cee9f6190F833554d03B5054D0b3",
-          "oracleName": "UniV2LPAggregator"
+          "oracleType": "UniV2LPAggregator"
         },
         {
           "assetName": "Balancer LP USDC-dUSD",
           "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
           "assetType": 0,
           "oracleAddress": "0x6b1163D89588F2480c5cA13E11Da2789B369DdD1",
-          "oracleName": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerLpStablePoolAggregator"
         },
         {
           "assetName": "Balancer LP WBTC-renBTC",
           "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
           "assetType": 0,
           "oracleAddress": "0x80523D712a49eBE36A985F36625F7023b8137f5B",
-          "oracleName": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerLpStablePoolAggregator"
         }
       ],
       "Oracles": [
         {
           "name": "DHT TWAP Oracle",
-          "oracleName": "MedianTWAPAggregator",
+          "oracleType": "MedianTWAPAggregator",
           "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
           "oracleAddress": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E"
         },
         {
           "name": "MAI TWAP Oracle",
-          "oracleName": "MedianTWAPAggregator",
+          "oracleType": "MedianTWAPAggregator",
           "assetAddress": "0xa3fa99a148fa48d14ed51d610c367c61876997f1",
           "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468"
         },
         {
           "name": "QI TWAP Oracle",
-          "oracleName": "MedianTWAPAggregator",
+          "oracleType": "MedianTWAPAggregator",
           "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
           "oracleAddress": "0xBbA786dBbE67879B7D3B2696aBF3DFbA50e95949"
         }
@@ -1807,6 +1807,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 10 Mar 2022 06:13:30 GMT"
+    "lastUpdated": "Sun, 13 Mar 2022 09:09:48 GMT"
   }
 }

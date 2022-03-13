@@ -1,6 +1,5 @@
 {
   "v2.12.0": {
-    "lastUpdated": "Fri, 03 Dec 2021 05:58:24 GMT",
     "contracts": {
       "ERC20Guard": "0xa2822a8D9aCa3d56A2eD2BE70F0c11136875289C",
       "SynthetixGuard": "0xbc87Becd9b2AED3E282D352b94B80045946CF4b9",
@@ -42,6 +41,11 @@
       "PoolManagerLogic": "0x9FEE88a18479bf7f0D41Da03819538AA7A617730",
       "PoolFactoryProxy": "0x643ea0B936803A624666Da378d44dC39E1d12534",
       "PoolFactory": "0x9FEE88a18479bf7f0D41Da03819538AA7A617730"
-    }
+    },
+    "network": {
+      "chainId": 69,
+      "name": "unknown"
+    },
+    "lastUpdated": "Sun, 13 Mar 2022 09:11:19 GMT"
   }
 }
