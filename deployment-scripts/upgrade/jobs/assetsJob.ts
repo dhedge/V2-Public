@@ -32,8 +32,10 @@ export const assetsJob: IJob<void> = async (
   const csvAssets: ICSVAsset[] = await csv().fromFile(fileName);
 
   // Check for any accidental duplicate addresses or price feeds in the CSV
-  if (hasDuplicates(csvAssets, "assetAddress")) throw "Duplicate 'Address' field found in assets CSV";
-  if (hasDuplicates(csvAssets, "oracleAddress")) throw "Duplicate 'oracleAddress' field found in assets CSV";
+  if (hasDuplicates(csvAssets, (x) => x.assetAddress)) throw "Duplicate 'Address' field found in assets CSV";
+  // Synth BTC and wBtc have same oracle BTC
+  if (hasDuplicates(csvAssets, (x) => x.oracleAddress + x.assetAddress))
+    throw "Duplicate 'oracleAddress' field found in assets CSV";
 
   for (const csvAsset of [...csvAssets]) {
     // TODO: We don't redeploy any assets that are already configure in Versions.json if the configuration changes
