@@ -4,7 +4,6 @@ import { hasDuplicates, proposeTx } from "../../Helpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, TDeployedAsset } from "../../types";
 import { getOracle } from "./oracles/assetsJobHelpers";
 import { TAssetConfig } from "./oracles/oracleTypes";
-import fs from "fs";
 
 // Todo: Combine jsonAssets and Balancer Assets into one JSON file (move away from csv)
 export const assetsJob: IJob<void> = async (

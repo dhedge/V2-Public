@@ -10,13 +10,6 @@ import { deployUniV3TWAPAggregator } from "./deployUniV3TWAPAggregator";
 import { deployUSDPriceAggregator } from "./deployUSDPriceAggregator";
 import { IAssetConfig, IChainlinkAggregatorConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
 
-export interface IBalancerAsset {
-  assetName: string;
-  oracleType: "BalancerV2LPAggregator" | "BalancerLpStablePoolAggregator";
-  assetAddress: string;
-  assetType: number;
-}
-
 export const getOracle = async (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig): Promise<TDeployedAsset> => {
   const oracleAddress = await typeToDeployer[assetConfig.oracleType](hre, assetConfig);
   return {
