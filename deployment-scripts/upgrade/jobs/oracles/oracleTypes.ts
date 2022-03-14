@@ -12,39 +12,38 @@ export interface IAssetConfig<TOracleType extends OracleType, TSpecificOracleCon
 }
 
 export type TAssetConfig =
-  | IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorConfig>
+  | IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorSpecificConfig>
   | IAssetConfig<"DHedgePoolAggregator", undefined>
-  | IAssetConfig<"MedianTWAPAggregator", IMedianTWAPAggregatorConfig>
+  | IAssetConfig<"MedianTWAPAggregator", IMedianTWAPAggregatorSpecificConfig>
   | IAssetConfig<"UniV3TWAPAggregator", IUniV3TWAPAggregatorSpecificConfig>
-  | IAssetConfig<"SynthPriceAggregator", ISynthPriceAggregatorConfig>
-  | IAssetConfig<"UniV2LPAggregator", IUniV2LPAggregatorConfig>
+  | IAssetConfig<"SynthPriceAggregator", ISynthPriceAggregatorSpecificConfig>
+  | IAssetConfig<"UniV2LPAggregator", IUniV2LPAggregatorSpecificConfig>
   | IAssetConfig<"USDPriceAggregator", undefined>
-  | IAssetConfig<"BalancerV2LPAggregator", IBalancerV2LPAggregatorConfig>
-  | IAssetConfig<"BalancerStablePoolAggregator", undefined>;
+  | IAssetConfig<"BalancerV2LPAggregator", IBalancerV2LPAggregatorSpecificConfig>
+  | IAssetConfig<"BalancerStablePoolAggregator", IBalancerStablePoolAggregatorSpecificConfig>;
 
-export interface IChainlinkAggregatorConfig {
+export interface IChainlinkAggregatorSpecificConfig {
   chainlinkOracleAddress: Address;
 }
 
-export interface ISynthPriceAggregatorConfig {
+export interface ISynthPriceAggregatorSpecificConfig {
   susdPriceAggregator: Address;
   tokenUSDPriceAggregator: Address;
 }
 
-export interface IUniV2LPAggregatorConfig {
+export interface IUniV2LPAggregatorSpecificConfig {
   dhedgeFactoryProxy: Address;
 }
 
-export interface IBalancerV2LPAggregatorConfig {
-  dhedgeFactoryProxy: Address;
-  balancerV2VaultAddress: Address;
-}
-
-export interface IBalancerStablePoolAggregatorConfig {
+export interface IBalancerV2LPAggregatorSpecificConfig {
   dhedgeFactoryProxy: Address;
 }
 
-export interface IMedianTWAPAggregatorConfig {
+export interface IBalancerStablePoolAggregatorSpecificConfig {
+  dhedgeFactoryProxy: Address;
+}
+
+export interface IMedianTWAPAggregatorSpecificConfig {
   poolAddress: string;
   pairTokenOracle: string;
   updateInterval: number;

@@ -1,7 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../../Helpers";
 import { Address } from "../../../types";
-import { IBalancerStablePoolAggregatorConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
+import {
+  IAssetConfig,
+  IBalancerStablePoolAggregatorSpecificConfig,
+  TAssetConfig,
+  TOracleDeployer,
+} from "./oracleTypes";
 
 export const deployBalancerStablePoolAggregator: TOracleDeployer = async (
   hre: HardhatRuntimeEnvironment,
@@ -11,10 +16,28 @@ export const deployBalancerStablePoolAggregator: TOracleDeployer = async (
   return deploy(hre, specificConfig.dhedgeFactoryProxy, oracleConfig.assetAddress);
 };
 
-const validateConfig = (oracleConfig: TAssetConfig): IBalancerStablePoolAggregatorConfig => {
+const isBalancerStablePoolAggregator = (
+  oracleConfig: TAssetConfig,
+): oracleConfig is IAssetConfig<"BalancerStablePoolAggregator", IBalancerStablePoolAggregatorSpecificConfig> => {
+  const requiredFields = ["dhedgeFactoryProxy"];
+  const { specificOracleConfig } = oracleConfig;
+  if (
+    oracleConfig.oracleType != "BalancerStablePoolAggregator" ||
+    !specificOracleConfig ||
+    requiredFields.some((field) => !(field in oracleConfig.specificOracleConfig))
+  ) {
+    return false;
+  }
+  return true;
+};
+
+const validateConfig = (oracleConfig: TAssetConfig): IBalancerStablePoolAggregatorSpecificConfig => {
   const specificOracleConfig = oracleConfig.specificOracleConfig;
-  throw new Error("Needs to be implemented");
-  return specificOracleConfig as IBalancerStablePoolAggregatorConfig;
+  if (!isBalancerStablePoolAggregator(oracleConfig)) {
+    throw new Error("MedianTWAPAggregator config incorrect: " + oracleConfig.assetAddress);
+  }
+
+  return specificOracleConfig as IBalancerStablePoolAggregatorSpecificConfig;
 };
 
 const deploy = async (hre: HardhatRuntimeEnvironment, factory: string, pool: string): Promise<Address> => {

@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Address } from "../../../types";
-import { IUniV2LPAggregatorConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
+import { IAssetConfig, IUniV2LPAggregatorSpecificConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
 
 export const deployUniV2LPAggregator: TOracleDeployer = async (
   hre: HardhatRuntimeEnvironment,
@@ -8,7 +8,7 @@ export const deployUniV2LPAggregator: TOracleDeployer = async (
 ): Promise<Address> => {
   const { ethers } = hre;
 
-  const specificOracleConfig: IUniV2LPAggregatorConfig = validateConfig(oracleConfig);
+  const specificOracleConfig: IUniV2LPAggregatorSpecificConfig = validateConfig(oracleConfig);
 
   const SushiLPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
   const sushiLPAggregator = await SushiLPAggregator.deploy(
@@ -20,10 +20,26 @@ export const deployUniV2LPAggregator: TOracleDeployer = async (
   return sushiLPAggregator.address;
 };
 
-const validateConfig = (oracleConfig: TAssetConfig): IUniV2LPAggregatorConfig => {
+const isUniV2LPAggregator = (
+  oracleConfig: TAssetConfig,
+): oracleConfig is IAssetConfig<"UniV2LPAggregator", IUniV2LPAggregatorSpecificConfig> => {
+  const requiredFields = ["dhedgeFactoryProxy"];
+  const { specificOracleConfig } = oracleConfig;
+  if (
+    oracleConfig.oracleType != "UniV2LPAggregator" ||
+    !specificOracleConfig ||
+    requiredFields.some((field) => !(field in oracleConfig.specificOracleConfig))
+  ) {
+    return false;
+  }
+  return true;
+};
+
+const validateConfig = (oracleConfig: TAssetConfig): IUniV2LPAggregatorSpecificConfig => {
   const specificOracleConfig = oracleConfig.specificOracleConfig;
+  if (!isUniV2LPAggregator(oracleConfig)) {
+    throw new Error("UniV2LPAggregator config incorrect: " + oracleConfig.assetAddress);
+  }
 
-  throw new Error("Needs to be implemented");
-
-  return specificOracleConfig as IUniV2LPAggregatorConfig;
+  return specificOracleConfig as IUniV2LPAggregatorSpecificConfig;
 };

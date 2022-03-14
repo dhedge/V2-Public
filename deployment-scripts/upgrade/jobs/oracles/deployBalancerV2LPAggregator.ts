@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../../Helpers";
 import { Address } from "../../../types";
-import { TAssetConfig, TOracleDeployer, IBalancerV2LPAggregatorConfig } from "./oracleTypes";
+import { TAssetConfig, TOracleDeployer, IBalancerV2LPAggregatorSpecificConfig, IAssetConfig } from "./oracleTypes";
 
 export const deployBalancerV2LPAggregator: TOracleDeployer = async (
   hre: HardhatRuntimeEnvironment,
@@ -10,22 +10,34 @@ export const deployBalancerV2LPAggregator: TOracleDeployer = async (
 ): Promise<Address> => {
   const specificConfig = validateConfig(oracleConfig);
 
-  return deployBalancerV2LpAggregator(
-    specificConfig.balancerV2VaultAddress,
-    specificConfig.dhedgeFactoryProxy,
-    oracleConfig.assetAddress,
-    hre,
-  );
+  return deployBalancerV2LpAggregator(specificConfig.dhedgeFactoryProxy, oracleConfig.assetAddress, hre);
 };
 
-const validateConfig = (oracleConfig: TAssetConfig): IBalancerV2LPAggregatorConfig => {
+const isBalancerV2LPAggregator = (
+  oracleConfig: TAssetConfig,
+): oracleConfig is IAssetConfig<"BalancerV2LPAggregator", IBalancerV2LPAggregatorSpecificConfig> => {
+  const requiredFields = ["dhedgeFactoryProxy"];
+  const { specificOracleConfig } = oracleConfig;
+  if (
+    oracleConfig.oracleType != "BalancerV2LPAggregator" ||
+    !specificOracleConfig ||
+    requiredFields.some((field) => !(field in oracleConfig.specificOracleConfig))
+  ) {
+    return false;
+  }
+  return true;
+};
+
+const validateConfig = (oracleConfig: TAssetConfig): IBalancerV2LPAggregatorSpecificConfig => {
   const specificOracleConfig = oracleConfig.specificOracleConfig;
-  throw new Error("Needs to be implemented");
-  return specificOracleConfig as IBalancerV2LPAggregatorConfig;
+  if (!isBalancerV2LPAggregator(oracleConfig)) {
+    throw new Error("BalancerV2LPAggregator config incorrect: " + oracleConfig.assetAddress);
+  }
+
+  return specificOracleConfig as IBalancerV2LPAggregatorSpecificConfig;
 };
 
 export const deployBalancerV2LpAggregator = async (
-  balancerV2VaultAddress: string,
   factory: string,
   pool: string,
   hre: HardhatRuntimeEnvironment,
@@ -76,7 +88,6 @@ export const deployBalancerV2LpAggregator = async (
     "contracts/priceAggregators/BalancerV2LPAggregator.sol:BalancerV2LPAggregator",
     [
       factory,
-      balancerV2VaultAddress,
       pool,
       [
         "50000000000000000", // maxPriceDeviation: 0.05

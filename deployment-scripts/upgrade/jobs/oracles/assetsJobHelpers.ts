@@ -8,7 +8,7 @@ import { deploySynthPriceAggregator } from "./deploySynthPriceAggregator";
 import { deployUniV2LPAggregator } from "./deployUniV2LPAggregator";
 import { deployUniV3TWAPAggregator } from "./deployUniV3TWAPAggregator";
 import { deployUSDPriceAggregator } from "./deployUSDPriceAggregator";
-import { IAssetConfig, IChainlinkAggregatorConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
+import { IAssetConfig, IChainlinkAggregatorSpecificConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
 
 export const getOracle = async (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig): Promise<TDeployedAsset> => {
   const oracleAddress = await typeToDeployer[assetConfig.oracleType](hre, assetConfig);
@@ -34,7 +34,7 @@ const typeToDeployer: TOracleTypeToDeployer = {
   ChainlinkAggregator: (_, oracleConfig) => {
     const isChainlink = (
       oracleConfig: TAssetConfig,
-    ): oracleConfig is IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorConfig> => {
+    ): oracleConfig is IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorSpecificConfig> => {
       if (
         oracleConfig.oracleType != "ChainlinkAggregator" ||
         !oracleConfig.specificOracleConfig ||

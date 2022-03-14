@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../../Helpers";
 import { Address } from "../../../types";
-import { TAssetConfig, IMedianTWAPAggregatorConfig, TOracleDeployer } from "./oracleTypes";
+import { TAssetConfig, IMedianTWAPAggregatorSpecificConfig, TOracleDeployer, IAssetConfig } from "./oracleTypes";
 
 export const deployMedianTWAPAggregator: TOracleDeployer = async (
   hre: HardhatRuntimeEnvironment,
@@ -9,7 +9,7 @@ export const deployMedianTWAPAggregator: TOracleDeployer = async (
 ): Promise<Address> => {
   const ethers = hre.ethers;
 
-  const twapConfig: IMedianTWAPAggregatorConfig = validateConfig(oracleConfig);
+  const twapConfig: IMedianTWAPAggregatorSpecificConfig = validateConfig(oracleConfig);
 
   const MedianTWAPAggregator = await ethers.getContractFactory("MedianTWAPAggregator");
   const medianTwapAggregator = await MedianTWAPAggregator.deploy(
@@ -40,10 +40,26 @@ export const deployMedianTWAPAggregator: TOracleDeployer = async (
   return medianTwapAggregator.address;
 };
 
-const validateConfig = (oracleConfig: TAssetConfig): IMedianTWAPAggregatorConfig => {
+const isMedianTWAPAggregator = (
+  oracleConfig: TAssetConfig,
+): oracleConfig is IAssetConfig<"MedianTWAPAggregator", IMedianTWAPAggregatorSpecificConfig> => {
+  const requiredFields = ["poolAddress", "pairTokenOracle", "updateInterval", "volatilityTripLimit"];
+  const { specificOracleConfig } = oracleConfig;
+  if (
+    oracleConfig.oracleType != "MedianTWAPAggregator" ||
+    !specificOracleConfig ||
+    requiredFields.some((field) => !(field in oracleConfig.specificOracleConfig))
+  ) {
+    return false;
+  }
+  return true;
+};
+
+const validateConfig = (oracleConfig: TAssetConfig): IMedianTWAPAggregatorSpecificConfig => {
   const specificOracleConfig = oracleConfig.specificOracleConfig;
+  if (!isMedianTWAPAggregator(oracleConfig)) {
+    throw new Error("MedianTWAPAggregator config incorrect: " + oracleConfig.assetAddress);
+  }
 
-  throw new Error("Needs to be implemented");
-
-  return specificOracleConfig as IMedianTWAPAggregatorConfig;
+  return specificOracleConfig as IMedianTWAPAggregatorSpecificConfig;
 };
