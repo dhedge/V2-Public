@@ -99,11 +99,11 @@ export async function deploy(deploymentData: IDeploymentData) {
         if (asset.oracleAddress) {
           return asset;
         }
-        if (asset.oracleName == "USDPriceAggregator") {
+        if (asset.oracleType == "USDPriceAggregator") {
           return {
             ...asset,
             oracleAddress: versions[tag].contracts.USDPriceAggregator || "",
-            oracleName: "USDPriceAggregator",
+            oracleType: "USDPriceAggregator",
           };
         }
         throw new Error("No code path for this asset");

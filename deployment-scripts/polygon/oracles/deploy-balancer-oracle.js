@@ -30,7 +30,7 @@ const main = async () => {
     contracts.Oracles.push({
       assetAddress: pool,
       oracleAddress: dHedgePoolPriceOracle.address,
-      oracleName: "BalancerDHedgePoolPriceOracle",
+      oracleType: "BalancerDHedgePoolPriceOracle",
     });
   }
 

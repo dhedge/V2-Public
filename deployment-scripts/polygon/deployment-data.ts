@@ -71,22 +71,20 @@ export const polygonAddresses: IAddresses = {
 
 export const polygonStagingFileNames: IFileNames = {
   versionsFileName: "./publish/polygon/staging/versions.json",
-  assetsFileName: "./config/polygon-staging/dHEDGE Assets list - Polygon Staging.csv",
+  assetsFileName: "./config/polygon-staging/dHEDGE Assets list - Polygon Staging.json",
   governanceNamesFileName: "./config/polygon-staging/dHEDGE Governance Names - Polygon Staging.csv",
   contractGuardsFileName: "./config/polygon-staging/dHEDGE Governance Contract Guards - Polygon Staging.csv",
   assetGuardsFileName: "./config/polygon-staging/dHEDGE Governance Asset Guards - Polygon Staging.csv",
   balancerConfigFileName: "./config/polygon-staging/dHEDGE Asset list - Polygon Balancer LP Staging.json",
   externalAssetFileName: "./config/polygon-staging/dHEDGE Assets list - Polygon External Staging.csv",
-  assetOracleConfigFileName: "./config/polygon-staging/dHEDGE Asset Oracles.json",
 };
 
 export const polygonProdFileNames: IFileNames = {
   versionsFileName: "./publish/polygon/prod/versions.json",
-  assetsFileName: "./config/polygon-prod/dHEDGE Assets list - Polygon.csv",
+  assetsFileName: "./config/polygon-prod/dHEDGE Assets list - Polygon.json",
   governanceNamesFileName: "./config/polygon-prod/dHEDGE Governance Names - Polygon.csv",
   contractGuardsFileName: "./config/polygon-prod/dHEDGE Governance Contract Guards - Polygon.csv",
   assetGuardsFileName: "./config/polygon-prod/dHEDGE Governance Asset Guards - Polygon.csv",
   balancerConfigFileName: "./config/polygon-prod/dHEDGE Asset list - Polygon Balancer LP.json",
   externalAssetFileName: "./config/polygon-prod/dHEDGE Assets list - Polygon External.csv",
-  assetOracleConfigFileName: "./config/polygon-prod/dHEDGE Asset Oracles.json",
 };
