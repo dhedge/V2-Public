@@ -10,24 +10,34 @@
           "assetName": "Synth sETH",
           "assetAddress": "0x94B41091eB29b36003aC1C6f0E55a5225633c884",
           "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xCb7895bDC70A1a1Dce69b689FD7e43A627475A06"
+          },
           "oracleAddress": "0xCb7895bDC70A1a1Dce69b689FD7e43A627475A06"
         },
         {
           "assetName": "Synth sBTC",
           "assetAddress": "0x23F608ACc41bd7BCC617a01a9202214EE305439a",
           "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x81AE7F8fF54070C52f0eB4EB5b8890e1506AA4f4"
+          },
           "oracleAddress": "0x81AE7F8fF54070C52f0eB4EB5b8890e1506AA4f4"
         },
         {
           "assetName": "Synth sLINK",
           "assetAddress": "0xe2B26511C64FE18Acc0BE8EA7c888cDFcacD846E",
           "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xb37aA79EBc31B93864Bff2d5390b385bE482897b"
+          },
           "oracleAddress": "0xb37aA79EBc31B93864Bff2d5390b385bE482897b"
         },
         {
           "assetName": "Synth sUSD",
           "assetAddress": "0xaA5068dC2B3AADE533d3e52C6eeaadC6a8154c57",
           "assetType": "0",
+          "oracleType": "USDPriceAggregator",
           "oracleAddress": "0x03228Ddd04f0FF07cB68F53d164b53Dc2E4362eA"
         }
       ],
@@ -46,6 +56,6 @@
       "chainId": 69,
       "name": "unknown"
     },
-    "lastUpdated": "Sun, 13 Mar 2022 09:11:19 GMT"
+    "lastUpdated": "Mon, 14 Mar 2022 03:52:52 GMT"
   }
 }

@@ -26,7 +26,7 @@ export const ovmProdAddresses: IAddresses = {
 
 export const ovmProdFileNames: IFileNames = {
   versionsFileName: "./publish/ovm/prod/versions.json",
-  assetsFileName: "./config/ovm-prod/dHEDGE Assets list.csv",
+  assetsFileName: "./config/ovm-prod/dHEDGE Assets list.json",
   governanceNamesFileName: "./config/ovm-prod/dHEDGE Governance Names.csv",
   contractGuardsFileName: "./config/ovm-prod/dHEDGE Governance Contract Guards.csv",
   assetGuardsFileName: "./config/ovm-prod/dHEDGE Governance Asset Guards.csv",
@@ -34,7 +34,7 @@ export const ovmProdFileNames: IFileNames = {
 
 export const ovmKovanFileNames: IFileNames = {
   versionsFileName: "./publish/ovm/kovan/versions.json",
-  assetsFileName: "./config/ovm-kovan/dHEDGE Assets list.csv",
+  assetsFileName: "./config/ovm-kovan/dHEDGE Assets list.json",
   governanceNamesFileName: "./config/ovm-kovan/dHEDGE Governance Names.csv",
   contractGuardsFileName: "./config/ovm-kovan/dHEDGE Governance Contract Guards.csv",
   assetGuardsFileName: "./config/ovm-kovan/dHEDGE Governance Asset Guards.csv",

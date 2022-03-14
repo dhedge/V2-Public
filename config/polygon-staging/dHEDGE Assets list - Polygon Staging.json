@@ -595,7 +595,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
-    "address": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
+    "assetAddress": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
     "assetType": 0
   },
   {
@@ -604,7 +604,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
-    "address": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
+    "assetAddress": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
     "assetType": 0
   },
   {
@@ -613,7 +613,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
-    "address": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
+    "assetAddress": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
     "assetType": 0
   },
   {
@@ -622,7 +622,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
-    "address": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
+    "assetAddress": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
     "assetType": 0
   },
   {
@@ -631,7 +631,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
-    "address": "0xce66904b68f1f070332cbc631de7ee98b650b499",
+    "assetAddress": "0xce66904b68f1f070332cbc631de7ee98b650b499",
     "assetType": 0
   },
   {
@@ -640,7 +640,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
-    "address": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+    "assetAddress": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
     "assetType": 0
   },
   {
@@ -649,7 +649,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
     },
-    "address": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+    "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
     "assetType": 0
   },
   {
@@ -658,7 +658,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
     },
-    "address": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+    "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
     "assetType": 0
   },
   {
@@ -667,7 +667,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
     },
-    "address": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
+    "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
     "assetType": 0
   },
   {
@@ -676,7 +676,7 @@
     "specificOracleConfig": {
       "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
     },
-    "address": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
+    "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
     "assetType": 0
   },
   {

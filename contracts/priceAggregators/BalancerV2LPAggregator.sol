@@ -45,7 +45,6 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
     PriceDeviationParams memory _params
   ) {
     require(_factory != address(0), "_factory address cannot be 0");
-    require(address(_vault) != address(0), "_vault address cannot be 0");
     require(address(_pool) != address(0), "_pool address cannot be 0");
 
     factory = _factory;
