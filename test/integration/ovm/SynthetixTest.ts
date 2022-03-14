@@ -3,18 +3,35 @@ import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract } from "ethers";
 
-import { PoolFactory } from "../../../types";
-import { assets, synthetix as SynthetixData } from "../../../config/chainData/ovm-data";
+import {
+  IERC20__factory,
+  ISynthAddressProxy,
+  ISynthetix,
+  ISynthetix__factory,
+  IV3SwapRouter__factory,
+  PoolFactory,
+  SynthetixGuard,
+  UniswapV3RouterGuard,
+} from "../../../types";
+import { assets, synthetix as SynthetixData, uniswapV3 } from "../../../config/chainData/ovm-data";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { createFund } from "../utils/createFund";
 import { deployContracts, IDeployments } from "../utils/deployContracts";
+import { getMinAmountOut } from "../utils/getMinAmountOut";
 
 describe("Synthetix Test", function () {
   let deployments: IDeployments;
-  let susdProxy: Contract, sethProxy: Contract, synthetix: Contract, synthetixGuard: Contract;
+  let susdProxy: ISynthAddressProxy,
+    sethProxy: ISynthAddressProxy,
+    synthetix: ISynthetix,
+    synthetixGuard: SynthetixGuard,
+    uniswapV3RouterGuard: UniswapV3RouterGuard;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: Contract, poolManagerLogicProxy: Contract;
+  const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
+  const iSynthetix = new ethers.utils.Interface(ISynthetix__factory.abi);
+  const IV3SwapRouter = new ethers.utils.Interface(IV3SwapRouter__factory.abi);
 
   before(async function () {
     [logicOwner, manager] = await ethers.getSigners();
@@ -22,14 +39,14 @@ describe("Synthetix Test", function () {
 
     poolFactory = deployments.poolFactory;
     synthetixGuard = deployments.synthetixGuard!;
+    uniswapV3RouterGuard = deployments.uniswapV3RouterGuard;
 
-    const ISynthetix = await artifacts.readArtifact("ISynthetix");
-    synthetix = await ethers.getContractAt(ISynthetix.abi, assets.snxProxy);
+    synthetix = await ethers.getContractAt("ISynthetix", assets.snxProxy);
+    susdProxy = await ethers.getContractAt("ISynthAddressProxy", assets.susd);
+    sethProxy = await ethers.getContractAt("ISynthAddressProxy", assets.seth);
+  });
 
-    const ISynthAddressProxy = await artifacts.readArtifact("ISynthAddressProxy");
-    susdProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.susd);
-    sethProxy = await ethers.getContractAt(ISynthAddressProxy.abi, assets.seth);
-
+  beforeEach(async function () {
     const sUSDProxy_target_tokenState = "0x92bac115d89ca17fd02ed9357ceca32842acb4c2";
     await getAccountToken(units(500), logicOwner.address, sUSDProxy_target_tokenState, 3);
     expect(await susdProxy.balanceOf(logicOwner.address)).to.equal(units(500));
@@ -40,6 +57,7 @@ describe("Synthetix Test", function () {
       [
         { asset: assets.susd, isDeposit: true },
         { asset: assets.seth, isDeposit: true },
+        { asset: assets.snxProxy, isDeposit: false },
       ],
       0,
     );
@@ -50,23 +68,10 @@ describe("Synthetix Test", function () {
     await poolLogicProxy.deposit(assets.susd, units(500));
   });
 
-  it("Should be able to approve", async () => {
-    const IERC20 = await artifacts.readArtifact("IERC20");
-    const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let approveABI = iERC20.encodeFunctionData("approve", [assets.susd, units(100)]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.slink, approveABI)).to.be.revertedWith(
-      "asset not enabled in pool",
-    );
-
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI)).to.be.revertedWith(
-      "unsupported spender approval",
-    );
-
-    approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, units(100)]);
-    await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
-  });
-
   it("should be able to swap tokens on synthetix.", async () => {
+    const approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, units(100)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
+
     let exchangeEvent = new Promise((resolve, reject) => {
       synthetixGuard.on(
         "ExchangeFrom",
@@ -94,8 +99,6 @@ describe("Synthetix Test", function () {
     const daoAddress = await poolFactory.owner();
     const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
 
-    const ISynthetix = await artifacts.readArtifact("ISynthetix");
-    const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
     let swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
       sourceKey,
       sourceAmount,
@@ -140,7 +143,81 @@ describe("Synthetix Test", function () {
     expect(event.destinationAsset).to.equal(assets.seth);
   });
 
-  it("should be able to withdraw", async function () {
+  it("should be able to swap snx on uniswap.", async () => {
+    await uniswapV3RouterGuard.setSlippageLimit(500, 1000);
+
+    // swap susd -> snx
+    let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
+    let srcAsset = assets.susd;
+    let sourceAmount = units(300);
+    let dstAsset = assets.snxProxy;
+    let minAmountOut = await getMinAmountOut(deployments.assetHandler, sourceAmount, srcAsset, dstAsset, 60);
+    let exactInputSingleCalldata = IV3SwapRouter.encodeFunctionData("exactInputSingle", [
+      [
+        srcAsset, // from
+        dstAsset, // to
+        10000, // 1% fee
+        poolLogicProxy.address,
+        sourceAmount,
+        minAmountOut,
+        0,
+      ],
+    ]);
+    await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
+
+    // swap snx -> susd
+    approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.snxProxy, approveABI);
+    srcAsset = assets.snxProxy;
+    sourceAmount = minAmountOut;
+    dstAsset = assets.susd;
+    minAmountOut = await getMinAmountOut(deployments.assetHandler, sourceAmount, srcAsset, dstAsset, 60);
+    exactInputSingleCalldata = IV3SwapRouter.encodeFunctionData("exactInputSingle", [
+      [
+        srcAsset, // from
+        dstAsset, // to
+        10000, // 1% fee
+        poolLogicProxy.address,
+        sourceAmount,
+        minAmountOut,
+        0,
+      ],
+    ]);
+    await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
+  });
+
+  it("try: invalid contract guard & no asset guard.", async () => {
+    let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
+    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, approveABI)).to.revertedWith(
+      "invalid transaction",
+    );
+  });
+
+  it("try: invalid contract guard & valid asset guard.", async () => {
+    let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.snxProxy, approveABI);
+  });
+
+  it("should be able to withdraw after synthetix swap", async function () {
+    const IERC20 = await artifacts.readArtifact("IERC20");
+    const iERC20 = new ethers.utils.Interface(IERC20.abi);
+    const approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, units(100)]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
+    const sourceKey = SynthetixData.susdKey;
+    const sourceAmount = units(100);
+    const destinationKey = SynthetixData.sethKey;
+    const daoAddress = await poolFactory.owner();
+    const trackingCode = "0x4448454447450000000000000000000000000000000000000000000000000000"; // DHEDGE
+    const swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
+      sourceKey,
+      sourceAmount,
+      destinationKey,
+      daoAddress,
+      trackingCode,
+    ]);
+    await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
+
     let withdrawalEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
         "Withdrawal",
