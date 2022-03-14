@@ -14,7 +14,7 @@ import {
 } from "../../../types";
 import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { deployContracts } from "../utils/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 use(solidity);
@@ -36,20 +36,22 @@ describe("Aave Edge Test", function () {
   let snapshot: any;
   after(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
+    await ethers.provider.send("evm_mine", []);
   });
 
   before(async function () {
     [logicOwner, manager] = await ethers.getSigners();
     snapshot = await ethers.provider.send("evm_snapshot", []);
-    const deployments = await deployPolygonContracts();
+    await ethers.provider.send("evm_mine", []);
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
     DAI = deployments.assets.DAI;
-    AMUSDC = deployments.assets.AMUSDC;
-    AMWETH = deployments.assets.AMWETH;
-    VariableWETH = deployments.assets.VariableWETH;
-    VariableDAI = deployments.assets.VariableDAI;
+    AMUSDC = deployments.assets.AMUSDC!;
+    AMWETH = deployments.assets.AMWETH!;
+    VariableWETH = deployments.assets.VariableWETH!;
+    VariableDAI = deployments.assets.VariableDAI!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);

@@ -39,10 +39,11 @@ import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "./Path.sol";
 import "../../../utils/TxDataUtils.sol";
+import "../../../utils/uniswap/UniswapV3PriceLibrary.sol";
 import "../../../interfaces/guards/IGuard.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";
+import "../../../interfaces/IPoolLogic.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
 
 contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
@@ -81,12 +82,10 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
   event Burn(address fundAddress, uint256 tokenId, uint256 time);
   event Collect(address fundAddress, uint256 tokenId, uint128 amount0Max, uint128 amount1Max, uint256 time);
 
-  INonfungiblePositionManager public nonfungiblePositionManager;
   // uniswap v3 liquidity position count limit
   uint256 public uniV3PositionsLimit;
 
-  constructor(address _nonfungiblePositionManager, uint256 _uniV3PositionsLimit) {
-    nonfungiblePositionManager = INonfungiblePositionManager(_nonfungiblePositionManager);
+  constructor(uint256 _uniV3PositionsLimit) {
     uniV3PositionsLimit = _uniV3PositionsLimit;
   }
 
@@ -109,6 +108,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
     )
   {
     bytes4 method = getMethod(data);
+    INonfungiblePositionManager nonfungiblePositionManager = INonfungiblePositionManager(to);
 
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
@@ -124,8 +124,15 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
       require(poolManagerLogicAssets.isSupportedAsset(param.token1), "unsupported asset: tokenB");
 
       require(nonfungiblePositionManager.balanceOf(pool) < uniV3PositionsLimit, "too many uniswap v3 positions");
-
       require(pool == param.recipient, "recipient is not pool");
+
+      UniswapV3PriceLibrary.assertFairPrice(
+        IPoolLogic(pool).factory(),
+        nonfungiblePositionManager.factory(),
+        param.token0,
+        param.token1,
+        param.fee
+      );
 
       emit Mint(
         poolManagerLogic.poolLogic(),
@@ -186,7 +193,10 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
         getParams(data),
         (INonfungiblePositionManager.CollectParams)
       );
+      (, , address token0, address token1, , , , , , , , ) = nonfungiblePositionManager.positions(param.tokenId);
 
+      require(poolManagerLogicAssets.isSupportedAsset(token0), "unsupported asset: tokenA");
+      require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
       require(pool == param.recipient, "recipient is not pool");
 
       emit Collect(poolManagerLogic.poolLogic(), param.tokenId, param.amount0Max, param.amount1Max, block.timestamp);

@@ -13,8 +13,8 @@ import {
 } from "../../../types";
 import { units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 
 const oneDollar = units(1);
 
@@ -33,9 +33,9 @@ describe("EasySwapperGuard", () => {
     DhedgeEasySwapperInterface = await new ethers.utils.Interface(DhedgeEasySwapper__factory.abi);
     USDC = await ethers.getContractAt("IERC20", assets.usdc);
 
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
-    dhedgeEasySwapper = deployments.dhedgeEasySwapper;
+    dhedgeEasySwapper = deployments.dhedgeEasySwapper!;
 
     const torosAsset = await createFund(poolFactory, logicOwner, manager, [{ asset: assets.usdc, isDeposit: true }]);
     torosAssetAddress = torosAsset.poolLogicProxy.address;

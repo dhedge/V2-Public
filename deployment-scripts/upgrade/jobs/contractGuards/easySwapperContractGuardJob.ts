@@ -43,11 +43,11 @@ export const easySwapperContractGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      ContractAddress: addresses.dhedgeEasySwapperAddress,
-      GuardName: "EasySwapperGuard",
-      GuardAddress: easySwapperGuard.address,
-      Description: "Dhedge EasySwapper - allows access to toros pools",
+      contractAddress: addresses.dhedgeEasySwapperAddress,
+      guardName: "EasySwapperGuard",
+      guardAddress: easySwapperGuard.address,
+      description: "Dhedge EasySwapper - allows access to toros pools",
     };
-    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "ContractAddress");
+    await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
   }
 };

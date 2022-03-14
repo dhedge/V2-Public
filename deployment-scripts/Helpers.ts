@@ -22,17 +22,20 @@ export const getTag = async () => {
   return result.stdout.trim();
 };
 
-export const hasDuplicates = async (array: any, key: any) => {
-  const valueArr = array.map(function (item: any) {
-    return item[key];
-  });
+export const hasDuplicates = <T extends Object>(array: T[], keyCreator: (v: T) => string) => {
+  const valueArr = array
+    .map(keyCreator)
+    .filter(Boolean)
+    .map((x) => x.toLowerCase());
 
-  const isDuplicate = valueArr.some(function (item: any, idx: number) {
-    if (!item) return false;
-    return valueArr.indexOf(item) != idx;
-  });
+  const dups = valueArr.filter((item, index) => valueArr.indexOf(item) !== index);
 
-  return isDuplicate;
+  if (dups.length) {
+    console.log("Duplicates", dups);
+    return true;
+  } else {
+    return false;
+  }
 };
 
 export const isSameBytecode = (creationBytecode: string, runtimeBytecode: string) => {
@@ -72,14 +75,14 @@ export const tryVerify = async (
       if (e.message.toLowerCase().includes("constructor arguments exceeds max accepted")) {
         // This error may be to do with the compiler, "constructor arguments exceeds max accepted (10k chars) length"
         // Possibly because the contract should have been compiled in isolation before deploying ie "compile:one"
-        console.warn(`Couldn't verify contract at ${address}. Error: ${e.message}`);
+        console.warn(`Couldn't verify contract at ${address}. Error: ${e.message}, skipping verification`);
         return;
       }
       if (!e.message.toLowerCase().includes("already verified")) {
         throw e;
       }
     }
-  }, "Try Verify: " + address);
+  }, "Try Verify Failed: " + address);
 };
 
 export const writeCsv = (data: any, fileName: string) => {
@@ -154,7 +157,9 @@ export const proposeTx = async (
     contractNetworks,
   });
 
-  nonce = nonce ? nonce : await getNonce(safeSdk, chainId, chainSafeAddress, config.restartnonce);
+  nonce = nonce
+    ? nonce
+    : await retryWithDelay(() => getNonce(safeSdk, chainId, chainSafeAddress, config.restartnonce), "Gnosis Get Nonce");
 
   const transaction = {
     to: to,
@@ -183,94 +188,7 @@ export const proposeTx = async (
   // console.log("approveTxResponse", approveTxResponse);
   console.log("safeTransaction: ", safeTransaction);
 
-  await retryWithDelay(
-    async () => await service.proposeTx(chainSafeAddress, txHash, safeTransaction, signature),
-    "Gnosis safe",
-  );
-};
-
-export const checkAsset = async (csvAsset: any, contracts: any, poolFactory: any, assetHandlerAssets: any) => {
-  for (const asset of contracts.Assets) {
-    // if (csvAsset["AssetName"] === "Sushi") sushiToken = csvAsset.Address;
-    // if (csvAsset["AssetName"] === "Wrapped Matic") wmatic = csvAsset.Address;
-    if (csvAsset["Address"].toLowerCase() === asset.asset.toLowerCase()) {
-      // console.log(`csvAsset: ${csvAsset["AssetName"]} is already in the current contracts.Assets`);
-      const assetType = parseInt(await poolFactory.getAssetType(csvAsset.Address));
-
-      if (assetType !== parseInt(csvAsset.AssetType)) {
-        console.log(`${csvAsset["AssetName"]} asset type update from ${assetType} to ${csvAsset.AssetType}`);
-        assetHandlerAssets.push({
-          name: csvAsset["AssetName"],
-          asset: csvAsset.Address,
-          assetType: csvAsset.AssetType,
-          aggregator: csvAsset["ChainlinkPriceFeed"],
-        });
-      }
-
-      const foundInVersions = true;
-      return foundInVersions;
-    }
-  }
-  const foundInVersions = false;
-  return foundInVersions;
-};
-
-export const checkBalancerLpAsset = async (
-  balancerLp: any,
-  contracts: any,
-  poolFactory: any,
-  assetHandlerAssets: any,
-) => {
-  for (const asset of contracts.Assets) {
-    if (balancerLp.name === asset.name) {
-      // console.log(`${balancerLp.name} is already in the current contracts.Assets`);
-      const assetType = parseInt(await poolFactory.getAssetType(balancerLp.address));
-
-      if (assetType !== balancerLp.assetType) {
-        console.log(`${balancerLp.name} asset type update from ${assetType} to ${balancerLp.assetType}`);
-        assetHandlerAssets.push({
-          name: balancerLp.name,
-          asset: balancerLp.data.pool,
-          assetType: balancerLp.assetType,
-          aggregator: asset.aggregator,
-        });
-      }
-
-      const foundInVersions = true;
-      return foundInVersions;
-    }
-  }
-  const foundInVersions = false;
-  return foundInVersions;
-};
-
-export const getAggregator = async (hre: HardhatRuntimeEnvironment, csvAsset: any) => {
-  const AggregatorName = csvAsset["AggregatorName"];
-
-  switch (AggregatorName) {
-    case "DHedgePoolAggregator":
-      // Deploy DHedgePoolAggregator
-      const assetAddress = csvAsset["Address"];
-      const { ethers } = hre;
-      const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
-      const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(assetAddress);
-      await dHedgePoolAggregator.deployed();
-      await tryVerify(
-        hre,
-        dHedgePoolAggregator.address,
-        "contracts/priceAggregators/DHedgePoolAggregator.sol:DHedgePoolAggregator",
-        [assetAddress],
-      );
-      return dHedgePoolAggregator.address;
-    case "USDPriceAggregator":
-      // Deploy USDPriceAggregator
-      const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-      const usdPriceAggregator = await USDPriceAggregator.deploy();
-      await usdPriceAggregator.deployed();
-      return usdPriceAggregator.address;
-    default:
-      return csvAsset["ChainlinkPriceFeed"];
-  }
+  await retryWithDelay(() => service.proposeTx(chainSafeAddress, txHash, safeTransaction, signature), "Gnosis safe");
 };
 
 export const executeInSeries = <T>(providers: (() => Promise<T>)[]): Promise<T[]> => {

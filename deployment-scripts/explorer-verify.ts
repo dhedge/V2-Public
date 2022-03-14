@@ -1,5 +1,5 @@
 import { task, types } from "hardhat/config";
-import { synthetix } from "../test/integration/ovm/ovm-data";
+import { synthetix } from "../config/chainData/ovm-data";
 
 import { getTag, tryVerify } from "./Helpers";
 import { getDeploymentData } from "./upgrade/getDeploymentData";

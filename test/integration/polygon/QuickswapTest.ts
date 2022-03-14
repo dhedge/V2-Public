@@ -13,10 +13,10 @@ import {
   PoolLogic,
   PoolManagerLogic,
 } from "../../../types";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { assets, assetsBalanceOfSlot, quickswap } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
+import { deployContracts } from "../utils/deployContracts";
 
 use(solidity);
 
@@ -31,12 +31,12 @@ describe("Quickswap V2 Test", function () {
 
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     WETH = deployments.assets.WETH;
-    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH;
-    QUICK = deployments.assets.QUICK;
+    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH!;
+    QUICK = deployments.assets.QUICK!;
 
     await deployments.assetHandler.removeAsset(assets.wmatic);
 

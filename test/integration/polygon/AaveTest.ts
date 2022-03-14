@@ -13,10 +13,9 @@ import {
   PoolManagerLogic,
 } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
 import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
-import { IDeployments } from "../utils/deployContracts";
+import { deployContracts, IDeployments } from "../utils/deployContracts";
 import { BigNumber } from "ethers";
 
 use(solidity);
@@ -32,12 +31,12 @@ describe("Aave Test", function () {
   before(async function () {
     [logicOwner, manager, dao, user] = await ethers.getSigners();
 
-    deployments = await deployPolygonContracts();
+    deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     DAI = deployments.assets.DAI;
     USDC = deployments.assets.USDC;
-    WMATIC = deployments.assets.WMATIC;
-    AMUSDC = deployments.assets.AMUSDC;
+    WMATIC = deployments.assets.WMATIC!;
+    AMUSDC = deployments.assets.AMUSDC!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
   });
@@ -45,9 +44,11 @@ describe("Aave Test", function () {
   let snapshot: any;
   afterEach(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
+    await ethers.provider.send("evm_mine", []);
   });
   beforeEach(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);
+    await ethers.provider.send("evm_mine", []);
     const funds = await createFund(poolFactory, logicOwner, manager, [
       { asset: assets.usdc, isDeposit: true },
       { asset: assets.weth, isDeposit: true },
@@ -469,6 +470,7 @@ describe("Aave Test", function () {
         const incentivesController = IAaveIncentivesController__factory.connect(aave.incentivesController, logicOwner);
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24 * 10]); // add 10 day
+        await ethers.provider.send("evm_mine", []);
 
         const amount = units(10);
         const repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
@@ -478,6 +480,7 @@ describe("Aave Test", function () {
         await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI);
 
         await ethers.provider.send("evm_increaseTime", [3600 * 24 * 10]); // add 10 day
+        await ethers.provider.send("evm_mine", []);
 
         const remainingRewardsBefore = await incentivesController.getUserUnclaimedRewards(poolLogicProxy.address);
         expect(remainingRewardsBefore).to.be.gt(0);

@@ -44,6 +44,7 @@ export interface ExternalLogicContracts {
 
   quickStakingRewardsFactoryAddress?: Address;
   v2RouterAddresses?: string[]; //quickswapRouter, sushiswapV2Router etc etc
+  uniswapV3RouterAddress?: Address;
   swapRouterCurvePools?: string[];
   quickLpUsdcWethStakingRewardsAddress?: Address;
   aaveIncentivesControllerAddress?: Address;
@@ -55,6 +56,13 @@ export interface ExternalLogicContracts {
   // Token Addresses
   sushiTokenAddress?: Address;
   wmaticTokenAddress?: Address;
+}
+
+export interface sUSDUniV3TWAPAggregatorProperties {
+  // For sUSDUniV3TWAPAggregator
+  sUSDAddress?: Address;
+  sUSDDaiUniV3PoolAddress?: Address;
+  daiChainlinkOracleAddress?: Address;
 }
 
 export interface IDhedgeInternal {
@@ -73,28 +81,29 @@ export type IProposeTxProperties = IDhedgeInternal & {
 };
 
 // Addresses
-export type IAddresses = IProposeTxProperties & ExternalLogicContracts;
+export type IAddresses = IProposeTxProperties & ExternalLogicContracts & sUSDUniV3TWAPAggregatorProperties;
 
-export interface IDeployedAssetGuard {
-  AssetType: number;
-  GuardName: string;
-  GuardAddress: string;
-  Description: string;
+type RecordNumberString = Record<string, number | string>;
+export interface IDeployedAssetGuard extends RecordNumberString {
+  assetType: number;
+  guardName: string;
+  guardAddress: string;
+  description: string;
 }
 
-export interface IDeployedContractGuard {
-  ContractAddress: string;
-  GuardName: string;
-  GuardAddress: string;
-  Description: string;
+export interface IDeployedContractGuard extends RecordNumberString {
+  contractAddress: string;
+  guardName: string;
+  guardAddress: string;
+  description: string;
 }
 
 export interface INotSureGuard {
-  Name: string;
-  Destination: string;
+  name: string;
+  destination: string;
 }
 
-export type Address = string;
+export type Address = string; // TODO: Could probably harden this type. Maybe Hardhat supports it?
 
 export interface IContracts {
   Governance: Address;
@@ -110,6 +119,7 @@ export interface IContracts {
   PoolPerformance: Address;
   DynamicBondsProxy?: Address;
   DynamicBonds?: Address;
+  ProxyAdmin?: Address;
 
   // Contract Guards
   SynthetixGuard?: Address;
@@ -126,6 +136,7 @@ export interface IContracts {
   AaveLendingPoolGuard?: Address;
   AaveIncentivesControllerGuard?: Address;
   UniswapV3NonfungiblePositionGuard?: Address;
+  UniswapV3RouterGuard?: Address;
 
   // Asset Guards
   SushiLPAssetGuard?: Address;
@@ -134,10 +145,30 @@ export interface IContracts {
   AaveLendingPoolAssetGuard?: Address;
   UniswapV3AssetGuard?: Address;
 
+  // Oracles
+  Oracles?: { assetAddress: Address; oracleAddress: Address; oracleName: string }[];
+
   DhedgeEasySwapper: Address;
   DhedgeSwapRouter: Address;
 
-  Assets?: { name: string; asset: Address; assetType: string | undefined; aggregator: Address | undefined }[];
+  Assets: ICSVAsset[];
+}
+
+type OracleName =
+  | "DHedgePoolAggregator"
+  | "USDPriceAggregator"
+  | "DeployedOracle"
+  | "UniV2LPAggregator"
+  | "BalancerV2LPAggregator"
+  | "SynthPriceAggregator"
+  | "BalancerLpStablePoolAggregator";
+
+export interface ICSVAsset extends RecordNumberString {
+  assetType: number;
+  oracleName: OracleName;
+  oracleAddress: Address;
+  assetAddress: Address;
+  assetName: string;
 }
 
 export type IVersions = {
@@ -150,11 +181,3 @@ export type IVersions = {
     contracts: IContracts;
   };
 };
-
-export interface ICSVAsset {
-  AssetName: string;
-  Address: Address;
-  AssetType: string;
-  ChainlinkPriceFeed?: string;
-  AggregatorName?: string;
-}

@@ -40,29 +40,12 @@ export const balancer = {
   v2Vault: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
   merkleOrchard: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",
   pools: {
-    // USDC, DAI, miMatic, USDT
-    stablePool: {
-      pool: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
-      poolId: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012",
-      tokens: [
-        "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-        "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
-        "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
-        "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-      ],
-      decimals: [6, 18, 18, 6],
-      weights: [0.25, 0.25, 0.25, 0.25],
-    },
     // WETH, BALANCER
-    bal80weth20: {
-      pool: "0x7EB878107Af0440F9E776f999CE053D277c8Aca8",
-      poolId: "0x7eb878107af0440f9e776f999ce053d277c8aca800020000000000000000002f",
-      tokens: ["0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3"],
-      decimals: [18, 18],
-      weights: [0.2, 0.8],
-    },
+    bal80weth20: "0x7EB878107Af0440F9E776f999CE053D277c8Aca8",
   },
   stablePools: {
+    // USDC, DAI, miMatic, USDT
+    BPSP: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
     // USDC, TUSD, DAI, USDT
     BPSP_TUSD: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f",
   },
@@ -111,11 +94,14 @@ export const assets = {
   dai: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
   sushi: "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a",
   balancer: "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
-  miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
   quick: "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
   ghst: "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
   dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
   tusd: "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
+  miMatic: "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+  // Unsupported assets:
+  xsgd: "0x769434dca303597c8fc4997bf3dab233e961eda2",
+  frax: "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89",
   ...torosPools,
 };
 

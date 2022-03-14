@@ -6,7 +6,7 @@ import { assets, assetsBalanceOfSlot, price_feeds } from "../../../config/chainD
 import { IERC20, MockContract, PoolFactory } from "../../../types";
 import { checkAlmostSame, currentBlockTimestamp, units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
-import { deployPolygonContracts } from "../utils/deployContracts/deployPolygonContracts";
+import { deployContracts } from "../utils/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 describe("ManagerFee Test", function () {
@@ -35,7 +35,7 @@ describe("ManagerFee Test", function () {
 
     const assetUsdc = { asset: assets.usdc, assetType: 0, aggregator: usdc_price_feed.address };
 
-    const deployments = await deployPolygonContracts();
+    const deployments = await deployContracts("polygon");
     USDC = deployments.assets.USDC;
     deployments.assetHandler.addAssets([assetUsdc]);
     poolFactory = deployments.poolFactory;

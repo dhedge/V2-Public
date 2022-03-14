@@ -1,31 +1,117 @@
 {
   "v2.12.0": {
-    "lastUpdated": "Wed, 01 Dec 2021 05:51:21 GMT",
     "contracts": {
       "Assets": [
         {
-          "name": "Synth sUSD",
-          "asset": "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
-          "assetType": 0,
-          "aggregator": "0x645f8ec14d0940Efd7272ba478c12968e8eB9937"
+          "assetName": "Synth sSOL",
+          "assetAddress": "0x8b2f7ae8ca8ee8428b6d76de88326bb413db2766",
+          "assetType": "0",
+          "oracleAddress": "0x1a00d8C8E98b43c926b1907d0aC6d230bf631CA3",
+          "oracleName": "SynthPriceAggregator"
         },
         {
-          "name": "Synth sETH",
-          "asset": "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
+          "assetName": "Synth sAVAX",
+          "assetAddress": "0xB2b42B231C68cbb0b4bF2FFEbf57782Fd97D3dA4",
           "assetType": "0",
-          "aggregator": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
+          "oracleAddress": "0x4eb362C3Bc5ca28429ae7E2EA27248b7EBdB7c4f",
+          "oracleName": "SynthPriceAggregator"
         },
         {
-          "name": "Synth sBTC",
-          "asset": "0x298B9B95708152ff6968aafd889c6586e9169f1D",
+          "assetName": "Synth sMATIC",
+          "assetAddress": "0x81DDfAc111913d3d5218DEA999216323B7CD6356",
           "assetType": "0",
-          "aggregator": "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593"
+          "oracleAddress": "0x66B1880cc598EF3f93bB95e25580c2e761E1A5C5",
+          "oracleName": "SynthPriceAggregator"
         },
         {
-          "name": "Synth sLINK",
-          "asset": "0xc5Db22719A06418028A40A9B5E9A7c02959D0d08",
+          "assetName": "Synth sEUR",
+          "assetAddress": "0xFBc4198702E81aE77c06D58f81b629BDf36f0a71",
           "assetType": "0",
-          "aggregator": "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450"
+          "oracleAddress": "0x77B07F67D8d7a8a3D334A8C3FDd79781dA592A96",
+          "oracleName": "SynthPriceAggregator"
+        },
+        {
+          "assetName": "USD Coin",
+          "assetAddress": "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
+          "assetType": "0",
+          "oracleAddress": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
+        },
+        {
+          "assetName": "Tether",
+          "assetAddress": "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
+          "assetType": "0",
+          "oracleAddress": "0xECef79E109e997bCA29c1c0897ec9d7b03647F5E"
+        },
+        {
+          "assetName": "Dai",
+          "assetAddress": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
+          "assetType": "0",
+          "oracleAddress": "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6"
+        },
+        {
+          "assetName": "Wrapped Ethereum",
+          "assetAddress": "0x4200000000000000000000000000000000000006",
+          "assetType": "0",
+          "oracleAddress": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
+        },
+        {
+          "assetName": "Wrapped Bitcoin",
+          "assetAddress": "0x68f180fcce6836688e9084f035309e29bf0a2095",
+          "assetType": "0",
+          "oracleAddress": "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593"
+        },
+        {
+          "assetName": "Chainlink",
+          "assetAddress": "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6",
+          "assetType": "0",
+          "oracleAddress": "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450"
+        },
+        {
+          "assetName": "Synthetix",
+          "assetAddress": "0x8700daec35af8ff88c16bdf0418774cb3d7599b4",
+          "assetType": "0",
+          "oracleAddress": "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877"
+        },
+        {
+          "assetName": "Uniswap",
+          "assetAddress": "0x6fd9d7ad17242c41f7131d257212c54a0e816691",
+          "assetType": "0",
+          "oracleAddress": "0x11429eE838cC01071402f21C219870cbAc0a59A0"
+        },
+        {
+          "assetName": "Uniswap V3 NFT Position Manager",
+          "assetAddress": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+          "assetType": "7",
+          "oracleAddress": "0x336a6cF0d85932611cA5c0c7e4adDC60989692Cd",
+          "oracleName": "USDPriceAggregator"
+        },
+        {
+          "assetName": "Synth sUSD",
+          "assetAddress": "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+          "assetType": "0",
+          "oracleAddress": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+          "oracleName": "DeployedOracle"
+        },
+        {
+          "assetName": "Synth sETH",
+          "assetAddress": "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
+          "assetType": "0",
+          "oracleAddress": "0x54e90eC191569bC10111dF85c3f8ACc77C068890",
+          "oracleName": "SynthPriceAggregator"
+        },
+        {
+          "assetName": "Synth sBTC",
+          "assetAddress": "0x298B9B95708152ff6968aafd889c6586e9169f1D",
+          "assetType": "0",
+          "oracleAddress": "0x3686E19C10F4e2fD979Ec1d4A94dE3A77Cd60486",
+          "oracleName": "SynthPriceAggregator"
+        },
+        {
+          "assetName": "Synth sLINK",
+          "assetAddress": "0xc5Db22719A06418028A40A9B5E9A7c02959D0d08",
+          "assetType": "0",
+          "oracleAddress": "0xDa9D1d035CAdAd6B439435a189e2b80573a521b0",
+          "oracleName": "SynthPriceAggregator"
         }
       ],
       "ERC20Guard": "0x6212FFDDe8f24e525264df10A7FfC6D017c8424A",
@@ -41,12 +127,22 @@
       "PoolLogicProxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
       "PoolLogic": "0xfe231f6b46d84f1dd046b4e4b5562a6433f3e914",
       "PoolFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
-      "PoolFactory": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8"
+      "PoolFactory": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8",
+      "Oracles": [
+        {
+          "assetAddress": "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
+          "oracleAddress": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+          "oracleName": "susdUniV3TWAPAggregator"
+        }
+      ],
+      "UniswapV3AssetGuard": "0x9a6d482c81F2D7b520Fa52AAC3b7614Af7000Caf",
+      "UniswapV3NonfungiblePositionGuard": "0x17C39280F075B17ccaD807B67B910c13697c9050",
+      "UniswapV3RouterGuard": "0xf2d2a22591E7c8fD6a7ec29a1E557e10e3bB2B9c"
     },
     "network": {
       "chainId": 10,
       "name": "unknown"
     },
-    "date": "Fri, 28 Jan 2022 06:32:00 GMT"
+    "lastUpdated": "Thu, 10 Mar 2022 07:32:26 GMT"
   }
 }
