@@ -1838,7 +1838,7 @@
           "name": "QI TWAP Oracle",
           "oracleType": "MedianTWAPAggregator",
           "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
-          "oracleAddress": "0xBbA786dBbE67879B7D3B2696aBF3DFbA50e95949"
+          "oracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",

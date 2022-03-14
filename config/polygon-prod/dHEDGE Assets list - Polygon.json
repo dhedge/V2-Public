@@ -317,7 +317,8 @@
       "poolAddress": "0xa375d23a751124359568f3a22576528bd1c8c3e3",
       "pairTokenOracle": "0xf9680d99d6c9589e2a93a78a04a279e509205945",
       "updateInterval": 300,
-      "volatilityTripLimit": 25
+      "volatilityTripLimit": 25,
+      "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
     }
   },
   {
@@ -479,7 +480,8 @@
       "poolAddress": "0x160532d2536175d65c03b97b0630a9802c274dad",
       "pairTokenOracle": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",
       "updateInterval": 600,
-      "volatilityTripLimit": 5
+      "volatilityTripLimit": 5,
+      "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
     }
   },
   {
@@ -596,7 +598,8 @@
       "poolAddress": "0x9a8b2601760814019b7e6ee0052e25f1c623d1e6",
       "pairTokenOracle": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
       "updateInterval": 300,
-      "volatilityTripLimit": 25
+      "volatilityTripLimit": 25,
+      "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
     }
   },
   {

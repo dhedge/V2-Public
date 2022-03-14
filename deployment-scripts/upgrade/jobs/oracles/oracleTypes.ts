@@ -48,6 +48,7 @@ export interface IMedianTWAPAggregatorSpecificConfig {
   pairTokenOracle: string;
   updateInterval: number;
   volatilityTripLimit: number;
+  owner: string;
 }
 
 export interface IUniV3TWAPAggregatorSpecificConfig {
