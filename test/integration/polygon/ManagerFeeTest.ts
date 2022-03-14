@@ -57,38 +57,9 @@ describe("ManagerFee Test", function () {
     poolManagerLogicProxy = await poolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
     await getAccountToken(units(5000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(5000, 6), logicOwner.address, assets.wmatic, assetsBalanceOfSlot.wmatic);
-  });
-
-  it("should be able to deposit", async function () {
-    const supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-    console.log("supportedAssets: ", supportedAssets);
-
-    const chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", price_feeds.eth);
-    const ethPrice = await chainlinkEth.latestRoundData();
-    console.log("eth price: ", ethPrice[1].toString());
-    console.log("updatedAt: ", ethPrice[3].toString());
-
-    const chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", price_feeds.usdc);
-    const usdcPrice = await chainlinkUsdc.latestRoundData();
-    console.log("usdc price: ", usdcPrice[1].toString());
-    console.log("updatedAt: ", usdcPrice[3].toString());
-
-    const assetBalance = await poolManagerLogicProxy.assetBalance(assets.usdc);
-    console.log("assetBalance: ", assetBalance.toString());
-
-    const assetValue = await poolManagerLogicProxy["assetValue(address)"](assets.usdc);
-    console.log("assetValue: ", assetValue.toString());
-
-    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
-    expect(totalFundValue.toString()).to.equal("0");
-
-    await expect(poolLogicProxy.deposit(assets.wmatic, (200e6).toString())).to.be.revertedWith("invalid deposit asset");
 
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
     await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
-
-    totalFundValue = await poolManagerLogicProxy.totalFundValue();
-    checkAlmostSame(totalFundValue, units(200));
   });
 
   it("should mint manager fee after 1 day", async () => {
