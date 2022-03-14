@@ -237,7 +237,6 @@
     "assetName": "Aave Lending Pool",
     "assetAddress": "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
     "assetType": "3",
-    "oracleAddress": "0x7A6B761836012842d304C7e4d836F226e2b52eA9",
     "oracleType": "USDPriceAggregator"
   },
   {
@@ -313,7 +312,6 @@
     "assetName": "dHEDGE DAO",
     "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
     "assetType": "0",
-    "oracleAddress": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E",
     "oracleType": "MedianTWAPAggregator",
     "specificOracleConfig": {
       "poolAddress": "0xa375d23a751124359568f3a22576528bd1c8c3e3",
@@ -488,37 +486,55 @@
     "assetName": "DODO bird",
     "assetAddress": "0xe4bf2864ebec7b7fdf6eeca9bacae7cdfdaffe78",
     "assetType": "0",
-    "oracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
+    }
   },
   {
     "assetName": "MAKER DAO",
     "assetAddress": "0x6f7C932e7684666C9fd1d44527765433e01fF61d",
     "assetType": "0",
-    "oracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
+    }
   },
   {
     "assetName": "The Sandbox",
     "assetAddress": "0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683",
     "assetType": "0",
-    "oracleAddress": "0x3D49406EDd4D52Fb7FFd25485f32E073b529C924"
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x3D49406EDd4D52Fb7FFd25485f32E073b529C924"
+    }
   },
   {
     "assetName": "Graph Token",
     "assetAddress": "0x5fe2b58c013d7601147dcdd68c143a77499f5531",
     "assetType": "0",
-    "oracleAddress": "0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410"
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410"
+    }
   },
   {
     "assetName": "Kyber Network Crystal v2",
     "assetAddress": "0x1c954e8fe737f99f68fa1ccda3e51ebdb291948c",
     "assetType": "0",
-    "oracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2"
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2"
+    }
   },
   {
     "assetName": "Rai Reflex Index",
     "assetAddress": "0x00e5646f60ac6fb446f621d146b6e1886f002905",
     "assetType": "0",
-    "oracleAddress": "0x7f45273fD7C644714825345670414Ea649b50b16"
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x7f45273fD7C644714825345670414Ea649b50b16"
+    }
   },
   {
     "assetName": "Sushi LP WMATIC-USDC",

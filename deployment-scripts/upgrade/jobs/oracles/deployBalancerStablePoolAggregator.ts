@@ -8,7 +8,7 @@ export const deployBalancerStablePoolAggregator: TOracleDeployer = async (
   oracleConfig: TAssetConfig,
 ): Promise<Address> => {
   const specificConfig = validateConfig(oracleConfig);
-  return deployBalancerStablePoolAggregator(hre, specificConfig.dhedgeFactoryProxy, oracleConfig.assetAddress);
+  return deploy(hre, specificConfig.dhedgeFactoryProxy, oracleConfig.assetAddress);
 };
 
 const validateConfig = (oracleConfig: TAssetConfig): IBalancerStablePoolAggregatorConfig => {
@@ -17,11 +17,7 @@ const validateConfig = (oracleConfig: TAssetConfig): IBalancerStablePoolAggregat
   return specificOracleConfig as IBalancerStablePoolAggregatorConfig;
 };
 
-export const deployBalancerStablePoolAggregator = async (
-  hre: HardhatRuntimeEnvironment,
-  factory: string,
-  pool: string,
-): Promise<Address> => {
+const deploy = async (hre: HardhatRuntimeEnvironment, factory: string, pool: string): Promise<Address> => {
   const BalancerStablePoolAggregator = await hre.ethers.getContractFactory("BalancerStablePoolAggregator");
 
   const balancerStablePoolAggregator = await BalancerStablePoolAggregator.deploy(factory, pool);
