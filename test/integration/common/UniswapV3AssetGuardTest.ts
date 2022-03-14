@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import type { BigNumber, Wallet } from "ethers";
+import { BigNumber, Wallet } from "ethers";
 import { ethers } from "hardhat";
 import { describe, it } from "mocha";
 import {
@@ -123,7 +123,10 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           { asset: bothSupportedPair.token1, isDeposit: true },
           { asset: uniswapV3.nonfungiblePositionManager, isDeposit: false },
         ],
-        0, // 0% performance fee
+        {
+          performance: BigNumber.from("0"),
+          management: BigNumber.from("0"),
+        },
       );
       poolLogicProxy = funds.poolLogicProxy;
       poolManagerLogicProxy = funds.poolManagerLogicProxy;
