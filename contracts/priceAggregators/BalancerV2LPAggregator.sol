@@ -41,7 +41,6 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
 
   constructor(
     address _factory,
-    IBalancerV2Vault _vault,
     IBalancerWeightedPool _pool,
     PriceDeviationParams memory _params
   ) {
@@ -50,7 +49,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
     require(address(_pool) != address(0), "_pool address cannot be 0");
 
     factory = _factory;
-    vault = _vault;
+    vault = IBalancerV2Vault(_pool.getVault());
     pool = _pool;
     poolId = _pool.getPoolId();
 

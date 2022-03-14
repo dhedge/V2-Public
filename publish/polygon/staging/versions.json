@@ -1586,7 +1586,7 @@
           "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
           "assetType": 0,
           "oracleAddress": "0x355Df4C5c2430C1dB86077aD88D33a5D7ACB90b7",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         },
         {
           "assetName": "Toros ETHBEAR2X",
@@ -1659,7 +1659,7 @@
           "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
           "assetType": 0,
           "oracleAddress": "0xD7F4D1Da563Bc9849527c68501576139a496D2dc",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         },
         {
           "assetName": "CRV",
@@ -1737,14 +1737,14 @@
           "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
           "assetType": 0,
           "oracleAddress": "0x6b1163D89588F2480c5cA13E11Da2789B369DdD1",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         },
         {
           "assetName": "Balancer LP WBTC-renBTC",
           "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
           "assetType": 0,
           "oracleAddress": "0x80523D712a49eBE36A985F36625F7023b8137f5B",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         }
       ],
       "Oracles": [

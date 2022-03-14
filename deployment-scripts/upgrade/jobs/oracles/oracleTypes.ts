@@ -20,7 +20,7 @@ export type TAssetConfig =
   | IAssetConfig<"UniV2LPAggregator", IUniV2LPAggregatorConfig>
   | IAssetConfig<"USDPriceAggregator", undefined>
   | IAssetConfig<"BalancerV2LPAggregator", IBalancerV2LPAggregatorConfig>
-  | IAssetConfig<"BalancerLpStablePoolAggregator", undefined>;
+  | IAssetConfig<"BalancerStablePoolAggregator", undefined>;
 
 export interface IChainlinkAggregatorConfig {
   chainlinkOracleAddress: Address;
@@ -40,7 +40,7 @@ export interface IBalancerV2LPAggregatorConfig {
   balancerV2VaultAddress: Address;
 }
 
-export interface IBalancerLpStablePoolAggregatorConfig {
+export interface IBalancerStablePoolAggregatorConfig {
   dhedgeFactoryProxy: Address;
 }
 

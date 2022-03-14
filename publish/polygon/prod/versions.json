@@ -1416,7 +1416,7 @@
           "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
           "assetType": 0,
           "oracleAddress": "0x8e2C4244B39dc330F07f5b7B1E57588Ed23C848E",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         },
         {
           "assetName": "Toros ETHBEAR2X",
@@ -1488,7 +1488,7 @@
           "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
           "assetType": 0,
           "oracleAddress": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         },
         {
           "assetName": "DODO bird",
@@ -1559,14 +1559,14 @@
           "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
           "assetType": 0,
           "oracleAddress": "0xffF58887963f23B54BdC14F688385b76281845b3",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         },
         {
           "assetName": "Balancer LP USDC-dUSD",
           "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
           "assetType": 0,
           "oracleAddress": "0x98AcE0cA833de98B396497A906Da47D3ea711AC0",
-          "oracleType": "BalancerLpStablePoolAggregator"
+          "oracleType": "BalancerStablePoolAggregator"
         },
         {
           "assetName": "Uniswap V3 NFT Position Manager",

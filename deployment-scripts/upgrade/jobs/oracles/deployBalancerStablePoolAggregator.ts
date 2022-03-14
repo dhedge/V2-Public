@@ -1,23 +1,23 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../../Helpers";
 import { Address } from "../../../types";
-import { IBalancerLpStablePoolAggregatorConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
+import { IBalancerStablePoolAggregatorConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
 
 export const deployBalancerStablePoolAggregator: TOracleDeployer = async (
   hre: HardhatRuntimeEnvironment,
   oracleConfig: TAssetConfig,
 ): Promise<Address> => {
   const specificConfig = validateConfig(oracleConfig);
-  return deployBalancerLpStablePoolAggregator(hre, specificConfig.dhedgeFactoryProxy, oracleConfig.assetAddress);
+  return deployBalancerStablePoolAggregator(hre, specificConfig.dhedgeFactoryProxy, oracleConfig.assetAddress);
 };
 
-const validateConfig = (oracleConfig: TAssetConfig): IBalancerLpStablePoolAggregatorConfig => {
+const validateConfig = (oracleConfig: TAssetConfig): IBalancerStablePoolAggregatorConfig => {
   const specificOracleConfig = oracleConfig.specificOracleConfig;
   throw new Error("Needs to be implemented");
-  return specificOracleConfig as IBalancerLpStablePoolAggregatorConfig;
+  return specificOracleConfig as IBalancerStablePoolAggregatorConfig;
 };
 
-export const deployBalancerLpStablePoolAggregator = async (
+export const deployBalancerStablePoolAggregator = async (
   hre: HardhatRuntimeEnvironment,
   factory: string,
   pool: string,

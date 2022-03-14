@@ -160,7 +160,7 @@ export type OracleType =
   | "UniV2LPAggregator"
   | "BalancerV2LPAggregator"
   | "SynthPriceAggregator"
-  | "BalancerLpStablePoolAggregator"
+  | "BalancerStablePoolAggregator"
   | "MedianTWAPAggregator"
   | "UniV3TWAPAggregator";
 

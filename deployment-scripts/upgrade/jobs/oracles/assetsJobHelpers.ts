@@ -24,7 +24,7 @@ type TOracleTypeToDeployer = {
 
 const typeToDeployer: TOracleTypeToDeployer = {
   BalancerV2LPAggregator: deployBalancerV2LPAggregator,
-  BalancerLpStablePoolAggregator: deployBalancerStablePoolAggregator,
+  BalancerStablePoolAggregator: deployBalancerStablePoolAggregator,
   DHedgePoolAggregator: deployDhedgePoolAggregator,
   MedianTWAPAggregator: deployMedianTWAPAggregator,
   UniV2LPAggregator: deployUniV2LPAggregator,
