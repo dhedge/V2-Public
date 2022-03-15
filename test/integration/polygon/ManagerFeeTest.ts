@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { Contract } from "ethers";
 import { artifacts, ethers } from "hardhat";
-import { assets, assetsBalanceOfSlot, price_feeds } from "../../../config/chainData/polygon-data";
+import { assets, assetsBalanceOfSlot } from "../../../config/chainData/polygon-data";
 import { IERC20, MockContract, PoolFactory } from "../../../types";
 import { checkAlmostSame, currentBlockTimestamp, units } from "../../TestHelpers";
 import { createFund } from "../utils/createFund";
@@ -25,13 +25,6 @@ describe("ManagerFee Test", function () {
     const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
     const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
     latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
-    await usdc_price_feed.givenCalldataReturn(
-      latestRoundDataABI,
-      ethers.utils.solidityPack(
-        ["uint256", "int256", "uint256", "uint256", "uint256"],
-        [0, 100000000, 0, await currentBlockTimestamp(), 0],
-      ),
-    ); // $1
 
     const assetUsdc = { asset: assets.usdc, assetType: 0, aggregator: usdc_price_feed.address };
 
@@ -43,6 +36,14 @@ describe("ManagerFee Test", function () {
   });
 
   beforeEach(async () => {
+    await usdc_price_feed.givenCalldataReturn(
+      latestRoundDataABI,
+      ethers.utils.solidityPack(
+        ["uint256", "int256", "uint256", "uint256", "uint256"],
+        [0, 100000000, 0, await currentBlockTimestamp(), 0],
+      ),
+    ); // $1
+
     const funds = await createFund(
       poolFactory,
       logicOwner,
@@ -62,11 +63,76 @@ describe("ManagerFee Test", function () {
     await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
   });
 
-  it("should mint manager fee after 1 day", async () => {
-    // deposit 200 USDC
-    await USDC.approve(poolLogicProxy.address, (200e6).toString());
-    await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
+  it("only manager fee after 1 block", async () => {
+    // manager fee is set 50%
+    // update price from $1 to $1.1
+    // should mint 50% of profit
 
+    const daoFees = await poolFactory.getDaoFee();
+
+    await usdc_price_feed.givenCalldataReturn(
+      latestRoundDataABI,
+      ethers.utils.solidityPack(
+        ["uint256", "int256", "uint256", "uint256", "uint256"],
+        [0, 110000000, 0, await currentBlockTimestamp(), 0],
+      ),
+    ); // $1.1
+
+    await ethers.provider.send("evm_mine", []);
+
+    const daoBalanceBefore = await poolLogicProxy.balanceOf(dao.address);
+    const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
+    const availableFeePreMint = await poolLogicProxy.availableManagerFee();
+    const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
+    const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const calculatedAvailableFee = tokenPricePreMint
+      .sub(tokenPriceAtLastFeeMint)
+      .mul(totalSupplyPreMint)
+      .div(2)
+      .div(tokenPricePreMint);
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
+
+    await poolLogicProxy.mintManagerFee();
+
+    const tokenPricePostMint = await poolLogicProxy.tokenPrice();
+    const totalSupplyPostMint = await poolLogicProxy.totalSupply();
+
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+
+    checkAlmostSame(
+      await poolLogicProxy.balanceOf(dao.address),
+      daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+    );
+
+    const availableFeePostMint = await poolLogicProxy.availableManagerFee();
+    expect(availableFeePostMint).to.be.eq("0");
+  });
+
+  it("only streaming fee after 6 months", async () => {
+    // streaming fee is set 2% year
+    // should mint 1% of total pool tokens after 6 months
+    const daoFees = await poolFactory.getDaoFee();
+
+    await ethers.provider.send("evm_increaseTime", [(3600 * 24 * 365) / 2]);
+    await ethers.provider.send("evm_mine", []);
+
+    const daoBalanceBefore = await poolLogicProxy.balanceOf(dao.address);
+    const availableFeePreMint = await poolLogicProxy.availableManagerFee();
+    const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+
+    const streamingFee = totalSupplyPreMint.div(100);
+    checkAlmostSame(availableFeePreMint, streamingFee);
+
+    await poolLogicProxy.mintManagerFee();
+
+    checkAlmostSame(
+      await poolLogicProxy.balanceOf(dao.address),
+      daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+    );
+  });
+
+  it("should mint both manager/streaming fee", async () => {
     const daoFees = await poolFactory.getDaoFee();
 
     await usdc_price_feed.givenCalldataReturn(
@@ -118,39 +184,6 @@ describe("ManagerFee Test", function () {
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
     expect(availableFeePostMint).to.be.eq("0");
-  });
-
-  it("only streaming fee fee after 1 block", async () => {
-    const daoFees = await poolFactory.getDaoFee();
-
-    await usdc_price_feed.givenCalldataReturn(
-      latestRoundDataABI,
-      ethers.utils.solidityPack(
-        ["uint256", "int256", "uint256", "uint256", "uint256"],
-        [0, 115000000, 0, await currentBlockTimestamp(), 0],
-      ),
-    ); // $1.15
-
-    await ethers.provider.send("evm_mine", []);
-
-    const daoBalanceBefore = await poolLogicProxy.balanceOf(dao.address);
-    const availableFeePreMint = await poolLogicProxy.availableManagerFee();
-    const totalSupplyPreMint = await poolLogicProxy.totalSupply();
-    const streamingFeeNumerator = await poolManagerLogicProxy.streamingFeeNumerator();
-
-    const streamingFee = totalSupplyPreMint
-      .mul(ethers.BigNumber.from(await currentBlockTimestamp()).sub(await poolLogicProxy.lastFeeMintTime()))
-      .mul(streamingFeeNumerator)
-      .div(10000)
-      .div(86400 * 365);
-    checkAlmostSame(availableFeePreMint, streamingFee);
-
-    await poolLogicProxy.mintManagerFee();
-
-    checkAlmostSame(
-      await poolLogicProxy.balanceOf(dao.address),
-      daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
-    );
   });
 
   it("should mint manager fee after large deposit (1 year after)", async () => {
