@@ -254,7 +254,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       const token1 = bothSupportedPair.token1;
       const fee = bothSupportedPair.fee;
       const tickSpacing = fee / 50;
-      let mintSettings: UniV3LpMintSettings = {
+      const mintSettings: UniV3LpMintSettings = {
         token0,
         token1,
         fee,

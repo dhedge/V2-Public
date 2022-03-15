@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import hre, { ethers, upgrades } from "hardhat";
 
 // Place holder addresses
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
@@ -8,26 +8,28 @@ const externalInvalidToken = "0x7cea675598da73f859696b483c05a4f135b2092e"; //ran
 import { expect } from "chai";
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-import { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32 } from "../TestHelpers";
-
-let logicOwner, manager, dao, investor, user1, user2;
-let poolFactory,
+import { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32, units } from "../TestHelpers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import {
+  AssetHandler,
+  ERC20Guard,
+  IERC20Extended__factory,
+  IMiniChefV2__factory,
+  MockContract,
+  OpenAssetGuard,
+  PoolFactory,
   PoolLogic,
+  PoolLogic__factory,
   PoolManagerLogic,
-  poolLogic,
-  poolManagerLogic,
-  poolLogicProxy,
-  poolManagerLogicProxy,
-  fundAddress;
-let IERC20, iERC20, IMiniChefV2, iMiniChefV2;
-let synthetixGuard, uniswapV2RouterGuard, uniswapV3RouterGuard, sushiMiniChefV2Guard; // contract guards
-let erc20Guard, sushiLPAssetGuard, openAssetGuard; // asset guards
-let addressResolver, synthetix, uniswapV2Router, uniswapV3Router; // integrating contracts
-let susd, seth, slink;
-let oneInchRouter;
-let susdAsset, susdProxy, sethAsset, sethProxy, slinkAsset, slinkProxy;
-let sushiLPAggregator; // local aggregators
-let usd_price_feed, eth_price_feed, link_price_feed; // integrating aggregators
+  PoolManagerLogic__factory,
+  SushiLPAssetGuard,
+  SushiMiniChefV2Guard,
+  SynthetixGuard,
+  UniswapV2RouterGuard,
+  UniswapV3RouterGuard,
+  UniV2LPAggregator,
+} from "../../types";
+import { Interface } from "@ethersproject/abi";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
@@ -44,8 +46,59 @@ const ONE_HUNDRED_TOKENS = "100000000000000000000";
 const POOL_STORAGE_VERSION = "99999";
 
 describe("PoolFactory", function () {
+  let logicOwner: SignerWithAddress,
+    manager: SignerWithAddress,
+    dao: SignerWithAddress,
+    investor: SignerWithAddress,
+    user1: SignerWithAddress,
+    user2: SignerWithAddress,
+    user3: SignerWithAddress;
+  let poolFactory: PoolFactory,
+    poolLogic: PoolLogic,
+    poolManagerLogic: PoolManagerLogic,
+    poolLogicProxy: PoolLogic,
+    poolManagerLogicProxy: PoolManagerLogic,
+    fundAddress: string;
+  let iERC20: Interface, iMiniChefV2: Interface;
+  let synthetixGuard: SynthetixGuard,
+    uniswapV2RouterGuard: UniswapV2RouterGuard,
+    uniswapV3RouterGuard: UniswapV3RouterGuard,
+    sushiMiniChefV2Guard: SushiMiniChefV2Guard; // contract guards
+  let erc20Guard: ERC20Guard, sushiLPAssetGuard: SushiLPAssetGuard, openAssetGuard: OpenAssetGuard; // asset guards
+  let addressResolver: MockContract,
+    synthetix: MockContract,
+    uniswapV2Router: MockContract,
+    uniswapV3Router: MockContract; // integrating contracts
+  let susd: string, seth: string, slink: string;
+  let oneInchRouter: MockContract;
+  let susdAsset: MockContract,
+    susdProxy: MockContract,
+    sethAsset: MockContract,
+    sethProxy: MockContract,
+    slinkAsset: MockContract,
+    slinkProxy: MockContract;
+  let sushiLPAggregator: UniV2LPAggregator; // local aggregators
+  let assetHandler: AssetHandler;
+  let usd_price_feed: MockContract, eth_price_feed: MockContract, link_price_feed: MockContract; // integrating aggregators
+  let sushiMiniChefV2: MockContract;
+  let sushiLPLinkWethAsset: MockContract;
+  let quickLPLinkWethAsset: MockContract;
+  let uniswapV2Factory: MockContract;
+  let sushiToken: MockContract;
+  let wmaticToken: MockContract;
+  let aaveLendingPool: MockContract;
+  let dai: MockContract;
+  let usdc: MockContract;
+  let aaveProtocolDataProvider: MockContract;
+  let aaveLendingPoolAssetGuard: MockContract;
+  let quickLPAssetGuard: MockContract;
+  let sushiLPLinkWeth: string;
+  let quickLPLinkWeth: string;
+  let sushiLPLinkWethPoolId: number;
+  let badtoken: string;
+
   before(async function () {
-    [logicOwner, manager, dao, investor, user1, user2, user3, user4] = await ethers.getSigners();
+    [logicOwner, manager, dao, investor, user1, user2, user3] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
     addressResolver = await MockContract.deploy();
@@ -72,7 +125,6 @@ describe("PoolFactory", function () {
     dai = await MockContract.deploy();
     usdc = await MockContract.deploy();
     aaveProtocolDataProvider = await MockContract.deploy();
-    quickStakingRewardsFactory = await MockContract.deploy();
     aaveLendingPoolAssetGuard = await MockContract.deploy();
     quickLPAssetGuard = await MockContract.deploy();
     susd = susdProxy.address;
@@ -165,8 +217,7 @@ describe("PoolFactory", function () {
     const getLendingPoolABI = iLendingPoolAddressesProvider.encodeFunctionData("getLendingPool", []);
     await aaveProtocolDataProvider.givenCalldataReturnAddress(getLendingPoolABI, aaveProtocolDataProvider.address);
 
-    IERC20 = await hre.artifacts.readArtifact("ERC20Upgradeable");
-    iERC20 = new ethers.utils.Interface(IERC20.abi);
+    iERC20 = new ethers.utils.Interface(IERC20Extended__factory.abi);
     const decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
     await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
@@ -190,19 +241,19 @@ describe("PoolFactory", function () {
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
     const poolPerformance = await PoolPerformance.deploy();
 
-    PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
-    poolLogicV24 = await PoolLogicV24.deploy();
-    PoolLogic = await ethers.getContractFactory("PoolLogic");
+    const PoolLogicV24 = await ethers.getContractFactory("PoolLogicV24");
+    const poolLogicV24 = await PoolLogicV24.deploy();
+    const PoolLogic = await ethers.getContractFactory("PoolLogic");
     poolLogic = await PoolLogic.deploy();
 
-    PoolManagerLogicV24 = await ethers.getContractFactory("PoolManagerLogicV24");
-    poolManagerLogicV24 = await PoolManagerLogicV24.deploy();
-    PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+    const PoolManagerLogicV24 = await ethers.getContractFactory("PoolManagerLogicV24");
+    const poolManagerLogicV24 = await PoolManagerLogicV24.deploy();
+    const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     poolManagerLogic = await PoolManagerLogic.deploy();
 
     // Deploy USD Price Aggregator
     const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
-    usdPriceAggregator = await USDPriceAggregator.deploy();
+    const usdPriceAggregator = await USDPriceAggregator.deploy();
 
     // Initialize Asset Price Consumer
     const assetSusdProxy = { asset: susd, assetType: 1, aggregator: usd_price_feed.address };
@@ -238,15 +289,15 @@ describe("PoolFactory", function () {
       assetSeth,
     ];
 
-    // await assetHandler.initialize(poolFactoryProxy.address, assetHandlerInitAssets);
-    // await assetHandler.deployed();
-    AssetHandlerLogic = await ethers.getContractFactory("contracts/priceAggregators/AssetHandler.sol:AssetHandler");
-    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
+    const AssetHandlerLogic = await ethers.getContractFactory(
+      "contracts/priceAggregators/AssetHandler.sol:AssetHandler",
+    );
+    assetHandler = <AssetHandler>await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
     console.log("assetHandler deployed to:", assetHandler.address);
 
     const PoolFactoryLogicV24 = await ethers.getContractFactory("PoolFactoryV24");
-    poolFactoryV24 = await upgrades.deployProxy(PoolFactoryLogicV24, [
+    const poolFactoryV24 = await upgrades.deployProxy(PoolFactoryLogicV24, [
       poolLogicV24.address,
       poolManagerLogicV24.address,
       assetHandler.address,
@@ -258,7 +309,7 @@ describe("PoolFactory", function () {
     console.log("poolFactoryV24 deployed to:", poolFactoryV24.address);
 
     const PoolFactoryLogic = await ethers.getContractFactory("PoolFactory");
-    poolFactory = await upgrades.upgradeProxy(poolFactoryV24.address, PoolFactoryLogic);
+    poolFactory = <PoolFactory>await upgrades.upgradeProxy(poolFactoryV24.address, PoolFactoryLogic);
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
     await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
@@ -274,36 +325,38 @@ describe("PoolFactory", function () {
     const SynthetixGuard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/SynthetixGuard.sol:SynthetixGuard",
     );
-    synthetixGuard = await SynthetixGuard.deploy(addressResolver.address);
+    synthetixGuard = <SynthetixGuard>await SynthetixGuard.deploy(addressResolver.address);
     synthetixGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
     );
-    uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
+    uniswapV2RouterGuard = <UniswapV2RouterGuard>await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
     uniswapV2RouterGuard.deployed();
 
     const UniswapV3RouterGuard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/uniswapV3/UniswapV3RouterGuard.sol:UniswapV3RouterGuard",
     );
-    uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
+    uniswapV3RouterGuard = <UniswapV3RouterGuard>await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
     uniswapV3RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/SushiMiniChefV2Guard.sol:SushiMiniChefV2Guard",
     );
-    sushiMiniChefV2Guard = await SushiMiniChefV2Guard.deploy([sushiToken.address, wmaticToken.address]);
+    sushiMiniChefV2Guard = <SushiMiniChefV2Guard>(
+      await SushiMiniChefV2Guard.deploy([sushiToken.address, wmaticToken.address])
+    );
     sushiMiniChefV2Guard.deployed();
 
     const OneInchV3Guard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/OneInchV3Guard.sol:OneInchV3Guard",
     );
-    oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
+    const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
     oneInchV3Guard.deployed();
 
     // Deploy asset guards
     const ERC20Guard = await ethers.getContractFactory("contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard");
-    erc20Guard = await ERC20Guard.deploy();
+    erc20Guard = <ERC20Guard>await ERC20Guard.deploy();
     erc20Guard.deployed();
 
     const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
@@ -313,13 +366,13 @@ describe("PoolFactory", function () {
     const SushiLPAssetGuard = await ethers.getContractFactory(
       "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
     );
-    sushiLPAssetGuard = await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
+    sushiLPAssetGuard = <SushiLPAssetGuard>await SushiLPAssetGuard.deploy(sushiMiniChefV2.address); // initialise with Sushi staking pool Id
     sushiLPAssetGuard.deployed();
 
     const OpenAssetGuard = await ethers.getContractFactory(
       "contracts/guards/assetGuards/OpenAssetGuard.sol:OpenAssetGuard",
     );
-    openAssetGuard = await OpenAssetGuard.deploy([externalValidToken]); // initialise with random external token
+    openAssetGuard = <OpenAssetGuard>await OpenAssetGuard.deploy([externalValidToken]); // initialise with random external token
     openAssetGuard.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
@@ -333,8 +386,16 @@ describe("PoolFactory", function () {
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3RouterGuard.address);
     await governance.setContractGuard(oneInchRouter.address, oneInchV3Guard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
-    await governance.setAddresses([[toBytes32("openAssetGuard"), openAssetGuard.address]]);
-    await governance.setAddresses([[toBytes32("aaveProtocolDataProvider"), aaveProtocolDataProvider.address]]);
+    await governance.setAddresses([
+      {
+        name: toBytes32("openAssetGuard"),
+        destination: openAssetGuard.address,
+      },
+      {
+        name: toBytes32("aaveProtocolDataProvider"),
+        destination: aaveProtocolDataProvider.address,
+      },
+    ]);
 
     const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
     console.log("openAssetGuardSetting:", openAssetGuardSetting);
@@ -378,26 +439,30 @@ describe("PoolFactory", function () {
       poolLogic.address,
       "1000",
       [
-        [susd, true],
-        [seth, true],
+        {
+          asset: susd,
+          isDeposit: true,
+        },
+        {
+          asset: seth,
+          isDeposit: true,
+        },
       ],
     );
 
     console.log("Passed poolManagerLogic Init!");
 
     await expect(
-      poolFactory.createFund(
-        false,
-        manager.address,
-        "Barren Wuffet",
-        "Test Fund",
-        "DHTF",
-        new ethers.BigNumber.from("6000"),
-        [
-          [susd, true],
-          [seth, true],
-        ],
-      ),
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", [
+        {
+          asset: susd,
+          isDeposit: true,
+        },
+        {
+          asset: seth,
+          isDeposit: true,
+        },
+      ]),
     ).to.be.revertedWith("invalid manager fee");
 
     console.log("Creating Fund...");
@@ -438,49 +503,44 @@ describe("PoolFactory", function () {
     });
 
     await expect(
-      poolFactory.createFund(
-        false,
-        manager.address,
-        "Barren Wuffet",
-        "Test Fund",
-        "DHTF",
-        new ethers.BigNumber.from("6000"),
-        [
-          [susd, false],
-          [seth, true],
-        ],
-      ),
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", [
+        {
+          asset: susd,
+          isDeposit: false,
+        },
+        {
+          asset: seth,
+          isDeposit: true,
+        },
+      ]),
     ).to.be.revertedWith("invalid manager fee");
 
     await expect(
-      poolFactory.createFund(
-        false,
-        manager.address,
-        "Barren Wuffet",
-        "Test Fund",
-        "DHTF",
-        new ethers.BigNumber.from("5000"),
-        [
-          [susd, false],
-          [seth, false],
-        ],
-      ),
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+        {
+          asset: susd,
+          isDeposit: false,
+        },
+        {
+          asset: seth,
+          isDeposit: false,
+        },
+      ]),
     ).to.be.revertedWith("at least one deposit asset"); // at least one deposit asset
 
-    await poolFactory.createFund(
-      false,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [seth, false],
-        [susd, true],
-      ],
-    );
+    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      {
+        asset: seth,
+        isDeposit: false,
+      },
+      {
+        asset: susd,
+        isDeposit: true,
+      },
+    ]);
 
-    const event = await fundCreatedEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await fundCreatedEvent;
 
     fundAddress = event.fundAddress;
     console.log("fundAddress: ", fundAddress);
@@ -505,12 +565,13 @@ describe("PoolFactory", function () {
     const poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(poolLogic.address);
 
-    poolLogicProxy = await PoolLogic.attach(fundAddress);
+    poolLogicProxy = await PoolLogic__factory.connect(fundAddress, logicOwner);
     const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
-    poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
+    poolManagerLogicProxy = await PoolManagerLogic__factory.connect(poolManagerLogicProxyAddress, logicOwner);
 
     // check create fund works correctly for AssetAdded event (fundAddress = poolLogic)
-    expect(poolManagerLogicProxy.filters.AssetAdded(poolLogicProxy.address).topics[1]).to.be.equal(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect(poolManagerLogicProxy.filters.AssetAdded(poolLogicProxy.address).topics![1]).to.be.equal(
       ethers.utils.hexZeroPad(poolLogicProxy.address, 32).toLowerCase(),
     );
 
@@ -528,8 +589,7 @@ describe("PoolFactory", function () {
     expect(poolVersion).to.equal(POOL_STORAGE_VERSION);
 
     // mock IMiniChefV2
-    IMiniChefV2 = await hre.artifacts.readArtifact("contracts/interfaces/sushi/IMiniChefV2.sol:IMiniChefV2");
-    iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2.abi);
+    iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2__factory.abi);
     const userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
     const amountLPStaked = "0";
     const amountRewarded = "0";
@@ -544,32 +604,104 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to manage assets", async function () {
-    await expect(poolManagerLogicProxy.changeAssets([[slink, false]], [])).to.be.revertedWith(
-      "only manager, trader or factory",
-    );
+    await expect(
+      poolManagerLogicProxy.changeAssets(
+        [
+          {
+            asset: slink,
+            isDeposit: false,
+          },
+        ],
+        [],
+      ),
+    ).to.be.revertedWith("only manager, trader or factory");
 
     const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
     const poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
 
     // Can add asset
-    await poolManagerLogicManagerProxy.changeAssets([[slink, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: slink,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
 
     let supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(3);
 
-    depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
-    numberOfDepositAssets = depositAssets.length;
+    let depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
+    let numberOfDepositAssets = depositAssets.length;
     expect(numberOfDepositAssets).to.be.equal(1);
 
     // Can add asset to maximum
-    await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[quickLPLinkWeth, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[sushiToken.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[wmaticToken.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[aaveLendingPool.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[dai.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[usdc.address, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: sushiLPLinkWeth,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: quickLPLinkWeth,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: sushiToken.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: wmaticToken.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: aaveLendingPool.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: dai.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: usdc.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
 
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
@@ -586,10 +718,17 @@ describe("PoolFactory", function () {
     expect(supportedAssets[7][0]).to.equal(slink);
     expect(supportedAssets[8][0]).to.equal(sushiToken.address);
     expect(supportedAssets[9][0]).to.equal(wmaticToken.address);
-
-    await expect(poolManagerLogicManagerProxy.changeAssets([[sethAsset.address, false]], [])).to.be.revertedWith(
-      "maximum assets reached",
-    );
+    await expect(
+      poolManagerLogicManagerProxy.changeAssets(
+        [
+          {
+            asset: sethAsset.address,
+            isDeposit: false,
+          },
+        ],
+        [],
+      ),
+    ).to.be.revertedWith("maximum assets reached");
 
     // Can remove asset back to before
     await poolManagerLogicManagerProxy.changeAssets([], [sushiLPLinkWeth]);
@@ -659,9 +798,17 @@ describe("PoolFactory", function () {
 
     // Can't add invalid asset
     const invalid_synth_asset = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
-    await expect(poolManagerLogicManagerProxy.changeAssets([[invalid_synth_asset, false]], [])).to.be.revertedWith(
-      "invalid asset",
-    );
+    await expect(
+      poolManagerLogicManagerProxy.changeAssets(
+        [
+          {
+            asset: invalid_synth_asset,
+            isDeposit: false,
+          },
+        ],
+        [],
+      ),
+    ).to.be.revertedWith("invalid asset");
 
     // Can't remove asset with non zero balance
     // mock IERC20 balanceOf to return non zero
@@ -673,7 +820,15 @@ describe("PoolFactory", function () {
     );
 
     // Can enable deposit asset
-    await poolManagerLogicManagerProxy.changeAssets([[slink, true]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: slink,
+          isDeposit: true,
+        },
+      ],
+      [],
+    );
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.true;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
@@ -681,7 +836,15 @@ describe("PoolFactory", function () {
     expect(numberOfDepositAssets).to.be.equal(2);
 
     // Can disable deposit asset
-    await poolManagerLogicManagerProxy.changeAssets([[slink, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: slink,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
@@ -761,8 +924,9 @@ describe("PoolFactory", function () {
 
     await expect(poolLogicProxy.deposit(slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
     await poolLogicProxy.connect(investor).deposit(susd, (100e18).toString());
-    const event = await depositEvent;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await depositEvent;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
     expect(event.assetDeposited).to.equal(susd);
@@ -816,7 +980,7 @@ describe("PoolFactory", function () {
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
     // Withdraw 50%
-    const withdrawAmount = 50e18;
+    const withdrawAmount = units(50);
     const totalSupply = await poolLogicProxy.totalSupply();
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
@@ -829,42 +993,44 @@ describe("PoolFactory", function () {
 
     await poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString());
 
-    const event = await withdrawalEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await withdrawalEvent;
 
     const fundTokensWithdrawn = withdrawAmount;
-    const valueWithdrawn = (fundTokensWithdrawn / totalSupply) * totalFundValue;
+    const valueWithdrawn = fundTokensWithdrawn.mul(totalFundValue).div(totalSupply);
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
     expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
     expect(event.fundTokensWithdrawn).to.equal((50e18).toString());
     expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
-    expect(event.fundValue).to.equal((totalFundValue - valueWithdrawn).toString());
-    expect(event.totalSupply).to.equal((100e18 - withdrawAmount).toString());
+    expect(event.fundValue).to.equal(totalFundValue.sub(valueWithdrawn).toString());
+    expect(event.totalSupply).to.equal(units(100).sub(withdrawAmount).toString());
     const withdrawnAsset = event.withdrawnAssets[0];
     expect(withdrawnAsset[0]).to.equal(susd);
-    expect(withdrawnAsset[1].toString()).to.equal(fundTokensWithdrawn.toString());
+    expect(withdrawnAsset[1]).to.equal(fundTokensWithdrawn);
     expect(withdrawnAsset[2]).to.equal(false);
   });
 
   it("should be able to manage pool", async function () {
-    await poolFactory.createFund(
-      true,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [susd, true],
-        [seth, true],
-      ],
-    );
+    await poolFactory.createFund(true, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      {
+        asset: susd,
+        isDeposit: true,
+      },
+      {
+        asset: seth,
+        isDeposit: true,
+      },
+    ]);
 
     const deployedFunds = await poolFactory.getDeployedFunds();
     const deployedFundsLength = deployedFunds.length;
     const fundAddress = deployedFunds[deployedFundsLength - 1];
-    const poolLogicPrivateProxy = await PoolLogic.attach(fundAddress);
-    const poolManagerLogicPrivateProxy = await PoolManagerLogic.attach(await poolLogicPrivateProxy.poolManagerLogic());
+    const poolLogicPrivateProxy = await PoolLogic__factory.connect(fundAddress, logicOwner);
+    const poolManagerLogicPrivateProxy = await PoolManagerLogic__factory.connect(
+      await poolLogicPrivateProxy.poolManagerLogic(),
+      logicOwner,
+    );
 
     const transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
@@ -909,22 +1075,38 @@ describe("PoolFactory", function () {
   });
 
   it("should be able to manage assets 2", async function () {
-    await expect(poolManagerLogicProxy.changeAssets([[slink, false]], [])).to.be.revertedWith(
-      "only manager, trader or factory",
-    );
+    await expect(
+      poolManagerLogicProxy.changeAssets(
+        [
+          {
+            asset: slink,
+            isDeposit: false,
+          },
+        ],
+        [],
+      ),
+    ).to.be.revertedWith("only manager, trader or factory");
 
     const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
     const poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
 
     // Can add asset
-    await poolManagerLogicManagerProxy.changeAssets([[slink, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: slink,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
 
     let supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     let numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(3);
 
-    depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
-    numberOfDepositAssets = depositAssets.length;
+    let depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
+    let numberOfDepositAssets = depositAssets.length;
     expect(numberOfDepositAssets).to.be.equal(1);
 
     // Can add asset to maximum
@@ -957,13 +1139,69 @@ describe("PoolFactory", function () {
       },
     ];
     await assetHandler.addAssets(assets);
-    await poolManagerLogicManagerProxy.changeAssets([[sushiLPLinkWeth, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[susdAsset.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[sethAsset.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[slinkAsset.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[sushiToken.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[wmaticToken.address, false]], []);
-    await poolManagerLogicManagerProxy.changeAssets([[usd_price_feed.address, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: sushiLPLinkWeth,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: susdAsset.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: sethAsset.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: slinkAsset.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: sushiToken.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: wmaticToken.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: usd_price_feed.address,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
 
     supportedAssets = await poolManagerLogicManagerProxy.getSupportedAssets();
     numberOfSupportedAssets = supportedAssets.length;
@@ -975,9 +1213,17 @@ describe("PoolFactory", function () {
     expect(supportedAssets[3][0]).to.equal(usd_price_feed.address);
     expect(supportedAssets[7][0]).to.equal(slinkAsset.address);
 
-    await expect(poolManagerLogicManagerProxy.changeAssets([[eth_price_feed.address, false]], [])).to.be.revertedWith(
-      "maximum assets reached",
-    );
+    await expect(
+      poolManagerLogicManagerProxy.changeAssets(
+        [
+          {
+            asset: eth_price_feed.address,
+            isDeposit: false,
+          },
+        ],
+        [],
+      ),
+    ).to.be.revertedWith("maximum assets reached");
 
     // Can remove asset back to before
     await poolManagerLogicManagerProxy.changeAssets([], [sushiLPLinkWeth]);
@@ -998,9 +1244,17 @@ describe("PoolFactory", function () {
 
     // Can't add invalid asset
     const invalid_synth_asset = "0x823bE81bbF96BEc0e25CA13170F5AaCb5B79ba83";
-    await expect(poolManagerLogicManagerProxy.changeAssets([[invalid_synth_asset, false]], [])).to.be.revertedWith(
-      "invalid asset",
-    );
+    await expect(
+      poolManagerLogicManagerProxy.changeAssets(
+        [
+          {
+            asset: invalid_synth_asset,
+            isDeposit: false,
+          },
+        ],
+        [],
+      ),
+    ).to.be.revertedWith("invalid asset");
 
     // Can't remove asset with non zero balance
     // mock IERC20 balanceOf to return non zero
@@ -1012,7 +1266,15 @@ describe("PoolFactory", function () {
     );
 
     // Can enable deposit asset
-    await poolManagerLogicManagerProxy.changeAssets([[slink, true]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: slink,
+          isDeposit: true,
+        },
+      ],
+      [],
+    );
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.true;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
@@ -1020,7 +1282,15 @@ describe("PoolFactory", function () {
     expect(numberOfDepositAssets).to.be.equal(2);
 
     // Can disable deposit asset
-    await poolManagerLogicManagerProxy.changeAssets([[slink, false]], []);
+    await poolManagerLogicManagerProxy.changeAssets(
+      [
+        {
+          asset: slink,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
     expect(await poolManagerLogicProxy.isDepositAsset(slink)).to.be.false;
 
     depositAssets = await poolManagerLogicManagerProxy.getDepositAssets();
@@ -1070,7 +1340,7 @@ describe("PoolFactory", function () {
   });
 
   beforeEach(async () => {
-    const current = (await ethers.provider.getBlock()).timestamp;
+    const current = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp;
     const AggregatorV3 = await hre.artifacts.readArtifact("AggregatorV3Interface");
     const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
@@ -1162,7 +1432,8 @@ describe("PoolFactory", function () {
     await synthetix.givenCalldataReturnUint(exchangeWithTrackingABI, (1e18).toString());
     await poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI);
 
-    const event = await exchangeEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(susd);
     expect(event.sourceAmount).to.equal((100e18).toString());
     expect(event.destinationAsset).to.equal(seth);
@@ -1284,7 +1555,8 @@ describe("PoolFactory", function () {
     await uniswapV2Router.givenCalldataReturn(swapABI, []);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
 
-    const event = await exchangeEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(susd);
     expect(event.sourceAmount).to.equal((100e18).toString());
     expect(event.destinationAsset).to.equal(seth);
@@ -1352,7 +1624,8 @@ describe("PoolFactory", function () {
     swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [exactInputSingleParams]);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI);
 
-    const event = await exchangeEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(susd);
     expect(event.sourceAmount).to.equal(sourceAmount);
     expect(event.destinationAsset).to.equal(seth);
@@ -1441,7 +1714,8 @@ describe("PoolFactory", function () {
     swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI);
 
-    const event = await exchangeEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(susd);
     expect(event.sourceAmount).to.equal(sourceAmount);
     expect(event.destinationAsset).to.equal(seth);
@@ -1471,7 +1745,15 @@ describe("PoolFactory", function () {
       slink.toLowerCase().slice(2, slink.length) +
       "00000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd200000000000000000000000052bc44d5378309ee2abf1539bf71de1b7d7be3b50000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000044073670020b6564a6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000034000000000000000000000000000000000000000000000000000000000000005a0000000000000000000000000000000000000000000000000000000000000068000000000000000000000000000000000000000000000000000000000000009a0000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000056bc75e2d6310000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000004d0e30db00000000000000000000000000000000000000000000000000000000080000000000000000000000011b815efb8f581194ae79006d24e0d814b7697f60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000104128acb0800000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d6310000000000000000000000000000000000000000000000000000000000001000276a400000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000040000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec700000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000001a4b3af37c000000000000000000000000000000000000000000000000000000000000000808000000000000000000000000000000000000000000000000000000000000044000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000000000320000000000000000000000000000003200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000064d1660f99000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec70000000000000000000000003058ef90929cb8180174d74c507176cca6835d73000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000003058ef90929cb8180174d74c507176cca6835d730000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000024dd93f59a00000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000002647f8fe7a00000000000000000000000000000000000000000000000000000000000000080800000000000000000000000000000000000000000000000000000000000004400000000000000000000000027239549dd40e1d60f5b80b0c4196923745b1fd200000000000000000000000000000000000000000000000000000000000001e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000a4059712240000000000000000000000006b175474e89094c44da98b954eedeac495271d0f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000100000000000000000000000000000001000000000000000000000000000000000000000000000000454e93cbdf7dccc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004470bdb9470000000000000000000000006b175474e89094c44da98b954eedeac495271d0f0000000000000000000000000000000000000000000044b71fb6f522c8ae11b3000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000184b3af37c0000000000000000000000000000000000000000000000000000000000000008080000000000000000000000000000000000000000000000000000000000000240000000000000000000000006b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000001000000000000000000000000000000010000000000000000000000006b175474e89094c44da98b954eedeac495271d0f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000044a9059cbb00000000000000000000000052bc44d5378309ee2abf1539bf71de1b7d7be3b500000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
-    await poolManagerLogicProxy.connect(manager).changeAssets([[slink, false]], []);
+    await poolManagerLogicProxy.connect(manager).changeAssets(
+      [
+        {
+          asset: slink,
+          isDeposit: false,
+        },
+      ],
+      [],
+    );
     await expect(
       poolLogicProxy.connect(manager).execTransaction(oneInchRouter.address, exchangeCallData),
     ).to.be.revertedWith("recipient is not pool");
@@ -1544,18 +1826,16 @@ describe("PoolFactory", function () {
     expect(await poolFactory.isPaused()).to.be.true;
 
     await expect(
-      poolFactory.createFund(
-        false,
-        manager.address,
-        "Barren Wuffet",
-        "Test Fund",
-        "DHTF",
-        new ethers.BigNumber.from("6000"),
-        [
-          [susd, true],
-          [seth, true],
-        ],
-      ),
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", [
+        {
+          asset: susd,
+          isDeposit: true,
+        },
+        {
+          asset: seth,
+          isDeposit: true,
+        },
+      ]),
     ).to.be.revertedWith("contracts paused");
 
     await expect(poolLogicProxy.deposit(susd, (100e18).toString())).to.be.revertedWith("contracts paused");
@@ -1658,7 +1938,7 @@ describe("PoolFactory", function () {
       await expect(assetHandler.getUSDPrice(susd)).to.be.revertedWith("Price get failed");
 
       // chainlink timeout
-      const current = (await ethers.provider.getBlock()).timestamp;
+      const current = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp;
       await usd_price_feed.givenCalldataReturn(
         latestRoundDataABI,
         ethers.utils.solidityPack(
@@ -1763,7 +2043,15 @@ describe("PoolFactory", function () {
       ).to.be.revertedWith("unsupported lp asset");
 
       // enable Sushi LP token to pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets(
+        [
+          {
+            asset: sushiLPLinkWeth,
+            isDeposit: false,
+          },
+        ],
+        [],
+      );
 
       // mock 5 Sushi LP tokens in pool
       const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
@@ -1790,18 +2078,35 @@ describe("PoolFactory", function () {
       ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets(
+        [
+          {
+            asset: sushiToken.address,
+            isDeposit: false,
+          },
+        ],
+        [],
+      );
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi),
       ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets(
+        [
+          {
+            asset: wmaticToken.address,
+            isDeposit: false,
+          },
+        ],
+        [],
+      );
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, depositAbi);
 
-      const event = await stakeEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const event: any = await stakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.asset).to.equal(sushiLPLinkWeth);
       expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
@@ -1847,7 +2152,8 @@ describe("PoolFactory", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAbi);
 
-      const event = await unstakeEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const event: any = await unstakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.asset).to.equal(sushiLPLinkWeth);
       expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
@@ -1887,7 +2193,8 @@ describe("PoolFactory", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, harvestAbi);
 
-      const event = await claimEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const event: any = await claimEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
       expect(event.time).to.equal((await currentBlockTimestamp()).toString());
@@ -1925,7 +2232,8 @@ describe("PoolFactory", function () {
 
       await poolLogicProxy.connect(logicOwner).execTransaction(sushiMiniChefV2.address, harvestAbi);
 
-      const event = await claimEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const event: any = await claimEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.stakingContract).to.equal(sushiMiniChefV2.address);
       expect(event.time).to.equal((await currentBlockTimestamp()).toString());
@@ -2005,25 +2313,43 @@ describe("PoolFactory", function () {
       ).to.be.revertedWith("enable reward token");
 
       // enable SUSHI token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiToken.address, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets(
+        [
+          {
+            asset: sushiToken.address,
+            isDeposit: false,
+          },
+        ],
+        [],
+      );
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi),
       ).to.be.revertedWith("enable reward token");
 
       // enable WMATIC token in pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[wmaticToken.address, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets(
+        [
+          {
+            asset: wmaticToken.address,
+            isDeposit: false,
+          },
+        ],
+        [],
+      );
 
       await poolLogicProxy.connect(manager).execTransaction(sushiMiniChefV2.address, withdrawAndHarvestAbi);
 
-      const eventUnstake = await unstakeEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const eventUnstake: any = await unstakeEvent;
       expect(eventUnstake.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventUnstake.asset).to.equal(sushiLPLinkWeth);
       expect(eventUnstake.stakingContract).to.equal(sushiMiniChefV2.address);
       expect(eventUnstake.amount).to.equal(FIVE_TOKENS);
       expect(eventUnstake.time).to.equal((await currentBlockTimestamp()).toString());
 
-      const eventClaim = await claimEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const eventClaim: any = await claimEvent;
       expect(eventClaim.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventClaim.stakingContract).to.equal(sushiMiniChefV2.address);
       expect(eventClaim.time).to.equal((await currentBlockTimestamp()).toString());
@@ -2070,7 +2396,15 @@ describe("PoolFactory", function () {
       await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
       // enable Sushi LP token to pool
-      await poolManagerLogicProxy.connect(manager).changeAssets([[sushiLPLinkWeth, false]], []);
+      await poolManagerLogicProxy.connect(manager).changeAssets(
+        [
+          {
+            asset: sushiLPLinkWeth,
+            isDeposit: false,
+          },
+        ],
+        [],
+      );
 
       // remove manager fee so that performance fee minting doesn't get in the way
       await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
@@ -2084,7 +2418,7 @@ describe("PoolFactory", function () {
 
       // mock 100 Sushi LP tokens staked in MiniChefV2
       const userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
-      const amountLPStaked = new ethers.BigNumber.from(ONE_HUNDRED_TOKENS);
+      const amountLPStaked = ethers.BigNumber.from(ONE_HUNDRED_TOKENS);
       const amountRewarded = (0).toString();
       await sushiMiniChefV2.givenCalldataReturn(
         userInfo,
@@ -2094,7 +2428,7 @@ describe("PoolFactory", function () {
       const totalSupply = await poolLogicProxy.totalSupply();
       const totalFundValue = await poolManagerLogicProxy.totalFundValue();
       const sushiLPPrice = await assetHandler.getUSDPrice(sushiLPLinkWeth);
-      const fundUsdValue = new ethers.BigNumber.from(TWENTY_TOKENS);
+      const fundUsdValue = ethers.BigNumber.from(TWENTY_TOKENS);
       const fundSushiLPValue = sushiLPPrice.mul(5);
       const stakedSushiLPValue = sushiLPPrice.mul(100);
       const expectedFundValue = fundUsdValue.add(fundSushiLPValue).add(stakedSushiLPValue);
@@ -2107,7 +2441,8 @@ describe("PoolFactory", function () {
       ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
       await poolLogicProxy.connect(investor).withdraw(withdrawAmount);
 
-      const eventWithdrawal = await withdrawalEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const eventWithdrawal: any = await withdrawalEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);
       const expectedFundValueAfter = totalFundValue.sub(valueWithdrawn);
@@ -2116,9 +2451,9 @@ describe("PoolFactory", function () {
       expect(eventWithdrawal.investor).to.equal(investor.address);
       checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
       expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
-      expect(eventWithdrawal.totalInvestorFundTokens).to.equal((investorFundBalance - withdrawAmount).toString());
+      expect(eventWithdrawal.totalInvestorFundTokens).to.equal(investorFundBalance.sub(withdrawAmount).toString());
       checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
-      checkAlmostSame(eventWithdrawal.totalSupply, (totalSupply - withdrawAmount).toString());
+      checkAlmostSame(eventWithdrawal.totalSupply, totalSupply.sub(withdrawAmount).toString());
 
       const withdrawSUSD = eventWithdrawal.withdrawnAssets[1];
       const withdrawLP = eventWithdrawal.withdrawnAssets[0];
@@ -2149,31 +2484,27 @@ describe("PoolFactory", function () {
     expect(await poolFactory.getManagedPools(manager.address)).to.be.deep.equal([pools[0]]);
     expect(await poolFactory.getManagedPools(user1.address)).to.be.deep.equal([pools[1]]);
 
-    await poolFactory.createFund(
-      false,
-      manager.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [seth, false],
-        [susd, true],
-      ],
-    );
+    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      {
+        asset: seth,
+        isDeposit: false,
+      },
+      {
+        asset: susd,
+        isDeposit: true,
+      },
+    ]);
 
-    await poolFactory.createFund(
-      false,
-      user1.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [seth, false],
-        [susd, true],
-      ],
-    );
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      {
+        asset: seth,
+        isDeposit: false,
+      },
+      {
+        asset: susd,
+        isDeposit: true,
+      },
+    ]);
     pools = await poolFactory.getDeployedFunds();
 
     expect(await poolFactory.getManagedPools(manager.address)).to.be.deep.equal([pools[0], pools[2]]);
@@ -2185,7 +2516,7 @@ describe("PoolFactory", function () {
     expect(await poolFactory.getInvestedPools(investor.address)).to.be.deep.equal([pools[0]]);
     expect(await poolFactory.getInvestedPools(logicOwner.address)).to.be.deep.equal([pools[1]]);
 
-    const newPoolLogic = await PoolLogic.attach(pools[3]);
+    const newPoolLogic = await PoolLogic__factory.connect(pools[3], logicOwner);
     const transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
       newPoolLogic.address,
@@ -2216,48 +2547,42 @@ describe("PoolFactory", function () {
   });
 
   it("should check dhedge pool restriction", async () => {
-    await poolFactory.createFund(
-      false,
-      user1.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [seth, false],
-        [susd, true],
-      ],
-    );
-    pools = await poolFactory.getDeployedFunds();
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      {
+        asset: seth,
+        isDeposit: false,
+      },
+      {
+        asset: susd,
+        isDeposit: true,
+      },
+    ]);
+    let pools = await poolFactory.getDeployedFunds();
     const pool1 = pools[pools.length - 1];
 
-    await poolFactory.createFund(
-      false,
-      user1.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [seth, false],
-        [susd, true],
-      ],
-    );
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      {
+        asset: seth,
+        isDeposit: false,
+      },
+      {
+        asset: susd,
+        isDeposit: true,
+      },
+    ]);
     pools = await poolFactory.getDeployedFunds();
     const pool2 = pools[pools.length - 1];
 
-    await poolFactory.createFund(
-      false,
-      user1.address,
-      "Barren Wuffet",
-      "Test Fund",
-      "DHTF",
-      new ethers.BigNumber.from("5000"),
-      [
-        [seth, false],
-        [susd, true],
-      ],
-    );
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      {
+        asset: seth,
+        isDeposit: false,
+      },
+      {
+        asset: susd,
+        isDeposit: true,
+      },
+    ]);
     pools = await poolFactory.getDeployedFunds();
     const pool3 = pools[pools.length - 1];
 
@@ -2274,16 +2599,32 @@ describe("PoolFactory", function () {
       },
     ]);
 
-    const pool1Logic = await PoolLogic.attach(pool1);
-    const pool1ManagerLogic = await PoolManagerLogic.attach(await pool1Logic.poolManagerLogic());
+    const pool1Logic = await PoolLogic__factory.connect(pool1, logicOwner);
+    const pool1ManagerLogic = await PoolManagerLogic__factory.connect(await pool1Logic.poolManagerLogic(), logicOwner);
 
-    await expect(pool1ManagerLogic.connect(user1).changeAssets([[pool2, false]], [])).to.revertedWith(
-      "cannot add pool asset",
+    await expect(
+      pool1ManagerLogic.connect(user1).changeAssets(
+        [
+          {
+            asset: pool2,
+            isDeposit: false,
+          },
+        ],
+        [],
+      ),
+    ).to.revertedWith("cannot add pool asset");
+
+    const pool3Logic = await PoolLogic__factory.connect(pool3, logicOwner);
+    const pool3ManagerLogic = await PoolManagerLogic__factory.connect(await pool3Logic.poolManagerLogic(), logicOwner);
+    await pool3ManagerLogic.connect(user1).changeAssets(
+      [
+        {
+          asset: pool2,
+          isDeposit: false,
+        },
+      ],
+      [],
     );
-
-    const pool3Logic = await PoolLogic.attach(pool3);
-    const pool3ManagerLogic = await PoolManagerLogic.attach(await pool3Logic.poolManagerLogic());
-    await pool3ManagerLogic.connect(user1).changeAssets([[pool2, false]], []);
   });
 
   it("should be able to add/remove token transfer whitelist", async function () {
@@ -2311,7 +2652,7 @@ describe("PoolFactory", function () {
     transferWhitelist = await poolFactory.transferWhitelist(investor.address);
     expect(transferWhitelist).to.equal(true);
 
-    whitelisted = await poolFactory.transferWhitelist(logicOwner.address);
+    const whitelisted = await poolFactory.transferWhitelist(logicOwner.address);
     expect(whitelisted).to.equal(false);
 
     // can transfer to whitelisted address during cooldown

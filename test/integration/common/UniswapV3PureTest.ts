@@ -117,7 +117,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
+        const [token0Liquidity] = await getV3LpBalances(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
@@ -363,7 +363,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
+        const [token0Liquidity] = await getV3LpBalances(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());
@@ -472,7 +472,7 @@ export const UniswapV3PureTest = (
 
         const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
 
-        const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
+        const [token0Liquidity] = await getV3LpBalances(uniswapV3.factory, pair);
 
         const LIQUIDITY_MULTIPLIER = 10;
         console.log("Getting", LIQUIDITY_MULTIPLIER, "x the current liquidity of token0", token0Liquidity.toString());

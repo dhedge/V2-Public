@@ -1,10 +1,12 @@
 import { expect } from "chai";
+import { ethers } from "hardhat";
+import { Governance } from "../../types";
 import { toBytes32 } from "../TestHelpers";
-let governance;
 
 describe("Governance", async () => {
+  let governance: Governance;
+
   before(async () => {
-    [signer] = await ethers.getSigners();
     const Governance = await ethers.getContractFactory("Governance");
     governance = await Governance.deploy();
   });
@@ -38,9 +40,18 @@ describe("Governance", async () => {
     const address3 = "0x3333333333333333333333333333333333333333";
     const addresses = [address1, address2, address3];
     const setAddressesTuple = [
-      [toBytes32(name1), address1],
-      [toBytes32(name2), address2],
-      [toBytes32(name3), address3],
+      {
+        name: toBytes32(name1),
+        destination: address1,
+      },
+      {
+        name: toBytes32(name2),
+        destination: address2,
+      },
+      {
+        name: toBytes32(name3),
+        destination: address3,
+      },
     ];
 
     await governance.setAddresses(setAddressesTuple);
