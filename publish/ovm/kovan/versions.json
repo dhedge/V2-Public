@@ -1,6 +1,5 @@
 {
   "v2.12.0": {
-    "lastUpdated": "Fri, 03 Dec 2021 05:58:24 GMT",
     "contracts": {
       "ERC20Guard": "0xa2822a8D9aCa3d56A2eD2BE70F0c11136875289C",
       "SynthetixGuard": "0xbc87Becd9b2AED3E282D352b94B80045946CF4b9",
@@ -11,24 +10,34 @@
           "assetName": "Synth sETH",
           "assetAddress": "0x94B41091eB29b36003aC1C6f0E55a5225633c884",
           "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xCb7895bDC70A1a1Dce69b689FD7e43A627475A06"
+          },
           "oracleAddress": "0xCb7895bDC70A1a1Dce69b689FD7e43A627475A06"
         },
         {
           "assetName": "Synth sBTC",
           "assetAddress": "0x23F608ACc41bd7BCC617a01a9202214EE305439a",
           "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x81AE7F8fF54070C52f0eB4EB5b8890e1506AA4f4"
+          },
           "oracleAddress": "0x81AE7F8fF54070C52f0eB4EB5b8890e1506AA4f4"
         },
         {
           "assetName": "Synth sLINK",
           "assetAddress": "0xe2B26511C64FE18Acc0BE8EA7c888cDFcacD846E",
           "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xb37aA79EBc31B93864Bff2d5390b385bE482897b"
+          },
           "oracleAddress": "0xb37aA79EBc31B93864Bff2d5390b385bE482897b"
         },
         {
           "assetName": "Synth sUSD",
           "assetAddress": "0xaA5068dC2B3AADE533d3e52C6eeaadC6a8154c57",
           "assetType": "0",
+          "oracleType": "USDPriceAggregator",
           "oracleAddress": "0x03228Ddd04f0FF07cB68F53d164b53Dc2E4362eA"
         }
       ],
@@ -42,6 +51,11 @@
       "PoolManagerLogic": "0x9FEE88a18479bf7f0D41Da03819538AA7A617730",
       "PoolFactoryProxy": "0x643ea0B936803A624666Da378d44dC39E1d12534",
       "PoolFactory": "0x9FEE88a18479bf7f0D41Da03819538AA7A617730"
-    }
+    },
+    "network": {
+      "chainId": 69,
+      "name": "unknown"
+    },
+    "lastUpdated": "Mon, 14 Mar 2022 04:19:19 GMT"
   }
 }

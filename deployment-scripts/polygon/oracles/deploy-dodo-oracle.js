@@ -35,7 +35,7 @@ const main = async () => {
     contracts.Oracles.push({
       assetAddress: pool,
       oracleAddress: dHedgePoolPriceOracle.address,
-      oracleName: "DodoDHedgePoolPriceOracle",
+      oracleType: "DodoDHedgePoolPriceOracle",
     });
   }
 

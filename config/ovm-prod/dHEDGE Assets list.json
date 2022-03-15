@@ -1,0 +1,164 @@
+[
+  {
+    "assetName": "Synth sUSD",
+    "assetAddress": "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+    "assetType": "0",
+    "oracleType": "UniV3TWAPAggregator",
+    "specificOracleConfig": {
+      "pool": "0xadb35413ec50e0afe41039eac8b930d313e94fa4",
+      "mainToken": "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
+      "pairTokenUsdAggregator": "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
+      "priceLowerLimit": 98000000,
+      "priceUpperLimit": 102000000,
+      "updateInterval": 600
+    }
+  },
+  {
+    "assetName": "Synth sETH",
+    "assetAddress": "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "susdPriceAggregator": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+      "tokenUSDPriceAggregator": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
+    },
+    "oracleType": "SynthPriceAggregator"
+  },
+  {
+    "assetName": "Synth sBTC",
+    "assetAddress": "0x298B9B95708152ff6968aafd889c6586e9169f1D",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "susdPriceAggregator": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+      "tokenUSDPriceAggregator": "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593"
+    },
+    "oracleType": "SynthPriceAggregator"
+  },
+  {
+    "assetName": "Synth sLINK",
+    "assetAddress": "0xc5Db22719A06418028A40A9B5E9A7c02959D0d08",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "susdPriceAggregator": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+      "tokenUSDPriceAggregator": "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450"
+    },
+    "oracleType": "SynthPriceAggregator"
+  },
+  {
+    "assetName": "Synth sSOL",
+    "assetAddress": "0x8b2f7ae8ca8ee8428b6d76de88326bb413db2766",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "susdPriceAggregator": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+      "tokenUSDPriceAggregator": "0xC663315f7aF904fbbB0F785c32046dFA03e85270"
+    },
+    "oracleType": "SynthPriceAggregator"
+  },
+  {
+    "assetName": "Synth sAVAX",
+    "assetAddress": "0xB2b42B231C68cbb0b4bF2FFEbf57782Fd97D3dA4",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "susdPriceAggregator": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+      "tokenUSDPriceAggregator": "0x5087Dc69Fd3907a016BD42B38022F7f024140727"
+    },
+    "oracleType": "SynthPriceAggregator"
+  },
+  {
+    "assetName": "Synth sMATIC",
+    "assetAddress": "0x81DDfAc111913d3d5218DEA999216323B7CD6356",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "susdPriceAggregator": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+      "tokenUSDPriceAggregator": "0x0ded608AFc23724f614B76955bbd9dFe7dDdc828"
+    },
+    "oracleType": "SynthPriceAggregator"
+  },
+  {
+    "assetName": "Synth sEUR",
+    "assetAddress": "0xFBc4198702E81aE77c06D58f81b629BDf36f0a71",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "susdPriceAggregator": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
+      "tokenUSDPriceAggregator": "0x3626369857A10CcC6cc3A6e4f5C2f5984a519F20"
+    },
+    "oracleType": "SynthPriceAggregator"
+  },
+  {
+    "assetName": "USD Coin",
+    "assetAddress": "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Tether",
+    "assetAddress": "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xECef79E109e997bCA29c1c0897ec9d7b03647F5E"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Dai",
+    "assetAddress": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Wrapped Ethereum",
+    "assetAddress": "0x4200000000000000000000000000000000000006",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Wrapped Bitcoin",
+    "assetAddress": "0x68f180fcce6836688e9084f035309e29bf0a2095",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Chainlink",
+    "assetAddress": "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Synthetix",
+    "assetAddress": "0x8700daec35af8ff88c16bdf0418774cb3d7599b4",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Uniswap",
+    "assetAddress": "0x6fd9d7ad17242c41f7131d257212c54a0e816691",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x11429eE838cC01071402f21C219870cbAc0a59A0"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Uniswap V3 NFT Position Manager",
+    "assetAddress": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+    "assetType": "7",
+    "oracleType": "USDPriceAggregator"
+  }
+]

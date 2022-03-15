@@ -5,7 +5,7 @@ import { Contract } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { InitType } from "./initialize";
-import { ICSVAsset } from "../types";
+import { TDeployedAsset } from "../types";
 
 const approxEq = (v1: number, v2: number, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
 
@@ -23,7 +23,7 @@ export const checkAssets = async (initializeData: InitType, hre: HardhatRuntimeE
   console.log("Checking assets..");
 
   const assets = versions[version].contracts.Assets;
-  const csvAssets: ICSVAsset[] = await csv().fromFile(assetsFileName);
+  const csvAssets: TDeployedAsset[] = await csv().fromFile(assetsFileName);
 
   // Check for any new assets in the asset CSV config
   for (const csvAsset of csvAssets) {
