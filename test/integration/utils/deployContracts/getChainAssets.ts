@@ -5,7 +5,7 @@ import * as polygonData from "../../../../config/chainData/polygon-data";
 import * as ovmData from "../../../../config/chainData/ovm-data";
 import { NETWORK, IAssetSetting } from ".";
 
-const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, v2Vault: string, pool: string) => {
+const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, pool: string) => {
   const weights: Decimal[] = (
     await (await ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights()
   ).map((w) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
@@ -30,7 +30,7 @@ const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, v2Vault: s
   }
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
-  return await BalancerV2LPAggregator.deploy(poolFactory.address, v2Vault, pool, {
+  return await BalancerV2LPAggregator.deploy(poolFactory.address, pool, {
     maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
     K,
     powerPrecision: "100000000", // powerPrecision
@@ -99,7 +99,6 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
 
     const balancerV2AggregatorWethBalancer = await deployBalancerV2LpAggregator(
       poolFactory,
-      polygonData.balancer.v2Vault,
       polygonData.balancer.pools.bal80weth20,
     );
     const balancerLpAssetWethBalancer = {
