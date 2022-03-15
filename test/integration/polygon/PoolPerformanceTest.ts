@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Contract, ContractFactory } from "ethers";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -38,7 +37,9 @@ describe("PoolPerformance", function () {
 
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMUSDC = deployments.assets.AMUSDC!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMWETH = deployments.assets.AMWETH!;
 
     await getAccountToken(units(6000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);

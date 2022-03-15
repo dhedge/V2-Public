@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify, writeCsv } from "../../../Helpers";
-import { INotSureGuard, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { INotSureGuard, IJob, IUpgradeConfig, IVersions, IProposeTxProperties } from "../../../types";
 import csv from "csvtojson";
 
 // JBG69 Not sure what this guard is suppose to do
@@ -13,7 +10,8 @@ export const openAssetContractGuardJob: IJob<void> = async (
   // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { externalAssetFileName?: string; governanceNamesFileName: string },
-  _address: {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _addresses: IProposeTxProperties,
 ) => {
   const ethers = hre.ethers;
   const Governance = await hre.artifacts.readArtifact("Governance");
@@ -26,6 +24,7 @@ export const openAssetContractGuardJob: IJob<void> = async (
   if (config.execute) {
     const fileName = filenames.externalAssetFileName;
     const csvAssets = await csv().fromFile(fileName);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addresses: any = csvAssets.map((asset) => asset.Address);
     const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
     const openAssetGuard = await OpenAssetGuard.deploy(addresses);

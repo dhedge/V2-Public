@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
@@ -23,6 +22,7 @@ describe("Balancer V2 Rewards Claiming Test", function () {
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     BALANCER = deployments.assets.BALANCER!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);

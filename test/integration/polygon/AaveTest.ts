@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
@@ -36,7 +35,9 @@ describe("Aave Test", function () {
     poolFactory = deployments.poolFactory;
     DAI = deployments.assets.DAI;
     USDC = deployments.assets.USDC;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     WMATIC = deployments.assets.WMATIC!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMUSDC = deployments.assets.AMUSDC!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);

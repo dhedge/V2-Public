@@ -1,5 +1,5 @@
-const { expect } = require("chai");
-const { toBytes32 } = require("../TestHelpers");
+import { expect } from "chai";
+import { toBytes32 } from "../TestHelpers";
 let governance;
 
 describe("Governance", async () => {
@@ -32,11 +32,11 @@ describe("Governance", async () => {
     const name1 = "Name1";
     const name2 = "Name2";
     const name3 = "Name3";
-    let namesBytes = [toBytes32(name1), toBytes32(name2), toBytes32(name3)];
+    const namesBytes = [toBytes32(name1), toBytes32(name2), toBytes32(name3)];
     const address1 = "0x1111111111111111111111111111111111111111";
     const address2 = "0x2222222222222222222222222222222222222222";
     const address3 = "0x3333333333333333333333333333333333333333";
-    let addresses = [address1, address2, address3];
+    const addresses = [address1, address2, address3];
     const setAddressesTuple = [
       [toBytes32(name1), address1],
       [toBytes32(name2), address2],
@@ -46,7 +46,7 @@ describe("Governance", async () => {
     await governance.setAddresses(setAddressesTuple);
 
     // Check set is successful
-    let destinationCheck = await governance.nameToDestination(namesBytes[0]);
+    const destinationCheck = await governance.nameToDestination(namesBytes[0]);
     expect(destinationCheck).to.equal(addresses[0]);
 
     // Check correct mappings

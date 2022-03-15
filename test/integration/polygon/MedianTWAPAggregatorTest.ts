@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import axios from "axios";
 import { assert, expect, use } from "chai";
@@ -100,6 +99,7 @@ describe("Median TWAP Oracle Test", function () {
 
     const price = (await dhedgeMedianTwapAggregator.latestRoundData()).answer;
     const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.dht)).toString(), 8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(5).div(100) as any); // 3% diff
   });
 
@@ -124,6 +124,7 @@ describe("Median TWAP Oracle Test", function () {
 
     const price = (await wethMedianTwapAggregator.latestRoundData()).answer;
     const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.weth)).toString(), 8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(3).div(100) as any); // 3% diff
   });
 
@@ -148,6 +149,7 @@ describe("Median TWAP Oracle Test", function () {
 
     const price = (await usdcMedianTwapAggregator.latestRoundData()).answer;
     const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.usdc)).toString(), 8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(3).div(100) as any); // 3% diff
   });
 

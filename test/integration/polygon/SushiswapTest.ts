@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
@@ -44,11 +42,16 @@ describe("Sushiswap V2 Test", function () {
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     assetHandler = deployments.assetHandler;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     sushiMiniChefV2Guard = deployments.sushiMiniChefV2Guard!;
     USDC = deployments.assets.USDC;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     SUSHI = deployments.assets.SUSHI!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     WETH = deployments.assets.WETH;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     WMATIC = deployments.assets.WMATIC!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     SushiLPUSDCWETH = deployments.assets.SushiLPUSDCWETH!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
@@ -280,6 +283,7 @@ describe("Sushiswap V2 Test", function () {
       expect(await poolManagerLogicProxy.assetBalance(sushi.pools.usdc_weth.address)).to.be.equal(availableLpToken);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const event: any = await stakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.asset).to.equal(sushi.pools.usdc_weth.address);
@@ -332,6 +336,7 @@ describe("Sushiswap V2 Test", function () {
       expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const event: any = await unstakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.asset).to.equal(sushi.pools.usdc_weth.address);
@@ -376,6 +381,7 @@ describe("Sushiswap V2 Test", function () {
 
       await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, harvestAbi);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const event: any = await claimEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.stakingContract).to.equal(sushi.minichef);
@@ -436,6 +442,7 @@ describe("Sushiswap V2 Test", function () {
       expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const event: any = await unstakeEvent;
       expect(event.fundAddress).to.equal(poolLogicProxy.address);
       expect(event.asset).to.equal(sushi.pools.usdc_weth.address);
@@ -519,12 +526,14 @@ describe("Sushiswap V2 Test", function () {
       expect(await WMATIC.balanceOf(poolLogicProxy.address)).to.be.gt(wmaticBalanceBefore);
       expect(await poolManagerLogicProxy.totalFundValue()).to.be.gt(totalFundValueBefore);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const eventUnstake: any = await unstakeEvent;
       expect(eventUnstake.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventUnstake.asset).to.equal(sushi.pools.usdc_weth.address);
       expect(eventUnstake.stakingContract).to.equal(sushi.minichef);
       expect(eventUnstake.amount).to.equal(availableLpToken);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const eventClaim: any = await claimEvent;
       expect(eventClaim.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventClaim.stakingContract).to.equal(sushi.minichef);
@@ -599,6 +608,7 @@ describe("Sushiswap V2 Test", function () {
       ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
       await poolLogicProxy.withdraw(withdrawAmount);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const eventWithdrawal: any = await withdrawalEvent;
 
       const valueWithdrawn = withdrawAmount.mul(totalFundValue).div(totalSupply);

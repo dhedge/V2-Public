@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
@@ -49,9 +48,13 @@ describe("Aave Edge Test", function () {
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
     DAI = deployments.assets.DAI;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMUSDC = deployments.assets.AMUSDC!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMWETH = deployments.assets.AMWETH!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     VariableWETH = deployments.assets.VariableWETH!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     VariableDAI = deployments.assets.VariableDAI!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);

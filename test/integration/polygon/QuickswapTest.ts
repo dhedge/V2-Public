@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
@@ -36,7 +35,9 @@ describe("Quickswap V2 Test", function () {
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     WETH = deployments.assets.WETH;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     QUICK = deployments.assets.QUICK!;
 
     await deployments.assetHandler.removeAsset(assets.wmatic);
