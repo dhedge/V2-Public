@@ -28,7 +28,7 @@ export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntim
   const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
   const QuickLPAssetGuard = await ethers.getContractFactory("QuickLPAssetGuard");
   const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
-  const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
+  const OneInchV4Guard = await ethers.getContractFactory("OneInchV4Guard");
   const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
   const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
 
@@ -48,7 +48,7 @@ export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntim
     { contract: OpenAssetGuard, name: "OpenAssetGuard" },
     { contract: QuickLPAssetGuard, name: "QuickLPAssetGuard" },
     { contract: QuickStakingRewardsGuard, name: "QuickStakingRewardsGuard" },
-    { contract: OneInchV3Guard, name: "OneInchV3Guard" },
+    { contract: OneInchV4Guard, name: "OneInchV4Guard" },
     { contract: BalancerV2Guard, name: "BalancerV2Guard" },
     { contract: PoolPerformance, name: "PoolPerformance" },
   ];
