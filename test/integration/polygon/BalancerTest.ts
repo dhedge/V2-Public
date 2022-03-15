@@ -259,7 +259,7 @@ describe("Balancer V2 Test", function () {
   it("should be able to join pool on balancer.", async () => {
     await poolManagerLogicProxy
       .connect(manager)
-      .changeAssets([{ asset: balancer.pools.stablePool.pool, isDeposit: false }], []);
+      .changeAssets([{ asset: balancer.stablePools.BPSP, isDeposit: false }], []);
     const poolId = "0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000012";
     const sender = poolLogicProxy.address;
     const recipient = poolLogicProxy.address;
@@ -425,11 +425,12 @@ describe("Balancer V2 Test", function () {
     await poolLogicProxy.deposit(assets.weth, units(1).div(10));
     await poolManagerLogicProxy
       .connect(manager)
-      .changeAssets([{ asset: balancer.pools.bal80weth20.pool, isDeposit: false }], []);
-    const poolId = balancer.pools.bal80weth20.poolId;
+      .changeAssets([{ asset: balancer.pools.bal80weth20, isDeposit: false }], []);
+    const poolId = await (await ethers.getContractAt("IBalancerWeightedPool", balancer.pools.bal80weth20)).getPoolId();
     const sender = poolLogicProxy.address;
     const recipient = poolLogicProxy.address;
-    const assetsArray = balancer.pools.bal80weth20.tokens;
+    const assetsArray = (await (await ethers.getContractAt("IBalancerV2Vault", balancer.v2Vault)).getPoolTokens(poolId))
+      .tokens;
     const amount = units(1).div(10);
     const maxAmountsIn = [amount, 0];
 
@@ -458,10 +459,11 @@ describe("Balancer V2 Test", function () {
     checkAlmostSame(totalFundValueBefore, totalFundValueAfter);
   });
   it("should be able to exit weth-bal pool on balancer.", async () => {
-    const poolId = balancer.pools.bal80weth20.poolId;
+    const poolId = await (await ethers.getContractAt("IBalancerWeightedPool", balancer.pools.bal80weth20)).getPoolId();
     const sender = poolLogicProxy.address;
     const recipient = poolLogicProxy.address;
-    const assetsArray = balancer.pools.bal80weth20.tokens;
+    const assetsArray = (await (await ethers.getContractAt("IBalancerV2Vault", balancer.v2Vault)).getPoolTokens(poolId))
+      .tokens;
     const minAmountsOut = [0, 0];
 
     const exitTx = iBalancerV2Vault.encodeFunctionData("exitPool", [

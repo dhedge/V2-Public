@@ -4,4 +4,4 @@ assetType,guardName,guardAddress,description
 4,LendingEnabledAssetGuard,0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6,Lending Enabled Asset tokens
 5,QuickLPAssetGuard,0x202040Bb1efA759C3BfdBef56603f241245f2ad4,Quick LP tokens
 3,AaveLendingPoolAssetGuard,0xa2dA62b7080D225c70376BCdcF4d94467915A903,Aave Lending Pool
-7,UniswapV3AssetGuard,0xD5A3eBcce55d71d97e0b24352B23F2b5744031A9,Uniswap V3 LP positions
+7,UniswapV3AssetGuard,0x5AA258597bd1a2B0850652a2389264a37382B916,Uniswap V3 LP positions

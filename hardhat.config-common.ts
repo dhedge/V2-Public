@@ -61,7 +61,7 @@ export default {
     // JHM: During integration tests we sometimes get
     // ProviderError: Errors encountered in param 1: Invalid value "0x02e5dda5c51be531e95b2e5b22389b23cd39a929c1a594052162ebe432d897e9" supplied to : QUANTITY
     // Usually retrying the test works
-    retries: 2,
+    retries: process.env.TEST_RETRIES || 2,
   },
   abiExporter: {
     path: "./abi",
@@ -89,10 +89,14 @@ export default {
     spacing: 2,
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY,
+    // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
+    apiKey: {
+      optimisticEthereum: process.env.OPTIMISICSCAN_API_KEY,
+      polygon: process.env.POLYGONSCAN_API_KEY,
+    },
   },
   typechain: {
     outDir: "./types",
     target: "ethers-v5",
   },
-} as HardhatUserConfig;
+};

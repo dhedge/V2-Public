@@ -23,15 +23,15 @@ export const assets = {
 export const assetsBalanceOfSlot = {
   usdc: 0,
   usdt: 0,
-  dai: 2,
   weth: 3,
+  dai: 2,
   wbtc: 0,
 };
 
 export const price_feeds = {
-  eth: "0xA969bEB73d918f6100163Cd0fba3C586C269bee1",
-  link: "0x74d6B50283AC1D651f9Afdc33521e4c1E3332b78",
-  btc: "0xc326371d4D866C6Ff522E69298e36Fe75797D358",
+  eth: "0x13e3Ee699D1909E989722E753853AE30b17e08c5",
+  link: "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450",
+  btc: "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593",
   dai: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
   usdc: "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3",
   usdt: "0xECef79E109e997bCA29c1c0897ec9d7b03647F5E",
