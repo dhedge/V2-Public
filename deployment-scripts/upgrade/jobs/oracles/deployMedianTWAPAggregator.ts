@@ -3,6 +3,12 @@ import { tryVerify } from "../../../Helpers";
 import { Address } from "../../../types";
 import { TAssetConfig, IMedianTWAPAggregatorSpecificConfig, TOracleDeployer, IAssetConfig } from "./oracleTypes";
 
+/**
+ * Uniswap v2 pool TWAP oracle deployer
+ * @param hre Hardhat Runtime Environment
+ * @param oracleConfig Oracle configuration parameters
+ * @returns Address of the deployed oracle
+ */
 export const deployMedianTWAPAggregator: TOracleDeployer = async (
   hre: HardhatRuntimeEnvironment,
   oracleConfig: TAssetConfig,
@@ -37,13 +43,15 @@ export const deployMedianTWAPAggregator: TOracleDeployer = async (
     ],
   );
 
+  await medianTwapAggregator.transferOwnership(twapConfig.owner);
+
   return medianTwapAggregator.address;
 };
 
 const isMedianTWAPAggregator = (
   oracleConfig: TAssetConfig,
 ): oracleConfig is IAssetConfig<"MedianTWAPAggregator", IMedianTWAPAggregatorSpecificConfig> => {
-  const requiredFields = ["poolAddress", "pairTokenOracle", "updateInterval", "volatilityTripLimit"];
+  const requiredFields = ["poolAddress", "pairTokenOracle", "updateInterval", "volatilityTripLimit", "owner"];
   const { specificOracleConfig } = oracleConfig;
   if (
     oracleConfig.oracleType != "MedianTWAPAggregator" ||

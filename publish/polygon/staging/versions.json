@@ -1613,7 +1613,8 @@
             "poolAddress": "0xa375d23a751124359568f3a22576528bd1c8c3e3",
             "pairTokenOracle": "0xf9680d99d6c9589e2a93a78a04a279e509205945",
             "updateInterval": 300,
-            "volatilityTripLimit": 25
+            "volatilityTripLimit": 25,
+            "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
           }
         },
         {
@@ -1850,7 +1851,8 @@
             "poolAddress": "0x160532d2536175d65c03b97b0630a9802c274dad",
             "pairTokenOracle": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",
             "updateInterval": 600,
-            "volatilityTripLimit": 5
+            "volatilityTripLimit": 5,
+            "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
           },
           "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468"
         },
@@ -1880,7 +1882,7 @@
           "assetType": "0",
           "oracleType": "ChainlinkAggregator",
           "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6",
+            "chainlinkOracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
           }
         },
         {
@@ -1889,7 +1891,7 @@
           "assetType": "0",
           "oracleType": "ChainlinkAggregator",
           "specificOracleConfig": {
-            "chainlinkOracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C",
+            "chainlinkOracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
           }
         },
         {
@@ -1898,7 +1900,7 @@
           "assetType": "0",
           "oracleType": "ChainlinkAggregator",
           "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x3D49406EDd4D52Fb7FFd25485f32E073b529C924",
+            "chainlinkOracleAddress": "0x3D49406EDd4D52Fb7FFd25485f32E073b529C924"
           }
         },
         {
@@ -1907,7 +1909,7 @@
           "assetType": "0",
           "oracleType": "ChainlinkAggregator",
           "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410",
+            "chainlinkOracleAddress": "0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410"
           }
         },
         {
@@ -1916,7 +1918,7 @@
           "assetType": "0",
           "oracleType": "ChainlinkAggregator",
           "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2",
+            "chainlinkOracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2"
           }
         },
         {
@@ -1925,7 +1927,7 @@
           "assetType": "0",
           "oracleType": "ChainlinkAggregator",
           "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x7f45273fD7C644714825345670414Ea649b50b16",
+            "chainlinkOracleAddress": "0x7f45273fD7C644714825345670414Ea649b50b16"
           }
         },
         {
@@ -1987,6 +1989,20 @@
           "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
           "assetType": 0,
           "oracleAddress": "0x80523D712a49eBE36A985F36625F7023b8137f5B"
+        },
+        {
+          "assetName": "QI",
+          "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
+          "assetType": 0,
+          "oracleType": "MedianTWAPAggregator",
+          "specificOracleConfig": {
+            "poolAddress": "0x9a8b2601760814019b7e6ee0052e25f1c623d1e6",
+            "pairTokenOracle": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
+            "updateInterval": 300,
+            "volatilityTripLimit": 25,
+            "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
+          },
+          "oracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
         }
       ],
       "Oracles": [
@@ -2012,7 +2028,7 @@
           "name": "QI TWAP Oracle",
           "oracleType": "MedianTWAPAggregator",
           "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
-          "oracleAddress": "0xBbA786dBbE67879B7D3B2696aBF3DFbA50e95949"
+          "oracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
@@ -2055,6 +2071,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Mon, 14 Mar 2022 04:18:28 GMT"
+    "lastUpdated": "Mon, 14 Mar 2022 09:24:09 GMT"
   }
 }
