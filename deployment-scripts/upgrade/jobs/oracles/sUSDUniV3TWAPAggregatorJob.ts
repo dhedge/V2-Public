@@ -13,6 +13,7 @@ export const sUSDUniV3TWAPAggregatorJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
+  // eslint-disable-next-line @typescript-eslint/ban-types
   _: {},
   addresses: IProposeTxProperties & sUSDUniV3TWAPAggregatorProperties,
 ) => {

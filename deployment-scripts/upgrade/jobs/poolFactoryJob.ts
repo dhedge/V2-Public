@@ -7,6 +7,7 @@ export const poolFactoryJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
+  // eslint-disable-next-line @typescript-eslint/ban-types
   _: {},
   addresses: IProposeTxProperties,
 ) => {
@@ -28,7 +29,7 @@ export const poolFactoryJob: IJob<void> = async (
       // If this script runs and then fails, on retry,
       // The deploy contract will already be initialised.
       await poolFactoryImpl.implInitializer();
-    } catch (e: any) {
+    } catch (e) {
       if (!e.error.message.includes("contract is already initialized")) {
         throw e;
       }

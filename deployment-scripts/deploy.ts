@@ -7,8 +7,7 @@ import csv from "csvtojson";
 import { assert } from "chai";
 import { ICSVAsset, IAddresses, IContracts, IVersions } from "./types";
 import { IDeploymentData } from "./upgrade/getDeploymentData";
-
-const { getTag } = require("../Helpers");
+import { getTag } from "./Helpers";
 
 export async function deploy(deploymentData: IDeploymentData) {
   const { filenames, addresses } = deploymentData;
@@ -67,11 +66,13 @@ export async function deploy(deploymentData: IDeploymentData) {
 
       const SynthetixGuardFactory = await ethers.getContractFactory("SynthetixGuard");
       checkSet(addresses, "synthetixAddressResolverAddress");
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const synthetixGuard = await SynthetixGuardFactory.deploy(addresses.synthetixAddressResolverAddress!);
       await synthetixGuard.deployed();
       addToVersions("SynthetixGuard", synthetixGuard.address);
       console.log("SynthetixGuard deployed at ", synthetixGuard.address);
       checkSet(addresses, "synthetixProxyAddress");
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await governance.setContractGuard(addresses.synthetixProxyAddress!, synthetixGuard.address);
       await governance.transferOwnership(addresses.protocolDaoAddress);
       addToVersions("Governance", governance.address);
@@ -99,11 +100,11 @@ export async function deploy(deploymentData: IDeploymentData) {
         if (asset.oracleAddress) {
           return asset;
         }
-        if (asset.oracleName == "USDPriceAggregator") {
+        if (asset.oracleType == "USDPriceAggregator") {
           return {
             ...asset,
             oracleAddress: versions[tag].contracts.USDPriceAggregator || "",
-            oracleName: "USDPriceAggregator",
+            oracleType: "USDPriceAggregator",
           };
         }
         throw new Error("No code path for this asset");
@@ -210,6 +211,30 @@ export async function deploy(deploymentData: IDeploymentData) {
       await addToVersions("PoolFactoryProxy", poolFactory.address);
       await addToVersions("PoolFactory", poolFactoryImplementation);
       console.log("poolFactory deployed at ", poolFactory.address);
+    },
+    PoolFactoryProxy: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+    PoolLogicProxy: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+    PoolManagerLogicProxy: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+    AssetHandlerProxy: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+    PoolPerformanceProxy: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+    DhedgeEasySwapper: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+    DhedgeSwapRouter: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+    Assets: function (): Promise<void> {
+      throw new Error("Function not implemented.");
     },
   };
 

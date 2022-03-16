@@ -10,7 +10,7 @@ describe("DhedgeSwapRouter", () => {
   const swapAmount = units(100, 6);
   let USDC: IERC20, DAI: IERC20;
   let SwapRouter: DhedgeSwapRouter__factory;
-  let snapshot: any;
+  let snapshot: unknown;
 
   before(async () => {
     USDC = await ethers.getContractAt("IERC20", assets.usdc);

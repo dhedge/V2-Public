@@ -12,18 +12,15 @@ import { deployContracts } from "../utils/deployContracts";
 use(solidity);
 
 describe("WithdrawTo Test", function () {
-  let WETH: IERC20, USDC: IERC20, QuickLPUSDCWETH: IERC20, QUICK: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let USDC: IERC20;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, user: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager, , user] = await ethers.getSigners();
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
-    WETH = deployments.assets.WETH;
-    QUICK = deployments.assets.QUICK!;
-    QuickLPUSDCWETH = deployments.assets.QuickLPUSDCWETH!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
     await getAccountToken(units(10000), logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);

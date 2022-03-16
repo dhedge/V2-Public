@@ -1,13 +1,10 @@
-import { artifacts, ethers, upgrades } from "hardhat";
+import { ethers } from "hardhat";
 import { expect } from "chai";
-import { utils, Contract } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   IERC20__factory,
   IMulticall__factory,
   INonfungiblePositionManager__factory,
   MockContract,
-  PoolManagerLogic,
   PoolManagerLogic__factory,
   UniswapV3NonfungiblePositionGuard,
 } from "../../../types";
@@ -36,10 +33,7 @@ describe("DynamicBonds Test", () => {
     usdc = await MockContract.deploy();
 
     const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
-    uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
-      nonfungiblePositionManager.address,
-      1,
-    );
+    uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(1);
     await uniswapV3NonfungiblePositionGuard.deployed();
 
     await poolManagerLogic.givenCalldataReturnAddress(
@@ -131,7 +125,7 @@ describe("DynamicBonds Test", () => {
   });
 
   it("increaseLiquidity", async () => {
-    let increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
+    const increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
       [tokenId, units(2000, 6), units(1), 0, 0, deadLine],
     ]);
     await expect(
@@ -144,7 +138,7 @@ describe("DynamicBonds Test", () => {
   });
 
   it("decreaseLiquidity", async () => {
-    let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+    const decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
       [tokenId, units(2000, 6), 0, 0, deadLine],
     ]);
     await expect(
@@ -157,7 +151,7 @@ describe("DynamicBonds Test", () => {
   });
 
   it("burn", async () => {
-    let burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
+    const burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
     await expect(
       uniswapV3NonfungiblePositionGuard.txGuard(poolManagerLogic.address, nonfungiblePositionManager.address, burnABI),
     ).to.emit(uniswapV3NonfungiblePositionGuard, "Burn");
@@ -188,14 +182,14 @@ describe("DynamicBonds Test", () => {
   });
 
   it("multicall", async () => {
-    let wrongABI = iERC20.encodeFunctionData("approve", [nonfungiblePositionManager.address, units(10000, 6)]);
-    let decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
+    const wrongABI = iERC20.encodeFunctionData("approve", [nonfungiblePositionManager.address, units(10000, 6)]);
+    const decreaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("decreaseLiquidity", [
       [tokenId, units(2000, 6), 0, 0, deadLine],
     ]);
-    let collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
+    const collectABI = iNonfungiblePositionManager.encodeFunctionData("collect", [
       [tokenId, poolLogic.address, units(10000), units(10000)],
     ]);
-    let burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
+    const burnABI = iNonfungiblePositionManager.encodeFunctionData("burn", [tokenId]);
 
     let multicallABI = iMulticall.encodeFunctionData("multicall", [[decreaseLiquidityABI, wrongABI, burnABI]]);
     await expect(

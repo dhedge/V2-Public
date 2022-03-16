@@ -7,6 +7,7 @@ export const assetHandlerJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
+  // eslint-disable-next-line @typescript-eslint/ban-types
   _: {},
   addresses: IProposeTxProperties,
 ) => {
@@ -18,7 +19,7 @@ export const assetHandlerJob: IJob<void> = async (
 
   console.log("Will upgrade assethandler");
   if (config.execute) {
-    let oldAssetHandler = versions[config.oldTag].contracts.AssetHandlerProxy;
+    const oldAssetHandler = versions[config.oldTag].contracts.AssetHandlerProxy;
     const AssetHandler = await ethers.getContractFactory("AssetHandler");
     const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
     console.log("assetHandler logic deployed to: ", assetHandler);

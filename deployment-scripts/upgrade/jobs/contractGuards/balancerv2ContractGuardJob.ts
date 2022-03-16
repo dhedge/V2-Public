@@ -36,7 +36,7 @@ export const balancerv2ContractGuard: IJob<void> = async (
     );
 
     await balancerV2Guard.transferOwnership(addresses.protocolDaoAddress);
-    let setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
+    const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
       addresses.balancerV2VaultAddress,
       balancerV2Guard.address,
     ]);

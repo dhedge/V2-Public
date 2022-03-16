@@ -1,4 +1,3 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { InitType } from "./initialize";
 import { assert } from "chai";
 import csv from "csvtojson";
@@ -6,7 +5,7 @@ import csv from "csvtojson";
 import { toBytes32 } from "../Helpers";
 import { IContracts } from "../types";
 
-export const checkGovernance = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
+export const checkGovernance = async (initializeData: InitType) => {
   const { namesFileName, assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;
 
   // Check Governance settings
