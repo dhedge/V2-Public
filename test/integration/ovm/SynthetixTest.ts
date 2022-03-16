@@ -38,6 +38,7 @@ describe("Synthetix Test", function () {
     deployments = await deployContracts("ovm");
 
     poolFactory = deployments.poolFactory;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     synthetixGuard = deployments.synthetixGuard!;
     uniswapV3RouterGuard = deployments.uniswapV3RouterGuard;
 
@@ -72,7 +73,7 @@ describe("Synthetix Test", function () {
     const approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, units(100)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
 
-    let exchangeEvent = new Promise((resolve, reject) => {
+    const exchangeEvent = new Promise((resolve, reject) => {
       synthetixGuard.on(
         "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
@@ -137,7 +138,8 @@ describe("Synthetix Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
 
-    let event: any = await exchangeEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(assets.susd);
     expect(event.sourceAmount).to.equal(units(100));
     expect(event.destinationAsset).to.equal(assets.seth);
@@ -188,14 +190,14 @@ describe("Synthetix Test", function () {
   });
 
   it("try: invalid contract guard & no asset guard.", async () => {
-    let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
+    const approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, approveABI)).to.revertedWith(
       "invalid transaction",
     );
   });
 
   it("try: invalid contract guard & valid asset guard.", async () => {
-    let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
+    const approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.snxProxy, approveABI);
   });
 
@@ -218,7 +220,7 @@ describe("Synthetix Test", function () {
     ]);
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
 
-    let withdrawalEvent = new Promise((resolve, reject) => {
+    const withdrawalEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
         "Withdrawal",
         (
@@ -255,7 +257,7 @@ describe("Synthetix Test", function () {
     });
 
     // Withdraw 50%
-    let withdrawAmount = (await poolLogicProxy.totalSupply()).div(2);
+    const withdrawAmount = (await poolLogicProxy.totalSupply()).div(2);
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
     await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
@@ -263,7 +265,8 @@ describe("Synthetix Test", function () {
 
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
-    let event: any = await withdrawalEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await withdrawalEvent;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
     checkAlmostSame(event.valueWithdrawn, totalFundValue.div(2));

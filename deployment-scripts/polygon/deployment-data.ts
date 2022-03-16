@@ -1,4 +1,4 @@
-import { curvePools, dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
+import { dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
 import { IAddresses, IFileNames } from "../types";
 import fs from "fs";
 
@@ -71,7 +71,7 @@ export const polygonAddresses: IAddresses = {
 
 export const polygonStagingFileNames: IFileNames = {
   versionsFileName: "./publish/polygon/staging/versions.json",
-  assetsFileName: "./config/polygon-staging/dHEDGE Assets list - Polygon Staging.csv",
+  assetsFileName: "./config/polygon-staging/dHEDGE Assets list - Polygon Staging.json",
   governanceNamesFileName: "./config/polygon-staging/dHEDGE Governance Names - Polygon Staging.csv",
   contractGuardsFileName: "./config/polygon-staging/dHEDGE Governance Contract Guards - Polygon Staging.csv",
   assetGuardsFileName: "./config/polygon-staging/dHEDGE Governance Asset Guards - Polygon Staging.csv",
@@ -81,7 +81,7 @@ export const polygonStagingFileNames: IFileNames = {
 
 export const polygonProdFileNames: IFileNames = {
   versionsFileName: "./publish/polygon/prod/versions.json",
-  assetsFileName: "./config/polygon-prod/dHEDGE Assets list - Polygon.csv",
+  assetsFileName: "./config/polygon-prod/dHEDGE Assets list - Polygon.json",
   governanceNamesFileName: "./config/polygon-prod/dHEDGE Governance Names - Polygon.csv",
   contractGuardsFileName: "./config/polygon-prod/dHEDGE Governance Contract Guards - Polygon.csv",
   assetGuardsFileName: "./config/polygon-prod/dHEDGE Governance Asset Guards - Polygon.csv",

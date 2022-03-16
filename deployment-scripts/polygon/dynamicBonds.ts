@@ -7,7 +7,7 @@ import axios from "axios";
 import { proposeTx, tryVerify } from "../Helpers";
 import { protocolDao } from "../../config/chainData/polygon-data";
 import { DynamicBonds } from "../../types"; // Unit test fails on Github Actions
-import { IUpgradeConfigProposeTx, IVersions } from "../types";
+import { IUpgradeConfigProposeTx, IVersion, IVersions } from "../types";
 import { getDeploymentData, IDeploymentData } from "../upgrade/getDeploymentData";
 const coingeckoNetwork = "polygon-pos";
 
@@ -226,7 +226,7 @@ const checkPayoutBalance = async (hre: HardhatRuntimeEnvironment, dynamicBonds: 
   console.log("DHT balance:", utils.formatEther(payoutBalance));
 };
 
-const getDynamicBondsContract = async (hre: HardhatRuntimeEnvironment, version: any): Promise<DynamicBonds> => {
+const getDynamicBondsContract = async (hre: HardhatRuntimeEnvironment, version: IVersion): Promise<DynamicBonds> => {
   const ethers = hre.ethers;
   const contractName = "DynamicBonds";
   const dynamicBondsProxyAddress = version.contracts["DynamicBondsProxy"];

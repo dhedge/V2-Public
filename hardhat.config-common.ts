@@ -1,5 +1,3 @@
-import { HardhatUserConfig } from "hardhat/config";
-
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -89,10 +87,14 @@ export default {
     spacing: 2,
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY,
+    // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
+    apiKey: {
+      optimisticEthereum: process.env.OPTIMISICSCAN_API_KEY,
+      polygon: process.env.POLYGONSCAN_API_KEY,
+    },
   },
   typechain: {
     outDir: "./types",
     target: "ethers-v5",
   },
-} as HardhatUserConfig;
+};

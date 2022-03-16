@@ -1,8 +1,7 @@
 import { InitType } from "./initialize";
 import { expect } from "chai";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export const checkOwnership = async (initializeData: InitType, _: HardhatRuntimeEnvironment) => {
+export const checkOwnership = async (initializeData: InitType) => {
   const {
     protocolDao,
     proxyAdmin,

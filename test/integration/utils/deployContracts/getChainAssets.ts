@@ -5,19 +5,13 @@ import * as polygonData from "../../../../config/chainData/polygon-data";
 import * as ovmData from "../../../../config/chainData/ovm-data";
 import { NETWORK, IAssetSetting } from ".";
 
-const deployBalancerV2LpAggregator = async (
-  poolFactory: PoolFactory,
-  v2Vault: string,
-  info: {
-    pool: string;
-    poolId: string;
-    tokens: string[];
-    decimals: number[];
-    weights: number[];
-  },
-) => {
+const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, pool: string) => {
+  const weights: Decimal[] = (
+    await (await ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights()
+  ).map((w) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
+
   const ether = "1000000000000000000";
-  const divisor = info.weights.reduce((acc, w, i) => {
+  const divisor = weights.reduce((acc, w, i) => {
     if (i == 0) {
       return new Decimal(w).pow(w);
     }
@@ -26,30 +20,22 @@ const deployBalancerV2LpAggregator = async (
 
   const K = new Decimal(ether).div(divisor).toFixed(0);
 
-  let matrix = [];
+  const matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
-    for (let j = 0; j < info.weights.length; j++) {
-      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
+    for (let j = 0; j < weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(weights[j]).times(ether).toFixed(0));
     }
     matrix.push(elements);
   }
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
-  return await BalancerV2LPAggregator.deploy(
-    poolFactory.address,
-    v2Vault,
-    info.pool,
-    info.tokens,
-    info.decimals,
-    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
-    {
-      maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
-      K,
-      powerPrecision: "100000000", // powerPrecision
-      approximationMatrix: matrix, // approximationMatrix
-    },
-  );
+  return await BalancerV2LPAggregator.deploy(poolFactory.address, pool, {
+    maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
+    K,
+    powerPrecision: "100000000", // powerPrecision
+    approximationMatrix: matrix, // approximationMatrix
+  });
 };
 
 export const assetSetting = (asset: string, assetType: number, aggregator: string) => ({
@@ -103,24 +89,24 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
     };
 
     // Deploy Balancer LP Aggregators
-    const balancerV2Aggregator = await deployBalancerV2LpAggregator(
-      poolFactory,
-      polygonData.balancer.v2Vault,
-      polygonData.balancer.pools.stablePool,
+    const BalancerStablePoolAggregator = await ethers.getContractFactory("BalancerStablePoolAggregator");
+    const balancerV2Aggregator = await BalancerStablePoolAggregator.deploy(
+      poolFactory.address,
+      polygonData.balancer.stablePools.BPSP,
     );
+    await balancerV2Aggregator.deployed();
     const balancerLpAsset = {
-      asset: polygonData.balancer.pools.stablePool.pool,
+      asset: polygonData.balancer.stablePools.BPSP,
       assetType: 0,
       aggregator: balancerV2Aggregator.address,
     };
 
     const balancerV2AggregatorWethBalancer = await deployBalancerV2LpAggregator(
       poolFactory,
-      polygonData.balancer.v2Vault,
       polygonData.balancer.pools.bal80weth20,
     );
     const balancerLpAssetWethBalancer = {
-      asset: polygonData.balancer.pools.bal80weth20.pool,
+      asset: polygonData.balancer.pools.bal80weth20,
       assetType: 0,
       aggregator: balancerV2AggregatorWethBalancer.address,
     };

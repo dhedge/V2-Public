@@ -4,18 +4,14 @@ import { expect, use } from "chai";
 import { units } from "../../TestHelpers";
 import { assets, sushi } from "../../../config/chainData/polygon-data";
 import { DhedgeSwapTest, IERC20, IWETH } from "../../../types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 use(solidity);
 
 describe("DhedgeSwap Test", function () {
-  let WMATIC: IWETH, WETH: IERC20, USDC: IERC20, USDT: IERC20, DAI: IERC20;
-  let owner: SignerWithAddress;
+  let WMATIC: IWETH, USDT: IERC20;
   let dhedgeSwapTest: DhedgeSwapTest;
 
   before(async function () {
-    [owner] = await ethers.getSigners();
-
     const DhedgeSwapTest = await ethers.getContractFactory("DhedgeSwapTest");
     dhedgeSwapTest = await DhedgeSwapTest.deploy(sushi.router, assets.weth);
     dhedgeSwapTest.deployed();
@@ -24,9 +20,6 @@ describe("DhedgeSwap Test", function () {
   it("Should be able to get WMATIC", async function () {
     WMATIC = await ethers.getContractAt("IWETH", assets.wmatic);
     USDT = await ethers.getContractAt("IERC20", assets.usdt);
-    DAI = await ethers.getContractAt("IERC20", assets.dai);
-    USDC = await ethers.getContractAt("IERC20", assets.usdc);
-    WETH = await ethers.getContractAt("IERC20", assets.weth);
 
     // deposit Matic -> WMATIC
     await WMATIC.deposit({ value: units(500) });

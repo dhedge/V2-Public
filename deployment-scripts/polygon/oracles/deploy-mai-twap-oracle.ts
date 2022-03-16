@@ -14,6 +14,7 @@ const main = async () => {
 
   const network = await ethers.provider.getNetwork();
   const versionsPath = "../../../publish/polygon/oracle-versions.json";
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const versions = require(versionsPath);
   const tag = Object.keys(versions)[Object.keys(versions).length - 1];
   versions[tag].network = network;

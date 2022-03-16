@@ -15,7 +15,7 @@ import { DhedgeEasySwapper, Governance, PoolFactory, PoolManagerLogic } from "..
 import { units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
-const { toBytes32 } = require("../../TestHelpers");
+import { toBytes32 } from "../../TestHelpers";
 
 use(solidity);
 
@@ -260,7 +260,7 @@ describe("DhedgeEasySwapper", function () {
   });
 
   describe("Toros Tests", () => {
-    let snapshot: any;
+    let snapshot: unknown;
     beforeEach(async function () {
       snapshot = await ethers.provider.send("evm_snapshot", []);
       await ethers.provider.send("evm_mine", []);
