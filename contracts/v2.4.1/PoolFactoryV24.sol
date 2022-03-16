@@ -71,7 +71,7 @@ contract PoolFactoryV24 is
     string managerName,
     address manager,
     uint256 time,
-    uint256 managerFeeNumerator,
+    uint256 performanceFeeNumerator,
     uint256 managerFeeDenominator
   );
 
@@ -93,13 +93,13 @@ contract PoolFactoryV24 is
 
   event SetMaximumManagerFee(uint256 numerator, uint256 denominator);
 
-  event SetMaximumManagerFeeNumeratorChange(uint256 amount);
+  event SetMaximumPerformanceFeeNumeratorChange(uint256 amount);
 
   event SetAssetHandler(address assetHandler);
 
   event SetPoolStorageVersion(uint256 poolStorageVersion);
 
-  event SetManagerFeeNumeratorChangeDelay(uint256 delay);
+  event SetPerformanceFeeNumeratorChangeDelay(uint256 delay);
 
   address[] public deployedFunds;
 
@@ -124,8 +124,8 @@ contract PoolFactoryV24 is
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
 
-  uint256 public override maximumManagerFeeNumeratorChange;
-  uint256 public override managerFeeNumeratorChangeDelay;
+  uint256 public override maximumPerformanceFeeNumeratorChange;
+  uint256 public override performanceFeeNumeratorChangeDelay;
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -153,8 +153,8 @@ contract PoolFactoryV24 is
 
     _setDaoFee(10, 100); // 10%
     _setExitCooldown(1 days);
-    setManagerFeeNumeratorChangeDelay(4 weeks);
-    setMaximumManagerFeeNumeratorChange(1000);
+    setPerformanceFeeNumeratorChangeDelay(4 weeks);
+    setMaximumPerformanceFeeNumeratorChange(1000);
 
     _setMaximumSupportedAssetCount(10);
 
@@ -167,7 +167,7 @@ contract PoolFactoryV24 is
   /// @param _managerName The name of the manager
   /// @param _fundName The name of the fund
   /// @param _fundSymbol The symbol of the fund
-  /// @param _managerFeeNumerator The numerator of the manager fee
+  /// @param _performanceFeeNumerator The numerator of the manager fee
   /// @param _supportedAssets An array of supported assets
   /// @return fund Address of the fund
   function createFund(
@@ -176,12 +176,12 @@ contract PoolFactoryV24 is
     string memory _managerName,
     string memory _fundName,
     string memory _fundSymbol,
-    uint256 _managerFeeNumerator,
+    uint256 _performanceFeeNumerator,
     IHasSupportedAssetV24.Asset[] memory _supportedAssets
   ) external returns (address fund) {
     require(!paused(), "contracts paused");
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
-    require(_managerFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
+    require(_performanceFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
 
     bytes memory poolLogicData = abi.encodeWithSignature(
       "initialize(address,bool,string,string)",
@@ -199,7 +199,7 @@ contract PoolFactoryV24 is
       _manager,
       _managerName,
       fund,
-      _managerFeeNumerator,
+      _performanceFeeNumerator,
       _supportedAssets
     );
 
@@ -219,7 +219,7 @@ contract PoolFactoryV24 is
       _managerName,
       _manager,
       block.timestamp,
-      _managerFeeNumerator,
+      _performanceFeeNumerator,
       _MANAGER_FEE_DENOMINATOR
     );
   }
@@ -315,18 +315,18 @@ contract PoolFactoryV24 is
 
   /// @notice Set maximum manager fee numberator change
   /// @param amount The amount for the maximum manager fee numerator change
-  function setMaximumManagerFeeNumeratorChange(uint256 amount) public onlyOwner {
-    maximumManagerFeeNumeratorChange = amount;
+  function setMaximumPerformanceFeeNumeratorChange(uint256 amount) public onlyOwner {
+    maximumPerformanceFeeNumeratorChange = amount;
 
-    emit SetMaximumManagerFeeNumeratorChange(amount);
+    emit SetMaximumPerformanceFeeNumeratorChange(amount);
   }
 
   /// @notice Set manager fee numberator change delay
   /// @param delay The delay in seconds for the manager fee numerator change
-  function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
-    managerFeeNumeratorChangeDelay = delay;
+  function setPerformanceFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
+    performanceFeeNumeratorChangeDelay = delay;
 
-    emit SetManagerFeeNumeratorChangeDelay(delay);
+    emit SetPerformanceFeeNumeratorChangeDelay(delay);
   }
 
   /// @notice Set exit cool down time (in seconds)

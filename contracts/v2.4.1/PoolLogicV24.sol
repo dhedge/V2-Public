@@ -333,6 +333,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
 
       for (uint256 i = 0; i < txCount; i++) {
+        /* solhint-disable-next-line avoid-low-level-calls */
         (success, ) = transactions[i].to.call(transactions[i].txData);
         require(success, "failed to withdraw tokens");
       }
@@ -374,6 +375,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint16 txType = IGuardV24(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
+    /* solhint-disable-next-line avoid-low-level-calls */
     (success, ) = to.call(data);
     require(success, "failed to execute the call");
 
@@ -395,9 +397,9 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       uint256
     )
   {
-    uint256 managerFeeNumerator;
+    uint256 performanceFeeNumerator;
     uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogicV24(poolManagerLogic).getManagerFee();
+    (performanceFeeNumerator, managerFeeDenominator) = IPoolManagerLogicV24(poolManagerLogic).getManagerFee();
 
     return (
       name(),
@@ -407,7 +409,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       managerName(),
       creationTime,
       privatePool,
-      managerFeeNumerator,
+      performanceFeeNumerator,
       managerFeeDenominator
     );
   }
@@ -429,12 +431,18 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 fundValue = IPoolManagerLogicV24(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
-    uint256 managerFeeNumerator;
+    uint256 performanceFeeNumerator;
     uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogicV24(poolManagerLogic).getManagerFee();
+    (performanceFeeNumerator, managerFeeDenominator) = IPoolManagerLogicV24(poolManagerLogic).getManagerFee();
 
     return
-      _availableManagerFee(fundValue, tokenSupply, tokenPriceAtLastFeeMint, managerFeeNumerator, managerFeeDenominator);
+      _availableManagerFee(
+        fundValue,
+        tokenSupply,
+        tokenPriceAtLastFeeMint,
+        performanceFeeNumerator,
+        managerFeeDenominator
+      );
   }
 
   function _availableManagerFee(
@@ -468,15 +476,15 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     fundValue = IPoolManagerLogicV24(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
-    uint256 managerFeeNumerator;
+    uint256 performanceFeeNumerator;
     uint256 managerFeeDenominator;
-    (managerFeeNumerator, managerFeeDenominator) = IPoolManagerLogicV24(poolManagerLogic).getManagerFee();
+    (performanceFeeNumerator, managerFeeDenominator) = IPoolManagerLogicV24(poolManagerLogic).getManagerFee();
 
     uint256 available = _availableManagerFee(
       fundValue,
       tokenSupply,
       tokenPriceAtLastFeeMint,
-      managerFeeNumerator,
+      performanceFeeNumerator,
       managerFeeDenominator
     );
 
@@ -571,6 +579,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       .flashloanProcessing(address(this), portion, assets, amounts, premiums, interestRateModes);
 
     for (uint256 i = 0; i < transactions.length; i++) {
+      /* solhint-disable-next-line avoid-low-level-calls */
       (success, ) = transactions[i].to.call(transactions[i].txData);
       require(success, "failed to process flashloan");
     }
