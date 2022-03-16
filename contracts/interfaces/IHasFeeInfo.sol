@@ -45,9 +45,9 @@ interface IHasFeeInfo {
       uint256
     );
 
-  function maximumManagerFeeNumeratorChange() external view returns (uint256);
+  function maximumPerformanceFeeNumeratorChange() external view returns (uint256);
 
-  function managerFeeNumeratorChangeDelay() external view returns (uint256);
+  function performanceFeeNumeratorChangeDelay() external view returns (uint256);
 
   function getExitFee() external view returns (uint256, uint256);
 

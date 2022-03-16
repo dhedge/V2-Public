@@ -151,17 +151,17 @@ describe("ManagerFee Test", function () {
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
     const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const performanceFeeNumerator = await poolManagerLogicProxy.performanceFeeNumerator();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
-    const streamingFeeNumerator = await poolManagerLogicProxy.streamingFeeNumerator();
     const streamingFee = totalSupplyPreMint
       .mul(ethers.BigNumber.from(await currentBlockTimestamp()).sub(await poolLogicProxy.lastFeeMintTime()))
-      .mul(streamingFeeNumerator)
+      .mul(managerFeeNumerator)
       .div(10000)
       .div(86400 * 365);
     const calculatedAvailableFee = tokenPricePreMint
       .sub(tokenPriceAtLastFeeMint)
       .mul(totalSupplyPreMint)
-      .mul(managerFeeNumerator)
+      .mul(performanceFeeNumerator)
       .div(10000)
       .div(tokenPricePreMint)
       .add(streamingFee);
@@ -221,17 +221,17 @@ describe("ManagerFee Test", function () {
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
     const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const performanceFeeNumerator = await poolManagerLogicProxy.performanceFeeNumerator();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
-    const streamingFeeNumerator = await poolManagerLogicProxy.streamingFeeNumerator();
     const streamingFee = totalSupplyPreMint
       .mul(ethers.BigNumber.from(await currentBlockTimestamp()).sub(await poolLogicProxy.lastFeeMintTime()))
-      .mul(streamingFeeNumerator)
+      .mul(managerFeeNumerator)
       .div(10000)
       .div(86400 * 365);
     const calculatedAvailableFee = tokenPricePreMint
       .sub(tokenPriceAtLastFeeMint)
       .mul(totalSupplyPreMint)
-      .mul(managerFeeNumerator)
+      .mul(performanceFeeNumerator)
       .div(10000)
       .div(tokenPricePreMint)
       .add(streamingFee);

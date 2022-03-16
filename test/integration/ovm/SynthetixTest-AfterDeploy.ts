@@ -59,7 +59,7 @@ describe("Synthetix Test", function () {
           managerName,
           manager,
           time,
-          managerFeeNumerator,
+          performanceFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -73,7 +73,7 @@ describe("Synthetix Test", function () {
             managerName: managerName,
             manager: manager,
             time: time,
-            managerFeeNumerator: managerFeeNumerator,
+            performanceFeeNumerator: performanceFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },
@@ -105,7 +105,7 @@ describe("Synthetix Test", function () {
 
     expect(event.managerName).to.equal("Barren Wuffet");
     expect(event.manager).to.equal(manager.address);
-    expect(event.managerFeeNumerator.toString()).to.equal("5000");
+    expect(event.performanceFeeNumerator.toString()).to.equal("5000");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
     let deployedFunds = await poolFactory.getDeployedFunds();
