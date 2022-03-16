@@ -4,7 +4,6 @@ import { checkAlmostSame } from "../../TestHelpers";
 import {
   IERC20__factory,
   IMulticallExtended__factory,
-  IV3SwapRouter,
   IV3SwapRouter__factory,
   PoolFactory,
   PoolLogic,
@@ -40,17 +39,14 @@ export const uniswapV3SwapRouterGuardTest = (params: IUniswapV3SwapRouterGuardTe
 
   describe("Uniswap V3 Swap Router Test", function () {
     let deployments: IDeployments;
-    let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+    let logicOwner: SignerWithAddress, manager: SignerWithAddress;
     let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
-    let v3SwapRouter: IV3SwapRouter;
     const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
     const IV3SwapRouter = new ethers.utils.Interface(IV3SwapRouter__factory.abi);
     const iMulticall = new ethers.utils.Interface(IMulticallExtended__factory.abi);
 
     before(async function () {
-      [logicOwner, manager, dao, user] = await ethers.getSigners();
-
-      v3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
+      [logicOwner, manager] = await ethers.getSigners();
 
       deployments = await deployContracts(network);
       poolFactory = deployments.poolFactory;

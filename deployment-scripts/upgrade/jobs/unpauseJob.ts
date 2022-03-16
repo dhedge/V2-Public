@@ -7,6 +7,7 @@ export const unpauseJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
+  // eslint-disable-next-line @typescript-eslint/ban-types
   _filenames: {},
   addresses: IProposeTxProperties,
 ) => {

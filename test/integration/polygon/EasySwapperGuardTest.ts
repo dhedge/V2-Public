@@ -26,7 +26,7 @@ describe("EasySwapperGuard", () => {
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let torosAssetAddress: string;
 
-  let snapshot: any;
+  let snapshot: unknown;
   before(async () => {
     snapshot = await ethers.provider.send("evm_snapshot", []);
     [logicOwner, manager] = await ethers.getSigners();
@@ -35,6 +35,7 @@ describe("EasySwapperGuard", () => {
 
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     dhedgeEasySwapper = deployments.dhedgeEasySwapper!;
 
     const torosAsset = await createFund(poolFactory, logicOwner, manager, [{ asset: assets.usdc, isDeposit: true }]);
@@ -75,9 +76,10 @@ describe("EasySwapperGuard", () => {
     await USDC.approve(poolLogicProxy.address, units(500, 6));
     await poolLogicProxy.deposit(assets.usdc, units(500, 6));
     // Check token price is $1
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100) as any);
 
-    let approveABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, units(500, 6)]);
+    const approveABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, units(500, 6)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const depositEncoded = DhedgeEasySwapperInterface.encodeFunctionData("deposit", [
@@ -99,9 +101,10 @@ describe("EasySwapperGuard", () => {
     expect(torosBalance.gt(0)).to.be.true;
 
     // Check token price is $1
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100) as any);
 
-    let approveTorosABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, torosBalance]);
+    const approveTorosABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, torosBalance]);
     await poolLogicProxy.connect(manager).execTransaction(torosAssetAddress, approveTorosABI);
 
     const withdrawEncoded = DhedgeEasySwapperInterface.encodeFunctionData("withdraw", [
@@ -120,6 +123,7 @@ describe("EasySwapperGuard", () => {
     expect(torosBalanceAfterWithdraw).to.equal(0);
 
     // Check token price is 98c to $1.02
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(50) as any);
   });
 

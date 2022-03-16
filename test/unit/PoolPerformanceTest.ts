@@ -5,12 +5,12 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Artifact } from "hardhat/types";
 
 import { updateChainlinkAggregators } from "../TestHelpers";
-import { MockContract } from "../../types";
+import { MockContract, PoolLogic__factory } from "../../types";
 import { Interface } from "@ethersproject/abi";
 
 const { BigNumber } = ethers;
 
-const { units, currentBlockTimestamp } = require("../TestHelpers");
+import { units, currentBlockTimestamp } from "../TestHelpers";
 
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
 
@@ -19,7 +19,7 @@ const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000
 
 describe("PoolFactory", function () {
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, investor: SignerWithAddress;
-  let poolFactory: Contract, PoolLogic: Contract, poolLogicProxy: Contract, poolPerformance: Contract;
+  let PoolLogic: PoolLogic__factory, poolFactory: Contract, poolLogicProxy: Contract, poolPerformance: Contract;
 
   let IERC20: Artifact, iERC20: Interface;
   let synthetixGuard; // contract guards
@@ -49,7 +49,7 @@ describe("PoolFactory", function () {
       "contracts/interfaces/synthetix/IAddressResolver.sol:IAddressResolver",
     );
     const iAddressResolver = new ethers.utils.Interface(IAddressResolver.abi);
-    let getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
+    const getAddressABI = iAddressResolver.encodeFunctionData("getAddress", [_SYNTHETIX_KEY]);
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
     // mock ISynthetix
@@ -83,12 +83,12 @@ describe("PoolFactory", function () {
 
     IERC20 = await artifacts.readArtifact("ERC20Upgradeable");
     iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let decimalsABI = iERC20.encodeFunctionData("decimals", []);
+    const decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await susdProxy.givenCalldataReturnUint(decimalsABI, "18");
     await sethProxy.givenCalldataReturnUint(decimalsABI, "18");
 
     const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
+    const governance = await Governance.deploy();
 
     const mockAaveProtocolDataProvider = await MockContract.deploy();
     const mockAaveLendingPool = await MockContract.deploy();
@@ -105,7 +105,7 @@ describe("PoolFactory", function () {
     await poolPerformance.deployed();
     await poolPerformance.enable();
 
-    PoolLogic = (await ethers.getContractFactory("PoolLogic")) as any;
+    PoolLogic = await ethers.getContractFactory("PoolLogic");
     const poolLogic = await PoolLogic.deploy();
 
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -166,7 +166,7 @@ describe("PoolFactory", function () {
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
-    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+    const transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
       poolLogicProxy.address,
       (100e18).toString(),
@@ -176,7 +176,7 @@ describe("PoolFactory", function () {
     await poolLogicProxy.deposit(susd, (100e18).toString());
 
     const oneDollar = 1e18;
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
     expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
@@ -246,7 +246,7 @@ describe("PoolFactory", function () {
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
-    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+    const transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
       poolLogicProxy.address,
       (100e18).toString(),
@@ -256,7 +256,7 @@ describe("PoolFactory", function () {
     await poolLogicProxy.deposit(susd, (100e18).toString());
 
     const oneDollar = 1e18;
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
     expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
@@ -330,7 +330,7 @@ describe("PoolFactory", function () {
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
-    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+    const transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
       poolLogicProxy.address,
       (100e18).toString(),
@@ -341,7 +341,7 @@ describe("PoolFactory", function () {
 
     const oneDollar = 1e18;
 
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
     expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(
@@ -406,7 +406,7 @@ describe("PoolFactory", function () {
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
-    let transferFromABI = iERC20.encodeFunctionData("transferFrom", [
+    const transferFromABI = iERC20.encodeFunctionData("transferFrom", [
       investor.address,
       poolLogicProxy.address,
       (100e18).toString(),
@@ -416,7 +416,7 @@ describe("PoolFactory", function () {
     await poolLogicProxy.deposit(susd, (100e18).toString());
 
     const oneDollar = 1e18;
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await susdProxy.givenCalldataReturnUint(balanceOfABI, (100e18).toString());
 
     expect((await poolPerformance.tokenPriceWithoutManagerFee(poolLogicProxy.address)).toString()).to.equal(

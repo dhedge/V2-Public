@@ -99,7 +99,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
 
   await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
-  const chainAssets = (await getChainAssets(poolFactory, network))!;
+  const chainAssets = await getChainAssets(poolFactory, network);
   await assetHandler.addAssets(chainAssets);
 
   if (network == "ovm") {

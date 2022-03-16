@@ -5,7 +5,7 @@ import { Contract, ContractFactory } from "ethers";
 import { solidity } from "ethereum-waffle";
 use(solidity);
 
-const { toBytes32 } = require("../../TestHelpers");
+import { toBytes32 } from "../../TestHelpers";
 const { BigNumber } = ethers;
 
 const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
@@ -17,11 +17,11 @@ describe("RemoveAssets", function () {
     PoolManagerLogic: ContractFactory,
     aaveProtocolDataProvider: Contract;
 
-  let _: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress;
+  let manager: SignerWithAddress, dao: SignerWithAddress;
   let dai: Contract, aDai: Contract, aDaiVariableDebt: Contract, aDaiStableDebt: Contract, usdc: Contract;
 
   before(async function () {
-    [_, manager, dao] = await ethers.getSigners();
+    [, manager, dao] = await ethers.getSigners();
 
     const MockContract = await ethers.getContractFactory("MockContract");
 
@@ -50,14 +50,14 @@ describe("RemoveAssets", function () {
 
     const IERC20 = await artifacts.readArtifact("ERC20Upgradeable");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let decimalsABI = iERC20.encodeFunctionData("decimals", []);
+    const decimalsABI = iERC20.encodeFunctionData("decimals", []);
     await aaveLendingPool.givenCalldataReturnUint(decimalsABI, "18");
     await dai.givenCalldataReturnUint(decimalsABI, "18");
     await usdc.givenCalldataReturnUint(decimalsABI, "18");
     await aaveLendingPoolAssetGuard.givenCalldataReturnUint(decimalsABI, "18");
 
     const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
+    const governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
@@ -149,10 +149,10 @@ describe("RemoveAssets", function () {
     expect(funds[0]).not.to.be.undefined;
     const poolLogicProxy = await PoolLogic.attach(funds[0]);
 
-    let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
+    const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
     const poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
-    let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+    const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
     expect((await poolManagerLogicManagerProxy.getSupportedAssets()).length).to.eq(2);
 
@@ -166,7 +166,7 @@ describe("RemoveAssets", function () {
 
     const IERC20 = await artifacts.readArtifact("ERC20Upgradeable");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await aDai.givenCalldataReturnUint(balanceOfABI, 1);
 
     await expect(poolManagerLogicManagerProxy.changeAssets([], [dai.address])).to.be.revertedWith(
@@ -185,11 +185,11 @@ describe("RemoveAssets", function () {
 
     const poolManagerLogicProxy = await PoolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
 
-    let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+    const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
     const IERC20 = await artifacts.readArtifact("ERC20Upgradeable");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await aDaiStableDebt.givenCalldataReturnUint(balanceOfABI, 1);
 
     await expect(poolManagerLogicManagerProxy.changeAssets([], [dai.address])).to.be.revertedWith(
@@ -208,11 +208,11 @@ describe("RemoveAssets", function () {
 
     const poolManagerLogicProxy = await PoolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
 
-    let poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
+    const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
     const IERC20 = await artifacts.readArtifact("ERC20Upgradeable");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
-    let balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
+    const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
     await aDaiVariableDebt.givenCalldataReturnUint(balanceOfABI, 1);
 
     await expect(poolManagerLogicManagerProxy.changeAssets([], [dai.address])).to.be.revertedWith(

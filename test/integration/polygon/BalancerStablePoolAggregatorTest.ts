@@ -1,6 +1,5 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { units } from "../../TestHelpers";
 import { balancer } from "../../../config/chainData/polygon-data";
@@ -8,7 +7,6 @@ import { BalancerStablePoolAggregator, PoolFactory } from "../../../types";
 import { deployContracts } from "../utils/deployContracts";
 
 describe("Balancer Stable Pool Aggregator Test", function () {
-  let logicOwner: SignerWithAddress, other: SignerWithAddress;
   let balancerStablePoolAggregator: BalancerStablePoolAggregator;
   let poolFactory: PoolFactory;
 
@@ -18,7 +16,6 @@ describe("Balancer Stable Pool Aggregator Test", function () {
   });
 
   it("Stable Pool - USDC, TUSD, DAI, USDT", async function () {
-    [logicOwner, other] = await ethers.getSigners();
     const BalancerStablePoolAggregator = await ethers.getContractFactory("BalancerStablePoolAggregator");
     balancerStablePoolAggregator = await BalancerStablePoolAggregator.deploy(
       poolFactory.address,

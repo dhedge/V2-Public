@@ -1,6 +1,5 @@
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { deploy } from "../../deploy";
 import { hasDuplicates, proposeTx } from "../../Helpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, TDeployedAsset } from "../../types";
 import { getOracle } from "./oracles/assetsJobHelpers";
@@ -17,7 +16,7 @@ export const assetsJob: IJob<void> = async (
 ) => {
   console.log("Running Assets Job");
   const ethers = hre.ethers;
-  let newAssets: TDeployedAsset[] = [];
+  const newAssets: TDeployedAsset[] = [];
 
   const filename = filenames.assetsFileName;
   if (!filename) {
@@ -27,13 +26,16 @@ export const assetsJob: IJob<void> = async (
   const jsonAssets: TAssetConfig[] = JSON.parse(fs.readFileSync(filename, "utf-8"));
 
   // Check for any accidental duplicate addresses or price feeds in the json file
-  if (hasDuplicates(jsonAssets, (x) => x.assetAddress)) throw "Duplicate 'Address' field found in assets CSV";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (hasDuplicates(jsonAssets as any, (x: any) => x.assetAddress))
+    throw "Duplicate 'Address' field found in assets CSV";
 
   for (const jsonAsset of [...jsonAssets]) {
     const foundInVersions = versions[config.newTag].contracts.Assets?.some((deployedAsset) => {
       // We remove the deployed oracle address and then check all other fields are the same
       // JSON does need to be ordered for this to work, so might need to use node-hasher here
       if (deployedAsset.assetAddress == jsonAsset.assetAddress) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { oracleAddress, ...allOtherProps } = deployedAsset;
         return JSON.stringify(allOtherProps) === JSON.stringify(jsonAsset);
       } else {
