@@ -22,13 +22,13 @@ task("checkConfig", "Check deployed contracts")
     const initializeData = await init(environment, version, hre);
 
     // Checks ownable contracts are owned by Protocol DAO
-    if (notSpecific || taskArgs.ownership) await checkOwnership(initializeData, hre);
+    if (notSpecific || taskArgs.ownership) await checkOwnership(initializeData);
 
     // Checks deployed asset configuration vs CSV & versions file
-    if (notSpecific || taskArgs.factory) await checkFactory(initializeData, hre);
+    if (notSpecific || taskArgs.factory) await checkFactory(initializeData);
 
     // Goverernance contract configuration vs CSV
-    if (notSpecific || taskArgs.governance) await checkGovernance(initializeData, hre);
+    if (notSpecific || taskArgs.governance) await checkGovernance(initializeData);
 
     // Checks deployed asset configuration vs CSV & versions file
     if (notSpecific || taskArgs.assets) await checkAssets(initializeData, hre);

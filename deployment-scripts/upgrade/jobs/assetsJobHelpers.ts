@@ -3,11 +3,20 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../Helpers";
 import { Address, ICSVAsset, IVersions } from "../../types";
 
+export interface IBalancerData {
+  pool: string;
+  poolId: string;
+  tokens: string[];
+  decimals: number[];
+  weights: number[];
+}
+
 export interface IBalancerAsset {
   name: string;
   oracleName: "BalancerV2LPAggregator" | "BalancerLpStablePoolAggregator";
   address: string;
   assetType: number;
+  data: IBalancerData;
 }
 
 export const getOracle = async (
@@ -71,22 +80,15 @@ const getOracleAddress = async (
         csvAsset.oracleAddress,
       );
       synthPriceAggregator.deployed();
-      await tryVerify(
-        hre,
-        synthPriceAggregator.address,
-        "contracts/priceAggregators/SynthPriceAggregator.sol:SynthPriceAggregator",
-        [susdPriceAggregator.oracleAddress, csvAsset.oracleAddress],
-      );
       return synthPriceAggregator.address;
     case "DeployedOracle":
       if (csvAsset.oracleAddress) {
         return csvAsset.oracleAddress;
       }
       const deployedOracle = versions[latestVersion].contracts.Oracles?.find(
-        (oracle) => oracle.assetAddress.toLowerCase() == csvAsset.assetAddress.toLowerCase(),
+        (oracle) => oracle.assetAddress == csvAsset.assetAddress,
       );
       if (!deployedOracle) {
-        console.log(versions[latestVersion].contracts.Oracles);
         throw new Error("assetsJob.getOracleAddress.DeployedOracle: No oracle found in versions.json");
       }
 
@@ -102,16 +104,11 @@ const getOracleAddress = async (
 export const deployBalancerV2LpAggregator = async (
   balancerV2VaultAddress: string,
   factory: string,
-  pool: string,
+  info: IBalancerData,
   hre: HardhatRuntimeEnvironment,
 ): Promise<Address> => {
-  const weights: Decimal[] = (
-    await (await hre.ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights()
-  ).map((w) => new Decimal(w.toString()).div(hre.ethers.utils.parseEther("1").toString()));
-  console.log("BalancerV2LPAggregator ", pool, " : ", weights.toString());
-
   const ether = "1000000000000000000";
-  const divisor = weights.reduce((acc: any, w: any, i: any) => {
+  const divisor = info.weights.reduce((acc, w, i) => {
     if (i == 0) {
       return new Decimal(w).pow(w);
     }
@@ -120,23 +117,31 @@ export const deployBalancerV2LpAggregator = async (
 
   const K = new Decimal(ether).div(divisor).toFixed(0);
 
-  let matrix = [];
+  const matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
-    for (let j = 0; j < weights.length; j++) {
-      elements.push(new Decimal(10).pow(i).pow(weights[j]).times(ether).toFixed(0));
+    for (let j = 0; j < info.weights.length; j++) {
+      elements.push(new Decimal(10).pow(i).pow(info.weights[j]).times(ether).toFixed(0));
     }
     matrix.push(elements);
   }
 
   const BalancerV2LPAggregator = await hre.ethers.getContractFactory("BalancerV2LPAggregator");
 
-  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(factory, balancerV2VaultAddress, pool, [
-    "50000000000000000", // maxPriceDeviation: 0.05
-    K,
-    "100000000", // powerPrecision
-    matrix, // approximationMatrix
-  ] as any);
+  const balancerV2LpAggregator = await BalancerV2LPAggregator.deploy(
+    factory,
+    balancerV2VaultAddress,
+    info.pool,
+    info.tokens,
+    info.decimals,
+    info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+    {
+      maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
+      K,
+      powerPrecision: "100000000", // powerPrecision
+      approximationMatrix: matrix, // approximationMatrix
+    },
+  );
   await balancerV2LpAggregator.deployed();
 
   await tryVerify(
@@ -146,13 +151,16 @@ export const deployBalancerV2LpAggregator = async (
     [
       factory,
       balancerV2VaultAddress,
-      pool,
-      [
-        "50000000000000000", // maxPriceDeviation: 0.05
+      info.pool,
+      info.tokens,
+      info.decimals,
+      info.weights.map((w) => new Decimal(w).mul(ether).toFixed(0)),
+      {
+        maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
         K,
-        "100000000", // powerPrecision
-        matrix, // approximationMatrix
-      ],
+        powerPrecision: "100000000", // powerPrecision
+        approximationMatrix: matrix, // approximationMatrix
+      },
     ],
   );
   return balancerV2LpAggregator.address;

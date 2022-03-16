@@ -25,20 +25,23 @@ describe("Balancer V2 Test", function () {
     BALANCER: IERC20,
     BALANCERLP_STABLE: IERC20,
     BALANCERLP_WETH_BALANCER: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iBalancerV2Vault = new ethers.utils.Interface(IBalancerV2Vault__factory.abi);
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;
     WETH = deployments.assets.WETH;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     BALANCER = deployments.assets.BALANCER!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     BALANCERLP_STABLE = deployments.assets.BALANCERLP_STABLE!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     BALANCERLP_WETH_BALANCER = deployments.assets.BALANCERLP_WETH_BALANCER!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
@@ -203,7 +206,7 @@ describe("Balancer V2 Test", function () {
     const recipient = poolLogicProxy.address;
     const limits = ["1000000", "-990000"];
 
-    let swapTx = iBalancerV2Vault.encodeFunctionData("batchSwap", [
+    const swapTx = iBalancerV2Vault.encodeFunctionData("batchSwap", [
       kind,
       pools,
       assetsArray,
@@ -234,7 +237,7 @@ describe("Balancer V2 Test", function () {
     const recipient = poolLogicProxy.address;
     const limits = ["1010000", "-1000000"];
 
-    let swapTx = iBalancerV2Vault.encodeFunctionData("batchSwap", [
+    const swapTx = iBalancerV2Vault.encodeFunctionData("batchSwap", [
       kind,
       pools,
       assetsArray,
@@ -317,7 +320,7 @@ describe("Balancer V2 Test", function () {
         false,
       ],
     ]);
-    let approveABI = iERC20.encodeFunctionData("approve", [balancer.v2Vault, amount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [balancer.v2Vault, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdt, approveABI);
     const usdtBalanceBefore = ethers.BigNumber.from(await USDT.balanceOf(poolLogicProxy.address));
@@ -442,7 +445,7 @@ describe("Balancer V2 Test", function () {
         false,
       ],
     ]);
-    let approveABI = iERC20.encodeFunctionData("approve", [balancer.v2Vault, amount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [balancer.v2Vault, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
     const lpBalanceBefore = ethers.BigNumber.from(await BALANCERLP_WETH_BALANCER.balanceOf(poolLogicProxy.address));
     const wethBalanceBefore = ethers.BigNumber.from(await WETH.balanceOf(poolLogicProxy.address));

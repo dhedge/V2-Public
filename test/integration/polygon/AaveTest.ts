@@ -22,26 +22,28 @@ use(solidity);
 
 describe("Aave Test", function () {
   let USDC: IERC20, DAI: IERC20, AMUSDC: IERC20, WMATIC: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   let deployments: IDeployments;
 
   before(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
 
     deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     DAI = deployments.assets.DAI;
     USDC = deployments.assets.USDC;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     WMATIC = deployments.assets.WMATIC!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMUSDC = deployments.assets.AMUSDC!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
   });
 
-  let snapshot: any;
+  let snapshot: unknown;
   afterEach(async () => {
     await ethers.provider.send("evm_revert", [snapshot]);
     await ethers.provider.send("evm_mine", []);
@@ -255,7 +257,7 @@ describe("Aave Test", function () {
       // Aave balance: 100 amUSDC
 
       // Withdraw 20%
-      let withdrawAmount = units(40);
+      const withdrawAmount = units(40);
 
       const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
       const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
@@ -356,7 +358,7 @@ describe("Aave Test", function () {
         );
 
         // approve dai
-        let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+        const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
         await poolLogicProxy.connect(manager).execTransaction(assets.dai, approveABI);
 
         const daiBalanceBefore = await DAI.balanceOf(poolLogicProxy.address);
@@ -381,7 +383,7 @@ describe("Aave Test", function () {
         await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: assets.weth, isDeposit: false }], []);
 
         // Withdraw 10%
-        let withdrawAmount = units(20);
+        const withdrawAmount = units(20);
 
         const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
         const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
@@ -475,7 +477,7 @@ describe("Aave Test", function () {
         const amount = units(10);
         const repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
 
-        let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+        const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
         await poolLogicProxy.connect(manager).execTransaction(assets.dai, approveABI);
         await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI);
 

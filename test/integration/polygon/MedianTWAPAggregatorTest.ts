@@ -13,7 +13,7 @@ use(solidity);
 describe("Median TWAP Oracle Test", function () {
   let logicOwner: SignerWithAddress, other: SignerWithAddress;
   let dhedgeMedianTwapAggregator: MedianTWAPAggregator;
-  let snapshot: any;
+  let snapshot: unknown;
 
   beforeEach(async function () {
     snapshot = await ethers.provider.send("evm_snapshot", []);
@@ -99,6 +99,7 @@ describe("Median TWAP Oracle Test", function () {
 
     const price = (await dhedgeMedianTwapAggregator.latestRoundData()).answer;
     const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.dht)).toString(), 8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(5).div(100) as any); // 3% diff
   });
 
@@ -123,6 +124,7 @@ describe("Median TWAP Oracle Test", function () {
 
     const price = (await wethMedianTwapAggregator.latestRoundData()).answer;
     const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.weth)).toString(), 8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(3).div(100) as any); // 3% diff
   });
 
@@ -147,6 +149,7 @@ describe("Median TWAP Oracle Test", function () {
 
     const price = (await usdcMedianTwapAggregator.latestRoundData()).answer;
     const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.usdc)).toString(), 8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(3).div(100) as any); // 3% diff
   });
 
@@ -165,7 +168,6 @@ describe("Median TWAP Oracle Test", function () {
       value: ethers.utils.parseEther("0"),
     }); // dummy transaction to increase block time
 
-    const currentBlock = await ethers.provider.getBlockNumber();
     await expect(dhedgeMedianTwapAggregator.latestRoundData()).to.revertedWith("TWAP price expired");
   });
 
@@ -238,7 +240,6 @@ describe("Median TWAP Oracle Test", function () {
     const DHT = await ethers.getContractAt("IERC20", assets.dht);
     const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
     const sushiswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, sushi.router);
-    const dhtBalance = await DHT.balanceOf(logicOwner.address);
     const sourceAmount = units(100000);
     await DHT.approve(sushi.router, sourceAmount);
     await sushiswapRouter.swapExactTokensForTokens(

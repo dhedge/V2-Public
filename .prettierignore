@@ -1,0 +1,11 @@
+.vscode
+node_modules
+coverage
+artifacts
+artifacts-ovm
+cache
+types
+*.md
+*.yml
+*.hbs
+*.json

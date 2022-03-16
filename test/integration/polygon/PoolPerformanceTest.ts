@@ -1,8 +1,8 @@
 import { Contract, ContractFactory } from "ethers";
-import { checkAlmostSame, toBytes32, units } from "../../TestHelpers";
+import { checkAlmostSame, units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { aave, assets, assetsBalanceOfSlot, price_feeds, sushi } from "../../../config/chainData/polygon-data";
-import { artifacts, ethers, upgrades } from "hardhat";
+import { aave, assets, assetsBalanceOfSlot } from "../../../config/chainData/polygon-data";
+import { artifacts, ethers } from "hardhat";
 import { expect } from "chai";
 import { Interface } from "@ethersproject/abi";
 import { getAccountToken } from "../utils/getAccountTokens";
@@ -22,14 +22,14 @@ const setStorageAt = async (address: string, index: string, value: string) => {
 };
 
 describe("PoolPerformance", function () {
-  let USDC: Contract, WETH: Contract, WMatic: Contract;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress;
+  let USDC: Contract, WETH: Contract;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let PoolLogic: ContractFactory;
   let poolFactory: Contract, poolPerformance: Contract;
   let AMUSDC: Contract, AMWETH: Contract, iERC20: Interface;
 
   before(async function () {
-    [logicOwner, manager, dao] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
 
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
@@ -37,7 +37,9 @@ describe("PoolPerformance", function () {
 
     WETH = deployments.assets.WETH;
     USDC = deployments.assets.USDC;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMUSDC = deployments.assets.AMUSDC!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMWETH = deployments.assets.AMWETH!;
 
     await getAccountToken(units(6000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
@@ -740,7 +742,7 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+      const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
       await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -754,7 +756,12 @@ describe("PoolPerformance", function () {
       );
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
+      const depositABI = iLendingPool.encodeFunctionData("deposit", [
+        assets.usdc,
+        usdcAmount,
+        poolLogicProxy.address,
+        0,
+      ]);
       await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
@@ -826,7 +833,7 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+      const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
       await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -840,7 +847,12 @@ describe("PoolPerformance", function () {
       );
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, 100e6 / 2, poolLogicProxy.address, 0]);
+      const depositABI = iLendingPool.encodeFunctionData("deposit", [
+        assets.usdc,
+        100e6 / 2,
+        poolLogicProxy.address,
+        0,
+      ]);
       await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
@@ -932,7 +944,7 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+      const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
       await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -946,7 +958,12 @@ describe("PoolPerformance", function () {
       );
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
+      const depositABI = iLendingPool.encodeFunctionData("deposit", [
+        assets.usdc,
+        usdcAmount,
+        poolLogicProxy.address,
+        0,
+      ]);
       await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
@@ -1044,7 +1061,7 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+      const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
       await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
       const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -1058,7 +1075,12 @@ describe("PoolPerformance", function () {
       );
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
+      const depositABI = iLendingPool.encodeFunctionData("deposit", [
+        assets.usdc,
+        usdcAmount,
+        poolLogicProxy.address,
+        0,
+      ]);
       await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
 
       expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal((0).toString());
@@ -1136,7 +1158,7 @@ describe("PoolPerformance", function () {
       const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
 
       // approve usdc
-      let approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, halfBalanceOfWeth]);
+      const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, halfBalanceOfWeth]);
       await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
       const wethBalanceBefore = await WETH.balanceOf(poolLogicProxy.address);
@@ -1150,7 +1172,7 @@ describe("PoolPerformance", function () {
       );
 
       // deposit
-      let depositABI = iLendingPool.encodeFunctionData("deposit", [
+      const depositABI = iLendingPool.encodeFunctionData("deposit", [
         assets.weth,
         halfBalanceOfWeth,
         poolLogicProxy.address,

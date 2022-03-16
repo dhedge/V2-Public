@@ -10,6 +10,7 @@ task("explorerVerify", "Verify contracts")
     const network = await hre.ethers.provider.getNetwork();
     const { addresses, filenames } = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const versions = require(filenames.versionsFileName);
     const currentTag = await getTag();
     console.log("currentTag:", currentTag);

@@ -14,11 +14,11 @@ const oneDollar = units(1);
 
 describe.skip("Early Exit Fee", function () {
   let WMATIC: IWETH;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic;
 
   beforeEach(async function () {
-    [logicOwner, manager, dao] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
 

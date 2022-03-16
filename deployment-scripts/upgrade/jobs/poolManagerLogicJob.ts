@@ -7,6 +7,7 @@ export const poolManagerLogicJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
+  // eslint-disable-next-line @typescript-eslint/ban-types
   _filenames: {},
   addresses: IProposeTxProperties,
 ) => {
@@ -15,7 +16,7 @@ export const poolManagerLogicJob: IJob<void> = async (
 
   console.log("Will upgrade poolmanagerlogic");
   if (config.execute) {
-    let oldPooManagerLogicProxy = versions[config.oldTag].contracts.PoolManagerLogicProxy;
+    const oldPooManagerLogicProxy = versions[config.oldTag].contracts.PoolManagerLogicProxy;
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     const poolManagerLogic = await upgrades.prepareUpgrade(oldPooManagerLogicProxy, PoolManagerLogic);
     console.log("poolManagerLogic deployed to: ", poolManagerLogic);

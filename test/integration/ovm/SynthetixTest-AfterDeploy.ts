@@ -3,12 +3,12 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import fs from "fs";
 import { artifacts, ethers } from "hardhat";
-import { IVersions } from "../../../deployment-scripts/ovm/deploy-ovm";
 import { units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { assets, synthetix as SynthetixData } from "../../../config/chainData/ovm-data";
 
-const { checkAlmostSame } = require("../../TestHelpers");
+import { checkAlmostSame } from "../../TestHelpers";
+import { IVersions } from "../../../deployment-scripts/types";
 
 const versions: IVersions = JSON.parse(fs.readFileSync("./publish/ovm/prod/versions.json", "utf-8"));
 
@@ -49,7 +49,7 @@ describe("Synthetix Test", function () {
   });
 
   it("Should be able to createFund", async function () {
-    let fundCreatedEvent = new Promise((resolve, reject) => {
+    const fundCreatedEvent = new Promise((resolve, reject) => {
       poolFactory.on(
         "FundCreated",
         (
@@ -97,7 +97,8 @@ describe("Synthetix Test", function () {
       ],
     );
 
-    let event: any = await fundCreatedEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await fundCreatedEvent;
 
     fundAddress = event.fundAddress;
     expect(event.isPoolPrivate).to.be.false;
@@ -108,20 +109,20 @@ describe("Synthetix Test", function () {
     expect(event.performanceFeeNumerator.toString()).to.equal("5000");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
-    let deployedFunds = await poolFactory.getDeployedFunds();
-    let deployedFundsLength = deployedFunds.length;
+    const deployedFunds = await poolFactory.getDeployedFunds();
+    const deployedFundsLength = deployedFunds.length;
     expect(deployedFundsLength.toString()).to.equal("1");
 
-    let isPool = await poolFactory.isPool(fundAddress);
+    const isPool = await poolFactory.isPool(fundAddress);
     expect(isPool).to.be.true;
 
     poolLogicProxy = await PoolLogic.attach(fundAddress);
-    let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
+    const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
     poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
     //default assets are supported
-    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-    let numberOfSupportedAssets = supportedAssets.length;
+    const supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    const numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(2);
     expect(await poolManagerLogicProxy.isSupportedAsset(assets.susd)).to.be.true;
     expect(await poolManagerLogicProxy.isSupportedAsset(assets.seth)).to.be.true;
@@ -131,7 +132,7 @@ describe("Synthetix Test", function () {
   });
 
   it("should be able to deposit", async function () {
-    let depositEvent = new Promise((resolve, reject) => {
+    const depositEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
         "Deposit",
         (
@@ -169,14 +170,16 @@ describe("Synthetix Test", function () {
       }, 60000);
     });
 
-    let totalFundValue = await poolManagerLogicProxy.totalFundValue();
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
     await expect(poolLogicProxy.deposit(assets.slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
 
     await susdProxy.approve(poolLogicProxy.address, (100e18).toString());
     await poolLogicProxy.deposit(assets.susd, (100e18).toString());
-    let event: any = await depositEvent;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
@@ -204,7 +207,7 @@ describe("Synthetix Test", function () {
   });
 
   it("should be able to swap tokens on synthetix.", async () => {
-    let exchangeEvent = new Promise((resolve, reject) => {
+    const exchangeEvent = new Promise((resolve, reject) => {
       synthetixGuard.on(
         "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
@@ -271,14 +274,15 @@ describe("Synthetix Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
 
-    let event: any = await exchangeEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await exchangeEvent;
     expect(event.sourceAsset).to.equal(assets.susd);
     expect(event.sourceAmount).to.equal((100e18).toString());
     expect(event.destinationAsset).to.equal(assets.seth);
   });
 
   it("should be able to withdraw", async function () {
-    let withdrawalEvent = new Promise((resolve, reject) => {
+    const withdrawalEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
         "Withdrawal",
         (
@@ -315,7 +319,7 @@ describe("Synthetix Test", function () {
     });
 
     // Withdraw 50%
-    let withdrawAmount = (await poolLogicProxy.totalSupply()).div(2);
+    const withdrawAmount = (await poolLogicProxy.totalSupply()).div(2);
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
     await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day
@@ -323,7 +327,8 @@ describe("Synthetix Test", function () {
 
     await poolLogicProxy.withdraw(withdrawAmount.toString());
 
-    let event: any = await withdrawalEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const event: any = await withdrawalEvent;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
     checkAlmostSame(event.valueWithdrawn, totalFundValue.div(2));

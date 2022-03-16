@@ -1,8 +1,8 @@
-const { ethers, upgrades } = require("hardhat");
-const { expect, use } = require("chai");
-const chaiAlmost = require("chai-almost");
-const { checkAlmostSame, getAmountOut, units } = require("../../TestHelpers");
-const { sushi, assets, price_feeds, ZERO_ADDRESS } = require("./arbitrum-data");
+import { ethers, upgrades } from "hardhat";
+import { expect, use } from "chai";
+import chaiAlmost from "chai-almost";
+import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
+import { sushi, assets, price_feeds, ZERO_ADDRESS } from "./arbitrum-data";
 
 use(chaiAlmost());
 
@@ -19,7 +19,7 @@ describe("Sushiswap V2 Test", function () {
     const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
 
     const Governance = await ethers.getContractFactory("Governance");
-    let governance = await Governance.deploy();
+    const governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
     const PoolPerformance = await ethers.getContractFactory("PoolPerformance");
@@ -142,7 +142,7 @@ describe("Sushiswap V2 Test", function () {
 
     console.log("Passed poolManagerLogic Init!");
 
-    let fundCreatedEvent = new Promise((resolve, reject) => {
+    const fundCreatedEvent = new Promise((resolve, reject) => {
       poolFactory.on(
         "FundCreated",
         (
@@ -210,7 +210,7 @@ describe("Sushiswap V2 Test", function () {
       ],
     );
 
-    let event = await fundCreatedEvent;
+    const event = await fundCreatedEvent;
 
     fundAddress = event.fundAddress;
     expect(event.isPoolPrivate).to.be.false;
@@ -221,26 +221,26 @@ describe("Sushiswap V2 Test", function () {
     expect(event.performanceFeeNumerator.toString()).to.equal("5000");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
-    let deployedFunds = await poolFactory.getDeployedFunds();
-    let deployedFundsLength = deployedFunds.length;
+    const deployedFunds = await poolFactory.getDeployedFunds();
+    const deployedFundsLength = deployedFunds.length;
     expect(deployedFundsLength.toString()).to.equal("1");
 
-    let isPool = await poolFactory.isPool(fundAddress);
+    const isPool = await poolFactory.isPool(fundAddress);
     expect(isPool).to.be.true;
 
-    let poolManagerLogicAddress = await poolFactory.getLogic(1);
+    const poolManagerLogicAddress = await poolFactory.getLogic(1);
     expect(poolManagerLogicAddress).to.equal(poolManagerLogic.address);
 
-    let poolLogicAddress = await poolFactory.getLogic(2);
+    const poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(poolLogic.address);
 
     poolLogicProxy = await PoolLogic.attach(fundAddress);
-    let poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
+    const poolManagerLogicProxyAddress = await poolLogicProxy.poolManagerLogic();
     poolManagerLogicProxy = await PoolManagerLogic.attach(poolManagerLogicProxyAddress);
 
     //default assets are supported
-    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
-    let numberOfSupportedAssets = supportedAssets.length;
+    const supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    const numberOfSupportedAssets = supportedAssets.length;
     expect(numberOfSupportedAssets).to.eq(2);
     expect(await poolManagerLogicProxy.isSupportedAsset(assets.usdc)).to.be.true;
     expect(await poolManagerLogicProxy.isSupportedAsset(assets.weth)).to.be.true;
@@ -250,7 +250,7 @@ describe("Sushiswap V2 Test", function () {
   });
 
   it("should be able to deposit", async function () {
-    let depositEvent = new Promise((resolve, reject) => {
+    const depositEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
         "Deposit",
         (
@@ -288,25 +288,25 @@ describe("Sushiswap V2 Test", function () {
       }, 60000);
     });
 
-    let supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
+    const supportedAssets = await poolManagerLogicProxy.getSupportedAssets();
     console.log("supportedAsset: ", supportedAssets);
 
-    let chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", price_feeds.eth);
-    let ethPrice = await chainlinkEth.latestRoundData();
+    const chainlinkEth = await ethers.getContractAt("AggregatorV3Interface", price_feeds.eth);
+    const ethPrice = await chainlinkEth.latestRoundData();
     console.log("eth price: ", ethPrice[1].toString());
     console.log("updatedAt: ", ethPrice[3].toString());
 
-    let chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", price_feeds.usdc);
-    let usdcPrice = await chainlinkUsdc.latestRoundData();
+    const chainlinkUsdc = await ethers.getContractAt("AggregatorV3Interface", price_feeds.usdc);
+    const usdcPrice = await chainlinkUsdc.latestRoundData();
     console.log("usdc price: ", usdcPrice[1].toString());
     console.log("updatedAt: ", usdcPrice[3].toString());
 
     // Revert on second time
-    let assetBalance = await poolManagerLogicProxy.assetBalance(assets.usdc);
+    const assetBalance = await poolManagerLogicProxy.assetBalance(assets.usdc);
     console.log("assetBalance: ", assetBalance.toString());
 
     // Revert on second time
-    let assetValue = await poolManagerLogicProxy["assetValue(address)"](assets.usdc);
+    const assetValue = await poolManagerLogicProxy["assetValue(address)"](assets.usdc);
     console.log("assetValue: ", assetValue.toString());
 
     // Revert on second time
@@ -317,7 +317,7 @@ describe("Sushiswap V2 Test", function () {
 
     await USDC.approve(poolLogicProxy.address, (200e6).toString());
     await poolLogicProxy.deposit(assets.usdc, (200e6).toString());
-    let event = await depositEvent;
+    const event = await depositEvent;
 
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
@@ -345,7 +345,7 @@ describe("Sushiswap V2 Test", function () {
   });
 
   it("should be able to swap tokens on sushiswap.", async () => {
-    let exchangeEvent = new Promise((resolve, reject) => {
+    const exchangeEvent = new Promise((resolve, reject) => {
       uniswapV2RouterGuard.on(
         "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
@@ -435,14 +435,14 @@ describe("Sushiswap V2 Test", function () {
     await poolLogicProxy.connect(manager).execTransaction(sushi.router, swapABI);
 
     expect(await USDC.balanceOf(poolLogicProxy.address)).to.be.equal(100e6);
-    let event = await exchangeEvent;
+    const event = await exchangeEvent;
     expect(event.sourceAsset).to.equal(assets.usdc);
     expect(event.sourceAmount).to.equal((100e6).toString());
     expect(event.destinationAsset.toLowerCase()).to.equal(assets.weth.toLowerCase());
   });
 
   it("should be able to withdraw", async function () {
-    let withdrawalEvent = new Promise((resolve, reject) => {
+    const withdrawalEvent = new Promise((resolve, reject) => {
       poolLogicProxy.on(
         "Withdrawal",
         (
@@ -479,13 +479,13 @@ describe("Sushiswap V2 Test", function () {
     });
 
     // Withdraw 50%
-    let withdrawAmount = units(100);
+    const withdrawAmount = units(100);
 
     await poolFactory.setExitCooldown(0);
 
     await poolLogicProxy.withdraw(withdrawAmount);
 
-    let event = await withdrawalEvent;
+    const event = await withdrawalEvent;
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(logicOwner.address);
     checkAlmostSame(event.valueWithdrawn, units(100));
@@ -511,7 +511,7 @@ describe("Sushiswap V2 Test", function () {
 
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      const approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
       await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
       await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
     };
@@ -621,7 +621,7 @@ describe("Sushiswap V2 Test", function () {
 
       const IERC20 = await hre.artifacts.readArtifact("IERC20");
       const iERC20 = new ethers.utils.Interface(IERC20.abi);
-      let approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
+      const approveABI = iERC20.encodeFunctionData("approve", [sushi.minichef, availableLpToken]);
       await poolLogicProxy.connect(manager).execTransaction(sushi.pools.usdc_weth.address, approveABI);
 
       await poolLogicProxy.connect(manager).execTransaction(sushi.minichef, depositAbi);
