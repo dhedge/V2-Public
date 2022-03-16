@@ -371,7 +371,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
 
         // increase USDC-WETH LP position by 2000 USDC and 1 WETH
         const increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
-          [tokenId, units(2000, 6), units(1), 0, 0, deadLine],
+          [tokenId, bothSupportedPair.amount0, bothSupportedPair.amount1, 0, 0, deadLine],
         ]);
 
         const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
