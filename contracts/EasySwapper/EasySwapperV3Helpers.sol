@@ -42,7 +42,7 @@ library EasySwapperV3Helpers {
 
     uint256 reduceLength = assets.length.sub(hits);
     assembly {
-      mstore(transactions, sub(mload(assets), reduceLength))
+      mstore(assets, sub(mload(assets), reduceLength))
     }
   }
 }

@@ -22,7 +22,7 @@ library EasySwapperV2LpHelpers {
     address poolManagerLogic,
     IUniswapV2Router v2Router,
     address lpAddress
-  ) internal view returns (address[] memory assets) {
+  ) internal returns (address[] memory assets) {
     address token0 = IUniswapV2Pair(lpAddress).token0();
     address token1 = IUniswapV2Pair(lpAddress).token1();
     v2Router.removeLiquidity(
@@ -35,7 +35,7 @@ library EasySwapperV2LpHelpers {
       type(uint256).max
     );
 
-    assets = new assets[](2);
+    assets = new address[](2);
     uint256 hits;
 
     // If the asset is in the supported list it will be processed by the EasySwapper by default
@@ -52,7 +52,7 @@ library EasySwapperV2LpHelpers {
 
     uint256 reduceLength = assets.length.sub(hits);
     assembly {
-      mstore(transactions, sub(mload(assets), reduceLength))
+      mstore(assets, sub(mload(assets), reduceLength))
     }
   }
 }

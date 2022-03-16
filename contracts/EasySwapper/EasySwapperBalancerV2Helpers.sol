@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -20,8 +21,8 @@ library EasySwapperBalancerV2Helpers {
     address poolManagerLogic,
     address balancerPool,
     address withdrawalAsset
-  ) internal view returns (address[] memory assets) {
-    IBalancerV2Vault vault = IBalancerPool(balancerPool).getVault();
+  ) internal returns (address[] memory assets) {
+    IBalancerV2Vault vault = IBalancerV2Vault(IBalancerPool(balancerPool).getVault());
     bytes32 poolId = IBalancerPool(balancerPool).getPoolId();
     // struct ExitPoolRequest {
     //   address[] assets;
@@ -32,7 +33,7 @@ library EasySwapperBalancerV2Helpers {
     // Not sure if/how to initialise all these fields ^^
     IBalancerV2Vault.ExitPoolRequest memory request;
 
-    (address[] memory tokens, , , ) = vault.getPoolTokens(poolId);
+    (address[] memory tokens, , ) = vault.getPoolTokens(poolId);
 
     bool hasWithdrawalAsset;
     bool hasSupportedAsset;
@@ -49,8 +50,7 @@ library EasySwapperBalancerV2Helpers {
     }
 
     if (hasWithdrawalAsset || hasSupportedAsset) {
-      request.assets = new address[](1)[0] = hasWithdrawalAsset ? withdrawalAsset : tokens[supportedAssetIndex];
-      assets = new address[](0);
+      assets[0] = hasWithdrawalAsset ? withdrawalAsset : tokens[supportedAssetIndex];
     } else {
       request.assets = tokens;
       assets = tokens;
@@ -62,6 +62,6 @@ library EasySwapperBalancerV2Helpers {
     //   address payable recipient,
     //   ExitPoolRequest memory request
     // ) external;
-    vault.exitPool(poolId, address(this), address(this), request);
+    vault.exitPool(poolId, address(this), payable(address(this)), request);
   }
 }

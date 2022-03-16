@@ -55,12 +55,6 @@ contract DhedgeEasySwapper is Ownable {
     address poolDepositAsset,
     uint256 liquidityMinted
   );
-  event Withdraw(
-    address pool,
-    uint256 fundTokenAmount,
-    address withdrawalAsset,
-    uint256 amountWithdrawnInWithdrawalAsset
-  );
 
   address payable public feeSink;
   uint256 public feeNumerator = 50;
@@ -125,7 +119,7 @@ contract DhedgeEasySwapper is Ownable {
     depositAsset.safeTransferFrom(msg.sender, address(this), amount);
 
     if (depositAsset != poolDepositAsset) {
-      swapThat(depositAsset, poolDepositAsset);
+      EasySwapperWithdrawer.swapThat(swapRouter, depositAsset, poolDepositAsset);
     }
 
     // Sweep fee to sink
@@ -163,30 +157,10 @@ contract DhedgeEasySwapper is Ownable {
       fundTokenAmount,
       withdrawalAsset,
       expectedAmountOut,
+      swapRouter,
+      weth,
       assetType2Router,
       assetType5Router
     );
-  }
-
-  /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
-  /// @dev get on the floor
-  /// @param from asset to swap from
-  function swapThat(IERC20 from, IERC20 to) internal {
-    if (from == to) {
-      return;
-    }
-
-    uint256 balance = from.balanceOf(address(this));
-    if (balance == 0) {
-      return;
-    }
-
-    from.approve(address(swapRouter), balance);
-
-    address[] memory path = new address[](2);
-    path[0] = address(from);
-    path[1] = address(to);
-
-    swapRouter.swapExactTokensForTokens(balance, 0, path, address(this), uint256(-1));
   }
 }

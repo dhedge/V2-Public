@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
-
+pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IHasAssetInfo.sol";
 import "../interfaces/IERC20Extended.sol";
 import "../interfaces/IPoolLogic.sol";
+import "../interfaces/IPoolFactory.sol";
 import "../interfaces/IPoolFactory.sol";
 import "./EasySwapperV3Helpers.sol";
 import "./EasySwapperV2LpHelpers.sol";
@@ -15,6 +18,14 @@ import "./EasySwapperBalancerV2Helpers.sol";
 library EasySwapperWithdrawer {
   using SafeMathUpgradeable for uint160;
   using SafeMathUpgradeable for uint256;
+  using SafeERC20 for IERC20;
+
+  event Withdraw(
+    address pool,
+    uint256 fundTokenAmount,
+    address withdrawalAsset,
+    uint256 amountWithdrawnInWithdrawalAsset
+  );
 
   /// @notice withdraw underlying value of tokens in expectedWithdrawalAssetOfUser
   /// @dev Swaps the underlying pool withdrawal assets to expectedWithdrawalAssetOfUser
@@ -24,14 +35,15 @@ library EasySwapperWithdrawer {
   function withdraw(
     address pool,
     uint256 fundTokenAmount,
-    IERC20Extended withdrawalAsset,
+    IERC20 withdrawalAsset,
     uint256 expectedAmountOut,
+    IUniswapV2Router swapRouter,
+    IERC20 weth,
     IUniswapV2Router assetType2Router,
     IUniswapV2Router assetType5Router
   ) external {
     IERC20(pool).safeTransferFrom(msg.sender, address(this), fundTokenAmount);
     IPoolLogic(pool).withdraw(fundTokenAmount);
-    IPoolFactory factory = IPoolFactory(IPoolLogic(pool).factory());
 
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic())
       .getSupportedAssets();
@@ -63,24 +75,24 @@ library EasySwapperWithdrawer {
     uint8 hits;
 
     for (uint256 i = 0; i < supportedAssets.length; i++) {
-      IERC20 asset = IERC20(supportedAssets[i].asset);
-      uint8 assetType = factory.getAssetType(asset);
+      address asset = supportedAssets[i].asset;
+      uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
       address[] memory unrolledAssets;
 
       // if asset == balancer somehow
-      bool isBalancer = asset.getVault() != address(0);
+      bool isBalancer = IBalancerPool(asset).getVault() != address(0);
 
       if (isBalancer) {
         unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
-          (pool).poolManagerLogic(),
+          IPoolLogic(pool).poolManagerLogic(),
           asset,
-          withdrawalAsset
+          address(withdrawalAsset)
         );
       }
       // Sushi V2 lp and Quick V2 lp
       else if (assetType == 2 || assetType == 5) {
         unrolledAssets = EasySwapperV2LpHelpers.unrollLpsAndGetUnsupportedLpAssets(
-          (pool).poolManagerLogic(),
+          IPoolLogic(pool).poolManagerLogic(),
           assetType == 2 ? assetType2Router : assetType5Router,
           asset
         );
@@ -102,20 +114,46 @@ library EasySwapperWithdrawer {
 
     uint256 reduceLength = allBasicErc20s.length.sub(hits);
     assembly {
-      mstore(transactions, sub(mload(allBasicErc20s), reduceLength))
+      mstore(allBasicErc20s, sub(mload(allBasicErc20s), reduceLength))
     }
 
     for (uint256 i = 0; i < allBasicErc20s.length; i++) {
-      IERC20 from = IERC20(allBasicErc20s[i].asset);
-      swapThat(from, withdrawalAsset);
+      IERC20 from = IERC20(allBasicErc20s[i]);
+      swapThat(swapRouter, from, withdrawalAsset);
     }
 
     // Pools that have aave enabled withdraw weth to the user. This isnt in supportedAssets somestimes :(
-    swapThat(weth, withdrawalAsset);
+    swapThat(swapRouter, weth, withdrawalAsset);
 
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
     require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
     withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
     emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
+  }
+
+  /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
+  /// @dev get on the floor
+  /// @param from asset to swap from
+  function swapThat(
+    IUniswapV2Router swapRouter,
+    IERC20 from,
+    IERC20 to
+  ) internal {
+    if (from == to) {
+      return;
+    }
+
+    uint256 balance = from.balanceOf(address(this));
+    if (balance == 0) {
+      return;
+    }
+
+    from.approve(address(swapRouter), balance);
+
+    address[] memory path = new address[](2);
+    path[0] = address(from);
+    path[1] = address(to);
+
+    swapRouter.swapExactTokensForTokens(balance, 0, path, address(this), uint256(-1));
   }
 }
