@@ -152,6 +152,10 @@ contract DhedgeEasySwapper is Ownable {
     IERC20 withdrawalAsset,
     uint256 expectedAmountOut
   ) external {
+    // Im not sure we need this because if the person that can transfer the tokens
+    // to the easy swapper isnt under a lock up than
+    // Maybe we have it so that if people are transfering to the whitelisted address they can circumt vent the lock up?
+    require(allowedPools[address(pool)], "Pool is not allowed.");
     EasySwapperWithdrawer.withdraw(
       pool,
       fundTokenAmount,

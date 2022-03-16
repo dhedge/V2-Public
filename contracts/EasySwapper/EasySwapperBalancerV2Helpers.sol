@@ -38,6 +38,7 @@ library EasySwapperBalancerV2Helpers {
     bool hasWithdrawalAsset;
     bool hasSupportedAsset;
     uint256 supportedAssetIndex;
+
     for (uint8 i = 0; i < tokens.length; ++i) {
       if (withdrawalAsset == tokens[i]) {
         hasWithdrawalAsset = true;
