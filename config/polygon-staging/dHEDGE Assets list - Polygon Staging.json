@@ -131,7 +131,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -140,7 +140,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -149,7 +149,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -158,7 +158,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -167,7 +167,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -176,7 +176,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -185,7 +185,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -194,7 +194,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -203,7 +203,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -212,7 +212,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -221,7 +221,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -236,7 +236,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -245,7 +245,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -327,7 +327,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -336,7 +336,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -399,7 +399,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -408,7 +408,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -417,7 +417,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -426,7 +426,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -435,7 +435,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -444,7 +444,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -453,7 +453,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -559,7 +559,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -568,7 +568,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -577,7 +577,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -586,7 +586,7 @@
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     }
   },
   {
@@ -647,7 +647,7 @@
     "name": "Balancer LP BPSP-TUSD",
     "oracleType": "BalancerStablePoolAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
     "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
     "assetType": 0
@@ -656,7 +656,7 @@
     "name": "Balancer LP BPSP",
     "oracleType": "BalancerStablePoolAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
     "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
     "assetType": 0
@@ -665,7 +665,7 @@
     "name": "Balancer LP WBTC-renBTC",
     "oracleType": "BalancerStablePoolAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
     "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
     "assetType": 0
@@ -674,7 +674,7 @@
     "name": "Balancer LP USDC-dUSD",
     "oracleType": "BalancerStablePoolAggregator",
     "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
     },
     "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
     "assetType": 0
