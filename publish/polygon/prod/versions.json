@@ -1866,7 +1866,7 @@
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",
       "PoolPerformance": "0x0e9B510F1229a8F13789B156B09a8B403f99B940",
-      "DhedgeEasySwapper": "0xC3e6d2811f669094d94F7589CaEa69672D93408e",
+      "DhedgeEasySwapper": "0x1d26680028855926E807413Ac7eFB4330668586D",
       "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
       "EasySwapperGuard": "0xfB95299134E94466575c4Eff82037448be1AE4Ae",
@@ -1881,6 +1881,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Mon, 14 Mar 2022 04:16:42 GMT"
+    "lastUpdated": "Thu, 17 Mar 2022 22:55:24 GMT"
   }
 }

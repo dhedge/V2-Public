@@ -130,13 +130,4 @@ export const price_feeds = {
   tusd: "0x7C5D415B64312D38c56B54358449d0a4058339d2",
 };
 
-export const toros = {
-  leveragePools: [
-    "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada", // Bitcoin Bear 2x
-    "0x027da30fadab6202801f97be344e2348a2a92842", // Ethereum Bear 2x
-    "0xdb88ab5b485b38edbeef866314f9e49d095bce39", // Bitcoin Bull 3x
-    "0x460b60565cb73845d56564384ab84bf84c13e47d", // Ethereum Bull 3x
-  ],
-};
-
 export const dhedgeEasySwapperAddress = "0xC3e6d2811f669094d94F7589CaEa69672D93408e";
