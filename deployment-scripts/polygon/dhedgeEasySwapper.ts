@@ -1,6 +1,6 @@
 import { task, types } from "hardhat/config";
 import fs from "fs";
-import { assets, quickswap, protocolDao, aave, toros } from "../../config/chainData/polygon-data";
+import { assets, quickswap, protocolDao, aave, toros, sushi } from "../../config/chainData/polygon-data";
 
 import { tryVerify } from "../Helpers";
 import { getDeploymentData } from "../upgrade/getDeploymentData";
@@ -25,7 +25,13 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
       if (versions[latestVersion].contracts.DhedgeEasySwapper) throw "Easy Swapper contract already deployed";
 
       const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(protocolDao, quickswap.router, assets.weth);
+      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
+        protocolDao,
+        quickswap.router,
+        assets.weth,
+        sushi.router,
+        quickswap.router,
+      );
       await dhedgeEasySwapper.deployed();
 
       console.log("DhedgeEasySwapper deployed to: ", dhedgeEasySwapper.address);
@@ -34,7 +40,6 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
         assets.weth,
       ]);
 
-      await dhedgeEasySwapper.setAssetToSkip(aave.lendingPool, true); // Aave is processed separately
       // Enable the Toros leverage pools (Production)
       for (const leveragePool of torosLeveragePools) {
         await dhedgeEasySwapper.setPoolAllowed(leveragePool, true);

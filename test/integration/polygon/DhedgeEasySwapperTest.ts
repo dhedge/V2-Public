@@ -3,19 +3,13 @@ import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import {
-  aave,
-  assets,
-  assetsBalanceOfSlot,
-  quickswap,
-  sushi,
-  torosPools,
-} from "../../../config/chainData/polygon-data";
+import { assets, assetsBalanceOfSlot, quickswap, sushi, torosPools } from "../../../config/chainData/polygon-data";
 import { DhedgeEasySwapper, Governance, PoolFactory, PoolManagerLogic } from "../../../types";
 import { units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 import { toBytes32 } from "../../TestHelpers";
+import { utils } from "../utils/utils";
 
 use(solidity);
 
@@ -34,6 +28,15 @@ describe("DhedgeEasySwapper", function () {
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
   let governance: Governance;
+  let snapId: string;
+
+  beforeEach(async () => {
+    snapId = await utils.evmTakeSnap();
+  });
+
+  afterEach(async () => {
+    await utils.evmRestoreSnap(snapId);
+  });
 
   before(async function () {
     [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
@@ -69,12 +72,16 @@ describe("DhedgeEasySwapper", function () {
     await governance.setAddresses([{ name: toBytes32("swapRouter"), destination: swapRouter.address }]);
 
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, swapRouter.address, assets.weth);
+    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
+      feeSink.address,
+      swapRouter.address,
+      assets.weth,
+      sushi.router,
+      quickswap.router,
+    );
     // dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
     await dhedgeEasySwapper.deployed();
 
-    // AavelendingPool
-    await dhedgeEasySwapper.setAssetToSkip(aave.lendingPool, true);
     await dhedgeEasySwapper.setFee(0, 0);
 
     await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);
@@ -260,17 +267,6 @@ describe("DhedgeEasySwapper", function () {
   });
 
   describe("Toros Tests", () => {
-    let snapshot: unknown;
-    beforeEach(async function () {
-      snapshot = await ethers.provider.send("evm_snapshot", []);
-      await ethers.provider.send("evm_mine", []);
-      [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
-    });
-    afterEach(async () => {
-      await ethers.provider.send("evm_revert", [snapshot]);
-      await ethers.provider.send("evm_mine", []);
-    });
-
     const createTest = (test: TestCase) => {
       const {
         testName,
@@ -281,7 +277,7 @@ describe("DhedgeEasySwapper", function () {
         withdrawToken,
         poolDepositToken,
       } = test;
-      it(testName, async () => {
+      it.only(testName, async () => {
         const torosPool = await ethers.getContractAt("PoolLogic", torosPoolAddress);
         await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
 

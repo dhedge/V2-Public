@@ -161,10 +161,12 @@ contract DhedgeEasySwapper is Ownable {
       fundTokenAmount,
       withdrawalAsset,
       expectedAmountOut,
-      swapRouter,
-      weth,
-      assetType2Router,
-      assetType5Router
+      EasySwapperWithdrawer.WithdrawProps({
+        swapRouter: swapRouter,
+        assetType2Router: assetType2Router,
+        assetType5Router: assetType5Router,
+        weth: weth
+      })
     );
   }
 }

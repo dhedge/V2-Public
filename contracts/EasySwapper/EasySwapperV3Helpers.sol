@@ -7,6 +7,7 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import "../interfaces/IHasSupportedAsset.sol";
+import "../interfaces/IPoolLogic.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library EasySwapperV3Helpers {
@@ -14,11 +15,11 @@ library EasySwapperV3Helpers {
 
   // Find the v3 assets that aren't in the supported list
   // natspec to come
-  function getUnsupportedV3Assets(
-    address poolManagerLogic,
-    address nonfungiblePositionManager,
-    address pool
-  ) internal view returns (address[] memory assets) {
+  function getUnsupportedV3Assets(address pool, address nonfungiblePositionManager)
+    internal
+    view
+    returns (address[] memory assets)
+  {
     uint256 nftCount = INonfungiblePositionManager(nonfungiblePositionManager).balanceOf(pool);
     // Each position has two assets
     assets = new address[](nftCount.mul(2));
@@ -29,12 +30,12 @@ library EasySwapperV3Helpers {
         .positions(tokenId);
 
       // If the asset is in the supported list it will be processed by the EasySwapper by default
-      if (!IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token0)) {
+      if (!IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic()).isSupportedAsset(token0)) {
         assets[hits] = token0;
         hits++;
       }
       // If the asset is in the supported list it will be processed by the EasySwapper by default
-      if (!IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token1)) {
+      if (!IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic()).isSupportedAsset(token1)) {
         assets[hits] = token1;
         hits++;
       }

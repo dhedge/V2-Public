@@ -27,6 +27,13 @@ library EasySwapperWithdrawer {
     uint256 amountWithdrawnInWithdrawalAsset
   );
 
+  struct WithdrawProps {
+    IUniswapV2Router swapRouter;
+    IUniswapV2Router assetType2Router;
+    IUniswapV2Router assetType5Router;
+    IERC20 weth;
+  }
+
   /// @notice withdraw underlying value of tokens in expectedWithdrawalAssetOfUser
   /// @dev Swaps the underlying pool withdrawal assets to expectedWithdrawalAssetOfUser
   /// @param fundTokenAmount the amount to withdraw
@@ -37,11 +44,8 @@ library EasySwapperWithdrawer {
     uint256 fundTokenAmount,
     IERC20 withdrawalAsset,
     uint256 expectedAmountOut,
-    IUniswapV2Router swapRouter,
-    IERC20 weth,
-    IUniswapV2Router assetType2Router,
-    IUniswapV2Router assetType5Router
-  ) external {
+    WithdrawProps memory withdrawProps
+  ) internal {
     IERC20(pool).safeTransferFrom(msg.sender, address(this), fundTokenAmount);
     IPoolLogic(pool).withdraw(fundTokenAmount);
 
@@ -71,6 +75,7 @@ library EasySwapperWithdrawer {
 
     // We support balancer lp's with upto 5 assets :\
     // ie. USDC-LINK-WETH-BAL-AAVE
+
     address[] memory allBasicErc20s = new address[](supportedAssets.length * 5);
     uint8 hits;
 
@@ -79,8 +84,17 @@ library EasySwapperWithdrawer {
       uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
       address[] memory unrolledAssets;
 
+      // Maybe there is a cleaner way to do this?
+      // Have to use try catch because some erc20 have a fallback function that reverts
+      bool isBalancer;
+      try IBalancerPool(asset).getVault() returns (address balancerVaultAddress) {
+        isBalancer = balancerVaultAddress != address(0);
+      } catch {
+        isBalancer = false;
+      }
+
       // if isBalancer
-      if (IBalancerPool(asset).getVault() != address(0)) {
+      if (isBalancer) {
         unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
           IPoolLogic(pool).poolManagerLogic(),
           asset, // BHPT
@@ -91,13 +105,17 @@ library EasySwapperWithdrawer {
       else if (assetType == 2 || assetType == 5) {
         unrolledAssets = EasySwapperV2LpHelpers.unrollLpsAndGetUnsupportedLpAssets(
           IPoolLogic(pool).poolManagerLogic(),
-          assetType == 2 ? assetType2Router : assetType5Router,
+          assetType == 2 ? withdrawProps.assetType2Router : withdrawProps.assetType5Router,
           asset
         );
       }
+      // solhint-disable-next-line no-empty-blocks
+      else if (assetType == 3) {
+        // Aave do nothing
+      }
       // Uni V3 Lp - already unrolled
       else if (assetType == 7) {
-        unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(IPoolLogic(pool).poolManagerLogic(), asset, pool);
+        unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(pool, asset);
       } else {
         allBasicErc20s[hits] = asset;
         hits++;
@@ -105,7 +123,7 @@ library EasySwapperWithdrawer {
 
       // Push any unrolledAssets into the allBasics array
       for (uint8 y = 0; y < unrolledAssets.length; ++y) {
-        if (unrolledAssets[i] != address(weth) && unrolledAssets[i] != address(withdrawalAsset)) {
+        if (unrolledAssets[i] != address(withdrawProps.weth) && unrolledAssets[i] != address(withdrawalAsset)) {
           allBasicErc20s[hits] = unrolledAssets[i];
           hits++;
         }
@@ -114,7 +132,6 @@ library EasySwapperWithdrawer {
 
     {
       uint256 reduceLength = allBasicErc20s.length.sub(hits);
-
       assembly {
         mstore(allBasicErc20s, sub(mload(allBasicErc20s), reduceLength))
       }
@@ -122,11 +139,11 @@ library EasySwapperWithdrawer {
 
     for (uint256 i = 0; i < allBasicErc20s.length; i++) {
       IERC20 from = IERC20(allBasicErc20s[i]);
-      swapThat(swapRouter, from, withdrawalAsset);
+      swapThat(withdrawProps.swapRouter, from, withdrawalAsset);
     }
 
     // Pools that have aave enabled withdraw weth to the user. This isnt in supportedAssets somestimes :(
-    swapThat(swapRouter, weth, withdrawalAsset);
+    swapThat(withdrawProps.swapRouter, withdrawProps.weth, withdrawalAsset);
 
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
     require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
