@@ -5,6 +5,7 @@ import { TAssetConfig, TOracleDeployer } from "./oracleTypes";
 
 export const deployUSDPriceAggregator: TOracleDeployer = async (
   hre: HardhatRuntimeEnvironment,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _oracleConfig: TAssetConfig,
 ): Promise<Address> => {
   // Deploy USDPriceAggregator

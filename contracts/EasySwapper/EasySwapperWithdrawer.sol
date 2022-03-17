@@ -79,10 +79,8 @@ library EasySwapperWithdrawer {
       uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
       address[] memory unrolledAssets;
 
-      // if asset == balancer somehow
-      bool isBalancer = IBalancerPool(asset).getVault() != address(0);
-
-      if (isBalancer) {
+      // if isBalancer
+      if (IBalancerPool(asset).getVault() != address(0)) {
         unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
           IPoolLogic(pool).poolManagerLogic(),
           asset, // BHPT
@@ -107,16 +105,19 @@ library EasySwapperWithdrawer {
 
       // Push any unrolledAssets into the allBasics array
       for (uint8 y = 0; y < unrolledAssets.length; ++y) {
-        if (unrolledAssets[i] != weth && unrolledAssets[i] != withdrawalAsset) {
+        if (unrolledAssets[i] != address(weth) && unrolledAssets[i] != address(withdrawalAsset)) {
           allBasicErc20s[hits] = unrolledAssets[i];
           hits++;
         }
       }
     }
 
-    uint256 reduceLength = allBasicErc20s.length.sub(hits);
-    assembly {
-      mstore(allBasicErc20s, sub(mload(allBasicErc20s), reduceLength))
+    {
+      uint256 reduceLength = allBasicErc20s.length.sub(hits);
+
+      assembly {
+        mstore(allBasicErc20s, sub(mload(allBasicErc20s), reduceLength))
+      }
     }
 
     for (uint256 i = 0; i < allBasicErc20s.length; i++) {

@@ -1,4 +1,4 @@
-import { curvePools, dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
+import { dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
 import { IAddresses, IFileNames } from "../types";
 import fs from "fs";
 

@@ -55,6 +55,7 @@ describe("UniV3TWAPAggregator Test", function () {
 
     const price = (await uniV3TwapAggregator.latestRoundData()).answer;
     const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.susd)).toString(), 8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(2).div(100) as any); // 2% diff
   });
 });

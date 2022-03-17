@@ -122,6 +122,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, IGuard {
 
       require(poolManagerLogicAssets.isSupportedAsset(param.token0), "unsupported asset: tokenA");
       require(poolManagerLogicAssets.isSupportedAsset(param.token1), "unsupported asset: tokenB");
+      require(poolManagerLogicAssets.isSupportedAsset(to), "uniswap asset not enabled");
 
       require(nonfungiblePositionManager.balanceOf(pool) < uniV3PositionsLimit, "too many uniswap v3 positions");
       require(pool == param.recipient, "recipient is not pool");

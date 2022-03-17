@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx } from "../../Helpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../types";
-const csv = require("csvtojson");
+import csv from "csvtojson";
 
 export const governanceNamesJob: IJob<void> = async (
   config: IUpgradeConfig,

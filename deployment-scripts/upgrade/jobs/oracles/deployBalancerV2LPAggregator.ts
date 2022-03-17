@@ -48,7 +48,7 @@ export const deployBalancerV2LpAggregator = async (
   console.log("BalancerV2LPAggregator ", pool, " : ", weights.toString());
 
   const ether = "1000000000000000000";
-  const divisor = weights.reduce((acc: any, w: any, i: any) => {
+  const divisor = weights.reduce((acc, w, i) => {
     if (i == 0) {
       return new Decimal(w).pow(w);
     }
@@ -57,7 +57,7 @@ export const deployBalancerV2LpAggregator = async (
 
   const K = new Decimal(ether).div(divisor).toFixed(0);
 
-  let matrix = [];
+  const matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
     for (let j = 0; j < weights.length; j++) {

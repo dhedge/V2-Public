@@ -1,6 +1,6 @@
-const { ethers, upgrades } = require("hardhat");
+import { ethers } from "hardhat";
 import { Contract, ContractFactory } from "ethers";
-const { use, expect } = require("chai");
+import { use, expect } from "chai";
 import { solidity } from "ethereum-waffle";
 
 use(solidity);
