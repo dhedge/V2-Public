@@ -10,6 +10,7 @@ import {
   PoolManagerLogic,
   PoolPerformance,
   SushiMiniChefV2Guard,
+  SynthetixGuard,
   UniswapV3AssetGuard,
   UniswapV3RouterGuard,
 } from "../../../../types";
@@ -33,6 +34,7 @@ export type IDeployments = {
   poolPerformance: PoolPerformance;
   sushiMiniChefV2Guard?: SushiMiniChefV2Guard;
   dhedgeEasySwapper?: DhedgeEasySwapper;
+  synthetixGuard?: SynthetixGuard;
   uniV3AssetGuard: UniswapV3AssetGuard;
   uniswapV3RouterGuard: UniswapV3RouterGuard;
   assets: {
@@ -120,10 +122,16 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(3);
     await uniswapV3NonfungiblePositionGuard.deployed();
 
+    const SynthetixGuard = await ethers.getContractFactory("SynthetixGuard");
+    const synthetixGuard = await SynthetixGuard.deploy(ovmData.synthetix.addressResolver);
+    await synthetixGuard.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
+    await governance.setAssetGuard(1, erc20Guard.address);
     await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
     await governance.setAssetGuard(7, uniV3AssetGuard.address);
     await governance.setContractGuard(ovmData.uniswapV3.router, uniswapV3RouterGuard.address);
+    await governance.setContractGuard(ovmData.assets.snxProxy, synthetixGuard.address);
     await governance.setContractGuard(
       ovmData.uniswapV3.nonfungiblePositionManager,
       uniswapV3NonfungiblePositionGuard.address,
@@ -152,6 +160,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       poolPerformance,
       uniV3AssetGuard,
       uniswapV3RouterGuard,
+      synthetixGuard,
       assets: {
         USDT,
         USDC,

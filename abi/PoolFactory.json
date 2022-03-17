@@ -561,6 +561,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "extContract",
+        "type": "address"
+      }
+    ],
+    "name": "getContractGuard",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "guard",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getDaoFee",
     "outputs": [
@@ -617,25 +636,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "extContract",
-        "type": "address"
-      }
-    ],
-    "name": "getGuard",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "guard",
-        "type": "address"
       }
     ],
     "stateMutability": "view",

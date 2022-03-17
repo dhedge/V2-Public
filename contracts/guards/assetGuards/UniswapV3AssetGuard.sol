@@ -74,7 +74,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     uint256 length;
     {
       UniswapV3NonfungiblePositionGuard guard = UniswapV3NonfungiblePositionGuard(
-        IHasGuardInfo(factory).getGuard(asset)
+        IHasGuardInfo(factory).getContractGuard(asset)
       );
       uint256 nftCount = nonfungiblePositionManager.balanceOf(pool);
       uint256 limit = guard.uniV3PositionsLimit();

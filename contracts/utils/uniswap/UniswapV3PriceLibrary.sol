@@ -15,9 +15,9 @@ library UniswapV3PriceLibrary {
   using SafeMathUpgradeable for uint256;
 
   // Oracle sqrt price threshold in basis points
-  uint16 public constant BP_THRESHOLD = 25;
+  uint16 public constant BP_THRESHOLD = 35;
 
-  /// @notice Assets the v3 pool price for the assets given is within 0.25% of oracle price
+  /// @notice Assets the v3 pool price for the assets given is within the threshold of oracle price
   /// @param dhedgeFactory dHEDGE Factory address
   /// @param uniswapV3Factory UniswapV3 Factory
   /// @param token0 Uni pool token0

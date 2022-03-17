@@ -615,18 +615,11 @@ contract PoolFactory is
 
   // Transaction Guards
 
-  /// @notice Get address of the transaction guard
+  /// @notice Get address of the contract guard
   /// @param extContract The address of the external contract
   /// @return guard Return the address of the transaction guard
-  function getGuard(address extContract) external view override returns (address guard) {
+  function getContractGuard(address extContract) external view override returns (address guard) {
     guard = IGovernance(governanceAddress).contractGuards(extContract);
-    if (guard == address(0)) {
-      if (isValidAsset(extContract)) {
-        guard = getAssetGuard(extContract);
-      }
-    }
-
-    require(guard != address(0), "Guard not found");
   }
 
   /// @notice Get address of the asset guard
