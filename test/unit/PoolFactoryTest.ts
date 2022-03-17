@@ -479,8 +479,8 @@ describe("PoolFactory", function () {
           managerName,
           manager,
           time,
+          performanceFeeNumerator,
           managerFeeNumerator,
-          streamingFeeNumerator,
           managerFeeDenominator,
           event,
         ) => {
@@ -494,8 +494,8 @@ describe("PoolFactory", function () {
             managerName: managerName,
             manager: manager,
             time: time,
+            performanceFeeNumerator: performanceFeeNumerator,
             managerFeeNumerator: managerFeeNumerator,
-            streamingFeeNumerator: streamingFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },
@@ -553,8 +553,8 @@ describe("PoolFactory", function () {
     // expect(event.fundSymbol).to.equal('DHTF');
     expect(event.managerName).to.equal("Barren Wuffet");
     expect(event.manager).to.equal(manager.address);
-    expect(event.managerFeeNumerator.toString()).to.equal("5000");
-    expect(event.streamingFeeNumerator.toString()).to.equal("200");
+    expect(event.performanceFeeNumerator.toString()).to.equal("5000");
+    expect(event.managerFeeNumerator.toString()).to.equal("200");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
     const deployedFunds = await poolFactory.getDeployedFunds();
@@ -989,7 +989,7 @@ describe("PoolFactory", function () {
     const totalSupply = await poolLogicProxy.totalSupply();
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
-    await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator(0, 0);
+    await poolManagerLogicProxy.connect(manager).setPerformanceFeeNumerator(0, 0);
 
     await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
       "cooldown active",
@@ -1017,11 +1017,11 @@ describe("PoolFactory", function () {
     expect(withdrawnAsset[1]).to.equal(fundTokensWithdrawn);
     expect(withdrawnAsset[2]).to.equal(false);
 
-    await poolFactory.setMaximumManagerFeeNumeratorChange(5000);
+    await poolFactory.setMaximumPerformanceFeeNumeratorChange(5000);
     await poolManagerLogicProxy.connect(manager).announceManagerFeeIncrease(5000, 200); // increase streaming fee to 2%
     await ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4]); // add 4 weeks
     await poolManagerLogicProxy.connect(manager).commitManagerFeeIncrease();
-    await poolFactory.setMaximumManagerFeeNumeratorChange(1000);
+    await poolFactory.setMaximumPerformanceFeeNumeratorChange(1000);
   });
 
   it("should be able to manage pool", async function () {
@@ -1343,25 +1343,25 @@ describe("PoolFactory", function () {
 
     await poolManagerLogicManagerProxy.commitManagerFeeIncrease();
 
-    let [managerFeeNumerator, streamingFeeNumerator, managerFeeDenominator] =
+    let [performanceFeeNumerator, managerFeeNumerator, managerFeeDenominator] =
       await poolManagerLogicManagerProxy.getManagerFee();
-    expect(managerFeeNumerator.toString()).to.equal("4000");
-    expect(streamingFeeNumerator.toString()).to.equal("250");
+    expect(performanceFeeNumerator.toString()).to.equal("4000");
+    expect(managerFeeNumerator.toString()).to.equal("250");
     expect(managerFeeDenominator.toString()).to.equal("10000");
 
-    await expect(poolManagerLogicProxy.setManagerFeeNumerator(3000, 200)).to.be.revertedWith("only manager");
-    await expect(poolManagerLogicManagerProxy.setManagerFeeNumerator(5000, 200)).to.be.revertedWith(
+    await expect(poolManagerLogicProxy.setPerformanceFeeNumerator(3000, 200)).to.be.revertedWith("only manager");
+    await expect(poolManagerLogicManagerProxy.setPerformanceFeeNumerator(5000, 200)).to.be.revertedWith(
       "manager fee too high",
     );
-    await expect(poolManagerLogicManagerProxy.setManagerFeeNumerator(3000, 300)).to.be.revertedWith(
+    await expect(poolManagerLogicManagerProxy.setPerformanceFeeNumerator(3000, 300)).to.be.revertedWith(
       "manager fee too high",
     );
-    await poolManagerLogicManagerProxy.setManagerFeeNumerator(3000, 250);
-    await poolManagerLogicManagerProxy.setManagerFeeNumerator(3000, 200);
-    [managerFeeNumerator, streamingFeeNumerator, managerFeeDenominator] =
+    await poolManagerLogicManagerProxy.setPerformanceFeeNumerator(3000, 250);
+    await poolManagerLogicManagerProxy.setPerformanceFeeNumerator(3000, 200);
+    [performanceFeeNumerator, managerFeeNumerator, managerFeeDenominator] =
       await poolManagerLogicManagerProxy.getManagerFee();
-    expect(managerFeeNumerator.toString()).to.equal("3000");
-    expect(streamingFeeNumerator.toString()).to.equal("200");
+    expect(performanceFeeNumerator.toString()).to.equal("3000");
+    expect(managerFeeNumerator.toString()).to.equal("200");
     expect(managerFeeDenominator.toString()).to.equal("10000");
   });
 
@@ -1817,18 +1817,18 @@ describe("PoolFactory", function () {
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
     const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const performanceFeeNumerator = await poolManagerLogicProxy.performanceFeeNumerator();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
-    const streamingFeeNumerator = await poolManagerLogicProxy.streamingFeeNumerator();
     const calculatedAvailableFee = tokenPricePreMint
       .sub(tokenPriceAtLastFeeMint)
       .mul(totalSupplyPreMint)
-      .mul(managerFeeNumerator)
+      .mul(performanceFeeNumerator)
       .div(10000)
       .div(tokenPricePreMint)
       .add(
         totalSupplyPreMint
           .mul(ethers.BigNumber.from(await currentBlockTimestamp()).sub(await poolLogicProxy.lastFeeMintTime()))
-          .mul(streamingFeeNumerator)
+          .mul(managerFeeNumerator)
           .div(10000)
           .div(86400 * 365),
       );
@@ -2444,7 +2444,7 @@ describe("PoolFactory", function () {
       );
 
       // remove manager fee so that performance fee minting doesn't get in the way
-      await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0", "0");
+      await poolManagerLogicProxy.connect(manager).setPerformanceFeeNumerator("0", "0");
 
       // mock 20 sUSD in pool
       const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
