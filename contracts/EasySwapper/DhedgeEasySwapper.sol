@@ -62,24 +62,12 @@ contract DhedgeEasySwapper is Ownable {
 
   mapping(address => bool) public allowedPools;
   IERC20 public weth;
-  IUniswapV2Router public swapRouter;
-  IUniswapV2Router public assetType2Router;
-  IUniswapV2Router public assetType5Router;
 
-  constructor(
-    address payable _feeSink,
-    IUniswapV2Router _swapRouter,
-    IERC20 _weth,
-    // Sushi Router
-    IUniswapV2Router _assetType2Router,
-    // Quick Router
-    IUniswapV2Router _assetType5Router
-  ) {
+  EasySwapperWithdrawer.WithdrawProps public withdrawProps;
+
+  constructor(address payable _feeSink, EasySwapperWithdrawer.WithdrawProps memory _withdrawProps) {
     feeSink = _feeSink;
-    swapRouter = _swapRouter;
-    weth = _weth;
-    assetType2Router = _assetType2Router;
-    assetType5Router = _assetType5Router;
+    withdrawProps = _withdrawProps;
   }
 
   function setPoolAllowed(address pool, bool allowed) external onlyOwner {
@@ -97,7 +85,7 @@ contract DhedgeEasySwapper is Ownable {
   }
 
   function setSwapRouter(IUniswapV2Router _swapRouter) external onlyOwner {
-    swapRouter = _swapRouter;
+    withdrawProps.swapRouter = _swapRouter;
   }
 
   /// @notice deposit into underlying pool and receive tokens that aren't locked
@@ -119,7 +107,7 @@ contract DhedgeEasySwapper is Ownable {
     depositAsset.safeTransferFrom(msg.sender, address(this), amount);
 
     if (depositAsset != poolDepositAsset) {
-      EasySwapperWithdrawer.swapThat(swapRouter, depositAsset, poolDepositAsset);
+      EasySwapperWithdrawer.swapThat(withdrawProps.swapRouter, depositAsset, poolDepositAsset);
     }
 
     // Sweep fee to sink
@@ -156,17 +144,7 @@ contract DhedgeEasySwapper is Ownable {
     // to the easy swapper isnt under a lock up than
     // Maybe we have it so that if people are transfering to the whitelisted address they can circumt vent the lock up?
     require(allowedPools[address(pool)], "Pool is not allowed.");
-    EasySwapperWithdrawer.withdraw(
-      pool,
-      fundTokenAmount,
-      withdrawalAsset,
-      expectedAmountOut,
-      EasySwapperWithdrawer.WithdrawProps({
-        swapRouter: swapRouter,
-        assetType2Router: assetType2Router,
-        assetType5Router: assetType5Router,
-        weth: weth
-      })
-    );
+    IERC20(pool).safeTransferFrom(msg.sender, address(this), fundTokenAmount);
+    EasySwapperWithdrawer.withdraw(pool, fundTokenAmount, withdrawalAsset, expectedAmountOut, withdrawProps);
   }
 }

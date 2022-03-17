@@ -23,7 +23,7 @@ library EasySwapperV3Helpers {
     uint256 nftCount = INonfungiblePositionManager(nonfungiblePositionManager).balanceOf(pool);
     // Each position has two assets
     assets = new address[](nftCount.mul(2));
-    uint8 hits;
+    uint256 hits;
     for (uint256 i = 0; i < nftCount; ++i) {
       uint256 tokenId = INonfungiblePositionManager(nonfungiblePositionManager).tokenOfOwnerByIndex(pool, i);
       (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(nonfungiblePositionManager)
@@ -40,7 +40,6 @@ library EasySwapperV3Helpers {
         hits++;
       }
     }
-
     uint256 reduceLength = assets.length.sub(hits);
     assembly {
       mstore(assets, sub(mload(assets), reduceLength))

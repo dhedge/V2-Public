@@ -23,7 +23,7 @@ interface TestCase {
   withdrawToken: string;
 }
 
-describe("DhedgeEasySwapper", function () {
+describe("DhedgeEasySwapper Toros Tests", function () {
   let logicOwner: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress, feeSink: SignerWithAddress;
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
@@ -60,7 +60,7 @@ describe("DhedgeEasySwapper", function () {
 
     const governanceAddress = "0x206CbDa3381e7afdF448621b90f549f89555A588";
     governance = await ethers.getContractAt("Governance", governanceAddress);
-    // // Take over ownership of the governance
+    // Take over ownership of the governance
     // const governanceOwner = await ethers.provider.getStorageAt(governance.address, 0);
     await ethers.provider.send("hardhat_setStorageAt", [
       governance.address,
@@ -72,14 +72,13 @@ describe("DhedgeEasySwapper", function () {
     await governance.setAddresses([{ name: toBytes32("swapRouter"), destination: swapRouter.address }]);
 
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
-      feeSink.address,
-      swapRouter.address,
-      assets.weth,
-      sushi.router,
-      quickswap.router,
-    );
-    // dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
+    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, {
+      swapRouter: quickswap.router,
+      weth: assets.weth,
+      assetType2Router: sushi.router,
+      assetType5Router: quickswap.router,
+      dhedgePools: [...Object.values(torosPools), assets.dusd],
+    });
     await dhedgeEasySwapper.deployed();
 
     await dhedgeEasySwapper.setFee(0, 0);
@@ -362,13 +361,32 @@ describe("DhedgeEasySwapper", function () {
         // Funds returned should be close to funds in
         expect(withdrawAmountUSDC).closeTo(
           depositAssetValueInUSDC,
-          // 2% - in and out slippage is quite a bit 605570-595902
-          depositAssetValueInUSDC.div(100).mul(3) as unknown as number,
+          // 3% - in and out slippage is quite a bit 605570-595902
+          depositAssetValueInUSDC.div(100).mul(4) as unknown as number,
         );
       });
     };
 
+    const jakesBroadFund = "0x53cd6399ad01403cfa86aaed77a7553810459bf3"; // deposit usdc
     const tests: TestCase[] = [
+      {
+        testName: "JAKES BROAD FUND - can deposit and withdraw - no swap in - but big swaps out",
+        torosPoolAddress: jakesBroadFund,
+        userDepositToken: assets.usdc,
+        depositAmount: units(6, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.usdc,
+      },
+      {
+        testName: "dUSD- can deposit and withdraw - no swap in - but big swaps out",
+        torosPoolAddress: assets.dusd,
+        userDepositToken: assets.usdc,
+        depositAmount: units(10000, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.usdc,
+      },
       {
         testName: "ETHBEAR2X - can deposit and withdraw - no swap on in or out",
         torosPoolAddress: torosPools.ETHBEAR2X,

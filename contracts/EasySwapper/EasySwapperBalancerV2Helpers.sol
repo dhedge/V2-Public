@@ -6,6 +6,8 @@ pragma abicoder v2;
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IERC20Extended.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/balancer/IBalancerV2Vault.sol";
@@ -24,24 +26,18 @@ library EasySwapperBalancerV2Helpers {
   ) internal returns (address[] memory assets) {
     IBalancerV2Vault vault = IBalancerV2Vault(IBalancerPool(balancerPool).getVault());
     bytes32 poolId = IBalancerPool(balancerPool).getPoolId();
-    // struct ExitPoolRequest {
-    //   address[] assets;
-    //   uint256[] minAmountsOut;
-    //   bytes userData;
-    //   bool toInternalBalance;
-    // }
-    // Not sure if/how to initialise all these fields ^^
-    IBalancerV2Vault.ExitPoolRequest memory request;
 
     (address[] memory tokens, , ) = vault.getPoolTokens(poolId);
 
     bool hasWithdrawalAsset;
+    uint256 withdrawalAssetIndex;
     bool hasSupportedAsset;
     uint256 supportedAssetIndex;
 
     for (uint8 i = 0; i < tokens.length; ++i) {
       if (withdrawalAsset == tokens[i]) {
         hasWithdrawalAsset = true;
+        withdrawalAssetIndex = i;
         break;
       }
       if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokens[i])) {
@@ -50,19 +46,31 @@ library EasySwapperBalancerV2Helpers {
       }
     }
 
-    if (hasWithdrawalAsset || hasSupportedAsset) {
-      assets[0] = hasWithdrawalAsset ? withdrawalAsset : tokens[supportedAssetIndex];
+    require(hasWithdrawalAsset, "doenst have");
+
+    uint256 balance = IERC20Extended(balancerPool).balanceOf(address(this));
+    bytes memory userData;
+    if (hasWithdrawalAsset) {
+      userData = abi.encode(IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, balance, withdrawalAssetIndex);
+      assets = new address[](0);
+    } else if (hasSupportedAsset) {
+      userData = abi.encode(IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, balance, supportedAssetIndex);
+      assets = new address[](0);
     } else {
-      request.assets = tokens;
+      userData = abi.encode(IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT, balance);
       assets = tokens;
     }
 
-    //   function exitPool(
-    //   bytes32 poolId,
-    //   address sender,
-    //   address payable recipient,
-    //   ExitPoolRequest memory request
-    // ) external;
-    vault.exitPool(poolId, address(this), payable(address(this)), request);
+    vault.exitPool(
+      poolId,
+      address(this),
+      payable(address(this)),
+      IBalancerV2Vault.ExitPoolRequest({
+        assets: tokens,
+        minAmountsOut: new uint256[](tokens.length),
+        userData: userData,
+        toInternalBalance: false
+      })
+    );
   }
 }

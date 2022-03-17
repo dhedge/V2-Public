@@ -1,6 +1,6 @@
 import { task, types } from "hardhat/config";
 import fs from "fs";
-import { assets, quickswap, protocolDao, aave, toros, sushi } from "../../config/chainData/polygon-data";
+import { assets, quickswap, protocolDao, toros, sushi, torosPools } from "../../config/chainData/polygon-data";
 
 import { tryVerify } from "../Helpers";
 import { getDeploymentData } from "../upgrade/getDeploymentData";
@@ -25,13 +25,13 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
       if (versions[latestVersion].contracts.DhedgeEasySwapper) throw "Easy Swapper contract already deployed";
 
       const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
-        protocolDao,
-        quickswap.router,
-        assets.weth,
-        sushi.router,
-        quickswap.router,
-      );
+      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(protocolDao, {
+        swapRouter: quickswap.router,
+        weth: assets.weth,
+        assetType2Router: sushi.router,
+        assetType5Router: quickswap.router,
+        dhedgePools: [...Object.values(torosPools), assets.dusd],
+      });
       await dhedgeEasySwapper.deployed();
 
       console.log("DhedgeEasySwapper deployed to: ", dhedgeEasySwapper.address);

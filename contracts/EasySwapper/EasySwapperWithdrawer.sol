@@ -13,6 +13,7 @@ import "../interfaces/IPoolFactory.sol";
 import "./EasySwapperV3Helpers.sol";
 import "./EasySwapperV2LpHelpers.sol";
 import "./EasySwapperBalancerV2Helpers.sol";
+import "./IHasWithdraw.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library EasySwapperWithdrawer {
@@ -32,6 +33,7 @@ library EasySwapperWithdrawer {
     IUniswapV2Router assetType2Router;
     IUniswapV2Router assetType5Router;
     IERC20 weth;
+    IPoolLogic[] dhedgePools;
   }
 
   /// @notice withdraw underlying value of tokens in expectedWithdrawalAssetOfUser
@@ -46,7 +48,6 @@ library EasySwapperWithdrawer {
     uint256 expectedAmountOut,
     WithdrawProps memory withdrawProps
   ) internal {
-    IERC20(pool).safeTransferFrom(msg.sender, address(this), fundTokenAmount);
     IPoolLogic(pool).withdraw(fundTokenAmount);
 
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic())
@@ -59,6 +60,7 @@ library EasySwapperWithdrawer {
     // So that we can swap them also into our withdrawalAsset.
     // We also must detect which assets the pool had v3 lp in and
     // swap those into our withdrawalAsset.
+    // We also must deal with pools that hold dUSD.
 
     // Also be aware that we must unroll out sushi lps before any
     // withdrawing takes place because the pool might be lp'ing assetType 4
@@ -76,14 +78,20 @@ library EasySwapperWithdrawer {
     // We support balancer lp's with upto 5 assets :\
     // ie. USDC-LINK-WETH-BAL-AAVE
 
+    for (uint256 i = 0; i < withdrawProps.dhedgePools.length; i++) {
+      // TODO: Maybe we should just revert for pools that have dhedge tokens.
+      uint256 balance = withdrawProps.dhedgePools[i].balanceOf(address(this));
+      if (balance > 0) {
+        require(false, "Cannot easy swap dhedge");
+        // EasySwapperWithdrawer.withdraw(address(withdrawProps.dhedgePools[i]), balance, withdrawalAsset, 0, withdrawProps);
+      }
+    }
+
     address[] memory allBasicErc20s = new address[](supportedAssets.length * 5);
     uint8 hits;
 
     for (uint256 i = 0; i < supportedAssets.length; i++) {
       address asset = supportedAssets[i].asset;
-      uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
-      address[] memory unrolledAssets;
-
       // Maybe there is a cleaner way to do this?
       // Have to use try catch because some erc20 have a fallback function that reverts
       bool isBalancer;
@@ -92,7 +100,8 @@ library EasySwapperWithdrawer {
       } catch {
         isBalancer = false;
       }
-
+      uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
+      address[] memory unrolledAssets;
       // if isBalancer
       if (isBalancer) {
         unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
@@ -117,24 +126,27 @@ library EasySwapperWithdrawer {
       else if (assetType == 7) {
         unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(pool, asset);
       } else {
-        allBasicErc20s[hits] = asset;
-        hits++;
+        // Dhedge pools already withdraw or reverted
+        unrolledAssets = new address[](1);
+        unrolledAssets[0] = asset;
       }
 
       // Push any unrolledAssets into the allBasics array
-      for (uint8 y = 0; y < unrolledAssets.length; ++y) {
-        if (unrolledAssets[i] != address(withdrawProps.weth) && unrolledAssets[i] != address(withdrawalAsset)) {
-          allBasicErc20s[hits] = unrolledAssets[i];
+      for (uint256 y = 0; y < unrolledAssets.length; y++) {
+        if (
+          !isDhedgePool(unrolledAssets[y], withdrawProps.dhedgePools) &&
+          unrolledAssets[y] != address(withdrawProps.weth) &&
+          unrolledAssets[y] != address(withdrawalAsset)
+        ) {
+          allBasicErc20s[hits] = unrolledAssets[y];
           hits++;
         }
       }
     }
 
-    {
-      uint256 reduceLength = allBasicErc20s.length.sub(hits);
-      assembly {
-        mstore(allBasicErc20s, sub(mload(allBasicErc20s), reduceLength))
-      }
+    uint256 reduceLength = allBasicErc20s.length.sub(hits);
+    assembly {
+      mstore(allBasicErc20s, sub(mload(allBasicErc20s), reduceLength))
     }
 
     for (uint256 i = 0; i < allBasicErc20s.length; i++) {
@@ -175,5 +187,14 @@ library EasySwapperWithdrawer {
     path[1] = address(to);
 
     swapRouter.swapExactTokensForTokens(balance, 0, path, address(this), uint256(-1));
+  }
+
+  function isDhedgePool(address asset, IPoolLogic[] memory dhedgePools) internal pure returns (bool) {
+    for (uint256 i = 0; i < dhedgePools.length; i++) {
+      if (asset == address(dhedgePools[i])) {
+        return true;
+      }
+    }
+    return false;
   }
 }

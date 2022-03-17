@@ -7,24 +7,36 @@
         "type": "address"
       },
       {
-        "internalType": "contract IUniswapV2Router",
-        "name": "_swapRouter",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "_weth",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IUniswapV2Router",
-        "name": "_assetType2Router",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IUniswapV2Router",
-        "name": "_assetType5Router",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "contract IUniswapV2Router",
+            "name": "swapRouter",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IUniswapV2Router",
+            "name": "assetType2Router",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IUniswapV2Router",
+            "name": "assetType5Router",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "weth",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IPoolLogic[]",
+            "name": "dhedgePools",
+            "type": "address[]"
+          }
+        ],
+        "internalType": "struct EasySwapperWithdrawer.WithdrawProps",
+        "name": "_withdrawProps",
+        "type": "tuple"
       }
     ],
     "stateMutability": "nonpayable",
@@ -106,32 +118,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "assetType2Router",
-    "outputs": [
-      {
-        "internalType": "contract IUniswapV2Router",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "assetType5Router",
-    "outputs": [
-      {
-        "internalType": "contract IUniswapV2Router",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -298,19 +284,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "swapRouter",
-    "outputs": [
-      {
-        "internalType": "contract IUniswapV2Router",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -362,6 +335,34 @@
     "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawProps",
+    "outputs": [
+      {
+        "internalType": "contract IUniswapV2Router",
+        "name": "swapRouter",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IUniswapV2Router",
+        "name": "assetType2Router",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IUniswapV2Router",
+        "name": "assetType5Router",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "weth",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

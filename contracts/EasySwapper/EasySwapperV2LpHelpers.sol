@@ -25,15 +25,9 @@ library EasySwapperV2LpHelpers {
   ) internal returns (address[] memory assets) {
     address token0 = IUniswapV2Pair(lpAddress).token0();
     address token1 = IUniswapV2Pair(lpAddress).token1();
-    v2Router.removeLiquidity(
-      token0,
-      token1,
-      IERC20Extended(lpAddress).balanceOf(address(this)),
-      0,
-      0,
-      address(this),
-      type(uint256).max
-    );
+    uint256 bal = IERC20Extended(lpAddress).balanceOf(address(this));
+    IERC20Extended(lpAddress).approve(address(v2Router), bal);
+    v2Router.removeLiquidity(token0, token1, bal, 0, 0, address(this), type(uint256).max);
 
     assets = new address[](2);
     uint256 hits;
