@@ -12,18 +12,17 @@ import { deployContracts } from "../utils/deployContracts";
 use(solidity);
 
 describe("Balancer V2 Rewards Claiming Test", function () {
-  let WETH: IERC20, USDC: IERC20, USDT: IERC20, BALANCER: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, user: SignerWithAddress;
+  let USDC: IERC20, BALANCER: IERC20;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iBalancerMerkleOrchard = new ethers.utils.Interface(IBalancerMerkleOrchard__factory.abi);
 
   beforeEach(async function () {
-    [logicOwner, manager, dao, user] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
-    USDT = deployments.assets.USDT;
-    WETH = deployments.assets.WETH;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     BALANCER = deployments.assets.BALANCER!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);

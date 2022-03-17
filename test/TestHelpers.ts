@@ -1,5 +1,5 @@
 import { artifacts, ethers } from "hardhat";
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 import { MockContract } from "../types";
 import { expect } from "chai";
 
@@ -34,10 +34,11 @@ export const updateChainlinkAggregators = async (
 // Within 1%
 // @deprecated - don't use this - use closeTo with a delta that's geared for the test
 // 1% is not an ok spread for some tests
-export const checkAlmostSame = (a: any, b: any, percentDelta = 1) => {
+export const checkAlmostSame = (a: BigNumber, b: BigNumberish, percentDelta = 1) => {
   expect(ethers.BigNumber.from(a.toString())).to.be.closeTo(
     ethers.BigNumber.from(b.toString()),
-    a.div(100 / percentDelta),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    a.div(100 / percentDelta) as any,
   );
 };
 

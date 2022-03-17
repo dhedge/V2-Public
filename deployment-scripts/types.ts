@@ -164,13 +164,15 @@ export type OracleType =
   | "MedianTWAPAggregator"
   | "UniV3TWAPAggregator";
 
-export type IVersions = {
-  [version: string]: {
-    network: {
-      chainId: number;
-      name: string;
-    };
-    lastUpdated: string;
-    contracts: IContracts;
+export type IVersion = {
+  network: {
+    chainId: number;
+    name: string;
   };
+  lastUpdated: string;
+  contracts: IContracts;
+};
+
+export type IVersions = {
+  [version: string]: IVersion;
 };

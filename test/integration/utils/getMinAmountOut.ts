@@ -17,7 +17,7 @@ export const getMinAmountOut = async (
   amountIn: BigNumber,
   tokenInAddress: string,
   tokenOutAddress: string,
-  percentage: number = 91,
+  percentage = 91,
 ): Promise<BigNumber> => {
   const tokenIn = await ethers.getContractAt("IERC20Extended", tokenInAddress);
   const tokenOut = await ethers.getContractAt("IERC20Extended", tokenOutAddress);

@@ -3,27 +3,27 @@ import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { checkAlmostSame, units } from "../../TestHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { IERC20, IERC20__factory, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
+import { IERC20, IERC20__factory, PoolFactory, PoolLogic } from "../../../types";
 import { createFund } from "../utils/createFund";
 import { assets, assetsBalanceOfSlot, oneinch, ZERO_ADDRESS } from "../../../config/chainData/polygon-data";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { deployContracts } from "../utils/deployContracts";
-const axios = require("axios");
+import { BigNumber } from "ethers";
+import axios from "axios";
 
 use(solidity);
 
 describe("OneInch V3 Test", function () {
-  let WMATIC: IERC20, USDC: IERC20, USDT: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress;
-  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
+  let USDC: IERC20, USDT: IERC20;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
+  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 
   before(async function () {
-    [logicOwner, manager, dao] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
 
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
-    WMATIC = deployments.assets.WMATIC!;
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;
 
@@ -34,7 +34,6 @@ describe("OneInch V3 Test", function () {
       { asset: assets.usdt, isDeposit: true },
     ]);
     poolLogicProxy = funds.poolLogicProxy;
-    poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
     // Deposit 200 USDC
     await USDC.approve(poolLogicProxy.address, units(200, 6));
@@ -117,12 +116,12 @@ describe("OneInch V3 Test", function () {
 });
 
 const getOneInchSwapTransaction = async (params: {
-  srcAsset: any;
-  dstAsset: any;
-  srcAmount: any;
-  fromAddress: any;
-  toAddress: any;
-  referrerAddress: any;
+  srcAsset: string;
+  dstAsset: string;
+  srcAmount: BigNumber;
+  fromAddress: string;
+  toAddress: string;
+  referrerAddress: string;
 }) => {
   const { srcAsset, dstAsset, srcAmount, fromAddress, toAddress, referrerAddress } = params;
   const apiUrl = `https://api.1inch.exchange/v4.0/137/swap?fromTokenAddress=${srcAsset}&toTokenAddress=${dstAsset}&amount=${srcAmount.toString()}&fromAddress=${fromAddress}&destReceiver=${toAddress}&referrerAddress=${referrerAddress}&slippage=1&disableEstimate=true`;

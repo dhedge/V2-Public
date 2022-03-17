@@ -1,4 +1,3 @@
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { assert } from "chai";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { InitType } from "./initialize";

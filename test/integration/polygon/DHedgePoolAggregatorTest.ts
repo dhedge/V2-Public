@@ -20,8 +20,8 @@ import { deployContracts } from "../utils/deployContracts";
 use(solidity);
 
 describe("DHedgePoolAggregator Test", function () {
-  let WMATIC: IERC20, USDC: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress;
+  let USDC: IERC20;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory,
     poolLogicProxy: PoolLogic,
     poolManagerLogicProxy: PoolManagerLogic,
@@ -30,11 +30,10 @@ describe("DHedgePoolAggregator Test", function () {
   const iQuickswapRouter = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
   before(async function () {
-    [logicOwner, manager, dao] = await ethers.getSigners();
+    [logicOwner, manager] = await ethers.getSigners();
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
-    WMATIC = deployments.assets.WMATIC!;
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 

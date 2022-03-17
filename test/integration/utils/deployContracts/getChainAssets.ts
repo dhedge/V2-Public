@@ -5,7 +5,7 @@ import * as polygonData from "../../../../config/chainData/polygon-data";
 import * as ovmData from "../../../../config/chainData/ovm-data";
 import { NETWORK, IAssetSetting } from ".";
 
-const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, v2Vault: string, pool: string) => {
+const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, pool: string) => {
   const weights: Decimal[] = (
     await (await ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights()
   ).map((w) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
@@ -20,7 +20,7 @@ const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, v2Vault: s
 
   const K = new Decimal(ether).div(divisor).toFixed(0);
 
-  let matrix = [];
+  const matrix = [];
   for (let i = 1; i <= 20; i++) {
     const elements = [new Decimal(10).pow(i).times(ether).toFixed(0)];
     for (let j = 0; j < weights.length; j++) {
@@ -30,7 +30,7 @@ const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, v2Vault: s
   }
 
   const BalancerV2LPAggregator = await ethers.getContractFactory("BalancerV2LPAggregator");
-  return await BalancerV2LPAggregator.deploy(poolFactory.address, v2Vault, pool, {
+  return await BalancerV2LPAggregator.deploy(poolFactory.address, pool, {
     maxPriceDeviation: "50000000000000000", // maxPriceDeviation: 0.05
     K,
     powerPrecision: "100000000", // powerPrecision
@@ -56,6 +56,10 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       assetSetting(ovmData.assets.usdc, 0, ovmData.price_feeds.usdc),
       assetSetting(ovmData.assets.wbtc, 0, ovmData.price_feeds.btc),
       assetSetting(ovmData.assets.dai, 0, ovmData.price_feeds.dai),
+      assetSetting(ovmData.assets.snxProxy, 1, ovmData.price_feeds.snx),
+      assetSetting(ovmData.assets.susd, 1, usdPriceAggregator.address),
+      assetSetting(ovmData.assets.slink, 1, ovmData.price_feeds.link),
+      assetSetting(ovmData.assets.seth, 1, ovmData.price_feeds.eth),
       assetSetting(ovmData.uniswapV3.nonfungiblePositionManager, 7, usdPriceAggregator.address),
     ];
   } else {
@@ -99,7 +103,6 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
 
     const balancerV2AggregatorWethBalancer = await deployBalancerV2LpAggregator(
       poolFactory,
-      polygonData.balancer.v2Vault,
       polygonData.balancer.pools.bal80weth20,
     );
     const balancerLpAssetWethBalancer = {

@@ -198,7 +198,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
 
           // Act
           const swapRouter: IV3SwapRouter = await ethers.getContractAt("IV3SwapRouter", uniswapV3.router);
-          const [token0Liquidity, _] = await getV3LpBalances(uniswapV3.factory, pair);
+          const [token0Liquidity] = await getV3LpBalances(uniswapV3.factory, pair);
           // We dump 2x extra liquidity on one side, draining the other side
           const LIQUIDITY_MULTIPLIER = 10;
           const amountIn = token0Liquidity.mul(LIQUIDITY_MULTIPLIER);
@@ -216,7 +216,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
           });
 
           // Assert
-          const [token0LiquidityAfter, __] = await getV3LpBalances(uniswapV3.factory, pair);
+          const [token0LiquidityAfter] = await getV3LpBalances(uniswapV3.factory, pair);
           // console.log("tokenPrice before", tokenPriceBefore.toString());
           // console.log("liq before: ", token0Liquidity.toString(), "liq after: ", token0LiquidityAfter.toString());
 

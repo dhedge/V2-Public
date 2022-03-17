@@ -88,7 +88,7 @@ contract OpenAssetGuard is IGuard, TxDataUtils, Ownable {
       IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
 
       address factory = poolManagerLogic.factory();
-      address spenderGuard = IHasGuardInfo(factory).getGuard(spender);
+      address spenderGuard = IHasGuardInfo(factory).getContractGuard(spender);
       require(spenderGuard != address(0) && spenderGuard != address(this), "unsupported spender approval"); // checks that the spender is an approved address
 
       emit Approve(

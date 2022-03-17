@@ -1,14 +1,20 @@
-const { proposeTx } = require("../Helpers");
-require("dotenv").config();
+import { proposeTx } from "../Helpers";
+import dotenv from "dotenv";
+import { IProposeTxProperties, IUpgradeConfigProposeTx } from "../types";
+
+dotenv.config();
 const NODE_ENV = process.env.NODE_ENV;
 
-const main = async (NODE_ENV) => {
+const main = async (NODE_ENV: string | undefined) => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const hre = require("hardhat");
+  const { ethers } = hre;
   const network = await ethers.provider.getNetwork();
   console.log("network:", network);
-  const hre = require("hardhat");
 
   // Init tag
   const versionFile = NODE_ENV == "production" ? "versions" : "staging-versions";
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const versions = require(`../publish/${network.name}/${versionFile}.json`);
   const oldTag = Object.keys(versions)[Object.keys(versions).length - 1];
   console.log(`oldTag: ${oldTag}`);
@@ -17,12 +23,24 @@ const main = async (NODE_ENV) => {
   const contracts = versions[oldTag].contracts;
 
   // Pool Factory
-  let poolFactoryProxy = contracts.PoolFactoryProxy;
+  const poolFactoryProxy = contracts.PoolFactoryProxy;
   const PoolFactory = await hre.artifacts.readArtifact("PoolFactory");
   const PoolFactoryABI = new ethers.utils.Interface(PoolFactory.abi);
 
   const pauseABI = PoolFactoryABI.encodeFunctionData("pause", []);
-  await proposeTx(poolFactoryProxy, pauseABI, "Pause Pool Factory");
+  const config: IUpgradeConfigProposeTx = {
+    execute: false,
+    restartnonce: false,
+  };
+  const addresses: IProposeTxProperties = {
+    protocolDaoAddress: "",
+    protocolTreasuryAddress: "",
+    proxyAdminAddress: "",
+    implementationStorageAddress: "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+    gnosisMultiSendAddress: "",
+    gnosisApi: "",
+  };
+  await proposeTx(poolFactoryProxy, pauseABI, "Pause Pool Factory", config, addresses);
 
   // PoolManagerLogic PoolLogic
   const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
@@ -31,8 +49,8 @@ const main = async (NODE_ENV) => {
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
   let supportedAssets = [],
     poolLogic,
-    poolManagerLogic,
-    datas = [],
+    poolManagerLogic;
+  const datas = [],
     allSupportedAssets = [];
 
   // Governance
@@ -40,20 +58,26 @@ const main = async (NODE_ENV) => {
   const governanceABI = new ethers.utils.Interface(Governance.abi);
 
   // Set LendingEnabledAssetGuard assetType to 2
-  let LendingEnabledAssetGuard = contracts.LendingEnabledAssetGuard;
+  const LendingEnabledAssetGuard = contracts.LendingEnabledAssetGuard;
   let setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [2, LendingEnabledAssetGuard]);
-  await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for LendingEnabledAssetGuard");
+  await proposeTx(
+    contracts.Governance,
+    setAssetGuardABI,
+    "setAssetGuard for LendingEnabledAssetGuard",
+    config,
+    addresses,
+  );
 
   // Set SushiLPAssetGuard assetType to 4
-  let SushiLPAssetGuard = contracts.SushiLPAssetGuard;
+  const SushiLPAssetGuard = contracts.SushiLPAssetGuard;
   setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [4, SushiLPAssetGuard]);
-  await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for SushiLPAssetGuard");
+  await proposeTx(contracts.Governance, setAssetGuardABI, "setAssetGuard for SushiLPAssetGuard", config, addresses);
 
   const deployedFunds = await poolFactoryContract.getDeployedFunds();
-  for (fund of deployedFunds) {
+  for (const fund of deployedFunds) {
     console.log("fund: ", fund);
     poolLogic = await PoolLogic.attach(fund);
-    poolManagerLogicAddress = await poolLogic.poolManagerLogic();
+    const poolManagerLogicAddress = await poolLogic.poolManagerLogic();
     poolManagerLogic = await PoolManagerLogic.attach(poolManagerLogicAddress);
     supportedAssets = await poolManagerLogic.getSupportedAssets();
     console.log("supportedAssets: ", supportedAssets);
@@ -63,7 +87,7 @@ const main = async (NODE_ENV) => {
     const PoolManagerLogicABI = new ethers.utils.Interface(PoolManagerLogicArtifact.abi);
     const changeAssetsABI = PoolManagerLogicABI.encodeFunctionData("changeAssets", [
       supportedAssets,
-      supportedAssets.map((supportedAsset) => {
+      supportedAssets.map((supportedAsset: never[]) => {
         return supportedAsset[0];
       }),
     ]);
@@ -86,7 +110,7 @@ const main = async (NODE_ENV) => {
       // [0, deployedFunds.length - 1, "290", datas], // Runs for all funds
       params,
     );
-    await proposeTx(poolFactoryProxy, upgradePoolBatchABI, "Pool Factory Batch Upgrade Pool");
+    await proposeTx(poolFactoryProxy, upgradePoolBatchABI, "Pool Factory Batch Upgrade Pool", config, addresses);
   }
 };
 

@@ -9,7 +9,7 @@ export const retryWithDelay = async <T>(
 ): Promise<T> => {
   try {
     return await fn();
-  } catch (err: any) {
+  } catch (err) {
     console.log(`${functionType} call failed: ${err.message}`);
     if (retries <= 0) {
       return Promise.reject(finalErr);
