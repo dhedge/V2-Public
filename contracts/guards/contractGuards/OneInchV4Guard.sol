@@ -37,14 +37,14 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "../utils/TxDataUtils.sol";
-import "../utils/SlippageChecker.sol";
-import "../interfaces/guards/IGuard.sol";
-import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
-import "../interfaces/uniswapv3/IUniswapV3Pool.sol";
-import "../interfaces/oneInch/IAggregationRouterV3.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IHasSupportedAsset.sol";
+import "../../utils/TxDataUtils.sol";
+import "../../utils/SlippageChecker.sol";
+import "../../interfaces/guards/IGuard.sol";
+import "../../interfaces/uniswapv2/IUniswapV2Pair.sol";
+import "../../interfaces/uniswapv3/IUniswapV3Pool.sol";
+import "../../interfaces/oneInch/IAggregationRouterV3.sol";
+import "../../interfaces/IPoolManagerLogic.sol";
+import "../../interfaces/IHasSupportedAsset.sol";
 
 /// @notice Transaction guard for OneInchV3Router
 contract OneInchV4Guard is TxDataUtils, SlippageChecker, IGuard {
