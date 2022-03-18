@@ -90,19 +90,20 @@ describe("ManagerFee Test", function () {
       .mul(totalSupplyPreMint)
       .div(2)
       .div(tokenPricePreMint);
-    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee, 0.001);
 
     await poolLogicProxy.mintManagerFee();
 
     const tokenPricePostMint = await poolLogicProxy.tokenPrice();
     const totalSupplyPostMint = await poolLogicProxy.totalSupply();
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
-    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint), 0.001);
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint), 0.001);
 
     checkAlmostSame(
       await poolLogicProxy.balanceOf(dao.address),
       daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+      0.001,
     );
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
@@ -122,13 +123,14 @@ describe("ManagerFee Test", function () {
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
 
     const streamingFee = totalSupplyPreMint.div(100);
-    checkAlmostSame(availableFeePreMint, streamingFee);
+    checkAlmostSame(availableFeePreMint, streamingFee, 0.001);
 
     await poolLogicProxy.mintManagerFee();
 
     checkAlmostSame(
       await poolLogicProxy.balanceOf(dao.address),
       daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+      0.001,
     );
   });
 
@@ -167,19 +169,20 @@ describe("ManagerFee Test", function () {
       .add(streamingFee);
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");
-    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee, 0.001);
 
     await poolLogicProxy.mintManagerFee();
 
     const tokenPricePostMint = await poolLogicProxy.tokenPrice();
     const totalSupplyPostMint = await poolLogicProxy.totalSupply();
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
-    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint), 0.001);
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint), 0.001);
 
     checkAlmostSame(
       await poolLogicProxy.balanceOf(dao.address),
       daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+      0.001,
     );
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
@@ -238,19 +241,20 @@ describe("ManagerFee Test", function () {
 
     expect(streamingFee).lt(calculatedAvailableFee);
     expect(availableFeePreMint).to.be.gt("0");
-    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee, 0.001);
 
     await poolLogicProxy.mintManagerFee();
 
     const tokenPricePostMint = await poolLogicProxy.tokenPrice();
     const totalSupplyPostMint = await poolLogicProxy.totalSupply();
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
-    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint), 0.001);
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint), 0.001);
 
     checkAlmostSame(
       await poolLogicProxy.balanceOf(dao.address),
       daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+      0.001,
     );
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
