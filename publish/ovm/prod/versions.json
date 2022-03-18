@@ -107,16 +107,6 @@
           "oracleAddress": "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450"
         },
         {
-          "assetName": "Synthetix",
-          "assetAddress": "0x8700daec35af8ff88c16bdf0418774cb3d7599b4",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877"
-        },
-        {
           "assetName": "Uniswap",
           "assetAddress": "0x6fd9d7ad17242c41f7131d257212c54a0e816691",
           "assetType": "0",
@@ -180,6 +170,16 @@
           },
           "oracleType": "SynthPriceAggregator",
           "oracleAddress": "0xDa9D1d035CAdAd6B439435a189e2b80573a521b0"
+        },
+        {
+          "assetName": "Synthetix",
+          "assetAddress": "0x8700daec35af8ff88c16bdf0418774cb3d7599b4",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877"
         }
       ],
       "ERC20Guard": "0x6212FFDDe8f24e525264df10A7FfC6D017c8424A",
@@ -193,7 +193,7 @@
       "PoolManagerLogicProxy": "0x3621f9aAc18a42D2343270849611ea09aAea3e54",
       "PoolManagerLogic": "0xbc87becd9b2aed3e282d352b94b80045946cf4b9",
       "PoolLogicProxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
-      "PoolLogic": "0xfe231f6b46d84f1dd046b4e4b5562a6433f3e914",
+      "PoolLogic": "0xA1ab057c535C3A0Fcb4d0959B9059196870185ec",
       "PoolFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
       "PoolFactory": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8",
       "Oracles": [
@@ -203,14 +203,14 @@
           "oracleName": "susdUniV3TWAPAggregator"
         }
       ],
-      "UniswapV3AssetGuard": "0x9a6d482c81F2D7b520Fa52AAC3b7614Af7000Caf",
-      "UniswapV3NonfungiblePositionGuard": "0x17C39280F075B17ccaD807B67B910c13697c9050",
+      "UniswapV3AssetGuard": "0xbc95cFAd5ED6152c98cC0b7d63b158234AfA520f",
+      "UniswapV3NonfungiblePositionGuard": "0xD542b7765B8f1B991520ddf13CFC188472299228",
       "UniswapV3RouterGuard": "0xf2d2a22591E7c8fD6a7ec29a1E557e10e3bB2B9c"
     },
     "network": {
       "chainId": 10,
       "name": "unknown"
     },
-    "lastUpdated": "Mon, 14 Mar 2022 04:18:57 GMT"
+    "lastUpdated": "Fri, 18 Mar 2022 00:02:05 GMT"
   }
 }
