@@ -51,15 +51,16 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
   if (network == "ovm") {
     // Optimism network
     return [
-      assetSetting(ovmData.assets.weth, 0, ovmData.price_feeds.eth),
       assetSetting(ovmData.assets.usdt, 0, ovmData.price_feeds.usdt),
-      assetSetting(ovmData.assets.usdc, 0, ovmData.price_feeds.usdc),
       assetSetting(ovmData.assets.wbtc, 0, ovmData.price_feeds.btc),
-      assetSetting(ovmData.assets.dai, 0, ovmData.price_feeds.dai),
       assetSetting(ovmData.assets.snxProxy, 1, ovmData.price_feeds.snx),
       assetSetting(ovmData.assets.susd, 1, usdPriceAggregator.address),
       assetSetting(ovmData.assets.slink, 1, ovmData.price_feeds.link),
       assetSetting(ovmData.assets.seth, 1, ovmData.price_feeds.eth),
+      assetSetting(ovmData.aave.lendingPool, 3, usdPriceAggregator.address),
+      assetSetting(ovmData.assets.weth, 4, ovmData.price_feeds.eth),
+      assetSetting(ovmData.assets.dai, 4, ovmData.price_feeds.dai),
+      assetSetting(ovmData.assets.usdc, 4, ovmData.price_feeds.usdc),
       assetSetting(ovmData.uniswapV3.nonfungiblePositionManager, 7, usdPriceAggregator.address),
     ];
   } else {

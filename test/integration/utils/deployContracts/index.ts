@@ -110,6 +110,10 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const erc20Guard = await ERC20Guard.deploy();
     await erc20Guard.deployed();
 
+    const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
+    const openAssetGuard = await OpenAssetGuard.deploy([]);
+    await openAssetGuard.deployed();
+
     const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
     const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
     await uniswapV3RouterGuard.deployed();
@@ -126,18 +130,42 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const synthetixGuard = await SynthetixGuard.deploy(ovmData.synthetix.addressResolver);
     await synthetixGuard.deployed();
 
+    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(ovmData.aave.protocolDataProvider);
+    await aaveLendingPoolAssetGuard.deployed();
+
+    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+    await aaveLendingPoolGuard.deployed();
+
+    const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
+    const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
+    await lendingEnabledAssetGuard.deployed();
+
+    // const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
+    // const swapRouter = await SwapRouter.deploy([ovmData.quickswap.router, ovmData.sushi.router], []);
+    // await swapRouter.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(1, erc20Guard.address);
+    await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
+    await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
     await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
     await governance.setAssetGuard(7, uniV3AssetGuard.address);
     await governance.setContractGuard(ovmData.uniswapV3.router, uniswapV3RouterGuard.address);
+    await governance.setContractGuard(ovmData.aave.lendingPool, aaveLendingPoolGuard.address);
     await governance.setContractGuard(ovmData.assets.snxProxy, synthetixGuard.address);
     await governance.setContractGuard(
       ovmData.uniswapV3.nonfungiblePositionManager,
       uniswapV3NonfungiblePositionGuard.address,
     );
 
-    await governance.setAddresses([{ name: toBytes32("weth"), destination: ovmData.assets.weth }]);
+    await governance.setAddresses([
+      // { name: toBytes32("swapRouter"), destination: swapRouter.address },
+      { name: toBytes32("weth"), destination: ovmData.assets.weth },
+      { name: toBytes32("aaveProtocolDataProvider"), destination: ovmData.aave.protocolDataProvider },
+      { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
+    ]);
 
     await poolFactory.setExitFee(5, 1000); // 0.5%
 
