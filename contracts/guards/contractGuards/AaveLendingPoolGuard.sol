@@ -83,7 +83,10 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
     address factory = IPoolManagerLogic(_poolManagerLogic).factory();
 
-    if (method == bytes4(keccak256("deposit(address,uint256,address,uint16)"))) {
+    if (
+      method == bytes4(keccak256("supply(address,uint256,address,uint16)")) ||
+      method == bytes4(keccak256("deposit(address,uint256,address,uint16)"))
+    ) {
       address depositAsset = convert32toAddress(getInput(data, 0));
       uint256 amount = uint256(getInput(data, 1));
       address onBehalfOf = convert32toAddress(getInput(data, 2));
