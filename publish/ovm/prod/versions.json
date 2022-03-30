@@ -195,7 +195,7 @@
       "PoolLogicProxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
       "PoolLogic": "0xA1ab057c535C3A0Fcb4d0959B9059196870185ec",
       "PoolFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
-      "PoolFactory": "0xdf22F3975EA6897716E4b5Fa56E310eF0534e5F8",
+      "PoolFactory": "0x6CA177b0Ee3B1D352e6A9AF62a403FFd7E2013D1",
       "Oracles": [
         {
           "assetAddress": "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
@@ -211,6 +211,6 @@
       "chainId": 10,
       "name": "unknown"
     },
-    "lastUpdated": "Wed, 30 Mar 2022 03:10:32 GMT"
+    "lastUpdated": "Wed, 30 Mar 2022 04:15:24 GMT"
   }
 }
