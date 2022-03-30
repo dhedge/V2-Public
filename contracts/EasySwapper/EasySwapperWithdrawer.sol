@@ -13,7 +13,6 @@ import "../interfaces/IPoolFactory.sol";
 import "./EasySwapperV3Helpers.sol";
 import "./EasySwapperV2LpHelpers.sol";
 import "./EasySwapperBalancerV2Helpers.sol";
-import "./IHasWithdraw.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library EasySwapperWithdrawer {
@@ -33,7 +32,6 @@ library EasySwapperWithdrawer {
     IUniswapV2Router assetType2Router;
     IUniswapV2Router assetType5Router;
     IERC20 weth;
-    IPoolLogic[] dhedgePools;
   }
 
   /// @notice withdraw underlying value of tokens in expectedWithdrawalAssetOfUser
@@ -46,7 +44,8 @@ library EasySwapperWithdrawer {
     uint256 fundTokenAmount,
     IERC20 withdrawalAsset,
     uint256 expectedAmountOut,
-    WithdrawProps memory withdrawProps
+    WithdrawProps memory withdrawProps,
+    mapping(address => bool) storage dhedgePoolsMap
   ) internal {
     IPoolLogic(pool).withdraw(fundTokenAmount);
 
@@ -61,9 +60,10 @@ library EasySwapperWithdrawer {
     // We also must detect which assets the pool had v3 lp in and
     // swap those into our withdrawalAsset.
     // We also must deal with pools that hold dUSD.
+    // We also must deal with pools that holder bal-dusd-usdc
 
-    // Also be aware that we must unroll out sushi lps before any
-    // withdrawing takes place because the pool might be lp'ing assetType 4
+    // Also be aware that we must unroll everything before any
+    // swapping to the withdrawAssets takes place because the pool might be lp'ing assetType 4
     // assets and those are ordered after Sushi lp :\
 
     // 0 = Chainlink direct USD price feed with 8 decimals
@@ -78,37 +78,46 @@ library EasySwapperWithdrawer {
     // We support balancer lp's with upto 5 assets :\
     // ie. USDC-LINK-WETH-BAL-AAVE
 
-    for (uint256 i = 0; i < withdrawProps.dhedgePools.length; i++) {
-      // TODO: Maybe we should just revert for pools that have dhedge tokens.
-      uint256 balance = withdrawProps.dhedgePools[i].balanceOf(address(this));
-      if (balance > 0) {
-        require(false, "Cannot easy swap dhedge");
-        // EasySwapperWithdrawer.withdraw(address(withdrawProps.dhedgePools[i]), balance, withdrawalAsset, 0, withdrawProps);
-      }
-    }
-
     address[] memory allBasicErc20s = new address[](supportedAssets.length * 5);
     uint8 hits;
 
     for (uint256 i = 0; i < supportedAssets.length; i++) {
       address asset = supportedAssets[i].asset;
+      uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
+      address[] memory unrolledAssets;
       // Maybe there is a cleaner way to do this?
       // Have to use try catch because some erc20 have a fallback function that reverts
+
       bool isBalancer;
       try IBalancerPool(asset).getVault() returns (address balancerVaultAddress) {
         isBalancer = balancerVaultAddress != address(0);
       } catch {
         isBalancer = false;
       }
-      uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
-      address[] memory unrolledAssets;
+
       // if isBalancer
       if (isBalancer) {
         unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
           IPoolLogic(pool).poolManagerLogic(),
           asset, // BHPT
-          address(withdrawalAsset)
+          address(withdrawalAsset),
+          address(withdrawProps.weth)
         );
+      } else if (dhedgePoolsMap[asset] == true) {
+        // TODO: Maybe we should just revert for pools that have dhedge tokens.
+        revert("Cant contain dhedge pool");
+        // uint256 balance = IPoolLogic(asset).balanceOf(address(this));
+        // if (balance > 0) {
+        //   // require(false, "Cannot easy swap dhedge");
+        //   withdraw(
+        //     address(asset),
+        //     balance,
+        //     withdrawalAsset,
+        //     0,
+        //     withdrawProps
+        //   );
+        // }
+        // unrolledAssets = new address[](0);
       }
       // Sushi V2 lp and Quick V2 lp
       else if (assetType == 2 || assetType == 5) {
@@ -126,18 +135,13 @@ library EasySwapperWithdrawer {
       else if (assetType == 7) {
         unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(pool, asset);
       } else {
-        // Dhedge pools already withdraw or reverted
         unrolledAssets = new address[](1);
         unrolledAssets[0] = asset;
       }
 
       // Push any unrolledAssets into the allBasics array
       for (uint256 y = 0; y < unrolledAssets.length; y++) {
-        if (
-          !isDhedgePool(unrolledAssets[y], withdrawProps.dhedgePools) &&
-          unrolledAssets[y] != address(withdrawProps.weth) &&
-          unrolledAssets[y] != address(withdrawalAsset)
-        ) {
+        if (unrolledAssets[y] != address(withdrawProps.weth) && unrolledAssets[y] != address(withdrawalAsset)) {
           allBasicErc20s[hits] = unrolledAssets[y];
           hits++;
         }
@@ -159,8 +163,10 @@ library EasySwapperWithdrawer {
 
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
     require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
-    withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
-    emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
+    if (balanceAfterSwaps > 0) {
+      withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
+      emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
+    }
   }
 
   /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
@@ -187,14 +193,5 @@ library EasySwapperWithdrawer {
     path[1] = address(to);
 
     swapRouter.swapExactTokensForTokens(balance, 0, path, address(this), uint256(-1));
-  }
-
-  function isDhedgePool(address asset, IPoolLogic[] memory dhedgePools) internal pure returns (bool) {
-    for (uint256 i = 0; i < dhedgePools.length; i++) {
-      if (asset == address(dhedgePools[i])) {
-        return true;
-      }
-    }
-    return false;
   }
 }

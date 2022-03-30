@@ -22,7 +22,8 @@ library EasySwapperBalancerV2Helpers {
   function unrollBalancerLpAndGetUnsupportedLpAssets(
     address poolManagerLogic,
     address balancerPool,
-    address withdrawalAsset
+    address withdrawalAsset,
+    address weth
   ) internal returns (address[] memory assets) {
     IBalancerV2Vault vault = IBalancerV2Vault(IBalancerPool(balancerPool).getVault());
     bytes32 poolId = IBalancerPool(balancerPool).getPoolId();
@@ -40,13 +41,11 @@ library EasySwapperBalancerV2Helpers {
         withdrawalAssetIndex = i;
         break;
       }
-      if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokens[i])) {
+      if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokens[i]) || weth == tokens[i]) {
         hasSupportedAsset = true;
         supportedAssetIndex = i;
       }
     }
-
-    require(hasWithdrawalAsset, "doenst have");
 
     uint256 balance = IERC20Extended(balancerPool).balanceOf(address(this));
     bytes memory userData;

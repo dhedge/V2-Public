@@ -27,16 +27,16 @@
             "internalType": "contract IERC20",
             "name": "weth",
             "type": "address"
-          },
-          {
-            "internalType": "contract IPoolLogic[]",
-            "name": "dhedgePools",
-            "type": "address[]"
           }
         ],
         "internalType": "struct EasySwapperWithdrawer.WithdrawProps",
         "name": "_withdrawProps",
         "type": "tuple"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_dhedgePools",
+        "type": "address[]"
       }
     ],
     "stateMutability": "nonpayable",
@@ -160,6 +160,25 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "dhedgePools",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

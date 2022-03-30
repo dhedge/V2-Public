@@ -25,13 +25,16 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
       // }
 
       const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(protocolDao, {
-        swapRouter: quickswap.router,
-        weth: assets.weth,
-        assetType2Router: sushi.router,
-        assetType5Router: quickswap.router,
-        dhedgePools: [...Object.values(torosPools), assets.dusd],
-      }); // Init version
+      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
+        protocolDao,
+        {
+          swapRouter: quickswap.router,
+          weth: assets.weth,
+          assetType2Router: sushi.router,
+          assetType5Router: quickswap.router,
+        },
+        [...Object.values(torosPools), assets.dusd],
+      ); // Init version
 
       await dhedgeEasySwapper.deployed();
 
