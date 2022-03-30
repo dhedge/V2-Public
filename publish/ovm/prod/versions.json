@@ -182,7 +182,7 @@
           "oracleAddress": "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877"
         }
       ],
-      "ERC20Guard": "0x6212FFDDe8f24e525264df10A7FfC6D017c8424A",
+      "ERC20Guard": "0x051947f71f4b7fC8adDE3A50A2f7eeD8c6d20e0c",
       "SynthetixGuard": "0xEFEFCa1f7C5ac491d6fE720E6D6725255290D621",
       "Governance": "0xa9F912c1dB1b844fd96192Ac3B496E9d8F445bc9",
       "USDPriceAggregator": "0x645f8ec14d0940Efd7272ba478c12968e8eB9937",
@@ -211,6 +211,6 @@
       "chainId": 10,
       "name": "unknown"
     },
-    "lastUpdated": "Fri, 18 Mar 2022 00:02:05 GMT"
+    "lastUpdated": "Wed, 30 Mar 2022 03:10:32 GMT"
   }
 }
