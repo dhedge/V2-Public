@@ -131,8 +131,6 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   address public poolManagerLogic;
 
-  mapping(address => uint256) public lastWhitelistTransfer;
-
   modifier onlyPrivate() {
     require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
     _;
@@ -578,5 +576,5 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     }
   }
 
-  uint256[49] private __gap;
+  uint256[50] private __gap;
 }
