@@ -85,9 +85,9 @@ library EasySwapperWithdrawer {
       address asset = supportedAssets[i].asset;
       uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
       address[] memory unrolledAssets;
-      // Maybe there is a cleaner way to do this?
-      // Have to use try catch because some erc20 have a fallback function that reverts
 
+      // Maybe there is a cleaner way to detect if it is a balancer pool?
+      // Have to use try catch because some erc20 have a fallback function that reverts
       bool isBalancer;
       try IBalancerPool(asset).getVault() returns (address balancerVaultAddress) {
         isBalancer = balancerVaultAddress != address(0);
@@ -95,7 +95,6 @@ library EasySwapperWithdrawer {
         isBalancer = false;
       }
 
-      // if isBalancer
       if (isBalancer) {
         unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
           IPoolLogic(pool).poolManagerLogic(),
@@ -165,8 +164,8 @@ library EasySwapperWithdrawer {
     require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
     if (balanceAfterSwaps > 0) {
       withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
-      emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
     }
+    emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
   }
 
   /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
