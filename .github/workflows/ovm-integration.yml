@@ -141,7 +141,8 @@ jobs:
       - name: UniswapV3SwapRouterTest
         run: |
           npx hardhat test ./test/integration/ovm/UniswapV3SwapRouterTest.ts --network localhost
-ovm-integration3:
+
+  ovm-integration3:
     if: "contains(join(github.event.commits.*.message), '[run-ovm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
     name: OIT 3 - Aave V3
     # The type of runner that the job will run on
