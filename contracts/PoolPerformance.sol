@@ -49,6 +49,7 @@ import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/aave/IAaveProtocolDataProvider.sol";
 import "./interfaces/aave/ILendingPool.sol";
 import "./interfaces/aave/ILendingPoolAddressesProvider.sol";
+import "./interfaces/aave/IPoolAddressesProvider.sol";
 import "./interfaces/aave/IAToken.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -411,9 +412,16 @@ contract PoolPerformance is OwnableUpgradeable {
       .nameToDestination("aaveProtocolDataProvider");
 
     if (aaveProtocolDataProvider != address(0)) {
-      address aaveLendingPool = ILendingPoolAddressesProvider(
-        IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER()
-      ).getLendingPool();
+      address aaveLendingPool;
+      // aave v2 pool address provider has getLendingPool() function
+      // aave v3 pool address provider has getPool() function
+      address addressesProvider = IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER();
+      try ILendingPoolAddressesProvider(addressesProvider).getLendingPool() returns (address _aaveLendingPool) {
+        aaveLendingPool = _aaveLendingPool;
+      } catch {
+        aaveLendingPool = IPoolAddressesProvider(addressesProvider).getPool();
+      }
+
       return
         AaveAddresses(
           aaveProtocolDataProvider,

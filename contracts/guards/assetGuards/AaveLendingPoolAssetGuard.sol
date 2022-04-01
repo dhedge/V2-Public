@@ -42,6 +42,7 @@ import "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 import "../../interfaces/aave/ILendingPool.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/aave/ILendingPoolAddressesProvider.sol";
+import "../../interfaces/aave/IPoolAddressesProvider.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
@@ -60,15 +61,22 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
 
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
-  ILendingPoolAddressesProvider public aaveAddressProvider;
+  address public aaveAddressProvider;
   address public override aaveLendingPool;
 
   constructor(address _aaveProtocolDataProvider) {
     // solhint-disable-next-line reason-string
     require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
-    aaveAddressProvider = ILendingPoolAddressesProvider(aaveProtocolDataProvider.ADDRESSES_PROVIDER());
-    aaveLendingPool = aaveAddressProvider.getLendingPool();
+
+    aaveAddressProvider = IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER();
+    // aave v2 pool address provider has getLendingPool() function
+    // aave v3 pool address provider has getPool() function
+    try ILendingPoolAddressesProvider(aaveAddressProvider).getLendingPool() returns (address _aaveLendingPool) {
+      aaveLendingPool = _aaveLendingPool;
+    } catch {
+      aaveLendingPool = IPoolAddressesProvider(aaveAddressProvider).getPool();
+    }
   }
 
   /// @notice Returns the pool position of Aave lending pool

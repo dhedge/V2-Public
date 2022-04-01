@@ -2,9 +2,9 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { expect, use } from "chai";
 import { checkAlmostSame, units } from "../../TestHelpers";
-import { ZERO_ADDRESS, aave, assets, assetsBalanceOfSlot } from "../../../config/chainData/ovm-data";
+import { ZERO_ADDRESS, aave, assets, assetsBalanceOfSlot, zipswap } from "../../../config/chainData/ovm-data";
 import {
-  IAaveIncentivesController__factory,
+  DhedgeSwapRouter,
   IERC20,
   IERC20__factory,
   ILendingPool__factory,
@@ -21,7 +21,7 @@ import { BigNumber } from "ethers";
 use(solidity);
 
 describe("Aave Test", function () {
-  let USDC: IERC20, DAI: IERC20, AMUSDC: IERC20, WMATIC: IERC20;
+  let USDC: IERC20, DAI: IERC20, AMUSDC: IERC20;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
@@ -35,8 +35,6 @@ describe("Aave Test", function () {
     poolFactory = deployments.poolFactory;
     DAI = deployments.assets.DAI;
     USDC = deployments.assets.USDC;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    WMATIC = deployments.assets.WMATIC!;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     AMUSDC = deployments.assets.AMUSDC!;
 
@@ -137,7 +135,7 @@ describe("Aave Test", function () {
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI)).to.be.revertedWith(
-      "SafeERC20: low-level call failed",
+      "ERC20: transfer amount exceeds allowance",
     );
 
     const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -233,7 +231,7 @@ describe("Aave Test", function () {
       );
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.weth, true]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi)).to.be.revertedWith("19");
+      await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi)).to.be.revertedWith("43");
 
       abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [assets.usdc, false]);
       await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, abi);
@@ -349,7 +347,7 @@ describe("Aave Test", function () {
         );
 
         await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI)).to.be.revertedWith(
-          "SafeERC20: low-level call failed",
+          "Dai/insufficient-allowance",
         );
 
         // approve dai
@@ -386,7 +384,7 @@ describe("Aave Test", function () {
         checkAlmostSame(totalFundValueBefore, units(200));
 
         // Unapprove WETH in Sushiswap to test conditional approval logic
-        const approveABI = iERC20.encodeFunctionData("approve", [sushi.router, (0).toString()]);
+        const approveABI = iERC20.encodeFunctionData("approve", [zipswap.router, (0).toString()]);
         await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
         await poolLogicProxy.withdraw(withdrawAmount);
@@ -408,18 +406,16 @@ describe("Aave Test", function () {
 
         swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.usdc, 1]);
         await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
-          "17",
+          "41",
         );
 
         swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.dai, 1]);
         await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
-          "17",
+          "41",
         );
 
         swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.dai, 2]);
-        await expect(poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI)).to.be.revertedWith(
-          "12",
-        );
+        await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, swapRateABI);
       });
 
       it("should be able to rebalance stable borrow rate", async function () {
@@ -444,7 +440,7 @@ describe("Aave Test", function () {
         ]);
         await expect(
           poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, rebalanceAPI),
-        ).to.be.revertedWith("22");
+        ).to.be.revertedWith("44");
 
         rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
           assets.dai,
@@ -452,7 +448,7 @@ describe("Aave Test", function () {
         ]);
         await expect(
           poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, rebalanceAPI),
-        ).to.be.revertedWith("22");
+        ).to.be.revertedWith("44");
       });
 
       it("should fail to remove asset", async () => {

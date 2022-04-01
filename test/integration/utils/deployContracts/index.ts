@@ -3,6 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   AssetHandler,
   DhedgeEasySwapper,
+  DhedgeSwapRouter,
   Governance,
   IERC20,
   PoolFactory,
@@ -11,6 +12,7 @@ import {
   PoolPerformance,
   SushiMiniChefV2Guard,
   SynthetixGuard,
+  UniswapV2RouterGuard,
   UniswapV3AssetGuard,
   UniswapV3RouterGuard,
 } from "../../../../types";
@@ -28,6 +30,7 @@ export type IDeployments = {
   user: SignerWithAddress;
   governance: Governance;
   assetHandler: AssetHandler;
+  swapRouter: DhedgeSwapRouter;
   poolFactory: PoolFactory;
   poolLogic: PoolLogic;
   poolManagerLogic: PoolManagerLogic;
@@ -36,6 +39,7 @@ export type IDeployments = {
   dhedgeEasySwapper?: DhedgeEasySwapper;
   synthetixGuard?: SynthetixGuard;
   uniV3AssetGuard: UniswapV3AssetGuard;
+  uniswapV2RouterGuard: UniswapV2RouterGuard;
   uniswapV3RouterGuard: UniswapV3RouterGuard;
   assets: {
     USDT: IERC20;
@@ -114,6 +118,10 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const openAssetGuard = await OpenAssetGuard.deploy([]);
     await openAssetGuard.deployed();
 
+    const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
+    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
+    await uniswapV2RouterGuard.deployed();
+
     const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
     const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
     await uniswapV3RouterGuard.deployed();
@@ -134,17 +142,17 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(ovmData.aave.protocolDataProvider);
     await aaveLendingPoolAssetGuard.deployed();
 
-    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+    const AaveLendingL2PoolGuard = await ethers.getContractFactory("AaveLendingL2PoolGuard");
+    const aaveLendingPoolGuard = await AaveLendingL2PoolGuard.deploy(ovmData.aave.lendingPool);
     await aaveLendingPoolGuard.deployed();
 
     const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
     const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
     await lendingEnabledAssetGuard.deployed();
 
-    // const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
-    // const swapRouter = await SwapRouter.deploy([ovmData.quickswap.router, ovmData.sushi.router], []);
-    // await swapRouter.deployed();
+    const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
+    const swapRouter = await SwapRouter.deploy([ovmData.zipswap.router], []);
+    await swapRouter.deployed();
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(1, erc20Guard.address);
@@ -152,6 +160,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
     await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
     await governance.setAssetGuard(7, uniV3AssetGuard.address);
+    await governance.setContractGuard(ovmData.zipswap.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(ovmData.uniswapV3.router, uniswapV3RouterGuard.address);
     await governance.setContractGuard(ovmData.aave.lendingPool, aaveLendingPoolGuard.address);
     await governance.setContractGuard(ovmData.assets.snxProxy, synthetixGuard.address);
@@ -161,7 +170,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     );
 
     await governance.setAddresses([
-      // { name: toBytes32("swapRouter"), destination: swapRouter.address },
+      { name: toBytes32("swapRouter"), destination: swapRouter.address },
       { name: toBytes32("weth"), destination: ovmData.assets.weth },
       { name: toBytes32("aaveProtocolDataProvider"), destination: ovmData.aave.protocolDataProvider },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
@@ -175,6 +184,13 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const SUSD = await ethers.getContractAt("IERC20", ovmData.assets.susd);
     const DAI = await ethers.getContractAt("IERC20", ovmData.assets.dai);
 
+    const AMUSDC = await ethers.getContractAt("IERC20", ovmData.aave.aTokens.usdc);
+    const AMWETH = await ethers.getContractAt("IERC20", ovmData.aave.aTokens.weth);
+
+    const VariableWETH = await ethers.getContractAt("IERC20", ovmData.aave.variableDebtTokens.weth);
+    const VariableUSDT = await ethers.getContractAt("IERC20", ovmData.aave.variableDebtTokens.usdt);
+    const VariableDAI = await ethers.getContractAt("IERC20", ovmData.aave.variableDebtTokens.dai);
+
     return {
       logicOwner,
       manager,
@@ -182,11 +198,13 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       user,
       governance,
       assetHandler,
+      swapRouter,
       poolFactory,
       poolLogic,
       poolManagerLogic,
       poolPerformance,
       uniV3AssetGuard,
+      uniswapV2RouterGuard,
       uniswapV3RouterGuard,
       synthetixGuard,
       assets: {
@@ -195,6 +213,11 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
         WETH,
         DAI,
         SUSD,
+        AMUSDC,
+        AMWETH,
+        VariableWETH,
+        VariableUSDT,
+        VariableDAI,
       },
     };
   } else {
@@ -349,6 +372,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       user,
       governance,
       assetHandler,
+      swapRouter,
       poolFactory,
       poolLogic,
       poolManagerLogic,
@@ -356,6 +380,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       sushiMiniChefV2Guard,
       dhedgeEasySwapper,
       uniV3AssetGuard,
+      uniswapV2RouterGuard,
       uniswapV3RouterGuard,
       assets: {
         WMATIC,

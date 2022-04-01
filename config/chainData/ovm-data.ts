@@ -7,6 +7,12 @@ export const synthetix = {
   slinkKey: "0x734c494e4b000000000000000000000000000000000000000000000000000000",
 };
 
+// zipswap
+export const zipswap = {
+  factory: "0x8BCeDD62DD46F1A76F8A1633d4f5B76e0CDa521E",
+  router: "0xE6Df0BB08e5A97b40B21950a0A51b94c4DbA0Ff6",
+};
+
 export const assets = {
   susd: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
   seth: "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
