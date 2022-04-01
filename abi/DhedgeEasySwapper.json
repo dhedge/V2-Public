@@ -34,9 +34,9 @@
         "type": "tuple"
       },
       {
-        "internalType": "address[]",
-        "name": "_dhedgePools",
-        "type": "address[]"
+        "internalType": "contract IPoolFactory",
+        "name": "_poolFactory",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -163,25 +163,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "dhedgePools",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "feeDenominator",
     "outputs": [
@@ -226,6 +207,19 @@
     "outputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "poolFactory",
+    "outputs": [
+      {
+        "internalType": "contract IPoolFactory",
         "name": "",
         "type": "address"
       }

@@ -60,7 +60,7 @@ contract DhedgeEasySwapper is Ownable {
   uint256 public feeNumerator = 50;
   uint256 public feeDenominator = 1000;
 
-  mapping(address => bool) public dhedgePools;
+  IPoolFactory public poolFactory;
 
   mapping(address => bool) public allowedPools;
   IERC20 public weth;
@@ -70,13 +70,11 @@ contract DhedgeEasySwapper is Ownable {
   constructor(
     address payable _feeSink,
     EasySwapperWithdrawer.WithdrawProps memory _withdrawProps,
-    address[] memory _dhedgePools
+    IPoolFactory _poolFactory
   ) {
     feeSink = _feeSink;
     withdrawProps = _withdrawProps;
-    for (uint256 i = 0; i < _dhedgePools.length; i++) {
-      dhedgePools[_dhedgePools[i]] = true;
-    }
+    poolFactory = _poolFactory;
   }
 
   function setPoolAllowed(address pool, bool allowed) external onlyOwner {
@@ -152,7 +150,7 @@ contract DhedgeEasySwapper is Ownable {
     // Im not sure we need this because if the person that can transfer the tokens
     // to the easy swapper isnt under a lock up than
     // Maybe we have it so that if people are transfering to the whitelisted address they can circumt vent the lock up?
-    require(allowedPools[address(pool)], "Pool is not allowed.");
+    // require(allowedPools[address(pool)], "Pool is not allowed.");
     IERC20(pool).safeTransferFrom(msg.sender, address(this), fundTokenAmount);
     EasySwapperWithdrawer.withdraw(
       pool,
@@ -160,7 +158,7 @@ contract DhedgeEasySwapper is Ownable {
       withdrawalAsset,
       expectedAmountOut,
       withdrawProps,
-      dhedgePools
+      poolFactory
     );
   }
 }

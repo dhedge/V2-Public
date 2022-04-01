@@ -28,12 +28,12 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
       const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
         protocolDao,
         {
-          swapRouter: quickswap.router,
+          swapRouter: versions[latestVersion].contracts.DhedgeSwapRouter,
           weth: assets.weth,
           assetType2Router: sushi.router,
           assetType5Router: quickswap.router,
         },
-        [...Object.values(torosPools), assets.dusd],
+        versions[latestVersion].contracts.PoolFactoryProxy,
       ); // Init version
 
       await dhedgeEasySwapper.deployed();
@@ -57,8 +57,8 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
           weth: assets.weth,
           assetType2Router: sushi.router,
           assetType5Router: quickswap.router,
-          dhedgePools: [...Object.values(torosPools), assets.dusd],
         },
+        versions[latestVersion].contracts.PoolFactoryProxy,
       ]);
       if (versionUpdate) {
         versions[latestVersion].lastUpdated = new Date().toUTCString();

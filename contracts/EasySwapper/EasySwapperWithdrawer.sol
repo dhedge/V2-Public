@@ -45,7 +45,7 @@ library EasySwapperWithdrawer {
     IERC20 withdrawalAsset,
     uint256 expectedAmountOut,
     WithdrawProps memory withdrawProps,
-    mapping(address => bool) storage dhedgePoolsMap
+    IPoolFactory poolFactory
   ) internal {
     IPoolLogic(pool).withdraw(fundTokenAmount);
 
@@ -81,6 +81,10 @@ library EasySwapperWithdrawer {
     address[] memory allBasicErc20s = new address[](supportedAssets.length * 5);
     uint8 hits;
 
+    // Pools that have aave enabled withdraw weth to the user. This isnt in supportedAssets somestimes :(
+    allBasicErc20s[hits] = address(withdrawProps.weth);
+    hits++;
+
     for (uint256 i = 0; i < supportedAssets.length; i++) {
       address asset = supportedAssets[i].asset;
       uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
@@ -102,7 +106,7 @@ library EasySwapperWithdrawer {
           address(withdrawalAsset),
           address(withdrawProps.weth)
         );
-      } else if (dhedgePoolsMap[asset] == true) {
+      } else if (poolFactory.isPool(asset) == true) {
         // TODO: Maybe we should just revert for pools that have dhedge tokens.
         revert("Cant contain dhedge pool");
         // uint256 balance = IPoolLogic(asset).balanceOf(address(this));
@@ -156,9 +160,6 @@ library EasySwapperWithdrawer {
       IERC20 from = IERC20(allBasicErc20s[i]);
       swapThat(withdrawProps.swapRouter, from, withdrawalAsset);
     }
-
-    // Pools that have aave enabled withdraw weth to the user. This isnt in supportedAssets somestimes :(
-    swapThat(withdrawProps.swapRouter, withdrawProps.weth, withdrawalAsset);
 
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
     require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
