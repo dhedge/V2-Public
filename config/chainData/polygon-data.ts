@@ -129,5 +129,3 @@ export const price_feeds = {
   balancer: "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66",
   tusd: "0x7C5D415B64312D38c56B54358449d0a4058339d2",
 };
-
-export const dhedgeEasySwapperAddress = "0xC3e6d2811f669094d94F7589CaEa69672D93408e";

@@ -1,6 +1,6 @@
 import { task, types } from "hardhat/config";
 import fs from "fs";
-import { assets, quickswap, protocolDao, sushi, torosPools } from "../../config/chainData/polygon-data";
+import { assets, quickswap, protocolDao, sushi } from "../../config/chainData/polygon-data";
 
 import { tryVerify } from "../Helpers";
 import { getDeploymentData } from "../upgrade/getDeploymentData";
@@ -20,10 +20,6 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
       const latestVersion = Object.keys(versions)[Object.keys(versions).length - 1];
       let versionUpdate = false;
 
-      // if (versions[latestVersion].contracts.DhedgeEasySwapper) {
-      //   throw new Error("Easy Swapper contract already deployed");
-      // }
-
       const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
       const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
         protocolDao,
@@ -38,16 +34,19 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
 
       await dhedgeEasySwapper.deployed();
 
+      if (!deploymentData.addresses.torosEasySwapperAllowedPools) {
+        throw new Error("torosEasySwapperAllowedPools not defined");
+      }
+
       // Enable the Toros leverage pools (Production)
-      for (const leveragePool of Object.values(torosPools)) {
+      // This should not contain non leveraged pools
+      for (const leveragePool of deploymentData.addresses.torosEasySwapperAllowedPools) {
         await dhedgeEasySwapper.setPoolAllowed(leveragePool, true);
       }
-      await dhedgeEasySwapper.setPoolAllowed(assets.dusd, true);
 
       await dhedgeEasySwapper.transferOwnership(protocolDao);
 
       versions[latestVersion].contracts.DhedgeEasySwapper = dhedgeEasySwapper.address;
-      versionUpdate = true;
 
       console.log("DhedgeEasySwapper deployed to: ", dhedgeEasySwapper.address);
       await tryVerify(hre, dhedgeEasySwapper.address, "contracts/EasySwapper/DhedgeEasySwapper.sol:DhedgeEasySwapper", [
@@ -60,12 +59,11 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
         },
         versions[latestVersion].contracts.PoolFactoryProxy,
       ]);
-      if (versionUpdate) {
-        versions[latestVersion].lastUpdated = new Date().toUTCString();
-        // convert JSON object to string
-        const data = JSON.stringify(versions, null, 2);
-        // write to version file
-        fs.writeFileSync(deploymentData.filenames.versionsFileName, data);
-      }
+
+      versions[latestVersion].lastUpdated = new Date().toUTCString();
+      // convert JSON object to string
+      const data = JSON.stringify(versions, null, 2);
+      // write to version file
+      fs.writeFileSync(deploymentData.filenames.versionsFileName, data);
     }
   });

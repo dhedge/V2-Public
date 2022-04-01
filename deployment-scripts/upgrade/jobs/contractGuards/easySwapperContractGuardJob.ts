@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
 import { addOrReplaceGuardInFile } from "../helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
+import { IDeployedContractGuard, IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
 
 export const easySwapperContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -9,10 +9,10 @@ export const easySwapperContractGuardJob: IJob<void> = async (
   // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
-  addresses: { dhedgeEasySwapperAddress?: string } & IProposeTxProperties,
+  addresses: IProposeTxProperties,
 ) => {
-  if (!addresses.dhedgeEasySwapperAddress) {
-    console.warn("dhedgeEasySwapperAddress not configured for easySwapperContractGuardJob: skipping.");
+  if (!versions[config.newTag].contracts.DhedgeEasySwapper) {
+    console.warn("dhedgeEasySwapper not does not exist in versions: skipping.");
     return;
   }
 
@@ -31,7 +31,7 @@ export const easySwapperContractGuardJob: IJob<void> = async (
     await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", []);
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-      addresses.dhedgeEasySwapperAddress,
+      !versions[config.newTag].contracts.DhedgeEasySwapper,
       easySwapperGuard.address,
     ]);
     await proposeTx(
@@ -42,8 +42,8 @@ export const easySwapperContractGuardJob: IJob<void> = async (
       addresses,
     );
 
-    const deployedGuard = {
-      contractAddress: addresses.dhedgeEasySwapperAddress,
+    const deployedGuard: IDeployedContractGuard = {
+      contractAddress: versions[config.newTag].contracts.DhedgeEasySwapper,
       guardName: "EasySwapperGuard",
       guardAddress: easySwapperGuard.address,
       description: "Dhedge EasySwapper - allows access to toros pools",

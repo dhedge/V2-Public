@@ -80,7 +80,7 @@ describe("DhedgeEasySwapper Toros Tests", function () {
         assetType2Router: sushi.router,
         assetType5Router: quickswap.router,
       },
-      [...Object.values(torosPools), assets.dusd],
+      poolFactoryProxy,
     );
     await dhedgeEasySwapper.deployed();
 
@@ -187,6 +187,29 @@ describe("DhedgeEasySwapper Toros Tests", function () {
     });
   });
 
+  describe("Only using swapper for withdraw", () => {
+    it("can't withdraw locked tokens via easySwapper", async () => {
+      // Setup
+      const depositAmount = units(1, 6);
+      await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
+      const torosPool = await ethers.getContractAt("PoolLogic", torosPools.ETHBEAR2X);
+      const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
+      await DepositToken.connect(user1).approve(torosPool.address, depositAmount);
+
+      // Deposit
+      torosPool.connect(user1).deposit(assets.usdc, depositAmount);
+      const balance = await torosPool.connect(user1).balanceOf(user1.address);
+      // Withdraw
+      await ethers.provider.send("evm_increaseTime", [24 * 3600]); // 1 hour
+      await ethers.provider.send("evm_mine", []);
+
+      await torosPool.connect(user1).approve(dhedgeEasySwapper.address, balance);
+      await expect(
+        dhedgeEasySwapper.connect(user1).withdraw(torosPool.address, user1.address, assets.usdc, 0),
+      ).to.be.revertedWith("cooldown active");
+    });
+  });
+
   describe("Multiple users can use swapper at the same time", () => {
     it("2 users deposit, wait, withdraw", async () => {
       const userDepositToken = assets.usdc;
@@ -279,7 +302,7 @@ describe("DhedgeEasySwapper Toros Tests", function () {
         withdrawToken,
         poolDepositToken,
       } = test;
-      it.only(testName, async () => {
+      it(testName, async () => {
         const torosPool = await ethers.getContractAt("PoolLogic", torosPoolAddress);
         await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
 
