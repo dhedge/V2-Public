@@ -38,10 +38,10 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/aave/v3/ILendingL2Pool.sol";
-import "./AaveLendingPoolGuard.sol";
+import "./AaveLendingPoolGuardV3.sol";
 
 /// @title Transaction guard for Aave's lending pool contract
-contract AaveLendingL2PoolGuard is AaveLendingPoolGuard {
+contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
   using SafeMathUpgradeable for uint256;
 
   ILendingL2Pool public lendingPool;

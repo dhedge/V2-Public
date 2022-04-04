@@ -142,7 +142,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(ovmData.aave.protocolDataProvider);
     await aaveLendingPoolAssetGuard.deployed();
 
-    const AaveLendingL2PoolGuard = await ethers.getContractFactory("AaveLendingL2PoolGuard");
+    const AaveLendingL2PoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
     const aaveLendingPoolGuard = await AaveLendingL2PoolGuard.deploy(ovmData.aave.lendingPool);
     await aaveLendingPoolGuard.deployed();
 
