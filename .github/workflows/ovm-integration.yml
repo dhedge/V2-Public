@@ -199,10 +199,10 @@ jobs:
         run: npx hardhat compile
 
       # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
-      - name: AaveTests
+      - name: AaveV3Test
         run: |
-          npx hardhat test ./test/integration/ovm/AaveTest.ts --network localhost
+          npx hardhat test ./test/integration/ovm/AaveV3Test.ts --network localhost
 
-      - name: AaveEdgeCaseTest
+      - name: AaveV3TestWithWETH
         run: |
-          npx hardhat test ./test/integration/ovm/AaveEdgeCaseTest.ts --network localhost
+          npx hardhat test ./test/integration/ovm/AaveV3TestWithWETH.ts --network localhost

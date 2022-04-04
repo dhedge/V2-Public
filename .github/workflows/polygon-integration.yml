@@ -55,10 +55,10 @@ jobs:
         run: npx hardhat compile
         if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
-      # The AaveEdge Casttest are extremely brittle and often fail in CI seperating them
-      - name: AaveEdgeCaseTest
+      # The AaveV2TestWithWETH Casttest are extremely brittle and often fail in CI seperating them
+      - name: AaveV2TestWithWETH
         run: |
-          npx hardhat test ./test/integration/polygon/AaveEdgeCaseTest.ts --network localhost
+          npx hardhat test ./test/integration/polygon/AaveV2TestWithWETH.ts --network localhost
 
   polygon-aave-tests:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
@@ -115,9 +115,9 @@ jobs:
         if: steps.hardhat-cache.outputs.cache-hit != 'true'
 
       # We run these separately because then it fails faster AND you can tell immediately whichtest failed via github
-      - name: AaveTests
+      - name: AaveV2Test
         run: |
-          npx hardhat test ./test/integration/polygon/AaveTest.ts --network localhost
+          npx hardhat test ./test/integration/polygon/AaveV2Test.ts --network localhost
 
   polygon-integration1:
     if: "contains(join(github.event.commits.*.message), '[run-polygon]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
