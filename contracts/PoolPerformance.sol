@@ -47,9 +47,9 @@ import "./interfaces/IPoolLogic.sol";
 import "./interfaces/IERC20Extended.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/aave/IAaveProtocolDataProvider.sol";
-import "./interfaces/aave/ILendingPool.sol";
-import "./interfaces/aave/ILendingPoolAddressesProvider.sol";
-import "./interfaces/aave/IPoolAddressesProvider.sol";
+import "./interfaces/aave/v2/ILendingPool.sol";
+import "./interfaces/aave/v2/ILendingPoolAddressesProvider.sol";
+import "./interfaces/aave/v3/IPoolAddressesProvider.sol";
 import "./interfaces/aave/IAToken.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";

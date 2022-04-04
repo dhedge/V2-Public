@@ -37,7 +37,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../../interfaces/IPoolManagerLogic.sol";
-import "../../interfaces/aave/ILendingL2Pool.sol";
+import "../../interfaces/aave/v3/ILendingL2Pool.sol";
 import "./AaveLendingPoolGuard.sol";
 
 /// @title Transaction guard for Aave's lending pool contract

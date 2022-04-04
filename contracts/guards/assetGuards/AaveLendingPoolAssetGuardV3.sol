@@ -40,8 +40,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ERC20Guard.sol";
 import "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
-import "../../interfaces/aave/v2/ILendingPool.sol";
-import "../../interfaces/aave/v2/ILendingPoolAddressesProvider.sol";
+import "../../interfaces/aave/v3/IAaveV3Pool.sol";
+import "../../interfaces/aave/v3/IPoolAddressesProvider.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
@@ -50,7 +50,7 @@ import "../../interfaces/uniswapv2/IUniswapV2Router.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type = 3
-contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
+contract AaveLendingPoolAssetGuardV3 is ERC20Guard, IAaveLendingPoolAssetGuard {
   using SafeMathUpgradeable for uint256;
 
   // For Aave decimal calculation
@@ -66,8 +66,9 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     // solhint-disable-next-line reason-string
     require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
+
     address aaveAddressProvider = IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER();
-    aaveLendingPool = ILendingPoolAddressesProvider(aaveAddressProvider).getLendingPool();
+    aaveLendingPool = IPoolAddressesProvider(aaveAddressProvider).getPool();
   }
 
   /// @notice Returns the pool position of Aave lending pool
@@ -243,7 +244,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
     }
 
-    ILendingPool.ReserveConfigurationMap memory configuration = ILendingPool(aaveLendingPool).getConfiguration(asset);
+    IAaveV3Pool.ReserveConfigurationMap memory configuration = IAaveV3Pool(aaveLendingPool).getConfiguration(asset);
     decimals = (configuration.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
   }
 

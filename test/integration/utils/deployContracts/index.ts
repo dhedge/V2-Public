@@ -138,7 +138,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const synthetixGuard = await SynthetixGuard.deploy(ovmData.synthetix.addressResolver);
     await synthetixGuard.deployed();
 
-    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuardV3");
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(ovmData.aave.protocolDataProvider);
     await aaveLendingPoolAssetGuard.deployed();
 
