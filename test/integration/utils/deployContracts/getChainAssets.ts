@@ -44,7 +44,11 @@ export const assetSetting = (asset: string, assetType: number, aggregator: strin
   aggregator,
 });
 
-export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK): Promise<IAssetSetting[]> => {
+export const getChainAssets = async (
+  poolFactory: PoolFactory,
+  network: NETWORK,
+  supportedAaveVersion = "v2",
+): Promise<IAssetSetting[]> => {
   const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
   const usdPriceAggregator = await USDPriceAggregator.deploy();
 
@@ -57,7 +61,7 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       assetSetting(ovmData.assets.susd, 1, usdPriceAggregator.address),
       assetSetting(ovmData.assets.slink, 1, ovmData.price_feeds.link),
       assetSetting(ovmData.assets.seth, 1, ovmData.price_feeds.eth),
-      assetSetting(ovmData.aave.lendingPool, 3, usdPriceAggregator.address),
+      assetSetting(ovmData.aaveV3.lendingPool, 3, usdPriceAggregator.address),
       assetSetting(ovmData.assets.weth, 4, ovmData.price_feeds.eth),
       assetSetting(ovmData.assets.dai, 4, ovmData.price_feeds.dai),
       assetSetting(ovmData.assets.usdc, 4, ovmData.price_feeds.usdc),
@@ -118,7 +122,9 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       assetSetting(polygonData.assets.balancer, 0, polygonData.price_feeds.balancer),
       assetSetting(polygonData.assets.miMatic, 0, polygonData.price_feeds.matic),
       assetSetting(polygonData.assets.tusd, 0, polygonData.price_feeds.tusd),
-      assetSetting(polygonData.aave.lendingPool, 3, usdPriceAggregator.address),
+      supportedAaveVersion === "v3"
+        ? assetSetting(polygonData.aaveV3.lendingPool, 3, usdPriceAggregator.address)
+        : assetSetting(polygonData.aave.lendingPool, 3, usdPriceAggregator.address),
       assetSetting(polygonData.assets.weth, 4, polygonData.price_feeds.eth),
       assetSetting(polygonData.assets.dai, 4, polygonData.price_feeds.dai),
       assetSetting(polygonData.assets.usdc, 4, polygonData.price_feeds.usdc),
