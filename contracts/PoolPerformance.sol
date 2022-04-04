@@ -408,29 +408,16 @@ contract PoolPerformance is OwnableUpgradeable {
     view
     returns (AaveAddresses memory aaveAddresses)
   {
-    address aaveProtocolDataProvider = IGovernance(IPoolFactory(IPoolLogic(poolAddress).factory()).governanceAddress())
-      .nameToDestination("aaveProtocolDataProvider");
+    address governance = IPoolFactory(IPoolLogic(poolAddress).factory()).governanceAddress();
+    address aaveProtocolDataProvider = IGovernance(governance).nameToDestination("aaveProtocolDataProvider");
+    address aaveLendingPool = IGovernance(governance).nameToDestination("aaveLendingPool");
 
-    if (aaveProtocolDataProvider != address(0)) {
-      address aaveLendingPool;
-      // aave v2 pool address provider has getLendingPool() function
-      // aave v3 pool address provider has getPool() function
-      address addressesProvider = IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER();
-      try ILendingPoolAddressesProvider(addressesProvider).getLendingPool() returns (address _aaveLendingPool) {
-        aaveLendingPool = _aaveLendingPool;
-      } catch {
-        aaveLendingPool = IPoolAddressesProvider(addressesProvider).getPool();
-      }
-
-      return
-        AaveAddresses(
-          aaveProtocolDataProvider,
-          aaveLendingPool,
-          IHasSupportedAsset(IPoolLogic(poolAddress).poolManagerLogic()).isSupportedAsset(aaveLendingPool)
-        );
-    } else {
-      return AaveAddresses(address(0), address(0), false);
-    }
+    return
+      AaveAddresses(
+        aaveProtocolDataProvider,
+        aaveLendingPool,
+        IHasSupportedAsset(IPoolLogic(poolAddress).poolManagerLogic()).isSupportedAsset(aaveLendingPool)
+      );
   }
 
   /// @notice Enable PoolPerformance
