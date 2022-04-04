@@ -17,7 +17,7 @@ export const sushi = {
   },
 };
 
-// aave
+// aave v2
 export const aave = {
   protocolDataProvider: "0x7551b5D2763519d4e37e8B81929D336De671d46d",
   lendingPool: "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
@@ -32,6 +32,24 @@ export const aave = {
     dai: "0x75c4d1Fb84429023170086f06E682DcbBF537b7d",
     usdt: "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3",
     weth: "0xeDe17e9d79fc6f9fF9250D9EEfbdB88Cc18038b5",
+  },
+};
+
+// aave v3
+export const aaveV3 = {
+  protocolDataProvider: "0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654",
+  lendingPool: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+  incentivesController: "0x929EC64c34a17401F460460D4B9390518E5B473e",
+  aTokens: {
+    weth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
+    usdc: "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
+    usdt: "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
+    dai: "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE",
+  },
+  variableDebtTokens: {
+    dai: "0x8619d80FB0141ba7F184CbF22fd724116D9f7ffC",
+    usdt: "0xfb00AC187a8Eb5AFAE4eACE434F493Eb62672df7",
+    weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
   },
 };
 
