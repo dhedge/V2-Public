@@ -2033,8 +2033,8 @@
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
-      "PoolFactory": "0x378786f6d149380Fc7460c938D2Cb8C6F78aB936",
-      "PoolLogic": "0xdBFd8257f5921E09400Ac71892370dbB09AF5019",
+      "PoolFactory": "0x14A358dAc0a3d44F4E7c41F9D717d30335A28409",
+      "PoolLogic": "0x969d8016c5e0Ab74525f238824ac50dfc1DaBb5c",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
       "PoolManagerLogic": "0x51583c1923eb0F338c88dE674A59aB3f05731Ea8",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
@@ -2071,6 +2071,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Fri, 01 Apr 2022 06:11:43 GMT"
+    "lastUpdated": "Wed, 06 Apr 2022 06:41:41 GMT"
   }
 }
