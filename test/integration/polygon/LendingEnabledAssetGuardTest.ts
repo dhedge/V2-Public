@@ -66,11 +66,11 @@ describe("LendingEnabledAssetGuard", function () {
     const usdPriceAggregator = await USDPriceAggregator.deploy();
     const assetLendingPool = { asset: aaveV2.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
 
-    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuardV2");
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveV2.protocolDataProvider);
     aaveLendingPoolAssetGuard.deployed();
 
-    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
+    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV2");
     const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     aaveLendingPoolGuard.deployed();
 
