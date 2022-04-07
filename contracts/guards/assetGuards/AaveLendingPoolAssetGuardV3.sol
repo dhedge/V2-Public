@@ -67,7 +67,7 @@ contract AaveLendingPoolAssetGuardV3 is ERC20Guard, IAaveLendingPoolAssetGuard {
     require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
 
-    address aaveAddressProvider = IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER();
+    address aaveAddressProvider = aaveProtocolDataProvider.ADDRESSES_PROVIDER();
     aaveLendingPool = IPoolAddressesProvider(aaveAddressProvider).getPool();
   }
 

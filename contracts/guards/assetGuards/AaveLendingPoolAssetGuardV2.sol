@@ -66,7 +66,7 @@ contract AaveLendingPoolAssetGuardV2 is ERC20Guard, IAaveLendingPoolAssetGuard {
     // solhint-disable-next-line reason-string
     require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
-    address aaveAddressProvider = IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER();
+    address aaveAddressProvider = aaveProtocolDataProvider.ADDRESSES_PROVIDER();
     aaveLendingPool = ILendingPoolAddressesProvider(aaveAddressProvider).getLendingPool();
   }
 
