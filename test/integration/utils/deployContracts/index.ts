@@ -138,8 +138,11 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const synthetixGuard = await SynthetixGuard.deploy(ovmData.synthetix.addressResolver);
     await synthetixGuard.deployed();
 
-    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuardV3");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(ovmData.aaveV3.protocolDataProvider);
+    const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
+      ovmData.aaveV3.protocolDataProvider,
+      ovmData.aaveV3.lendingPool,
+    );
     await aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingL2PoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
@@ -254,9 +257,10 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const sushiLPAssetGuard = await SushiLPAssetGuard.deploy(polygonData.sushi.minichef); // initialise with Sushi staking pool Id
     await sushiLPAssetGuard.deployed();
 
-    const AaveLendingPoolAssetGuardV3 = await ethers.getContractFactory("AaveLendingPoolAssetGuardV3");
+    const AaveLendingPoolAssetGuardV3 = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
     const aaveLendingPoolAssetGuardV3 = await AaveLendingPoolAssetGuardV3.deploy(
       polygonData.aaveV3.protocolDataProvider,
+      polygonData.aaveV3.lendingPool,
     );
     await aaveLendingPoolAssetGuardV3.deployed();
 
@@ -264,9 +268,10 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const aaveLendingPoolGuardV3 = await AaveLendingPoolGuardV3.deploy();
     await aaveLendingPoolGuardV3.deployed();
 
-    const AaveLendingPoolAssetGuardV2 = await ethers.getContractFactory("AaveLendingPoolAssetGuardV2");
+    const AaveLendingPoolAssetGuardV2 = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
     const aaveLendingPoolAssetGuardV2 = await AaveLendingPoolAssetGuardV2.deploy(
       polygonData.aaveV2.protocolDataProvider,
+      polygonData.aaveV2.lendingPool,
     );
     await aaveLendingPoolAssetGuardV2.deployed();
 

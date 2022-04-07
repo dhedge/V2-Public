@@ -66,10 +66,8 @@ contract PoolPerformance is OwnableUpgradeable {
 
   struct AaveAddresses {
     address aaveProtocolDataProviderV2;
-    address aaveLendingPoolV2;
     bool supportsAaveV2;
     address aaveProtocolDataProviderV3;
-    address aaveLendingPoolV3;
     bool supportsAaveV3;
   }
 
@@ -459,10 +457,8 @@ contract PoolPerformance is OwnableUpgradeable {
     return
       AaveAddresses(
         aaveProtocolDataProviderV2,
-        aaveLendingPoolV2,
         poolManagerLogic.isSupportedAsset(aaveLendingPoolV2),
         aaveProtocolDataProviderV3,
-        aaveLendingPoolV3,
         poolManagerLogic.isSupportedAsset(aaveLendingPoolV3)
       );
   }
