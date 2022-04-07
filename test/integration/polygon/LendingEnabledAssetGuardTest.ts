@@ -8,7 +8,7 @@ const { BigNumber } = ethers;
 use(solidity);
 
 import { toBytes32, units } from "../../TestHelpers";
-import { sushi, aave, assets, price_feeds } from "../../../config/chainData/polygon-data";
+import { sushi, aaveV2, assets, price_feeds } from "../../../config/chainData/polygon-data";
 
 describe("LendingEnabledAssetGuard", function () {
   let USDC: Contract, WMatic: Contract;
@@ -64,10 +64,10 @@ describe("LendingEnabledAssetGuard", function () {
 
     const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
     const usdPriceAggregator = await USDPriceAggregator.deploy();
-    const assetLendingPool = { asset: aave.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
+    const assetLendingPool = { asset: aaveV2.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aave.protocolDataProvider);
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveV2.protocolDataProvider);
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
@@ -84,8 +84,8 @@ describe("LendingEnabledAssetGuard", function () {
 
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
     await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
-    await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuard.address);
-    await governance.setContractGuard(aave.incentivesController, aaveIncentivesControllerGuard.address);
+    await governance.setContractGuard(aaveV2.lendingPool, aaveLendingPoolGuard.address);
+    await governance.setContractGuard(aaveV2.incentivesController, aaveIncentivesControllerGuard.address);
 
     const OpenAssetGuard = await ethers.getContractFactory("OpenAssetGuard");
     const openAssetGuard = await OpenAssetGuard.deploy([]);
@@ -93,7 +93,7 @@ describe("LendingEnabledAssetGuard", function () {
 
     await governance.setAddresses([
       // [toBytes32("swapRouter"), sushi.router],
-      { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
+      { name: toBytes32("aaveProtocolDataProvider"), destination: aaveV2.protocolDataProvider },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
     await assetHandler.addAssets([assetLendingPool]);
@@ -128,7 +128,7 @@ describe("LendingEnabledAssetGuard", function () {
     await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
       [assets.wmatic, true],
       [assets.usdc, true],
-      [aave.lendingPool, false],
+      [aaveV2.lendingPool, false],
     ]);
     const funds = await poolFactory.getDeployedFunds();
     poolLogicProxy = await PoolLogic.attach(funds[0]);
@@ -139,14 +139,14 @@ describe("LendingEnabledAssetGuard", function () {
     const IERC20 = await artifacts.readArtifact("IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     // approve usdc
-    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, usdcAmount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [aaveV2.lendingPool, usdcAmount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const ILendingPool = await artifacts.readArtifact("ILendingPool");
     const iLendingPool = new ethers.utils.Interface(ILendingPool.abi);
     // deposit
     const depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, usdcAmount, poolLogicProxy.address, 0]);
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, depositABI);
 
     const poolManagerLogicProxy = await PoolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
     const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);

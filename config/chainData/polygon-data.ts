@@ -18,7 +18,7 @@ export const sushi = {
 };
 
 // aave v2
-export const aave = {
+export const aaveV2 = {
   protocolDataProvider: "0x7551b5D2763519d4e37e8B81929D336De671d46d",
   lendingPool: "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
   incentivesController: "0x357D51124f59836DeD84c8a1730D72B749d8BC23",

@@ -52,16 +52,12 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
     before(async function () {
       [logicOwner, manager] = await ethers.getSigners();
 
-      deployments = await deployContracts(network, "v3");
+      deployments = await deployContracts(network);
       poolFactory = deployments.poolFactory;
 
       DAI = await ethers.getContractAt("IERC20", dai.address);
       USDC = await ethers.getContractAt("IERC20", usdc.address);
       AMUSDC = await ethers.getContractAt("IERC20", usdc.aToken);
-      DAI = deployments.assets.DAI;
-      USDC = deployments.assets.USDC;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      AMUSDC = deployments.assets.AMUSDC!;
 
       await getAccountToken(units(10000, 6), logicOwner.address, usdc.address, usdc.balanceOfSlot);
     });

@@ -48,9 +48,9 @@ import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/uniswapv2/IUniswapV2Router.sol";
 
-/// @title Aave lending pool asset guard
+/// @title Aave V2 lending pool asset guard
 /// @dev Asset type = 3
-contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
+contract AaveLendingPoolAssetGuardV2 is ERC20Guard, IAaveLendingPoolAssetGuard {
   using SafeMathUpgradeable for uint256;
 
   // For Aave decimal calculation

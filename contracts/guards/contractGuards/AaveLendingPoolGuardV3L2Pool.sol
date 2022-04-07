@@ -40,7 +40,7 @@ import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/aave/v3/ILendingL2Pool.sol";
 import "./AaveLendingPoolGuardV3.sol";
 
-/// @title Transaction guard for Aave's lending pool contract
+/// @title Transaction guard for Aave V3 L2 lending pool contract
 contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
   using SafeMathUpgradeable for uint256;
 
@@ -50,7 +50,7 @@ contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
     lendingPool = ILendingL2Pool(_lendingPool);
   }
 
-  /// @notice Transaction guard for Aave Lending Pool
+  /// @notice Transaction guard for Aave V3 L2 Lending Pool
   /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode, rebalanceStableBorrowRate functionality
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data

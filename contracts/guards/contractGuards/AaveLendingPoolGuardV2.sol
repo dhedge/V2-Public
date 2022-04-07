@@ -45,9 +45,11 @@ import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IManaged.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
+import "../../interfaces/IPoolFactory.sol";
+import "../../interfaces/IGovernance.sol";
 
-/// @title Transaction guard for Aave's lending pool contract
-contract AaveLendingPoolGuard is TxDataUtils, IGuard {
+/// @title Transaction guard for Aave V2 lending pool contract
+contract AaveLendingPoolGuardV2 is TxDataUtils, IGuard {
   using SafeMathUpgradeable for uint256;
 
   event Deposit(address fundAddress, address asset, address lendingPool, uint256 amount, uint256 time);
@@ -61,7 +63,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
   uint256 internal constant BORROWING_MASK = 0x5555555555555555555555555555555555555555555555555555555555555555;
   uint256 internal constant COLLATERAL_MASK = 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
 
-  /// @notice Transaction guard for Aave Lending Pool
+  /// @notice Transaction guard for Aave V2 Lending Pool
   /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode, rebalanceStableBorrowRate functionality
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
@@ -199,7 +201,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
     address borrowAsset,
     uint256 amount,
     address onBehalfOf
-  ) internal returns (uint16 txType) {
+  ) internal virtual returns (uint16 txType) {
     require(IHasAssetInfo(factory).getAssetType(borrowAsset) == 4, "not borrow enabled");
     require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "aave not enabled");
     require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(borrowAsset), "unsupported borrow asset");
@@ -208,7 +210,8 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
 
     // limit only one borrow asset
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
-    address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
+    address governance = IPoolFactory(factory).governanceAddress();
+    address aaveProtocolDataProviderV2 = IGovernance(governance).nameToDestination("aaveProtocolDataProviderV2");
 
     for (uint256 i = 0; i < supportedAssets.length; i++) {
       if (supportedAssets[i].asset == borrowAsset) {
@@ -216,7 +219,7 @@ contract AaveLendingPoolGuard is TxDataUtils, IGuard {
       }
 
       // returns address(0) if it's not supported in aave
-      (, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
+      (, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProviderV2)
         .getReserveTokensAddresses(supportedAssets[i].asset);
 
       // check if asset is not supported or debt amount is zero

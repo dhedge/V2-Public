@@ -48,8 +48,8 @@ import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/uniswapv2/IUniswapV2Router.sol";
 
-/// @title Aave lending pool asset guard
-/// @dev Asset type = 3
+/// @title Aave V3 lending pool asset guard
+/// @dev Asset type = 8
 contract AaveLendingPoolAssetGuardV3 is ERC20Guard, IAaveLendingPoolAssetGuard {
   using SafeMathUpgradeable for uint256;
 

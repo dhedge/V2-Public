@@ -72,7 +72,7 @@ export const testAaveV3WithWETH = ({
       [logicOwner, manager] = await ethers.getSigners();
       snapshot = await ethers.provider.send("evm_snapshot", []);
       await ethers.provider.send("evm_mine", []);
-      const deployments = await deployContracts(network, "v3");
+      const deployments = await deployContracts(network);
       poolFactory = deployments.poolFactory;
 
       WETH = await ethers.getContractAt("IERC20", weth.address);

@@ -37,6 +37,8 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./ERC20Guard.sol";
+import "../../interfaces/IPoolFactory.sol";
+import "../../interfaces/IGovernance.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 
@@ -53,15 +55,30 @@ contract LendingEnabledAssetGuard is ERC20Guard {
     // check AAVE lending balances
     // returns address(0) if it's not supported in aave
     address factory = IPoolManagerLogic(pool).factory();
-    address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
+    address governance = IPoolFactory(factory).governanceAddress();
 
-    (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
-      aaveProtocolDataProvider
-    ).getReserveTokensAddresses(asset);
+    address aaveProtocolDataProviderV2 = IGovernance(governance).nameToDestination("aaveProtocolDataProviderV2");
+    if (aaveProtocolDataProviderV2 != address(0)) {
+      (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
+        aaveProtocolDataProviderV2
+      ).getReserveTokensAddresses(asset);
 
-    if (stableDebtToken != address(0)) require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
-    if (variableDebtToken != address(0))
-      require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
-    if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
+      if (stableDebtToken != address(0)) require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+      if (variableDebtToken != address(0))
+        require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+      if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
+    }
+
+    address aaveProtocolDataProviderV3 = IGovernance(governance).nameToDestination("aaveProtocolDataProviderV3");
+    if (aaveProtocolDataProviderV3 != address(0)) {
+      (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
+        aaveProtocolDataProviderV3
+      ).getReserveTokensAddresses(asset);
+
+      if (stableDebtToken != address(0)) require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+      if (variableDebtToken != address(0))
+        require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+      if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
+    }
   }
 }

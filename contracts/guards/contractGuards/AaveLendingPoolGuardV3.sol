@@ -38,13 +38,13 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/aave/v3/ILendingL2Pool.sol";
-import "./AaveLendingPoolGuard.sol";
+import "./AaveLendingPoolGuardV2.sol";
 
-/// @title Transaction guard for Aave's lending pool contract
-contract AaveLendingPoolGuardV3 is AaveLendingPoolGuard {
+/// @title Transaction guard for Aave V3 lending pool contract
+contract AaveLendingPoolGuardV3 is AaveLendingPoolGuardV2 {
   using SafeMathUpgradeable for uint256;
 
-  /// @notice Transaction guard for Aave Lending Pool
+  /// @notice Transaction guard for Aave V3 Lending Pool
   /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode, rebalanceStableBorrowRate functionality
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
@@ -77,5 +77,48 @@ contract AaveLendingPoolGuardV3 is AaveLendingPoolGuard {
     } else {
       (txType, isPublic) = super.txGuard(_poolManagerLogic, to, data);
     }
+  }
+
+  // override borrow for aave v3
+  function _borrow(
+    address factory,
+    address poolLogic,
+    address poolManagerLogic,
+    address to,
+    address borrowAsset,
+    uint256 amount,
+    address onBehalfOf
+  ) internal override returns (uint16 txType) {
+    require(IHasAssetInfo(factory).getAssetType(borrowAsset) == 4, "not borrow enabled");
+    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "aave not enabled");
+    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(borrowAsset), "unsupported borrow asset");
+
+    require(onBehalfOf == poolLogic, "recipient is not pool");
+
+    // limit only one borrow asset
+    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
+    address governance = IPoolFactory(factory).governanceAddress();
+    address aaveProtocolDataProviderV3 = IGovernance(governance).nameToDestination("aaveProtocolDataProviderV3");
+
+    for (uint256 i = 0; i < supportedAssets.length; i++) {
+      if (supportedAssets[i].asset == borrowAsset) {
+        continue;
+      }
+
+      // returns address(0) if it's not supported in aave
+      (, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProviderV3)
+        .getReserveTokensAddresses(supportedAssets[i].asset);
+
+      // check if asset is not supported or debt amount is zero
+      require(
+        (stableDebtToken == address(0) || IERC20(stableDebtToken).balanceOf(onBehalfOf) == 0) &&
+          (variableDebtToken == address(0) || IERC20(variableDebtToken).balanceOf(onBehalfOf) == 0),
+        "borrowing asset exists"
+      );
+    }
+
+    emit Borrow(poolLogic, borrowAsset, to, amount, block.timestamp);
+
+    txType = 12; // Aave `Borrow` type
   }
 }

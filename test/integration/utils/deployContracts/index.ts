@@ -68,7 +68,7 @@ export type IDeployments = {
 
 export type IAssetSetting = { asset: string; assetType: number; aggregator: string };
 
-export const deployContracts = async (network: NETWORK, supportedAaveVersion = "v2"): Promise<IDeployments> => {
+export const deployContracts = async (network: NETWORK): Promise<IDeployments> => {
   const [logicOwner, manager, dao, user] = await ethers.getSigners();
 
   const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
@@ -105,7 +105,7 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
 
   await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
 
-  const chainAssets = await getChainAssets(poolFactory, network, supportedAaveVersion);
+  const chainAssets = await getChainAssets(poolFactory, network);
   await assetHandler.addAssets(chainAssets);
 
   if (network == "ovm") {
@@ -172,8 +172,8 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
     await governance.setAddresses([
       { name: toBytes32("swapRouter"), destination: swapRouter.address },
       { name: toBytes32("weth"), destination: ovmData.assets.weth },
-      { name: toBytes32("aaveProtocolDataProvider"), destination: ovmData.aaveV3.protocolDataProvider },
-      { name: toBytes32("aaveLendingPool"), destination: ovmData.aaveV3.lendingPool },
+      { name: toBytes32("aaveProtocolDataProviderV3"), destination: ovmData.aaveV3.protocolDataProvider },
+      { name: toBytes32("aaveLendingPoolV3"), destination: ovmData.aaveV3.lendingPool },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
 
@@ -222,11 +222,6 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
       },
     };
   } else {
-    let aave = polygonData.aave;
-    if (supportedAaveVersion === "v3") {
-      aave = polygonData.aaveV3;
-    }
-
     // polygon network
     const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
     const erc20Guard = await ERC20Guard.deploy();
@@ -259,30 +254,25 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
     const sushiLPAssetGuard = await SushiLPAssetGuard.deploy(polygonData.sushi.minichef); // initialise with Sushi staking pool Id
     await sushiLPAssetGuard.deployed();
 
-    let aaveLendingPoolAssetGuardAddress = "";
-    let aaveLendingPoolGuardAddress = "";
+    const AaveLendingPoolAssetGuardV3 = await ethers.getContractFactory("AaveLendingPoolAssetGuardV3");
+    const aaveLendingPoolAssetGuardV3 = await AaveLendingPoolAssetGuardV3.deploy(
+      polygonData.aaveV3.protocolDataProvider,
+    );
+    await aaveLendingPoolAssetGuardV3.deployed();
 
-    if (supportedAaveVersion === "v3") {
-      const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuardV3");
-      const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aave.protocolDataProvider);
-      await aaveLendingPoolAssetGuard.deployed();
-      aaveLendingPoolAssetGuardAddress = aaveLendingPoolAssetGuard.address;
+    const AaveLendingPoolGuardV3 = await ethers.getContractFactory("AaveLendingPoolGuardV3");
+    const aaveLendingPoolGuardV3 = await AaveLendingPoolGuardV3.deploy();
+    await aaveLendingPoolGuardV3.deployed();
 
-      const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV3");
-      const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
-      await aaveLendingPoolGuard.deployed();
-      aaveLendingPoolGuardAddress = aaveLendingPoolGuard.address;
-    } else {
-      const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-      const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aave.protocolDataProvider);
-      await aaveLendingPoolAssetGuard.deployed();
-      aaveLendingPoolAssetGuardAddress = aaveLendingPoolAssetGuard.address;
+    const AaveLendingPoolAssetGuardV2 = await ethers.getContractFactory("AaveLendingPoolAssetGuardV2");
+    const aaveLendingPoolAssetGuardV2 = await AaveLendingPoolAssetGuardV2.deploy(
+      polygonData.aaveV2.protocolDataProvider,
+    );
+    await aaveLendingPoolAssetGuardV2.deployed();
 
-      const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-      const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
-      await aaveLendingPoolGuard.deployed();
-      aaveLendingPoolGuardAddress = aaveLendingPoolGuard.address;
-    }
+    const AaveLendingPoolGuardV2 = await ethers.getContractFactory("AaveLendingPoolGuardV2");
+    const aaveLendingPoolGuardV2 = await AaveLendingPoolGuardV2.deploy();
+    await aaveLendingPoolGuardV2.deployed();
 
     const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
     const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
@@ -326,18 +316,20 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
     const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(dao.address, swapRouter.address, polygonData.assets.weth);
     await dhedgeEasySwapper.deployed();
-    await dhedgeEasySwapper.setAssetToSkip(aave.lendingPool, true);
+    await dhedgeEasySwapper.setAssetToSkip(polygonData.aaveV2.lendingPool, true);
+    await dhedgeEasySwapper.setAssetToSkip(polygonData.aaveV3.lendingPool, true);
     await dhedgeEasySwapper.setFee(0, 0);
 
     await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);
 
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
-    await governance.setAssetGuard(3, aaveLendingPoolAssetGuardAddress);
+    await governance.setAssetGuard(3, aaveLendingPoolAssetGuardV2.address);
     await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
     await governance.setAssetGuard(5, quickLPAssetGuard.address);
     await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
     await governance.setAssetGuard(7, uniV3AssetGuard.address);
+    await governance.setAssetGuard(8, aaveLendingPoolAssetGuardV3.address);
     await governance.setContractGuard(polygonData.quickswap.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(
       polygonData.quickswap.pools.usdc_weth.stakingRewards,
@@ -345,8 +337,9 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
     );
     await governance.setContractGuard(polygonData.sushi.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(polygonData.sushi.minichef, sushiMiniChefV2Guard.address);
-    await governance.setContractGuard(aave.lendingPool, aaveLendingPoolGuardAddress);
-    await governance.setContractGuard(aave.incentivesController, aaveIncentivesControllerGuard.address);
+    await governance.setContractGuard(polygonData.aaveV2.lendingPool, aaveLendingPoolGuardV2.address);
+    await governance.setContractGuard(polygonData.aaveV3.lendingPool, aaveLendingPoolGuardV3.address);
+    await governance.setContractGuard(polygonData.aaveV2.incentivesController, aaveIncentivesControllerGuard.address);
     await governance.setContractGuard(polygonData.balancer.v2Vault, balancerV2Guard.address);
     await governance.setContractGuard(polygonData.balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
     await governance.setContractGuard(polygonData.oneinch.v3Router, oneInchV4Guard.address);
@@ -359,8 +352,10 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
 
     await governance.setAddresses([
       { name: toBytes32("swapRouter"), destination: swapRouter.address },
-      { name: toBytes32("aaveProtocolDataProvider"), destination: aave.protocolDataProvider },
-      { name: toBytes32("aaveLendingPool"), destination: aave.lendingPool },
+      { name: toBytes32("aaveProtocolDataProviderV2"), destination: polygonData.aaveV2.protocolDataProvider },
+      { name: toBytes32("aaveLendingPoolV2"), destination: polygonData.aaveV2.lendingPool },
+      { name: toBytes32("aaveProtocolDataProviderV3"), destination: polygonData.aaveV3.protocolDataProvider },
+      { name: toBytes32("aaveLendingPoolV3"), destination: polygonData.aaveV3.lendingPool },
       { name: toBytes32("weth"), destination: polygonData.assets.weth },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
@@ -379,12 +374,12 @@ export const deployContracts = async (network: NETWORK, supportedAaveVersion = "
     const SushiLPUSDCWETH = await ethers.getContractAt("IERC20", polygonData.sushi.pools.usdc_weth.address);
     const QuickLPUSDCWETH = await ethers.getContractAt("IERC20", polygonData.quickswap.pools.usdc_weth.address);
 
-    const AMUSDC = await ethers.getContractAt("IERC20", aave.aTokens.usdc);
-    const AMWETH = await ethers.getContractAt("IERC20", aave.aTokens.weth);
+    const AMUSDC = await ethers.getContractAt("IERC20", polygonData.aaveV2.aTokens.usdc);
+    const AMWETH = await ethers.getContractAt("IERC20", polygonData.aaveV2.aTokens.weth);
 
-    const VariableWETH = await ethers.getContractAt("IERC20", aave.variableDebtTokens.weth);
-    const VariableUSDT = await ethers.getContractAt("IERC20", aave.variableDebtTokens.usdt);
-    const VariableDAI = await ethers.getContractAt("IERC20", aave.variableDebtTokens.dai);
+    const VariableWETH = await ethers.getContractAt("IERC20", polygonData.aaveV2.variableDebtTokens.weth);
+    const VariableUSDT = await ethers.getContractAt("IERC20", polygonData.aaveV2.variableDebtTokens.usdt);
+    const VariableDAI = await ethers.getContractAt("IERC20", polygonData.aaveV2.variableDebtTokens.dai);
 
     const BALANCERLP_STABLE = await ethers.getContractAt("IERC20", polygonData.balancer.stablePools.BPSP);
     const BALANCERLP_WETH_BALANCER = await ethers.getContractAt("IERC20", polygonData.balancer.pools.bal80weth20);
