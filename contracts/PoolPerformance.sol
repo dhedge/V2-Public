@@ -449,13 +449,14 @@ contract PoolPerformance is OwnableUpgradeable {
   {
     address governance = IPoolFactory(IPoolLogic(poolAddress).factory()).governanceAddress();
     address aaveProtocolDataProviderV2 = IGovernance(governance).nameToDestination("aaveProtocolDataProviderV2");
-    address aaveLendingPoolV2 = ILendingPoolAddressesProvider(
-      IAaveProtocolDataProvider(aaveProtocolDataProviderV2).ADDRESSES_PROVIDER()
-    ).getLendingPool();
+    address aaveLendingPoolV2 = aaveProtocolDataProviderV2 == address(0)
+      ? address(0)
+      : ILendingPoolAddressesProvider(IAaveProtocolDataProvider(aaveProtocolDataProviderV2).ADDRESSES_PROVIDER())
+        .getLendingPool();
     address aaveProtocolDataProviderV3 = IGovernance(governance).nameToDestination("aaveProtocolDataProviderV3");
-    address aaveLendingPoolV3 = IPoolAddressesProvider(
-      IAaveProtocolDataProvider(aaveProtocolDataProviderV3).ADDRESSES_PROVIDER()
-    ).getPool();
+    address aaveLendingPoolV3 = aaveProtocolDataProviderV3 == address(0)
+      ? address(0)
+      : IPoolAddressesProvider(IAaveProtocolDataProvider(aaveProtocolDataProviderV3).ADDRESSES_PROVIDER()).getPool();
     IHasSupportedAsset poolManagerLogic = IHasSupportedAsset(IPoolLogic(poolAddress).poolManagerLogic());
 
     return
