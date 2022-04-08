@@ -1873,7 +1873,7 @@
       "AaveLendingPoolGuard": "0x5A511599E46a450Dd531c2e59a29480B32967A2D",
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
       "BalancerV2Guard": "0xb9AD72A87A1F30E3De4F80957cA2431F17256B65",
-      "OneInchV4Guard": "0xC0db6Be34Fc59F40BB6285C7db82eC702737cDCD",
+      "OneInchV4Guard": "0x708Fb18D76Ca9E80792810758aCd81E60C6D987d",
       "PoolFactory": "0xfb185b8A62F7b888755FBB3E3772F9bf33955211",
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",
@@ -1893,6 +1893,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 16 Mar 2022 03:57:03 GMT"
+    "lastUpdated": "Fri, 08 Apr 2022 05:42:51 GMT"
   }
 }
