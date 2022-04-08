@@ -343,8 +343,8 @@ describe("DhedgeEasySwapper Toros Tests", function () {
           userDepositToken,
           depositAmount,
           poolDepositToken,
-          // 5% slippage
-          expectedTokens.div(100).mul(95),
+          // 3% slippage
+          expectedTokens.div(100).mul(97),
         );
 
         // Make sure we received very close to one token
@@ -388,7 +388,7 @@ describe("DhedgeEasySwapper Toros Tests", function () {
         expect(withdrawAmountUSDC).closeTo(
           depositAssetValueInUSDC,
           // 3% - in and out slippage is quite a bit 605570-595902
-          depositAssetValueInUSDC.div(100).mul(4) as unknown as number,
+          depositAssetValueInUSDC.div(100).mul(3) as unknown as number,
         );
       });
     };
@@ -490,6 +490,15 @@ describe("DhedgeEasySwapper Toros Tests", function () {
         userDepositTokenSlot: assetsBalanceOfSlot.usdc,
         poolDepositToken: assets.wbtc,
         withdrawToken: assets.usdc,
+      },
+      {
+        testName: "BTCBULL3X - can deposit and withdraw - swap in, swap out to btc",
+        torosPoolAddress: torosPools.BTCBULL3X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(10000, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.wbtc,
+        withdrawToken: assets.wbtc,
       },
     ];
 
