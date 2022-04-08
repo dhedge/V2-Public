@@ -325,7 +325,7 @@ export const UniswapV3PureTest = (
         expect(lpCost.gt(totalReturned)).to.be.false;
       }).timeout(30000);
 
-      it.only("LP out of range, only token0", async () => {
+      it("LP out of range, only token0", async () => {
         const pair = bothSupportedNonStablePair;
         const tick = await getCurrentTick(uniswapV3.factory, pair);
         console.log("Current Tick", tick);
