@@ -796,11 +796,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "newNftMembershipAddress",
+        "name": "newNftMembershipCollectionAddress",
         "type": "address"
       }
     ],
-    "name": "setNftMembershipAddress",
+    "name": "setNftMembershipCollectionAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
