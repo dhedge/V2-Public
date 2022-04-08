@@ -85,7 +85,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
 
   // Fee increase announcement
-  uint256 public announcedFeeIncreaseNumerator;
+  uint256 public announcedPerformanceFeeNumerator;
   uint256 public announcedFeeIncreaseTimestamp;
   uint256 public performanceFeeNumerator;
   uint256 public announcedManagerFeeNumerator;
@@ -420,7 +420,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     uint256 feeChangeDelay = IHasFeeInfo(factory).performanceFeeNumeratorChangeDelay();
 
-    announcedFeeIncreaseNumerator = _performanceFeeNumerator;
+    announcedPerformanceFeeNumerator = _performanceFeeNumerator;
     announcedManagerFeeNumerator = _managerFeeNumerator;
     announcedFeeIncreaseTimestamp = block.timestamp + feeChangeDelay;
     emit ManagerFeeIncreaseAnnounced(_performanceFeeNumerator, _managerFeeNumerator, announcedFeeIncreaseTimestamp);
@@ -429,7 +429,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Manager can cancel the performance fee increase
   /// @dev Fee increase needs to be announced first
   function renounceManagerFeeIncrease() external onlyManager {
-    announcedFeeIncreaseNumerator = 0;
+    announcedPerformanceFeeNumerator = 0;
     announcedManagerFeeNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
     emit ManagerFeeIncreaseRenounced();
@@ -440,15 +440,15 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function commitManagerFeeIncrease() external onlyManager {
     require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
 
-    _setPerformanceFeeNumerator(announcedFeeIncreaseNumerator, announcedManagerFeeNumerator);
+    _setPerformanceFeeNumerator(announcedPerformanceFeeNumerator, announcedManagerFeeNumerator);
 
-    announcedFeeIncreaseNumerator = 0;
+    announcedPerformanceFeeNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
   }
 
   /// @notice Get manager fee increase information
   function getManagerFeeIncreaseInfo() external view returns (uint256, uint256) {
-    return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
+    return (announcedPerformanceFeeNumerator, announcedFeeIncreaseTimestamp);
   }
 
   /// @notice Setter for poolLogic contract
