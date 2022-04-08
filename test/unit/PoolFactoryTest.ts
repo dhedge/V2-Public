@@ -1834,19 +1834,20 @@ describe("PoolFactory", function () {
       );
 
     expect(availableFeePreMint).to.be.gt("0"); // the test needs to have some available fee to claim
-    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee, 0.001);
 
     await poolLogicProxy.mintManagerFee();
 
     const tokenPricePostMint = await poolLogicProxy.tokenPrice();
     const totalSupplyPostMint = await poolLogicProxy.totalSupply();
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
-    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint), 0.001);
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint), 0.001);
 
     checkAlmostSame(
       await poolLogicProxy.balanceOf(dao.address),
       daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+      0.001,
     );
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
@@ -2486,11 +2487,15 @@ describe("PoolFactory", function () {
 
       expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawal.investor).to.equal(investor.address);
-      checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
+      checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString(), 0.001);
       expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
-      checkAlmostSame(eventWithdrawal.totalInvestorFundTokens, investorFundBalance.sub(withdrawAmount).toString());
-      checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
-      checkAlmostSame(eventWithdrawal.totalSupply, totalSupply.sub(withdrawAmount).toString());
+      checkAlmostSame(
+        eventWithdrawal.totalInvestorFundTokens,
+        investorFundBalance.sub(withdrawAmount).toString(),
+        0.001,
+      );
+      checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter, 0.001);
+      checkAlmostSame(eventWithdrawal.totalSupply, totalSupply.sub(withdrawAmount).toString(), 0.001);
 
       const withdrawSUSD = eventWithdrawal.withdrawnAssets[1];
       const withdrawLP = eventWithdrawal.withdrawnAssets[0];
