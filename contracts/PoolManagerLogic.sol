@@ -52,6 +52,7 @@ import "./Managed.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 /// @notice Logic implmentation for pool manager
 contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsset, Managed {
@@ -78,6 +79,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public announcedFeeIncreaseNumerator;
   uint256 public announcedFeeIncreaseTimestamp;
   uint256 public managerFeeNumerator;
+
+  // Should be in Managed.sol but not upgradable
+  address public nftMembershipCollectionAddress;
 
   modifier onlyManagerOrTraderOrFactory() {
     require(msg.sender == manager || msg.sender == trader || msg.sender == factory, "only manager, trader or factory");
@@ -410,5 +414,26 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return true;
   }
 
-  uint256[51] private __gap;
+  /// @notice Set the address of the nftMembershipCollectionAddress
+  /// @param newNftMembershipCollectionAddress The address of the new nftMembershipCollectionAddress
+  function setNftMembershipCollectionAddress(address newNftMembershipCollectionAddress) external onlyManager {
+    nftMembershipCollectionAddress = newNftMembershipCollectionAddress;
+  }
+
+  /// @notice Return boolean if the there is a nftMembership address set and the member owns one
+  /// @param member The address of the member
+  /// @return Ture if the address owns an nft
+  function isNftMemberAllowed(address member) public view returns (bool) {
+    return (nftMembershipCollectionAddress != address(0) &&
+      ERC721Upgradeable(nftMembershipCollectionAddress).balanceOf(member) > 0);
+  }
+
+  /// @notice Return boolean if the address is a member of the list or owns an nft in the membership collection
+  /// @param member The address of the member
+  /// @return Ture if the address is a member of the list or owns nft in the membership collection, false otherwise
+  function isMemberAllowed(address member) public view virtual override returns (bool) {
+    return super.isMemberAllowed(member) || isNftMemberAllowed(member);
+  }
+
+  uint256[50] private __gap;
 }

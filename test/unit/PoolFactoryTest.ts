@@ -1,19 +1,12 @@
-import hre, { ethers, upgrades } from "hardhat";
-
-// Place holder addresses
-const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
-const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
-const externalInvalidToken = "0x7cea675598da73f859696b483c05a4f135b2092e"; //random address
-
-import { expect } from "chai";
-const abiCoder = ethers.utils.defaultAbiCoder;
-
-import { updateChainlinkAggregators, currentBlockTimestamp, checkAlmostSame, toBytes32, units } from "../TestHelpers";
+import { Interface } from "@ethersproject/abi";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { expect } from "chai";
+import hre, { ethers, upgrades } from "hardhat";
 import {
   AssetHandler,
   ERC20Guard,
   IERC20Extended__factory,
+  IERC20__factory,
   IMiniChefV2__factory,
   MockContract,
   OpenAssetGuard,
@@ -29,7 +22,14 @@ import {
   UniswapV3RouterGuard,
   UniV2LPAggregator,
 } from "../../types";
-import { Interface } from "@ethersproject/abi";
+import { checkAlmostSame, currentBlockTimestamp, toBytes32, units, updateChainlinkAggregators } from "../TestHelpers";
+
+// Place holder addresses
+const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
+const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
+const externalInvalidToken = "0x7cea675598da73f859696b483c05a4f135b2092e"; //random address
+
+const abiCoder = ethers.utils.defaultAbiCoder;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const _SYNTHETIX_KEY = "0x53796e7468657469780000000000000000000000000000000000000000000000"; // Synthetix
@@ -45,7 +45,7 @@ const ONE_HUNDRED_TOKENS = "100000000000000000000";
 
 const POOL_STORAGE_VERSION = "99999";
 
-describe("PoolFactory", function () {
+describe.only("PoolFactory", function () {
   let logicOwner: SignerWithAddress,
     manager: SignerWithAddress,
     dao: SignerWithAddress,
@@ -1997,6 +1997,36 @@ describe("PoolFactory", function () {
       await poolManagerLogicProxy.connect(manager).removeMembers([user1.address, user2.address, user3.address]);
 
       expect(await poolManagerLogicProxy.numberOfMembers()).to.be.equal(0);
+    });
+
+    it("only manager can call setNftMembershipCollectionAddress", async () => {
+      await expect(poolManagerLogicProxy.setNftMembershipCollectionAddress(logicOwner.address)).to.be.revertedWith(
+        "only manager",
+      );
+    });
+
+    it("should be able to have members that must own nft", async () => {
+      const MockContract = await ethers.getContractFactory("MockContract");
+      const nftCollectionMock = await MockContract.deploy();
+      await poolManagerLogicProxy.connect(manager).setNftMembershipCollectionAddress(nftCollectionMock.address);
+      // We only use balanceOf and IERC20 has same balanceof as erc721
+      const nftAbi = new ethers.utils.Interface(IERC20__factory.abi);
+      const balanceOfABI = nftAbi.encodeFunctionData("balanceOf", [user3.address]);
+      await nftCollectionMock.givenCalldataReturnUint(balanceOfABI, (1).toString());
+
+      expect(await poolManagerLogicProxy.isMemberAllowed(user3.address)).to.be.true;
+    });
+
+    it("should return false for member that doesn't own nft", async () => {
+      const MockContract = await ethers.getContractFactory("MockContract");
+      const nftCollectionMock = await MockContract.deploy();
+      await poolManagerLogicProxy.connect(manager).setNftMembershipCollectionAddress(nftCollectionMock.address);
+      // We only use balanceOf and IERC20 has same balanceof as erc721
+      const nftAbi = new ethers.utils.Interface(IERC20__factory.abi);
+      const balanceOfABI = nftAbi.encodeFunctionData("balanceOf", [user3.address]);
+      await nftCollectionMock.givenCalldataReturnUint(balanceOfABI, 0);
+
+      expect(await poolManagerLogicProxy.isMemberAllowed(user3.address)).to.be.false;
     });
   });
 
