@@ -422,7 +422,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   /// @notice Return boolean if the there is a nftMembership address set and the member owns one
   /// @param member The address of the member
-  /// @return Ture if the address owns an nft
+  /// @return True if the address owns an nft
   function isNftMemberAllowed(address member) public view returns (bool) {
     return (nftMembershipCollectionAddress != address(0) &&
       ERC721Upgradeable(nftMembershipCollectionAddress).balanceOf(member) > 0);
@@ -430,7 +430,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   /// @notice Return boolean if the address is a member of the list or owns an nft in the membership collection
   /// @param member The address of the member
-  /// @return Ture if the address is a member of the list or owns nft in the membership collection, false otherwise
+  /// @return True if the address is a member of the list or owns nft in the membership collection, false otherwise
   function isMemberAllowed(address member) public view virtual override returns (bool) {
     return super.isMemberAllowed(member) || isNftMemberAllowed(member);
   }
