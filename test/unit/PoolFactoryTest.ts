@@ -395,10 +395,6 @@ describe("PoolFactory", function () {
         name: toBytes32("aaveProtocolDataProviderV2"),
         destination: aaveProtocolDataProvider.address,
       },
-      {
-        name: toBytes32("aaveLendingPoolV2"),
-        destination: aaveLendingPool.address,
-      },
     ]);
 
     const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));

@@ -176,7 +176,6 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       { name: toBytes32("swapRouter"), destination: swapRouter.address },
       { name: toBytes32("weth"), destination: ovmData.assets.weth },
       { name: toBytes32("aaveProtocolDataProviderV3"), destination: ovmData.aaveV3.protocolDataProvider },
-      { name: toBytes32("aaveLendingPoolV3"), destination: ovmData.aaveV3.lendingPool },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
 
@@ -358,9 +357,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await governance.setAddresses([
       { name: toBytes32("swapRouter"), destination: swapRouter.address },
       { name: toBytes32("aaveProtocolDataProviderV2"), destination: polygonData.aaveV2.protocolDataProvider },
-      { name: toBytes32("aaveLendingPoolV2"), destination: polygonData.aaveV2.lendingPool },
       { name: toBytes32("aaveProtocolDataProviderV3"), destination: polygonData.aaveV3.protocolDataProvider },
-      { name: toBytes32("aaveLendingPoolV3"), destination: polygonData.aaveV3.lendingPool },
       { name: toBytes32("weth"), destination: polygonData.assets.weth },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
