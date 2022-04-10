@@ -2,10 +2,14 @@ import { ethers } from "hardhat";
 import { Contract, ContractFactory } from "ethers";
 import { use, expect } from "chai";
 import { solidity } from "ethereum-waffle";
+import { deployContracts } from "../utils/deployContracts";
+import { getAccountToken } from "../utils/getAccountTokens";
+import { units } from "../../TestHelpers";
+import { assets, assetsBalanceOfSlot } from "../../../config/chainData/polygon-data";
+import { createFund } from "../utils/createFund";
 
 use(solidity);
 
-const poolAddress = "0x3deeba9ca29e2dd98d32eed8dd559dac55014615";
 const decimals = 6;
 
 describe("DHedgePoolPriceOracle", function () {
@@ -13,14 +17,28 @@ describe("DHedgePoolPriceOracle", function () {
   let poolLogic: Contract;
 
   beforeEach(async function () {
+    const [logicOwner, manager] = await ethers.getSigners();
+    const deployments = await deployContracts("polygon");
+    const poolFactory = deployments.poolFactory;
+    const USDC = deployments.assets.USDC;
+
+    await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+
+    const funds = await createFund(poolFactory, logicOwner, manager, [
+      { asset: assets.usdc, isDeposit: true },
+      { asset: assets.usdt, isDeposit: true },
+    ]);
+    poolLogic = funds.poolLogicProxy;
+
+    // Deposit 1000 USDC
+    await USDC.approve(poolLogic.address, units(1000, 6));
+    await poolLogic.deposit(assets.usdc, units(1000, 6));
+
     const BalancerDHedgePoolPriceOracle: ContractFactory = await ethers.getContractFactory(
       "BalancerDHedgePoolPriceOracle",
     );
-    dhedgePoolPriceOracle = await BalancerDHedgePoolPriceOracle.deploy(poolAddress, decimals);
+    dhedgePoolPriceOracle = await BalancerDHedgePoolPriceOracle.deploy(poolLogic.address, decimals);
     await dhedgePoolPriceOracle.deployed();
-    const PoolLogic: ContractFactory = await ethers.getContractFactory("PoolLogic");
-    // TODO: deploy a new pool and seed it with funds. Can be done after Integration test refactor.
-    poolLogic = await PoolLogic.attach(poolAddress);
   });
 
   // Checks id pool address is set
