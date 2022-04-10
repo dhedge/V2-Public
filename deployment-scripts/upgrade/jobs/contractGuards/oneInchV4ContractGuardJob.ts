@@ -22,8 +22,8 @@ export const oneInchV4ContractGuardJob: IJob<void> = async (
 
   console.log("Will deploy oneinchv4guard");
   if (config.execute) {
-    const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
-    const oneInchV4Guard = await OneInchV3Guard.deploy(10, 100); // set slippage 10%
+    const OneInchV4Guard = await ethers.getContractFactory("OneInchV4Guard");
+    const oneInchV4Guard = await OneInchV4Guard.deploy(10, 100); // set slippage 10%
     await oneInchV4Guard.deployed();
     console.log("oneInchV4Guard deployed at", oneInchV4Guard.address);
     versions[config.newTag].contracts.OneInchV4Guard = oneInchV4Guard.address;
@@ -31,7 +31,7 @@ export const oneInchV4ContractGuardJob: IJob<void> = async (
     await tryVerify(
       hre,
       oneInchV4Guard.address,
-      "contracts/guards/contractGuards/OneInchV3Guard.sol:OneInchV3Guard",
+      "contracts/guards/contractGuards/OneInchV4Guard.sol:OneInchV4Guard",
       [10, 100],
     );
 

@@ -592,14 +592,10 @@
   {
     "assetName": "QI",
     "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
-    "assetType": 0,
-    "oracleType": "MedianTWAPAggregator",
+    "assetType": "0",
+    "oracleType": "ChainlinkAggregator",
     "specificOracleConfig": {
-      "poolAddress": "0x9a8b2601760814019b7e6ee0052e25f1c623d1e6",
-      "pairTokenOracle": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
-      "updateInterval": 300,
-      "volatilityTripLimit": 25,
-      "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
+      "chainlinkOracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
     }
   },
   {

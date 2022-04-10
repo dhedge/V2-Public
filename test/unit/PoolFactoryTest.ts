@@ -349,11 +349,11 @@ describe("PoolFactory", function () {
     );
     sushiMiniChefV2Guard.deployed();
 
-    const OneInchV3Guard = await ethers.getContractFactory(
-      "contracts/guards/contractGuards/OneInchV3Guard.sol:OneInchV3Guard",
+    const OneInchV4Guard = await ethers.getContractFactory(
+      "contracts/guards/contractGuards/OneInchV4Guard.sol:OneInchV4Guard",
     );
-    const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
-    oneInchV3Guard.deployed();
+    const oneInchV4Guard = await OneInchV4Guard.deploy(2, 100); // set slippage 2%
+    oneInchV4Guard.deployed();
 
     // Deploy asset guards
     const ERC20Guard = await ethers.getContractFactory("contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard");
@@ -385,7 +385,7 @@ describe("PoolFactory", function () {
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3RouterGuard.address);
-    await governance.setContractGuard(oneInchRouter.address, oneInchV3Guard.address);
+    await governance.setContractGuard(oneInchRouter.address, oneInchV4Guard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
     await governance.setAddresses([
       {
