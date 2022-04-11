@@ -133,6 +133,7 @@ describe("Sushiswap V2 Test", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         [assets.usdc, true],
         [assets.weth, true],
@@ -151,6 +152,7 @@ describe("Sushiswap V2 Test", function () {
           managerName,
           manager,
           time,
+          performanceFeeNumerator,
           managerFeeNumerator,
           managerFeeDenominator,
           event,
@@ -165,7 +167,8 @@ describe("Sushiswap V2 Test", function () {
             managerName: managerName,
             manager: manager,
             time: time,
-            managerFeeNumerator: managerFeeNumerator,
+            performanceFeeNumerator: performanceFeeNumerator,
+            managerFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
         },
@@ -184,10 +187,12 @@ describe("Sushiswap V2 Test", function () {
         "Test Fund",
         "DHTF",
         new ethers.BigNumber.from("6000"),
+        new ethers.BigNumber.from("0"), // 0% streaming fee
         [
           [assets.usdc, true],
           [assets.weth, true],
         ],
+        14250,
       ),
     ).to.be.revertedWith("invalid manager fee");
 
@@ -198,6 +203,7 @@ describe("Sushiswap V2 Test", function () {
       "Test Fund",
       "DHTF",
       new ethers.BigNumber.from("5000"),
+      new ethers.BigNumber.from("0"), // 0% streaming fee
       [
         [assets.usdc, true],
         [assets.weth, true],
@@ -212,7 +218,7 @@ describe("Sushiswap V2 Test", function () {
     // expect(event.fundSymbol).to.equal("DHTF");
     expect(event.managerName).to.equal("Barren Wuffet");
     expect(event.manager).to.equal(manager.address);
-    expect(event.managerFeeNumerator.toString()).to.equal("5000");
+    expect(event.performanceFeeNumerator.toString()).to.equal("5000");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
     const deployedFunds = await poolFactory.getDeployedFunds();
@@ -849,7 +855,7 @@ describe("Sushiswap V2 Test", function () {
       });
 
       // remove manager fee so that performance fee minting doesn't get in the way
-      await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
+      await poolManagerLogicProxy.connect(manager).setPerformanceFeeNumerator("0");
 
       const totalSupply = await poolLogicProxy.totalSupply();
 

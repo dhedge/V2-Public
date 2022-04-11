@@ -112,6 +112,7 @@ export const assetsBalanceOfSlot = {
   dai: 0,
   dht: 0,
   wbtc: 0,
+  wmatic: 0,
 };
 
 export const eth_price_feeds = {

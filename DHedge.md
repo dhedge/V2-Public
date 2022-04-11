@@ -70,4 +70,4 @@
 - removeFromSupportedAssets - manager
 - exchange - manager
 - getManagerFee - manager
-- setManagerFeeNumerator - manager
+- setPerformanceFeeNumerator - manager

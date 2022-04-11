@@ -125,11 +125,20 @@ describe("LendingEnabledAssetGuard", function () {
     const usdcAmount = (100e6).toString();
     const managerFee = BigNumber.from("0"); // 0%;
     // Create the fund we're going to use for testing
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-      [assets.wmatic, true],
-      [assets.usdc, true],
-      [aave.lendingPool, false],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      managerFee,
+      BigNumber.from("0"),
+      [
+        [assets.wmatic, true],
+        [assets.usdc, true],
+        [aave.lendingPool, false],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     poolLogicProxy = await PoolLogic.attach(funds[0]);
     // Deposit

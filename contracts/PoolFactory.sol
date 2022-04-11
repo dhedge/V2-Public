@@ -77,6 +77,7 @@ contract PoolFactory is
     string managerName,
     address manager,
     uint256 time,
+    uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
     uint256 managerFeeDenominator
   );
@@ -97,15 +98,15 @@ contract PoolFactory is
 
   event SetPoolManagerFee(uint256 numerator, uint256 denominator);
 
-  event SetMaximumManagerFee(uint256 numerator, uint256 denominator);
+  event SetMaximumManagerFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 denominator);
 
-  event SetMaximumManagerFeeNumeratorChange(uint256 amount);
+  event SetMaximumPerformanceFeeNumeratorChange(uint256 amount);
 
   event SetAssetHandler(address assetHandler);
 
   event SetPoolStorageVersion(uint256 poolStorageVersion);
 
-  event SetManagerFeeNumeratorChangeDelay(uint256 delay);
+  event SetPerformanceFeeNumeratorChangeDelay(uint256 delay);
 
   event PoolPerformanceAddressSet(address poolPerformanceAddress);
 
@@ -131,8 +132,8 @@ contract PoolFactory is
   mapping(address => uint256) public poolVersion;
   uint256 public poolStorageVersion;
 
-  uint256 public override maximumManagerFeeNumeratorChange;
-  uint256 public override managerFeeNumeratorChangeDelay;
+  uint256 public override maximumPerformanceFeeNumeratorChange;
+  uint256 public override performanceFeeNumeratorChangeDelay;
 
   // Added after initial deployment
   address public override poolPerformanceAddress;
@@ -140,6 +141,8 @@ contract PoolFactory is
   uint256 private _exitFeeDenominator;
 
   mapping(address => bool) public transferWhitelist; // 24h lockup whitelist
+
+  uint256 private maximumManagerFeeNumerator;
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -163,13 +166,13 @@ contract PoolFactory is
 
     _setGovernanceAddress(_governanceAddress);
 
-    _setMaximumManagerFee(5000, 10000);
+    _setMaximumManagerFee(5000, 300, 10000); // 50% manager fee, 3% streaming fee
 
     _setDaoFee(10, 100); // 10%
     _setExitFee(5, 1000); // 0.5%
     _setExitCooldown(1 days);
-    setManagerFeeNumeratorChangeDelay(4 weeks);
-    setMaximumManagerFeeNumeratorChange(1000);
+    setPerformanceFeeNumeratorChangeDelay(4 weeks);
+    setMaximumPerformanceFeeNumeratorChange(1000);
 
     _setMaximumSupportedAssetCount(10);
 
@@ -186,7 +189,7 @@ contract PoolFactory is
   /// @param _managerName The name of the manager
   /// @param _fundName The name of the fund
   /// @param _fundSymbol The symbol of the fund
-  /// @param _managerFeeNumerator The numerator of the manager fee
+  /// @param _performanceFeeNumerator The numerator of the manager fee
   /// @param _supportedAssets An array of supported assets
   /// @return fund Address of the fund
   function createFund(
@@ -195,6 +198,7 @@ contract PoolFactory is
     string memory _managerName,
     string memory _fundName,
     string memory _fundSymbol,
+    uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
     IHasSupportedAsset.Asset[] memory _supportedAssets
   ) external returns (address fund) {
@@ -211,11 +215,12 @@ contract PoolFactory is
     fund = deploy(poolLogicData, 2);
 
     bytes memory managerLogicData = abi.encodeWithSignature(
-      "initialize(address,address,string,address,uint256,(address,bool)[])",
+      "initialize(address,address,string,address,uint256,uint256,(address,bool)[])",
       address(this),
       _manager,
       _managerName,
       fund,
+      _performanceFeeNumerator,
       _managerFeeNumerator,
       _supportedAssets
     );
@@ -236,6 +241,7 @@ contract PoolFactory is
       _managerName,
       _manager,
       block.timestamp,
+      _performanceFeeNumerator,
       _managerFeeNumerator,
       _MANAGER_FEE_DENOMINATOR
     );
@@ -366,42 +372,58 @@ contract PoolFactory is
   /// @notice Get the maximum manager fee
   /// @return The maximum manager fee numerator
   /// @return The maximum manager fee denominator
-  function getMaximumManagerFee() external view override returns (uint256, uint256) {
-    return (_MAXIMUM_MANAGER_FEE_NUMERATOR, _MANAGER_FEE_DENOMINATOR);
+  function getMaximumManagerFee()
+    external
+    view
+    override
+    returns (
+      uint256,
+      uint256,
+      uint256
+    )
+  {
+    return (_MAXIMUM_MANAGER_FEE_NUMERATOR, maximumManagerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee
-  /// @param numerator The numerator of the maximum manager fee
-  function setMaximumManagerFee(uint256 numerator) external onlyOwner {
-    _setMaximumManagerFee(numerator, _MANAGER_FEE_DENOMINATOR);
+  /// @param performanceFeeNumerator The numerator of the maximum manager fee
+  /// @param managerFeeNumerator The numerator of the maximum streaming fee
+  function setMaximumManagerFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator) external onlyOwner {
+    _setMaximumManagerFee(performanceFeeNumerator, managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee internal call
-  /// @param numerator The numerator of the maximum manager fee
+  /// @param performanceFeeNumerator The numerator of the maximum manager fee
+  /// @param managerFeeNumerator The numerator of the maximum streaming fee
   /// @param denominator The denominator of the maximum manager fee
-  function _setMaximumManagerFee(uint256 numerator, uint256 denominator) internal {
-    require(numerator <= denominator, "invalid fraction");
+  function _setMaximumManagerFee(
+    uint256 performanceFeeNumerator,
+    uint256 managerFeeNumerator,
+    uint256 denominator
+  ) internal {
+    require(performanceFeeNumerator <= denominator && managerFeeNumerator <= denominator, "invalid fraction");
 
-    _MAXIMUM_MANAGER_FEE_NUMERATOR = numerator;
+    _MAXIMUM_MANAGER_FEE_NUMERATOR = performanceFeeNumerator;
+    maximumManagerFeeNumerator = managerFeeNumerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
 
-    emit SetMaximumManagerFee(numerator, denominator);
+    emit SetMaximumManagerFee(performanceFeeNumerator, managerFeeNumerator, denominator);
   }
 
   /// @notice Set maximum manager fee numberator change
   /// @param amount The amount for the maximum manager fee numerator change
-  function setMaximumManagerFeeNumeratorChange(uint256 amount) public onlyOwner {
-    maximumManagerFeeNumeratorChange = amount;
+  function setMaximumPerformanceFeeNumeratorChange(uint256 amount) public onlyOwner {
+    maximumPerformanceFeeNumeratorChange = amount;
 
-    emit SetMaximumManagerFeeNumeratorChange(amount);
+    emit SetMaximumPerformanceFeeNumeratorChange(amount);
   }
 
   /// @notice Set manager fee numberator change delay
   /// @param delay The delay in seconds for the manager fee numerator change
-  function setManagerFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
-    managerFeeNumeratorChangeDelay = delay;
+  function setPerformanceFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
+    performanceFeeNumeratorChangeDelay = delay;
 
-    emit SetManagerFeeNumeratorChangeDelay(delay);
+    emit SetPerformanceFeeNumeratorChangeDelay(delay);
   }
 
   /// @notice Set exit cool down time (in seconds)
