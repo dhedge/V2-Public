@@ -60,21 +60,14 @@ contract DhedgeEasySwapper is Ownable {
   uint256 public feeNumerator = 50;
   uint256 public feeDenominator = 1000;
 
-  IPoolFactory public poolFactory;
-
   mapping(address => bool) public allowedPools;
   IERC20 public weth;
 
   EasySwapperWithdrawer.WithdrawProps public withdrawProps;
 
-  constructor(
-    address payable _feeSink,
-    EasySwapperWithdrawer.WithdrawProps memory _withdrawProps,
-    IPoolFactory _poolFactory
-  ) {
+  constructor(address payable _feeSink, EasySwapperWithdrawer.WithdrawProps memory _withdrawProps) {
     feeSink = _feeSink;
     withdrawProps = _withdrawProps;
-    poolFactory = _poolFactory;
   }
 
   function setPoolAllowed(address pool, bool allowed) external onlyOwner {
@@ -131,7 +124,7 @@ contract DhedgeEasySwapper is Ownable {
     liquidityMinted = IPoolLogic(pool).deposit(address(poolDepositAsset), poolDepositAsset.balanceOf(address(this)));
 
     require(liquidityMinted >= expectedLiquidityMinted, "Deposit Slippage detected");
-    // // Transfer the pool tokens to the depositer
+    // Transfer the pool tokens to the depositer
     IERC20(pool).safeTransfer(msg.sender, liquidityMinted);
     emit Deposit(pool, msg.sender, address(depositAsset), amount, address(poolDepositAsset), liquidityMinted);
   }
@@ -153,12 +146,12 @@ contract DhedgeEasySwapper is Ownable {
     // require(allowedPools[address(pool)], "Pool is not allowed.");
     IERC20(pool).safeTransferFrom(msg.sender, address(this), fundTokenAmount);
     EasySwapperWithdrawer.withdraw(
+      msg.sender,
       pool,
       fundTokenAmount,
       withdrawalAsset,
       expectedAmountOut,
-      withdrawProps,
-      poolFactory
+      withdrawProps
     );
   }
 }

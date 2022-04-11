@@ -250,16 +250,13 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(3);
     await uniswapV3NonfungiblePositionGuard.deployed();
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-    const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
-      dao.address,
-      {
-        swapRouter: polygonData.quickswap.router,
-        weth: polygonData.assets.weth,
-        assetType2Router: polygonData.sushi.router,
-        assetType5Router: polygonData.quickswap.router,
-      },
-      poolFactory.address,
-    );
+    const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(dao.address, {
+      swapRouter: polygonData.quickswap.router,
+      weth: polygonData.assets.weth,
+      assetType2Router: polygonData.sushi.router,
+      assetType5Router: polygonData.quickswap.router,
+      poolFactory: poolFactory.address,
+    });
     await dhedgeEasySwapper.deployed();
     await dhedgeEasySwapper.setFee(0, 0);
 

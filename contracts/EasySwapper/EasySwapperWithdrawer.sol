@@ -32,6 +32,7 @@ library EasySwapperWithdrawer {
     IUniswapV2Router assetType2Router;
     IUniswapV2Router assetType5Router;
     IERC20 weth;
+    IPoolFactory poolFactory;
   }
 
   /// @notice withdraw underlying value of tokens in expectedWithdrawalAssetOfUser
@@ -40,12 +41,12 @@ library EasySwapperWithdrawer {
   /// @param withdrawalAsset must have direct pair to all pool.supportedAssets on swapRouter
   /// @param expectedAmountOut the amount of value in the withdrawalAsset expected (slippage protection)
   function withdraw(
+    address receipient,
     address pool,
     uint256 fundTokenAmount,
     IERC20 withdrawalAsset,
     uint256 expectedAmountOut,
-    WithdrawProps memory withdrawProps,
-    IPoolFactory poolFactory
+    WithdrawProps memory withdrawProps
   ) internal {
     IPoolLogic(pool).withdraw(fundTokenAmount);
 
@@ -59,7 +60,7 @@ library EasySwapperWithdrawer {
     // So that we can swap them also into our withdrawalAsset.
     // We also must detect which assets the pool had v3 lp in and
     // swap those into our withdrawalAsset.
-    // We also must deal with pools that hold dUSD.
+    // We also must deal with pools that hold dUSD or toros.
     // We also must deal with pools that holder bal-dusd-usdc
 
     // Also be aware that we must unroll everything before any
@@ -90,40 +91,8 @@ library EasySwapperWithdrawer {
       uint16 assetType = IHasAssetInfo(IPoolLogic(pool).factory()).getAssetType(asset);
       address[] memory unrolledAssets;
 
-      // Maybe there is a cleaner way to detect if it is a balancer pool?
-      // Have to use try catch because some erc20 have a fallback function that reverts
-      bool isBalancer;
-      try IBalancerPool(asset).getVault() returns (address balancerVaultAddress) {
-        isBalancer = balancerVaultAddress != address(0);
-      } catch {
-        isBalancer = false;
-      }
-
-      if (isBalancer) {
-        unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
-          IPoolLogic(pool).poolManagerLogic(),
-          asset, // BHPT
-          address(withdrawalAsset),
-          address(withdrawProps.weth)
-        );
-      } else if (poolFactory.isPool(asset) == true) {
-        // TODO: Maybe we should just revert for pools that have dhedge tokens.
-        revert("Cant contain dhedge pool");
-        // uint256 balance = IPoolLogic(asset).balanceOf(address(this));
-        // if (balance > 0) {
-        //   // require(false, "Cannot easy swap dhedge");
-        //   withdraw(
-        //     address(asset),
-        //     balance,
-        //     withdrawalAsset,
-        //     0,
-        //     withdrawProps
-        //   );
-        // }
-        // unrolledAssets = new address[](0);
-      }
       // Sushi V2 lp and Quick V2 lp
-      else if (assetType == 2 || assetType == 5) {
+      if (assetType == 2 || assetType == 5) {
         unrolledAssets = EasySwapperV2LpHelpers.unrollLpsAndGetUnsupportedLpAssets(
           IPoolLogic(pool).poolManagerLogic(),
           assetType == 2 ? withdrawProps.assetType2Router : withdrawProps.assetType5Router,
@@ -138,8 +107,24 @@ library EasySwapperWithdrawer {
       else if (assetType == 7) {
         unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(pool, asset);
       } else {
-        unrolledAssets = new address[](1);
-        unrolledAssets[0] = asset;
+        if (withdrawProps.poolFactory.isPool(asset) == true) {
+          // revert("Cant contain dhedge pool");
+          uint256 balance = IPoolLogic(asset).balanceOf(address(this));
+          if (balance > 0) {
+            EasySwapperWithdrawer.withdraw(address(this), address(asset), balance, withdrawalAsset, 0, withdrawProps);
+          }
+          unrolledAssets = new address[](0);
+        } else if (isBalancer(asset)) {
+          unrolledAssets = EasySwapperBalancerV2Helpers.unrollBalancerLpAndGetUnsupportedLpAssets(
+            IPoolLogic(pool).poolManagerLogic(),
+            asset, // BHPT
+            address(withdrawalAsset),
+            address(withdrawProps.weth)
+          );
+        } else {
+          unrolledAssets = new address[](1);
+          unrolledAssets[0] = asset;
+        }
       }
 
       // Push any unrolledAssets into the allBasics array
@@ -163,10 +148,13 @@ library EasySwapperWithdrawer {
 
     uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
     require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
-    if (balanceAfterSwaps > 0) {
-      withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
+
+    if (receipient != address(this)) {
+      if (balanceAfterSwaps > 0) {
+        withdrawalAsset.safeTransfer(receipient, balanceAfterSwaps);
+      }
+      emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
     }
-    emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
   }
 
   /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
@@ -182,16 +170,23 @@ library EasySwapperWithdrawer {
     }
 
     uint256 balance = from.balanceOf(address(this));
-    if (balance == 0) {
-      return;
+
+    if (balance > 0) {
+      from.approve(address(swapRouter), balance);
+      address[] memory path = new address[](2);
+      path[0] = address(from);
+      path[1] = address(to);
+      swapRouter.swapExactTokensForTokens(balance, 0, path, address(this), uint256(-1));
     }
+  }
 
-    from.approve(address(swapRouter), balance);
-
-    address[] memory path = new address[](2);
-    path[0] = address(from);
-    path[1] = address(to);
-
-    swapRouter.swapExactTokensForTokens(balance, 0, path, address(this), uint256(-1));
+  function isBalancer(address asset) internal view returns (bool) {
+    // Maybe there is a cleaner way to detect if it is a balancer pool?
+    // Have to use try catch because some erc20 have a fallback function that reverts
+    try IBalancerPool(asset).getVault() returns (address balancerVaultAddress) {
+      return balancerVaultAddress != address(0);
+    } catch {
+      return false;
+    }
   }
 }

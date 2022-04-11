@@ -27,16 +27,16 @@
             "internalType": "contract IERC20",
             "name": "weth",
             "type": "address"
+          },
+          {
+            "internalType": "contract IPoolFactory",
+            "name": "poolFactory",
+            "type": "address"
           }
         ],
         "internalType": "struct EasySwapperWithdrawer.WithdrawProps",
         "name": "_withdrawProps",
         "type": "tuple"
-      },
-      {
-        "internalType": "contract IPoolFactory",
-        "name": "_poolFactory",
-        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -216,19 +216,6 @@
   },
   {
     "inputs": [],
-    "name": "poolFactory",
-    "outputs": [
-      {
-        "internalType": "contract IPoolFactory",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -372,6 +359,11 @@
       {
         "internalType": "contract IERC20",
         "name": "weth",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IPoolFactory",
+        "name": "poolFactory",
         "type": "address"
       }
     ],

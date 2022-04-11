@@ -24,16 +24,13 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
       }
 
       const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(
-        protocolDao,
-        {
-          swapRouter: versions[latestVersion].contracts.DhedgeSwapRouter,
-          weth: assets.weth,
-          assetType2Router: sushi.router,
-          assetType5Router: quickswap.router,
-        },
-        versions[latestVersion].contracts.PoolFactoryProxy,
-      ); // Init version
+      const dhedgeEasySwapper = await DhedgeEasySwapper.deploy(protocolDao, {
+        swapRouter: versions[latestVersion].contracts.DhedgeSwapRouter,
+        weth: assets.weth,
+        assetType2Router: sushi.router,
+        assetType5Router: quickswap.router,
+        poolFactory: versions[latestVersion].contracts.PoolFactoryProxy,
+      }); // Init version
 
       await dhedgeEasySwapper.deployed();
 
@@ -55,8 +52,8 @@ task("easySwapper", "dHEDGE Easy Swapper commands")
           weth: assets.weth,
           assetType2Router: sushi.router,
           assetType5Router: quickswap.router,
+          poolFactory: versions[latestVersion].contracts.PoolFactoryProxy,
         },
-        versions[latestVersion].contracts.PoolFactoryProxy,
       ]);
 
       const poolFactoryProxy = versions[latestVersion].contracts.PoolFactoryProxy;

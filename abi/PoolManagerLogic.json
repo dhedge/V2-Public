@@ -6,7 +6,7 @@
         "indexed": true,
         "internalType": "address",
         "name": "fundAddress",
-        "type": "address"
+        "type": "address"a
       },
       {
         "indexed": false,
