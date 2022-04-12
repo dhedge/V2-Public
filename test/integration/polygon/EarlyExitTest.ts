@@ -6,6 +6,7 @@ import { assets } from "../../../config/chainData/polygon-data";
 import { IWETH, PoolFactory, PoolLogic, PoolLogic__factory } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { deployContracts } from "../utils/deployContracts";
+import { createFund } from "../utils/createFund";
 
 use(solidity);
 
@@ -32,14 +33,8 @@ describe.skip("Early Exit Fee", function () {
   // we then deposit again and check the token price is $1 to confirm not left over assets from previous withdraw
   // Skipped because this behaviour was backed out
   it("early 100% withdrawal should not incur fee when there is a fee", async () => {
-    const managerFee = ethers.BigNumber.from("0"); // 0%;
-    // Create the fund we're going to use for testing
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-      { asset: assets.wmatic, isDeposit: true },
-    ]);
-
-    const funds = await poolFactory.getDeployedFunds();
-    poolLogicProxy = await PoolLogic__factory.connect(funds[0], logicOwner);
+    const funds = await createFund(poolFactory, logicOwner, manager, [{ asset: assets.wmatic, isDeposit: true }]);
+    poolLogicProxy = funds.poolLogicProxy;
     // Deposit $1 conventional way
     await WMATIC.approve(poolLogicProxy.address, units(500));
     await poolLogicProxy.deposit(assets.wmatic, units(500));

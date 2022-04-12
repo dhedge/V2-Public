@@ -141,10 +141,19 @@ describe("RemoveAssets", function () {
   });
 
   it("should not be able to remove asset with open aave atoken position", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("5000"), [
-      [usdc.address, true],
-      [dai.address, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      BigNumber.from("5000"),
+      BigNumber.from("0"),
+      [
+        [usdc.address, true],
+        [dai.address, true],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     const poolLogicProxy = await PoolLogic.attach(funds[0]);
@@ -175,10 +184,19 @@ describe("RemoveAssets", function () {
   });
 
   it("should not be able to remove asset with open aave stable debt position", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("5000"), [
-      [usdc.address, true],
-      [dai.address, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      BigNumber.from("5000"),
+      BigNumber.from("0"),
+      [
+        [usdc.address, true],
+        [dai.address, true],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     const poolLogicProxy = await PoolLogic.attach(funds[0]);
@@ -198,10 +216,19 @@ describe("RemoveAssets", function () {
   });
 
   it("should not be able to remove asset with open aave variable debt position", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("5000"), [
-      [usdc.address, true],
-      [dai.address, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      BigNumber.from("5000"),
+      BigNumber.from("0"),
+      [
+        [usdc.address, true],
+        [dai.address, true],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     const poolLogicProxy = await PoolLogic.attach(funds[0]);

@@ -370,6 +370,10 @@ jobs:
         run: |
           npx hardhat test ./test/integration/polygon/WithdrawSingleTest.ts --network localhost
 
+      - name: Manager Fees
+        run: |
+          npx hardhat test ./test/integration/polygon/ManagerFeeTest.ts --network localhost
+
       - name: WithdrawToTest
         run: |
           npx hardhat test ./test/integration/polygon/WithdrawToTest.ts --network localhost
