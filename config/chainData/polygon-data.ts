@@ -33,6 +33,11 @@ export const aaveV2 = {
     usdt: "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3",
     weth: "0xeDe17e9d79fc6f9fF9250D9EEfbdB88Cc18038b5",
   },
+  stableDebtTokens: {
+    dai: "0x2238101B7014C279aaF6b408A284E49cDBd5DB55",
+    usdt: "0xe590cfca10e81FeD9B0e4496381f02256f5d2f61",
+    weth: "0xc478cBbeB590C76b01ce658f8C4dda04f30e2C6f",
+  },
 };
 
 // aave v3
@@ -45,11 +50,21 @@ export const aaveV3 = {
     usdc: "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
     usdt: "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
     dai: "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE",
+    link: "0x191c10Aa4AF7C30e871E70C95dB0E4eb77237530",
   },
   variableDebtTokens: {
+    usdc: "0xFCCf3cAbbe80101232d343252614b6A3eE81C989",
     dai: "0x8619d80FB0141ba7F184CbF22fd724116D9f7ffC",
     usdt: "0xfb00AC187a8Eb5AFAE4eACE434F493Eb62672df7",
     weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
+    link: "0x953A573793604aF8d41F306FEb8274190dB4aE0e",
+  },
+  stableDebtTokens: {
+    usdc: "0x307ffe186F84a3bc2613D1eA417A5737D69A7007",
+    dai: "0xd94112B5B62d53C9402e7A60289c6810dEF1dC9B",
+    usdt: "0x70eFfc565DB6EEf7B927610155602d31b670e802",
+    weth: "0xD8Ad37849950903571df17049516a5CD4cbE55F6",
+    link: "0x89D976629b7055ff1ca02b927BA3e020F22A44e4",
   },
 };
 
@@ -120,6 +135,7 @@ export const assets = {
   // Unsupported assets:
   xsgd: "0x769434dca303597c8fc4997bf3dab233e961eda2",
   frax: "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89",
+  link: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39",
   ...torosPools,
 };
 
@@ -145,6 +161,7 @@ export const price_feeds = {
   sushi: "0x49B0c695039243BBfEb8EcD054EB70061fd54aa0",
   balancer: "0xD106B538F2A868c28Ca1Ec7E298C3325E0251d66",
   tusd: "0x7C5D415B64312D38c56B54358449d0a4058339d2",
+  link: "0xd9FFdb71EbE7496cC440152d43986Aae0AB76665",
 };
 
 export const toros = {

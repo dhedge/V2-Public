@@ -121,6 +121,7 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       assetSetting(polygonData.aaveV2.lendingPool, 3, usdPriceAggregator.address),
       assetSetting(polygonData.assets.weth, 4, polygonData.price_feeds.eth),
       assetSetting(polygonData.assets.dai, 4, polygonData.price_feeds.dai),
+      assetSetting(polygonData.assets.link, 4, polygonData.price_feeds.link),
       assetSetting(polygonData.assets.usdc, 4, polygonData.price_feeds.usdc),
       assetSetting(polygonData.uniswapV3.nonfungiblePositionManager, 7, usdPriceAggregator.address),
       assetSetting(polygonData.aaveV3.lendingPool, 8, usdPriceAggregator.address),
