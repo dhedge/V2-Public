@@ -92,6 +92,8 @@ library EasySwapperWithdrawer {
       address[] memory unrolledAssets;
 
       // Sushi V2 lp and Quick V2 lp
+      // 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270
+      // 0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756
       if (assetType == 2 || assetType == 5) {
         unrolledAssets = EasySwapperV2LpHelpers.unrollLpsAndGetUnsupportedLpAssets(
           IPoolLogic(pool).poolManagerLogic(),
@@ -183,7 +185,8 @@ library EasySwapperWithdrawer {
   function isBalancer(address asset) internal view returns (bool) {
     // Maybe there is a cleaner way to detect if it is a balancer pool?
     // Have to use try catch because some erc20 have a fallback function that reverts
-    try IBalancerPool(asset).getVault() returns (address balancerVaultAddress) {
+    // Also we set the max gas because contracts that don't have a fallback like wmatic chew the remaining gas
+    try IBalancerPool(asset).getVault{gas: 5000}() returns (address balancerVaultAddress) {
       return balancerVaultAddress != address(0);
     } catch {
       return false;

@@ -288,7 +288,7 @@ describe("DhedgeEasySwapper Toros Tests", function () {
     });
   });
 
-  describe.only("Toros Tests", () => {
+  describe("Toros Tests", () => {
     const createTest = (test: TestCase) => {
       const {
         testName,
@@ -419,84 +419,84 @@ describe("DhedgeEasySwapper Toros Tests", function () {
         poolDepositToken: assets.usdc,
         withdrawToken: assets.usdc,
       },
-      // {
-      //   testName: "ETHBEAR2X - can deposit and withdraw - swap in, swap out",
-      //   torosPoolAddress: torosPools.ETHBEAR2X,
-      //   userDepositToken: assets.weth,
-      //   depositAmount: units(1),
-      //   userDepositTokenSlot: assetsBalanceOfSlot.weth,
-      //   poolDepositToken: assets.usdc,
-      //   withdrawToken: assets.weth,
-      // },
+      {
+        testName: "ETHBEAR2X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: torosPools.ETHBEAR2X,
+        userDepositToken: assets.weth,
+        depositAmount: units(1),
+        userDepositTokenSlot: assetsBalanceOfSlot.weth,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.weth,
+      },
 
-      // {
-      //   testName: "ETHBULL3X - can deposit and withdraw - no swap on the way in, swap out",
-      //   torosPoolAddress: torosPools.ETHBULL3X,
-      //   userDepositToken: assets.weth,
-      //   depositAmount: units(3),
-      //   userDepositTokenSlot: assetsBalanceOfSlot.weth,
-      //   poolDepositToken: assets.weth,
-      //   withdrawToken: assets.weth,
-      // },
+      {
+        testName: "ETHBULL3X - can deposit and withdraw - no swap on the way in, swap out",
+        torosPoolAddress: torosPools.ETHBULL3X,
+        userDepositToken: assets.weth,
+        depositAmount: units(3),
+        userDepositTokenSlot: assetsBalanceOfSlot.weth,
+        poolDepositToken: assets.weth,
+        withdrawToken: assets.weth,
+      },
 
-      // {
-      //   testName: "ETHBULL3X - can deposit and withdraw - swap in, swap out",
-      //   torosPoolAddress: torosPools.ETHBULL3X,
-      //   userDepositToken: assets.usdc,
-      //   depositAmount: units(1, 6),
-      //   userDepositTokenSlot: assetsBalanceOfSlot.usdc,
-      //   poolDepositToken: assets.weth,
-      //   withdrawToken: assets.usdc,
-      // },
+      {
+        testName: "ETHBULL3X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: torosPools.ETHBULL3X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(1, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.weth,
+        withdrawToken: assets.usdc,
+      },
 
-      // {
-      //   testName: "BTCBEAR2X - can deposit and withdraw - no swap on the way in, swap on way out",
-      //   torosPoolAddress: torosPools.BTCBEAR2X,
-      //   userDepositToken: assets.usdc,
-      //   depositAmount: units(20000, 6),
-      //   userDepositTokenSlot: assetsBalanceOfSlot.usdc,
-      //   poolDepositToken: assets.usdc,
-      //   withdrawToken: assets.usdc,
-      // },
+      {
+        testName: "BTCBEAR2X - can deposit and withdraw - no swap on the way in, swap on way out",
+        torosPoolAddress: torosPools.BTCBEAR2X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(20000, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.usdc,
+      },
 
-      // {
-      //   testName: "BTCBEAR2X - can deposit and withdraw - swap in, swap out",
-      //   torosPoolAddress: torosPools.BTCBEAR2X,
-      //   userDepositToken: assets.weth,
-      //   depositAmount: units(1),
-      //   userDepositTokenSlot: assetsBalanceOfSlot.weth,
-      //   poolDepositToken: assets.usdc,
-      //   withdrawToken: assets.weth,
-      // },
+      {
+        testName: "BTCBEAR2X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: torosPools.BTCBEAR2X,
+        userDepositToken: assets.weth,
+        depositAmount: units(1),
+        userDepositTokenSlot: assetsBalanceOfSlot.weth,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.weth,
+      },
 
-      // {
-      //   testName: "BTCBULL3X - can deposit and withdraw - no swap on the way in, swap out",
-      //   torosPoolAddress: torosPools.BTCBULL3X,
-      //   userDepositToken: assets.wbtc,
-      //   depositAmount: units(1, 7), // 0.1 btc (I think)
-      //   userDepositTokenSlot: assetsBalanceOfSlot.wbtc,
-      //   poolDepositToken: assets.wbtc,
-      //   withdrawToken: assets.wbtc,
-      // },
+      {
+        testName: "BTCBULL3X - can deposit and withdraw - no swap on the way in, swap out",
+        torosPoolAddress: torosPools.BTCBULL3X,
+        userDepositToken: assets.wbtc,
+        depositAmount: units(1, 7), // 0.1 btc (I think)
+        userDepositTokenSlot: assetsBalanceOfSlot.wbtc,
+        poolDepositToken: assets.wbtc,
+        withdrawToken: assets.wbtc,
+      },
 
-      // {
-      //   testName: "BTCBULL3X - can deposit and withdraw - swap in, swap out",
-      //   torosPoolAddress: torosPools.BTCBULL3X,
-      //   userDepositToken: assets.usdc,
-      //   depositAmount: units(10000, 6),
-      //   userDepositTokenSlot: assetsBalanceOfSlot.usdc,
-      //   poolDepositToken: assets.wbtc,
-      //   withdrawToken: assets.usdc,
-      // },
-      // {
-      //   testName: "BTCBULL3X - can deposit and withdraw - swap in, swap out to btc",
-      //   torosPoolAddress: torosPools.BTCBULL3X,
-      //   userDepositToken: assets.usdc,
-      //   depositAmount: units(10000, 6),
-      //   userDepositTokenSlot: assetsBalanceOfSlot.usdc,
-      //   poolDepositToken: assets.wbtc,
-      //   withdrawToken: assets.wbtc,
-      // },
+      {
+        testName: "BTCBULL3X - can deposit and withdraw - swap in, swap out",
+        torosPoolAddress: torosPools.BTCBULL3X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(10000, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.wbtc,
+        withdrawToken: assets.usdc,
+      },
+      {
+        testName: "BTCBULL3X - can deposit and withdraw - swap in, swap out to btc",
+        torosPoolAddress: torosPools.BTCBULL3X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(10000, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.wbtc,
+        withdrawToken: assets.wbtc,
+      },
     ];
 
     tests.forEach(createTest);
