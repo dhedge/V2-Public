@@ -73,8 +73,8 @@ contract Managed is IManaged {
 
   /// @notice Return boolean if the address is a member of the list
   /// @param member The address of the member
-  /// @return Ture if the address is a member of the list, false otherwise
-  function isMemberAllowed(address member) public view override returns (bool) {
+  /// @return True if the address is a member of the list, false otherwise
+  function isMemberAllowed(address member) public view virtual override returns (bool) {
     return _memberPosition[member] != 0;
   }
 
