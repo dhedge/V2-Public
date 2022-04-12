@@ -2018,7 +2018,7 @@
       "PoolFactory": "0x4BE12Ff933C418b193B36180221Fb0033a63b3E2",
       "PoolLogic": "0x14954602f2BA9810dCfd830738E52534416125f0",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x5DDf53e8D9406583C49a85F0B918b1c7f0D0C875",
+      "PoolManagerLogic": "0x2Ddc472C27c4C82030870c0e6dbA513c13a60d8A",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
       "ERC20Guard": "0xf2Be739e22B6C7c823E5116433D2992Fc0f7C1EF",
@@ -2053,6 +2053,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Tue, 12 Apr 2022 22:47:01 GMT"
+    "lastUpdated": "Tue, 12 Apr 2022 23:34:47 GMT"
   }
 }
