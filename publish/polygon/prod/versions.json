@@ -1457,7 +1457,8 @@
             "poolAddress": "0xa375d23a751124359568f3a22576528bd1c8c3e3",
             "pairTokenOracle": "0xf9680d99d6c9589e2a93a78a04a279e509205945",
             "updateInterval": 300,
-            "volatilityTripLimit": 25
+            "volatilityTripLimit": 25,
+            "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
           }
         },
         {
@@ -1697,7 +1698,8 @@
             "poolAddress": "0x160532d2536175d65c03b97b0630a9802c274dad",
             "pairTokenOracle": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",
             "updateInterval": 600,
-            "volatilityTripLimit": 5
+            "volatilityTripLimit": 5,
+            "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
           },
           "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468"
         },
@@ -1715,37 +1717,55 @@
           "assetName": "DODO bird",
           "assetAddress": "0xe4bf2864ebec7b7fdf6eeca9bacae7cdfdaffe78",
           "assetType": "0",
-          "oracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
+          }
         },
         {
           "assetName": "MAKER DAO",
           "assetAddress": "0x6f7C932e7684666C9fd1d44527765433e01fF61d",
           "assetType": "0",
-          "oracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
+          }
         },
         {
           "assetName": "The Sandbox",
           "assetAddress": "0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683",
           "assetType": "0",
-          "oracleAddress": "0x3D49406EDd4D52Fb7FFd25485f32E073b529C924"
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x3D49406EDd4D52Fb7FFd25485f32E073b529C924"
+          }
         },
         {
           "assetName": "Graph Token",
           "assetAddress": "0x5fe2b58c013d7601147dcdd68c143a77499f5531",
           "assetType": "0",
-          "oracleAddress": "0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410"
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x3FabBfb300B1e2D7c9B84512fe9D30aeDF24C410"
+          }
         },
         {
           "assetName": "Kyber Network Crystal v2",
           "assetAddress": "0x1c954e8fe737f99f68fa1ccda3e51ebdb291948c",
           "assetType": "0",
-          "oracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2"
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2"
+          }
         },
         {
           "assetName": "Rai Reflex Index",
           "assetAddress": "0x00e5646f60ac6fb446f621d146b6e1886f002905",
           "assetType": "0",
-          "oracleAddress": "0x7f45273fD7C644714825345670414Ea649b50b16"
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x7f45273fD7C644714825345670414Ea649b50b16"
+          }
         },
         {
           "assetName": "Sushi LP MKR-WETH",
@@ -1813,6 +1833,16 @@
           "assetType": "7",
           "oracleType": "USDPriceAggregator",
           "oracleAddress": "0x97e4C7204fc43627EeE4694C3Dd3c6819217E035"
+        },
+        {
+          "assetName": "QI",
+          "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
+          "assetType": "0",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
+          },
+          "oracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
         }
       ],
       "Oracles": [
@@ -1821,24 +1851,6 @@
           "oracleName": "BalancerDHedgePoolPriceOracle",
           "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
           "oracleAddress": "0x703FEAcab4F7b7B8ac8a42F04C6eDCa60e415Bd4"
-        },
-        {
-          "name": "DHT TWAP Oracle",
-          "oracleType": "MedianTWAPAggregator",
-          "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
-          "oracleAddress": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E"
-        },
-        {
-          "name": "MAI TWAP Oracle",
-          "oracleType": "MedianTWAPAggregator",
-          "assetAddress": "0xa3fa99a148fa48d14ed51d610c367c61876997f1",
-          "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468"
-        },
-        {
-          "name": "QI TWAP Oracle",
-          "oracleType": "MedianTWAPAggregator",
-          "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
-          "oracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
         }
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
@@ -1861,7 +1873,7 @@
       "AaveLendingPoolGuard": "0x5A511599E46a450Dd531c2e59a29480B32967A2D",
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
       "BalancerV2Guard": "0xb9AD72A87A1F30E3De4F80957cA2431F17256B65",
-      "OneInchV4Guard": "0xC0db6Be34Fc59F40BB6285C7db82eC702737cDCD",
+      "OneInchV4Guard": "0x708Fb18D76Ca9E80792810758aCd81E60C6D987d",
       "PoolFactory": "0xfb185b8A62F7b888755FBB3E3772F9bf33955211",
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",

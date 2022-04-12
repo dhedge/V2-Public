@@ -313,6 +313,7 @@ describe("PoolFactory", function () {
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
     await poolFactory.setPoolPerformanceAddress(poolPerformance.address);
+    await poolFactory.setMaximumManagerFee(5000, 300); // 3% streaming fee
 
     // Deploy Sushi LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
@@ -348,11 +349,11 @@ describe("PoolFactory", function () {
     );
     sushiMiniChefV2Guard.deployed();
 
-    const OneInchV3Guard = await ethers.getContractFactory(
-      "contracts/guards/contractGuards/OneInchV3Guard.sol:OneInchV3Guard",
+    const OneInchV4Guard = await ethers.getContractFactory(
+      "contracts/guards/contractGuards/OneInchV4Guard.sol:OneInchV4Guard",
     );
-    const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
-    oneInchV3Guard.deployed();
+    const oneInchV4Guard = await OneInchV4Guard.deploy(2, 100); // set slippage 2%
+    oneInchV4Guard.deployed();
 
     // Deploy asset guards
     const ERC20Guard = await ethers.getContractFactory("contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard");
@@ -384,7 +385,7 @@ describe("PoolFactory", function () {
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3RouterGuard.address);
-    await governance.setContractGuard(oneInchRouter.address, oneInchV3Guard.address);
+    await governance.setContractGuard(oneInchRouter.address, oneInchV4Guard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
     await governance.setAddresses([
       {
@@ -438,6 +439,7 @@ describe("PoolFactory", function () {
       "Barren Wuffet",
       poolLogic.address,
       "1000",
+      "200",
       [
         {
           asset: susd,
@@ -453,7 +455,7 @@ describe("PoolFactory", function () {
     console.log("Passed poolManagerLogic Init!");
 
     await expect(
-      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", [
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", "200", [
         {
           asset: susd,
           isDeposit: true,
@@ -477,6 +479,7 @@ describe("PoolFactory", function () {
           managerName,
           manager,
           time,
+          performanceFeeNumerator,
           managerFeeNumerator,
           managerFeeDenominator,
           event,
@@ -491,6 +494,7 @@ describe("PoolFactory", function () {
             managerName: managerName,
             manager: manager,
             time: time,
+            performanceFeeNumerator: performanceFeeNumerator,
             managerFeeNumerator: managerFeeNumerator,
             managerFeeDenominator: managerFeeDenominator,
           });
@@ -503,7 +507,7 @@ describe("PoolFactory", function () {
     });
 
     await expect(
-      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", [
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", "200", [
         {
           asset: susd,
           isDeposit: false,
@@ -516,7 +520,7 @@ describe("PoolFactory", function () {
     ).to.be.revertedWith("invalid manager fee");
 
     await expect(
-      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
         {
           asset: susd,
           isDeposit: false,
@@ -528,7 +532,7 @@ describe("PoolFactory", function () {
       ]),
     ).to.be.revertedWith("at least one deposit asset"); // at least one deposit asset
 
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
       {
         asset: seth,
         isDeposit: false,
@@ -549,7 +553,8 @@ describe("PoolFactory", function () {
     // expect(event.fundSymbol).to.equal('DHTF');
     expect(event.managerName).to.equal("Barren Wuffet");
     expect(event.manager).to.equal(manager.address);
-    expect(event.managerFeeNumerator.toString()).to.equal("5000");
+    expect(event.performanceFeeNumerator.toString()).to.equal("5000");
+    expect(event.managerFeeNumerator.toString()).to.equal("200");
     expect(event.managerFeeDenominator.toString()).to.equal("10000");
 
     const deployedFunds = await poolFactory.getDeployedFunds();
@@ -984,6 +989,8 @@ describe("PoolFactory", function () {
     const totalSupply = await poolLogicProxy.totalSupply();
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
 
+    await poolManagerLogicProxy.connect(manager).setPerformanceFeeNumerator(0, 0);
+
     await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
       "cooldown active",
     );
@@ -1009,10 +1016,16 @@ describe("PoolFactory", function () {
     expect(withdrawnAsset[0]).to.equal(susd);
     expect(withdrawnAsset[1]).to.equal(fundTokensWithdrawn);
     expect(withdrawnAsset[2]).to.equal(false);
+
+    await poolFactory.setMaximumPerformanceFeeNumeratorChange(5000);
+    await poolManagerLogicProxy.connect(manager).announceManagerFeeIncrease(5000, 200); // increase streaming fee to 2%
+    await ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4]); // add 4 weeks
+    await poolManagerLogicProxy.connect(manager).commitManagerFeeIncrease();
+    await poolFactory.setMaximumPerformanceFeeNumeratorChange(1000);
   });
 
   it("should be able to manage pool", async function () {
-    await poolFactory.createFund(true, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+    await poolFactory.createFund(true, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
       {
         asset: susd,
         isDeposit: true,
@@ -1308,34 +1321,47 @@ describe("PoolFactory", function () {
 
   it("should be able to manage fees", async function () {
     //Can't set manager fee if not manager or if fee too high
-    await expect(poolManagerLogicProxy.announceManagerFeeIncrease(4000)).to.be.revertedWith("only manager");
+    await expect(poolManagerLogicProxy.announceManagerFeeIncrease(4000, 300)).to.be.revertedWith("only manager");
 
     const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
-    await expect(poolManagerLogicManagerProxy.announceManagerFeeIncrease(6100)).to.be.revertedWith(
+    await expect(poolManagerLogicManagerProxy.announceManagerFeeIncrease(6100, 400)).to.be.revertedWith(
+      "exceeded allowed increase",
+    );
+    await expect(poolManagerLogicManagerProxy.announceManagerFeeIncrease(4000, 400)).to.be.revertedWith(
       "exceeded allowed increase",
     );
 
     //Can set manager fee
-    await poolManagerLogicManagerProxy.announceManagerFeeIncrease(4000);
+    await poolManagerLogicManagerProxy.announceManagerFeeIncrease(4000, 250); // increase streaming fee to 2.5%
 
     await expect(poolManagerLogicManagerProxy.commitManagerFeeIncrease()).to.be.revertedWith(
       "fee increase delay active",
     );
 
-    ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4]); // add 1 day
+    await ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4]); // add 4 weeks
 
     await poolManagerLogicManagerProxy.commitManagerFeeIncrease();
 
-    let [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee();
-    expect(managerFeeNumerator.toString()).to.equal("4000");
+    let [performanceFeeNumerator, managerFeeNumerator, managerFeeDenominator] =
+      await poolManagerLogicManagerProxy.getManagerFee();
+    expect(performanceFeeNumerator.toString()).to.equal("4000");
+    expect(managerFeeNumerator.toString()).to.equal("250");
     expect(managerFeeDenominator.toString()).to.equal("10000");
 
-    await expect(poolManagerLogicProxy.setManagerFeeNumerator(3000)).to.be.revertedWith("only manager");
-    await expect(poolManagerLogicManagerProxy.setManagerFeeNumerator(5000)).to.be.revertedWith("manager fee too high");
-    await poolManagerLogicManagerProxy.setManagerFeeNumerator(3000);
-    [managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getManagerFee();
-    expect(managerFeeNumerator.toString()).to.equal("3000");
+    await expect(poolManagerLogicProxy.setPerformanceFeeNumerator(3000, 200)).to.be.revertedWith("only manager");
+    await expect(poolManagerLogicManagerProxy.setPerformanceFeeNumerator(5000, 200)).to.be.revertedWith(
+      "manager fee too high",
+    );
+    await expect(poolManagerLogicManagerProxy.setPerformanceFeeNumerator(3000, 300)).to.be.revertedWith(
+      "manager fee too high",
+    );
+    await poolManagerLogicManagerProxy.setPerformanceFeeNumerator(3000, 250);
+    await poolManagerLogicManagerProxy.setPerformanceFeeNumerator(3000, 200);
+    [performanceFeeNumerator, managerFeeNumerator, managerFeeDenominator] =
+      await poolManagerLogicManagerProxy.getManagerFee();
+    expect(performanceFeeNumerator.toString()).to.equal("3000");
+    expect(managerFeeNumerator.toString()).to.equal("200");
     expect(managerFeeDenominator.toString()).to.equal("10000");
   });
 
@@ -1783,33 +1809,45 @@ describe("PoolFactory", function () {
 
     await assetHandler.setChainlinkTimeout(9000000);
 
+    await ethers.provider.send("evm_increaseTime", [3600 * 24]);
+    await ethers.provider.send("evm_mine", []);
+
     const daoBalanceBefore = ethers.BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
     const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
+    const performanceFeeNumerator = await poolManagerLogicProxy.performanceFeeNumerator();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     const calculatedAvailableFee = tokenPricePreMint
       .sub(tokenPriceAtLastFeeMint)
       .mul(totalSupplyPreMint)
-      .mul(managerFeeNumerator)
+      .mul(performanceFeeNumerator)
       .div(10000)
-      .div(tokenPricePreMint);
+      .div(tokenPricePreMint)
+      .add(
+        totalSupplyPreMint
+          .mul(ethers.BigNumber.from(await currentBlockTimestamp()).sub(await poolLogicProxy.lastFeeMintTime()))
+          .mul(managerFeeNumerator)
+          .div(10000)
+          .div(86400 * 365),
+      );
 
     expect(availableFeePreMint).to.be.gt("0"); // the test needs to have some available fee to claim
-    checkAlmostSame(availableFeePreMint, calculatedAvailableFee);
+    checkAlmostSame(availableFeePreMint, calculatedAvailableFee, 0.001);
 
     await poolLogicProxy.mintManagerFee();
 
     const tokenPricePostMint = await poolLogicProxy.tokenPrice();
     const totalSupplyPostMint = await poolLogicProxy.totalSupply();
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint));
-    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint));
+    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint), 0.001);
+    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint), 0.001);
 
     checkAlmostSame(
       await poolLogicProxy.balanceOf(dao.address),
       daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
+      0.001,
     );
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
@@ -1826,7 +1864,7 @@ describe("PoolFactory", function () {
     expect(await poolFactory.isPaused()).to.be.true;
 
     await expect(
-      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", [
+      poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "6000", "200", [
         {
           asset: susd,
           isDeposit: true,
@@ -2407,7 +2445,7 @@ describe("PoolFactory", function () {
       );
 
       // remove manager fee so that performance fee minting doesn't get in the way
-      await poolManagerLogicProxy.connect(manager).setManagerFeeNumerator("0");
+      await poolManagerLogicProxy.connect(manager).setPerformanceFeeNumerator("0", "0");
 
       // mock 20 sUSD in pool
       const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
@@ -2438,7 +2476,7 @@ describe("PoolFactory", function () {
       const withdrawAmount = ethers.BigNumber.from(TEN_TOKENS);
       const investorFundBalance = await poolLogicProxy.balanceOf(investor.address);
 
-      ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
+      await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
       await poolLogicProxy.connect(investor).withdraw(withdrawAmount);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2449,11 +2487,15 @@ describe("PoolFactory", function () {
 
       expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawal.investor).to.equal(investor.address);
-      checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString());
+      checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString(), 0.001);
       expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
-      expect(eventWithdrawal.totalInvestorFundTokens).to.equal(investorFundBalance.sub(withdrawAmount).toString());
-      checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter);
-      checkAlmostSame(eventWithdrawal.totalSupply, totalSupply.sub(withdrawAmount).toString());
+      checkAlmostSame(
+        eventWithdrawal.totalInvestorFundTokens,
+        investorFundBalance.sub(withdrawAmount).toString(),
+        0.001,
+      );
+      checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter, 0.001);
+      checkAlmostSame(eventWithdrawal.totalSupply, totalSupply.sub(withdrawAmount).toString(), 0.001);
 
       const withdrawSUSD = eventWithdrawal.withdrawnAssets[1];
       const withdrawLP = eventWithdrawal.withdrawnAssets[0];
@@ -2484,7 +2526,7 @@ describe("PoolFactory", function () {
     expect(await poolFactory.getManagedPools(manager.address)).to.be.deep.equal([pools[0]]);
     expect(await poolFactory.getManagedPools(user1.address)).to.be.deep.equal([pools[1]]);
 
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
       {
         asset: seth,
         isDeposit: false,
@@ -2495,7 +2537,7 @@ describe("PoolFactory", function () {
       },
     ]);
 
-    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
       {
         asset: seth,
         isDeposit: false,
@@ -2547,7 +2589,7 @@ describe("PoolFactory", function () {
   });
 
   it("should check dhedge pool restriction", async () => {
-    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
       {
         asset: seth,
         isDeposit: false,
@@ -2560,7 +2602,7 @@ describe("PoolFactory", function () {
     let pools = await poolFactory.getDeployedFunds();
     const pool1 = pools[pools.length - 1];
 
-    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
       {
         asset: seth,
         isDeposit: false,
@@ -2573,7 +2615,7 @@ describe("PoolFactory", function () {
     pools = await poolFactory.getDeployedFunds();
     const pool2 = pools[pools.length - 1];
 
-    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", [
+    await poolFactory.createFund(false, user1.address, "Barren Wuffet", "Test Fund", "DHTF", "5000", "200", [
       {
         asset: seth,
         isDeposit: false,

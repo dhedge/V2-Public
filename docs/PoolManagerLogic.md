@@ -1,7 +1,7 @@
 Logic implmentation for pool manager
 
 # Functions:
-- [`initialize(address _factory, address _manager, string _managerName, address _poolLogic, uint256 _managerFeeNumerator, struct IHasSupportedAsset.Asset[] _supportedAssets)`](#PoolManagerLogic-initialize-address-address-string-address-uint256-struct-IHasSupportedAsset-Asset---)
+- [`initialize(address _factory, address _manager, string _managerName, address _poolLogic, uint256 _performanceFeeNumerator, struct IHasSupportedAsset.Asset[] _supportedAssets)`](#PoolManagerLogic-initialize-address-address-string-address-uint256-struct-IHasSupportedAsset-Asset---)
 - [`isSupportedAsset(address asset)`](#PoolManagerLogic-isSupportedAsset-address-)
 - [`isDepositAsset(address asset)`](#PoolManagerLogic-isDepositAsset-address-)
 - [`validateAsset(address asset)`](#PoolManagerLogic-validateAsset-address-)
@@ -17,7 +17,7 @@ Logic implmentation for pool manager
 - [`getManagerFee()`](#PoolManagerLogic-getManagerFee--)
 - [`getMaximumManagerFee()`](#PoolManagerLogic-getMaximumManagerFee--)
 - [`getMaximumManagerFeeChange()`](#PoolManagerLogic-getMaximumManagerFeeChange--)
-- [`setManagerFeeNumerator(uint256 numerator)`](#PoolManagerLogic-setManagerFeeNumerator-uint256-)
+- [`setPerformanceFeeNumerator(uint256 numerator)`](#PoolManagerLogic-setPerformanceFeeNumerator-uint256-)
 - [`announceManagerFeeIncrease(uint256 numerator)`](#PoolManagerLogic-announceManagerFeeIncrease-uint256-)
 - [`renounceManagerFeeIncrease()`](#PoolManagerLogic-renounceManagerFeeIncrease--)
 - [`commitManagerFeeIncrease()`](#PoolManagerLogic-commitManagerFeeIncrease--)
@@ -33,7 +33,7 @@ Logic implmentation for pool manager
 - [`PoolLogicSet(address poolLogic, address from)`](#PoolManagerLogic-PoolLogicSet-address-address-)
 
 
-# Function `initialize(address _factory, address _manager, string _managerName, address _poolLogic, uint256 _managerFeeNumerator, struct IHasSupportedAsset.Asset[] _supportedAssets)` {#PoolManagerLogic-initialize-address-address-string-address-uint256-struct-IHasSupportedAsset-Asset---}
+# Function `initialize(address _factory, address _manager, string _managerName, address _poolLogic, uint256 _performanceFeeNumerator, struct IHasSupportedAsset.Asset[] _supportedAssets)` {#PoolManagerLogic-initialize-address-address-string-address-uint256-struct-IHasSupportedAsset-Asset---}
 initialize the pool manager
 
 
@@ -46,7 +46,7 @@ initialize the pool manager
 
 - `_poolLogic`: address of the pool logic
 
-- `_managerFeeNumerator`: numerator of the manager fee
+- `_performanceFeeNumerator`: numerator of the manager fee
 
 - `_supportedAssets`: array of supported assets
 
@@ -206,7 +206,7 @@ Get maximum manager fee change
 - change change of the maximum manager fee
 
 
-# Function `setManagerFeeNumerator(uint256 numerator)` {#PoolManagerLogic-setManagerFeeNumerator-uint256-}
+# Function `setPerformanceFeeNumerator(uint256 numerator)` {#PoolManagerLogic-setPerformanceFeeNumerator-uint256-}
 Manager can decrease performance fee
 
 

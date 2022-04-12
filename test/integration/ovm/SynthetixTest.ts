@@ -60,7 +60,10 @@ describe("Synthetix Test", function () {
         { asset: assets.seth, isDeposit: true },
         { asset: assets.snxProxy, isDeposit: false },
       ],
-      0,
+      {
+        performance: ethers.BigNumber.from("0"),
+        management: ethers.BigNumber.from("0"),
+      },
     );
     poolLogicProxy = fund.poolLogicProxy;
     poolManagerLogicProxy = fund.poolManagerLogicProxy;

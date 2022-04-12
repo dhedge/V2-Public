@@ -1,3 +1,3 @@
 assetType,guardName,guardAddress,description
-0,ERC20Guard,0x6212FFDDe8f24e525264df10A7FfC6D017c8424A,ERC20 tokens
-7,UniswapV3AssetGuard,0x9a6d482c81F2D7b520Fa52AAC3b7614Af7000Caf,Uniswap V3 LP positions
+7,UniswapV3AssetGuard,0xbc95cFAd5ED6152c98cC0b7d63b158234AfA520f,Uniswap V3 LP positions
+0,ERC20Guard,0x051947f71f4b7fC8adDE3A50A2f7eeD8c6d20e0c,ERC20 tokens

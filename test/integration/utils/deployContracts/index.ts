@@ -85,7 +85,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
 
   const assetHandler = <AssetHandler>await upgrades.deployProxy(AssetHandlerLogic, [[]]);
   await assetHandler.deployed();
-  await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
+  await assetHandler.setChainlinkTimeout((3600 * 24 * 365 * 10).toString()); // 10 year expiry
 
   const PoolFactory = await ethers.getContractFactory("PoolFactory");
   const poolFactory = <PoolFactory>(
@@ -226,9 +226,9 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const balancerMerkleOrchardGuard = await BalancerMerkleOrchardGuard.deploy();
     await balancerMerkleOrchardGuard.deployed();
 
-    const OneInchV3Guard = await ethers.getContractFactory("OneInchV3Guard");
-    const oneInchV3Guard = await OneInchV3Guard.deploy(2, 100); // set slippage 2%
-    await oneInchV3Guard.deployed();
+    const OneInchV4Guard = await ethers.getContractFactory("OneInchV4Guard");
+    const oneInchV4Guard = await OneInchV4Guard.deploy(2, 100); // set slippage 2%
+    await oneInchV4Guard.deployed();
 
     const SwapRouter = await ethers.getContractFactory("DhedgeSwapRouter");
     const swapRouter = await SwapRouter.deploy([polygonData.quickswap.router, polygonData.sushi.router], []);
@@ -280,7 +280,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await governance.setContractGuard(polygonData.aave.incentivesController, aaveIncentivesControllerGuard.address);
     await governance.setContractGuard(polygonData.balancer.v2Vault, balancerV2Guard.address);
     await governance.setContractGuard(polygonData.balancer.merkleOrchard, balancerMerkleOrchardGuard.address);
-    await governance.setContractGuard(polygonData.oneinch.v3Router, oneInchV3Guard.address);
+    await governance.setContractGuard(polygonData.oneinch.v3Router, oneInchV4Guard.address);
     await governance.setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
     await governance.setContractGuard(polygonData.uniswapV3.router, uniswapV3RouterGuard.address);
     await governance.setContractGuard(

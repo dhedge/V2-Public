@@ -8,7 +8,7 @@ import { updateChainlinkAggregators } from "../TestHelpers";
 import { MockContract, PoolLogic__factory } from "../../types";
 import { Interface } from "@ethersproject/abi";
 
-const { BigNumber } = ethers;
+const { BigNumber, utils } = ethers;
 
 import { units, currentBlockTimestamp } from "../TestHelpers";
 
@@ -17,7 +17,7 @@ const _SYNTHETIX_KEY = "0x53796e746865746978000000000000000000000000000000000000
 const susdKey = "0x7355534400000000000000000000000000000000000000000000000000000000";
 const sethKey = "0x7345544800000000000000000000000000000000000000000000000000000000";
 
-describe("PoolFactory", function () {
+describe("PoolPerformance", function () {
   let logicOwner: SignerWithAddress, manager: SignerWithAddress, dao: SignerWithAddress, investor: SignerWithAddress;
   let PoolLogic: PoolLogic__factory, poolFactory: Contract, poolLogicProxy: Contract, poolPerformance: Contract;
 
@@ -54,7 +54,7 @@ describe("PoolFactory", function () {
 
     // mock ISynthetix
     const ISynthetix = await artifacts.readArtifact("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix");
-    const iSynthetix = new ethers.utils.Interface(ISynthetix.abi);
+    const iSynthetix = new utils.Interface(ISynthetix.abi);
     let synthsABI = iSynthetix.encodeFunctionData("synths", [susdKey]);
     await synthetix.givenCalldataReturnAddress(synthsABI, susdAsset.address);
     synthsABI = iSynthetix.encodeFunctionData("synths", [sethKey]);
@@ -67,7 +67,7 @@ describe("PoolFactory", function () {
 
     // mock ISynth
     const ISynth = await artifacts.readArtifact("contracts/interfaces/synthetix/ISynth.sol:ISynth");
-    const iSynth = new ethers.utils.Interface(ISynth.abi);
+    const iSynth = new utils.Interface(ISynth.abi);
     const proxyABI = iSynth.encodeFunctionData("proxy", []);
     await susdAsset.givenCalldataReturnAddress(proxyABI, susdProxy.address);
     await sethAsset.givenCalldataReturnAddress(proxyABI, sethProxy.address);
@@ -76,7 +76,7 @@ describe("PoolFactory", function () {
     const ISynthAddressProxy = await artifacts.readArtifact(
       "contracts/interfaces/synthetix/ISynthAddressProxy.sol:ISynthAddressProxy",
     );
-    const iSynthAddressProxy = new ethers.utils.Interface(ISynthAddressProxy.abi);
+    const iSynthAddressProxy = new utils.Interface(ISynthAddressProxy.abi);
     const targetABI = iSynthAddressProxy.encodeFunctionData("target", []);
     await susdProxy.givenCalldataReturnAddress(targetABI, susdAsset.address);
     await sethProxy.givenCalldataReturnAddress(targetABI, sethAsset.address);
@@ -96,7 +96,7 @@ describe("PoolFactory", function () {
     const IAaveProtocolDataProvider = await artifacts.readArtifact(
       "contracts/interfaces/aave/IAaveProtocolDataProvider.sol:IAaveProtocolDataProvider",
     );
-    const iAaveProtocolDataProvider = new ethers.utils.Interface(IAaveProtocolDataProvider.abi);
+    const iAaveProtocolDataProvider = new utils.Interface(IAaveProtocolDataProvider.abi);
     const addressProviderABI = iAaveProtocolDataProvider.encodeFunctionData("ADDRESSES_PROVIDER", []);
     await mockAaveProtocolDataProvider.givenCalldataReturnAddress(addressProviderABI, mockAaveLendingPool.address);
 
@@ -159,10 +159,19 @@ describe("PoolFactory", function () {
   // pool goes down 50% in value (performance drop)
   // Token price returns $1 and tokenPriceAdjustedForPerformance returns $0.5
   it("Scenario 1 - direct deposit equal to aum, 50% drop in asset value", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("5000"), [
-      [seth, false],
-      [susd, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0% streaming fee
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
@@ -206,7 +215,7 @@ describe("PoolFactory", function () {
 
     const current = await currentBlockTimestamp();
     const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
-    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const iAggregatorV3 = new utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
     // Halve the usd price
@@ -239,10 +248,19 @@ describe("PoolFactory", function () {
   // now token price returns 3? (ie 200% gain)
   // No token price returns $4 (double the underlying value) and tokenPriceAdjustedForPerformance returns $2 (double the deposited value)
   it("Scenario 2 - direct deposit equal to aum, 100% increase in asset value", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("5000"), [
-      [seth, false],
-      [susd, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0%
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
@@ -286,7 +304,7 @@ describe("PoolFactory", function () {
 
     const current = await currentBlockTimestamp();
     const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
-    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const iAggregatorV3 = new utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
     // Double the usd price
@@ -323,10 +341,19 @@ describe("PoolFactory", function () {
   // now token price returns 3? (ie 200% gain)
   // No token price returns $4 (double the underlying value) and tokenPriceAdjustedForPerformance returns $2 (double the deposited value)
   it("Scenario 3 - small aum, large deposit, 100% increase in asset value", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("5000"), [
-      [seth, false],
-      [susd, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0%
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
     poolLogicProxy = await PoolLogic.attach(funds[0]);
@@ -365,7 +392,7 @@ describe("PoolFactory", function () {
 
     const current = await currentBlockTimestamp();
     const AggregatorV3 = await artifacts.readArtifact("AggregatorV3Interface");
-    const iAggregatorV3 = new ethers.utils.Interface(AggregatorV3.abi);
+    const iAggregatorV3 = new utils.Interface(AggregatorV3.abi);
     const latestRoundDataABI = iAggregatorV3.encodeFunctionData("latestRoundData", []);
 
     // Double the usd price
@@ -398,10 +425,19 @@ describe("PoolFactory", function () {
   });
 
   it("setInternalValueFactor", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("0"), [
-      [seth, false],
-      [susd, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      ethers.BigNumber.from("0"),
+      ethers.BigNumber.from("0"), // 0%
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
 
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;
@@ -456,10 +492,19 @@ describe("PoolFactory", function () {
   });
 
   it("setInternalValueFactor only callable by owner", async function () {
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", BigNumber.from("5000"), [
-      [seth, false],
-      [susd, true],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      BigNumber.from("5000"),
+      BigNumber.from("0"), // 0%
+      [
+        [seth, false],
+        [susd, true],
+      ],
+    );
 
     const funds = await poolFactory.getDeployedFunds();
     expect(funds[0]).not.to.be.undefined;

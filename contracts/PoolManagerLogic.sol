@@ -61,9 +61,19 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   event AssetAdded(address indexed fundAddress, address manager, address asset, bool isDeposit);
   event AssetRemoved(address fundAddress, address manager, address asset);
 
-  event ManagerFeeSet(address fundAddress, address manager, uint256 numerator, uint256 denominator);
+  event ManagerFeeSet(
+    address fundAddress,
+    address manager,
+    uint256 performanceFeeNumerator,
+    uint256 managerFeeNumerator,
+    uint256 denominator
+  );
 
-  event ManagerFeeIncreaseAnnounced(uint256 newNumerator, uint256 announcedFeeActivationTime);
+  event ManagerFeeIncreaseAnnounced(
+    uint256 performanceFeeNumerator,
+    uint256 managerFeeNumerator,
+    uint256 announcedFeeActivationTime
+  );
 
   event ManagerFeeIncreaseRenounced();
   event PoolLogicSet(address poolLogic, address from);
@@ -75,8 +85,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
 
   // Fee increase announcement
-  uint256 public announcedFeeIncreaseNumerator;
+  uint256 public announcedPerformanceFeeNumerator;
   uint256 public announcedFeeIncreaseTimestamp;
+  uint256 public performanceFeeNumerator;
+  uint256 public announcedManagerFeeNumerator;
   uint256 public managerFeeNumerator;
 
   modifier onlyManagerOrTraderOrFactory() {
@@ -89,13 +101,14 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param _manager address of the manager
   /// @param _managerName name of the manager
   /// @param _poolLogic address of the pool logic
-  /// @param _managerFeeNumerator numerator of the manager fee
+  /// @param _performanceFeeNumerator numerator of the manager fee
   /// @param _supportedAssets array of supported assets
   function initialize(
     address _factory,
     address _manager,
     string calldata _managerName,
     address _poolLogic,
+    uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
     Asset[] calldata _supportedAssets
   ) external initializer {
@@ -106,7 +119,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     factory = _factory;
     poolLogic = _poolLogic;
-    _setManagerFeeNumerator(_managerFeeNumerator);
+    _setPerformanceFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator);
     _changeAssets(_supportedAssets, new address[](0));
   }
 
@@ -314,69 +327,110 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /* ========== MANAGER FEES ========== */
 
   /// @notice Return the manager fees
-  function getManagerFee() external view override returns (uint256, uint256) {
-    (, uint256 managerFeeDenominator) = IHasFeeInfo(factory).getMaximumManagerFee();
-    return (managerFeeNumerator, managerFeeDenominator);
+  function getManagerFee()
+    external
+    view
+    override
+    returns (
+      uint256,
+      uint256,
+      uint256
+    )
+  {
+    (, , uint256 managerFeeDenominator) = IHasFeeInfo(factory).getMaximumManagerFee();
+    return (performanceFeeNumerator, managerFeeNumerator, managerFeeDenominator);
   }
 
   /// @notice Get maximum manager fee
   /// @return numerator numberator of the maximum manager fee
   /// @return denominator denominator of the maximum manager fee
-  function getMaximumManagerFee() public view returns (uint256 numerator, uint256 denominator) {
-    (numerator, denominator) = IHasFeeInfo(factory).getMaximumManagerFee();
+  function getMaximumManagerFee()
+    public
+    view
+    returns (
+      uint256,
+      uint256,
+      uint256
+    )
+  {
+    return IHasFeeInfo(factory).getMaximumManagerFee();
   }
 
   /// @notice Get maximum manager fee change
   /// @return change change of the maximum manager fee
   function getMaximumManagerFeeChange() public view returns (uint256 change) {
-    change = IHasFeeInfo(factory).maximumManagerFeeNumeratorChange();
+    change = IHasFeeInfo(factory).maximumPerformanceFeeNumeratorChange();
   }
 
   // Manager fee decreases
 
   /// @notice Manager can decrease performance fee
-  /// @param numerator numberator of the performance fee to set
-  function setManagerFeeNumerator(uint256 numerator) external onlyManager {
-    require(numerator <= managerFeeNumerator, "manager fee too high");
-    _setManagerFeeNumerator(numerator);
+  /// @param _performanceFeeNumerator The numerator of the maximum manager fee
+  /// @param _managerFeeNumerator The numerator of the maximum streaming fee
+  function setPerformanceFeeNumerator(uint256 _performanceFeeNumerator, uint256 _managerFeeNumerator)
+    external
+    onlyManager
+  {
+    require(
+      _performanceFeeNumerator <= performanceFeeNumerator && _managerFeeNumerator <= managerFeeNumerator,
+      "manager fee too high"
+    );
+    _setPerformanceFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator);
   }
 
   /// @notice Manager can decrease performance fee internal call
-  /// @param numerator numberator of the performance fee to set
-  function _setManagerFeeNumerator(uint256 numerator) internal {
-    (uint256 maximumNumerator, uint256 denominator) = getMaximumManagerFee();
-    require(numerator <= denominator && numerator <= maximumNumerator, "invalid manager fee");
+  /// @param _performanceFeeNumerator The numerator of the maximum manager fee
+  /// @param _managerFeeNumerator The numerator of the maximum streaming fee
+  function _setPerformanceFeeNumerator(uint256 _performanceFeeNumerator, uint256 _managerFeeNumerator) internal {
+    (
+      uint256 maximumPerformanceFeeNumerator,
+      uint256 maximumManagerFeeNumerator,
+      uint256 denominator
+    ) = getMaximumManagerFee();
+    require(
+      _performanceFeeNumerator <= maximumPerformanceFeeNumerator && _managerFeeNumerator <= maximumManagerFeeNumerator,
+      "invalid manager fee"
+    );
 
-    managerFeeNumerator = numerator;
+    performanceFeeNumerator = _performanceFeeNumerator;
+    managerFeeNumerator = _managerFeeNumerator;
 
-    emit ManagerFeeSet(poolLogic, manager, numerator, denominator);
+    emit ManagerFeeSet(poolLogic, manager, _performanceFeeNumerator, _managerFeeNumerator, denominator);
   }
 
   // Manager fee increases
 
   /// @notice Manager can announce an increase to the performance fee
   /// @dev The commit to the new fee can happen after a time delay
-  function announceManagerFeeIncrease(uint256 numerator) external onlyManager {
-    (uint256 maximumNumerator, uint256 denominator) = getMaximumManagerFee();
+  /// @param _performanceFeeNumerator The numerator of the maximum manager fee
+  /// @param _managerFeeNumerator The numerator of the maximum streaming fee
+  function announceManagerFeeIncrease(uint256 _performanceFeeNumerator, uint256 _managerFeeNumerator)
+    external
+    onlyManager
+  {
+    (uint256 maximumPerformanceFeeNumerator, uint256 maximumManagerFeeNumerator, ) = getMaximumManagerFee();
     uint256 maximumAllowedChange = getMaximumManagerFeeChange();
 
-    require(numerator <= denominator, "invalid fraction");
     require(
-      numerator <= maximumNumerator && numerator <= managerFeeNumerator.add(maximumAllowedChange),
+      _performanceFeeNumerator <= maximumPerformanceFeeNumerator &&
+        _managerFeeNumerator <= maximumManagerFeeNumerator &&
+        _performanceFeeNumerator <= performanceFeeNumerator.add(maximumAllowedChange),
       "exceeded allowed increase"
     );
 
-    uint256 feeChangeDelay = IHasFeeInfo(factory).managerFeeNumeratorChangeDelay();
+    uint256 feeChangeDelay = IHasFeeInfo(factory).performanceFeeNumeratorChangeDelay();
 
-    announcedFeeIncreaseNumerator = numerator;
+    announcedPerformanceFeeNumerator = _performanceFeeNumerator;
+    announcedManagerFeeNumerator = _managerFeeNumerator;
     announcedFeeIncreaseTimestamp = block.timestamp + feeChangeDelay;
-    emit ManagerFeeIncreaseAnnounced(numerator, announcedFeeIncreaseTimestamp);
+    emit ManagerFeeIncreaseAnnounced(_performanceFeeNumerator, _managerFeeNumerator, announcedFeeIncreaseTimestamp);
   }
 
   /// @notice Manager can cancel the performance fee increase
   /// @dev Fee increase needs to be announced first
   function renounceManagerFeeIncrease() external onlyManager {
-    announcedFeeIncreaseNumerator = 0;
+    announcedPerformanceFeeNumerator = 0;
+    announcedManagerFeeNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
     emit ManagerFeeIncreaseRenounced();
   }
@@ -386,15 +440,15 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function commitManagerFeeIncrease() external onlyManager {
     require(block.timestamp >= announcedFeeIncreaseTimestamp, "fee increase delay active");
 
-    _setManagerFeeNumerator(announcedFeeIncreaseNumerator);
+    _setPerformanceFeeNumerator(announcedPerformanceFeeNumerator, announcedManagerFeeNumerator);
 
-    announcedFeeIncreaseNumerator = 0;
+    announcedPerformanceFeeNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
   }
 
   /// @notice Get manager fee increase information
   function getManagerFeeIncreaseInfo() external view returns (uint256, uint256) {
-    return (announcedFeeIncreaseNumerator, announcedFeeIncreaseTimestamp);
+    return (announcedPerformanceFeeNumerator, announcedFeeIncreaseTimestamp);
   }
 
   /// @notice Setter for poolLogic contract
@@ -410,5 +464,5 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return true;
   }
 
-  uint256[51] private __gap;
+  uint256[49] private __gap;
 }
