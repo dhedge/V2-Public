@@ -89,7 +89,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
 
   const assetHandler = <AssetHandler>await upgrades.deployProxy(AssetHandlerLogic, [[]]);
   await assetHandler.deployed();
-  await assetHandler.setChainlinkTimeout((3600 * 24 * 365).toString()); // 1 year expiry
+  await assetHandler.setChainlinkTimeout((3600 * 24 * 365 * 10).toString()); // 10 year expiry
 
   const PoolFactory = await ethers.getContractFactory("PoolFactory");
   const poolFactory = <PoolFactory>(

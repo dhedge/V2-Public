@@ -67,10 +67,7 @@ describe("LendingEnabledAssetGuard", function () {
     const assetLendingPool = { asset: aaveV2.lendingPool, assetType: 3, aggregator: usdPriceAggregator.address };
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
-      aaveV2.protocolDataProvider,
-      aaveV2.lendingPool,
-    );
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(aaveV2.protocolDataProvider);
     aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV2");
@@ -128,11 +125,20 @@ describe("LendingEnabledAssetGuard", function () {
     const usdcAmount = (100e6).toString();
     const managerFee = BigNumber.from("0"); // 0%;
     // Create the fund we're going to use for testing
-    await poolFactory.createFund(false, manager.address, "Barren Wuffet", "Test Fund", "DHTF", managerFee, [
-      [assets.wmatic, true],
-      [assets.usdc, true],
-      [aaveV2.lendingPool, false],
-    ]);
+    await poolFactory.createFund(
+      false,
+      manager.address,
+      "Barren Wuffet",
+      "Test Fund",
+      "DHTF",
+      managerFee,
+      BigNumber.from("0"),
+      [
+        [assets.wmatic, true],
+        [assets.usdc, true],
+        [aaveV2.lendingPool, false],
+      ],
+    );
     const funds = await poolFactory.getDeployedFunds();
     poolLogicProxy = await PoolLogic.attach(funds[0]);
     // Deposit

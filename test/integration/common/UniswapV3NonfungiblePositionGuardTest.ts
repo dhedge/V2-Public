@@ -107,7 +107,10 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
           { asset: bothSupportedPair.token1, isDeposit: true },
           { asset: testSupportedAsset.address, isDeposit: true },
         ],
-        0, // 0% performance fee
+        {
+          performance: BigNumber.from("0"),
+          management: BigNumber.from("0"),
+        },
       );
       poolLogicProxy = funds.poolLogicProxy;
       poolManagerLogicProxy = funds.poolManagerLogicProxy;
