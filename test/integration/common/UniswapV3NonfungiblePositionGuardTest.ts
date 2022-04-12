@@ -107,7 +107,10 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
           { asset: bothSupportedPair.token1, isDeposit: true },
           { asset: testSupportedAsset.address, isDeposit: true },
         ],
-        0, // 0% performance fee
+        {
+          performance: BigNumber.from("0"),
+          management: BigNumber.from("0"),
+        },
       );
       poolLogicProxy = funds.poolLogicProxy;
       poolManagerLogicProxy = funds.poolManagerLogicProxy;
@@ -368,7 +371,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
 
         // increase USDC-WETH LP position by 2000 USDC and 1 WETH
         const increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
-          [tokenId, units(2000, 6), units(1), 0, 0, deadLine],
+          [tokenId, bothSupportedPair.amount0, bothSupportedPair.amount1, 0, 0, deadLine],
         ]);
 
         const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();

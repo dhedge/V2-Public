@@ -61,7 +61,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newNumerator",
+        "name": "performanceFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "managerFeeNumerator",
         "type": "uint256"
       },
       {
@@ -98,7 +104,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "performanceFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "managerFeeNumerator",
         "type": "uint256"
       },
       {
@@ -179,7 +191,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "_performanceFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_managerFeeNumerator",
         "type": "uint256"
       }
     ],
@@ -190,7 +207,7 @@
   },
   {
     "inputs": [],
-    "name": "announcedFeeIncreaseNumerator",
+    "name": "announcedFeeIncreaseTimestamp",
     "outputs": [
       {
         "internalType": "uint256",
@@ -203,7 +220,20 @@
   },
   {
     "inputs": [],
-    "name": "announcedFeeIncreaseTimestamp",
+    "name": "announcedManagerFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "announcedPerformanceFeeNumerator",
     "outputs": [
       {
         "internalType": "uint256",
@@ -443,6 +473,11 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -472,12 +507,17 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "denominator",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
         "type": "uint256"
       }
     ],
@@ -556,6 +596,11 @@
         "internalType": "address",
         "name": "_poolLogic",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_performanceFeeNumerator",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
@@ -728,6 +773,19 @@
   },
   {
     "inputs": [],
+    "name": "performanceFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "poolLogic",
     "outputs": [
       {
@@ -783,11 +841,16 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "_performanceFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_managerFeeNumerator",
         "type": "uint256"
       }
     ],
-    "name": "setManagerFeeNumerator",
+    "name": "setPerformanceFeeNumerator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
