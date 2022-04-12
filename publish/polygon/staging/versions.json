@@ -1325,7 +1325,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xCD9537EE38A7d33106423197b05ebaf977eCa386"
         },
@@ -1335,7 +1335,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xa99CD5A68E2d06A944Be7eb9812fd114a8dF5e43"
         },
@@ -1345,7 +1345,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xcB5974894fd98F14D914DCCA207e77610FEc92E2"
         },
@@ -1355,7 +1355,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x2DF72868c90A4DBb2d49B94D38F05f3c237D257a"
         },
@@ -1365,7 +1365,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x0531BEBbF617654febB1FAd88EF2C7A1cA379DA7"
         },
@@ -1375,7 +1375,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x3feE405C646b7B3355A3C02d86ad6F070D4164ac"
         },
@@ -1385,7 +1385,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xE9cd5690B5F526D7c73eD9192B075FC39d4DC08A"
         },
@@ -1395,7 +1395,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x228D1bB551d9e2C85D4b514108ED2a480e9eBe76"
         },
@@ -1405,7 +1405,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xE9A38F4636799f95248fAEfF547b2930fa4227dD"
         },
@@ -1415,7 +1415,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x1A2D51763DbfF46eDdcB3Dc2191770216a1CBF87"
         },
@@ -1425,7 +1425,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x5D3Ff64f93Bc2577653206607B80108C7Bc90837"
         },
@@ -1462,7 +1462,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x86D8026eC6777ced83860e418Db45bA480271eA8"
         },
@@ -1472,7 +1472,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xC26291C08FeBAD7394e981c569839De8e008B6E4"
         },
@@ -1623,7 +1623,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x2eb4669a820e2570AC953C512263857aE6ED5832"
         },
@@ -1633,7 +1633,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xc52696F35462480C173c4631214A1D8542f24F28"
         },
@@ -1693,7 +1693,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xBD82AF6bB1078Ba798651a057b48B4A345297Ca6"
         },
@@ -1703,7 +1703,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x2a4578df4f7046c53Ba562E746B9b5312efdb6a2"
         },
@@ -1713,7 +1713,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x399164858855dd6736eB52F2a08EAe9A5A2b96bA"
         },
@@ -1723,7 +1723,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xdB38Dd1584736ED125d8b73E4ce890CD0B994618"
         },
@@ -1733,7 +1733,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xF69D764Aaa1F99415966f76DcE52BF6775Ba1918"
         },
@@ -1743,7 +1743,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x321535294D38D5F4DE5F0Ea8c41c013023270aFE"
         },
@@ -1753,7 +1753,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xcb682967d0c6642ed1eB91A1cc4942Fae1C9F1Db"
         },
@@ -1761,7 +1761,7 @@
           "name": "Balancer LP BPSP-TUSD",
           "oracleType": "BalancerStablePoolAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
           "assetType": 0,
@@ -1860,7 +1860,7 @@
           "name": "Balancer LP BPSP",
           "oracleType": "BalancerStablePoolAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
           "assetType": 0,
@@ -1936,7 +1936,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x5C5526E4228145296bB5a96227388c4450f8f699"
         },
@@ -1946,7 +1946,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0xe60d3758f337731a8c518022A9777Bc244d67Fc3"
         },
@@ -1956,7 +1956,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x03E92d4D54Ca28817a02e5F01Eb106dd4E3B8dba"
         },
@@ -1966,7 +1966,7 @@
           "assetType": "2",
           "oracleType": "UniV2LPAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "oracleAddress": "0x9d5b47AdA676Cee9f6190F833554d03B5054D0b3"
         },
@@ -1974,7 +1974,7 @@
           "name": "Balancer LP USDC-dUSD",
           "oracleType": "BalancerStablePoolAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "assetAddress": "0x5028497af0c9a54ea8C6D42a054c0341B9fc6168",
           "assetType": 0,
@@ -1984,7 +1984,7 @@
           "name": "Balancer LP WBTC-renBTC",
           "oracleType": "BalancerStablePoolAggregator",
           "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
           },
           "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
           "assetType": 0,
@@ -2011,12 +2011,30 @@
           "oracleName": "BalancerDHedgePoolPriceOracle",
           "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
           "oracleAddress": "0x703FEAcab4F7b7B8ac8a42F04C6eDCa60e415Bd4"
+        },
+        {
+          "name": "DHT TWAP Oracle",
+          "oracleType": "MedianTWAPAggregator",
+          "assetAddress": "0x8c92e38eca8210f4fcbf17f0951b198dd7668292",
+          "oracleAddress": "0x5C44cB803582891Bc9Bf020a4Aa36A3c6281119E"
+        },
+        {
+          "name": "MAI TWAP Oracle",
+          "oracleType": "MedianTWAPAggregator",
+          "assetAddress": "0xa3fa99a148fa48d14ed51d610c367c61876997f1",
+          "oracleAddress": "0x33248d41454dD8DFE5360cF00fFe6C380160e468"
+        },
+        {
+          "name": "QI TWAP Oracle",
+          "oracleType": "MedianTWAPAggregator",
+          "assetAddress": "0x580a84c73811e1839f75d86d75d88cca0c241ff4",
+          "oracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
         }
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
-      "PoolFactory": "0x378786f6d149380Fc7460c938D2Cb8C6F78aB936",
-      "PoolLogic": "0xdBFd8257f5921E09400Ac71892370dbB09AF5019",
+      "PoolFactory": "0x14A358dAc0a3d44F4E7c41F9D717d30335A28409",
+      "PoolLogic": "0x969d8016c5e0Ab74525f238824ac50dfc1DaBb5c",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
       "PoolManagerLogic": "0x51583c1923eb0F338c88dE674A59aB3f05731Ea8",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
@@ -2038,8 +2056,8 @@
       "BalancerV2Guard": "0xe048300AF8359D0e8e8b27E1C931AF49ba1BA6eA",
       "DynamicBondsProxy": "0xfBa63e639F1F509a2e8831A37D4D9ee1db0Bf269",
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
-      "OneInchV4Guard": "0x5D2A737a060dFba1Fd6F8E8CF49c087D7e9b1721",
-      "DhedgeEasySwapper": "0x9D756d62624b839a670f2Ee4dfd5B7dCFA9757f4",
+      "OneInchV4Guard": "0xaF4144f7202DF3E46aa7e245e299413260D42f03",
+      "DhedgeEasySwapper": "0xB9Ee6A6EA232B2aa4B6F3060661Cc3EB64B3d978",
       "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
       "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E",
       "UniswapV3NonfungiblePositionGuard": "0x7218cB1Df9c40095C7203DC50f511a246f039086",
@@ -2053,6 +2071,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Fri, 08 Apr 2022 05:37:10 GMT"
+    "lastUpdated": "Wed, 06 Apr 2022 06:41:41 GMT"
   }
 }
