@@ -760,7 +760,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     _managerName = IManaged(poolManagerLogic).managerName();
   }
 
-  /// @notice Return true if member is allowed, false otherwise
+  /// @notice Return boolean if the address is a member of the list
+  /// @param member The address of the member
+  /// @return True if the address is a member of the list, false otherwise
   function isMemberAllowed(address member) public view returns (bool) {
     return IManaged(poolManagerLogic).isMemberAllowed(member);
   }
