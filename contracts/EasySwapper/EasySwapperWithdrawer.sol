@@ -108,7 +108,6 @@ library EasySwapperWithdrawer {
         unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(pool, asset);
       } else {
         if (withdrawProps.poolFactory.isPool(asset) == true) {
-          // revert("Cant contain dhedge pool");
           uint256 balance = IPoolLogic(asset).balanceOf(address(this));
           if (balance > 0) {
             EasySwapperWithdrawer.withdraw(address(this), address(asset), balance, withdrawalAsset, 0, withdrawProps);
