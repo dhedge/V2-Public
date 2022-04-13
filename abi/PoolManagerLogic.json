@@ -672,6 +672,25 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "member",
+        "type": "address"
+      }
+    ],
+    "name": "isNftMemberAllowed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "asset",
         "type": "address"
       }
@@ -721,6 +740,19 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nftMembershipCollectionAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -801,6 +833,19 @@
   {
     "inputs": [],
     "name": "renounceManagerFeeIncrease",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newNftMembershipCollectionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setNftMembershipCollectionAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

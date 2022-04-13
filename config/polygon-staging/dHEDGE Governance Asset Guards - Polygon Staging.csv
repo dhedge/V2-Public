@@ -1,7 +1,7 @@
 assetType,guardName,guardAddress,description
-0,ERC20Guard,0x296Ae47463d474198e797C61c19D2493208b72F9,ERC20 tokens
 2,SushiLPAssetGuard,0x1D7f482F2bE2783b635cc03F14E1821db5a4C8c7,Sushi LP tokens
 4,LendingEnabledAssetGuard,0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6,Lending Enabled Asset tokens
 5,QuickLPAssetGuard,0x202040Bb1efA759C3BfdBef56603f241245f2ad4,Quick LP tokens
 3,AaveLendingPoolAssetGuard,0xa2dA62b7080D225c70376BCdcF4d94467915A903,Aave Lending Pool
-7,UniswapV3AssetGuard,0x5AA258597bd1a2B0850652a2389264a37382B916,Uniswap V3 LP positions
+0,ERC20Guard,0xf2Be739e22B6C7c823E5116433D2992Fc0f7C1EF,ERC20 tokens
+7,UniswapV3AssetGuard,0x90e5A8989C741c7D7268BdD2C839E3c73541B5C0,Uniswap V3 LP positions

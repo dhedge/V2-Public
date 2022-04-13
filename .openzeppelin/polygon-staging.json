@@ -1809,9 +1809,15 @@
           },
           {
             "contract": "PoolLogic",
+            "label": "lastFeeMintTime",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:156"
+          },
+          {
+            "contract": "PoolLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "contracts/PoolLogic.sol:791"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolLogic.sol:810"
           }
         ],
         "types": {
@@ -1921,7 +1927,7 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "announcedFeeIncreaseNumerator",
+            "label": "announcedPerformanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts\\PoolManagerLogic.sol:76"
           },
@@ -1933,15 +1939,33 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "managerFeeNumerator",
+            "label": "performanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts\\PoolManagerLogic.sol:78"
           },
           {
             "contract": "PoolManagerLogic",
+            "label": "announcedManagerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:91"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:92"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "nftMembershipCollectionAddress",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:96"
+          },
+          {
+            "contract": "PoolManagerLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)51_storage",
-            "src": "contracts\\PoolManagerLogic.sol:349"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolManagerLogic.sol:492"
           }
         ],
         "types": {
@@ -2320,9 +2344,15 @@
           },
           {
             "contract": "PoolLogic",
+            "label": "lastFeeMintTime",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:156"
+          },
+          {
+            "contract": "PoolLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "contracts/PoolLogic.sol:791"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolLogic.sol:810"
           }
         ],
         "types": {
@@ -2432,7 +2462,7 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "announcedFeeIncreaseNumerator",
+            "label": "announcedPerformanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts/PoolManagerLogic.sol:77"
           },
@@ -2444,15 +2474,33 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "managerFeeNumerator",
+            "label": "performanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts/PoolManagerLogic.sol:79"
           },
           {
             "contract": "PoolManagerLogic",
+            "label": "announcedManagerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:91"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:92"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "nftMembershipCollectionAddress",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:96"
+          },
+          {
+            "contract": "PoolManagerLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)51_storage",
-            "src": "contracts/PoolManagerLogic.sol:390"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolManagerLogic.sol:492"
           }
         ],
         "types": {
@@ -2834,9 +2882,15 @@
           },
           {
             "contract": "PoolLogic",
+            "label": "lastFeeMintTime",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:156"
+          },
+          {
+            "contract": "PoolLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "contracts/PoolLogic.sol:791"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolLogic.sol:810"
           }
         ],
         "types": {
@@ -2946,7 +3000,7 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "announcedFeeIncreaseNumerator",
+            "label": "announcedPerformanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts\\PoolManagerLogic.sol:77"
           },
@@ -2958,15 +3012,33 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "managerFeeNumerator",
+            "label": "performanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts\\PoolManagerLogic.sol:79"
           },
           {
             "contract": "PoolManagerLogic",
+            "label": "announcedManagerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:91"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:92"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "nftMembershipCollectionAddress",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:96"
+          },
+          {
+            "contract": "PoolManagerLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)51_storage",
-            "src": "contracts\\PoolManagerLogic.sol:407"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolManagerLogic.sol:492"
           }
         ],
         "types": {
@@ -3686,7 +3758,7 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "announcedFeeIncreaseNumerator",
+            "label": "announcedPerformanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts\\PoolManagerLogic.sol:77"
           },
@@ -3698,15 +3770,33 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "managerFeeNumerator",
+            "label": "performanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts\\PoolManagerLogic.sol:79"
           },
           {
             "contract": "PoolManagerLogic",
+            "label": "announcedManagerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:91"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:92"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "nftMembershipCollectionAddress",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:96"
+          },
+          {
+            "contract": "PoolManagerLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)51_storage",
-            "src": "contracts\\PoolManagerLogic.sol:411"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolManagerLogic.sol:492"
           }
         ],
         "types": {
@@ -4821,7 +4911,7 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "announcedFeeIncreaseNumerator",
+            "label": "announcedPerformanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts/PoolManagerLogic.sol:78"
           },
@@ -4833,15 +4923,33 @@
           },
           {
             "contract": "PoolManagerLogic",
-            "label": "managerFeeNumerator",
+            "label": "performanceFeeNumerator",
             "type": "t_uint256",
             "src": "contracts/PoolManagerLogic.sol:80"
           },
           {
             "contract": "PoolManagerLogic",
+            "label": "announcedManagerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:91"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:92"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "nftMembershipCollectionAddress",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:96"
+          },
+          {
+            "contract": "PoolManagerLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)51_storage",
-            "src": "contracts/PoolManagerLogic.sol:413"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolManagerLogic.sol:492"
           }
         ],
         "types": {
@@ -5100,9 +5208,15 @@
           },
           {
             "contract": "PoolLogic",
+            "label": "lastFeeMintTime",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:156"
+          },
+          {
+            "contract": "PoolLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "contracts/PoolLogic.sol:791"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolLogic.sol:810"
           }
         ],
         "types": {
@@ -5562,9 +5676,15 @@
           },
           {
             "contract": "PoolLogic",
+            "label": "lastFeeMintTime",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:156"
+          },
+          {
+            "contract": "PoolLogic",
             "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "contracts/PoolLogic.sol:791"
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolLogic.sol:810"
           }
         ],
         "types": {
@@ -5597,6 +5717,491 @@
           },
           "t_array(t_uint256)50_storage": {
             "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "74e527bd1e59d8e015c280dfeb2fdbc273910b74383e6ca07331e4990d8a277c": {
+      "address": "0x14954602f2BA9810dCfd830738E52534416125f0",
+      "txHash": "0xffba909cc9d618554ccc1d8f7384e6ad1ce13ea0bd72acab94f74a555a81563a",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:37"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_allowances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:39"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_totalSupply",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:41"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:43"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:44"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_decimals",
+            "type": "t_uint8",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:45"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)44_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:312"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:37"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:67"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "privatePool",
+            "type": "t_bool",
+            "src": "contracts/PoolLogic.sol:140"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "creator",
+            "type": "t_address",
+            "src": "contracts/PoolLogic.sol:141"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "creationTime",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:143"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "factory",
+            "type": "t_address",
+            "src": "contracts/PoolLogic.sol:145"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "tokenPriceAtLastFeeMint",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:148"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "lastDeposit",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/PoolLogic.sol:150"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "poolManagerLogic",
+            "type": "t_address",
+            "src": "contracts/PoolLogic.sol:152"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "lastWhitelistTransfer",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/PoolLogic.sol:154"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "lastFeeMintTime",
+            "type": "t_uint256",
+            "src": "contracts/PoolLogic.sol:156"
+          },
+          {
+            "contract": "PoolLogic",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolLogic.sol:810"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_array(t_uint256)44_storage": {
+            "label": "uint256[44]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "233724c647855b84fc6dd57710f694c09334d701e88f86da0b4e05f4578f886e": {
+      "address": "0x5DDf53e8D9406583C49a85F0B918b1c7f0D0C875",
+      "txHash": "0x5a40eee65f3244efc563ecb13ac80c118d981d4c8eb1f0756dc6105f90e63c79",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
+          },
+          {
+            "contract": "Managed",
+            "label": "manager",
+            "type": "t_address",
+            "src": "contracts/Managed.sol:47"
+          },
+          {
+            "contract": "Managed",
+            "label": "managerName",
+            "type": "t_string_storage",
+            "src": "contracts/Managed.sol:48"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberList",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/Managed.sol:50"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/Managed.sol:51"
+          },
+          {
+            "contract": "Managed",
+            "label": "trader",
+            "type": "t_address",
+            "src": "contracts/Managed.sol:53"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "factory",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:81"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "poolLogic",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:82"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "supportedAssets",
+            "type": "t_array(t_struct(Asset)28986_storage)dyn_storage",
+            "src": "contracts/PoolManagerLogic.sol:84"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "assetPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/PoolManagerLogic.sol:85"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedPerformanceFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:88"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedFeeIncreaseTimestamp",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:89"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "performanceFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:90"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedManagerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:91"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:92"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "nftMembershipCollectionAddress",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:96"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolManagerLogic.sol:492"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_struct(Asset)28986_storage)dyn_storage": {
+            "label": "struct IHasSupportedAsset.Asset[]"
+          },
+          "t_struct(Asset)28986_storage": {
+            "label": "struct IHasSupportedAsset.Asset",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_address"
+              },
+              {
+                "label": "isDeposit",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          }
+        }
+      }
+    },
+    "7e3e11ee58d76708f8ce3c1d211e108220f1d229a0118b467c19ca6c4bc2c80e": {
+      "address": "0x2Ddc472C27c4C82030870c0e6dbA513c13a60d8A",
+      "txHash": "0x3b09cc0f00a2ec97998195461fc738336b65f85373b0e772c918c23e25391298",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
+          },
+          {
+            "contract": "Managed",
+            "label": "manager",
+            "type": "t_address",
+            "src": "contracts/Managed.sol:47"
+          },
+          {
+            "contract": "Managed",
+            "label": "managerName",
+            "type": "t_string_storage",
+            "src": "contracts/Managed.sol:48"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberList",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/Managed.sol:50"
+          },
+          {
+            "contract": "Managed",
+            "label": "_memberPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/Managed.sol:51"
+          },
+          {
+            "contract": "Managed",
+            "label": "trader",
+            "type": "t_address",
+            "src": "contracts/Managed.sol:53"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "factory",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:82"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "poolLogic",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:83"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "supportedAssets",
+            "type": "t_array(t_struct(Asset)31311_storage)dyn_storage",
+            "src": "contracts/PoolManagerLogic.sol:85"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "assetPosition",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/PoolManagerLogic.sol:86"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedPerformanceFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:89"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedFeeIncreaseTimestamp",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:90"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "performanceFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:91"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "announcedManagerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:92"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "managerFeeNumerator",
+            "type": "t_uint256",
+            "src": "contracts/PoolManagerLogic.sol:93"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "nftMembershipCollectionAddress",
+            "type": "t_address",
+            "src": "contracts/PoolManagerLogic.sol:96"
+          },
+          {
+            "contract": "PoolManagerLogic",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/PoolManagerLogic.sol:492"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_struct(Asset)31311_storage)dyn_storage": {
+            "label": "struct IHasSupportedAsset.Asset[]"
+          },
+          "t_struct(Asset)31311_storage": {
+            "label": "struct IHasSupportedAsset.Asset",
+            "members": [
+              {
+                "label": "asset",
+                "type": "t_address"
+              },
+              {
+                "label": "isDeposit",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
           }
         }
       }
