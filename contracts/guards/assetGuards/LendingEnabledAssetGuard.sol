@@ -37,6 +37,8 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "./ERC20Guard.sol";
+import "../../interfaces/IPoolFactory.sol";
+import "../../interfaces/IGovernance.sol";
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 
@@ -53,15 +55,26 @@ contract LendingEnabledAssetGuard is ERC20Guard {
     // check AAVE lending balances
     // returns address(0) if it's not supported in aave
     address factory = IPoolManagerLogic(pool).factory();
-    address aaveProtocolDataProvider = IHasGuardInfo(factory).getAddress("aaveProtocolDataProvider");
+    address governance = IPoolFactory(factory).governanceAddress();
 
-    (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
-      aaveProtocolDataProvider
-    ).getReserveTokensAddresses(asset);
+    _checkBalance(pool, asset, IGovernance(governance).nameToDestination("aaveProtocolDataProviderV2"));
+    _checkBalance(pool, asset, IGovernance(governance).nameToDestination("aaveProtocolDataProviderV3"));
+  }
 
-    if (stableDebtToken != address(0)) require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
-    if (variableDebtToken != address(0))
-      require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
-    if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
+  function _checkBalance(
+    address pool,
+    address asset,
+    address aaveProtocolDataProvider
+  ) internal view {
+    if (aaveProtocolDataProvider != address(0)) {
+      (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
+        aaveProtocolDataProvider
+      ).getReserveTokensAddresses(asset);
+
+      if (stableDebtToken != address(0)) require(IERC20(stableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+      if (variableDebtToken != address(0))
+        require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+      if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
+    }
   }
 }

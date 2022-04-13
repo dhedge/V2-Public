@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import {
-  aave,
+  aaveV2,
   assets,
   assetsBalanceOfSlot,
   quickswap,
@@ -74,7 +74,7 @@ describe("DhedgeEasySwapper", function () {
     await dhedgeEasySwapper.deployed();
 
     // AavelendingPool
-    await dhedgeEasySwapper.setAssetToSkip(aave.lendingPool, true);
+    await dhedgeEasySwapper.setAssetToSkip(aaveV2.lendingPool, true);
     await dhedgeEasySwapper.setFee(0, 0);
 
     await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);

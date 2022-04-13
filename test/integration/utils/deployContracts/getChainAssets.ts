@@ -44,11 +44,7 @@ export const assetSetting = (asset: string, assetType: number, aggregator: strin
   aggregator,
 });
 
-export const getChainAssets = async (
-  poolFactory: PoolFactory,
-  network: NETWORK,
-  supportedAaveVersion = "v2",
-): Promise<IAssetSetting[]> => {
+export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK): Promise<IAssetSetting[]> => {
   const USDPriceAggregator = await ethers.getContractFactory("USDPriceAggregator");
   const usdPriceAggregator = await USDPriceAggregator.deploy();
 
@@ -122,13 +118,13 @@ export const getChainAssets = async (
       assetSetting(polygonData.assets.balancer, 0, polygonData.price_feeds.balancer),
       assetSetting(polygonData.assets.miMatic, 0, polygonData.price_feeds.matic),
       assetSetting(polygonData.assets.tusd, 0, polygonData.price_feeds.tusd),
-      supportedAaveVersion === "v3"
-        ? assetSetting(polygonData.aaveV3.lendingPool, 3, usdPriceAggregator.address)
-        : assetSetting(polygonData.aave.lendingPool, 3, usdPriceAggregator.address),
+      assetSetting(polygonData.aaveV2.lendingPool, 3, usdPriceAggregator.address),
       assetSetting(polygonData.assets.weth, 4, polygonData.price_feeds.eth),
       assetSetting(polygonData.assets.dai, 4, polygonData.price_feeds.dai),
+      assetSetting(polygonData.assets.link, 4, polygonData.price_feeds.link),
       assetSetting(polygonData.assets.usdc, 4, polygonData.price_feeds.usdc),
       assetSetting(polygonData.uniswapV3.nonfungiblePositionManager, 7, usdPriceAggregator.address),
+      assetSetting(polygonData.aaveV3.lendingPool, 8, usdPriceAggregator.address),
       assetSushiLPWethUsdc,
       assetQuickLPWethUsdc,
       balancerLpAsset,

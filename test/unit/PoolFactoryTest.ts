@@ -393,7 +393,7 @@ describe("PoolFactory", function () {
         destination: openAssetGuard.address,
       },
       {
-        name: toBytes32("aaveProtocolDataProvider"),
+        name: toBytes32("aaveProtocolDataProviderV2"),
         destination: aaveProtocolDataProvider.address,
       },
     ]);

@@ -38,10 +38,9 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ERC20Guard.sol";
+import "../../interfaces/IERC20Extended.sol";
 import "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
-import "../../interfaces/aave/v2/ILendingPool.sol";
-import "../../interfaces/aave/v2/ILendingPoolAddressesProvider.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 import "../../interfaces/IPoolLogic.sol";
@@ -49,7 +48,8 @@ import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/uniswapv2/IUniswapV2Router.sol";
 
 /// @title Aave lending pool asset guard
-/// @dev Asset type = 3
+/// @dev Asset type = 3 : v2
+/// @dev Asset type = 8 : v3
 contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   using SafeMathUpgradeable for uint256;
 
@@ -62,12 +62,13 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   IAaveProtocolDataProvider public aaveProtocolDataProvider;
   address public override aaveLendingPool;
 
-  constructor(address _aaveProtocolDataProvider) {
+  constructor(address _aaveProtocolDataProvider, address _aaveLendingPool) {
     // solhint-disable-next-line reason-string
     require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
+    // solhint-disable-next-line reason-string
+    require(_aaveLendingPool != address(0), "_aaveLendingPool address cannot be 0");
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
-    address aaveAddressProvider = IAaveProtocolDataProvider(aaveProtocolDataProvider).ADDRESSES_PROVIDER();
-    aaveLendingPool = ILendingPoolAddressesProvider(aaveAddressProvider).getLendingPool();
+    aaveLendingPool = _aaveLendingPool;
   }
 
   /// @notice Returns the pool position of Aave lending pool
@@ -243,8 +244,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
       debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
     }
 
-    ILendingPool.ReserveConfigurationMap memory configuration = ILendingPool(aaveLendingPool).getConfiguration(asset);
-    decimals = (configuration.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
+    decimals = IERC20Extended(asset).decimals();
   }
 
   /// @notice Calculates AToken balances

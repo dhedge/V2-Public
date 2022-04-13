@@ -52,18 +52,14 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
     before(async function () {
       [logicOwner, manager] = await ethers.getSigners();
 
-      deployments = await deployContracts(network, "v3");
+      deployments = await deployContracts(network);
       poolFactory = deployments.poolFactory;
 
       DAI = await ethers.getContractAt("IERC20", dai.address);
       USDC = await ethers.getContractAt("IERC20", usdc.address);
       AMUSDC = await ethers.getContractAt("IERC20", usdc.aToken);
-      DAI = deployments.assets.DAI;
-      USDC = deployments.assets.USDC;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      AMUSDC = deployments.assets.AMUSDC!;
 
-      await getAccountToken(units(10000, 6), logicOwner.address, usdc.address, usdc.balanceOfSlot);
+      await getAccountToken(units(100000, 6), logicOwner.address, usdc.address, usdc.balanceOfSlot);
     });
 
     let snapshot: unknown;
@@ -82,9 +78,9 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
       poolLogicProxy = funds.poolLogicProxy;
       poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
-      // Deposit 200 USDC
-      await USDC.approve(poolLogicProxy.address, (200e6).toString());
-      await poolLogicProxy.deposit(usdc.address, (200e6).toString());
+      // Deposit 2M
+      await USDC.approve(poolLogicProxy.address, units(20000, 6));
+      await poolLogicProxy.deposit(usdc.address, units(20000, 6));
 
       await poolFactory.setExitCooldown(0);
     });
@@ -93,7 +89,7 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
       // assert usdt is non lending
       expect(await deployments.assetHandler.assetTypes(usdt.address)).to.equal(0);
 
-      const amount = units(100, 6);
+      const amount = units(10000, 6);
       await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aaveLendingPool, isDeposit: false }], []);
       const depositABI = iLendingPool.encodeFunctionData("deposit", [usdc.address, amount, poolLogicProxy.address, 0]);
 
@@ -122,8 +118,8 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
     });
 
     it("Should be able to deposit usdc and receive amusdc", async () => {
-      // Pool balance: 200 USDC
-      const amount = (100e6).toString();
+      // Pool balance: 2M USDC
+      const amount = units(10000, 6);
 
       let depositABI = iLendingPool.encodeFunctionData("deposit", [usdc.address, amount, poolLogicProxy.address, 0]);
 
@@ -168,7 +164,7 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
-      expect(usdcBalanceBefore).to.be.equal((200e6).toString());
+      expect(usdcBalanceBefore).to.be.equal(units(20000, 6));
       expect(amusdcBalanceBefore).to.be.equal(0);
 
       // approve .usdc
@@ -180,8 +176,8 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
 
       const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
       const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
-      expect(usdcBalanceAfter).to.be.equal((100e6).toString());
-      checkAlmostSame(amusdcBalanceAfter, 100e6);
+      expect(usdcBalanceAfter).to.be.equal(amount);
+      checkAlmostSame(amusdcBalanceAfter, amount);
       checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
     });
 
@@ -190,7 +186,7 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
         // add supported assets
         await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aaveLendingPool, isDeposit: false }], []);
 
-        const amount = (100e6).toString();
+        const amount = units(10000, 6);
 
         // approve .usdc
         const approveABI = iERC20.encodeFunctionData("approve", [aaveLendingPool, amount]);
@@ -206,8 +202,8 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
       });
 
       it("Should be able to withdraw amusdc and receive usdc", async () => {
-        // Pool balance: 80 USDC, 100 amUSDC, $20 in WETH
-        const amount = (50e6).toString();
+        // Pool balance: 0.8M USDC, 1M amUSDC, $0.2M in WETH
+        const amount = units(5000, 6);
 
         let withdrawABI = iLendingPool.encodeFunctionData("withdraw", [usdc.address, amount, poolLogicProxy.address]);
 
@@ -250,8 +246,8 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
       });
 
       it("Should be able to set reserve as collateral", async () => {
-        // Pool balance: 150 USDC
-        // Aave balance: 50 amUSDC
+        // Pool balance: 1.5M USDC
+        // Aave balance: 0.5M amUSDC
 
         const lendingPool = ILendingPool__factory.connect(aaveLendingPool, logicOwner);
 
@@ -276,11 +272,11 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
       });
 
       it("should be able to withdraw 20%", async function () {
-        // Pool balance: 100 USDC
-        // Aave balance: 100 amUSDC
+        // Pool balance: 1M USDC
+        // Aave balance: 1M amUSDC
 
         // Withdraw 20%
-        const withdrawAmount = units(40);
+        const withdrawAmount = units(4000);
 
         const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(poolLogicProxy.address));
         const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
@@ -290,16 +286,16 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
 
         checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(80).div(100));
         const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
-        checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub("20000000"));
+        checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(units(2000, 6)));
         const userUsdcBalanceAfter = await USDC.balanceOf(logicOwner.address);
-        checkAlmostSame(userUsdcBalanceAfter, userUsdcBalanceBefore.add("20000000").add("20000000"));
+        checkAlmostSame(userUsdcBalanceAfter, userUsdcBalanceBefore.add(units(2000, 6)).add(units(2000, 6)));
       });
 
       it("Should be able to borrow DAI", async () => {
-        // Pool balance: 100 USDC
-        // Aave balance: 100 amUSDC
+        // Pool balance: 1M USDC
+        // Aave balance: 1M amUSDC
 
-        const amount = units(25).toString();
+        const amount = units(2500).toString();
 
         let borrowABI = iLendingPool.encodeFunctionData("borrow", [dai.address, amount, 2, 0, poolLogicProxy.address]);
 
@@ -338,7 +334,7 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
         );
 
         const daiBalanceAfter = await DAI.balanceOf(poolLogicProxy.address);
-        expect(daiBalanceAfter).to.be.equal(units(25));
+        expect(daiBalanceAfter).to.be.equal(units(2500));
 
         checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
       });
@@ -348,7 +344,7 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
           // add supported assets
           await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: dai.address, isDeposit: false }], []);
 
-          const amount = units(25).toString();
+          const amount = units(2500).toString();
           const borrowABI = iLendingPool.encodeFunctionData("borrow", [
             dai.address,
             amount,
@@ -360,10 +356,10 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
         });
 
         it("Should be able to repay DAI", async () => {
-          // Pool balance: 100 USDC, 25 DAI
-          // Aave balance: 100 amUSDC, 25 debtDAI
+          // Pool balance: 1M USDC, 0.25M DAI
+          // Aave balance: 1M amUSDC, 0.25M debtDAI
 
-          const amount = units(10);
+          const amount = units(1000);
 
           let repayABI;
 
@@ -389,7 +385,7 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
           await poolLogicProxy.connect(manager).execTransaction(dai.address, approveABI);
 
           const daiBalanceBefore = await DAI.balanceOf(poolLogicProxy.address);
-          expect(daiBalanceBefore).to.be.equal(units(25));
+          expect(daiBalanceBefore).to.be.equal(units(2500));
 
           const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
@@ -397,25 +393,25 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
           await poolLogicProxy.connect(manager).execTransaction(aaveLendingPool, repayABI);
 
           const daiBalanceAfter = await DAI.balanceOf(poolLogicProxy.address);
-          expect(daiBalanceAfter).to.be.equal(units(15));
+          expect(daiBalanceAfter).to.be.equal(units(1500));
 
           checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore);
         });
 
         it("should be able to withdraw after borrow", async function () {
-          // Pool balance: 100 USDC, 25 DAI
-          // Aave balance: 100 amUSDC, 25 debtDAI
+          // Pool balance: 1M USDC, 0.25 DAI
+          // Aave balance: 1M amUSDC, 0.25 debtDAI
 
           // enable weth to check withdraw process
           await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: weth.address, isDeposit: false }], []);
 
           // Withdraw 10%
-          const withdrawAmount = units(20);
+          const withdrawAmount = units(2000);
 
           const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
           const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
 
-          checkAlmostSame(totalFundValueBefore, units(200));
+          checkAlmostSame(totalFundValueBefore, units(20000));
 
           await poolLogicProxy.withdraw(withdrawAmount);
 
@@ -423,7 +419,7 @@ export const testAaveV3 = ({ network, aaveLendingPool, weth, usdt, usdc, dai }: 
 
           checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(90).div(100));
           const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
-          checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((12e6).toString()));
+          checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((1200e6).toString()));
         });
 
         it("should be able to swap borrow rate mode", async function () {
