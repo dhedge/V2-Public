@@ -44,7 +44,7 @@ library EasySwapperBalancerV2Helpers {
       } else if (weth == tokens[i]) {
         hasWeth = true;
         hasWethIndex = i;
-      } else if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokens[i]) || weth == tokens[i]) {
+      } else if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokens[i])) {
         hasSupportedAsset = true;
         supportedAssetIndex = i;
       }
