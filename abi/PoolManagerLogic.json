@@ -840,6 +840,19 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "newNftMembershipCollectionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setNftMembershipCollectionAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "_performanceFeeNumerator",
         "type": "uint256"
@@ -851,19 +864,6 @@
       }
     ],
     "name": "setPerformanceFeeNumerator",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newNftMembershipCollectionAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setNftMembershipCollectionAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -489,6 +489,5 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return super.isMemberAllowed(member) || isNftMemberAllowed(member);
   }
 
-  uint256[49] private __gap;
-
+  uint256[48] private __gap;
 }
