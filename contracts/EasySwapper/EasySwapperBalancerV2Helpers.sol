@@ -13,7 +13,6 @@ import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/balancer/IBalancerV2Vault.sol";
 import "../interfaces/balancer/IBalancerPool.sol";
 
-// library with helper methods for oracles that are concerned with computing average prices
 library EasySwapperBalancerV2Helpers {
   using SafeMathUpgradeable for uint160;
   using SafeMathUpgradeable for uint256;
@@ -31,17 +30,21 @@ library EasySwapperBalancerV2Helpers {
     (address[] memory tokens, , ) = vault.getPoolTokens(poolId);
 
     bool hasWithdrawalAsset;
-    uint256 withdrawalAssetIndex;
+    uint8 withdrawalAssetIndex;
+    bool hasWeth;
+    uint8 hasWethIndex;
     bool hasSupportedAsset;
-    uint256 supportedAssetIndex;
+    uint8 supportedAssetIndex;
 
     for (uint8 i = 0; i < tokens.length; ++i) {
       if (withdrawalAsset == tokens[i]) {
         hasWithdrawalAsset = true;
         withdrawalAssetIndex = i;
         break;
-      }
-      if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokens[i]) || weth == tokens[i]) {
+      } else if (weth == tokens[i]) {
+        hasWeth = true;
+        hasWethIndex = i;
+      } else if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokens[i]) || weth == tokens[i]) {
         hasSupportedAsset = true;
         supportedAssetIndex = i;
       }
@@ -51,6 +54,9 @@ library EasySwapperBalancerV2Helpers {
     bytes memory userData;
     if (hasWithdrawalAsset) {
       userData = abi.encode(IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, balance, withdrawalAssetIndex);
+      assets = new address[](0);
+    } else if (hasWeth) {
+      userData = abi.encode(IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, balance, hasWethIndex);
       assets = new address[](0);
     } else if (hasSupportedAsset) {
       userData = abi.encode(IBalancerV2Vault.ExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, balance, supportedAssetIndex);

@@ -88,7 +88,7 @@ describe("DhedgeEasySwapper Toros Tests", function () {
   });
 
   describe("allowedPools", () => {
-    it("only approved pools can use Swappe  r", async () => {
+    it("only approved pools can use Swapper", async () => {
       expect(
         dhedgeEasySwapper.deposit(torosPools.ETHBEAR2X, assets.usdc, units(1, 6), assets.usdc, 0),
       ).to.be.revertedWith("Pool is not allowed.");
@@ -185,7 +185,7 @@ describe("DhedgeEasySwapper Toros Tests", function () {
   });
 
   describe("Only using swapper for withdraw", () => {
-    it("can't withdraw locked tokens via easySwapper", async () => {
+    it.only("can't withdraw locked tokens via easySwapper", async () => {
       // Setup
       const depositAmount = units(1, 6);
       await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
@@ -197,7 +197,7 @@ describe("DhedgeEasySwapper Toros Tests", function () {
       torosPool.connect(user1).deposit(assets.usdc, depositAmount);
       const balance = await torosPool.connect(user1).balanceOf(user1.address);
       // Withdraw
-      await ethers.provider.send("evm_increaseTime", [24 * 3600]); // 1 hour
+      await ethers.provider.send("evm_increaseTime", [25 * 3600]); // 1 hour
       await ethers.provider.send("evm_mine", []);
 
       await torosPool.connect(user1).approve(dhedgeEasySwapper.address, balance);

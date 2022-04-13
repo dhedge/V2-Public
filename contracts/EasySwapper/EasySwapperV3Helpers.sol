@@ -9,7 +9,6 @@ import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.s
 import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/IPoolLogic.sol";
 
-// library with helper methods for oracles that are concerned with computing average prices
 library EasySwapperV3Helpers {
   using SafeMathUpgradeable for uint256;
 

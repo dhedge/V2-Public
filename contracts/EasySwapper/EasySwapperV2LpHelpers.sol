@@ -12,7 +12,6 @@ import "../interfaces/IERC20Extended.sol";
 import "../interfaces/IHasSupportedAsset.sol";
 import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
 
-// library with helper methods for oracles that are concerned with computing average prices
 library EasySwapperV2LpHelpers {
   using SafeMathUpgradeable for uint256;
 

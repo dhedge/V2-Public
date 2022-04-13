@@ -14,7 +14,6 @@ import "./EasySwapperV3Helpers.sol";
 import "./EasySwapperV2LpHelpers.sol";
 import "./EasySwapperBalancerV2Helpers.sol";
 
-// library with helper methods for oracles that are concerned with computing average prices
 library EasySwapperWithdrawer {
   using SafeMathUpgradeable for uint160;
   using SafeMathUpgradeable for uint256;
