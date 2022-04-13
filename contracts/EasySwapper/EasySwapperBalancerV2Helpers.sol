@@ -72,4 +72,15 @@ library EasySwapperBalancerV2Helpers {
       })
     );
   }
+
+  function isBalancer(address asset) internal view returns (bool) {
+    // Maybe there is a cleaner way to detect if it is a balancer pool?
+    // Have to use try catch because some erc20 have a fallback function that reverts
+    // Also we set the max gas because contracts that don't have a fallback like wmatic chew the remaining gas
+    try IBalancerPool(asset).getVault{gas: 5000}() returns (address balancerVaultAddress) {
+      return balancerVaultAddress != address(0);
+    } catch {
+      return false;
+    }
+  }
 }
