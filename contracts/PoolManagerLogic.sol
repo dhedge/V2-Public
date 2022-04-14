@@ -86,11 +86,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   mapping(address => uint256) public assetPosition; // maps the asset to its 1-based position
 
   // Fee increase announcement
-  uint256 public performanceFeeNumerator;
-  uint256 public managerFeeNumerator;
   uint256 public announcedPerformanceFeeNumerator;
-  uint256 public announcedManagerFeeNumerator;
   uint256 public announcedFeeIncreaseTimestamp;
+  uint256 public performanceFeeNumerator;
+  uint256 public announcedManagerFeeNumerator;
+  uint256 public managerFeeNumerator;
 
   // Should be in Managed.sol but not upgradable
   address public nftMembershipCollectionAddress;
@@ -489,5 +489,5 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return super.isMemberAllowed(member) || isNftMemberAllowed(member);
   }
 
-  uint256[48] private __gap;
+  uint256[49] private __gap;
 }
