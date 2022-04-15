@@ -490,4 +490,5 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   uint256[49] private __gap;
+
 }
