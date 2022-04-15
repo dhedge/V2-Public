@@ -1881,7 +1881,7 @@
       "DhedgeEasySwapper": "0x93080d2A69F933c777FB358DCF836c45419b687b",
       "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
-      "EasySwapperGuard": "0xfB95299134E94466575c4Eff82037448be1AE4Ae",
+      "EasySwapperGuard": "0x6752f1b62Fe2bB66D941882A8B2450eD8afA1978",
       "DhedgeSwapRouter": "0x2Fa65bAA0D8E319568AbAda4099631044D79d7aA",
       "UniswapV3AssetGuard": "0x8c7CCB78F6b97965747971d955Fb8a6757EefFDb",
       "UniswapV3RouterGuard": "0x144cB6CdE4C4a6df5c20e78BB68cf598Fb887265",
@@ -1893,6 +1893,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 13 Apr 2022 23:51:50 GMT"
+    "lastUpdated": "Fri, 15 Apr 2022 03:27:24 GMT"
   }
 }

@@ -28,10 +28,15 @@ export const easySwapperContractGuardJob: IJob<void> = async (
     console.log("EasySwapperGuard deployed at", easySwapperGuard.address);
     versions[config.newTag].contracts.EasySwapperGuard = easySwapperGuard.address;
 
-    await tryVerify(hre, easySwapperGuard.address, "contracts/guards/EasySwapperGuard.sol:EasySwapperGuard", []);
+    await tryVerify(
+      hre,
+      easySwapperGuard.address,
+      "contracts/guards/contractGuards/EasySwapperGuard.sol:EasySwapperGuard",
+      [],
+    );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-      !versions[config.newTag].contracts.DhedgeEasySwapper,
+      versions[config.newTag].contracts.DhedgeEasySwapper,
       easySwapperGuard.address,
     ]);
     await proposeTx(

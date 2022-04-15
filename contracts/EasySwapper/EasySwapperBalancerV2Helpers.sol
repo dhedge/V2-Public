@@ -40,6 +40,7 @@ library EasySwapperBalancerV2Helpers {
       if (withdrawalAsset == tokens[i]) {
         hasWithdrawalAsset = true;
         withdrawalAssetIndex = i;
+        // We break here because this is the optimal outcome
         break;
       } else if (weth == tokens[i]) {
         hasWeth = true;

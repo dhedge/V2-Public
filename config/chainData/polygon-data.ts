@@ -83,6 +83,8 @@ export const torosPools = {
   ETHBULL3X: "0x460b60565cb73845d56564384ab84bf84c13e47d",
   BTCBEAR2X: "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
   BTCBULL3X: "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+  BTCBEAR1X: "0x86c3dd18baf4370495d9228b58fd959771285c55",
+  ETHBEAR1X: "0x79d2aefe6a21b26b024d9341a51f6b7897852499",
 };
 
 export const assets = {
