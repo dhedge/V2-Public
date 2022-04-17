@@ -40,6 +40,4 @@ interface IManaged {
   function trader() external view returns (address);
 
   function managerName() external view returns (string memory);
-
-  function isMemberAllowed(address member) external view returns (bool);
 }

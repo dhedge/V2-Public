@@ -764,7 +764,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param member The address of the member
   /// @return True if the address is a member of the list, false otherwise
   function isMemberAllowed(address member) public view returns (bool) {
-    return IManaged(poolManagerLogic).isMemberAllowed(member);
+    return IPoolManagerLogic(poolManagerLogic).isMemberAllowed(member);
   }
 
   /// @notice execute function of aave flash loan
