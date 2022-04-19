@@ -30,8 +30,8 @@ export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (
     await tryVerify(
       hre,
       aaveLendingPoolGuard.address,
-      "contracts/guards/contractGuards/AaveLendingPoolGuard.sol:AaveLendingPoolGuard",
-      [],
+      "contracts/guards/contractGuards/AaveLendingPoolGuard.sol:AaveLendingPoolGuardV3L2Pool",
+      [addresses.aaveV3.aaveLendingPoolAddress],
     );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
