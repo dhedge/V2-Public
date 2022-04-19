@@ -2015,13 +2015,13 @@
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
-      "PoolFactory": "0x378786f6d149380Fc7460c938D2Cb8C6F78aB936",
-      "PoolLogic": "0xdBFd8257f5921E09400Ac71892370dbB09AF5019",
+      "PoolFactory": "0x4BE12Ff933C418b193B36180221Fb0033a63b3E2",
+      "PoolLogic": "0x14954602f2BA9810dCfd830738E52534416125f0",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x51583c1923eb0F338c88dE674A59aB3f05731Ea8",
+      "PoolManagerLogic": "0x2Ddc472C27c4C82030870c0e6dbA513c13a60d8A",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
-      "ERC20Guard": "0x296Ae47463d474198e797C61c19D2493208b72F9",
+      "ERC20Guard": "0xf2Be739e22B6C7c823E5116433D2992Fc0f7C1EF",
       "UniswapV2RouterGuard": "0xef18E8271aA2B9657F17D3Fdefa9734aae9897ee",
       "SushiMiniChefV2Guard": "0x340c299d9Bc1196933278886280de26907d231f1",
       "SushiLPAssetGuard": "0x1D7f482F2bE2783b635cc03F14E1821db5a4C8c7",
@@ -2044,7 +2044,7 @@
       "EasySwapperGuard": "0xc7EfbD043CE45687d40baea35bCE775e31eF909E",
       "UniswapV3NonfungiblePositionGuard": "0x7218cB1Df9c40095C7203DC50f511a246f039086",
       "UniswapV3RouterGuard": "0x16FcD638cB1b6ed0D9C15C9B98a6C85453a4FA6A",
-      "UniswapV3AssetGuard": "0x5AA258597bd1a2B0850652a2389264a37382B916",
+      "UniswapV3AssetGuard": "0x90e5A8989C741c7D7268BdD2C839E3c73541B5C0",
       "DhedgeSwapRouter": "0x2Fa65bAA0D8E319568AbAda4099631044D79d7aA"
     },
     "network": {
@@ -2053,6 +2053,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Fri, 08 Apr 2022 05:37:10 GMT"
+    "lastUpdated": "Tue, 12 Apr 2022 23:34:47 GMT"
   }
 }
