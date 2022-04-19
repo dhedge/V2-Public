@@ -55,6 +55,6 @@ export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
       description: "Aave V2 Lending Pool",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "assetType");
   }
 };

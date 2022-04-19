@@ -41,6 +41,6 @@ export const erc20AssetGuardJob: IJob<void> = async (
       description: "ERC20 tokens",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "assetType");
   }
 };

@@ -50,6 +50,6 @@ export const uniV3AssetGuardJob: IJob<void> = async (
       description: "Uniswap V3 LP positions",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "assetType");
   }
 };

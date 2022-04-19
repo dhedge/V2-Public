@@ -44,6 +44,6 @@ export const lendingEnabledAssetGuardJob: IJob<void> = async (
       guardAddress: lendingEnabledAssetGuard.address,
       description: "Lending Enabled Asset tokens",
     };
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "assetType");
   }
 };

@@ -52,6 +52,6 @@ export const sushiLpAssetGuardJob: IJob<void> = async (
       description: "Sushi LP tokens",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "assetType");
   }
 };
