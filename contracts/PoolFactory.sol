@@ -121,7 +121,7 @@ contract PoolFactory is
 
   mapping(address => bool) public isPool;
   // solhint-disable-next-line var-name-mixedcase
-  uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  uint256 private maximumPerformanceFeeNumerator;
   // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
@@ -382,7 +382,7 @@ contract PoolFactory is
       uint256
     )
   {
-    return (_MAXIMUM_MANAGER_FEE_NUMERATOR, maximumManagerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+    return (maximumPerformanceFeeNumerator, maximumManagerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee
@@ -403,7 +403,7 @@ contract PoolFactory is
   ) internal {
     require(performanceFeeNumerator <= denominator && managerFeeNumerator <= denominator, "invalid fraction");
 
-    _MAXIMUM_MANAGER_FEE_NUMERATOR = performanceFeeNumerator;
+    maximumPerformanceFeeNumerator = performanceFeeNumerator;
     maximumManagerFeeNumerator = managerFeeNumerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
 
