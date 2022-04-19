@@ -3,16 +3,18 @@ import { task, types } from "hardhat/config";
 import { executeInSeries, getTag, nonceLog } from "../Helpers";
 import { IJob, IVersions } from "../types";
 import { getDeploymentData } from "./getDeploymentData";
+import { aaveV2LendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveV2LendingPoolAssetGuardJob";
+import { aaveV3LendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveV3LendingPoolAssetGuardJob";
 import { erc20AssetGuardJob } from "./jobs/assetGuards/erc20AssetGuardJob";
 import { lendingEnabledAssetGuardJob } from "./jobs/assetGuards/lendingEnabledAssetGuardJob";
 import { quickLpAssetGuardJob } from "./jobs/assetGuards/quickLpAssetGuardJob";
 import { sushiLpAssetGuardJob } from "./jobs/assetGuards/sushiLpAssetGuardJob";
 import { uniV3AssetGuardJob } from "./jobs/assetGuards/uniV3AssetGuardJob";
-import { aaveV3LendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveV3LendingPoolAssetGuardJob";
 import { assetHandlerJob } from "./jobs/assetHandlerJob";
 import { assetsJob } from "./jobs/assetsJob";
 import { aaveIncentivesControllerContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerContractGuardJob";
 import { aaveV2LendingPoolContractGuardJob } from "./jobs/contractGuards/aaveV2LendingPoolContractGuardJob";
+import { aaveV3LendingPoolContractGuardJob } from "./jobs/contractGuards/aaveV3LendingPoolContractGuardJob";
 import { balancerMerkleOrchardContractGuardJob } from "./jobs/contractGuards/balancerMerkleOrchardContractGuardJob";
 import { balancerv2ContractGuard } from "./jobs/contractGuards/balancerv2ContractGuardJob";
 import { easySwapperContractGuardJob } from "./jobs/contractGuards/easySwapperContractGuardJob";
@@ -20,8 +22,8 @@ import { oneInchV4ContractGuardJob } from "./jobs/contractGuards/oneInchV4Contra
 import { quickStakingRewardsContractGuardJob } from "./jobs/contractGuards/quickStakingRewardsContractGuardJob";
 import { sushiMiniChefV2ContractGuardJob } from "./jobs/contractGuards/sushiMiniChefV2ContractGuardJob";
 import { uniswapV3NonFungiblePositionGuardJob } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuardJob";
-import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob"; //quickswapRouter, sushiswapV2Router etc etc
 import { uniswapV3RouterContractGuardJob } from "./jobs/contractGuards/uniswapV3RouterContractGuardJob";
+import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob"; //quickswapRouter, sushiswapV2Router etc etc
 import { governanceNamesJob } from "./jobs/governanceNamesJob";
 import { openAssetContractGuardJob } from "./jobs/otherWeirdGuards/openAssetContractGuardJob";
 import { pauseJob } from "./jobs/pauseJob";
@@ -30,8 +32,6 @@ import { poolLogicJob } from "./jobs/poolLogicJob";
 import { poolManagerLogicJob } from "./jobs/poolManagerLogicJob";
 import { poolPerformanceJob } from "./jobs/poolPerformanceJobs";
 import { unpauseJob } from "./jobs/unpauseJob";
-import { aaveV2LendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveV2LendingPoolAssetGuardJob";
-import { aaveV3LendingPoolContractGuardJob } from "./jobs/contractGuards/aaveV3LendingPoolContractGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   pause: pauseJob,

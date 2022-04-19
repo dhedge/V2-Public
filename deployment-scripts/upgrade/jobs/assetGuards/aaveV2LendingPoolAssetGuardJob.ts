@@ -36,7 +36,7 @@ export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
       hre,
       aaveLendingPoolAssetGuard.address,
       "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol:AaveLendingPoolAssetGuard",
-      [addresses.aaveV2.aaveProtocolDataProviderAddress],
+      [addresses.aaveV2.aaveProtocolDataProviderAddress, addresses.aaveV2.aaveLendingPoolAddress],
     );
 
     const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [3, aaveLendingPoolAssetGuard.address]);
