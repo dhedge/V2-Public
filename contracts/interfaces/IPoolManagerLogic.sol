@@ -53,7 +53,7 @@ interface IPoolManagerLogic {
 
   function totalFundValue() external view returns (uint256);
 
-  function getManagerFee()
+  function getFee()
     external
     view
     returns (

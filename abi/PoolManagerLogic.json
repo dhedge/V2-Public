@@ -200,7 +200,7 @@
         "type": "uint256"
       }
     ],
-    "name": "announceManagerFeeIncrease",
+    "name": "announceFeeIncrease",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -394,7 +394,7 @@
   },
   {
     "inputs": [],
-    "name": "commitManagerFeeIncrease",
+    "name": "commitFeeIncrease",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -420,6 +420,52 @@
         "internalType": "address[]",
         "name": "",
         "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getFeeIncreaseInfo",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -462,7 +508,7 @@
   },
   {
     "inputs": [],
-    "name": "getManagerFee",
+    "name": "getMaximumFee",
     "outputs": [
       {
         "internalType": "uint256",
@@ -485,53 +531,7 @@
   },
   {
     "inputs": [],
-    "name": "getManagerFeeIncreaseInfo",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getMaximumManagerFee",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getMaximumManagerFeeChange",
+    "name": "getMaximumPerformanceFeeChange",
     "outputs": [
       {
         "internalType": "uint256",
@@ -837,20 +837,7 @@
   },
   {
     "inputs": [],
-    "name": "renounceManagerFeeIncrease",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newNftMembershipCollectionAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setNftMembershipCollectionAddress",
+    "name": "renounceFeeIncrease",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -868,7 +855,20 @@
         "type": "uint256"
       }
     ],
-    "name": "setPerformanceFeeNumerator",
+    "name": "setFeeNumerator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newNftMembershipCollectionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setNftMembershipCollectionAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

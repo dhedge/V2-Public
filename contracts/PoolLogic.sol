@@ -427,7 +427,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     // TODO: check streaming fee
     (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
       poolManagerLogic
-    ).getManagerFee();
+    ).getFee();
 
     uint256 availableFee = _availableManagerFee(
       fundValue,
@@ -561,8 +561,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       uint256
     )
   {
-    (uint256 performanceFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic)
-      .getManagerFee();
+    (uint256 performanceFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getFee();
     (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
     return (
@@ -618,7 +617,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
       poolManagerLogic
-    ).getManagerFee();
+    ).getFee();
 
     fee = _availableManagerFee(
       fundValue,
@@ -680,7 +679,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
       poolManagerLogic
-    ).getManagerFee();
+    ).getFee();
 
     uint256 available = _availableManagerFee(
       fundValue,
