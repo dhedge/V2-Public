@@ -2003,6 +2003,13 @@
             "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
           },
           "oracleAddress": "0x844BA8d164fBb345D3cb9d24cda1cf4392bA9054"
+        },
+        {
+          "assetName": "Aave Lending Pool V3",
+          "assetAddress": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+          "assetType": "8",
+          "oracleType": "USDPriceAggregator",
+          "oracleAddress": "0x376177C78f2765e135BE01EDBD2733F582c4E338"
         }
       ],
       "Oracles": [
@@ -2026,7 +2033,7 @@
       "SushiMiniChefV2Guard": "0x340c299d9Bc1196933278886280de26907d231f1",
       "SushiLPAssetGuard": "0x1D7f482F2bE2783b635cc03F14E1821db5a4C8c7",
       "AaveLendingPoolAssetGuard": "0xa2dA62b7080D225c70376BCdcF4d94467915A903",
-      "AaveLendingPoolGuard": "0x6f0433989cab7e16986DB15117889F3F5026254f",
+      "AaveLendingPoolGuard": "0x3045B39690761Aa47011Beaa968a58eD5ffC0735",
       "LendingEnabledAssetGuard": "0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6",
       "AaveIncentivesControllerGuard": "0xeE315011c5709360e5006835ECC033AebdD3F0da",
       "OpenAssetGuard": "0x8cfA65f17A2d34C42Dd12BA30035Ce69B616FC89",
@@ -2053,6 +2060,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Tue, 12 Apr 2022 23:34:47 GMT"
+    "lastUpdated": "Tue, 19 Apr 2022 09:22:38 GMT"
   }
 }
