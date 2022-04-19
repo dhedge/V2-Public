@@ -41,7 +41,6 @@ export interface ExternalLogicContracts {
   balancerV2VaultAddress?: Address;
   sushiMiniChefV2Address?: Address;
   balancerMerkleOrchardAddress?: Address;
-  aaveProtocolDataProviderAddress?: Address;
 
   quickStakingRewardsFactoryAddress?: Address;
   v2RouterAddresses?: string[]; //quickswapRouter, sushiswapV2Router etc etc
@@ -49,8 +48,17 @@ export interface ExternalLogicContracts {
   swapRouterCurvePools?: string[];
   quickLpUsdcWethStakingRewardsAddress?: Address;
   aaveIncentivesControllerAddress?: Address;
-  aaveLendingPoolAddress?: Address;
   oneInchV4RouterAddress?: Address;
+
+  aaveV2?: {
+    aaveProtocolDataProviderAddress: Address;
+    aaveLendingPoolAddress: Address;
+  };
+
+  aaveV3?: {
+    aaveProtocolDataProviderAddress: Address;
+    aaveLendingPoolAddress: Address;
+  };
 
   uniSwapV3NonfungiblePositionManagerAddress?: Address;
 

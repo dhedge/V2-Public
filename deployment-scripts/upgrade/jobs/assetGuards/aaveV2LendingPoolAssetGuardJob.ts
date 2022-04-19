@@ -1,18 +1,18 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
+import { IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
 
-export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
+export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { assetGuardsFileName: string },
-  addresses: { aaveProtocolDataProviderAddress?: string; aaveLendingPoolAddress?: string } & IProposeTxProperties,
+  addresses: IAddresses,
 ) => {
-  if (!addresses.aaveProtocolDataProviderAddress) {
-    console.warn("aaveProtocolDataProviderAddress not configured for aaveLendingPoolAssetGuardJob: skipping.");
+  if (!addresses.aaveV2) {
+    console.warn("aaveV2 config missing.. skipping.");
     return;
   }
 
@@ -22,18 +22,12 @@ export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
 
   console.log("Will deploy aavelendingpoolassetguard");
   if (config.execute) {
-    if (!addresses.aaveProtocolDataProviderAddress) {
-      throw new Error("No aaveProtocolDataProviderAddress configured");
-    }
-    if (!addresses.aaveLendingPoolAddress) {
-      throw new Error("No aaveLendingPoolAddress configured");
-    }
-
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
-      addresses.aaveProtocolDataProviderAddress,
-      addresses.aaveLendingPoolAddress,
+      addresses.aaveV2.aaveProtocolDataProviderAddress,
+      addresses.aaveV2.aaveLendingPoolAddress,
     );
+
     await aaveLendingPoolAssetGuard.deployed();
     console.log("AaveLendingPoolAssetGuard deployed at", aaveLendingPoolAssetGuard.address);
     versions[config.newTag].contracts.AaveLendingPoolAssetGuard = aaveLendingPoolAssetGuard.address;
@@ -42,14 +36,14 @@ export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
       hre,
       aaveLendingPoolAssetGuard.address,
       "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol:AaveLendingPoolAssetGuard",
-      [addresses.aaveProtocolDataProviderAddress],
+      [addresses.aaveV2.aaveProtocolDataProviderAddress],
     );
 
     const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [3, aaveLendingPoolAssetGuard.address]);
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
       setAssetGuardABI,
-      "setAssetGuard for aaveLendingPoolAssetGuard",
+      "setAssetGuard for Asset 3 - aaveLendingPoolAssetGuard",
       config,
       addresses,
     );
@@ -58,7 +52,7 @@ export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
       assetType: 3,
       guardName: "AaveLendingPoolAssetGuard",
       guardAddress: aaveLendingPoolAssetGuard.address,
-      description: "Aave Lending Pool",
+      description: "Aave V2 Lending Pool",
     };
 
     await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");

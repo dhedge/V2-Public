@@ -8,11 +8,11 @@ import { lendingEnabledAssetGuardJob } from "./jobs/assetGuards/lendingEnabledAs
 import { quickLpAssetGuardJob } from "./jobs/assetGuards/quickLpAssetGuardJob";
 import { sushiLpAssetGuardJob } from "./jobs/assetGuards/sushiLpAssetGuardJob";
 import { uniV3AssetGuardJob } from "./jobs/assetGuards/uniV3AssetGuardJob";
-import { aaveLendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveLendingPoolAssetGuardJob";
+import { aaveV3LendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveV3LendingPoolAssetGuardJob";
 import { assetHandlerJob } from "./jobs/assetHandlerJob";
 import { assetsJob } from "./jobs/assetsJob";
 import { aaveIncentivesControllerContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerContractGuardJob";
-import { aaveLendingPoolContractGuardJob } from "./jobs/contractGuards/aaveLendingPoolContractGuardJob";
+import { aaveV2LendingPoolContractGuardJob } from "./jobs/contractGuards/aaveV2LendingPoolContractGuardJob";
 import { balancerMerkleOrchardContractGuardJob } from "./jobs/contractGuards/balancerMerkleOrchardContractGuardJob";
 import { balancerv2ContractGuard } from "./jobs/contractGuards/balancerv2ContractGuardJob";
 import { easySwapperContractGuardJob } from "./jobs/contractGuards/easySwapperContractGuardJob";
@@ -30,6 +30,8 @@ import { poolLogicJob } from "./jobs/poolLogicJob";
 import { poolManagerLogicJob } from "./jobs/poolManagerLogicJob";
 import { poolPerformanceJob } from "./jobs/poolPerformanceJobs";
 import { unpauseJob } from "./jobs/unpauseJob";
+import { aaveV2LendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveV2LendingPoolAssetGuardJob";
+import { aaveV3LendingPoolContractGuardJob } from "./jobs/contractGuards/aaveV3LendingPoolContractGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   pause: pauseJob,
@@ -43,7 +45,8 @@ const jobs: { [key: string]: IJob<void> } = {
   poolperformance: poolPerformanceJob,
 
   // Asset Guards
-  aavelendingpoolassetguard: aaveLendingPoolAssetGuardJob,
+  aavev2lendingpoolassetguard: aaveV2LendingPoolAssetGuardJob,
+  aavev3lendingpoolassetguard: aaveV3LendingPoolAssetGuardJob,
   sushilpassetguard: sushiLpAssetGuardJob,
   erc20guard: erc20AssetGuardJob,
   lendingenabledassetguard: lendingEnabledAssetGuardJob,
@@ -51,6 +54,8 @@ const jobs: { [key: string]: IJob<void> } = {
   univ3assetguard: uniV3AssetGuardJob,
 
   // Contract Guards
+  aavev2lendingpoolguard: aaveV2LendingPoolContractGuardJob,
+  aavev3lendingpoolguard: aaveV3LendingPoolContractGuardJob,
   uniswapv2routerguard: v2RouterContractGuardJob,
   uniswapv3routerguard: uniswapV3RouterContractGuardJob,
   balancerv2guard: balancerv2ContractGuard,
@@ -59,7 +64,6 @@ const jobs: { [key: string]: IJob<void> } = {
   sushiminichefv2guard: sushiMiniChefV2ContractGuardJob,
   easyswapperguard: easySwapperContractGuardJob,
   aaveincentivescontrollerguard: aaveIncentivesControllerContractGuardJob,
-  aavelendingpoolguard: aaveLendingPoolContractGuardJob,
   oneinchv4guard: oneInchV4ContractGuardJob,
   uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuardJob,
 
