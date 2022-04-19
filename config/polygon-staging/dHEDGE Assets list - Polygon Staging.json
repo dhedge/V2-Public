@@ -691,5 +691,11 @@
       "volatilityTripLimit": 25,
       "owner": "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4"
     }
+  },
+  {
+    "assetName": "Aave Lending Pool V3",
+    "assetAddress": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "assetType": "8",
+    "oracleType": "USDPriceAggregator"
   }
 ]
