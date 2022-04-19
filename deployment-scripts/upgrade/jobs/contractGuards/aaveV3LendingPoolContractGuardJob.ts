@@ -30,7 +30,7 @@ export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (
     await tryVerify(
       hre,
       aaveLendingPoolGuard.address,
-      "contracts/guards/contractGuards/AaveLendingPoolGuard.sol:AaveLendingPoolGuardV3L2Pool",
+      "contracts/guards/contractGuards/AaveLendingPoolGuardV3L2Pool.sol:AaveLendingPoolGuardV3L2Pool",
       [addresses.aaveV3.aaveLendingPoolAddress],
     );
 
