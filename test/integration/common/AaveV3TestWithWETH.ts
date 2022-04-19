@@ -104,6 +104,7 @@ export const testAaveV3WithWETH = ({
 
       // set slipage to 10%
       await deployments.uniswapV3RouterGuard.setSlippageLimit(10, 100);
+      await deployments.uniswapV2RouterGuard.setSlippageLimit(10, 100);
     });
 
     it("Should be able to deposit usdc and receive amusdc", async () => {

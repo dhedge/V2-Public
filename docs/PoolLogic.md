@@ -93,7 +93,7 @@ Function to let pool talk to other protocol
 - success A boolean for success or fail transaction
 
 
-# Function `getFundSummary() → string, uint256, uint256, address, string, uint256, bool, uint256, uint256` {#PoolLogic-getFundSummary--}
+# Function `getFundSummary() → string, uint256, uint256, address, string, uint256, bool, uint256, uint256, uint256` {#PoolLogic-getFundSummary--}
 Get fund summary of the pool
 
 

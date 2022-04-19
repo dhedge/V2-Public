@@ -534,50 +534,44 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
   }
 
+  struct FundSummary {
+    string name;
+    uint256 totalSupply;
+    uint256 totalFundValue;
+    address manager;
+    string managerName;
+    uint256 creationTime;
+    bool privatePool;
+    uint256 performanceFeeNumerator;
+    uint256 managerFeeNumerator;
+    uint256 managerFeeDenominator;
+    uint256 exitFeeNumerator;
+    uint256 exitFeeDenominator;
+  }
+
   /// @notice Get fund summary of the pool
-  /// @return Name of the pool
-  /// @return Total supply of the pool
-  /// @return Total fund value of the pool
-  /// @return Address of the pool manager
-  /// @return Name of the pool manager
-  /// @return Time of the pool creation
-  /// @return True if the pool is private, false otherwise
-  /// @return Numberator of the manager fee
-  /// @return Denominator of the manager fee
-  function getFundSummary()
-    external
-    view
-    returns (
-      string memory,
-      uint256,
-      uint256,
-      address,
-      string memory,
-      uint256,
-      bool,
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    )
-  {
-    (uint256 performanceFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic)
-      .getManagerFee();
+  /// @return Fund summary of the pool
+  function getFundSummary() external view returns (FundSummary memory) {
+    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
+      poolManagerLogic
+    ).getManagerFee();
     (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
-    return (
-      name(),
-      totalSupply(),
-      IPoolManagerLogic(poolManagerLogic).totalFundValue(),
-      manager(),
-      managerName(),
-      creationTime,
-      privatePool,
-      performanceFeeNumerator,
-      managerFeeDenominator,
-      exitFeeNumerator,
-      exitFeeDenominator
-    );
+    return
+      FundSummary(
+        name(),
+        totalSupply(),
+        IPoolManagerLogic(poolManagerLogic).totalFundValue(),
+        manager(),
+        managerName(),
+        creationTime,
+        privatePool,
+        performanceFeeNumerator,
+        managerFeeNumerator,
+        managerFeeDenominator,
+        exitFeeNumerator,
+        exitFeeDenominator
+      );
   }
 
   /// @notice Get price of the asset adjusted for any unminted manager fees
