@@ -561,9 +561,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       uint256
     )
   {
-    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
-      poolManagerLogic
-    ).getFee();
+    (uint256 performanceFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(poolManagerLogic).getFee();
     (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
     return (
@@ -577,8 +575,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       performanceFeeNumerator,
       managerFeeDenominator,
       exitFeeNumerator,
-      exitFeeDenominator,
-      managerFeeNumerator
+      exitFeeDenominator
     );
   }
 
