@@ -74,7 +74,7 @@ contract Managed is IManaged {
   /// @notice Return boolean if the address is a member of the list
   /// @param member The address of the member
   /// @return True if the address is a member of the list, false otherwise
-  function isMemberAllowed(address member) public view virtual override returns (bool) {
+  function _isMemberAllowed(address member) internal view returns (bool) {
     return _memberPosition[member] != 0;
   }
 
@@ -98,7 +98,7 @@ contract Managed is IManaged {
   /// @param members Array of member addresses
   function addMembers(address[] memory members) external onlyManager {
     for (uint256 i = 0; i < members.length; i++) {
-      if (isMemberAllowed(members[i])) continue;
+      if (_isMemberAllowed(members[i])) continue;
 
       _addMember(members[i]);
     }
@@ -108,7 +108,7 @@ contract Managed is IManaged {
   /// @param members Array of member addresses
   function removeMembers(address[] memory members) external onlyManager {
     for (uint256 i = 0; i < members.length; i++) {
-      if (!isMemberAllowed(members[i])) continue;
+      if (!_isMemberAllowed(members[i])) continue;
 
       _removeMember(members[i]);
     }
@@ -117,7 +117,7 @@ contract Managed is IManaged {
   /// @notice add a member
   /// @param member The address of the member
   function addMember(address member) external onlyManager {
-    if (isMemberAllowed(member)) return;
+    if (_isMemberAllowed(member)) return;
 
     _addMember(member);
   }
@@ -125,7 +125,7 @@ contract Managed is IManaged {
   /// @notice remove a member
   /// @param member The address of the member
   function removeMember(address member) external onlyManager {
-    if (!isMemberAllowed(member)) return;
+    if (!_isMemberAllowed(member)) return;
 
     _removeMember(member);
   }
