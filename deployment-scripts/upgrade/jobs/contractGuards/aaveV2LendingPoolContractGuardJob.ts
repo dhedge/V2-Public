@@ -24,7 +24,7 @@ export const aaveV2LendingPoolContractGuardJob: IJob<void> = async (
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV2");
     const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     await aaveLendingPoolGuard.deployed();
-    console.log("AaveLendingPoolGuard deployed at", aaveLendingPoolGuard.address);
+    console.log("AaveLendingPoolGuardV2 deployed at", aaveLendingPoolGuard.address);
     versions[config.newTag].contracts.AaveLendingPoolGuard = aaveLendingPoolGuard.address;
 
     await tryVerify(
