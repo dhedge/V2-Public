@@ -451,8 +451,16 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   /// @notice Get manager fee increase information
-  function getManagerFeeIncreaseInfo() external view returns (uint256, uint256) {
-    return (announcedPerformanceFeeNumerator, announcedFeeIncreaseTimestamp);
+  function getManagerFeeIncreaseInfo()
+    external
+    view
+    returns (
+      uint256,
+      uint256,
+      uint256
+    )
+  {
+    return (announcedPerformanceFeeNumerator, announcedManagerFeeNumerator, announcedFeeIncreaseTimestamp);
   }
 
   /// @notice Setter for poolLogic contract

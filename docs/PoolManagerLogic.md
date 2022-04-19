@@ -238,7 +238,7 @@ Manager can commit the performance fee increase
 
 
 
-# Function `getManagerFeeIncreaseInfo() → uint256, uint256` {#PoolManagerLogic-getManagerFeeIncreaseInfo--}
+# Function `getManagerFeeIncreaseInfo() → uint256, uint256, uint256` {#PoolManagerLogic-getManagerFeeIncreaseInfo--}
 Get manager fee increase information
 
 
