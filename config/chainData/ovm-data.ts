@@ -7,6 +7,12 @@ export const synthetix = {
   slinkKey: "0x734c494e4b000000000000000000000000000000000000000000000000000000",
 };
 
+// zipswap
+export const zipswap = {
+  factory: "0x8BCeDD62DD46F1A76F8A1633d4f5B76e0CDa521E",
+  router: "0xE6Df0BB08e5A97b40B21950a0A51b94c4DbA0Ff6",
+};
+
 export const assets = {
   susd: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
   seth: "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49",
@@ -45,5 +51,32 @@ export const uniswapV3 = {
   nonfungiblePositionManager: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
   pools: {
     susd_dai: "0xadb35413ec50e0afe41039eac8b930d313e94fa4",
+  },
+};
+
+// aave v3
+export const aaveV3 = {
+  protocolDataProvider: "0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654",
+  lendingPool: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+  aTokens: {
+    weth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
+    usdc: "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
+    dai: "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE",
+    usdt: "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
+    link: "0x191c10Aa4AF7C30e871E70C95dB0E4eb77237530",
+  },
+  variableDebtTokens: {
+    weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
+    usdc: "0xFCCf3cAbbe80101232d343252614b6A3eE81C989",
+    dai: "0x8619d80FB0141ba7F184CbF22fd724116D9f7ffC",
+    usdt: "0xfb00AC187a8Eb5AFAE4eACE434F493Eb62672df7",
+    link: "0x953A573793604aF8d41F306FEb8274190dB4aE0e",
+  },
+  stableDebtTokens: {
+    weth: "0xD8Ad37849950903571df17049516a5CD4cbE55F6",
+    usdc: "0x307ffe186F84a3bc2613D1eA417A5737D69A7007",
+    dai: "0xd94112B5B62d53C9402e7A60289c6810dEF1dC9B",
+    usdt: "0x70eFfc565DB6EEf7B927610155602d31b670e802",
+    link: "0x89D976629b7055ff1ca02b927BA3e020F22A44e4",
   },
 };
