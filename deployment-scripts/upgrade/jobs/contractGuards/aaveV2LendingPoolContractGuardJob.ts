@@ -48,7 +48,7 @@ export const aaveV2LendingPoolContractGuardJob: IJob<void> = async (
 
     const deployedGuard = {
       contractAddress: addresses.aaveV2.aaveLendingPoolAddress,
-      guardName: "AaveLendingPoolGuard",
+      guardName: "AaveLendingPoolGuardV2",
       guardAddress: aaveLendingPoolGuard.address,
       description: "Aave Lending Pool contract",
     };
