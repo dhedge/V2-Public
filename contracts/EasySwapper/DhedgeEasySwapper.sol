@@ -36,12 +36,12 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./interfaces/IPoolLogic.sol";
-import "./interfaces/uniswapv2/IUniswapV2Router.sol";
-import "./interfaces/IHasSupportedAsset.sol";
+import "../interfaces/IPoolLogic.sol";
+import "../interfaces/uniswapv2/IUniswapV2Router.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./EasySwapperWithdrawer.sol";
 
 contract DhedgeEasySwapper is Ownable {
   using SafeMath for uint256;
@@ -55,12 +55,6 @@ contract DhedgeEasySwapper is Ownable {
     address poolDepositAsset,
     uint256 liquidityMinted
   );
-  event Withdraw(
-    address pool,
-    uint256 fundTokenAmount,
-    address withdrawalAsset,
-    uint256 amountWithdrawnInWithdrawalAsset
-  );
 
   address payable public feeSink;
   uint256 public feeNumerator = 50;
@@ -68,19 +62,12 @@ contract DhedgeEasySwapper is Ownable {
 
   mapping(address => bool) public allowedPools;
   IERC20 public weth;
-  IUniswapV2Router public swapRouter;
 
-  // non erc20 assets -> aaveLendingPool etc
-  mapping(address => bool) public assetsToSkip;
+  EasySwapperWithdrawer.WithdrawProps public withdrawProps;
 
-  constructor(
-    address payable _feeSink,
-    IUniswapV2Router _swapRouter,
-    IERC20 _weth
-  ) {
+  constructor(address payable _feeSink, EasySwapperWithdrawer.WithdrawProps memory _withdrawProps) {
     feeSink = _feeSink;
-    swapRouter = _swapRouter;
-    weth = _weth;
+    withdrawProps = _withdrawProps;
   }
 
   function setPoolAllowed(address pool, bool allowed) external onlyOwner {
@@ -97,12 +84,8 @@ contract DhedgeEasySwapper is Ownable {
     feeSink = sink;
   }
 
-  function setAssetToSkip(address asset, bool skip) external onlyOwner {
-    assetsToSkip[asset] = skip;
-  }
-
   function setSwapRouter(IUniswapV2Router _swapRouter) external onlyOwner {
-    swapRouter = _swapRouter;
+    withdrawProps.swapRouter = _swapRouter;
   }
 
   /// @notice deposit into underlying pool and receive tokens that aren't locked
@@ -124,7 +107,7 @@ contract DhedgeEasySwapper is Ownable {
     depositAsset.safeTransferFrom(msg.sender, address(this), amount);
 
     if (depositAsset != poolDepositAsset) {
-      swapThat(depositAsset, poolDepositAsset);
+      EasySwapperWithdrawer.swapThat(withdrawProps.swapRouter, depositAsset, poolDepositAsset);
     }
 
     // Sweep fee to sink
@@ -141,7 +124,7 @@ contract DhedgeEasySwapper is Ownable {
     liquidityMinted = IPoolLogic(pool).deposit(address(poolDepositAsset), poolDepositAsset.balanceOf(address(this)));
 
     require(liquidityMinted >= expectedLiquidityMinted, "Deposit Slippage detected");
-    // // Transfer the pool tokens to the depositer
+    // Transfer the pool tokens to the depositer
     IERC20(pool).safeTransfer(msg.sender, liquidityMinted);
     emit Deposit(pool, msg.sender, address(depositAsset), amount, address(poolDepositAsset), liquidityMinted);
   }
@@ -157,48 +140,18 @@ contract DhedgeEasySwapper is Ownable {
     IERC20 withdrawalAsset,
     uint256 expectedAmountOut
   ) external {
-    require(allowedPools[pool], "Pool is not allowed.");
+    // Im not sure we need this because if the person that can transfer the tokens
+    // to the easy swapper isnt under a lock up than
+    // Maybe we have it so that if people are transfering to the whitelisted address they can circumt vent the lock up?
+    // require(allowedPools[address(pool)], "Pool is not allowed.");
     IERC20(pool).safeTransferFrom(msg.sender, address(this), fundTokenAmount);
-    IPoolLogic(pool).withdraw(fundTokenAmount);
-    // Pools that have aave enabled withdraw weth to the user. This isnt in supportedAssets somestimes :(
-    swapThat(weth, withdrawalAsset);
-
-    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic())
-      .getSupportedAssets();
-
-    for (uint256 i = 0; i < supportedAssets.length; i++) {
-      IERC20 from = IERC20(supportedAssets[i].asset);
-      if (assetsToSkip[address(from)]) {
-        continue;
-      }
-      swapThat(from, withdrawalAsset);
-    }
-
-    uint256 balanceAfterSwaps = withdrawalAsset.balanceOf(address(this));
-    require(balanceAfterSwaps >= expectedAmountOut, "Withdraw Slippage detected");
-    withdrawalAsset.safeTransfer(msg.sender, balanceAfterSwaps);
-    emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
-  }
-
-  /// @notice Swaps from an asset to the expectedWithdrawalAssetOfUser
-  /// @dev get on the floor
-  /// @param from asset to swap from
-  function swapThat(IERC20 from, IERC20 to) internal {
-    if (from == to) {
-      return;
-    }
-
-    uint256 balance = from.balanceOf(address(this));
-    if (balance == 0) {
-      return;
-    }
-
-    from.approve(address(swapRouter), balance);
-
-    address[] memory path = new address[](2);
-    path[0] = address(from);
-    path[1] = address(to);
-
-    swapRouter.swapExactTokensForTokens(balance, 0, path, address(this), uint256(-1));
+    EasySwapperWithdrawer.withdraw(
+      msg.sender,
+      pool,
+      fundTokenAmount,
+      withdrawalAsset,
+      expectedAmountOut,
+      withdrawProps
+    );
   }
 }

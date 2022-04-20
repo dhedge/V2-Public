@@ -7,14 +7,36 @@
         "type": "address"
       },
       {
-        "internalType": "contract IUniswapV2Router",
-        "name": "_swapRouter",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "_weth",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "contract IUniswapV2Router",
+            "name": "swapRouter",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IUniswapV2Router",
+            "name": "assetType2Router",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IUniswapV2Router",
+            "name": "assetType5Router",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "weth",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IPoolFactory",
+            "name": "poolFactory",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct EasySwapperWithdrawer.WithdrawProps",
+        "name": "_withdrawProps",
+        "type": "tuple"
       }
     ],
     "stateMutability": "nonpayable",
@@ -83,37 +105,6 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "pool",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "fundTokenAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "withdrawalAsset",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amountWithdrawnInWithdrawalAsset",
-        "type": "uint256"
-      }
-    ],
-    "name": "Withdraw",
-    "type": "event"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -122,25 +113,6 @@
       }
     ],
     "name": "allowedPools",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "assetsToSkip",
     "outputs": [
       {
         "internalType": "bool",
@@ -252,24 +224,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "skip",
-        "type": "bool"
-      }
-    ],
-    "name": "setAssetToSkip",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "numerator",
         "type": "uint256"
@@ -330,19 +284,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "swapRouter",
-    "outputs": [
-      {
-        "internalType": "contract IUniswapV2Router",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -394,6 +335,39 @@
     "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawProps",
+    "outputs": [
+      {
+        "internalType": "contract IUniswapV2Router",
+        "name": "swapRouter",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IUniswapV2Router",
+        "name": "assetType2Router",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IUniswapV2Router",
+        "name": "assetType5Router",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "weth",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IPoolFactory",
+        "name": "poolFactory",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

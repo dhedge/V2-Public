@@ -40,7 +40,7 @@ import "../../utils/TxDataUtils.sol";
 import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
-import "../../DhedgeEasySwapper.sol";
+import "../../EasySwapper/DhedgeEasySwapper.sol";
 
 /// @title Transaction guard for Dhedge EasySwapper
 contract EasySwapperGuard is TxDataUtils, IGuard {

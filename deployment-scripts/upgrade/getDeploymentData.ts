@@ -1,8 +1,9 @@
 import { IAddresses, IFileNames } from "../types";
 
 import {
-  polygonAddresses,
+  polygonProdAddresses,
   polygonProdFileNames,
+  polygonStagingAddresses,
   polygonStagingFileNames,
   switchPolygonOzFile,
 } from "../polygon/deployment-data";
@@ -19,13 +20,13 @@ export const getDeploymentData = (chainId: number, deployment: "staging" | "prod
     case "137-staging":
       switchPolygonOzFile(false);
       return {
-        addresses: polygonAddresses,
+        addresses: polygonStagingAddresses,
         filenames: polygonStagingFileNames,
       };
     case "137-production":
       switchPolygonOzFile(true);
       return {
-        addresses: polygonAddresses,
+        addresses: polygonProdAddresses,
         filenames: polygonProdFileNames,
       };
     // ovm kovan
