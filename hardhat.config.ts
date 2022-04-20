@@ -11,7 +11,7 @@ import "@typechain/hardhat";
 import "./deployment-scripts/upgrade/upgrade";
 
 import "./deployment-scripts/explorer-verify";
-import "./deployment-scripts/polygon/dhedgeEasySwapper";
+import "./deployment-scripts/polygon/dhedgeEasySwapperDeploy";
 import "./deployment-scripts/polygon/dhedgeSwapRouter";
 import "./deployment-scripts/checks/checkConfig";
 import "./deployment-scripts/compileOne";

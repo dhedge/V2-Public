@@ -579,7 +579,7 @@ describe("Sushiswap V2 Test", function () {
       });
 
       // remove manager fee so that performance fee minting doesn't get in the way
-      await poolManagerLogicProxy.connect(manager).setPerformanceFeeNumerator("0", "0");
+      await poolManagerLogicProxy.connect(manager).setFeeNumerator("0", "0");
 
       const totalSupply = await poolLogicProxy.totalSupply();
 

@@ -1,4 +1,4 @@
-import { dhedgeEasySwapperAddress, uniswapV3 } from "../../config/chainData/polygon-data";
+import { torosPools, uniswapV3 } from "../../config/chainData/polygon-data";
 import { IAddresses, IFileNames } from "../types";
 import fs from "fs";
 
@@ -32,7 +32,7 @@ export const switchPolygonOzFile = (isProduction: boolean) => {
   });
 };
 
-export const polygonAddresses: IAddresses = {
+const polygonAddresses: IAddresses = {
   // Dhedge Internal
   protocolDaoAddress: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
   protocolTreasuryAddress: "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3",
@@ -44,8 +44,6 @@ export const polygonAddresses: IAddresses = {
   // https://github.com/gnosis/safe-deployments
   gnosisMultiSendAddress: "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761",
   gnosisApi: "https://safe-transaction.polygon.gnosis.io",
-
-  dhedgeEasySwapperAddress: dhedgeEasySwapperAddress,
 
   // External Logic Contracts
   balancerV2VaultAddress: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
@@ -67,6 +65,16 @@ export const polygonAddresses: IAddresses = {
   // Token Addresses
   sushiTokenAddress: "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
   wmaticTokenAddress: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+};
+
+export const polygonProdAddresses = {
+  ...polygonAddresses,
+  torosEasySwapperAllowedPools: Object.values(torosPools),
+};
+
+export const polygonStagingAddresses = {
+  ...polygonAddresses,
+  torosEasySwapperAllowedPools: [],
 };
 
 export const polygonStagingFileNames: IFileNames = {

@@ -14,14 +14,14 @@ Logic implmentation for pool manager
 - [`assetValue(address asset)`](#PoolManagerLogic-assetValue-address-)
 - [`getFundComposition()`](#PoolManagerLogic-getFundComposition--)
 - [`totalFundValue()`](#PoolManagerLogic-totalFundValue--)
-- [`getManagerFee()`](#PoolManagerLogic-getManagerFee--)
-- [`getMaximumManagerFee()`](#PoolManagerLogic-getMaximumManagerFee--)
-- [`getMaximumManagerFeeChange()`](#PoolManagerLogic-getMaximumManagerFeeChange--)
-- [`setPerformanceFeeNumerator(uint256 numerator)`](#PoolManagerLogic-setPerformanceFeeNumerator-uint256-)
-- [`announceManagerFeeIncrease(uint256 numerator)`](#PoolManagerLogic-announceManagerFeeIncrease-uint256-)
-- [`renounceManagerFeeIncrease()`](#PoolManagerLogic-renounceManagerFeeIncrease--)
-- [`commitManagerFeeIncrease()`](#PoolManagerLogic-commitManagerFeeIncrease--)
-- [`getManagerFeeIncreaseInfo()`](#PoolManagerLogic-getManagerFeeIncreaseInfo--)
+- [`getFee()`](#PoolManagerLogic-getFee--)
+- [`getMaximumFee()`](#PoolManagerLogic-getMaximumFee--)
+- [`getMaximumPerformanceFeeChange()`](#PoolManagerLogic-getMaximumPerformanceFeeChange--)
+- [`setFeeNumerator(uint256 numerator)`](#PoolManagerLogic-setFeeNumerator-uint256-)
+- [`announceFeeIncrease(uint256 numerator)`](#PoolManagerLogic-announceFeeIncrease-uint256-)
+- [`renounceFeeIncrease()`](#PoolManagerLogic-renounceFeeIncrease--)
+- [`commitFeeIncrease()`](#PoolManagerLogic-commitFeeIncrease--)
+- [`getFeeIncreaseInfo()`](#PoolManagerLogic-getFeeIncreaseInfo--)
 - [`setPoolLogic(address _poolLogic)`](#PoolManagerLogic-setPoolLogic-address-)
 
 # Events:
@@ -180,13 +180,13 @@ Return the total fund value of the pool
 - value in USD
 
 
-# Function `getManagerFee() → uint256, uint256` {#PoolManagerLogic-getManagerFee--}
+# Function `getFee() → uint256, uint256` {#PoolManagerLogic-getFee--}
 Return the manager fees
 
 
 
 
-# Function `getMaximumManagerFee() → uint256 numerator, uint256 denominator` {#PoolManagerLogic-getMaximumManagerFee--}
+# Function `getMaximumFee() → uint256 numerator, uint256 denominator` {#PoolManagerLogic-getMaximumFee--}
 Get maximum manager fee
 
 
@@ -197,7 +197,7 @@ Get maximum manager fee
 - denominator denominator of the maximum manager fee
 
 
-# Function `getMaximumManagerFeeChange() → uint256 change` {#PoolManagerLogic-getMaximumManagerFeeChange--}
+# Function `getMaximumPerformanceFeeChange() → uint256 change` {#PoolManagerLogic-getMaximumPerformanceFeeChange--}
 Get maximum manager fee change
 
 
@@ -206,7 +206,7 @@ Get maximum manager fee change
 - change change of the maximum manager fee
 
 
-# Function `setPerformanceFeeNumerator(uint256 numerator)` {#PoolManagerLogic-setPerformanceFeeNumerator-uint256-}
+# Function `setFeeNumerator(uint256 numerator)` {#PoolManagerLogic-setFeeNumerator-uint256-}
 Manager can decrease performance fee
 
 
@@ -217,28 +217,28 @@ Manager can decrease performance fee
 
 
 
-# Function `announceManagerFeeIncrease(uint256 numerator)` {#PoolManagerLogic-announceManagerFeeIncrease-uint256-}
+# Function `announceFeeIncrease(uint256 numerator)` {#PoolManagerLogic-announceFeeIncrease-uint256-}
 Manager can announce an increase to the performance fee
 
 
 
 
 
-# Function `renounceManagerFeeIncrease()` {#PoolManagerLogic-renounceManagerFeeIncrease--}
+# Function `renounceFeeIncrease()` {#PoolManagerLogic-renounceFeeIncrease--}
 Manager can cancel the performance fee increase
 
 
 
 
 
-# Function `commitManagerFeeIncrease()` {#PoolManagerLogic-commitManagerFeeIncrease--}
+# Function `commitFeeIncrease()` {#PoolManagerLogic-commitFeeIncrease--}
 Manager can commit the performance fee increase
 
 
 
 
 
-# Function `getManagerFeeIncreaseInfo() → uint256, uint256` {#PoolManagerLogic-getManagerFeeIncreaseInfo--}
+# Function `getFeeIncreaseInfo() → uint256, uint256, uint256` {#PoolManagerLogic-getFeeIncreaseInfo--}
 Get manager fee increase information
 
 

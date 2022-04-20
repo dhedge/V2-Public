@@ -36,7 +36,7 @@ pragma solidity 0.7.6;
 
 interface IHasFeeInfo {
   // Manager fee
-  function getMaximumManagerFee()
+  function getMaximumFee()
     external
     view
     returns (
