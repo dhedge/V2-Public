@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
 import { ethers } from "hardhat";
-import { aave, assets, assetsBalanceOfSlot, sushi } from "../../../config/chainData/polygon-data";
+import { aaveV2, assets, assetsBalanceOfSlot, sushi } from "../../../config/chainData/polygon-data";
 import {
   IERC20,
   IERC20__factory,
@@ -85,10 +85,10 @@ describe("Aave Edge Test", function () {
     const depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
 
     // add supported assets
-    await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aave.lendingPool, isDeposit: false }], []);
+    await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aaveV2.lendingPool, isDeposit: false }], []);
 
     // approve usdc
-    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [aaveV2.lendingPool, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     const usdcBalanceBefore = await USDC.balanceOf(poolLogicProxy.address);
@@ -100,7 +100,7 @@ describe("Aave Edge Test", function () {
     expect(amusdcBalanceBefore).to.be.equal(0);
 
     // deposit
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, depositABI);
 
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     const amusdcBalanceAfter = await AMUSDC.balanceOf(poolLogicProxy.address);
@@ -118,10 +118,10 @@ describe("Aave Edge Test", function () {
     const depositABI = iLendingPool.encodeFunctionData("deposit", [assets.weth, amount, poolLogicProxy.address, 0]);
 
     // add supported assets
-    await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aave.lendingPool, isDeposit: false }], []);
+    await poolManagerLogicProxy.connect(manager).changeAssets([{ asset: aaveV2.lendingPool, isDeposit: false }], []);
 
     // approve weth
-    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [aaveV2.lendingPool, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
     const amwethBalanceBefore = await AMWETH.balanceOf(poolLogicProxy.address);
@@ -130,7 +130,7 @@ describe("Aave Edge Test", function () {
     expect(amwethBalanceBefore).to.be.equal(0);
 
     // deposit
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, depositABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, depositABI);
 
     const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
     const amwethBalanceAfter = await AMWETH.balanceOf(poolLogicProxy.address);
@@ -156,7 +156,7 @@ describe("Aave Edge Test", function () {
     expect(daiBalanceBefore).to.be.equal(0);
 
     // borrow
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, borrowABI);
 
     const daiBalanceAfter = await DAI.balanceOf(poolLogicProxy.address);
     expect(daiBalanceAfter).to.be.equal(amount);
@@ -204,7 +204,7 @@ describe("Aave Edge Test", function () {
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
     // borrow
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, borrowABI);
 
     const daiBalanceAfter = await DAI.balanceOf(poolLogicProxy.address);
 
@@ -238,13 +238,13 @@ describe("Aave Edge Test", function () {
     const repayABI = iLendingPool.encodeFunctionData("repay", [assets.dai, amount, 2, poolLogicProxy.address]);
 
     // approve dai
-    approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+    approveABI = iERC20.encodeFunctionData("approve", [aaveV2.lendingPool, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.dai, approveABI);
 
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
     // repay
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, repayABI);
 
     const debtDaiAfter = await VariableDAI.balanceOf(poolLogicProxy.address);
     expect(debtDaiAfter).to.be.equal(0);
@@ -262,7 +262,7 @@ describe("Aave Edge Test", function () {
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
     // borrow
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, borrowABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, borrowABI);
 
     const wethBalanceAfter = await WETH.balanceOf(poolLogicProxy.address);
     expect(wethBalanceAfter).to.be.gt(wethBalanceBefore);
@@ -279,13 +279,13 @@ describe("Aave Edge Test", function () {
     const repayABI = iLendingPool.encodeFunctionData("repay", [assets.weth, amount, 2, poolLogicProxy.address]);
 
     // approve weth
-    const approveABI = iERC20.encodeFunctionData("approve", [aave.lendingPool, amount]);
+    const approveABI = iERC20.encodeFunctionData("approve", [aaveV2.lendingPool, amount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
     const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
     // repay
-    await poolLogicProxy.connect(manager).execTransaction(aave.lendingPool, repayABI);
+    await poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, repayABI);
 
     const debtWethAfter = await VariableWETH.balanceOf(poolLogicProxy.address);
     expect(debtWethAfter).to.be.equal(0);

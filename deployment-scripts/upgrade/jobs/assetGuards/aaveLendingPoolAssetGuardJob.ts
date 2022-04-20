@@ -9,7 +9,7 @@ export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
   // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { assetGuardsFileName: string },
-  addresses: { aaveProtocolDataProviderAddress?: string } & IProposeTxProperties,
+  addresses: { aaveProtocolDataProviderAddress?: string; aaveLendingPoolAddress?: string } & IProposeTxProperties,
 ) => {
   if (!addresses.aaveProtocolDataProviderAddress) {
     console.warn("aaveProtocolDataProviderAddress not configured for aaveLendingPoolAssetGuardJob: skipping.");
@@ -25,9 +25,15 @@ export const aaveLendingPoolAssetGuardJob: IJob<void> = async (
     if (!addresses.aaveProtocolDataProviderAddress) {
       throw new Error("No aaveProtocolDataProviderAddress configured");
     }
+    if (!addresses.aaveLendingPoolAddress) {
+      throw new Error("No aaveLendingPoolAddress configured");
+    }
 
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(addresses.aaveProtocolDataProviderAddress);
+    const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
+      addresses.aaveProtocolDataProviderAddress,
+      addresses.aaveLendingPoolAddress,
+    );
     await aaveLendingPoolAssetGuard.deployed();
     console.log("AaveLendingPoolAssetGuard deployed at", aaveLendingPoolAssetGuard.address);
     versions[config.newTag].contracts.AaveLendingPoolAssetGuard = aaveLendingPoolAssetGuard.address;

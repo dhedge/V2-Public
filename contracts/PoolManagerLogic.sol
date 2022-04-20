@@ -471,7 +471,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Set the address of the nftMembershipCollectionAddress
   /// @param newNftMembershipCollectionAddress The address of the new nftMembershipCollectionAddress
   function setNftMembershipCollectionAddress(address newNftMembershipCollectionAddress) external onlyManager {
-    nftMembershipCollectionAddress = newNftMembershipCollectionAddress;
+    try ERC721Upgradeable(newNftMembershipCollectionAddress).balanceOf(address(this)) {
+      nftMembershipCollectionAddress = newNftMembershipCollectionAddress;
+    } catch {
+      revert("Invalid collection");
+    }
   }
 
   /// @notice Return boolean if the there is a nftMembership address set and the member owns one
@@ -486,7 +490,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param member The address of the member
   /// @return True if the address is a member of the list or owns nft in the membership collection, false otherwise
   function isMemberAllowed(address member) public view virtual override returns (bool) {
-    return super.isMemberAllowed(member) || isNftMemberAllowed(member);
+    return _isMemberAllowed(member) || isNftMemberAllowed(member);
   }
 
   uint256[48] private __gap;
