@@ -25,7 +25,7 @@ export const aaveV2LendingPoolContractGuardJob: IJob<void> = async (
     const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     await aaveLendingPoolGuard.deployed();
     console.log("AaveLendingPoolGuardV2 deployed at", aaveLendingPoolGuard.address);
-    versions[config.newTag].contracts.AaveLendingPoolGuard = aaveLendingPoolGuard.address;
+    versions[config.newTag].contracts.AaveLendingPoolGuardV2 = aaveLendingPoolGuard.address;
 
     await tryVerify(
       hre,

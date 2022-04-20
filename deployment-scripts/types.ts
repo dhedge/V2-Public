@@ -135,7 +135,8 @@ export interface IContracts {
   EasySwapperGuard?: Address;
   BalancerV2Guard?: Address;
   BalancerMerkleOrchardGuard?: Address;
-  AaveLendingPoolGuard?: Address;
+  AaveLendingPoolGuardV2?: Address;
+  AaveLendingPoolGuardV3?: Address;
   AaveIncentivesControllerGuard?: Address;
   UniswapV3NonfungiblePositionGuard?: Address;
   UniswapV3RouterGuard?: Address;
