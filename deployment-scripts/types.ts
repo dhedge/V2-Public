@@ -145,7 +145,8 @@ export interface IContracts {
   SushiLPAssetGuard?: Address;
   LendingEnabledAssetGuard?: Address;
   QuickLPAssetGuard?: Address;
-  AaveLendingPoolAssetGuard?: Address;
+  AaveLendingPoolAssetGuardV2?: Address;
+  AaveLendingPoolAssetGuardV3?: Address;
   UniswapV3AssetGuard?: Address;
 
   DhedgeEasySwapper: Address;

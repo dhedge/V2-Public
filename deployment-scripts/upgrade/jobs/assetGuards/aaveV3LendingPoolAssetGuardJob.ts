@@ -29,7 +29,7 @@ export const aaveV3LendingPoolAssetGuardJob: IJob<void> = async (
     );
     await aaveLendingPoolAssetGuard.deployed();
     console.log("AaveLendingPoolAssetGuard deployed at", aaveLendingPoolAssetGuard.address);
-    versions[config.newTag].contracts.AaveLendingPoolAssetGuard = aaveLendingPoolAssetGuard.address;
+    versions[config.newTag].contracts.AaveLendingPoolAssetGuardV3 = aaveLendingPoolAssetGuard.address;
 
     await tryVerify(
       hre,
