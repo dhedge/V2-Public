@@ -56,7 +56,8 @@ contract Governance is IGovernance, Ownable {
 
   // Addresses
 
-  // "aaveProtocolDataProvider": aave protocol data provider
+  // "aaveProtocolDataProviderV2": aave protocol data provider
+  // "aaveProtocolDataProviderV3": aave protocol data provider
   // "swapRouter": swapRouter with uniswap v2 interface.
   // "weth": weth address which is used token swap
   mapping(bytes32 => address) public override nameToDestination;

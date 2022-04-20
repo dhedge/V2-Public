@@ -2036,7 +2036,7 @@
       "AaveLendingPoolAssetGuardV3": "0x628DA3FDD9c82df56AE7472a5e9f627750A1b55D",
       "AaveLendingPoolGuardV2": "0x6f0433989cab7e16986DB15117889F3F5026254f",
       "AaveLendingPoolGuardV3": "0x3045B39690761Aa47011Beaa968a58eD5ffC0735",
-      "LendingEnabledAssetGuard": "0xfaA0Bce1929272b7fa036B4d49c54E8a58B9C3d6",
+      "LendingEnabledAssetGuard": "0x81d438E9baB6f7AAA9518B80E85D172062A4F57C",
       "AaveIncentivesControllerGuard": "0xeE315011c5709360e5006835ECC033AebdD3F0da",
       "OpenAssetGuard": "0x8cfA65f17A2d34C42Dd12BA30035Ce69B616FC89",
       "QuickLPAssetGuard": "0x202040Bb1efA759C3BfdBef56603f241245f2ad4",
@@ -2062,6 +2062,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Tue, 19 Apr 2022 09:22:38 GMT"
+    "lastUpdated": "Wed, 20 Apr 2022 02:02:38 GMT"
   }
 }
