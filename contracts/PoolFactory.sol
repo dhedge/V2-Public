@@ -98,7 +98,7 @@ contract PoolFactory is
 
   event SetPoolManagerFee(uint256 numerator, uint256 denominator);
 
-  event SetMaximumManagerFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 denominator);
+  event SetMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 denominator);
 
   event SetMaximumPerformanceFeeNumeratorChange(uint256 amount);
 
@@ -121,7 +121,7 @@ contract PoolFactory is
 
   mapping(address => bool) public isPool;
   // solhint-disable-next-line var-name-mixedcase
-  uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  uint256 private maximumPerformanceFeeNumerator;
   // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
@@ -166,7 +166,7 @@ contract PoolFactory is
 
     _setGovernanceAddress(_governanceAddress);
 
-    _setMaximumManagerFee(5000, 300, 10000); // 50% manager fee, 3% streaming fee
+    _setMaximumFee(5000, 300, 10000); // 50% manager fee, 3% streaming fee
 
     _setDaoFee(10, 100); // 10%
     _setExitFee(5, 1000); // 0.5%
@@ -372,7 +372,7 @@ contract PoolFactory is
   /// @notice Get the maximum manager fee
   /// @return The maximum manager fee numerator
   /// @return The maximum manager fee denominator
-  function getMaximumManagerFee()
+  function getMaximumFee()
     external
     view
     override
@@ -382,32 +382,32 @@ contract PoolFactory is
       uint256
     )
   {
-    return (_MAXIMUM_MANAGER_FEE_NUMERATOR, maximumManagerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+    return (maximumPerformanceFeeNumerator, maximumManagerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee
   /// @param performanceFeeNumerator The numerator of the maximum manager fee
   /// @param managerFeeNumerator The numerator of the maximum streaming fee
-  function setMaximumManagerFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator) external onlyOwner {
-    _setMaximumManagerFee(performanceFeeNumerator, managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+  function setMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator) external onlyOwner {
+    _setMaximumFee(performanceFeeNumerator, managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee internal call
   /// @param performanceFeeNumerator The numerator of the maximum manager fee
   /// @param managerFeeNumerator The numerator of the maximum streaming fee
   /// @param denominator The denominator of the maximum manager fee
-  function _setMaximumManagerFee(
+  function _setMaximumFee(
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
     uint256 denominator
   ) internal {
     require(performanceFeeNumerator <= denominator && managerFeeNumerator <= denominator, "invalid fraction");
 
-    _MAXIMUM_MANAGER_FEE_NUMERATOR = performanceFeeNumerator;
+    maximumPerformanceFeeNumerator = performanceFeeNumerator;
     maximumManagerFeeNumerator = managerFeeNumerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
 
-    emit SetMaximumManagerFee(performanceFeeNumerator, managerFeeNumerator, denominator);
+    emit SetMaximumFee(performanceFeeNumerator, managerFeeNumerator, denominator);
   }
 
   /// @notice Set maximum manager fee numberator change

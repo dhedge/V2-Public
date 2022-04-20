@@ -69,5 +69,5 @@
 - _addToSupportedAssets - manager
 - removeFromSupportedAssets - manager
 - exchange - manager
-- getManagerFee - manager
-- setPerformanceFeeNumerator - manager
+- getFee - manager
+- setFeeNumerator - manager

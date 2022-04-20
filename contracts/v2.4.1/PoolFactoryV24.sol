@@ -113,7 +113,7 @@ contract PoolFactoryV24 is
   mapping(address => bool) public isPool;
 
   // solhint-disable-next-line var-name-mixedcase
-  uint256 private _MAXIMUM_MANAGER_FEE_NUMERATOR;
+  uint256 private maximumPerformanceFeeNumerator;
   // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
 
@@ -181,7 +181,7 @@ contract PoolFactoryV24 is
   ) external returns (address fund) {
     require(!paused(), "contracts paused");
     require(_supportedAssets.length <= _maximumSupportedAssetCount, "maximum assets reached");
-    require(_performanceFeeNumerator <= _MAXIMUM_MANAGER_FEE_NUMERATOR, "invalid manager fee");
+    require(_performanceFeeNumerator <= maximumPerformanceFeeNumerator, "invalid manager fee");
 
     bytes memory poolLogicData = abi.encodeWithSignature(
       "initialize(address,bool,string,string)",
@@ -292,7 +292,7 @@ contract PoolFactoryV24 is
   /// @return The maximum manager fee numerator
   /// @return The maximum manager fee denominator
   function getMaximumManagerFee() external view override returns (uint256, uint256) {
-    return (_MAXIMUM_MANAGER_FEE_NUMERATOR, _MANAGER_FEE_DENOMINATOR);
+    return (maximumPerformanceFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee
@@ -307,7 +307,7 @@ contract PoolFactoryV24 is
   function _setMaximumManagerFee(uint256 numerator, uint256 denominator) internal {
     require(numerator <= denominator, "invalid fraction");
 
-    _MAXIMUM_MANAGER_FEE_NUMERATOR = numerator;
+    maximumPerformanceFeeNumerator = numerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
 
     emit SetMaximumManagerFee(numerator, denominator);
