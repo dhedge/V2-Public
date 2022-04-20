@@ -33,8 +33,6 @@ export interface IFileNames {
 }
 
 export interface ExternalLogicContracts {
-  dhedgeEasySwapperAddress?: Address;
-
   synthetixProxyAddress?: Address;
   synthetixAddressResolverAddress?: Address;
 
@@ -65,6 +63,8 @@ export interface ExternalLogicContracts {
   // Token Addresses
   sushiTokenAddress?: Address;
   wmaticTokenAddress?: Address;
+
+  torosEasySwapperAllowedPools?: Address[];
 }
 
 export interface IDhedgeInternal {

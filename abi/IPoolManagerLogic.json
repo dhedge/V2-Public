@@ -76,7 +76,7 @@
   },
   {
     "inputs": [],
-    "name": "getManagerFee",
+    "name": "getFee",
     "outputs": [
       {
         "internalType": "uint256",

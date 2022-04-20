@@ -7,8 +7,8 @@
 - [`setGovernanceAddress(address _governanceAddress)`](#PoolFactory-setGovernanceAddress-address-)
 - [`setDaoFee(uint256 numerator, uint256 denominator)`](#PoolFactory-setDaoFee-uint256-uint256-)
 - [`getDaoFee()`](#PoolFactory-getDaoFee--)
-- [`getMaximumManagerFee()`](#PoolFactory-getMaximumManagerFee--)
-- [`setMaximumManagerFee(uint256 numerator)`](#PoolFactory-setMaximumManagerFee-uint256-)
+- [`getMaximumFee()`](#PoolFactory-getMaximumFee--)
+- [`setMaximumFee(uint256 numerator)`](#PoolFactory-setMaximumFee-uint256-)
 - [`setMaximumPerformanceFeeNumeratorChange(uint256 amount)`](#PoolFactory-setMaximumPerformanceFeeNumeratorChange-uint256-)
 - [`setPerformanceFeeNumeratorChangeDelay(uint256 delay)`](#PoolFactory-setPerformanceFeeNumeratorChangeDelay-uint256-)
 - [`setExitCooldown(uint256 cooldown)`](#PoolFactory-setExitCooldown-uint256-)
@@ -42,7 +42,7 @@
 - [`MaximumSupportedAssetCountSet(uint256 count)`](#PoolFactory-MaximumSupportedAssetCountSet-uint256-)
 - [`LogUpgrade(address manager, address pool)`](#PoolFactory-LogUpgrade-address-address-)
 - [`SetPoolManagerFee(uint256 numerator, uint256 denominator)`](#PoolFactory-SetPoolManagerFee-uint256-uint256-)
-- [`SetMaximumManagerFee(uint256 numerator, uint256 denominator)`](#PoolFactory-SetMaximumManagerFee-uint256-uint256-)
+- [`SetMaximumFee(uint256 numerator, uint256 denominator)`](#PoolFactory-SetMaximumFee-uint256-uint256-)
 - [`SetMaximumPerformanceFeeNumeratorChange(uint256 amount)`](#PoolFactory-SetMaximumPerformanceFeeNumeratorChange-uint256-)
 - [`SetAssetHandler(address assetHandler)`](#PoolFactory-SetAssetHandler-address-)
 - [`SetPoolStorageVersion(uint256 poolStorageVersion)`](#PoolFactory-SetPoolStorageVersion-uint256-)
@@ -136,7 +136,7 @@ Get the DAO fee
 - The denominator of the DAO fee
 
 
-# Function `getMaximumManagerFee() → uint256, uint256` {#PoolFactory-getMaximumManagerFee--}
+# Function `getMaximumFee() → uint256, uint256` {#PoolFactory-getMaximumFee--}
 Get the maximum manager fee
 
 
@@ -147,7 +147,7 @@ Get the maximum manager fee
 - The maximum manager fee denominator
 
 
-# Function `setMaximumManagerFee(uint256 numerator)` {#PoolFactory-setMaximumManagerFee-uint256-}
+# Function `setMaximumFee(uint256 numerator)` {#PoolFactory-setMaximumFee-uint256-}
 Set the maximum manager fee
 
 

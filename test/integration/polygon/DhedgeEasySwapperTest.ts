@@ -3,19 +3,13 @@ import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import {
-  aaveV2,
-  assets,
-  assetsBalanceOfSlot,
-  quickswap,
-  sushi,
-  torosPools,
-} from "../../../config/chainData/polygon-data";
+import { assets, assetsBalanceOfSlot, quickswap, sushi, torosPools } from "../../../config/chainData/polygon-data";
 import { DhedgeEasySwapper, Governance, PoolFactory, PoolManagerLogic } from "../../../types";
 import { units } from "../../TestHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
 import { toBytes32 } from "../../TestHelpers";
+import { utils } from "../utils/utils";
 
 use(solidity);
 
@@ -29,11 +23,20 @@ interface TestCase {
   withdrawToken: string;
 }
 
-describe("DhedgeEasySwapper", function () {
+describe("DhedgeEasySwapper Toros Tests", function () {
   let logicOwner: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress, feeSink: SignerWithAddress;
   let dhedgeEasySwapper: DhedgeEasySwapper;
   let poolFactory: PoolFactory;
   let governance: Governance;
+  let snapId: string;
+
+  beforeEach(async () => {
+    snapId = await utils.evmTakeSnap();
+  });
+
+  afterEach(async () => {
+    await utils.evmRestoreSnap(snapId);
+  });
 
   before(async function () {
     [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
@@ -57,7 +60,7 @@ describe("DhedgeEasySwapper", function () {
 
     const governanceAddress = "0x206CbDa3381e7afdF448621b90f549f89555A588";
     governance = await ethers.getContractAt("Governance", governanceAddress);
-    // // Take over ownership of the governance
+    // Take over ownership of the governance
     // const governanceOwner = await ethers.provider.getStorageAt(governance.address, 0);
     await ethers.provider.send("hardhat_setStorageAt", [
       governance.address,
@@ -69,12 +72,15 @@ describe("DhedgeEasySwapper", function () {
     await governance.setAddresses([{ name: toBytes32("swapRouter"), destination: swapRouter.address }]);
 
     const DhedgeEasySwapper = await ethers.getContractFactory("DhedgeEasySwapper");
-    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, swapRouter.address, assets.weth);
-    // dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, quickswap.router, assets.weth);
+    dhedgeEasySwapper = await DhedgeEasySwapper.deploy(feeSink.address, {
+      swapRouter: swapRouter.address,
+      weth: assets.weth,
+      assetType2Router: sushi.router,
+      assetType5Router: quickswap.router,
+      poolFactory: poolFactoryProxy,
+    });
     await dhedgeEasySwapper.deployed();
 
-    // AavelendingPool
-    await dhedgeEasySwapper.setAssetToSkip(aaveV2.lendingPool, true);
     await dhedgeEasySwapper.setFee(0, 0);
 
     await poolFactory.addTransferWhitelist(dhedgeEasySwapper.address);
@@ -178,6 +184,29 @@ describe("DhedgeEasySwapper", function () {
     });
   });
 
+  describe("Only using swapper for withdraw", () => {
+    it("can't withdraw locked tokens via easySwapper", async () => {
+      // Setup
+      const depositAmount = units(1, 6);
+      await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
+      const torosPool = await ethers.getContractAt("PoolLogic", torosPools.ETHBEAR2X);
+      const DepositToken = await ethers.getContractAt("IERC20", assets.usdc);
+      await DepositToken.connect(user1).approve(torosPool.address, depositAmount);
+
+      // Deposit
+      torosPool.connect(user1).deposit(assets.usdc, depositAmount);
+      const balance = await torosPool.connect(user1).balanceOf(user1.address);
+      // Withdraw
+      await ethers.provider.send("evm_increaseTime", [3600]); // 1 hour
+      await ethers.provider.send("evm_mine", []);
+
+      await torosPool.connect(user1).approve(dhedgeEasySwapper.address, balance);
+      await expect(
+        dhedgeEasySwapper.connect(user1).withdraw(torosPool.address, user1.address, assets.usdc, 0),
+      ).to.be.revertedWith("cooldown active");
+    });
+  });
+
   describe("Multiple users can use swapper at the same time", () => {
     it("2 users deposit, wait, withdraw", async () => {
       const userDepositToken = assets.usdc;
@@ -260,17 +289,6 @@ describe("DhedgeEasySwapper", function () {
   });
 
   describe("Toros Tests", () => {
-    let snapshot: unknown;
-    beforeEach(async function () {
-      snapshot = await ethers.provider.send("evm_snapshot", []);
-      await ethers.provider.send("evm_mine", []);
-      [logicOwner, user1, user2, feeSink] = await ethers.getSigners();
-    });
-    afterEach(async () => {
-      await ethers.provider.send("evm_revert", [snapshot]);
-      await ethers.provider.send("evm_mine", []);
-    });
-
     const createTest = (test: TestCase) => {
       const {
         testName,
@@ -322,8 +340,8 @@ describe("DhedgeEasySwapper", function () {
           userDepositToken,
           depositAmount,
           poolDepositToken,
-          // 5% slippage
-          expectedTokens.div(100).mul(95),
+          // 3% slippage
+          expectedTokens.div(100).mul(97),
         );
 
         // Make sure we received very close to one token
@@ -366,13 +384,32 @@ describe("DhedgeEasySwapper", function () {
         // Funds returned should be close to funds in
         expect(withdrawAmountUSDC).closeTo(
           depositAssetValueInUSDC,
-          // 2% - in and out slippage is quite a bit 605570-595902
+          // 3% - in and out slippage is quite a bit 605570-595902
           depositAssetValueInUSDC.div(100).mul(3) as unknown as number,
         );
       });
     };
 
+    const jakesBroadFund = "0x53cd6399ad01403cfa86aaed77a7553810459bf3"; // deposit usdc
     const tests: TestCase[] = [
+      {
+        testName: "JAKES BROAD FUND - can deposit and withdraw - no swap in - but big swaps out",
+        torosPoolAddress: jakesBroadFund,
+        userDepositToken: assets.usdc,
+        depositAmount: units(6, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.usdc,
+      },
+      {
+        testName: "dUSD- can deposit and withdraw - no swap in - but big swaps out",
+        torosPoolAddress: assets.dusd,
+        userDepositToken: assets.usdc,
+        depositAmount: units(10000, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.usdc,
+        withdrawToken: assets.usdc,
+      },
       {
         testName: "ETHBEAR2X - can deposit and withdraw - no swap on in or out",
         torosPoolAddress: torosPools.ETHBEAR2X,
@@ -450,6 +487,15 @@ describe("DhedgeEasySwapper", function () {
         userDepositTokenSlot: assetsBalanceOfSlot.usdc,
         poolDepositToken: assets.wbtc,
         withdrawToken: assets.usdc,
+      },
+      {
+        testName: "BTCBULL3X - can deposit and withdraw - swap in, swap out to btc",
+        torosPoolAddress: torosPools.BTCBULL3X,
+        userDepositToken: assets.usdc,
+        depositAmount: units(10000, 6),
+        userDepositTokenSlot: assetsBalanceOfSlot.usdc,
+        poolDepositToken: assets.wbtc,
+        withdrawToken: assets.wbtc,
       },
     ];
 

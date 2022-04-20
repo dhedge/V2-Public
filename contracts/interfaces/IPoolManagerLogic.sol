@@ -55,7 +55,7 @@ interface IPoolManagerLogic {
 
   function isMemberAllowed(address member) external view returns (bool);
 
-  function getManagerFee()
+  function getFee()
     external
     view
     returns (
