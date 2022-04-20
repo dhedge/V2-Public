@@ -52,6 +52,6 @@ export const quickLpAssetGuardJob: IJob<void> = async (
       description: "Quick LP tokens",
     };
 
-    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "guardName");
+    await addOrReplaceGuardInFile(filenames.assetGuardsFileName, deployedGuard, "assetType");
   }
 };

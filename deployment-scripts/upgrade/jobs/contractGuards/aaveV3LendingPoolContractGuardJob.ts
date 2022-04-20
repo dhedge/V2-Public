@@ -1,18 +1,17 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../Helpers";
 import { addOrReplaceGuardInFile } from "../helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
+import { IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
-export const aaveLendingPoolContractGuardJob: IJob<void> = async (
+export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
-  addresses: { aaveLendingPoolAddress?: string } & IProposeTxProperties,
+  addresses: IAddresses,
 ) => {
-  if (!addresses.aaveLendingPoolAddress) {
-    console.warn("aaveLendingPoolAddress not configured for aaveIncentivesControllerContractGuard: skipping.");
+  if (!addresses.aaveV3?.aaveLendingPoolAddress) {
+    console.warn("aaveLendingPoolAddress not configured for aaveV3LendingPoolContractGuardJob: skipping.");
     return;
   }
 
@@ -20,23 +19,23 @@ export const aaveLendingPoolContractGuardJob: IJob<void> = async (
   const Governance = await hre.artifacts.readArtifact("Governance");
   const governanceABI = new ethers.utils.Interface(Governance.abi);
 
-  console.log("Will deploy aavelendingpoolguard");
+  console.log("Will deploy aavev3lendingpoolguard");
   if (config.execute) {
-    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuard");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
+    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(addresses.aaveV3.aaveLendingPoolAddress);
     await aaveLendingPoolGuard.deployed();
     console.log("AaveLendingPoolGuard deployed at", aaveLendingPoolGuard.address);
-    versions[config.newTag].contracts.AaveLendingPoolGuard = aaveLendingPoolGuard.address;
+    versions[config.newTag].contracts.AaveLendingPoolGuardV3 = aaveLendingPoolGuard.address;
 
     await tryVerify(
       hre,
       aaveLendingPoolGuard.address,
-      "contracts/guards/contractGuards/AaveLendingPoolGuard.sol:AaveLendingPoolGuard",
-      [],
+      "contracts/guards/contractGuards/AaveLendingPoolGuardV3L2Pool.sol:AaveLendingPoolGuardV3L2Pool",
+      [addresses.aaveV3.aaveLendingPoolAddress],
     );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
-      addresses.aaveLendingPoolAddress,
+      addresses.aaveV3.aaveLendingPoolAddress,
       aaveLendingPoolGuard.address,
     ]);
     await proposeTx(
@@ -48,10 +47,10 @@ export const aaveLendingPoolContractGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      contractAddress: addresses.aaveLendingPoolAddress,
-      guardName: "AaveLendingPoolGuard",
+      contractAddress: addresses.aaveV3.aaveLendingPoolAddress,
+      guardName: "AaveLendingPoolGuardV3L2Pool",
       guardAddress: aaveLendingPoolGuard.address,
-      description: "Aave Lending Pool contract",
+      description: "Aave V2 Lending Pool contract",
     };
     await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");
   }

@@ -1,6 +1,6 @@
-import { torosPools, uniswapV3 } from "../../config/chainData/polygon-data";
-import { IAddresses, IFileNames } from "../types";
 import fs from "fs";
+import { aaveV3, torosPools, uniswapV3 } from "../../config/chainData/polygon-data";
+import { IAddresses, IFileNames } from "../types";
 
 // Openzepplin doesn't support having two distinct deployments of the same contracts to the same chain.
 // Itt always looks for the file "unknown-137.json" (137 is the chainId).
@@ -49,9 +49,16 @@ const polygonAddresses: IAddresses = {
   balancerV2VaultAddress: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
   balancerMerkleOrchardAddress: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",
   sushiMiniChefV2Address: "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F",
-  aaveProtocolDataProviderAddress: "0x7551b5D2763519d4e37e8B81929D336De671d46d",
   aaveIncentivesControllerAddress: "0x357D51124f59836DeD84c8a1730D72B749d8BC23",
-  aaveLendingPoolAddress: "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
+  aaveV2: {
+    aaveProtocolDataProviderAddress: "0x7551b5D2763519d4e37e8B81929D336De671d46d",
+    aaveLendingPoolAddress: "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
+  },
+
+  aaveV3: {
+    aaveProtocolDataProviderAddress: aaveV3.protocolDataProvider,
+    aaveLendingPoolAddress: aaveV3.lendingPool,
+  },
 
   quickStakingRewardsFactoryAddress: "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f",
   v2RouterAddresses: ["0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"], //quickswapRouter, sushiswapV2Router etc etc

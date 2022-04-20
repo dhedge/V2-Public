@@ -39,7 +39,6 @@ export interface ExternalLogicContracts {
   balancerV2VaultAddress?: Address;
   sushiMiniChefV2Address?: Address;
   balancerMerkleOrchardAddress?: Address;
-  aaveProtocolDataProviderAddress?: Address;
 
   quickStakingRewardsFactoryAddress?: Address;
   v2RouterAddresses?: string[]; //quickswapRouter, sushiswapV2Router etc etc
@@ -47,8 +46,17 @@ export interface ExternalLogicContracts {
   swapRouterCurvePools?: string[];
   quickLpUsdcWethStakingRewardsAddress?: Address;
   aaveIncentivesControllerAddress?: Address;
-  aaveLendingPoolAddress?: Address;
   oneInchV4RouterAddress?: Address;
+
+  aaveV2?: {
+    aaveProtocolDataProviderAddress: Address;
+    aaveLendingPoolAddress: Address;
+  };
+
+  aaveV3?: {
+    aaveProtocolDataProviderAddress: Address;
+    aaveLendingPoolAddress: Address;
+  };
 
   uniSwapV3NonfungiblePositionManagerAddress?: Address;
 
@@ -127,7 +135,8 @@ export interface IContracts {
   EasySwapperGuard?: Address;
   BalancerV2Guard?: Address;
   BalancerMerkleOrchardGuard?: Address;
-  AaveLendingPoolGuard?: Address;
+  AaveLendingPoolGuardV2?: Address;
+  AaveLendingPoolGuardV3?: Address;
   AaveIncentivesControllerGuard?: Address;
   UniswapV3NonfungiblePositionGuard?: Address;
   UniswapV3RouterGuard?: Address;
@@ -136,7 +145,8 @@ export interface IContracts {
   SushiLPAssetGuard?: Address;
   LendingEnabledAssetGuard?: Address;
   QuickLPAssetGuard?: Address;
-  AaveLendingPoolAssetGuard?: Address;
+  AaveLendingPoolAssetGuardV2?: Address;
+  AaveLendingPoolAssetGuardV3?: Address;
   UniswapV3AssetGuard?: Address;
 
   DhedgeEasySwapper: Address;
