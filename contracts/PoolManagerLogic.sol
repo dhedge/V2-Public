@@ -469,7 +469,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Set the address of the nftMembershipCollectionAddress
   /// @param newNftMembershipCollectionAddress The address of the new nftMembershipCollectionAddress
   function setNftMembershipCollectionAddress(address newNftMembershipCollectionAddress) external onlyManager {
-    try ERC721Upgradeable(newNftMembershipCollectionAddress).balanceOf(address(this)) {
+    if (newNftMembershipCollectionAddress == address(0)) {
+      nftMembershipCollectionAddress = newNftMembershipCollectionAddress;
+      return;
+    }
+    try ERC721Upgradeable(newNftMembershipCollectionAddress).balanceOf(address(this)) returns (uint256) {
       nftMembershipCollectionAddress = newNftMembershipCollectionAddress;
     } catch {
       revert("Invalid collection");

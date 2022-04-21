@@ -45,7 +45,7 @@ const ONE_HUNDRED_TOKENS = "100000000000000000000";
 
 const POOL_STORAGE_VERSION = "99999";
 
-describe("PoolFactory", function () {
+describe.only("PoolFactory", function () {
   let logicOwner: SignerWithAddress,
     manager: SignerWithAddress,
     dao: SignerWithAddress,
@@ -2034,6 +2034,20 @@ describe("PoolFactory", function () {
       await expect(poolManagerLogicProxy.setNftMembershipCollectionAddress(logicOwner.address)).to.be.revertedWith(
         "only manager",
       );
+    });
+
+    it("should be able to add and remove nft collection", async () => {
+      const MockContract = await ethers.getContractFactory("MockContract");
+      const nftCollectionMock = await MockContract.deploy();
+      await poolManagerLogicProxy.connect(manager).setNftMembershipCollectionAddress(nftCollectionMock.address);
+      await poolManagerLogicProxy.connect(manager).setNftMembershipCollectionAddress(ZERO_ADDRESS);
+      expect(await poolManagerLogicProxy.nftMembershipCollectionAddress()).to.equal(ZERO_ADDRESS);
+    });
+
+    it("should not be able to set nft collection to contract without balanceOf func", async () => {
+      expect(
+        poolManagerLogicProxy.connect(manager).setNftMembershipCollectionAddress(poolFactory.address),
+      ).to.be.revertedWith("Invalid collection");
     });
 
     it("should be able to have members that must own nft", async () => {
