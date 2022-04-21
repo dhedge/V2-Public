@@ -2010,6 +2010,40 @@
           "assetType": "8",
           "oracleType": "USDPriceAggregator",
           "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+        },
+        {
+          "assetName": "Toros BTCBEAR1X",
+          "assetAddress": "0x86C3Dd18bAF4370495d9228b58fD959771285C55",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0xd2e42eF0510c4d8C005bcC047945B543BC1841AD"
+        },
+        {
+          "assetName": "Toros ETHBEAR1X",
+          "assetAddress": "0x79D2aeFE6A21b26B024d9341A51f6b7897852499",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x634642a30606Ead66482CaeC8Cb952dE11e009A7"
+        },
+        {
+          "assetName": "StraitsX Singapore Dollar",
+          "assetAddress": "0x769434dcA303597C8fc4997Bf3DAB233e961Eda2",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x8CE3cAc0E6635ce04783709ca3CC4F5fc5304299"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x8CE3cAc0E6635ce04783709ca3CC4F5fc5304299"
+        },
+        {
+          "assetName": "Balancer LP 20DHT-80dUSD",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0x0a8156fdc4b488cb1bf1c44c7ee944088174fa30",
+          "assetType": 0,
+          "oracleAddress": "0x9EBE499D82D21859D18d2542d79FA6df887A4469"
         }
       ],
       "Oracles": [
@@ -2062,6 +2096,6 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 21 Apr 2022 02:43:02 GMT"
+    "lastUpdated": "Thu, 21 Apr 2022 23:42:44 GMT"
   }
 }
