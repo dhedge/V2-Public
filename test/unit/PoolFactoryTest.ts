@@ -45,7 +45,7 @@ const ONE_HUNDRED_TOKENS = "100000000000000000000";
 
 const POOL_STORAGE_VERSION = "99999";
 
-describe.only("PoolFactory", function () {
+describe("PoolFactory", function () {
   let logicOwner: SignerWithAddress,
     manager: SignerWithAddress,
     dao: SignerWithAddress,
