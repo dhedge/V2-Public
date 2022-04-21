@@ -554,7 +554,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function getFundSummary() external view returns (FundSummary memory) {
     (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
       poolManagerLogic
-    ).getManagerFee();
+    ).getFee();
     (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
     return
