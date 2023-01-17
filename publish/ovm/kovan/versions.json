@@ -1,0 +1,59 @@
+{
+  "v2.12.0": {
+    "contracts": {
+      "ERC20Guard": "0x9bdefbbad25f2f318Ca631C138Af87a8D60Ab0d9",
+      "SynthetixGuard": "0x17cC56AB666Cb0Af5bcBD5DB042F87c568D45CCB",
+      "Governance": "0x35F89E1851A037Fa496f936a05E6818346FB67a8",
+      "USDPriceAggregator": "0x1655bfB8D727225dd6e7E9ED166600d46BA3ED94",
+      "Assets": [
+        {
+          "assetName": "Synth sETH",
+          "assetAddress": "0xD7C80fC4A5B05B5bE7B5b762e32127B54Fea385A",
+          "assetType": "0",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261"
+          },
+          "oracleAddress": "0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261"
+        },
+        {
+          "assetName": "Synth sUSD",
+          "assetAddress": "0x2400D0469bfdA59FB0233c3027349D83F1a0f4c8",
+          "assetType": "0",
+          "oracleType": "USDPriceAggregator",
+          "oracleAddress": "0x1655bfB8D727225dd6e7E9ED166600d46BA3ED94"
+        },
+        {
+          "assetName": "Lyra Option Market Wrapper Asset",
+          "assetAddress": "0xd24955B7AB75FaD5542769105d862FC76A76AF7f",
+          "assetType": "11",
+          "oracleType": "USDPriceAggregator",
+          "oracleAddress": "0x1655bfB8D727225dd6e7E9ED166600d46BA3ED94"
+        }
+      ],
+      "AssetHandlerProxy": "0xdA10048Dcee9218b0302903b33A5FF8cE0f6379f",
+      "AssetHandler": "0x8c649efD62e25664A634b0F3F9e9c739CeEd7Ce4",
+      "PoolPerformanceProxy": "0xAd5f2cF65FdcDcAa366C59d4c6c9bB8599045756",
+      "PoolPerformance": "0x536E255Aa062a81e1Cd770012f6F6bCA4b237B00",
+      "PoolLogicProxy": "0x15003Da981696d0540E678203C5555a14Da3D179",
+      "PoolLogic": "0xf8056b9c58b3a8cdc0a3123d36455fb73eb85704",
+      "PoolManagerLogicProxy": "0x8aE077a5AA3BC5EdA7a8f70888D05104849B94ff",
+      "PoolManagerLogic": "0x418eaa6eb030d087c6808f11d7d69f213efc1be9",
+      "PoolFactoryProxy": "0x697F895d1e2a934F14C4f33Cad92fcDdd114F748",
+      "PoolFactory": "0x51390DB5CC5c55065Ba5f67b21E35c99225f8a98",
+      "DhedgeOptionMarketWrapperForLyra": "0x617Fa542F727af6cD01253F04398E366B0F1973F",
+      "LyraOptionMarketWrapperAssetGuard": "0x8e03E4ECC28633035c15a8f3fD3aec4c1a03260c",
+      "LyraOptionMarketWrapperContractGuard": "0xe01fB8799e3Ed1CA066EC102E5b203E197681039",
+      "ERC721ContractGuard": "0x093496D68438fF9232b3AA2404F6c457f3AF2334",
+      "DhedgeNftTrackerStorageProxy": "0x8B566d5783a98EdDAe7C469cfe5d883611412872",
+      "DhedgeNftTrackerStorage": "0xd8dB03041D880924c624204D7639378DaAf7a171"
+    },
+    "network": {
+      "name": "optimism-kovan",
+      "chainId": 69,
+      "ensAddress": null,
+      "_defaultProvider": null
+    },
+    "lastUpdated": "Wed, 10 Aug 2022 02:17:11 GMT"
+  }
+}

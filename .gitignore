@@ -1,0 +1,27 @@
+node_modules
+.env
+.openzeppelin/unknown-31337.json
+.openzeppelin/unknown-137.json
+
+#Hardhat files
+cache
+cache-ovm
+artifacts
+artifacts-ovm
+types
+
+#VIM
+*.swp
+
+#Mac Files
+*.DS_Store
+
+#Coverage
+coverage/
+coverage.json
+
+# VScode
+.vscode
+
+# OVM
+cache-ovm

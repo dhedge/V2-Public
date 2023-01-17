@@ -1,0 +1,244 @@
+name: OVM Integration Tests
+on: [push]
+
+jobs:
+  ovm-integration1:
+    if: "contains(join(github.event.commits.*.message), '[run-ovm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    name: OIT 1 - Uniswap V3, Synthetix, Futures
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Node module cache
+        uses: actions/cache@v2
+        id: node-cache
+        with:
+          path: "**/node_modules"
+          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-v2-
+      - name: Install dependencies
+        run: npm install
+        if: steps.node-cache.outputs.cache-hit != 'true'
+
+      - name: Run EVM Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.OVM_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --config hardhat.config-compile.ts --fork $ALCHEMY_URL &
+
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
+
+      - name: Hardhat compile
+        run: npx hardhat compile
+
+      - name: FuturesTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/futures/*.ts --network localhost
+
+      - name: UniswapV3AssetGuardTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/UniswapV3AssetGuardTest.ts --network localhost
+
+      - name: UniswapV3NonfungiblePositionGuardTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/UniswapV3NonfungiblePositionGuardTest.ts --network localhost
+
+      - name: UniswapV3SwapRouterTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/UniswapV3SwapRouterTest.ts --network localhost
+
+      - name: UniV3TWAPAggregator Tests
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/UniV3TWAPAggregator.ts --network localhost
+
+      - name: SynthetixTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/SynthetixTest.ts --network localhost
+
+      - name: SynthPriceAggregatorTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/SynthPriceAggregatorTest.ts --network localhost
+
+
+  ovm-integration2:
+    if: "contains(join(github.event.commits.*.message), '[run-ovm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    name: OIT 2 - Aave V3 & Velodrome
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Node module cache
+        uses: actions/cache@v2
+        id: node-cache
+        with:
+          path: "**/node_modules"
+          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-v2-
+
+      - name: Install dependencies
+        run: npm install
+        if: steps.node-cache.outputs.cache-hit != 'true'
+
+      - name: Run EVM Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.OVM_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --config hardhat.config-compile.ts --fork $ALCHEMY_URL &
+
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
+
+      - name: Hardhat compile
+        run: npx hardhat compile
+
+      # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
+      - name: AaveV3Test
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/AaveV3Test.ts --network localhost
+
+      - name: AaveV3TestWithWETH
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/AaveV3TestWithWETH.ts --network localhost
+
+      - name: Velodrome
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/velodrome/*.ts --network localhost
+
+      - name: ArrakisTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/arrakis/*.ts --network localhost
+
+  ovm-integration3:
+    if: "contains(join(github.event.commits.*.message), '[run-lyra]') || contains(join(github.event.commits.*.message), '[run-ovm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    name: OIT 3 - Lyra
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Node module cache
+        uses: actions/cache@v2
+        id: node-cache
+        with:
+          path: "**/node_modules"
+          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-v2-
+
+      - name: Install dependencies
+        run: npm install
+        if: steps.node-cache.outputs.cache-hit != 'true'
+
+      - name: Run EVM Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.OVM_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --config hardhat.config-compile.ts --fork $ALCHEMY_URL &
+
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile-lyra.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
+
+      - name: Hardhat compile
+        run: npx hardhat compile
+
+      # We run these separately because then it fails faster AND you can tell immediately which tests failed via github
+
+      - name: LyraOptionMarketWrapperAssetGuardRealTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/lyra/LyraOptionMarketWrapperAssetGuardRealTest.ts --network localhost
+
+      - name: LyraOptionMarketWrapperContractGuardTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/lyra/LyraOptionMarketWrapperContractGuardTest.ts --network localhost
+
+      - name: LyraOptionMarketWrapperAssetGuardTest
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/lyra/LyraOptionMarketWrapperAssetGuardTest.ts --network localhost
+
+  ovm-integration4:
+    if: "contains(join(github.event.commits.*.message), '[run-easy-swapper]') || contains(join(github.event.commits.*.message), '[run-ovm]') || contains(join(github.event.commits.*.message), '[run-integration]') || contains(github.event.ref, 'master')"
+    name: OIT 4 - DhedgeEasySwapper
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Node module cache
+        uses: actions/cache@v2
+        id: node-cache
+        with:
+          path: "**/node_modules"
+          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: npm-v2-
+      - name: Install dependencies
+        run: npm install
+        if: steps.node-cache.outputs.cache-hit != 'true'
+
+      - name: Run EVM Fork in background
+        env:
+          ALCHEMY_URL: ${{ secrets.OVM_ALCHEMY_URL_INTEGRATION_TEST }}
+        run: |
+          npx hardhat node --config hardhat.config-compile.ts --fork $ALCHEMY_URL &
+
+      - name: Hardhat compile TypeChain
+        run: npx hardhat --config hardhat.config-compile.ts typechain
+        if: steps.typechain-cache.outputs.cache-hit != 'true'
+
+      - name: Hardhat compile
+        run: npx hardhat compile
+
+      - name: DhedgeEasySwapper
+        if: always()
+        run: |
+          npx hardhat test ./test/integration/ovm/DhedgeEasySwapperTest.ts --network localhost

@@ -1,0 +1,23 @@
+[
+  {
+    "assetName": "Synth sETH",
+    "assetAddress": "0xD7C80fC4A5B05B5bE7B5b762e32127B54Fea385A",
+    "assetType": "0",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x7f8847242a530E809E17bF2DA5D2f9d2c4A43261"
+    }
+  },
+  {
+    "assetName": "Synth sUSD",
+    "assetAddress": "0x2400D0469bfdA59FB0233c3027349D83F1a0f4c8",
+    "assetType": "0",
+    "oracleType": "USDPriceAggregator"
+  },
+  {
+    "assetName": "Lyra Option Market Wrapper Asset",
+    "assetAddress": "0xd24955B7AB75FaD5542769105d862FC76A76AF7f",
+    "assetType": "100",
+    "oracleType": "USDPriceAggregator"
+  }
+]
