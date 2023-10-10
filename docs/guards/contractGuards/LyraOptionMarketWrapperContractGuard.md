@@ -6,9 +6,10 @@
 - [`marketWrapper()`](#LyraOptionMarketWrapperContractGuard-marketWrapper--)
 - [`getOptionPositions(address poolLogic)`](#LyraOptionMarketWrapperContractGuard-getOptionPositions-address-)
 - [`txGuard(address _poolManagerLogic, address to, bytes data)`](#LyraOptionMarketWrapperContractGuard-txGuard-address-address-bytes-)
-- [`afterTxGuard(address _poolManagerLogic, address, bytes data)`](#LyraOptionMarketWrapperContractGuard-afterTxGuard-address-address-bytes-)
+- [`afterTxGuard(address _poolManagerLogic, address to, bytes data)`](#LyraOptionMarketWrapperContractGuard-afterTxGuard-address-address-bytes-)
 - [`removeClosedPosition(address poolLogic, address optionMarket, uint256 positionId)`](#LyraOptionMarketWrapperContractGuard-removeClosedPosition-address-address-uint256-)
 - [`settleExpiredAndFilterActivePositions(address poolLogic)`](#LyraOptionMarketWrapperContractGuard-settleExpiredAndFilterActivePositions-address-)
+- [`settleExpiredAndFilterActivePositions(address poolLogic, address guardedContract)`](#LyraOptionMarketWrapperContractGuard-settleExpiredAndFilterActivePositions-address-address-)
 
 
 
@@ -54,7 +55,7 @@ Transaction guard for OptionMarketWrapper - used for Toros
 
 
 
-# Function `afterTxGuard(address _poolManagerLogic, address, bytes data)` {#LyraOptionMarketWrapperContractGuard-afterTxGuard-address-address-bytes-}
+# Function `afterTxGuard(address _poolManagerLogic, address to, bytes data)` {#LyraOptionMarketWrapperContractGuard-afterTxGuard-address-address-bytes-}
 This function is called after execution transaction (used to track transactions)
 
 
@@ -74,7 +75,17 @@ No description
 
 
 # Function `settleExpiredAndFilterActivePositions(address poolLogic)` {#LyraOptionMarketWrapperContractGuard-settleExpiredAndFilterActivePositions-address-}
-No description
+Function for settling expired options and filtering active options
+
+
+
+
+
+# Function `settleExpiredAndFilterActivePositions(address poolLogic, address guardedContract)` {#LyraOptionMarketWrapperContractGuard-settleExpiredAndFilterActivePositions-address-address-}
+Public function for settling expired options and filtering active options
+
+
+
 
 
 

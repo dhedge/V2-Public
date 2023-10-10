@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
-import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
+import { expect } from "chai";
+import { checkAlmostSame, getAmountOut, units } from "../../testHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   DHedgePoolAggregator,
@@ -13,13 +12,11 @@ import {
   PoolManagerLogic,
 } from "../../../types";
 import { createFund } from "../utils/createFund";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 const { quickswap, assets, assetsBalanceOfSlot } = polygonChainData;
 import { getAccountToken } from "../utils/getAccountTokens";
 import { deployContracts } from "../utils/deployContracts/deployContracts";
 import { utils } from "../utils/utils";
-
-use(solidity);
 
 describe("DHedgePoolAggregator Test", function () {
   let USDC: IERC20;

@@ -2,7 +2,7 @@ Transaction guard for UniswapV2Router
 
 
 # Functions:
-- [`constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)`](#UniswapV2RouterGuard-constructor-uint256-uint256-)
+- [`constructor(address _slippageAccumulator)`](#UniswapV2RouterGuard-constructor-address-)
 - [`txGuard(address _poolManagerLogic, address to, bytes data)`](#UniswapV2RouterGuard-txGuard-address-address-bytes-)
 
 # Events:
@@ -10,7 +10,7 @@ Transaction guard for UniswapV2Router
 - [`RemoveLiquidity(address fundAddress, address tokenA, address tokenB, address pair, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, uint256 time)`](#UniswapV2RouterGuard-RemoveLiquidity-address-address-address-address-uint256-uint256-uint256-uint256-)
 
 
-# Function `constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)` {#UniswapV2RouterGuard-constructor-uint256-uint256-}
+# Function `constructor(address _slippageAccumulator)` {#UniswapV2RouterGuard-constructor-address-}
 No description
 
 
@@ -32,5 +32,7 @@ Transaction guard for Uniswap V2
 - txType the transaction type of a given transaction data. 2 for `Exchange` type, 3 for `Add Liquidity`, 4 for `Remove Liquidity`
 
 - isPublic if the transaction is public or private
+
+
 
 

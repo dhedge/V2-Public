@@ -17,6 +17,25 @@ interface IOptionMarket {
     SHORT_PUT_QUOTE
   }
 
+  struct TradeInputParameters {
+    // id of strike
+    uint256 strikeId;
+    // OptionToken ERC721 id for position (set to 0 for new positions)
+    uint256 positionId;
+    // number of sub-orders to break order into (reduces slippage)
+    uint256 iterations;
+    // type of option to trade
+    OptionType optionType;
+    // number of contracts to trade
+    uint256 amount;
+    // final amount of collateral to leave in OptionToken position
+    uint256 setCollateralTo;
+    // revert trade if totalCost is below this value
+    uint256 minTotalCost;
+    // revert trade if totalCost is above this value
+    uint256 maxTotalCost;
+  }
+
   struct Strike {
     // strike listing identifier
     uint256 id;
@@ -50,4 +69,16 @@ interface IOptionMarket {
       uint256 priceAtExpiry,
       uint256 strikeToBaseReturned
     );
+
+  ///
+
+  function addCollateral(uint256 positionId, uint256 amountCollateral) external;
+
+  function liquidatePosition(uint256 positionId, address rewardBeneficiary) external;
+
+  function closePosition(TradeInputParameters memory params) external;
+
+  function forceClosePosition(TradeInputParameters memory params) external;
+
+  function openPosition(TradeInputParameters memory params) external;
 }

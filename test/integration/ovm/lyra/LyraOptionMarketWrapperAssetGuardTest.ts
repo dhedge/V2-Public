@@ -4,7 +4,7 @@ import { deployContracts } from "../../utils/deployContracts/deployContracts";
 import { utils } from "../../utils/utils";
 import { lyraUtils, TestSystemContractsType } from "@lyrafinance/protocol";
 import { IERC20__factory, MockAggregatorV2V3 } from "@lyrafinance/protocol/dist/typechain-types";
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
 import {
   IOptionMarketWrapper__factory,
   PoolFactory,
@@ -13,7 +13,7 @@ import {
   ISynthAddressProxy,
   LyraOptionMarketWrapperAssetGuard,
 } from "../../../../types";
-import { currentBlockTimestamp, toBytes32, units } from "../../../TestHelpers";
+import { currentBlockTimestamp, toBytes32, units } from "../../../testHelpers";
 import { createFund } from "../../utils/createFund";
 import { BigNumber } from "ethers";
 import { deployLyraTestSystem } from "./LyraTestHelpers";
@@ -183,12 +183,12 @@ describe("LyraOptionMarketWrapperAssetGuard Test", function () {
       // Wont revert
       await lyraOptionMarketWrapperAssetGuard.assertNoGWAVDivergence(100, 98);
       // Will revert more than 3% divergence
-      await expect(lyraOptionMarketWrapperAssetGuard.assertNoGWAVDivergence(100, 96)).to.be.revertedWith(
+      await expect(lyraOptionMarketWrapperAssetGuard.assertNoGWAVDivergence(100, 94)).to.be.revertedWith(
         "gwav divergence too high",
       );
     });
 
-    it("getGWAVCallPrice Reverts on more than 3% divergance", async () => {
+    it("getGWAVCallPrice Reverts on more than 5% divergance", async () => {
       await lyraOptionMarketWrapperAssetGuard.getGWAVCallPrice(testSystem.optionMarket.address, 1);
       await openLongCall();
       await increaseTimeAndBuyOption(2);
@@ -197,7 +197,7 @@ describe("LyraOptionMarketWrapperAssetGuard Test", function () {
       ).to.be.revertedWith("gwav divergence too high");
     });
 
-    it("getGWAVPutPrice Reverts on more than 3% divergance", async () => {
+    it("getGWAVPutPrice Reverts on more than 5% divergance", async () => {
       await lyraOptionMarketWrapperAssetGuard.getGWAVPutPrice(testSystem.optionMarket.address, 1);
       await openLongCall();
       await increaseTimeAndBuyOption(2);

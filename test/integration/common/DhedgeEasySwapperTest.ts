@@ -11,14 +11,15 @@ import {
   DhedgeEasySwapper__factory,
   EasySwapperGuard,
 } from "../../../types";
-import { checkAlmostSame, units } from "../../TestHelpers";
+import { checkAlmostSame, units } from "../../testHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
-import { toBytes32 } from "../../TestHelpers";
+import { toBytes32 } from "../../testHelpers";
 import { utils } from "../utils/utils";
 import { createFund } from "../utils/createFund";
-import { ChainDataCommon } from "../../../config/chainData/ChainDataType";
-import { Address } from "../../../deployment-scripts/types";
+import { Address } from "../../../deployment/types";
+
+const SIXTEEN_MINUTES = 60 * 16;
 
 export interface EasySwapperCommonTestCase {
   testName: string;
@@ -37,17 +38,44 @@ export interface EasySwapperNativeTestCase extends EasySwapperCommonTestCase {
   nativeAssetDepositAmount: BigNumber;
 }
 
+interface EasySwapperTestsChainData {
+  assets: {
+    weth: string;
+    usdc: string;
+    susd?: string;
+    snxProxy?: string;
+  };
+  assetsBalanceOfSlot: {
+    usdc: number;
+    weth: number;
+  };
+  v2Routers: string[];
+  uniswapV3: {
+    factory: string;
+    router: string;
+  };
+  velodrome?: {
+    router: string;
+  };
+  velodromeV2?: {
+    router: string;
+    factory: string;
+  };
+  proxyAdmin: string;
+  routeHints: { asset: string; intermediary: string }[];
+}
+
 export const DhedgeEasySwapperTests = (
   poolFactoryProxy: string,
   baseTestDhedgePoolMustAcceptUSDC: Address,
   withdrawNormalTestCases: EasySwapperTestCase[],
   withdrawSUSDTestCases: EasySwapperTestCase[],
   withdrawNativeTestCases: EasySwapperNativeTestCase[],
-  chainData: ChainDataCommon,
+  chainData: EasySwapperTestsChainData,
   nativeAssetWrapper: Address,
   emptyNeverFundedDhedgePoolMustAcceptWETH: Address,
 ) => {
-  const { assets, assetsBalanceOfSlot, v2Routers, uniswapV3, velodrome } = chainData;
+  const { assets, assetsBalanceOfSlot, v2Routers, uniswapV3, velodrome, velodromeV2, routeHints } = chainData;
   // Must accept usdc
   const BASE_TEST_POOL = baseTestDhedgePoolMustAcceptUSDC;
   describe("DhedgeEasySwapper Toros Tests", function () {
@@ -81,16 +109,25 @@ export const DhedgeEasySwapperTests = (
       poolFactory
         .connect(poolFactoryOwner)
         .setLogic((await PoolLogic.deploy()).address, (await PoolManagerLogic.deploy()).address);
+      poolFactory.connect(poolFactoryOwner).setMaximumFee(5000, 300, 100);
+      poolFactory.connect(poolFactoryOwner).setPerformanceFeeNumeratorChangeDelay(0);
 
       const UniV3V2SwapRouter = await ethers.getContractFactory("DhedgeUniV3V2Router");
       const v3v2SwapRouter = await UniV3V2SwapRouter.deploy(uniswapV3.factory, uniswapV3.router);
       await v3v2SwapRouter.deployed();
 
       if (velodrome) {
-        const DhedgeVeloV2Router = await ethers.getContractFactory("DhedgeVeloV2Router");
-        const dhedgeVeloV2Router = await DhedgeVeloV2Router.deploy(velodrome.router);
-        await dhedgeVeloV2Router.deployed();
-        v2Routers.push(dhedgeVeloV2Router.address);
+        const DhedgeVeloUniV2Router = await ethers.getContractFactory("DhedgeVeloUniV2Router");
+        const dhedgeVeloUniV2Router = await DhedgeVeloUniV2Router.deploy(velodrome.router);
+        await dhedgeVeloUniV2Router.deployed();
+        v2Routers.push(dhedgeVeloUniV2Router.address);
+      }
+
+      if (velodromeV2) {
+        const DhedgeVeloV2UniV2Router = await ethers.getContractFactory("DhedgeVeloV2UniV2Router");
+        const dhedgeVeloV2UniV2Router = await DhedgeVeloV2UniV2Router.deploy(velodromeV2.router, velodromeV2.factory);
+        await dhedgeVeloV2UniV2Router.deployed();
+        v2Routers.push(dhedgeVeloV2UniV2Router.address);
       }
 
       const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
@@ -98,7 +135,7 @@ export const DhedgeEasySwapperTests = (
       await dHedgePoolAggregator.deployed();
 
       const SwapRouter = await ethers.getContractFactory("DhedgeSuperSwapper");
-      const swapRouter = await SwapRouter.deploy([v3v2SwapRouter.address, ...v2Routers], []);
+      const swapRouter = await SwapRouter.deploy([v3v2SwapRouter.address, ...v2Routers], routeHints);
       await swapRouter.deployed();
 
       const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
@@ -115,14 +152,10 @@ export const DhedgeEasySwapperTests = (
       await dhedgeEasySwapper.setWithdrawProps({
         swapRouter: swapRouter.address,
         weth: assets.weth,
-        // Not used - Kept for upgradability
-        assetType2Router: chainData.ZERO_ADDRESS,
-        // Not used - Kept for upgradability
-        assetType5Router: chainData.ZERO_ADDRESS,
         synthetixProps: {
           swapSUSDToAsset: assets.usdc,
-          sUSDProxy: assets.susd || chainData.ZERO_ADDRESS,
-          snxProxy: assets.snxProxy || chainData.ZERO_ADDRESS,
+          sUSDProxy: assets.susd || ethers.constants.AddressZero,
+          snxProxy: assets.snxProxy || ethers.constants.AddressZero,
         },
         nativeAssetWrapper,
       });
@@ -159,9 +192,9 @@ export const DhedgeEasySwapperTests = (
       expect(await poolFactory.connect(poolFactoryOwner).customCooldownWhitelist(dhedgeEasySwapper.address)).to.be.true;
     });
 
-    describe("fees", () => {
-      it("fee sink receives fee", async () => {
-        const depositAmount = units(1, 6);
+    describe("Fees", () => {
+      it("fee sink receives fee after custom cooldown deposit", async () => {
+        const depositAmount = units(6, 6); // Amount should be greater than 5e6.
         await getAccountToken(depositAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
         // Whitelist
@@ -177,21 +210,21 @@ export const DhedgeEasySwapperTests = (
         // Check feeSink is empty
         const balanceBefore = await DepositToken.balanceOf(feeSink.address);
         // Deposit
-        await dhedgeEasySwapper.deposit(BASE_TEST_POOL, assets.usdc, depositAmount, assets.usdc, 0);
+        await dhedgeEasySwapper.depositWithCustomCooldown(BASE_TEST_POOL, assets.usdc, depositAmount, assets.usdc, 0);
         // Fee of 1% received by fee sink
         const balanceAfter = await DepositToken.balanceOf(feeSink.address);
         expect(balanceAfter.sub(balanceBefore)).to.equal(depositAmount.div(100));
         await dhedgeEasySwapper.setFee(0, 0);
       });
 
-      it("pool manager fee bypass works", async () => {
+      it("pool manager fee bypass works with custom cooldown deposit", async () => {
         // Invest into Toros pool from a manager pool
         // The manager is whitelisted to bypass fee
         const DepositToken = await ethers.getContractAt(
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
           assets.usdc,
         );
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
         await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
         const funds = await createFund(poolFactory, logicOwner, user1, [
@@ -218,7 +251,7 @@ export const DhedgeEasySwapperTests = (
         const dhedgeEasySwapperAbi = new ethers.utils.Interface(DhedgeEasySwapper__factory.abi);
         const approveData = iERC20.encodeFunctionData("approve", [dhedgeEasySwapper.address, depositAmount]);
         await feeBypassPool.connect(user1).execTransaction(DepositToken.address, approveData);
-        const easySwapperDepositData = dhedgeEasySwapperAbi.encodeFunctionData("deposit", [
+        const easySwapperDepositData = dhedgeEasySwapperAbi.encodeFunctionData("depositWithCustomCooldown", [
           torosPool.address,
           DepositToken.address,
           depositAmount,
@@ -233,6 +266,32 @@ export const DhedgeEasySwapperTests = (
         expect(balanceAfter.sub(balanceBefore)).to.equal(0);
         await dhedgeEasySwapper.setFee(0, 0);
       });
+
+      it("doesn't receive fee if pool has entry fee set up", async () => {
+        const { poolLogicProxy, poolManagerLogicProxy } = await createFund(poolFactory, logicOwner, user1, [
+          { asset: assets.usdc, isDeposit: true },
+        ]);
+        await dhedgeEasySwapper.setFee(1, 100); // 1%
+        await dhedgeEasySwapper.setPoolAllowed(poolLogicProxy.address, true);
+        await poolManagerLogicProxy.connect(user1).announceFeeIncrease(5000, 0, 100); // 1% entry fee
+        await poolManagerLogicProxy.connect(user1).commitFeeIncrease();
+
+        const depositAmount = units(10, 6); // 10 USDC
+        await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
+
+        const DepositToken = await ethers.getContractAt(
+          "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
+          assets.usdc,
+        );
+        const sinkBalanceBefore = await DepositToken.balanceOf(feeSink.address);
+        expect(sinkBalanceBefore).to.equal(0);
+        await DepositToken.connect(user1).approve(dhedgeEasySwapper.address, depositAmount);
+        await dhedgeEasySwapper
+          .connect(user1)
+          .depositWithCustomCooldown(poolLogicProxy.address, assets.usdc, depositAmount, assets.usdc, 0);
+        const sinkBalanceAfter = await DepositToken.balanceOf(feeSink.address);
+        expect(sinkBalanceAfter).to.equal(0);
+      });
     });
 
     describe("FlashSwap Test", () => {
@@ -241,7 +300,7 @@ export const DhedgeEasySwapperTests = (
         const FlashSwapperTest = await ethers.getContractFactory("FlashSwapperTest");
         const flashSwapperTest = await FlashSwapperTest.deploy();
         await flashSwapperTest.deployed();
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
         await getAccountToken(depositAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
         // Whitelist
         const torosPool = await ethers.getContractAt("PoolLogic", BASE_TEST_POOL);
@@ -264,7 +323,7 @@ export const DhedgeEasySwapperTests = (
         const FlashSwapperTest = await ethers.getContractFactory("FlashSwapperTest");
         const flashSwapperTest = await FlashSwapperTest.deploy();
         await flashSwapperTest.deployed();
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
         await getAccountToken(depositAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
         // Whitelist
         const torosPool = await ethers.getContractAt("PoolLogic", BASE_TEST_POOL);
@@ -291,7 +350,7 @@ export const DhedgeEasySwapperTests = (
       it("24 hour lock up still works", async () => {
         /// NOTE we operate as user1.address in this test so that we don't trigger wallet cooldown for other tests
         // Setup
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
         await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
         const torosPool = await ethers.getContractAt("PoolLogic", BASE_TEST_POOL);
         const DepositToken = await ethers.getContractAt(
@@ -310,10 +369,10 @@ export const DhedgeEasySwapperTests = (
       });
     });
 
-    describe("   using swapper for withdraw", () => {
+    describe("Using swapper for withdraw", () => {
       it("can't withdraw locked tokens via easySwapper", async () => {
         // Setup
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
         await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
         const torosPool = await ethers.getContractAt("PoolLogic", BASE_TEST_POOL);
         const DepositToken = await ethers.getContractAt(
@@ -337,7 +396,7 @@ export const DhedgeEasySwapperTests = (
     describe("Using Swapper for deposit", () => {
       it("tokens have lockup", async () => {
         // Setup
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
         await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
         const torosPool = await ethers.getContractAt("PoolLogic", BASE_TEST_POOL);
         const DepositToken = await ethers.getContractAt(
@@ -356,6 +415,24 @@ export const DhedgeEasySwapperTests = (
         ).to.be.revertedWith("cooldown active");
         await expect(torosPool.connect(user1).withdraw(balance)).to.be.revertedWith("cooldown active");
       });
+
+      it("doesn't allow to call custom cooldown deposit methods for non-allowed pools", async () => {
+        const depositAmount = units(6, 6);
+        await getAccountToken(depositAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+        const DepositToken = await ethers.getContractAt(
+          "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
+          assets.usdc,
+        );
+        await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
+        await expect(
+          dhedgeEasySwapper.depositWithCustomCooldown(BASE_TEST_POOL, assets.usdc, depositAmount, assets.usdc, 0),
+        ).to.be.revertedWith("no-go");
+        await expect(
+          dhedgeEasySwapper.depositNativeWithCustomCooldown(BASE_TEST_POOL, assets.usdc, 0, {
+            value: units(1),
+          }),
+        ).to.be.revertedWith("no-go");
+      });
     });
 
     describe("Multiple users can use swapper at the same time", () => {
@@ -371,7 +448,7 @@ export const DhedgeEasySwapperTests = (
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
           assets.usdc,
         );
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
 
         await getAccountToken(depositAmount, logicOwner.address, userDepositToken, userDepositTokenSlot);
         await getAccountToken(depositAmount, user2.address, userDepositToken, userDepositTokenSlot);
@@ -382,15 +459,21 @@ export const DhedgeEasySwapperTests = (
         await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
         await DepositToken.connect(user2).approve(dhedgeEasySwapper.address, depositAmount);
 
-        await dhedgeEasySwapper.deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+        await dhedgeEasySwapper.depositWithCustomCooldown(
+          torosPool.address,
+          userDepositToken,
+          depositAmount,
+          poolDepositToken,
+          0,
+        );
         await dhedgeEasySwapper
           .connect(user2)
-          .deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+          .depositWithCustomCooldown(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
 
         const balanceLogicOwner = await torosPool.balanceOf(logicOwner.address);
         const balanceUser2 = await torosPool.balanceOf(user2.address);
 
-        await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+        await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
         await ethers.provider.send("evm_mine", []);
 
         // Withdraw all
@@ -413,7 +496,7 @@ export const DhedgeEasySwapperTests = (
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
           assets.usdc,
         );
-        const depositAmount = units(1, 6);
+        const depositAmount = units(6, 6);
 
         await getAccountToken(depositAmount, logicOwner.address, userDepositToken, userDepositTokenSlot);
         await getAccountToken(depositAmount, user2.address, userDepositToken, userDepositTokenSlot);
@@ -424,21 +507,27 @@ export const DhedgeEasySwapperTests = (
         await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
         await DepositToken.connect(user2).approve(dhedgeEasySwapper.address, depositAmount);
 
-        await dhedgeEasySwapper.deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+        await dhedgeEasySwapper.depositWithCustomCooldown(
+          torosPool.address,
+          userDepositToken,
+          depositAmount,
+          poolDepositToken,
+          0,
+        );
         const balanceLogicOwner = await torosPool.balanceOf(logicOwner.address);
 
-        await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+        await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
 
         // Withdraw all
         await dhedgeEasySwapper
           .connect(user2)
-          .deposit(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
+          .depositWithCustomCooldown(torosPool.address, userDepositToken, depositAmount, poolDepositToken, 0);
         const balanceUser2 = await torosPool.balanceOf(user2.address);
 
         await torosPool.approve(dhedgeEasySwapper.address, balanceLogicOwner);
         await dhedgeEasySwapper.withdraw(torosPool.address, balanceLogicOwner, withdrawToken, 0);
 
-        await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+        await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
         await ethers.provider.send("evm_mine", []);
         await torosPool.connect(user2).approve(dhedgeEasySwapper.address, balanceUser2);
         await dhedgeEasySwapper.connect(user2).withdraw(torosPool.address, balanceUser2, withdrawToken, 0);
@@ -448,7 +537,7 @@ export const DhedgeEasySwapperTests = (
     describe("depositQuote", () => {
       it("provides accurate quote when not swapping", async () => {
         const userDepositToken = assets.usdc;
-        const userDepositAmount = units(1000, 1);
+        const userDepositAmount = units(1000, 6);
         const userDepositSlot = assetsBalanceOfSlot.usdc;
         const poolDepositToken = assets.usdc;
 
@@ -469,9 +558,10 @@ export const DhedgeEasySwapperTests = (
           userDepositToken,
           userDepositAmount,
           poolDepositToken,
+          true,
         );
 
-        expect(quote).to.be.closeTo(expectedTokens, expectedTokens.div(100) as unknown as number);
+        expect(quote).to.be.closeTo(expectedTokens, expectedTokens.div(100));
 
         await dhedgeEasySwapper.setPoolAllowed(dhedgePool.address, true);
         await getAccountToken(userDepositAmount, logicOwner.address, userDepositToken, userDepositSlot);
@@ -480,7 +570,13 @@ export const DhedgeEasySwapperTests = (
           userDepositToken,
         );
         await DepositToken.approve(dhedgeEasySwapper.address, userDepositAmount);
-        await dhedgeEasySwapper.deposit(dhedgePool.address, userDepositToken, userDepositAmount, poolDepositToken, 0);
+        await dhedgeEasySwapper.depositWithCustomCooldown(
+          dhedgePool.address,
+          userDepositToken,
+          userDepositAmount,
+          poolDepositToken,
+          0,
+        );
 
         checkAlmostSame(await dhedgePool.balanceOf(logicOwner.address), quote, 0.0001);
       });
@@ -507,8 +603,9 @@ export const DhedgeEasySwapperTests = (
           userDepositToken,
           userDepositAmount,
           poolDepositToken,
+          false,
         );
-        expect(quote).to.be.closeTo(expectedTokens, expectedTokens.div(100) as unknown as number);
+        expect(quote).to.be.closeTo(expectedTokens, expectedTokens.div(100));
 
         // 5%
         await dhedgeEasySwapper.setFee(50, 1000); // 5%
@@ -518,6 +615,7 @@ export const DhedgeEasySwapperTests = (
           userDepositToken,
           userDepositAmount,
           poolDepositToken,
+          true,
         );
 
         checkAlmostSame(quoteAfterSetFees, quote.mul(95).div(100), 0.001);
@@ -532,7 +630,7 @@ export const DhedgeEasySwapperTests = (
         await DepositToken.connect(logicOwner).approve(dhedgeEasySwapper.address, userDepositAmount);
         await dhedgeEasySwapper
           .connect(logicOwner)
-          .deposit(dhedgePool.address, userDepositToken, userDepositAmount, poolDepositToken, 0);
+          .depositWithCustomCooldown(dhedgePool.address, userDepositToken, userDepositAmount, poolDepositToken, 0);
 
         checkAlmostSame(await dhedgePool.balanceOf(logicOwner.address), quoteAfterSetFees, 0.0001);
       });
@@ -550,23 +648,42 @@ export const DhedgeEasySwapperTests = (
           userDepositToken,
           userDepositAmount,
         );
-
-        const expectedTokens = depositAssetValue.mul(units(1));
         const quoteWithNonZeroAmount = await dhedgeEasySwapper.depositQuote(
           dhedgePool.address,
           userDepositToken,
           userDepositAmount,
           poolDepositToken,
+          false,
         );
-        expect(quoteWithNonZeroAmount).to.equal(expectedTokens);
+        expect(quoteWithNonZeroAmount).to.equal(depositAssetValue);
 
         const quoteZeroAmount = await dhedgeEasySwapper.depositQuote(
           dhedgePool.address,
           userDepositToken,
           0,
           poolDepositToken,
+          false,
         );
         expect(quoteZeroAmount).to.equal(0);
+      });
+
+      it("provides accurate quote for pool with entry fee set", async () => {
+        const { poolLogicProxy, poolManagerLogicProxy } = await createFund(poolFactory, logicOwner, user1, [
+          { asset: assets.usdc, isDeposit: true },
+        ]);
+        await poolManagerLogicProxy.connect(user1).announceFeeIncrease(5000, 0, 100); // 1% entry fee
+        await poolManagerLogicProxy.connect(user1).commitFeeIncrease();
+
+        const depositAmount = units(10, 6); // 10 USDC
+        const expectedPoolTokens = units(10);
+        const quote = await dhedgeEasySwapper.depositQuote(
+          poolLogicProxy.address,
+          assets.usdc,
+          depositAmount,
+          assets.usdc,
+          false,
+        );
+        expect(quote).to.be.closeTo(expectedPoolTokens, quote.div(95)); // 1.05% delta
       });
     });
 
@@ -595,9 +712,7 @@ export const DhedgeEasySwapperTests = (
           // And asset price in 10**18 hurt my brain
           const tokenPriceInUSDC = await torosPool.tokenPrice();
           const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-          const poolManagerLogicProxy: PoolManagerLogic = await PoolManagerLogic.attach(
-            await torosPool.poolManagerLogic(),
-          );
+          const poolManagerLogicProxy: PoolManagerLogic = PoolManagerLogic.attach(await torosPool.poolManagerLogic());
           const depositAssetValueInUSDC = await poolManagerLogicProxy["assetValue(address,uint256)"](
             userDepositToken,
             depositAmount,
@@ -613,7 +728,7 @@ export const DhedgeEasySwapperTests = (
           expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(depositAmount);
           await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
           // deposit the cost of 1 token
-          await dhedgeEasySwapper.deposit(
+          await dhedgeEasySwapper.depositWithCustomCooldown(
             torosPool.address,
             userDepositToken,
             depositAmount,
@@ -625,7 +740,7 @@ export const DhedgeEasySwapperTests = (
           const balance = await torosPool.balanceOf(logicOwner.address);
           expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100) as unknown as number);
           expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(0);
-          await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
+          await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
           await ethers.provider.send("evm_mine", []);
           // Withdraw all
 
@@ -666,25 +781,21 @@ export const DhedgeEasySwapperTests = (
       };
       const createTestNative = (test: EasySwapperNativeTestCase) => {
         const { testName, dhedgePoolAddress: torosPoolAddress, nativeAssetDepositAmount, poolDepositToken } = test;
-        it("[native-asset] " + testName, async () => {
+        it("depositNative " + testName, async () => {
           const torosPool = await ethers.getContractAt("PoolLogic", torosPoolAddress);
           await dhedgeEasySwapper.setPoolAllowed(torosPool.address, true);
           // Reset token ownership - for when other tests fail
           // TokenPrice is in 10**18
           const tokenPriceInUSD = await torosPool.tokenPrice();
           const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
-          const poolManagerLogicProxy: PoolManagerLogic = await PoolManagerLogic.attach(
-            await torosPool.poolManagerLogic(),
-          );
+          const poolManagerLogicProxy: PoolManagerLogic = PoolManagerLogic.attach(await torosPool.poolManagerLogic());
           const depositAssetValueInUSD = await poolManagerLogicProxy["assetValue(address,uint256)"](
             nativeAssetWrapper,
             nativeAssetDepositAmount,
           );
-          console.log("depositAssetValueInUSD $", depositAssetValueInUSD.div(units(1)).toString());
-          console.log("totalFundValue $", (await poolManagerLogicProxy.totalFundValue()).div(units(1)).toString());
           const expectedTokens = depositAssetValueInUSD.mul(units(1)).div(tokenPriceInUSD.toString());
           // deposit the cost of 1 token
-          await dhedgeEasySwapper.depositNative(
+          await dhedgeEasySwapper.depositNativeWithCustomCooldown(
             torosPool.address,
             poolDepositToken,
             // 3% slippage
@@ -696,37 +807,6 @@ export const DhedgeEasySwapperTests = (
           // Make sure we received very close to one token
           const balance = await torosPool.balanceOf(logicOwner.address);
           expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100) as unknown as number);
-          await ethers.provider.send("evm_increaseTime", [60 * 6]); // 6 minutes
-          await ethers.provider.send("evm_mine", []);
-          // Withdraw all
-          await torosPool.approve(dhedgeEasySwapper.address, balance);
-          const beforeFundsReturnedBalance = await logicOwner.getBalance();
-          // Here I need update this to calculate the withdrawal amount out in withdraw token
-          const txResult = await (await dhedgeEasySwapper.withdrawNative(torosPool.address, balance, 0)).wait();
-          // Calculate transaction fee for correct withdrawn amount of native asset
-          const txFee = txResult.cumulativeGasUsed.mul(txResult.effectiveGasPrice);
-
-          // All tokens were withdrawn
-          const balanceAfterWithdraw = await torosPool.balanceOf(logicOwner.address);
-          expect(balanceAfterWithdraw).to.equal(0);
-          // Check we received back funds close to the value of what we deposited
-          const afterFundsReturnedBalance = await logicOwner.getBalance();
-          // Subtract transaction fee
-          const fundsReturned = afterFundsReturnedBalance.add(txFee).sub(beforeFundsReturnedBalance);
-          const withdrawAmountUSD = await poolManagerLogicProxy["assetValue(address,uint256)"](
-            nativeAssetWrapper,
-            fundsReturned,
-          );
-          // Funds returned should be close to funds in
-          const difference = depositAssetValueInUSD.div(depositAssetValueInUSD.sub(withdrawAmountUSD));
-          console.log("Total in out Slippage %", 100 / difference.toNumber());
-
-          // Funds returned should be close to funds in
-          expect(withdrawAmountUSD).closeTo(
-            depositAssetValueInUSD,
-            // 3% - in and out slippage is quite a bit 605570-595902
-            depositAssetValueInUSD.div(100).mul(3) as unknown as number,
-          );
         });
       };
 

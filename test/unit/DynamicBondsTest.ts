@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { utils, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-import { units, currentBlockTimestamp } from "../TestHelpers";
+import { units, currentBlockTimestamp } from "../testHelpers";
 const parseUnits = utils.parseUnits;
 const days = (d: number) => d * 3600 * 24;
 

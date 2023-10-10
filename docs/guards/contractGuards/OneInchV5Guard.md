@@ -1,18 +1,18 @@
 Transaction guard for OneInchV5Router
 
 # Functions:
-- [`constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)`](#OneInchV5Guard-constructor-uint256-uint256-)
-- [`txGuard(address _poolManagerLogic, address, bytes data)`](#OneInchV5Guard-txGuard-address-address-bytes-)
+- [`constructor(address _slippageAccumulator)`](#OneInchV5Guard-constructor-address-)
+- [`txGuard(address _poolManagerLogic, address to, bytes data)`](#OneInchV5Guard-txGuard-address-address-bytes-)
 
 
 
-# Function `constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)` {#OneInchV5Guard-constructor-uint256-uint256-}
+# Function `constructor(address _slippageAccumulator)` {#OneInchV5Guard-constructor-address-}
 No description
 
 
 
 
-# Function `txGuard(address _poolManagerLogic, address, bytes data) → uint16 txType, bool` {#OneInchV5Guard-txGuard-address-address-bytes-}
+# Function `txGuard(address _poolManagerLogic, address to, bytes data) → uint16 txType, bool` {#OneInchV5Guard-txGuard-address-address-bytes-}
 Transaction guard for OneInchV5
 
 
@@ -26,5 +26,7 @@ Transaction guard for OneInchV5
 - txType the transaction type of a given transaction data. 2 for `Exchange` type
 
 - isPublic if the transaction is public or private
+
+
 
 

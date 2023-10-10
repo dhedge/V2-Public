@@ -116,6 +116,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "entryFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "denominator",
         "type": "uint256"
       }
@@ -211,11 +217,29 @@
         "internalType": "uint256",
         "name": "_managerFeeNumerator",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_entryFeeNumerator",
+        "type": "uint256"
       }
     ],
     "name": "announceFeeIncrease",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "announcedEntryFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -414,6 +438,19 @@
   },
   {
     "inputs": [],
+    "name": "entryFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "factory",
     "outputs": [
       {
@@ -456,6 +493,11 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -465,6 +507,11 @@
     "inputs": [],
     "name": "getFeeIncreaseInfo",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "",
@@ -523,6 +570,11 @@
     "inputs": [],
     "name": "getMaximumFee",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "",
@@ -879,6 +931,11 @@
         "internalType": "uint256",
         "name": "_managerFeeNumerator",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_entryFeeNumerator",
+        "type": "uint256"
       }
     ],
     "name": "setFeeNumerator",
@@ -979,6 +1036,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalFundValueMutable",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "total",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

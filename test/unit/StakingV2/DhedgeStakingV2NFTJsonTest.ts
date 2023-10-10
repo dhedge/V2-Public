@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { DhedgeStakingV2NFTJson } from "../../../types";
 import { utils } from "../../integration/utils/utils";
 import { BigNumber } from "ethers";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import * as fs from "fs";
 
 describe("Dhedge DHT Staking V2", () => {

@@ -9,13 +9,13 @@ import {
   PoolLogic,
   PoolManagerLogic,
 } from "../../../../types";
-import { checkAlmostSame, units } from "../../../TestHelpers";
+import { checkAlmostSame, units } from "../../../testHelpers";
 import { createFund } from "../../utils/createFund";
 import { deployContracts, NETWORK } from "../../utils/deployContracts/deployContracts";
 import { getAccountToken } from "../../utils/getAccountTokens";
 import { utils } from "../../utils/utils";
 
-import { Address } from "../../../../deployment-scripts/types";
+import { Address } from "../../../../deployment/types";
 import { arrakisRewardsFinished, deployArrakis } from "./arrakisDeployHelper";
 import { BigNumber } from "ethers";
 
@@ -113,6 +113,7 @@ export const ArrakisV1RouterStakingGuardTest = (
           token1Amount,
           units(0),
           units(0),
+          units(0),
           poolLogicProxy.address,
         ]);
         await expect(
@@ -125,6 +126,7 @@ export const ArrakisV1RouterStakingGuardTest = (
           usdcWethGauge,
           token0Amount,
           token1Amount,
+          units(0),
           units(0),
           units(0),
           poolLogicProxy.address,
@@ -143,6 +145,7 @@ export const ArrakisV1RouterStakingGuardTest = (
           usdcWethGauge,
           token0Amount,
           token1Amount,
+          units(0),
           units(0),
           units(0),
           poolLogicProxy.address,
@@ -170,6 +173,7 @@ export const ArrakisV1RouterStakingGuardTest = (
           token1Amount,
           units(0),
           units(0),
+          units(0),
           logicOwner.address,
         ]);
         await expect(
@@ -183,6 +187,7 @@ export const ArrakisV1RouterStakingGuardTest = (
           usdcWethGauge,
           token0Amount,
           token1Amount,
+          units(0),
           units(0),
           units(0),
           logicOwner.address,
@@ -206,6 +211,7 @@ export const ArrakisV1RouterStakingGuardTest = (
           usdcWethGauge,
           token0Amount,
           token1Amount,
+          units(0),
           units(0),
           units(0),
           poolLogicProxy.address,
@@ -317,6 +323,7 @@ export const ArrakisV1RouterStakingGuardTest = (
             usdcInvestmentAmount,
             units(0),
             units(0),
+            units(0),
             poolLogicProxy.address,
           ]);
           await poolLogicProxy.connect(manager).execTransaction(v1RouterStaking, addLiquidityAndStakeABI);
@@ -364,6 +371,7 @@ export const ArrakisV1RouterStakingGuardTest = (
           usdcWethGauge,
           token0Amount,
           token1Amount,
+          units(0),
           units(0),
           units(0),
           poolLogicProxy.address,

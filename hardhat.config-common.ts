@@ -14,39 +14,26 @@ export default {
     localhost: {
       chainId: 31337,
       url: "http://127.0.0.1:8545",
-      timeout: 600000,
+      timeout: 0,
     },
     ovm: {
       chainId: 10,
       url: process.env.OPTIMISM_URL || "https://opt-mainnet.g.alchemy.com/v2/",
       accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
     },
-    "ovm-kovan": {
-      chainId: 69,
-      url: process.env.KOVAN_OVM_URL || "https://opt-kovan.g.alchemy.com/v2",
-      accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
-    },
-    "ovm-goerli": {
-      chainId: 69,
-      url: process.env.GOERLI_OVM_URL || "https://opt-goerli.g.alchemy.com/v2",
-      accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
-    },
     polygon: {
       chainId: 137,
       url: process.env.POLYGON_URL || "https://polygon-mainnet.g.alchemy.com/v2/",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: process.env.POLYGON_PRIVATE_KEY ? [process.env.POLYGON_PRIVATE_KEY] : [],
       gasPrice: 400e9,
       timeout: 600000,
     },
-    mumbai: {
-      chainId: 80001,
-      url: process.env.MUMBAI_URL
-        ? process.env.MUMBAI_URL
-        : "https://rpc-mumbai.maticvigil.com/v1/" + process.env.MATIC_KEY,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    arbitrum: {
+      chainId: 42161,
+      url: process.env.ARBITRUM_URL || "https://arb-mainnet.g.alchemy.com/v2/",
+      accounts: process.env.ARBITRUM_PRIVATE_KEY ? [process.env.ARBITRUM_PRIVATE_KEY] : [],
     },
   },
-
   solidity: {
     compilers: [
       {
@@ -67,9 +54,12 @@ export default {
   },
   mocha: {
     timeout: 0,
-    // JHM: During integration tests we sometimes get
+    // Jake: During integration tests we sometimes get
     // ProviderError: Errors encountered in param 1: Invalid value "0x02e5dda5c51be531e95b2e5b22389b23cd39a929c1a594052162ebe432d897e9" supplied to : QUANTITY
-    // Usually retrying the test works
+    // Usually retrying the test works.
+    // Chinmay: If the tests fail and it turns out they are being run multiple times and the state being used
+    // is persistent, comment this out and re-run the tests. You will probably find the reason the
+    // tests were failing.
     retries: process.env.TEST_RETRIES !== undefined ? process.env.TEST_RETRIES : 3,
   },
   abiExporter: {
@@ -81,38 +71,31 @@ export default {
       "PoolLogic",
       "PoolManagerLogic",
       "AssetHandler",
-      "UniswapV3RouterGuard",
-      "ERC20Guard",
-      "SynthetixGuard",
-      "AaveLendingPoolGuard",
-      "UniswapV2RouterGuard",
-      "SushiMiniChefV2Guard",
-      "QuickStakingRewardsGuard",
-      "Managed",
       "Governance",
       "DynamicBonds",
-      "BalancerV2Guard",
-      "DhedgeEasySwapper",
-      "IArrakisV1RouterStaking",
       "DhedgeStakingV2",
-      "IDhedgeStakingV2",
       "DhedgeEasySwapper",
       "RewardDistribution",
+      "UniswapV3NonfungiblePositionGuard",
+      "PoolTokenSwapper",
     ],
     spacing: 2,
   },
   etherscan: {
     // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
     apiKey: {
-      optimisticKovan: process.env.OPTIMISTICKOVAN_API_KEY,
-      optimisticEthereum: process.env.OPTIMISICSCAN_API_KEY,
+      optimisticEthereum: process.env.OPTIMISTICSCAN_API_KEY,
       polygon: process.env.POLYGONSCAN_API_KEY,
+      arbitrumOne: process.env.ARBISCAN_API_KEY,
     },
   },
   typechain: {
     outDir: "./types",
     target: "ethers-v5",
   },
+  // contractSizer: {
+  //   only: ["DhedgeEasySwapper"],
+  // },
 };
 
 // Hack console to just print bigNumbers as normal numbers not as an object

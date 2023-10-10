@@ -30,37 +30,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //
-// Transaction Types in execTransaction()
-// 1. Approve: Approving a token for spending by different address/contract
-// 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
-// 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
-// 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
-// 5. Stake: Stake tokens into a third party contract (eg. Sushi yield farming)
-// 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
-// 7. Claim: Claim rewards tokens from a third party contract (eg. SUSHI & MATIC rewards)
-// 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
-// 9. Deposit: Aave deposit tokens -> get Aave Interest Bearing Token
-// 10. Withdraw: Withdraw tokens from Aave Interest Bearing Token
-// 11. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
-// 12. Borrow: Aave borrow tokens
-// 13. Repay: Aave repay tokens
-// 14. SwapBorrowRateMode: Aave change borrow rate mode (stable/variable)
-// 15. RebalanceStableBorrowRate: Aave rebalance stable borrow rate
-// 16. JoinPool: Balancer join pool
-// 17. ExitPool: Balancer exit pool
-// 18. Deposit: EasySwapper Deposit
-// 19. Withdraw: EasySwapper Withdraw
-// 20. Mint: Uniswap V3 Mint position
-// 21. IncreaseLiquidity: Uniswap V3 increase liquidity position
-// 22. DecreaseLiquidity: Uniswap V3 decrease liquidity position
-// 23. Burn: Uniswap V3 Burn position
-// 24. Collect: Uniswap V3 collect fees
-// 25. Multicall: Uniswap V3 Multicall
-// 26. Lyra: open position
-// 27. Lyra: close position
-// 28. Lyra: force close position
-// 29. Futures: Market
-
+//
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
@@ -82,16 +52,18 @@ import "./interfaces/guards/IGuard.sol";
 import "./interfaces/guards/ITxTrackingGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import "./interfaces/guards/IERC721VerifyingGuard.sol";
 import "./interfaces/IGovernance.sol";
 import "./utils/AddressHelper.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /// @notice Logic implementation for pool
-contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
+contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721ReceiverUpgradeable {
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
 
@@ -108,6 +80,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 managerFeeDenominator;
     uint256 exitFeeNumerator;
     uint256 exitFeeDenominator;
+    uint256 entryFeeNumerator;
   }
 
   struct TxToExecute {
@@ -181,8 +154,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   mapping(address => uint256) public lastExitCooldown;
 
-  modifier onlyPrivate() {
-    require(msg.sender == manager() || !privatePool || isMemberAllowed(msg.sender), "only members allowed");
+  modifier onlyAllowed(address _recipient) {
+    require(_recipient == manager() || !privatePool || isMemberAllowed(_recipient), "only members allowed");
     _;
   }
 
@@ -191,13 +164,18 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     _;
   }
 
-  modifier whenNotPaused() {
+  modifier whenNotFactoryPaused() {
     require(!IHasPausable(factory).isPaused(), "contracts paused");
     _;
   }
 
   modifier whitelistedForCustomCooldown() {
     require(IPoolFactory(factory).customCooldownWhitelist(msg.sender), "only whitelisted sender");
+    _;
+  }
+
+  modifier whenNotPaused() {
+    require(!IHasPausable(factory).pausedPools(address(this)), "pool is paused");
     _;
   }
 
@@ -297,7 +275,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     address _asset,
     uint256 _amount,
     uint256 _cooldown
-  ) private onlyPrivate whenNotPaused returns (uint256 liquidityMinted) {
+  ) private onlyAllowed(_recipient) whenNotFactoryPaused whenNotPaused returns (uint256 liquidityMinted) {
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
 
     uint256 fundValue = _mintManagerFee();
@@ -310,13 +288,24 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
     uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
 
-    if (totalSupplyBefore > 0) {
-      //total balance converted to susd that this contract holds
-      //need to calculate total value of synths in this contract
-      liquidityMinted = usdAmount.mul(totalSupplyBefore).div(fundValue);
-    } else {
-      liquidityMinted = usdAmount;
+    // Scoping to avoid stack too deep errors.
+    {
+      (, , uint256 entryFeeNumerator, uint256 denominator) = IPoolManagerLogic(poolManagerLogic).getFee();
+
+      if (totalSupplyBefore > 0) {
+        // Accounting for entry fee while calculating liquidity to be minted.
+        liquidityMinted = usdAmount.mul(totalSupplyBefore).mul(denominator.sub(entryFeeNumerator)).div(fundValue).div(
+          denominator
+        );
+      } else {
+        // This is equivalent to doing liquidityMinted = liquidityMinted * (1 - entryFeeNumerator/denominator).
+        liquidityMinted = usdAmount.mul(denominator.sub(entryFeeNumerator)).div(denominator);
+      }
     }
+
+    // Note: We are making it impossible for someone to mint liquidity < 100_000.
+    // This is so that we can mitigate the inflation attack.
+    require(liquidityMinted >= 100_000, "invalid liquidityMinted");
 
     lastExitCooldown[_recipient] = calculateCooldown(
       balanceOf(_recipient),
@@ -361,9 +350,25 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
 
   /// @notice Withdraw assets based on the fund token amount
   /// @param _fundTokenAmount the fund token amount
-  function withdrawTo(address _recipient, uint256 _fundTokenAmount) public virtual nonReentrant whenNotPaused {
+  function withdrawTo(address _recipient, uint256 _fundTokenAmount)
+    public
+    virtual
+    nonReentrant
+    whenNotFactoryPaused
+    whenNotPaused
+  {
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
+
+    // Scoping to avoid "stack-too-deep" errors.
+    {
+      // Calculating how much pool token supply will be left after withdrawal and
+      // whether or not this satisfies the min supply (100_000) check.
+      // If the user is redeeming all the shares then this check passes.
+      // Otherwise, they might have to reduce the amount to be withdrawn.
+      uint256 supplyAfter = totalSupply().sub(_fundTokenAmount);
+      require(supplyAfter >= 100_000 || supplyAfter == 0, "below supply threshold");
+    }
 
     // calculate the exit fee
     uint256 fundValue = _mintManagerFee();
@@ -467,7 +472,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
 
       if (withdrawAsset != address(0)) {
-        // calculated the balance change after withdraw process.
+        // get any balance increase after withdraw processing and add it to the withdraw balance
         uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
         withdrawBalance = withdrawBalance.add(assetBalanceAfter.sub(assetBalanceBefore));
       }
@@ -481,7 +486,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param to The destination address for pool to talk to
   /// @param data The data that going to send in the transaction
   /// @return success A boolean for success or fail transaction
-  function _execTransaction(address to, bytes memory data) private nonReentrant whenNotPaused returns (bool success) {
+  function _execTransaction(address to, bytes memory data)
+    private
+    nonReentrant
+    whenNotFactoryPaused
+    returns (bool success)
+  {
     require(to != address(0), "non-zero address is required");
 
     address contractGuard = IHasGuardInfo(factory).getContractGuard(to);
@@ -547,19 +557,24 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @return success A boolean indicating if all transactions succeeded
   function execTransactions(TxToExecute[] calldata txs) external returns (bool success) {
     require(txs.length > 0, "no transactions to execute");
+
     for (uint256 i = 0; i < txs.length; i++) {
       bool result = _execTransaction(txs[i].to, txs[i].data);
       require(result, "transaction failure");
     }
+
     return true;
   }
 
   /// @notice Get fund summary of the pool
   /// @return Fund summary of the pool
   function getFundSummary() external view returns (FundSummary memory) {
-    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
-      poolManagerLogic
-    ).getFee();
+    (
+      uint256 performanceFeeNumerator,
+      uint256 managerFeeNumerator,
+      uint256 entryFeeNumerator,
+      uint256 managerFeeDenominator
+    ) = IPoolManagerLogic(poolManagerLogic).getFee();
     (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
 
     return
@@ -575,7 +590,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
         managerFeeNumerator,
         managerFeeDenominator,
         exitFeeNumerator,
-        exitFeeDenominator
+        exitFeeDenominator,
+        entryFeeNumerator
       );
   }
 
@@ -615,7 +631,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
     uint256 tokenSupply = totalSupply();
 
-    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
+    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(
       poolManagerLogic
     ).getFee();
 
@@ -664,17 +680,17 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   }
 
   /// @notice Mint the manager fee of the pool
-  function mintManagerFee() external whenNotPaused {
+  function mintManagerFee() external whenNotFactoryPaused whenNotPaused {
     _mintManagerFee();
   }
 
   /// @notice Get mint manager fee of the pool internal call
   /// @return fundValue The total fund value of the pool
   function _mintManagerFee() internal returns (uint256 fundValue) {
-    fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+    fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValueMutable();
     uint256 tokenSupply = totalSupply();
 
-    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 managerFeeDenominator) = IPoolManagerLogic(
+    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(
       poolManagerLogic
     ).getFee();
 
@@ -844,6 +860,27 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @notice Emits an event through the factory, so we can just listen to the factory offchain
   function emitFactoryEvent() internal {
     IPoolFactory(factory).emitPoolEvent();
+  }
+
+  /// @notice Support safeTransfers from ERC721 asset contracts
+  /// @dev Currently used for Synthetix V3
+  function onERC721Received(
+    address operator,
+    address from,
+    uint256 tokenId,
+    bytes calldata data
+  ) external override returns (bytes4 magicSelector) {
+    address contractGuard = IHasGuardInfo(factory).getContractGuard(operator);
+
+    // Only guarded contract can initiate ERC721 transfers
+    require(contractGuard != address(0), "only guarded address allowed");
+
+    require(
+      IERC721VerifyingGuard(contractGuard).verifyERC721(operator, from, tokenId, data),
+      "ERC721 token not verified"
+    );
+
+    magicSelector = IERC721ReceiverUpgradeable.onERC721Received.selector;
   }
 
   uint256[47] private __gap;

@@ -42,6 +42,7 @@ interface IHasFeeInfo {
     returns (
       uint256,
       uint256,
+      uint256,
       uint256
     );
 

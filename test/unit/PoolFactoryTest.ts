@@ -1,6 +1,7 @@
 import { Interface } from "@ethersproject/abi";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { BigNumber } from "ethers";
 import hre, { ethers, upgrades } from "hardhat";
 import {
   AssetHandler,
@@ -21,8 +22,9 @@ import {
   UniswapV2RouterGuard,
   UniswapV3RouterGuard,
   UniV2LPAggregator,
+  SlippageAccumulator,
 } from "../../types";
-import { checkAlmostSame, currentBlockTimestamp, toBytes32, units, updateChainlinkAggregators } from "../TestHelpers";
+import { currentBlockTimestamp, toBytes32, units, updateChainlinkAggregators } from "../testHelpers";
 
 // Place holder addresses
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
@@ -60,6 +62,7 @@ describe("PoolFactory", function () {
     poolManagerLogicProxy: PoolManagerLogic,
     fundAddress: string;
   let iERC20: Interface, iMiniChefV2: Interface;
+  let slippageAccumulator: SlippageAccumulator;
   let synthetixGuard: SynthetixGuard,
     uniswapV2RouterGuard: UniswapV2RouterGuard,
     uniswapV3RouterGuard: UniswapV3RouterGuard,
@@ -144,7 +147,7 @@ describe("PoolFactory", function () {
     await addressResolver.givenCalldataReturnAddress(getAddressABI, synthetix.address);
 
     const IUniswapV2Router = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv2/IUniswapV2Router.sol:IUniswapV2Router",
+      "contracts/interfaces/uniswapV2/IUniswapV2Router.sol:IUniswapV2Router",
     );
     const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
     const factoryABI = iUniswapV2Router.encodeFunctionData("factory", []);
@@ -152,7 +155,7 @@ describe("PoolFactory", function () {
 
     // mock Sushi LINK-WETH LP
     const IUniswapV2Pair = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv2/IUniswapV2Pair.sol:IUniswapV2Pair",
+      "contracts/interfaces/uniswapV2/IUniswapV2Pair.sol:IUniswapV2Pair",
     );
     const iUniswapV2Pair = new ethers.utils.Interface(IUniswapV2Pair.abi);
     const token0Abi = iUniswapV2Pair.encodeFunctionData("token0", []);
@@ -309,7 +312,7 @@ describe("PoolFactory", function () {
     poolFactory = <PoolFactory>await upgrades.upgradeProxy(poolFactoryV24.address, PoolFactoryLogic);
     console.log("poolFactory upgraded to: ", poolFactory.address);
 
-    await poolFactory.setMaximumFee(5000, 300); // 3% streaming fee
+    await poolFactory.setMaximumFee(5000, 300, 100); // 3% streaming fee, 1% entry fee.
 
     // Deploy Sushi LP Aggregator
     const UniV2LPAggregator = await ethers.getContractFactory("UniV2LPAggregator");
@@ -317,6 +320,11 @@ describe("PoolFactory", function () {
     const assetSushiLPLinkWeth = { asset: sushiLPLinkWeth, assetType: 2, aggregator: sushiLPAggregator.address };
     const assetQuickLPLinkWeth = { asset: quickLPLinkWeth, assetType: 5, aggregator: sushiLPAggregator.address };
     await assetHandler.addAssets([assetSushiLPLinkWeth, assetQuickLPLinkWeth]);
+
+    // Deploy SlippageAccumulator
+    const SlippageAccumulator = await ethers.getContractFactory("SlippageAccumulator");
+    slippageAccumulator = <SlippageAccumulator>await SlippageAccumulator.deploy(poolFactory.address, "21600", 5e4); // 6 hours decay time and 5% max cumulative slippage impact
+    slippageAccumulator.deployed();
 
     // Deploy contract guards
     const SynthetixGuard = await ethers.getContractFactory(
@@ -328,13 +336,13 @@ describe("PoolFactory", function () {
     const UniswapV2RouterGuard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/UniswapV2RouterGuard.sol:UniswapV2RouterGuard",
     );
-    uniswapV2RouterGuard = <UniswapV2RouterGuard>await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2%
+    uniswapV2RouterGuard = <UniswapV2RouterGuard>await UniswapV2RouterGuard.deploy(slippageAccumulator.address);
     uniswapV2RouterGuard.deployed();
 
     const UniswapV3RouterGuard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/uniswapV3/UniswapV3RouterGuard.sol:UniswapV3RouterGuard",
     );
-    uniswapV3RouterGuard = <UniswapV3RouterGuard>await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
+    uniswapV3RouterGuard = <UniswapV3RouterGuard>await UniswapV3RouterGuard.deploy(slippageAccumulator.address);
     uniswapV3RouterGuard.deployed();
 
     const SushiMiniChefV2Guard = await ethers.getContractFactory(
@@ -348,7 +356,7 @@ describe("PoolFactory", function () {
     const OneInchV4Guard = await ethers.getContractFactory(
       "contracts/guards/contractGuards/OneInchV4Guard.sol:OneInchV4Guard",
     );
-    const oneInchV4Guard = await OneInchV4Guard.deploy(2, 100); // set slippage 2%
+    const oneInchV4Guard = await OneInchV4Guard.deploy(slippageAccumulator.address);
     oneInchV4Guard.deployed();
 
     // Deploy asset guards
@@ -396,8 +404,6 @@ describe("PoolFactory", function () {
 
     const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
     console.log("openAssetGuardSetting:", openAssetGuardSetting);
-
-    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
@@ -466,7 +472,7 @@ describe("PoolFactory", function () {
     console.log("Creating Fund...");
 
     const fundCreatedEvent = new Promise((resolve, reject) => {
-      poolFactory.on(
+      poolFactory.once(
         "FundCreated",
         (
           fundAddress,
@@ -876,7 +882,7 @@ describe("PoolFactory", function () {
 
   it("should be able to deposit", async function () {
     const depositEvent = new Promise((resolve, reject) => {
-      poolLogicProxy.on(
+      poolLogicProxy.once(
         "Deposit",
         (
           fundAddress,
@@ -941,7 +947,7 @@ describe("PoolFactory", function () {
 
   it("should be able to withdraw", async function () {
     const withdrawalEvent = new Promise((resolve, reject) => {
-      poolLogicProxy.on(
+      poolLogicProxy.once(
         "Withdrawal",
         (
           fundAddress,
@@ -984,8 +990,10 @@ describe("PoolFactory", function () {
     const withdrawAmount = units(50);
     const totalSupply = await poolLogicProxy.totalSupply();
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
+    const totalFundsPreWithdrawal = await poolLogicProxy.balanceOf(investor.address);
+    const totalSupplyPreWithdrawal = await poolLogicProxy.totalSupply();
 
-    await poolManagerLogicProxy.connect(manager).setFeeNumerator(0, 0);
+    await poolManagerLogicProxy.connect(manager).setFeeNumerator(0, 0, 0);
 
     await expect(poolLogicProxy.connect(investor).withdraw(withdrawAmount.toString())).to.be.revertedWith(
       "cooldown active",
@@ -1003,18 +1011,19 @@ describe("PoolFactory", function () {
     const valueWithdrawn = fundTokensWithdrawn.mul(totalFundValue).div(totalSupply);
     expect(event.fundAddress).to.equal(poolLogicProxy.address);
     expect(event.investor).to.equal(investor.address);
-    expect(event.valueWithdrawn).to.equal(valueWithdrawn.toString());
-    expect(event.fundTokensWithdrawn).to.equal((50e18).toString());
-    expect(event.totalInvestorFundTokens).to.equal((50e18).toString());
-    expect(event.fundValue).to.equal(totalFundValue.sub(valueWithdrawn).toString());
-    expect(event.totalSupply).to.equal(units(100).sub(withdrawAmount).toString());
+    expect(event.valueWithdrawn).to.equal(valueWithdrawn);
+    expect(event.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
+    expect(event.totalInvestorFundTokens).to.equal(totalFundsPreWithdrawal.sub(withdrawAmount).toString());
+    expect(event.fundValue).to.equal(totalFundValue.sub(valueWithdrawn));
+
+    expect(event.totalSupply).to.equal(totalSupplyPreWithdrawal.sub(withdrawAmount).toString());
     const withdrawnAsset = event.withdrawnAssets[0];
     expect(withdrawnAsset[0]).to.equal(susd);
-    expect(withdrawnAsset[1]).to.equal(fundTokensWithdrawn);
+    expect(withdrawnAsset[1]).to.equal(valueWithdrawn);
     expect(withdrawnAsset[2]).to.equal(false);
 
     await poolFactory.setMaximumPerformanceFeeNumeratorChange(5000);
-    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(5000, 200); // increase streaming fee to 2%
+    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(5000, 200, 0); // increase streaming fee to 2%
     await ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4]); // add 4 weeks
     await ethers.provider.send("evm_mine", []);
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
@@ -1319,19 +1328,19 @@ describe("PoolFactory", function () {
 
   it("should be able to manage fees", async function () {
     //Can't set manager fee if not manager or if fee too high
-    await expect(poolManagerLogicProxy.announceFeeIncrease(4000, 300)).to.be.revertedWith("only manager");
+    await expect(poolManagerLogicProxy.announceFeeIncrease(4000, 300, 25)).to.be.revertedWith("only manager");
 
     const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
 
-    await expect(poolManagerLogicManagerProxy.announceFeeIncrease(6100, 400)).to.be.revertedWith(
+    await expect(poolManagerLogicManagerProxy.announceFeeIncrease(6100, 400, 25)).to.be.revertedWith(
       "exceeded allowed increase",
     );
-    await expect(poolManagerLogicManagerProxy.announceFeeIncrease(4000, 400)).to.be.revertedWith(
+    await expect(poolManagerLogicManagerProxy.announceFeeIncrease(4000, 400, 25)).to.be.revertedWith(
       "exceeded allowed increase",
     );
 
     //Can set manager fee
-    await poolManagerLogicManagerProxy.announceFeeIncrease(4000, 250); // increase streaming fee to 2.5%
+    await poolManagerLogicManagerProxy.announceFeeIncrease(4000, 250, 25); // increase streaming fee to 2.5% and entry fees to 0.25%
 
     await expect(poolManagerLogicManagerProxy.commitFeeIncrease()).to.be.revertedWith("fee increase delay active");
 
@@ -1341,21 +1350,31 @@ describe("PoolFactory", function () {
 
     await poolManagerLogicManagerProxy.commitFeeIncrease();
 
-    let [performanceFeeNumerator, managerFeeNumerator, managerFeeDenominator] =
+    let [performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, managerFeeDenominator] =
       await poolManagerLogicManagerProxy.getFee();
     expect(performanceFeeNumerator.toString()).to.equal("4000");
     expect(managerFeeNumerator.toString()).to.equal("250");
     expect(managerFeeDenominator.toString()).to.equal("10000");
+    expect(entryFeeNumerator.toString()).to.equal("25");
 
-    await expect(poolManagerLogicProxy.setFeeNumerator(3000, 200)).to.be.revertedWith("only manager");
-    await expect(poolManagerLogicManagerProxy.setFeeNumerator(5000, 200)).to.be.revertedWith("manager fee too high");
-    await expect(poolManagerLogicManagerProxy.setFeeNumerator(3000, 300)).to.be.revertedWith("manager fee too high");
-    await poolManagerLogicManagerProxy.setFeeNumerator(3000, 250);
-    await poolManagerLogicManagerProxy.setFeeNumerator(3000, 200);
-    [performanceFeeNumerator, managerFeeNumerator, managerFeeDenominator] = await poolManagerLogicManagerProxy.getFee();
+    await expect(poolManagerLogicProxy.setFeeNumerator(3000, 200, 25)).to.be.revertedWith("only manager");
+    await expect(poolManagerLogicManagerProxy.setFeeNumerator(5000, 200, 25)).to.be.revertedWith(
+      "manager fee too high",
+    );
+    await expect(poolManagerLogicManagerProxy.setFeeNumerator(3000, 300, 25)).to.be.revertedWith(
+      "manager fee too high",
+    );
+    await expect(poolManagerLogicManagerProxy.setFeeNumerator(3000, 300, 100)).to.be.revertedWith(
+      "manager fee too high",
+    );
+
+    await poolManagerLogicManagerProxy.setFeeNumerator(3000, 200, 0);
+    [performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, managerFeeDenominator] =
+      await poolManagerLogicManagerProxy.getFee();
     expect(performanceFeeNumerator.toString()).to.equal("3000");
     expect(managerFeeNumerator.toString()).to.equal("200");
     expect(managerFeeDenominator.toString()).to.equal("10000");
+    expect(entryFeeNumerator.toString()).to.equal("0");
   });
 
   beforeEach(async () => {
@@ -1408,7 +1427,7 @@ describe("PoolFactory", function () {
     const poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
     const exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.on(
+      synthetixGuard.once(
         "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
@@ -1489,7 +1508,7 @@ describe("PoolFactory", function () {
 
   it("should be able to swap tokens on Uniswap v2", async () => {
     const exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV2RouterGuard.on(
+      uniswapV2RouterGuard.once(
         "ExchangeFrom",
         (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
           event.removeListener();
@@ -1511,7 +1530,7 @@ describe("PoolFactory", function () {
 
     const sourceAmount = (100e18).toString();
     const IUniswapV2Router = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv2/IUniswapV2Router.sol:IUniswapV2Router",
+      "contracts/interfaces/uniswapV2/IUniswapV2Router.sol:IUniswapV2Router",
     );
     const iUniswapV2Router = new ethers.utils.Interface(IUniswapV2Router.abi);
     let swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
@@ -1563,21 +1582,24 @@ describe("PoolFactory", function () {
 
     swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
-      ethers.BigNumber.from(sourceAmount).mul(97).div(2000).div(100),
+      BigNumber.from(sourceAmount).mul(95).div(2000).div(100), // Creating a 5% slippage scenario.
       [susd, seth],
       poolLogicProxy.address,
       0,
     ]);
     await assetHandler.setChainlinkTimeout(9000000);
+
     await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.revertedWith(
-      "slippage limit exceed",
+      "slippage impact exceeded",
     );
 
-    await uniswapV2RouterGuard.setSlippageLimit(4, 100); // update slippage limit to 4 %
-    await uniswapV2Router.givenCalldataRevert(swapABI);
-    await expect(poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI)).to.be.reverted;
-
-    await uniswapV2Router.givenCalldataReturn(swapABI, []);
+    swapABI = iUniswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
+      sourceAmount,
+      ethers.BigNumber.from(sourceAmount).mul(99).div(2000).div(100),
+      [susd, seth],
+      poolLogicProxy.address,
+      0,
+    ]);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV2Router.address, swapABI);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1589,7 +1611,7 @@ describe("PoolFactory", function () {
 
   it.skip("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     const exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3RouterGuard.once("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -1608,7 +1630,7 @@ describe("PoolFactory", function () {
 
     const sourceAmount = (100e18).toString();
     const IUniswapV3Router = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv3/IV3SwapRouter.sol:IV3SwapRouter",
+      "contracts/interfaces/uniswapV3/IV3SwapRouter.sol:IV3SwapRouter",
     );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     const exactInputSingleParams = {
@@ -1658,7 +1680,7 @@ describe("PoolFactory", function () {
 
   it.skip("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     const exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3RouterGuard.on("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
+      uniswapV3RouterGuard.once("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
         event.removeListener();
 
         resolve({
@@ -1677,7 +1699,7 @@ describe("PoolFactory", function () {
 
     const sourceAmount = (100e18).toString();
     const IUniswapV3Router = await hre.artifacts.readArtifact(
-      "contracts/interfaces/uniswapv3/IV3SwapRouter.sol:IV3SwapRouter",
+      "contracts/interfaces/uniswapV3/IV3SwapRouter.sol:IV3SwapRouter",
     );
     const iUniswapV3Router = new ethers.utils.Interface(IUniswapV3Router.abi);
     // https://etherscan.io/tx/0xa8423934015c7e893e06721bbc01e42b8139b20764b9d23dbcb831e7b18b0e60
@@ -1811,7 +1833,7 @@ describe("PoolFactory", function () {
     await ethers.provider.send("evm_increaseTime", [3600 * 24]);
     await ethers.provider.send("evm_mine", []);
 
-    const daoBalanceBefore = ethers.BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
+    const daoBalanceBefore = BigNumber.from(await poolLogicProxy.balanceOf(dao.address));
     const tokenPriceAtLastFeeMint = await poolLogicProxy.tokenPriceAtLastFeeMint();
     const availableFeePreMint = await poolLogicProxy.availableManagerFee();
     const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
@@ -1820,26 +1842,28 @@ describe("PoolFactory", function () {
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     expect(tokenPriceAtLastFeeMint).gte(tokenPricePreMint);
     const calculatedAvailableFee = totalSupplyPreMint
-      .mul(ethers.BigNumber.from(await currentBlockTimestamp()).sub(await poolLogicProxy.lastFeeMintTime()))
+      .mul(BigNumber.from(await currentBlockTimestamp()).sub(await poolLogicProxy.lastFeeMintTime()))
       .mul(managerFeeNumerator)
       .div(10000)
       .div(86400 * 365);
 
     expect(availableFeePreMint).to.be.gt("0"); // the test needs to have some available fee to claim
-    checkAlmostSame(availableFeePreMint, calculatedAvailableFee, 0.001);
+
+    expect(availableFeePreMint).to.equal(calculatedAvailableFee);
 
     await poolLogicProxy.mintManagerFee();
 
     const tokenPricePostMint = await poolLogicProxy.tokenPrice();
     const totalSupplyPostMint = await poolLogicProxy.totalSupply();
+    const expectedTotalSupplyPostMint = totalSupplyPreMint.add(availableFeePreMint);
+    const expectedTokenPricePostMint = tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint);
+    const expectedDAOBalance = daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1]));
 
-    checkAlmostSame(totalSupplyPostMint, totalSupplyPreMint.add(availableFeePreMint), 0.001);
-    checkAlmostSame(tokenPricePostMint, tokenPricePreMint.mul(totalSupplyPreMint).div(totalSupplyPostMint), 0.001);
-
-    checkAlmostSame(
-      await poolLogicProxy.balanceOf(dao.address),
-      daoBalanceBefore.add(availableFeePreMint.mul(daoFees[0]).div(daoFees[1])),
-      0.001,
+    expect(totalSupplyPostMint).to.be.closeTo(expectedTotalSupplyPostMint, expectedTotalSupplyPostMint.div(10_000));
+    expect(tokenPricePostMint).to.be.closeTo(expectedTokenPricePostMint, expectedTokenPricePostMint.div(10_000));
+    expect(await poolLogicProxy.balanceOf(dao.address)).to.be.closeTo(
+      expectedDAOBalance,
+      expectedDAOBalance.div(10_000),
     );
 
     const availableFeePostMint = await poolLogicProxy.availableManagerFee();
@@ -2086,7 +2110,7 @@ describe("PoolFactory", function () {
   describe("Staking", function () {
     it("manager can Stake Sushi LP token", async function () {
       const stakeEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Stake", (fundAddress, asset, stakingContract, amount, time, event) => {
+        sushiMiniChefV2Guard.once("Stake", (fundAddress, asset, stakingContract, amount, time, event) => {
           event.removeListener();
 
           resolve({
@@ -2190,7 +2214,7 @@ describe("PoolFactory", function () {
 
     it("manager can Unstake Sushi LP token", async function () {
       const unstakeEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
+        sushiMiniChefV2Guard.once("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
           event.removeListener();
 
           resolve({
@@ -2237,7 +2261,7 @@ describe("PoolFactory", function () {
 
     it("manager can Harvest staked Sushi LP token", async function () {
       const claimEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+        sushiMiniChefV2Guard.once("Claim", (fundAddress, stakingContract, time, event) => {
           event.removeListener();
 
           resolve({
@@ -2276,7 +2300,7 @@ describe("PoolFactory", function () {
 
     it("user can Harvest staked Sushi LP token", async function () {
       const claimEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+        sushiMiniChefV2Guard.once("Claim", (fundAddress, stakingContract, time, event) => {
           event.removeListener();
 
           resolve({
@@ -2315,7 +2339,7 @@ describe("PoolFactory", function () {
 
     it("manager can Withdraw And Harvest staked Sushi LP token", async function () {
       const unstakeEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
+        sushiMiniChefV2Guard.once("Unstake", (fundAddress, asset, stakingContract, amount, time, event) => {
           event.removeListener();
 
           resolve({
@@ -2333,7 +2357,7 @@ describe("PoolFactory", function () {
       });
 
       const claimEvent = new Promise((resolve, reject) => {
-        sushiMiniChefV2Guard.on("Claim", (fundAddress, stakingContract, time, event) => {
+        sushiMiniChefV2Guard.once("Claim", (fundAddress, stakingContract, time, event) => {
           event.removeListener();
 
           resolve({
@@ -2431,7 +2455,7 @@ describe("PoolFactory", function () {
 
     it("investor can Withdraw staked Sushi LP token", async function () {
       const withdrawalEvent = new Promise((resolve, reject) => {
-        poolLogicProxy.on(
+        poolLogicProxy.once(
           "Withdrawal",
           (
             fundAddress,
@@ -2481,7 +2505,7 @@ describe("PoolFactory", function () {
       );
 
       // remove manager fee so that performance fee minting doesn't get in the way
-      await poolManagerLogicProxy.connect(manager).setFeeNumerator("0", "0");
+      await poolManagerLogicProxy.connect(manager).setFeeNumerator("0", "0", "0");
 
       // mock 20 sUSD in pool
       const balanceOfABI = iERC20.encodeFunctionData("balanceOf", [poolLogicProxy.address]);
@@ -2492,7 +2516,7 @@ describe("PoolFactory", function () {
 
       // mock 100 Sushi LP tokens staked in MiniChefV2
       const userInfo = iMiniChefV2.encodeFunctionData("userInfo", [sushiLPLinkWethPoolId, poolLogicProxy.address]);
-      const amountLPStaked = ethers.BigNumber.from(ONE_HUNDRED_TOKENS);
+      const amountLPStaked = BigNumber.from(ONE_HUNDRED_TOKENS);
       const amountRewarded = (0).toString();
       await sushiMiniChefV2.givenCalldataReturn(
         userInfo,
@@ -2502,14 +2526,14 @@ describe("PoolFactory", function () {
       const totalSupply = await poolLogicProxy.totalSupply();
       const totalFundValue = await poolManagerLogicProxy.totalFundValue();
       const sushiLPPrice = await assetHandler.getUSDPrice(sushiLPLinkWeth);
-      const fundUsdValue = ethers.BigNumber.from(TWENTY_TOKENS);
+      const fundUsdValue = BigNumber.from(TWENTY_TOKENS);
       const fundSushiLPValue = sushiLPPrice.mul(5);
       const stakedSushiLPValue = sushiLPPrice.mul(100);
       const expectedFundValue = fundUsdValue.add(fundSushiLPValue).add(stakedSushiLPValue);
       expect(totalFundValue).to.equal(expectedFundValue);
 
       // Withdraw 10 tokens
-      const withdrawAmount = ethers.BigNumber.from(TEN_TOKENS);
+      const withdrawAmount = BigNumber.from(TEN_TOKENS);
       const investorFundBalance = await poolLogicProxy.balanceOf(investor.address);
 
       await ethers.provider.send("evm_increaseTime", [3600 * 24]); // add 1 day to avoid cooldown revert
@@ -2523,15 +2547,17 @@ describe("PoolFactory", function () {
 
       expect(eventWithdrawal.fundAddress).to.equal(poolLogicProxy.address);
       expect(eventWithdrawal.investor).to.equal(investor.address);
-      checkAlmostSame(eventWithdrawal.valueWithdrawn, valueWithdrawn.toString(), 0.001);
+      expect(eventWithdrawal.valueWithdrawn).to.be.closeTo(valueWithdrawn, valueWithdrawn.div(1000));
       expect(eventWithdrawal.fundTokensWithdrawn).to.equal(withdrawAmount.toString());
-      checkAlmostSame(
-        eventWithdrawal.totalInvestorFundTokens,
-        investorFundBalance.sub(withdrawAmount).toString(),
-        0.001,
+      expect(eventWithdrawal.totalInvestorFundTokens).to.be.closeTo(
+        investorFundBalance.sub(withdrawAmount),
+        investorFundBalance.sub(withdrawAmount).div(1000),
       );
-      checkAlmostSame(eventWithdrawal.fundValue, expectedFundValueAfter, 0.001);
-      checkAlmostSame(eventWithdrawal.totalSupply, totalSupply.sub(withdrawAmount).toString(), 0.001);
+      expect(eventWithdrawal.fundValue).to.be.closeTo(expectedFundValueAfter, expectedFundValueAfter.div(1000));
+      expect(eventWithdrawal.totalSupply).to.be.closeTo(
+        totalSupply.sub(withdrawAmount),
+        totalSupply.sub(withdrawAmount).div(1000),
+      );
 
       const withdrawSUSD = eventWithdrawal.withdrawnAssets[1];
       const withdrawLP = eventWithdrawal.withdrawnAssets[0];

@@ -6,7 +6,7 @@ pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
-import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
+import "../interfaces/uniswapV2/IUniswapV2Pair.sol";
 import "../interfaces/balancer/IBalancerWeightedPool.sol";
 import "../interfaces/balancer/IBalancerV2Vault.sol";
 import "../interfaces/IERC20Extended.sol"; // includes decimals()

@@ -8,7 +8,7 @@ import {
   PoolManagerLogic__factory,
   UniswapV3NonfungiblePositionGuard,
 } from "../../../types";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 
 const deadLine = Math.floor(Date.now() / 1000 + 100000000);
 

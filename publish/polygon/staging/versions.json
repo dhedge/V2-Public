@@ -1888,16 +1888,6 @@
           "oracleAddress": "0x8CE3cAc0E6635ce04783709ca3CC4F5fc5304299"
         },
         {
-          "assetName": "MiMatic",
-          "assetAddress": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
-        },
-        {
           "assetName": "Arrakis WMATIC-WETH 0.05% Harvester",
           "assetAddress": "0xEdF8C3aD1186d6ecB8b8cd08230b9434768252A5",
           "assetType": "9",
@@ -2302,16 +2292,6 @@
           "oracleAddress": "0x2835416e6144c0c578932d8456a2c65D1FCF15e9"
         },
         {
-          "assetName": "stMatic",
-          "assetAddress": "0x3a58a54c066fdc0f2d55fc9c89f0415c92ebf3c4",
-          "assetType": "0",
-          "oracleType": "ChainlinkAggregator",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
-          },
-          "oracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
-        },
-        {
           "assetName": "MaticX",
           "assetAddress": "0xfa68FB4628DFF1028CFEc22b4162FCcd0d45efb6",
           "assetType": "0",
@@ -2337,6 +2317,80 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
+        },
+        {
+          "assetName": "Stargate USDC LP",
+          "assetAddress": "0x1205f31718499dbf1fca446663b532ef87481fe1",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "USDC Oracle",
+            "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+        },
+        {
+          "assetName": "Stargate USDT LP",
+          "assetAddress": "0x29e38769f23701A2e4A8Ef0492e19dA4604Be62c",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "USDT Oracle",
+            "chainlinkOracleAddress": "0x0A6513e40db6EB1b165753AD52E80663aeA50545"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x0A6513e40db6EB1b165753AD52E80663aeA50545"
+        },
+        {
+          "assetName": "Stargate DAI LP",
+          "assetAddress": "0x1c272232Df0bb6225dA87f4dEcD9d37c32f63Eea",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "DAI Oracle",
+            "chainlinkOracleAddress": "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D"
+        },
+        {
+          "assetName": "Stargate MAI LP",
+          "assetAddress": "0x8736f92646B2542B3e5F3c63590cA7Fe313e283B",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "MAI Oracle",
+            "chainlinkOracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+        },
+        {
+          "assetName": "Pax Gold",
+          "assetAddress": "0x553d3D295e0f695B9228246232eDF400ed3560B5",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x0f6914d8e7e1214CDb3A4C6fbf729b75C69DF608"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x0f6914d8e7e1214CDb3A4C6fbf729b75C69DF608"
+        },
+        {
+          "assetName": "MiMatic",
+          "assetAddress": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+        },
+        {
+          "assetName": "stMatic",
+          "assetAddress": "0x3a58a54c066fdc0f2d55fc9c89f0415c92ebf3c4",
+          "assetType": "4",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
+          },
+          "oracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
         }
       ],
       "RemovedAssets": [
@@ -2361,10 +2415,10 @@
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
-      "PoolFactory": "0x8De28a3446007D856CB75f14F07F1fF7eCa040D6",
-      "PoolLogic": "0x088DeB850d82603243E257DD1cBc05c5D838a28D",
+      "PoolFactory": "0x6858d1bdf033F29e2609c878580c70E9339fe9E2",
+      "PoolLogic": "0x0C1cCd956dC8E338008a6F4F4c27902a3B15d5F4",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0xa084F8Ef51Cf8728FE712C2E719a95a82623D199",
+      "PoolManagerLogic": "0x94a45eBCcf2996e95b8f82D4AD8098f1EfA1356A",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
       "ERC20Guard": "0xBd651F4a743dCdaC0141a1BEBACb9626D700fe40",
@@ -2388,23 +2442,30 @@
       "DynamicBonds": "0x04965F01E531311f1686BE8D6904E9A361191749",
       "OneInchV4Guard": "0x5D2A737a060dFba1Fd6F8E8CF49c087D7e9b1721",
       "BalancerMerkleOrchardGuard": "0xa71a1A922000BF91CACF835222C0E552A288A826",
-      "EasySwapperGuard": "0xcf5d8ee91FFE67e50b6cbffc4A614A4b1C4D932A",
-      "UniswapV3NonfungiblePositionGuard": "0x90d9E5B2Edc8426293bd9579b2f3Cefecba4602e",
-      "UniswapV3RouterGuard": "0x16FcD638cB1b6ed0D9C15C9B98a6C85453a4FA6A",
-      "UniswapV3AssetGuard": "0x90e5A8989C741c7D7268BdD2C839E3c73541B5C0",
-      "DhedgeSuperSwapper": "0x24aa07f62E90578c0af12cDFd5B16d1eA19C2bD4",
+      "EasySwapperGuard": "0x62201948D40863a657390501A320ec36DD6eDA31",
+      "UniswapV3NonfungiblePositionGuard": "0x29D45AdF45d7a68544C3BB3C84306d90ff8E3B74",
+      "UniswapV3RouterGuard": "0x6FdBd1E5BD9f245491A70795305539877F26060E",
+      "UniswapV3AssetGuard": "0xe0354b48EAe09405eCe07300A865FDB45c1341D1",
+      "DhedgeSuperSwapper": "0xaA0031Dae9755Cdc0473a3F25e14a1f639f32E6B",
       "ArrakisLiquidityGaugeV4AssetGuard": "0x358F165232d5C7b68F6Eae1Ac3848bC042B77a59",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6e0949ED2c3Fb19b445ED946C8A317639AEFCF04",
-      "ArrakisV1RouterStakingGuard": "0x87978E8a4ecB75Fc73E3D14405905eE8faFad241",
+      "ArrakisV1RouterStakingGuard": "0xA7757Ab47adCC9E2cB08ACc967f6AB779B270a2F",
       "BalancerV2GaugeAssetGuard": "0x93071a924735880a871bA34e800f74b895B0B388",
       "BalancerV2GaugeContractGuard": "0x3705f5D51f488e052Aa21a19b66a15CC0c07412E",
       "DhedgeStakingV2NFTJson": "0x2D6e4D79CcFFA007E888f78F02AE056a5921D4Aa",
       "DhedgeStakingV2Proxy": "0x62073D8A8b382f37342e595ACA23bC867C8Ea81e",
       "DhedgeStakingV2": "0xA5e199e7b70bcbC41C075f4388Da38E27b6F480C",
-      "DhedgeEasySwapperProxy": "0x0c0588E6515E804918740d6c622d768c84D5d39D",
-      "DhedgeEasySwapper": "0x4BD68633193950cc8D4776C61a9E8ea479136a7A",
-      "DhedgeUniV3V2Router": "0x918389920610186becfa7cfFdD8402B81b46a236",
-      "OneInchV5Guard": "0x1051dBEa189c0520A4E83a0D5850c788c7DeD119"
+      "DhedgeUniV3V2Router": "0x9cc0D93b2872D9768e3568975DC58B352C610C36",
+      "OneInchV5Guard": "0x1051dBEa189c0520A4E83a0D5850c788c7DeD119",
+      "DhedgeEasySwapperProxy": "0x0d7b2114dF22A954868a89b28D6f868114f3c285",
+      "DhedgeEasySwapper": "0xF7F631DBB3c8f82d27B6C23524FAF2822A4BFc37",
+      "DhedgeNftTrackerStorageProxy": "0x025bB4319dAB451360f4Fb34F567785d4cF73c2F",
+      "DhedgeNftTrackerStorage": "0x93127FeE7DCafeC3e04c40B2C05a582827C84e65",
+      "StargateLpStakingContractGuard": "0x62046FFEd342090540C8692f0A5b77ECE608DBaF",
+      "StargateRouterContractGuard": "0x26595Ed91617D045Ed2D77D698C0a25b99Df6c2a",
+      "StargateLPAssetGuard": "0xD000BdceE496bad6e06701DecF297324e687a47c",
+      "SlippageAccumulator": "0xd058DF1787B0c6134142Af16A639AC8993c8BD42",
+      "ZeroExContractGuard": "0x173ABbba2AdFBafE85430C37A248BB2AF686C05e"
     },
     "network": {
       "name": "matic",
@@ -2412,6 +2473,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 23 Nov 2022 04:34:59 GMT"
+    "lastUpdated": "Wed, 05 Jul 2023 10:09:48 GMT",
+    "config": {}
   }
 }

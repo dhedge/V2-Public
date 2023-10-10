@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { DhedgeStakingV2, ERC20Asset, PoolLogic__factory, PoolLogic, PoolFactory__factory } from "../../../types";
 import { utils } from "../../integration/utils/utils";
-import { checkDelta, units } from "../../TestHelpers";
+import { checkDelta, units } from "../../testHelpers";
 import { smock, MockContract } from "@defi-wonderland/smock";
 import { BigNumber } from "ethers";
 

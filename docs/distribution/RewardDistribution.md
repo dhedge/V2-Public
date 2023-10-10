@@ -5,8 +5,9 @@
 - [`setRewardToken(address _rewardToken)`](#RewardDistribution-setRewardToken-address-)
 - [`setRewardAmountPerSecond(uint256 _rewardAmountPerSecond)`](#RewardDistribution-setRewardAmountPerSecond-uint256-)
 - [`setWhitelistedPools(address[] _whitelistedPools)`](#RewardDistribution-setWhitelistedPools-address---)
+- [`launch(uint256 _rewardAmountPerSecond)`](#RewardDistribution-launch-uint256-)
+- [`withdrawAdmin(contract IERC20 _token, uint256 _amount)`](#RewardDistribution-withdrawAdmin-contract-IERC20-uint256-)
 - [`getWhitelistedPools()`](#RewardDistribution-getWhitelistedPools--)
-- [`getEligiblePools()`](#RewardDistribution-getEligiblePools--)
 - [`getEligiblePoolsWithTvl()`](#RewardDistribution-getEligiblePoolsWithTvl--)
 - [`calculateTotalRewardsForPeriod(uint256 _rewardAmountPerSecond, uint256 _lastDistributionTime, uint256 _blockTimestamp)`](#RewardDistribution-calculateTotalRewardsForPeriod-uint256-uint256-uint256-)
 - [`calculatePoolRewardAmount(uint256 _poolTvl, uint256 _eligiblePoolsTvl, uint256 _rewardsToDistribute)`](#RewardDistribution-calculatePoolRewardAmount-uint256-uint256-uint256-)
@@ -57,6 +58,26 @@ Setter to change whitelisted for distribution pools
 
 
 
+# Function `launch(uint256 _rewardAmountPerSecond)` {#RewardDistribution-launch-uint256-}
+Function to launch reward distribution process
+
+
+## Parameters:
+- `_rewardAmountPerSecond`: Mind reward token precision
+
+
+
+# Function `withdrawAdmin(contract IERC20 _token, uint256 _amount)` {#RewardDistribution-withdrawAdmin-contract-IERC20-uint256-}
+Allows the contract owner to withdraw any ERC20 token in the contract
+
+
+## Parameters:
+- `_token`: Token address. Usually should be rewardToken
+
+- `_amount`: Amount of tokens for emergency withdraw
+
+
+
 # Function `getWhitelistedPools() → address[]` {#RewardDistribution-getWhitelistedPools--}
 Getter for pools whitelisted for rewards
 
@@ -66,16 +87,7 @@ Getter for pools whitelisted for rewards
 - List of whitelisted pools' addresses
 
 
-# Function `getEligiblePools() → address[]` {#RewardDistribution-getEligiblePools--}
-Getter for pools eligible for rewards
-
-
-
-## Return Values:
-- List of eligible pools' addresses
-
-
-# Function `getEligiblePoolsWithTvl() → uint256 tvl, address[] eligiblePools` {#RewardDistribution-getEligiblePoolsWithTvl--}
+# Function `getEligiblePoolsWithTvl() → uint256 tvl, struct RewardDistribution.EligiblePool[] eligiblePools` {#RewardDistribution-getEligiblePoolsWithTvl--}
 Aggregates total usd value of all eligible pools
 
 
@@ -83,7 +95,7 @@ Aggregates total usd value of all eligible pools
 ## Return Values:
 - tvl Total value in usd
 
-- eligiblePools List of eligible pools' addresses
+- eligiblePools List of eligible pools
 
 
 # Function `calculateTotalRewardsForPeriod(uint256 _rewardAmountPerSecond, uint256 _lastDistributionTime, uint256 _blockTimestamp) → uint256 totalRewardsForPeriod` {#RewardDistribution-calculateTotalRewardsForPeriod-uint256-uint256-uint256-}

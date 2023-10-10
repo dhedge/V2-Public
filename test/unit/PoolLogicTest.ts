@@ -1,9 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { artifacts, ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
-import { updateChainlinkAggregators } from "../TestHelpers";
-import { MockContract, PoolFactory, PoolLogic } from "../../types";
+import { updateChainlinkAggregators } from "../testHelpers";
+import { MockContract, PoolFactory, PoolLogic, PoolManagerLogic__factory, TestUSDC, TestWETH } from "../../types";
+import { Contract, BigNumber } from "ethers";
 
 const ONE_SECOND = 1;
 const ONE_MINUTE = ONE_SECOND * 60;
@@ -20,21 +21,31 @@ const calcRemainingCooldown = (lastCooldown: number, lastDepositTime: number, bl
 const amount = 42 * 1e6;
 
 describe("dHEDGE Pool Deposit", () => {
-  let manager: SignerWithAddress, investor: SignerWithAddress, dao: SignerWithAddress;
+  let manager: SignerWithAddress, investor: SignerWithAddress, dao: SignerWithAddress, user1: SignerWithAddress;
   let poolFactory: PoolFactory;
   let poolLogicProxy: PoolLogic;
-  let usdcProxy: MockContract, usdcPriceFeed: MockContract;
+  let weth: TestWETH, wethPriceFeed: MockContract;
+  let wethAddress: string;
+  let usdcProxy: TestUSDC, usdcPriceFeed: MockContract, linkPriceFeed: MockContract;
   let usdcAddress: string, managerAddress: string, investorAddress: string;
+  let assetHandler: Contract;
 
   beforeEach(async () => {
-    [manager, investor, dao] = await ethers.getSigners();
+    [manager, investor, dao, user1] = await ethers.getSigners();
     managerAddress = manager.address;
     investorAddress = investor.address;
 
-    const MockContract = await ethers.getContractFactory("MockContract");
-    usdcProxy = await MockContract.deploy();
+    const TestUSDC = await ethers.getContractFactory("TestUSDC");
+    usdcProxy = await TestUSDC.deploy(20000000);
+    await usdcProxy.deployed();
     usdcAddress = usdcProxy.address;
+    const MockContract = await ethers.getContractFactory("MockContract");
     usdcPriceFeed = await MockContract.deploy();
+    const TestWETH = await ethers.getContractFactory("TestWETH");
+    weth = await TestWETH.deploy(2_000_000);
+    await weth.deployed();
+    wethAddress = weth.address;
+    wethPriceFeed = await MockContract.deploy();
 
     const PoolLogic = await ethers.getContractFactory("PoolLogic");
     const poolLogic = await PoolLogic.deploy();
@@ -42,19 +53,14 @@ describe("dHEDGE Pool Deposit", () => {
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
     const poolManagerLogic = await PoolManagerLogic.deploy();
 
-    await usdcProxy.givenCalldataReturnUint(
-      new ethers.utils.Interface((await artifacts.readArtifact("ERC20Upgradeable")).abi).encodeFunctionData(
-        "decimals",
-        [],
-      ),
-      "6",
-    );
-
     const AssetHandlerLogic = await ethers.getContractFactory(
       "contracts/priceAggregators/AssetHandler.sol:AssetHandler",
     );
-    const assetHandlerInitAssets = [{ asset: usdcAddress, assetType: 0, aggregator: usdcPriceFeed.address }];
-    const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
+    const assetHandlerInitAssets = [
+      { asset: usdcAddress, assetType: 0, aggregator: usdcPriceFeed.address },
+      { asset: wethAddress, assetType: 0, aggregator: wethPriceFeed.address },
+    ];
+    assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [assetHandlerInitAssets]);
     await assetHandler.deployed();
 
     const Governance = await ethers.getContractFactory("Governance");
@@ -78,11 +84,239 @@ describe("dHEDGE Pool Deposit", () => {
 
     await poolFactory.createFund(false, manager.address, "String0", "String1", "String3", 0, 0, [
       { asset: usdcAddress, isDeposit: true },
+      { asset: wethAddress, isDeposit: true },
     ]);
     const pools = await poolFactory.getDeployedFunds();
     poolLogicProxy = PoolLogic.attach(pools[0]);
 
-    await updateChainlinkAggregators(usdcPriceFeed, await MockContract.deploy(), await MockContract.deploy());
+    linkPriceFeed = await MockContract.deploy();
+    await updateChainlinkAggregators(usdcPriceFeed, wethPriceFeed, linkPriceFeed);
+
+    await usdcProxy.connect(manager).approve(poolLogicProxy.address, 2000000e6);
+
+    await usdcProxy.transfer(investor.address, 1000000e6);
+    await usdcProxy.connect(investor).approve(poolLogicProxy.address, 1000000e6);
+    await usdcProxy.transfer(user1.address, 1000000e6);
+    await usdcProxy.connect(user1).approve(poolLogicProxy.address, 1000000e6);
+
+    await weth.connect(manager).approve(poolLogicProxy.address, ethers.utils.parseUnits("100", 18));
+    await weth.connect(manager).transfer(investor.address, ethers.utils.parseUnits("100", 18));
+    await weth.connect(investor).approve(poolLogicProxy.address, ethers.utils.parseUnits("100", 18));
+    await weth.connect(manager).transfer(user1.address, ethers.utils.parseUnits("100", 18));
+    await weth.connect(user1).approve(poolLogicProxy.address, ethers.utils.parseUnits("100", 18));
+  });
+
+  // Replicating the 2nd way of attack mentioned in the following blog.
+  // https://mixbytes.io/blog/overview-of-the-inflation-attack
+  describe("Inflation attack mitigation", () => {
+    it("doesn't allow manager to steal first investor's funds from the pool", async () => {
+      const beforeAttack = await usdcProxy.connect(manager).balanceOf(manager.address);
+      // pool manager deposits 10 usdc
+      await poolLogicProxy.connect(manager).deposit(usdcAddress, 10e6);
+      let sharesForManager = await poolLogicProxy.balanceOf(manager.address);
+      await ethers.provider.send("evm_increaseTime", [86400]);
+      await ethers.provider.send("evm_mine", []);
+      // manager withdraws almost all shares except 100_000
+      await poolLogicProxy.connect(manager).withdraw(sharesForManager.sub(100_000));
+      sharesForManager = await poolLogicProxy.balanceOf(manager.address);
+
+      // manager transfers 1_000_001e6 usdc to the poolLogicProxy directly
+      await usdcProxy.connect(manager).transfer(poolLogicProxy.address, 1_000_001e6, { from: manager.address });
+      // investor tries to deposit 10e6 usdc
+      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, 10e6)).to.be.revertedWith(
+        "invalid liquidityMinted",
+      );
+      const sharesForInvestor = await poolLogicProxy.balanceOf(investor.address);
+
+      expect(sharesForInvestor).to.equal(0);
+
+      // manager redeems all of his shares.
+      await poolLogicProxy.connect(manager).withdraw(100_000);
+      const afterAttack = await usdcProxy.connect(manager).balanceOf(manager.address);
+      expect(beforeAttack).to.equal(afterAttack);
+    });
+
+    it("should revert if depositing tokens such that liquidity minted is below 100_000", async () => {
+      // Manager tries to deposit 1 wei. This should mint 2000 shares.
+      // Since the expected mint amount is less than < 100_000. This should revert.
+      await expect(poolLogicProxy.connect(manager).deposit(wethAddress, 1)).to.be.revertedWith(
+        "invalid liquidityMinted",
+      );
+    });
+
+    it("loss of tokens due to inflation attack should be within acceptable range of 0.00001% (18 decimal tokens)", async () => {
+      const investorBalanceBefore = await weth.balanceOf(investor.address);
+      const userBalanceBefore = await weth.balanceOf(user1.address);
+
+      // pool manager deposits 100 wei
+      await poolLogicProxy.connect(manager).deposit(wethAddress, 100);
+      let sharesForManager = await poolLogicProxy.balanceOf(manager.address);
+
+      // Skipping ahead by 1 day.
+      await ethers.provider.send("evm_increaseTime", [86400]);
+      await ethers.provider.send("evm_mine", []);
+
+      await poolLogicProxy.connect(manager).withdraw(sharesForManager.sub(100_000));
+      sharesForManager = await poolLogicProxy.balanceOf(manager.address);
+
+      // manager transfers 5e15 wei (0.005 eth) to the poolLogicProxy directly
+      await weth
+        .connect(manager)
+        .transfer(poolLogicProxy.address, ethers.utils.parseUnits("5", 15), { from: manager.address });
+
+      // investors deposit 1e16 wei (0.01 eth)
+      await poolLogicProxy.connect(investor).deposit(wethAddress, ethers.utils.parseUnits("1", 16));
+      await poolLogicProxy.connect(user1).deposit(wethAddress, ethers.utils.parseUnits("1", 16));
+      const sharesForInvestor = await poolLogicProxy.balanceOf(investor.address);
+      const sharesForUser = await poolLogicProxy.balanceOf(user1.address);
+
+      await ethers.provider.send("evm_increaseTime", [86400]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Setting a high value for chainlink timeout just for this test.
+      await assetHandler.setChainlinkTimeout(900000);
+
+      // manager withdraws all tokens before investor.
+      await poolLogicProxy.connect(manager).withdraw(sharesForManager);
+
+      // investors withdraw their shares of tokens.
+      await poolLogicProxy.connect(investor).withdraw(sharesForInvestor);
+      await poolLogicProxy.connect(user1).withdraw(sharesForUser);
+
+      const investorBalanceAfter = await weth.balanceOf(investor.address);
+      const userBalanceAfter = await weth.balanceOf(user1.address);
+
+      // console.log("Investor balance after: ", investorBalanceAfter.toString());
+      // console.log("User balance after: ", userBalanceAfter.toString());
+      // console.log("Manager balance after: ", await weth.balanceOf(manager.address));
+
+      // Accepting loss of 0.00001% due to the attack.
+      // Note, higher the minSupply threshold, higher is the precision we can target (lower loss %).
+      expect(investorBalanceAfter).to.be.gte(investorBalanceBefore.mul(9999).div(10000));
+      expect(userBalanceAfter).to.be.gte(userBalanceBefore.mul(9999).div(10000));
+    });
+
+    it("should revert if withdrawing shares such that supply is below threshold of 100_000", async () => {
+      // pool manager deposits 1 usdc
+      await poolLogicProxy.connect(manager).deposit(usdcAddress, 1e6);
+      const sharesForManager = await poolLogicProxy.balanceOf(manager.address);
+
+      // Skipping ahead by 1 day.
+      await ethers.provider.send("evm_increaseTime", [86400]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Manager attempts to withdraw his portion of shares such that only 1 share remains.
+      // This should fail as minimum share supply required in the pool is 100_000.
+      await expect(poolLogicProxy.connect(manager).withdraw(sharesForManager.sub(1))).to.be.revertedWith(
+        "below supply threshold",
+      );
+    });
+
+    it("loss of tokens due to inflation attack should be within acceptable range of 0.00001% (6 decimal tokens)", async () => {
+      const investorBalanceBefore = await usdcProxy.balanceOf(investor.address);
+      const userBalanceBefore = await usdcProxy.balanceOf(user1.address);
+
+      // pool manager deposits 1 usdc
+      await poolLogicProxy.connect(manager).deposit(usdcAddress, 1e6);
+      let sharesForManager = await poolLogicProxy.balanceOf(manager.address);
+
+      // Skipping ahead by 1 day.
+      await ethers.provider.send("evm_increaseTime", [86400]);
+      await ethers.provider.send("evm_mine", []);
+
+      await poolLogicProxy.connect(manager).withdraw(sharesForManager.sub(100_000));
+      sharesForManager = await poolLogicProxy.balanceOf(manager.address);
+
+      // manager transfers 501e6 usdc to the poolLogicProxy directly
+      await usdcProxy.connect(manager).transfer(poolLogicProxy.address, 501e6, { from: manager.address });
+
+      // investors deposit 1000e6 usdc
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, 1000e6);
+      await poolLogicProxy.connect(user1).deposit(usdcAddress, 1000e6);
+      const sharesForInvestor = await poolLogicProxy.balanceOf(investor.address);
+      const sharesForUser = await poolLogicProxy.balanceOf(user1.address);
+
+      await ethers.provider.send("evm_increaseTime", [86400]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Setting a high value for chainlink timeout just for this test.
+      await assetHandler.setChainlinkTimeout(900000);
+
+      // manager withdraws all tokens before investor.
+      await poolLogicProxy.connect(manager).withdraw(sharesForManager);
+
+      // investors withdraw their shares of tokens.
+      await poolLogicProxy.connect(investor).withdraw(sharesForInvestor);
+      await poolLogicProxy.connect(user1).withdraw(sharesForUser);
+
+      const investorBalanceAfter = await usdcProxy.balanceOf(investor.address);
+      const userBalanceAfter = await usdcProxy.balanceOf(user1.address);
+
+      // Accepting loss of 0.00001% due to the attack.
+      // Note, higher the minSupply threshold, higher is the precision we can target (lower loss %).
+      expect(investorBalanceAfter).to.be.gte(investorBalanceBefore.mul(9999).div(10000));
+      expect(userBalanceAfter).to.be.gte(userBalanceBefore.mul(9999).div(10000));
+    });
+  });
+
+  describe("Entry fee", () => {
+    it("should account for entry fee when totalSupply is 0", async function () {
+      const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+      const poolManagerLogicAddr = await poolLogicProxy.poolManagerLogic();
+      const poolManagerLogicProxy = PoolManagerLogic.attach(poolManagerLogicAddr);
+
+      // refresh timestamp of Chainlink price round data
+      await updateChainlinkAggregators(usdcPriceFeed, wethPriceFeed, linkPriceFeed);
+      await assetHandler.setChainlinkTimeout(9000000);
+
+      // Set the entry fee as 0.25%.
+      await poolManagerLogicProxy.connect(manager).announceFeeIncrease(0, 0, 25);
+
+      await ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4]); // add 4 weeks
+      await poolManagerLogicProxy.connect(manager).commitFeeIncrease();
+
+      await poolLogicProxy.connect(investor).deposit(usdcProxy.address, (100e6).toString());
+
+      const sharesForInvestor = await poolLogicProxy.balanceOf(investorAddress);
+
+      // This is equivalent of finding 99.75% of the liquidity minted for 100 USDC deposited.
+      const expectedLiquidityMinted = BigNumber.from("9975").mul(BigNumber.from(10).pow(16));
+
+      expect(sharesForInvestor).to.equal(expectedLiquidityMinted);
+    });
+
+    it("should account for entry fee when totalSupply is greater than 0", async function () {
+      const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
+      const poolManagerLogicAddr = await poolLogicProxy.poolManagerLogic();
+      const poolManagerLogicProxy = PoolManagerLogic.attach(poolManagerLogicAddr);
+
+      // refresh timestamp of Chainlink price round data
+      await updateChainlinkAggregators(usdcPriceFeed, wethPriceFeed, linkPriceFeed);
+      await assetHandler.setChainlinkTimeout(9000000);
+
+      // Set the entry fee as 0.25%.
+      await poolManagerLogicProxy.connect(manager).announceFeeIncrease(0, 0, 25);
+
+      await ethers.provider.send("evm_increaseTime", [3600 * 24 * 7 * 4]); // add 4 weeks
+      await poolManagerLogicProxy.connect(manager).commitFeeIncrease();
+
+      // Manager makes the first deposit.
+      await poolLogicProxy.connect(manager).deposit(usdcProxy.address, (100e6).toString());
+      const sharesForManager = await poolLogicProxy.balanceOf(managerAddress);
+
+      await poolLogicProxy.connect(investor).deposit(usdcProxy.address, (100e6).toString());
+      const sharesForInvestor = await poolLogicProxy.balanceOf(investorAddress);
+
+      // This is equivalent of finding 99.75% of the liquidity minted for 100 USDC deposited.
+      const expectedLiquidityMinted = BigNumber.from("9975").mul(BigNumber.from(10).pow(16));
+
+      // The difference between the shares minted for the manager and investor should not differ by more than
+      // 0.25%
+      expect(sharesForInvestor).to.be.closeTo(expectedLiquidityMinted, expectedLiquidityMinted.mul(25).div(10_000));
+
+      // The depositor who entered the pool earlier should have more number of shares.
+      expect(sharesForInvestor).to.be.lt(sharesForManager);
+    });
   });
 
   describe("receiverWhitelist", () => {
@@ -721,6 +955,83 @@ describe("dHEDGE Pool Deposit", () => {
         .depositForWithCustomCooldown(investorAddress, usdcAddress, amount, customCooldown);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(customCooldown);
       await poolFactory.removeCustomCooldownWhitelist(managerAddress);
+    });
+  });
+
+  describe("private pool works as expected", () => {
+    it("can't depositFor into private pool if recipient is not a member", async () => {
+      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await expect(poolLogicProxy.connect(investor).depositFor(dao.address, usdcAddress, amount)).to.be.revertedWith(
+        "only members allowed",
+      );
+      await expect(
+        poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount),
+      ).to.be.revertedWith("only members allowed");
+    });
+    it("can't depositFor into private pool if recipient is not a member but caller is a member", async () => {
+      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await expect(poolLogicProxy.connect(manager).depositFor(dao.address, usdcAddress, amount)).to.be.revertedWith(
+        "only members allowed",
+      );
+    });
+    it("can depositFor into private pool if recipient is a member", async () => {
+      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await expect(
+        poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount),
+      ).to.be.revertedWith("only members allowed");
+      const poolManagerLogicProxy = PoolManagerLogic__factory.connect(await poolLogicProxy.poolManagerLogic(), manager);
+      await poolManagerLogicProxy.connect(manager).addMember(investor.address);
+      expect(await poolLogicProxy.balanceOf(investor.address)).to.equal(0);
+      await poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount);
+      expect(await poolLogicProxy.balanceOf(investor.address)).not.to.equal(0);
+    });
+    it("can depositFor into private pool if recipient is a member, but caller is not a member", async () => {
+      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      const poolManagerLogicProxy = PoolManagerLogic__factory.connect(await poolLogicProxy.poolManagerLogic(), manager);
+      await expect(poolLogicProxy.connect(investor).depositFor(dao.address, usdcAddress, amount)).to.be.revertedWith(
+        "only members allowed",
+      );
+      await poolManagerLogicProxy.connect(manager).addMember(dao.address);
+      expect(await poolLogicProxy.balanceOf(dao.address)).to.equal(0);
+      await poolLogicProxy.connect(investor).depositFor(dao.address, usdcAddress, amount);
+      expect(await poolLogicProxy.balanceOf(dao.address)).not.to.equal(0);
+    });
+  });
+
+  describe("Specific pool pausing works as expected", () => {
+    it("can pause and unpause pool", async () => {
+      expect(await poolFactory.pausedPools(poolLogicProxy.address)).to.equal(false);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      expect(await poolFactory.pausedPools(poolLogicProxy.address)).to.equal(true);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: false }]);
+      expect(await poolFactory.pausedPools(poolLogicProxy.address)).to.equal(false);
+    });
+
+    it("can't pause and unpause pool if not owner", async () => {
+      await expect(
+        poolFactory.connect(investor).setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]),
+      ).to.be.revertedWith("caller is not the owner");
+    });
+
+    it("can't deposit into paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, amount)).to.be.revertedWith("pool is paused");
+      await expect(
+        poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount),
+      ).to.be.revertedWith("pool is paused");
+    });
+
+    it("can't withdraw from paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      await expect(poolLogicProxy.connect(investor).withdraw(amount)).to.be.revertedWith("pool is paused");
+      await expect(poolLogicProxy.connect(investor).withdrawTo(investor.address, amount)).to.be.revertedWith(
+        "pool is paused",
+      );
+    });
+
+    it("can't mint fees in paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      await expect(poolLogicProxy.mintManagerFee()).to.be.revertedWith("pool is paused");
     });
   });
 });

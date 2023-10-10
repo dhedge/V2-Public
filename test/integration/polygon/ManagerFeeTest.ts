@@ -4,12 +4,12 @@ import { Contract } from "ethers";
 import { artifacts, ethers } from "hardhat";
 
 import { IERC20, MockContract, PoolFactory } from "../../../types";
-import { checkAlmostSame, currentBlockTimestamp, units } from "../../TestHelpers";
+import { checkAlmostSame, currentBlockTimestamp, units } from "../../testHelpers";
 import { createFund } from "../utils/createFund";
 import { deployContracts } from "../utils/deployContracts/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 import { utils } from "../utils/utils";
 const { assets, assetsBalanceOfSlot } = polygonChainData;
 
@@ -318,7 +318,7 @@ describe("ManagerFee Test", function () {
   });
 
   it("should mint manager fee at commitFeeIncrease", async () => {
-    await poolFactory.setMaximumFee(6000, 300);
+    await poolFactory.setMaximumFee(6000, 300, 0);
     await poolFactory.setPerformanceFeeNumeratorChangeDelay(3600 * 24); // fee increase delay for 1 day
 
     // 1. increase price
@@ -333,7 +333,7 @@ describe("ManagerFee Test", function () {
     let tokenPriceBefore = await poolLogicProxy.tokenPriceWithoutManagerFee();
 
     // 2. increase fee
-    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(5500, 250);
+    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(5500, 250, 0);
     await ethers.provider.send("evm_increaseTime", [3600 * 24]);
     await ethers.provider.send("evm_mine", []);
     await poolManagerLogicProxy.connect(manager).commitFeeIncrease();
@@ -355,7 +355,7 @@ describe("ManagerFee Test", function () {
     const tokenPriceAtLastFeeMintBefore = await poolLogicProxy.tokenPriceAtLastFeeMint();
 
     // 5. increase fee
-    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(6000, 300);
+    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(6000, 300, 0);
     await ethers.provider.send("evm_increaseTime", [3600 * 24]);
     await ethers.provider.send("evm_mine", []);
     await poolManagerLogicProxy.connect(manager).commitFeeIncrease();
@@ -367,10 +367,10 @@ describe("ManagerFee Test", function () {
   });
 
   it("should initialize announcedFeeNumerators after commitFeeIncrease", async () => {
-    await poolFactory.setMaximumFee(6000, 300);
+    await poolFactory.setMaximumFee(6000, 300, 0);
     await poolFactory.setPerformanceFeeNumeratorChangeDelay(3600 * 24); // fee increase delay for 1 day
 
-    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(5500, 250);
+    await poolManagerLogicProxy.connect(manager).announceFeeIncrease(5500, 250, 0);
     await ethers.provider.send("evm_increaseTime", [3600 * 24]);
     await ethers.provider.send("evm_mine", []);
     await poolManagerLogicProxy.connect(manager).commitFeeIncrease();

@@ -8,6 +8,7 @@ interface IArrakisV1RouterStaking {
     uint256 amount1Max,
     uint256 amount0Min,
     uint256 amount1Min,
+    uint256 amountSharesMin,
     address receiver
   )
     external

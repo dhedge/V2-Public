@@ -6,7 +6,7 @@ import { deployContracts, NETWORK } from "../utils/deployContracts/deployContrac
 import { getAccountToken } from "../utils/getAccountTokens";
 import { getOneInchSwapTransaction } from "../utils/oneInchHelpers";
 import { utils } from "../utils/utils";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import { expect } from "chai";
 
 interface IexecTransactionsTestParams {

@@ -21,6 +21,8 @@
 
 # Pool Whitelisting
 
+Each pool that can participate in staking must be whitelisted, each needs to be configured with a cap denominated in $$ value of pool tokens that can be staked.
+
 # Notes on maxStakingValue
 
 - The dhtCap effective controls how much DHPT we allow to be staked at one given time. This is a crude safe guard to limit the max emissions. MaxStakingValue = `dhtCap / stakingRatio / emissionsRate`

@@ -1,5 +1,5 @@
 import { ArrakisLiquidityGaugeV4ContractGuardTest } from "../../common/arrakis/ArrakisLiquidityGaugeV4GuardTest";
-import { polygonChainData } from "../../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../../config/chainData/polygonData";
 
 ArrakisLiquidityGaugeV4ContractGuardTest(
   "polygon",

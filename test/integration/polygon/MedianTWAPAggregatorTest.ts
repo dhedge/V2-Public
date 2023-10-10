@@ -2,11 +2,11 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { assert, expect } from "chai";
 import { artifacts, ethers } from "hardhat";
 import { MedianTWAPAggregator } from "../../../types";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { utils } from "../utils/utils";
 
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 const { sushi, assets, assetsBalanceOfSlot, price_feeds } = polygonChainData;
 
 describe("Median TWAP Oracle Test", function () {

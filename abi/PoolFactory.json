@@ -271,6 +271,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "entryFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "denominator",
         "type": "uint256"
       }
@@ -775,6 +781,11 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -933,6 +944,25 @@
   {
     "inputs": [],
     "name": "paused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "pausedPools",
     "outputs": [
       {
         "internalType": "bool",
@@ -1170,6 +1200,11 @@
         "internalType": "uint256",
         "name": "managerFeeNumerator",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "entryFeeNumerator",
+        "type": "uint256"
       }
     ],
     "name": "setMaximumFee",
@@ -1225,6 +1260,31 @@
       }
     ],
     "name": "setPoolStorageVersion",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "pool",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "paused",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct PoolFactory.PoolPausedInfo[]",
+        "name": "pools",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "setPoolsPaused",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

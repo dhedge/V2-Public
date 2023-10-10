@@ -1,0 +1,278 @@
+{
+  "v2.12.0": {
+    "contracts": {
+      "USDPriceAggregator": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76",
+      "AssetHandlerProxy": "0x1BaF125D53F65a708bCb5559c9a9fdD9D088eDe3",
+      "AssetHandler": "0x46c56Ca71F3FCd36d65AB3Ea642D9F777C966c03",
+      "PoolLogicProxy": "0xBC1480Cb0dF8884d38cA6F2Af0bAD06A047B508d",
+      "PoolLogic": "0x2539E003C01FB45641aD6f74F783A24125843f22",
+      "PoolManagerLogicProxy": "0x57d6F7ac271FF522B70385A21DF2D2bbb516C8d9",
+      "PoolManagerLogic": "0x7742086eE047dc678ce7f551f86038f1d9858568",
+      "Governance": "0x0b844847558A5814CD0d5Ca539AdF62A5486c826",
+      "ERC20Guard": "0xa3072C67711cE0FCC222a8824fad345c725D62Ef",
+      "PoolFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535",
+      "PoolFactory": "0x68f44a498AF5CdC40e87F73f5D199f662803C802",
+      "DhedgeNftTrackerStorageProxy": "0xd40ef0EbE8C024CC31c2325B01649A7c024f45A4",
+      "DhedgeNftTrackerStorage": "0x67e34Cc20F8A982d7D804C8A5199f1e3E895d398",
+      "DhedgeUniV3V2Router": "0x5941E17856F4cF790B7E54BED643777154781CdE",
+      "DhedgeSuperSwapper": "0xbE7f41F325EA70df5dfEa8Fd5037f74c3222F488",
+      "DhedgeEasySwapperProxy": "0x80b9411977C4fF8D618f2aC3f29F1e2D623C4d34",
+      "DhedgeEasySwapper": "0x7f797AafEaa2A00E99ba9bE16B9Bb0459fB5f5EE",
+      "AaveLendingPoolAssetGuardV3": "0xd2C62C80E69802B8b313b00E86cE6dc97853dff0",
+      "LendingEnabledAssetGuard": "0xd0392103419ADA46070D7ea49a3BCd8D2256f219",
+      "AaveLendingPoolGuardV3": "0x81616A0D45F51A0F4640f281f98400333b802008",
+      "EasySwapperGuard": "0x60b8a1972f0f43809fEA643cFd4Dce86528a0b59",
+      "Assets": [
+        {
+          "assetName": "USDC",
+          "assetAddress": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+        },
+        {
+          "assetName": "WETH",
+          "assetAddress": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        },
+        {
+          "assetName": "USDT",
+          "assetAddress": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
+        },
+        {
+          "assetName": "DAI",
+          "assetAddress": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB"
+        },
+        {
+          "assetName": "SUSHI",
+          "assetAddress": "0xd4d42f0b6def4ce0383636770ef773390d85c61a",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xb2A8BA74cbca38508BA1632761b56C897060147C"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xb2A8BA74cbca38508BA1632761b56C897060147C"
+        },
+        {
+          "assetName": "UNI",
+          "assetAddress": "0xfa7f8980b0f1e64a2062791cc3b0871572f1f7f0",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
+        },
+        {
+          "assetName": "WBTC",
+          "assetAddress": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
+        },
+        {
+          "assetName": "LINK",
+          "assetAddress": "0xf97f4df75117a78c1a5a0dbb814af92458539fb4",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x86E53CF1B870786351Da77A57575e79CB55812CB"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x86E53CF1B870786351Da77A57575e79CB55812CB"
+        },
+        {
+          "assetName": "AAVE",
+          "assetAddress": "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xaD1d5344AaDE45F43E596773Bcc4c423EAbdD034"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xaD1d5344AaDE45F43E596773Bcc4c423EAbdD034"
+        },
+        {
+          "assetName": "FRAX",
+          "assetAddress": "0x17fc002b466eec40dae837fc4be5c67993ddbd6f",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x0809E3d38d1B4214958faf06D8b1B1a2b73f2ab8"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x0809E3d38d1B4214958faf06D8b1B1a2b73f2ab8"
+        },
+        {
+          "assetName": "CRV",
+          "assetAddress": "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xaebDA2c976cfd1eE1977Eac079B4382acb849325"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xaebDA2c976cfd1eE1977Eac079B4382acb849325"
+        },
+        {
+          "assetName": "GMX",
+          "assetAddress": "0xfc5a1a6eb076a2c7ad06ed22c90d7e710e35ad0a",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xDB98056FecFff59D032aB628337A4887110df3dB"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xDB98056FecFff59D032aB628337A4887110df3dB"
+        },
+        {
+          "assetName": "BAL",
+          "assetAddress": "0x040d1EdC9569d4Bab2D15287Dc5A4F10F56a56B8",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xBE5eA816870D11239c543F84b71439511D70B94f"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xBE5eA816870D11239c543F84b71439511D70B94f"
+        },
+        {
+          "assetName": "MIM",
+          "assetAddress": "0xfea7a6a0b346362bf88a9e4a88416b77a57d6c2a",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x87121F6c9A9F6E90E59591E4Cf4804873f54A95b"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x87121F6c9A9F6E90E59591E4Cf4804873f54A95b"
+        },
+        {
+          "assetName": "SPELL",
+          "assetAddress": "0x3e6648c5a70a150a88bce65f4ad4d506fe15d2af",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x383b3624478124697BEF675F07cA37570b73992f"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x383b3624478124697BEF675F07cA37570b73992f"
+        },
+        {
+          "assetName": "Aave Lending Pool V3",
+          "assetAddress": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+          "assetType": "8",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+          },
+          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        },
+        {
+          "assetName": "Uniswap V3 NFT Position Manager",
+          "assetAddress": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+          "assetType": "7",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+          },
+          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        },
+        {
+          "assetName": "Wrapped liquid staked Ether",
+          "assetAddress": "0x5979d7b546e38e414f7e9822514be443a4800529",
+          "assetType": "4",
+          "oracleType": "ETHCrossAggregator",
+          "specificOracleConfig": {
+            "assetToEthChainlinkOracleAddress": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
+            "ethToUsdChainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+          },
+          "oracleAddress": "0x478D8f26013184D7eEE8184dCB757E741a3C7EC1"
+        },
+        {
+          "assetName": "Balancer wstETH-WETH Stable Pool",
+          "assetAddress": "0x36bf227d6bac96e2ab1ebb5492ecec69c691943f",
+          "assetType": "6",
+          "oracleType": "BalancerStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+          },
+          "oracleAddress": "0x59488e5AeF225dfF7DBbc17cd96CFF5B504c5C63"
+        },
+        {
+          "assetName": "Balancer B-wstETH-WETH-Stable RewardGauge Deposit",
+          "assetAddress": "0x251e51b25afa40f2b6b9f05aaf1bc7eaa0551771",
+          "assetType": "10",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        },
+        {
+          "assetName": "Balancer 50wstETH-50USDC",
+          "assetAddress": "0x178e029173417b1f9c8bc16dcec6f697bc323746",
+          "assetType": "6",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+          },
+          "oracleAddress": "0x54Bb447ecC132979766bbD83fB237991aCfcC4fb"
+        },
+        {
+          "assetName": "Balancer 50WSTETH-50USDC RewardGauge Deposit",
+          "assetAddress": "0x9232ee56ab3167e2d77e491fba82babf963ccace",
+          "assetType": "10",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        }
+      ],
+      "OneInchV5Guard": "0x5A43D435a3F13229c0547f503fA5601324950898",
+      "UniswapV3RouterGuard": "0x380237186c38b37FEDe8BcAeBD0Bc761863C7425",
+      "UniswapV3AssetGuard": "0x7da7734F4A6A2CA405F5D975b2601543Ea5d4F9a",
+      "UniswapV3NonfungiblePositionGuard": "0x94ae37e0B0b56E4a1c69F7c24d0276D0446b0abD",
+      "BalancerV2Guard": "0x116157DF6afDFD191cdcb026378F87D2b66E4383",
+      "BalancerV2GaugeContractGuard": "0x72232EBf4D5D447AA39685b197d393004807b955",
+      "BalancerV2GaugeAssetGuard": "0x08Dfe9B8017AB3fde66a6A43A154ccC6f07B107B"
+    },
+    "network": {
+      "name": "arbitrum",
+      "chainId": 42161,
+      "ensAddress": null,
+      "_defaultProvider": null
+    },
+    "lastUpdated": "Mon, 29 May 2023 18:45:36 GMT",
+    "config": {
+      "easySwapperConfig": {
+        "customLockupAllowedPools": [],
+        "feeByPassManagers": [],
+        "feeNumerator": 10,
+        "feeDenominator": 10000
+      }
+    }
+  }
+}

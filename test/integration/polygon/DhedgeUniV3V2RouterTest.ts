@@ -4,10 +4,10 @@ import { ethers } from "hardhat";
 
 import { DhedgeUniV3V2Router } from "../../../types";
 import { IERC20 } from "../../../types";
-import { checkAlmostSame, units } from "../../TestHelpers";
+import { checkAlmostSame, units } from "../../testHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 import { utils } from "../utils/utils";
 const { assets, assetsBalanceOfSlot, uniswapV3 } = polygonChainData;
 
@@ -15,12 +15,14 @@ describe("DhedgeUniV3V2Router", () => {
   const swapUSDC = units(100, 6);
   const swapDAI = units(100);
   let logicOwner: SignerWithAddress;
-  let USDC: IERC20, DAI: IERC20;
+  let USDC: IERC20, DAI: IERC20, WETH: IERC20, AGEUR: IERC20;
   let swapRouter: DhedgeUniV3V2Router;
 
   before(async () => {
     USDC = <IERC20>await ethers.getContractAt("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20", assets.usdc);
     DAI = <IERC20>await ethers.getContractAt("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20", assets.dai);
+    WETH = <IERC20>await ethers.getContractAt("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20", assets.weth);
+    AGEUR = <IERC20>await ethers.getContractAt("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20", assets.agEur);
   });
 
   let snapId: string;
@@ -56,6 +58,31 @@ describe("DhedgeUniV3V2Router", () => {
     checkAlmostSame(await DAI.balanceOf(receiver), swapDAI);
   });
 
+  it("handles multi swap", async () => {
+    const wethAmount = units(1);
+    await getAccountToken(wethAmount, logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+    await WETH.approve(swapRouter.address, wethAmount);
+
+    await swapRouter.swapExactTokensForTokens(
+      wethAmount,
+      0,
+      [assets.weth, assets.usdc, assets.agEur],
+      logicOwner.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    );
+    const agEurBalance = await AGEUR.balanceOf(logicOwner.address);
+    await AGEUR.approve(swapRouter.address, agEurBalance);
+    await swapRouter.swapExactTokensForTokens(
+      agEurBalance,
+      0,
+      [assets.agEur, assets.usdc, assets.weth],
+      logicOwner.address,
+      Math.floor(Date.now() / 1000 + 100000000),
+    );
+
+    expect(await WETH.balanceOf(logicOwner.address)).to.be.closeTo(wethAmount, wethAmount.div(100));
+  });
+
   it("getAmountsIn", async () => {
     checkAlmostSame((await swapRouter.getAmountsIn(swapDAI, [assets.usdc, assets.weth, assets.dai]))[0], swapUSDC);
   });
@@ -75,6 +102,6 @@ describe("DhedgeUniV3V2Router", () => {
     );
 
     expect(await DAI.balanceOf(receiver)).to.equal(swapDAI);
-    checkAlmostSame((await usdcBalanceBefore).sub(await USDC.balanceOf(logicOwner.address)), swapUSDC);
+    checkAlmostSame(usdcBalanceBefore.sub(await USDC.balanceOf(logicOwner.address)), swapUSDC);
   });
 });

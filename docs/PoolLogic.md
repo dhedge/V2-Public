@@ -22,6 +22,7 @@ Logic implementation for pool
 - [`managerName()`](#PoolLogic-managerName--)
 - [`isMemberAllowed(address member)`](#PoolLogic-isMemberAllowed-address-)
 - [`executeOperation(address[] assets, uint256[] amounts, uint256[] premiums, address originator, bytes params)`](#PoolLogic-executeOperation-address---uint256---uint256---address-bytes-)
+- [`onERC721Received(address operator, address from, uint256 tokenId, bytes data)`](#PoolLogic-onERC721Received-address-address-uint256-bytes-)
 
 # Events:
 - [`Deposit(address fundAddress, address investor, address assetDeposited, uint256 amountDeposited, uint256 valueDeposited, uint256 fundTokensReceived, uint256 totalInvestorFundTokens, uint256 fundValue, uint256 totalSupply, uint256 time)`](#PoolLogic-Deposit-address-address-address-uint256-uint256-uint256-uint256-uint256-uint256-uint256-)
@@ -259,6 +260,13 @@ execute function of aave flash loan
 - `originator`: the origin caller address of the flash loan
 
 - `params`: Variadic packed params to pass to the receiver as extra information
+
+
+
+
+
+# Function `onERC721Received(address operator, address from, uint256 tokenId, bytes data) → bytes4 magicSelector` {#PoolLogic-onERC721Received-address-address-uint256-bytes-}
+Support safeTransfers from ERC721 asset contracts
 
 
 

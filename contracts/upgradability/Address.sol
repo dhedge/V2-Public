@@ -25,7 +25,6 @@ library OpenZeppelinUpgradesAddress {
     // for more details about how this works.
     // TODO Check this again before the Serenity release, because all addresses will be
     // contracts then.
-    // solhint-disable-next-line no-inline-assembly
     assembly {
       size := extcodesize(account)
     }

@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import { RewardsAPYCalculatorTest } from "../../../types";
 
 describe("RewardsAPYCalculator Tests", () => {

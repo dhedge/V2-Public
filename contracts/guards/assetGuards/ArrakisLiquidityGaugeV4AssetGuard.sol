@@ -42,7 +42,7 @@ import "../../interfaces/quick/IStakingRewards.sol";
 import "../../interfaces/arrakis/IArrakisV1RouterStaking.sol";
 import "../../interfaces/arrakis/ILiquidityGaugeV4.sol";
 import "../../interfaces/arrakis/IArrakisVaultV1.sol";
-import "../../utils/uniswap/UniswapV3PriceLibrary.sol";
+import "../../interfaces/IHasAssetInfo.sol";
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 

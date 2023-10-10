@@ -1,29 +1,29 @@
 # dHEDGE
 
-dHEDGE is a one-stop location for managing investment activities on the Ethereum, Polygon and Ovm where you can put your capital to work in different strategies based on a transparent track record.
+dHEDGE is all-in-one destination for managing vaults on Ethereum, Polygon and Optimism. Put your capital to work with confidence in various strategies backed by a transparent track record.
 
-- Non-custodial: users retain ownership over their funds, investment managers cannot run away with investor funds
-- decentralized asset management: dHEDGE aims to create a permissionsless, unstoppable protocol for asset management
-- synthetic assets on Ethereum: dHEDGE portfolios are powered by the Synthetix derivatives liquidity protocol
+- 🔒 **Non-custodial**: Users retain ownership over their funds. Vault managers can't make off with deposited money.
 
-Please note that this repository is under development.
+- 🌐 **Decentralized Asset Management**: dHEDGE is on a mission to create a permissionless, unstoppable protocol for asset management.
 
-For the latest system documentation see [https://docs.dhedge.org](https://docs.dhedge.org)
+Please keep in mind that this repository is under development.
 
-## DApps
+For the most up-to-date system documentation, visit [dHEDGE Docs](https://docs.dhedge.org).
 
-- [app.dhedge.org](http://app.dhedge.org)
+## Explore dHEDGE 🚀
 
-### Community
+📈 **Official DApp**: [dhedge.org](https://dhedge.org)
 
-[Discord](https://discord.gg/BAWTbRA/) [Twitter Follow](https://twitter.com/dHedgeOrg)
+## Join the Community 🌍
 
----
+📣 **Discord**: [Join our Discord](https://discord.gg/BAWTbRA/)
 
-## Repo Guide
+🐦 **Twitter**: [Follow us on Twitter](https://twitter.com/dhedgeorg)
 
-All technical documentation is stored in `./readmes/`.
+🔐 **Immunefi**: [dHEDGE Bug Bounty](https://immunefi.com/bounty/dhedge)
 
-Generated Contract documentation is stored in `./docs/`.
+## Repository Guide 📖
 
-A System diagram that includes a contracts architecture diagram can be accessed [here](https://drive.google.com/file/d/1MufDSY15kcrrg_0veOH7aaPSq-lzTxtW/view?usp=share_link)
+📚 All the technical documentation is in the `./readmes/` directory.
+
+📝 Check out generated contract documentation in `./docs/` directory.

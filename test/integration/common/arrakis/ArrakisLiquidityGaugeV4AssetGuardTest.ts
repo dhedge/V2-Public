@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { units } from "../../../TestHelpers";
+import { units } from "../../../testHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   IArrakisV1RouterStaking__factory,
@@ -14,7 +14,7 @@ import { createFund } from "../../utils/createFund";
 import { getAccountToken } from "../../utils/getAccountTokens";
 import { deployContracts, NETWORK } from "../../utils/deployContracts/deployContracts";
 import { utils } from "../../utils/utils";
-import { Address } from "../../../../deployment-scripts/types";
+import { Address } from "../../../../deployment/types";
 import { arrakisRewardsFinished, deployArrakis } from "./arrakisDeployHelper";
 import { BigNumber } from "ethers";
 
@@ -34,7 +34,7 @@ export const ArrakisLiquidityGaugeV4AssetGuardTest = (
     weth: number;
   },
 ) => {
-  describe.skip("ArrakisLiquidityGaugeV4AssetGuard Test", function () {
+  describe("ArrakisLiquidityGaugeV4AssetGuard Test", function () {
     let USDC: IERC20, weth: IERC20, rewardsToken: IERC20;
     let logicOwner: SignerWithAddress, manager: SignerWithAddress;
     let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
@@ -113,6 +113,7 @@ export const ArrakisLiquidityGaugeV4AssetGuardTest = (
         token1Amount,
         units(0),
         units(0),
+        units(0),
         poolLogicProxy.address,
       ]);
 
@@ -144,6 +145,7 @@ export const ArrakisLiquidityGaugeV4AssetGuardTest = (
         arrakisData.usdcWethGauge,
         token0Amount,
         token1Amount,
+        units(0),
         units(0),
         units(0),
         poolLogicProxy.address,
@@ -199,6 +201,7 @@ export const ArrakisLiquidityGaugeV4AssetGuardTest = (
         token1Amount,
         units(0),
         units(0),
+        units(0),
         poolLogicProxy.address,
       ]);
       await poolManagerLogicProxy
@@ -240,7 +243,7 @@ export const ArrakisLiquidityGaugeV4AssetGuardTest = (
         wethInvestmentAmount.div(1000),
       );
 
-      if (await arrakisRewardsFinished(arrakisData.usdcWethGauge, rewardsTokenAddress)) {
+      if (!(await arrakisRewardsFinished(arrakisData.usdcWethGauge, rewardsTokenAddress))) {
         expect(await rewardsToken.balanceOf(logicOwner.address)).to.closeTo(
           rewardsTokenBalanceBefore.add(claimableRewards).div(2),
           rewardsTokenBalanceBefore.add(claimableRewards).div(2).div(1000),

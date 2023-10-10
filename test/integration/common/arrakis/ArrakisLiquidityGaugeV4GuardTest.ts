@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { checkAlmostSame, units } from "../../../TestHelpers";
+import { checkAlmostSame, units } from "../../../testHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   IArrakisV1RouterStaking__factory,
@@ -15,7 +15,7 @@ import { createFund } from "../../utils/createFund";
 import { getAccountToken } from "../../utils/getAccountTokens";
 import { deployContracts, NETWORK } from "../../utils/deployContracts/deployContracts";
 import { utils } from "../../utils/utils";
-import { Address } from "../../../../deployment-scripts/types";
+import { Address } from "../../../../deployment/types";
 import { arrakisRewardsFinished, deployArrakis } from "./arrakisDeployHelper";
 import { BigNumber } from "ethers";
 
@@ -96,6 +96,7 @@ export const ArrakisLiquidityGaugeV4ContractGuardTest = (
         usdcWethGauge,
         token0Amount,
         token1Amount,
+        units(0),
         units(0),
         units(0),
         poolLogicProxy.address,

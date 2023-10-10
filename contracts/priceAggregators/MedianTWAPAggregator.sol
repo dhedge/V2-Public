@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
-import "../interfaces/uniswapv2/IUniswapV2Pair.sol";
+import "../interfaces/uniswapV2/IUniswapV2Pair.sol";
 import "../interfaces/IERC20Extended.sol";
 import "../utils/uniswap/UniswapV2OracleLibrary.sol";
 import "../utils/DhedgeMath.sol";

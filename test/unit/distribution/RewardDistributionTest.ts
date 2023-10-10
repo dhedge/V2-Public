@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import {
   ERC20Asset,
   PoolFactory,
@@ -141,28 +141,36 @@ describe("RewardDistribution Tests", () => {
 
   describe("getEligiblePools returns correct pools", () => {
     it("returns empty list if whitelisted pools not set", async () => {
-      expect(await rewardDistribution.getEligiblePools()).to.deep.equal([]);
+      const result = await rewardDistribution.getEligiblePoolsWithTvl();
+      expect(result.eligiblePools).to.deep.equal([]);
+      expect(result.tvl).to.be.equal(0);
     });
 
     it("returns empty list if no whitelited pools has reward token enabled", async () => {
       const pools = [false, false, false];
       const whitelistedPools = await prepareMockedWhitelistedPools(pools, POOL_VALUE);
       await rewardDistribution.setWhitelistedPools(whitelistedPools);
-      expect(await rewardDistribution.getEligiblePools()).to.deep.equal([]);
+      const result = await rewardDistribution.getEligiblePoolsWithTvl();
+      expect(result.eligiblePools).to.deep.equal([]);
+      expect(result.tvl).to.be.equal(0);
     });
 
     it("returns filtered list if some of whitelisted pools have reward token disabled", async () => {
       const pools = [true, false, true];
       const whitelistedPools = await prepareMockedWhitelistedPools(pools, POOL_VALUE);
       await rewardDistribution.setWhitelistedPools(whitelistedPools);
-      expect(await rewardDistribution.getEligiblePools()).to.deep.equal([whitelistedPools[0], whitelistedPools[2]]);
+      const result = await rewardDistribution.getEligiblePoolsWithTvl();
+      expect(result.eligiblePools.map(({ pool }) => pool)).to.deep.equal([whitelistedPools[0], whitelistedPools[2]]);
+      expect(result.tvl).to.be.equal(units(2_000_000));
     });
 
     it("returns whitelistedPools if all of whitelisted pools have reward token enabled", async () => {
       const pools = [true, true, true];
       const whitelistedPools = await prepareMockedWhitelistedPools(pools, POOL_VALUE);
       await rewardDistribution.setWhitelistedPools(whitelistedPools);
-      expect(await rewardDistribution.getEligiblePools()).to.deep.equal(whitelistedPools);
+      const result = await rewardDistribution.getEligiblePoolsWithTvl();
+      expect(result.eligiblePools.map(({ pool }) => pool)).to.deep.equal(whitelistedPools);
+      expect(result.tvl).to.be.equal(units(3_000_000));
     });
   });
 

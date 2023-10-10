@@ -15,7 +15,7 @@
 - [`setExitFee(uint256 numerator, uint256 denominator)`](#PoolFactory-setExitFee-uint256-uint256-)
 - [`getExitFee()`](#PoolFactory-getExitFee--)
 - [`getMaximumFee()`](#PoolFactory-getMaximumFee--)
-- [`setMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator)`](#PoolFactory-setMaximumFee-uint256-uint256-)
+- [`setMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 entryFeeNumerator)`](#PoolFactory-setMaximumFee-uint256-uint256-uint256-)
 - [`setMaximumPerformanceFeeNumeratorChange(uint256 amount)`](#PoolFactory-setMaximumPerformanceFeeNumeratorChange-uint256-)
 - [`setPerformanceFeeNumeratorChangeDelay(uint256 delay)`](#PoolFactory-setPerformanceFeeNumeratorChangeDelay-uint256-)
 - [`setExitCooldown(uint256 cooldown)`](#PoolFactory-setExitCooldown-uint256-)
@@ -33,6 +33,7 @@
 - [`pause()`](#PoolFactory-pause--)
 - [`unpause()`](#PoolFactory-unpause--)
 - [`isPaused()`](#PoolFactory-isPaused--)
+- [`setPoolsPaused(struct PoolFactory.PoolPausedInfo[] pools)`](#PoolFactory-setPoolsPaused-struct-PoolFactory-PoolPausedInfo---)
 - [`getContractGuard(address extContract)`](#PoolFactory-getContractGuard-address-)
 - [`getAssetGuard(address extAsset)`](#PoolFactory-getAssetGuard-address-)
 - [`getAddress(bytes32 name)`](#PoolFactory-getAddress-bytes32-)
@@ -54,7 +55,7 @@
 - [`MaximumSupportedAssetCountSet(uint256 count)`](#PoolFactory-MaximumSupportedAssetCountSet-uint256-)
 - [`LogUpgrade(address manager, address pool)`](#PoolFactory-LogUpgrade-address-address-)
 - [`SetPoolManagerFee(uint256 numerator, uint256 denominator)`](#PoolFactory-SetPoolManagerFee-uint256-uint256-)
-- [`SetMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 denominator)`](#PoolFactory-SetMaximumFee-uint256-uint256-uint256-)
+- [`SetMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 entryFeeNumerator, uint256 denominator)`](#PoolFactory-SetMaximumFee-uint256-uint256-uint256-uint256-)
 - [`SetMaximumPerformanceFeeNumeratorChange(uint256 amount)`](#PoolFactory-SetMaximumPerformanceFeeNumeratorChange-uint256-)
 - [`SetAssetHandler(address assetHandler)`](#PoolFactory-SetAssetHandler-address-)
 - [`SetPoolStorageVersion(uint256 poolStorageVersion)`](#PoolFactory-SetPoolStorageVersion-uint256-)
@@ -214,7 +215,7 @@ Get the Exit fee
 - The denominator of the Exit fee
 
 
-# Function `getMaximumFee() → uint256, uint256, uint256` {#PoolFactory-getMaximumFee--}
+# Function `getMaximumFee() → uint256, uint256, uint256, uint256` {#PoolFactory-getMaximumFee--}
 Get the maximum manager fee
 
 
@@ -222,10 +223,12 @@ Get the maximum manager fee
 ## Return Values:
 - The maximum manager fee numerator
 
+- The maximum entry fee numerator
+
 - The maximum manager fee denominator
 
 
-# Function `setMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator)` {#PoolFactory-setMaximumFee-uint256-uint256-}
+# Function `setMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 entryFeeNumerator)` {#PoolFactory-setMaximumFee-uint256-uint256-uint256-}
 Set the maximum manager fee
 
 
@@ -239,7 +242,7 @@ Set the maximum manager fee
 
 
 # Function `setMaximumPerformanceFeeNumeratorChange(uint256 amount)` {#PoolFactory-setMaximumPerformanceFeeNumeratorChange-uint256-}
-Set maximum manager fee numberator change
+Set maximum manager fee numerator change
 
 
 ## Parameters:
@@ -248,7 +251,7 @@ Set maximum manager fee numberator change
 
 
 # Function `setPerformanceFeeNumeratorChangeDelay(uint256 delay)` {#PoolFactory-setPerformanceFeeNumeratorChangeDelay-uint256-}
-Set manager fee numberator change delay
+Set manager fee numerator change delay
 
 
 ## Parameters:
@@ -411,6 +414,16 @@ Return the pause status
 
 ## Return Values:
 - The pause status
+
+
+# Function `setPoolsPaused(struct PoolFactory.PoolPausedInfo[] pools)` {#PoolFactory-setPoolsPaused-struct-PoolFactory-PoolPausedInfo---}
+Set the pause status of the pool
+
+
+## Parameters:
+- `pools`: The array of pool paused info
+
+
 
 
 # Function `getContractGuard(address extContract) → address guard` {#PoolFactory-getContractGuard-address-}

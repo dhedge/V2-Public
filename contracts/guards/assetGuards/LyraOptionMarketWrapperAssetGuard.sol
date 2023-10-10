@@ -37,7 +37,7 @@ pragma abicoder v2;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import "./ERC20Guard.sol";
+import "./ClosedAssetGuard.sol";
 import "../contractGuards/LyraOptionMarketWrapperContractGuard.sol";
 import "../../utils/lyra/DhedgeOptionMarketWrapperForLyra.sol";
 import "../../interfaces/IERC20Extended.sol";
@@ -51,7 +51,7 @@ import "../../interfaces/lyra/IOptionMarket.sol";
 
 /// @title Lyra OptionMarketWrapper asset guard
 /// @dev Asset type = 100
-contract LyraOptionMarketWrapperAssetGuard is ERC20Guard {
+contract LyraOptionMarketWrapperAssetGuard is ClosedAssetGuard {
   using SafeMath for uint256;
 
   DhedgeOptionMarketWrapperForLyra public immutable dhedgeLyraWrapper;

@@ -64,6 +64,13 @@ interface IAaveV3Pool {
     uint128 isolationModeTotalDebt;
   }
 
+  function deposit(
+    address asset,
+    uint256 amount,
+    address onBehalfOf,
+    uint16 referralCode
+  ) external;
+
   function supply(
     address asset,
     uint256 amount,
@@ -92,6 +99,12 @@ interface IAaveV3Pool {
     address onBehalfOf
   ) external returns (uint256);
 
+  function repayWithATokens(
+    address asset,
+    uint256 amount,
+    uint256 rateMode
+  ) external returns (uint256);
+
   function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external;
 
   function rebalanceStableBorrowRate(address asset, address user) external;
@@ -115,4 +128,12 @@ interface IAaveV3Pool {
     );
 
   function getReserveData(address asset) external view returns (ReserveData memory);
+
+  function flashLoanSimple(
+    address receiverAddress,
+    address asset,
+    uint256 amount,
+    bytes calldata params,
+    uint16 referralCode
+  ) external;
 }

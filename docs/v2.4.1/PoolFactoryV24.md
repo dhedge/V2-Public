@@ -159,7 +159,7 @@ Set the maximum manager fee
 
 
 # Function `setMaximumPerformanceFeeNumeratorChange(uint256 amount)` {#PoolFactoryV24-setMaximumPerformanceFeeNumeratorChange-uint256-}
-Set maximum manager fee numberator change
+Set maximum manager fee numerator change
 
 
 ## Parameters:
@@ -168,7 +168,7 @@ Set maximum manager fee numberator change
 
 
 # Function `setPerformanceFeeNumeratorChangeDelay(uint256 delay)` {#PoolFactoryV24-setPerformanceFeeNumeratorChangeDelay-uint256-}
-Set manager fee numberator change delay
+Set manager fee numerator change delay
 
 
 ## Parameters:

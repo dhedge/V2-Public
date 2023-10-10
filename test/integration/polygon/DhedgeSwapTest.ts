@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import { DhedgeSwapTest, IERC20, IWETH } from "../../../types";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 import { utils } from "../utils/utils";
 const { assets, sushi } = polygonChainData;
 

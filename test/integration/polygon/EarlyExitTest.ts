@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { units } from "../../TestHelpers";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { units } from "../../testHelpers";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 import { IWETH, PoolFactory, PoolLogic } from "../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { deployContracts } from "../utils/deployContracts/deployContracts";

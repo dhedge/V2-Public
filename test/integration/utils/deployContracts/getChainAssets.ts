@@ -1,11 +1,11 @@
 import { ethers } from "hardhat";
 import Decimal from "decimal.js";
 import { PoolFactory } from "../../../../types";
-import { polygonChainData } from "../../../../config/chainData/polygon-data";
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
+import { polygonChainData } from "../../../../config/chainData/polygonData";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { NETWORK, IAssetSetting } from "./deployContracts";
 
-const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, pool: string) => {
+export const deployBalancerV2LpAggregator = async (poolFactory: PoolFactory, pool: string) => {
   const weights: Decimal[] = (await (await ethers.getContractAt("IBalancerWeightedPool", pool)).getNormalizedWeights())
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((w: any) => new Decimal(w.toString()).div(ethers.utils.parseEther("1").toString()));
@@ -50,18 +50,18 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
 
   if (network == "ovm") {
     // Optimism network
-
     const VelodromeVariableLPAggregator = await ethers.getContractFactory("VelodromeVariableLPAggregator");
     const velodromeWethUsdcAggregator = await VelodromeVariableLPAggregator.deploy(
       ovmChainData.velodrome.VARIABLE_WETH_USDC.poolAddress,
-      ovmChainData.velodrome.factory,
+      poolFactory.address,
     );
     await velodromeWethUsdcAggregator.deployed();
-    const velodromeWethUsdcLpAsset = {
-      asset: ovmChainData.velodrome.VARIABLE_WETH_USDC.poolAddress,
-      assetType: 15,
-      aggregator: velodromeWethUsdcAggregator.address,
-    };
+
+    const velodromeWethUsdcV2Aggregator = await VelodromeVariableLPAggregator.deploy(
+      ovmChainData.velodromeV2.VARIABLE_WETH_USDC.poolAddress,
+      poolFactory.address,
+    );
+    await velodromeWethUsdcV2Aggregator.deployed();
 
     const VelodromeStableLPAggregator = await ethers.getContractFactory("VelodromeStableLPAggregator");
     const velodromeUsdcDaiAggregator = await VelodromeStableLPAggregator.deploy(
@@ -69,11 +69,12 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       poolFactory.address,
     );
     await velodromeUsdcDaiAggregator.deployed();
-    const velodromeUsdcDaiLpAsset = {
-      asset: ovmChainData.velodrome.STABLE_USDC_DAI.poolAddress,
-      assetType: 15,
-      aggregator: velodromeUsdcDaiAggregator.address,
-    };
+
+    const velodromeUsdcDaiV2Aggregator = await VelodromeStableLPAggregator.deploy(
+      ovmChainData.velodromeV2.STABLE_USDC_DAI.poolAddress,
+      poolFactory.address,
+    );
+    await velodromeUsdcDaiV2Aggregator.deployed();
 
     const VelodromeTWAPAggregator = await ethers.getContractFactory("VelodromeTWAPAggregator");
     const velodromeTwapAggregator = await VelodromeTWAPAggregator.deploy(
@@ -83,11 +84,22 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       ovmChainData.price_feeds.usdc,
     );
     await velodromeTwapAggregator.deployed();
+
+    const VelodromeV2TWAPAggregator = await ethers.getContractFactory("VelodromeV2TWAPAggregator");
+    const velodromeV2TwapAggregator = await VelodromeV2TWAPAggregator.deploy(
+      ovmChainData.velodromeV2.VARIABLE_VELO_USDC.poolAddress,
+      ovmChainData.velodromeV2.velo,
+      ovmChainData.assets.usdc,
+      ovmChainData.price_feeds.usdc,
+    );
+    await velodromeV2TwapAggregator.deployed();
+
     return [
       assetSetting(ovmChainData.assets.usdt, 0, ovmChainData.price_feeds.usdt),
       assetSetting(ovmChainData.assets.wbtc, 0, ovmChainData.price_feeds.btc),
       assetSetting(ovmChainData.assets.op, 0, ovmChainData.price_feeds.op),
       assetSetting(ovmChainData.velodrome.velo, 0, velodromeTwapAggregator.address),
+      assetSetting(ovmChainData.velodromeV2.velo, 0, velodromeV2TwapAggregator.address),
       assetSetting(ovmChainData.assets.snxProxy, 1, ovmChainData.price_feeds.snx),
       assetSetting(ovmChainData.assets.susd, 1, ovmChainData.price_feeds.susd),
       assetSetting(ovmChainData.assets.slink, 1, ovmChainData.price_feeds.link),
@@ -97,8 +109,11 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       assetSetting(ovmChainData.assets.dai, 4, ovmChainData.price_feeds.dai),
       assetSetting(ovmChainData.assets.usdc, 4, ovmChainData.price_feeds.usdc),
       assetSetting(ovmChainData.uniswapV3.nonfungiblePositionManager, 7, usdPriceAggregator.address),
-      velodromeWethUsdcLpAsset,
-      velodromeUsdcDaiLpAsset,
+      assetSetting(ovmChainData.stargate.pools.susdc.address, 16, ovmChainData.price_feeds.usdc),
+      assetSetting(ovmChainData.velodrome.VARIABLE_WETH_USDC.poolAddress, 15, velodromeWethUsdcAggregator.address),
+      assetSetting(ovmChainData.velodrome.STABLE_USDC_DAI.poolAddress, 15, velodromeUsdcDaiAggregator.address),
+      assetSetting(ovmChainData.velodromeV2.VARIABLE_WETH_USDC.poolAddress, 25, velodromeWethUsdcV2Aggregator.address),
+      assetSetting(ovmChainData.velodromeV2.STABLE_USDC_DAI.poolAddress, 25, velodromeUsdcDaiV2Aggregator.address),
     ];
   } else {
     // Polygon network
@@ -230,6 +245,8 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       assetSetting(polygonChainData.aaveV3.lendingPool, 8, usdPriceAggregator.address),
       assetSetting(polygonChainData.balancer.gaugePools.stMATIC.gauge, 10, usdPriceAggregator.address),
       assetSetting(polygonChainData.balancer.gaugePools.maticX.gauge, 10, usdPriceAggregator.address),
+      assetSetting(polygonChainData.stargate.pools.susdc.address, 16, polygonChainData.price_feeds.usdc),
+      assetSetting(polygonChainData.stargate.pools.sdai.address, 16, polygonChainData.price_feeds.dai),
       assetSushiLPWethUsdc,
       assetQuickLPWethUsdc,
       balancerLpAsset,

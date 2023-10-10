@@ -1,4 +1,4 @@
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { ArrakisV1RouterStakingGuardTest } from "../../common/arrakis/ArrakisV1RouterStakingGuardTest";
 
 ArrakisV1RouterStakingGuardTest(

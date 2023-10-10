@@ -1,4 +1,4 @@
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { ArrakisLiquidityGaugeV4AssetGuardTest } from "../../common/arrakis/ArrakisLiquidityGaugeV4AssetGuardTest";
 
 ArrakisLiquidityGaugeV4AssetGuardTest(

@@ -9,12 +9,12 @@ import "solidity-coverage";
 import "@typechain/hardhat";
 import "hardhat-contract-sizer";
 
-import "./deployment-scripts/upgrade/upgrade";
-
-import "./deployment-scripts/explorer-verify";
-import "./deployment-scripts/checks/checkConfig";
-import "./deployment-scripts/compileOne";
-import "./deployment-scripts/polygon/dynamicBonds";
+import "./deployment/upgrade/upgrade";
+import "./deployment/explorerVerify";
+import "./deployment/checks/checkConfig";
+import "./deployment/compileOne";
+import "./deployment/polygon/dynamicBonds";
+import "./deployment/polygon/privateTokenSwap";
 
 dotenv.config();
 

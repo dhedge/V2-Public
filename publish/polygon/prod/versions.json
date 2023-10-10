@@ -1728,16 +1728,6 @@
           "oracleAddress": "0x04E39031311E3f4D6A98299Cc4D194aaC2f98d4e"
         },
         {
-          "assetName": "MiMatic",
-          "assetAddress": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
-        },
-        {
           "assetName": "Arrakis WMATIC-WETH 0.05% Harvester",
           "assetAddress": "0xEdF8C3aD1186d6ecB8b8cd08230b9434768252A5",
           "assetType": "9",
@@ -2129,26 +2119,6 @@
           "oracleAddress": "0xE4A8C7e2363414506AD71E865fFD2b864133119d"
         },
         {
-          "assetName": "stMatic",
-          "assetAddress": "0x3a58a54c066fdc0f2d55fc9c89f0415c92ebf3c4",
-          "assetType": "0",
-          "oracleType": "ChainlinkAggregator",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
-          },
-          "oracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
-        },
-        {
-          "assetName": "MaticX",
-          "assetAddress": "0xfa68FB4628DFF1028CFEc22b4162FCcd0d45efb6",
-          "assetType": "0",
-          "oracleType": "ChainlinkAggregator",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x5d37E4b374E6907de8Fc7fb33EE3b0af403C7403"
-          },
-          "oracleAddress": "0x5d37E4b374E6907de8Fc7fb33EE3b0af403C7403"
-        },
-        {
           "assetName": "Tether Bear 3x",
           "assetAddress": "0x00b7c179b3d501699ae89fa97cc4e2d21a57e7b9",
           "assetType": "0",
@@ -2164,6 +2134,120 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
+        },
+        {
+          "assetName": "Stargate USDC LP",
+          "assetAddress": "0x1205f31718499dbf1fca446663b532ef87481fe1",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "USDC Oracle",
+            "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+        },
+        {
+          "assetName": "Stargate USDT LP",
+          "assetAddress": "0x29e38769f23701A2e4A8Ef0492e19dA4604Be62c",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "USDT Oracle",
+            "chainlinkOracleAddress": "0x0A6513e40db6EB1b165753AD52E80663aeA50545"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x0A6513e40db6EB1b165753AD52E80663aeA50545"
+        },
+        {
+          "assetName": "Stargate DAI LP",
+          "assetAddress": "0x1c272232Df0bb6225dA87f4dEcD9d37c32f63Eea",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "DAI Oracle",
+            "chainlinkOracleAddress": "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D"
+        },
+        {
+          "assetName": "Stargate MAI LP",
+          "assetAddress": "0x8736f92646B2542B3e5F3c63590cA7Fe313e283B",
+          "assetType": "16",
+          "specificOracleConfig": {
+            "Notes": "MAI Oracle",
+            "chainlinkOracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+        },
+        {
+          "assetName": "Pax Gold",
+          "assetAddress": "0x553d3D295e0f695B9228246232eDF400ed3560B5",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x0f6914d8e7e1214CDb3A4C6fbf729b75C69DF608"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x0f6914d8e7e1214CDb3A4C6fbf729b75C69DF608"
+        },
+        {
+          "assetName": "Lido DAO Token (LDO)",
+          "assetAddress": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
+          "assetType": "0",
+          "oracleType": "UniV3TWAPAggregator",
+          "specificOracleConfig": {
+            "pool": "0xd866fac7db79994d08c0ca2221fee08935595b4b",
+            "mainToken": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
+            "pairTokenUsdAggregator": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
+            "priceLowerLimit": 0,
+            "priceUpperLimit": 1000000000000,
+            "updateInterval": 600
+          },
+          "oracleAddress": "0xCbB972D39A3528bca8bc70751E46a413E884aaC7"
+        },
+        {
+          "assetName": "Gains Network (GNS) ",
+          "assetAddress": "0xE5417Af564e4bFDA1c483642db72007871397896",
+          "assetType": "0",
+          "oracleType": "UniV3TWAPAggregator",
+          "specificOracleConfig": {
+            "pool": "0xefa98fdf168f372e5e9e9b910fcdfd65856f3986",
+            "mainToken": "0xE5417Af564e4bFDA1c483642db72007871397896",
+            "pairTokenUsdAggregator": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
+            "priceLowerLimit": 0,
+            "priceUpperLimit": 1000000000000,
+            "updateInterval": 600
+          },
+          "oracleAddress": "0x60ADB940bEb0A64eea063278b375eA4454cACa65"
+        },
+        {
+          "assetName": "MiMatic",
+          "assetAddress": "0xa3Fa99A148fA48D14Ed51d610c367C61876997F1",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+        },
+        {
+          "assetName": "stMatic",
+          "assetAddress": "0x3a58a54c066fdc0f2d55fc9c89f0415c92ebf3c4",
+          "assetType": "4",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
+          },
+          "oracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
+        },
+        {
+          "assetName": "MaticX",
+          "assetAddress": "0xfa68FB4628DFF1028CFEc22b4162FCcd0d45efb6",
+          "assetType": "4",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x5d37E4b374E6907de8Fc7fb33EE3b0af403C7403"
+          },
+          "oracleAddress": "0x5d37E4b374E6907de8Fc7fb33EE3b0af403C7403"
         }
       ],
       "RemovedAssets": [
@@ -2188,9 +2272,9 @@
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0x047B51bA2E2DCAE557b89C62191933816501bC8B",
+      "PoolLogic": "0x473D3BDF01eEb67ceb94EcE429Ce3d667fe9bCd0",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0xA20fc581c92E06D29f452D7fa23C6C296cBcF549",
+      "PoolManagerLogic": "0x5bF8dFbA76Ab712dAb1096f91482CD49887C709d",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
       "ERC20Guard": "0x5eC7E3c7C802fBe6BBf2f02Ec4f4502ea9E94c41",
@@ -2205,30 +2289,41 @@
       "AaveLendingPoolAssetGuardV2": "0x037Ea3b6613E18476D80f630766E19CeD5142E9e",
       "AaveLendingPoolGuardV2": "0x373AC828d05058D646b9106A3DCda89f2626149e",
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
-      "BalancerV2Guard": "0x24869f707dE0a82eB576B883Ad5015231F002862",
+      "BalancerV2Guard": "0xf6c1f2fEFa1d77D9EF4f5aF90AE7B7B746772E97",
       "OneInchV4Guard": "0x708Fb18D76Ca9E80792810758aCd81E60C6D987d",
-      "PoolFactory": "0x2659Ce9395f82AF7e6d394039aF77dCA614fCbCd",
+      "PoolFactory": "0xcC4A31Ac7BcC67336b278AF63812Cee07936FA99",
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",
       "PoolPerformance": "0xb7De1766d13f845C91f6552880DCeC75ee670DA9",
       "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
-      "EasySwapperGuard": "0x217C256Cdb554D889DA96973CD86e31fFf35625D",
-      "DhedgeSuperSwapper": "0xe59307c1655Ef7d2665a8Bf9bfF0202cDbed8A1d",
-      "UniswapV3AssetGuard": "0x2958869A3FFBBa2FbdEe05F50657380b912Df299",
-      "UniswapV3RouterGuard": "0x144cB6CdE4C4a6df5c20e78BB68cf598Fb887265",
-      "UniswapV3NonfungiblePositionGuard": "0xaF0DaF487B31810Bd806aD8CC73076668b1a3cDe",
+      "EasySwapperGuard": "0x813a65aCc4b61530075B040f1689531966d62910",
+      "DhedgeSuperSwapper": "0x5E2E3c15827d96c7B4857B9ae9BA83b21ecd6178",
+      "UniswapV3AssetGuard": "0x69d0c7939554f69cA5dAfE661Fea0a118703B754",
+      "UniswapV3RouterGuard": "0x1729EF9441822F270b35995D359e1cd1dD2a59A9",
+      "UniswapV3NonfungiblePositionGuard": "0xe5f359a189698DDe6734edDdF5627A845F00eee4",
       "AaveLendingPoolAssetGuardV3": "0x27A4Fa61924F016C7f81a5531D56b21aBA0157c0",
       "AaveLendingPoolGuardV3": "0xc906D8f37f8833471f1bf317ff5cA623De7914f4",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6ABB2f1373c06b21655e90864433A3E0d5d8bdC1",
-      "ArrakisV1RouterStakingGuard": "0x6c1803D33194234B30c222Bcda310f36219dfF69",
+      "ArrakisV1RouterStakingGuard": "0xCA6C89dfF08E4040052088eaF21f59b1D4bc5fA2",
       "ArrakisLiquidityGaugeV4AssetGuard": "0x5A74eCFd320728534f30924812427595af96684B",
-      "DhedgeUniV3V2Router": "0xa67a3689b4B338280a6403B43c675069D3AC26d7",
+      "DhedgeUniV3V2Router": "0xeb0E2889B97Fbeb0e7b2e75CC30Ebd514FD76bEd",
       "BalancerV2GaugeAssetGuard": "0xd16D61231328936cD730D76ba6911C6F9B7f8a08",
       "BalancerV2GaugeContractGuard": "0x2583A4580F3014552197B47C542d8c5f88A8C772",
-      "DhedgeEasySwapperProxy": "0x42B1DDcFa1c43E06F483BA0Dd1b9cC923043677f",
-      "DhedgeEasySwapper": "0x64BA50A899695Ee8EECC8C0D41dAe179B8E0077d",
-      "OneInchV5Guard": "0xbf7903457441b6E4C8e3684C6D245B74CDb3211e"
+      "OneInchV5Guard": "0x065B9EB1024375bfB0A160dd1943DDDDe92457C7",
+      "DhedgeNftTrackerStorageProxy": "0x195AFA2ef88b0A52DFE561E12Fac30F28860A489",
+      "DhedgeNftTrackerStorage": "0x4150a35D8b2cD2a485750540efd3D546011bCccc",
+      "DhedgeEasySwapperProxy": "0xB2F1498983bf9c9442c35F772e6C1AdE66a8DeDE",
+      "DhedgeEasySwapper": "0x5efAa7451f2E4F35E70c80F6Bf56b4787ef7dB5F",
+      "StargateLPAssetGuard": "0xE3a2625e5DED7a5c406a772a814c388381041486",
+      "StargateRouterContractGuard": "0xe8d20D2105aC0d66C9A9a44266b93606EAf2a840",
+      "StargateLpStakingContractGuard": "0x0bAa2c1943B9c8BE74792Af7387f024ed5C33265",
+      "DhedgeStakingV2NFTJson": "0xAdb97F1dc5932F1A5014acCa6A9E92dFE340b92a",
+      "DhedgeStakingV2Proxy": "0xDDb64f8139A9BC44CD5E2493500475898240Ad40",
+      "DhedgeStakingV2": "0xc07e348f669bbe839d95743A1e4a57985AAE29ED",
+      "SlippageAccumulator": "0xD4f6cd5864984EfD1b494d7bE9dE6EEe9EBe6e4a",
+      "ZeroExContractGuard": "0xa5D6BD983Fc7c4618D0a476bD15e7748E7795d39",
+      "ClosedContractGuard": "0x32f9AEE0AB90D01917dCb4ECDE4E8eFA9B827Cdc"
     },
     "network": {
       "name": "matic",
@@ -2236,6 +2331,28 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 23 Nov 2022 04:36:00 GMT"
+    "lastUpdated": "Mon, 24 Jul 2023 20:45:14 GMT",
+    "config": {
+      "easySwapperConfig": {
+        "customLockupAllowedPools": [
+          "0x027da30fadab6202801f97be344e2348a2a92842",
+          "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
+          "0x460b60565cb73845d56564384ab84bf84c13e47d",
+          "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+          "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
+          "0x8987ca55e635d0d3ba9469ee31e9b8a7d447e9cc",
+          "0x7dab035a8a65f7d33f1628a450c6780323d3c5e1",
+          "0x00b7c179b3d501699ae89fa97cc4e2d21a57e7b9",
+          "0xc4c6333afdd510066786e0d257eb91095fd729e3",
+          "0x86c3dd18baf4370495d9228b58fd959771285c55",
+          "0x79d2aefe6a21b26b024d9341a51f6b7897852499"
+        ],
+        "feeByPassManagers": [
+          "0x090e7fbd87a673ee3d0b6ccacf0e1d94fb90da59"
+        ],
+        "feeNumerator": 10,
+        "feeDenominator": 10000
+      }
+    }
   }
 }

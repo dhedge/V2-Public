@@ -1,38 +1,37 @@
-# This is a basic workflow to help you get started with Actions
+name: Run Lint & Test
 
-name: Unit Tests
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
 
-# Triggers the workflow on push or pull request events
-on: [push]
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "test"
-  test:
-    name: "All Tests"
-    # The type of runner that the job will run on
+  checks:
+    name: Linting & Unit Tests
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       - name: Set up node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 16
-      - name: Node module cache
-        uses: actions/cache@v2
+
+      - name: Hit node_modules cache
+        uses: actions/cache@v3
         id: node-cache
         with:
           path: "**/node_modules"
           key: npm-v2-${{ hashFiles('**/package-lock.json') }}
           restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm install
-        if: steps.node-cache.outputs.cache-hit != 'true'
 
+      - name: Install dependencies
+        run: npm ci
+        if: steps.node-cache.outputs.cache-hit != 'true'
 
       - name: Hardhat compile TypeChain
         run: npx hardhat --config hardhat.config-compile.ts typechain
@@ -40,10 +39,8 @@ jobs:
       - name: Hardhat compile
         run: npx hardhat compile
 
-      - name: Run Lint
+      - name: Run lint
         run: npm run lint
-      - name: Hardhat version
-        run: npx hardhat --version
+
       - name: Run test
         run: npm run test:unit
-

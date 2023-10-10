@@ -16,10 +16,13 @@ import {
   UniswapV3RouterGuard,
   DhedgeNftTrackerStorage,
   ERC721ContractGuard,
+  SlippageAccumulator,
+  BalancerV2Guard,
+  OneInchV5Guard,
 } from "../../../../types";
-import { toBytes32 } from "../../../TestHelpers";
-import { polygonChainData } from "../../../../config/chainData/polygon-data";
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
+import { toBytes32 } from "../../../testHelpers";
+import { polygonChainData } from "../../../../config/chainData/polygonData";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { getChainAssets } from "./getChainAssets";
 
 export type NETWORK = "polygon" | "ovm";
@@ -35,12 +38,15 @@ export type IDeployments = {
   poolFactory: PoolFactory;
   poolLogic: PoolLogic;
   poolManagerLogic: PoolManagerLogic;
+  slippageAccumulator: SlippageAccumulator;
   sushiMiniChefV2Guard?: SushiMiniChefV2Guard;
   dhedgeEasySwapper?: DhedgeEasySwapper;
   synthetixGuard?: SynthetixGuard;
   uniV3AssetGuard: UniswapV3AssetGuard;
   uniswapV2RouterGuard: UniswapV2RouterGuard;
   uniswapV3RouterGuard: UniswapV3RouterGuard;
+  balancerV2Guard?: BalancerV2Guard;
+  oneInchV5Guard?: OneInchV5Guard;
   dhedgeNftTrackerStorage: DhedgeNftTrackerStorage;
   erc721ContractGuard: ERC721ContractGuard;
   assets: {
@@ -101,13 +107,17 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
   );
   await poolFactory.deployed();
 
+  const SlippageAccumulator = await ethers.getContractFactory("SlippageAccumulator");
+  const slippageAccumulator = <SlippageAccumulator>await SlippageAccumulator.deploy(poolFactory.address, "21600", 5e4); // Decay time set to 6 hours and max cumulative slippage to 5%.
+  slippageAccumulator.deployed();
+
   const chainAssets = await getChainAssets(poolFactory, network);
   await assetHandler.addAssets(chainAssets);
 
   const DhedgeNftTrackerStorage = await ethers.getContractFactory("DhedgeNftTrackerStorage");
-  const dhedgeNftTrackerStorage: DhedgeNftTrackerStorage = (await upgrades.deployProxy(DhedgeNftTrackerStorage, [
-    poolFactory.address,
-  ])) as unknown as DhedgeNftTrackerStorage;
+  const dhedgeNftTrackerStorage = <DhedgeNftTrackerStorage>(
+    await upgrades.deployProxy(DhedgeNftTrackerStorage, [poolFactory.address])
+  );
   await dhedgeNftTrackerStorage.deployed();
 
   const ERC721ContractGuard = await ethers.getContractFactory("ERC721ContractGuard");
@@ -126,20 +136,16 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
+    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(slippageAccumulator.address);
     await uniswapV2RouterGuard.deployed();
 
     const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
-    const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
+    const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(slippageAccumulator.address);
     await uniswapV3RouterGuard.deployed();
 
     const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");
     const uniV3AssetGuard = await UniswapV3AssetGuard.deploy();
     await uniV3AssetGuard.deployed();
-
-    const DhedgeNftTrackerStorage = await ethers.getContractFactory("DhedgeNftTrackerStorage");
-    const dhedgeNftTrackerStorage = await upgrades.deployProxy(DhedgeNftTrackerStorage, [poolFactory.address]);
-    await dhedgeNftTrackerStorage.deployed();
 
     const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
     const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
@@ -171,10 +177,21 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const aaveIncentivesControllerGuard = await AaveIncentivesControllerGuard.deploy();
     await aaveIncentivesControllerGuard.deployed();
 
-    const SwapRouter = await ethers.getContractFactory("DhedgeSuperSwapper");
-    const swapRouter = <DhedgeSuperSwapper>await SwapRouter.deploy([ovmChainData.zipswap.router], []);
-    await swapRouter.deployed();
+    const UniV3V2SwapRouter = await ethers.getContractFactory("DhedgeUniV3V2Router");
+    const v3v2SwapRouter = await UniV3V2SwapRouter.deploy(
+      ovmChainData.uniswapV3.factory,
+      ovmChainData.uniswapV3.router,
+    );
+    await v3v2SwapRouter.deployed();
 
+    const DhedgeVeloUniV2Router = await ethers.getContractFactory("DhedgeVeloUniV2Router");
+    const dhedgeVeloUniV2Router = await DhedgeVeloUniV2Router.deploy(ovmChainData.velodrome.router);
+    await dhedgeVeloUniV2Router.deployed();
+
+    const SwapRouter = await ethers.getContractFactory("DhedgeSuperSwapper");
+    const routeHints = [];
+    const swapRouter = await SwapRouter.deploy([v3v2SwapRouter.address, dhedgeVeloUniV2Router.address], routeHints);
+    await swapRouter.deployed();
     const VelodromeRouterGuard = await ethers.getContractFactory("VelodromeRouterGuard");
     const velodromeRouterGuard = await VelodromeRouterGuard.deploy();
     await velodromeRouterGuard.deployed();
@@ -187,6 +204,18 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     const velodromeLPAssetGuard = await VelodromeLPAssetGuard.deploy(ovmChainData.velodrome.voter);
     await velodromeLPAssetGuard.deployed();
 
+    const VelodromeV2RouterGuard = await ethers.getContractFactory("VelodromeV2RouterGuard");
+    const velodromeV2RouterGuard = await VelodromeV2RouterGuard.deploy();
+    await velodromeV2RouterGuard.deployed();
+
+    const VelodromeV2GaugeContractGuard = await ethers.getContractFactory("VelodromeV2GaugeContractGuard");
+    const velodromeV2GaugeContractGuard = await VelodromeV2GaugeContractGuard.deploy();
+    await velodromeGaugeContractGuard.deployed();
+
+    const VelodromeV2LPAssetGuard = await ethers.getContractFactory("VelodromeV2LPAssetGuard");
+    const velodromeV2LPAssetGuard = await VelodromeV2LPAssetGuard.deploy(ovmChainData.velodromeV2.voter);
+    await velodromeV2LPAssetGuard.deployed();
+
     await governance.setAssetGuard(0, erc20Guard.address);
     await governance.setAssetGuard(1, erc20Guard.address);
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
@@ -195,6 +224,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
     await governance.setAssetGuard(7, uniV3AssetGuard.address);
     await governance.setAssetGuard(15, velodromeLPAssetGuard.address);
+    await governance.setAssetGuard(25, velodromeV2LPAssetGuard.address);
 
     await governance.setContractGuard(ovmChainData.zipswap.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(ovmChainData.uniswapV3.router, uniswapV3RouterGuard.address);
@@ -215,14 +245,22 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       velodromeGaugeContractGuard.address,
     );
 
+    await governance.setContractGuard(ovmChainData.velodromeV2.router, velodromeV2RouterGuard.address);
+    await governance.setContractGuard(
+      ovmChainData.velodromeV2.VARIABLE_WETH_USDC.gaugeAddress,
+      velodromeV2GaugeContractGuard.address,
+    );
+    await governance.setContractGuard(
+      ovmChainData.velodromeV2.STABLE_USDC_DAI.gaugeAddress,
+      velodromeV2GaugeContractGuard.address,
+    );
+
     await governance.setAddresses([
       { name: toBytes32("swapRouter"), destination: swapRouter.address },
       { name: toBytes32("weth"), destination: ovmChainData.assets.weth },
       { name: toBytes32("aaveProtocolDataProviderV3"), destination: ovmChainData.aaveV3.protocolDataProvider },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
-
-    await poolFactory.setExitFee(5, 1000); // 0.5%
 
     const USDT = <IERC20>(
       await ethers.getContractAt("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20", ovmChainData.assets.usdt)
@@ -286,6 +324,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       poolFactory,
       poolLogic,
       poolManagerLogic,
+      slippageAccumulator,
       uniV3AssetGuard,
       uniswapV2RouterGuard,
       uniswapV3RouterGuard,
@@ -317,7 +356,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(2, 100); // set slippage 2% for testing
+    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(slippageAccumulator.address);
     await uniswapV2RouterGuard.deployed();
 
     const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
@@ -370,7 +409,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await aaveIncentivesControllerGuard.deployed();
 
     const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
-    const balancerV2Guard = await BalancerV2Guard.deploy(2, 100); // set slippage 2%
+    const balancerV2Guard = await BalancerV2Guard.deploy(slippageAccumulator.address);
     await balancerV2Guard.deployed();
 
     const BalancerMerkleOrchardGuard = await ethers.getContractFactory("BalancerMerkleOrchardGuard");
@@ -378,11 +417,15 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await balancerMerkleOrchardGuard.deployed();
 
     const OneInchV5Guard = await ethers.getContractFactory("OneInchV5Guard");
-    const oneInchV5Guard = await OneInchV5Guard.deploy(2, 100); // set slippage 2%
+    const oneInchV5Guard = await OneInchV5Guard.deploy(slippageAccumulator.address);
     await oneInchV5Guard.deployed();
 
     const SwapRouter = await ethers.getContractFactory("DhedgeSuperSwapper");
-    const swapRouter = await SwapRouter.deploy([polygonChainData.quickswap.router, polygonChainData.sushi.router], []);
+    const routeHints = [];
+    const swapRouter = await SwapRouter.deploy(
+      [polygonChainData.quickswap.router, polygonChainData.sushi.router],
+      routeHints,
+    );
     await swapRouter.deployed();
 
     const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
@@ -390,16 +433,12 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await easySwapperGuard.deployed();
 
     const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
-    const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(10, 100); // set slippage 10%
+    const uniswapV3RouterGuard = await UniswapV3RouterGuard.deploy(slippageAccumulator.address);
     uniswapV3RouterGuard.deployed();
 
     const UniswapV3AssetGuard = await ethers.getContractFactory("UniswapV3AssetGuard");
     const uniV3AssetGuard = await UniswapV3AssetGuard.deploy();
     await uniV3AssetGuard.deployed();
-
-    const DhedgeNftTrackerStorage = await ethers.getContractFactory("DhedgeNftTrackerStorage");
-    const dhedgeNftTrackerStorage = await upgrades.deployProxy(DhedgeNftTrackerStorage, [poolFactory.address]);
-    await dhedgeNftTrackerStorage.deployed();
 
     const UniswapV3NonfungiblePositionGuard = await ethers.getContractFactory("UniswapV3NonfungiblePositionGuard");
     const uniswapV3NonfungiblePositionGuard = await UniswapV3NonfungiblePositionGuard.deploy(
@@ -419,8 +458,6 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await dhedgeEasySwapper.setWithdrawProps({
       swapRouter: polygonChainData.quickswap.router,
       weth: polygonChainData.assets.weth,
-      assetType2Router: polygonChainData.sushi.router,
-      assetType5Router: polygonChainData.quickswap.router,
       synthetixProps: {
         snxProxy: polygonChainData.ZERO_ADDRESS,
         swapSUSDToAsset: polygonChainData.assets.dai,
@@ -448,8 +485,8 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await governance.setAssetGuard(6, erc20Guard.address); // set balancer lp asset guard to normal erc20 guard
     await governance.setAssetGuard(7, uniV3AssetGuard.address);
     await governance.setAssetGuard(8, aaveLendingPoolAssetGuardV3.address);
-
     await governance.setAssetGuard(10, balancerV2GaugeAssetGuard.address);
+
     await governance.setContractGuard(polygonChainData.quickswap.router, uniswapV2RouterGuard.address);
     await governance.setContractGuard(
       polygonChainData.quickswap.pools.usdc_weth.stakingRewards,
@@ -472,7 +509,6 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       polygonChainData.uniswapV3.nonfungiblePositionManager,
       uniswapV3NonfungiblePositionGuard.address,
     );
-
     await governance.setContractGuard(
       polygonChainData.balancer.gaugePools.stMATIC.gauge,
       balancerV2GaugeContractGuard.address,
@@ -485,8 +521,6 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       { name: toBytes32("weth"), destination: polygonChainData.assets.weth },
       { name: toBytes32("openAssetGuard"), destination: openAssetGuard.address },
     ]);
-
-    await poolFactory.setExitFee(5, 1000); // 0.5%
 
     const WMATIC = <IERC20>(
       await ethers.getContractAt(
@@ -588,11 +622,14 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       poolFactory,
       poolLogic,
       poolManagerLogic,
+      slippageAccumulator,
       sushiMiniChefV2Guard,
       dhedgeEasySwapper,
       uniV3AssetGuard,
       uniswapV2RouterGuard,
       uniswapV3RouterGuard,
+      balancerV2Guard,
+      oneInchV5Guard,
       dhedgeNftTrackerStorage,
       erc721ContractGuard,
       assets: {

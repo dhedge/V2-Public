@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { ethers } from "hardhat";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
-import { units } from "../../TestHelpers";
+import { polygonChainData } from "../../../config/chainData/polygonData";
+import { units } from "../../testHelpers";
 import { createFund } from "../utils/createFund";
 import { deployContracts } from "../utils/deployContracts/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";

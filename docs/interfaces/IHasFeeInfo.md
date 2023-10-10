@@ -9,7 +9,7 @@
 
 
 
-# Function `getMaximumFee() → uint256, uint256, uint256` {#IHasFeeInfo-getMaximumFee--}
+# Function `getMaximumFee() → uint256, uint256, uint256, uint256` {#IHasFeeInfo-getMaximumFee--}
 No description
 
 

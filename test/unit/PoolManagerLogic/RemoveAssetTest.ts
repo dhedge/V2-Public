@@ -1,11 +1,9 @@
 import { ethers, artifacts, upgrades } from "hardhat";
-import { use, expect } from "chai";
+import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, ContractFactory } from "ethers";
-import { solidity } from "ethereum-waffle";
-use(solidity);
 
-import { toBytes32 } from "../../TestHelpers";
+import { toBytes32 } from "../../testHelpers";
 const { BigNumber } = ethers;
 
 const externalValidToken = "0xb79fad4ca981472442f53d16365fdf0305ffd8e9"; //random address
@@ -131,8 +129,6 @@ describe("RemoveAssets", function () {
     await governance.setAddresses([
       { name: toBytes32("aaveProtocolDataProviderV2"), destination: aaveProtocolDataProvider.address },
     ]);
-
-    await poolFactory.setExitFee(5, 1000); // 0.5%
   });
 
   it("should not be able to remove asset with open aave atoken position", async function () {

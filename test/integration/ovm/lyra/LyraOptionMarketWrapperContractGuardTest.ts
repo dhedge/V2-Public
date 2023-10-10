@@ -13,12 +13,12 @@ import {
 } from "../../../../types";
 import { createFund } from "../../utils/createFund";
 import { utils } from "../../utils/utils";
-import { currentBlockTimestamp, units } from "../../../TestHelpers";
+import { currentBlockTimestamp, units } from "../../../testHelpers";
 import { OptionPositionStructOutput } from "@lyrafinance/protocol/dist/typechain-types/OptionMarketViewer";
 import { IERC721__factory, MockAggregatorV2V3 } from "@lyrafinance/protocol/dist/typechain-types";
 import { solidityPack } from "ethers/lib/utils";
 import { deployLyraTestSystem } from "./LyraTestHelpers";
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
 
 describe("LyraOptionMarketWrapperContractGuard Test", function () {
   const iOptionMarketWrapper = new ethers.utils.Interface(IOptionMarketWrapper__factory.abi);

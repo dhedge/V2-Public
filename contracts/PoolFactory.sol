@@ -68,6 +68,11 @@ contract PoolFactory is
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
 
+  struct PoolPausedInfo {
+    address pool;
+    bool paused;
+  }
+
   event FundCreated(
     address fundAddress,
     bool isPoolPrivate,
@@ -100,7 +105,12 @@ contract PoolFactory is
 
   event SetPoolManagerFee(uint256 numerator, uint256 denominator);
 
-  event SetMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator, uint256 denominator);
+  event SetMaximumFee(
+    uint256 performanceFeeNumerator,
+    uint256 managerFeeNumerator,
+    uint256 entryFeeNumerator,
+    uint256 denominator
+  );
 
   event SetMaximumPerformanceFeeNumeratorChange(uint256 amount);
 
@@ -148,6 +158,10 @@ contract PoolFactory is
   // A list of addresses that can receive tokens that are still under a lockup
   mapping(address => bool) public receiverWhitelist;
 
+  uint256 private maximumEntryFeeNumerator;
+
+  mapping(address => bool) public override pausedPools;
+
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
@@ -170,7 +184,7 @@ contract PoolFactory is
 
     _setGovernanceAddress(_governanceAddress);
 
-    _setMaximumFee(5000, 300, 10000); // 50% manager fee, 3% streaming fee
+    _setMaximumFee(5000, 300, 100, 10000); // 50% manager fee, 3% streaming fee, 1% entry fee
 
     _setDaoFee(10, 100); // 10%
     _setExitFee(5, 1000); // 0.5%
@@ -381,6 +395,7 @@ contract PoolFactory is
 
   /// @notice Get the maximum manager fee
   /// @return The maximum manager fee numerator
+  /// @return The maximum entry fee numerator
   /// @return The maximum manager fee denominator
   function getMaximumFee()
     external
@@ -389,17 +404,27 @@ contract PoolFactory is
     returns (
       uint256,
       uint256,
+      uint256,
       uint256
     )
   {
-    return (maximumPerformanceFeeNumerator, maximumManagerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+    return (
+      maximumPerformanceFeeNumerator,
+      maximumManagerFeeNumerator,
+      maximumEntryFeeNumerator,
+      _MANAGER_FEE_DENOMINATOR
+    );
   }
 
   /// @notice Set the maximum manager fee
   /// @param performanceFeeNumerator The numerator of the maximum manager fee
   /// @param managerFeeNumerator The numerator of the maximum streaming fee
-  function setMaximumFee(uint256 performanceFeeNumerator, uint256 managerFeeNumerator) external onlyOwner {
-    _setMaximumFee(performanceFeeNumerator, managerFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+  function setMaximumFee(
+    uint256 performanceFeeNumerator,
+    uint256 managerFeeNumerator,
+    uint256 entryFeeNumerator
+  ) external onlyOwner {
+    _setMaximumFee(performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, _MANAGER_FEE_DENOMINATOR);
   }
 
   /// @notice Set the maximum manager fee internal call
@@ -409,18 +434,23 @@ contract PoolFactory is
   function _setMaximumFee(
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
+    uint256 entryFeeNumerator,
     uint256 denominator
   ) internal {
-    require(performanceFeeNumerator <= denominator && managerFeeNumerator <= denominator, "invalid fraction");
+    require(
+      performanceFeeNumerator <= denominator && managerFeeNumerator <= denominator && entryFeeNumerator <= denominator,
+      "invalid fraction"
+    );
 
     maximumPerformanceFeeNumerator = performanceFeeNumerator;
     maximumManagerFeeNumerator = managerFeeNumerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
+    maximumEntryFeeNumerator = entryFeeNumerator;
 
-    emit SetMaximumFee(performanceFeeNumerator, managerFeeNumerator, denominator);
+    emit SetMaximumFee(performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, denominator);
   }
 
-  /// @notice Set maximum manager fee numberator change
+  /// @notice Set maximum manager fee numerator change
   /// @param amount The amount for the maximum manager fee numerator change
   function setMaximumPerformanceFeeNumeratorChange(uint256 amount) public onlyOwner {
     maximumPerformanceFeeNumeratorChange = amount;
@@ -428,7 +458,7 @@ contract PoolFactory is
     emit SetMaximumPerformanceFeeNumeratorChange(amount);
   }
 
-  /// @notice Set manager fee numberator change delay
+  /// @notice Set manager fee numerator change delay
   /// @param delay The delay in seconds for the manager fee numerator change
   function setPerformanceFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
     performanceFeeNumeratorChangeDelay = delay;
@@ -621,6 +651,19 @@ contract PoolFactory is
   /// @return The pause status
   function isPaused() external view override returns (bool) {
     return paused();
+  }
+
+  /// @notice Set the pause status of the pool
+  /// @param pools The array of pool paused info
+  /// @dev This function is used to pause/unpause the pool
+  /// @dev The pool can be paused/unpaused by the owner only
+  function setPoolsPaused(PoolPausedInfo[] calldata pools) external onlyOwner {
+    uint256 poolsLength = pools.length;
+    for (uint256 i = 0; i < poolsLength; i++) {
+      PoolPausedInfo memory poolInfo = pools[i];
+      require(isPool[poolInfo.pool], "invalid pool");
+      pausedPools[poolInfo.pool] = poolInfo.paused;
+    }
   }
 
   // Transaction Guards

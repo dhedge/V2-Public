@@ -1,12 +1,12 @@
 
 
 # Functions:
-- [`constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)`](#UniswapV3RouterGuard-constructor-uint256-uint256-)
+- [`constructor(address _slippageAccumulator)`](#UniswapV3RouterGuard-constructor-address-)
 - [`txGuard(address _poolManagerLogic, address to, bytes data)`](#UniswapV3RouterGuard-txGuard-address-address-bytes-)
 
 
 
-# Function `constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)` {#UniswapV3RouterGuard-constructor-uint256-uint256-}
+# Function `constructor(address _slippageAccumulator)` {#UniswapV3RouterGuard-constructor-address-}
 No description
 
 

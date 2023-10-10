@@ -1,5 +1,5 @@
 import { execTransactionsTest } from "../common/ExecTransactionsTest";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 
 execTransactionsTest({
   network: "polygon",

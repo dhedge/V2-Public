@@ -1,7 +1,7 @@
 Transaction guard for Balancer V2 Vault
 
 # Functions:
-- [`constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)`](#BalancerV2Guard-constructor-uint256-uint256-)
+- [`constructor(address _slippageAccumulator)`](#BalancerV2Guard-constructor-address-)
 - [`txGuard(address _poolManagerLogic, address to, bytes data)`](#BalancerV2Guard-txGuard-address-address-bytes-)
 
 # Events:
@@ -9,7 +9,7 @@ Transaction guard for Balancer V2 Vault
 - [`ExitPool(address fundAddress, bytes32 poolId, address[] assets, uint256[] minAmountsOut, uint256 time)`](#BalancerV2Guard-ExitPool-address-bytes32-address---uint256---uint256-)
 
 
-# Function `constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)` {#BalancerV2Guard-constructor-uint256-uint256-}
+# Function `constructor(address _slippageAccumulator)` {#BalancerV2Guard-constructor-address-}
 No description
 
 
@@ -29,6 +29,8 @@ Transaction guard for Balancer V2 Vault
 - txType the transaction type of a given transaction data. 2 for `Exchange` type
 
 - isPublic if the transaction is public or private
+
+
 
 
 

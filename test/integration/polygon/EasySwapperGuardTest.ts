@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 import {
   DhedgeEasySwapper,
   IERC20,
@@ -10,7 +10,7 @@ import {
   PoolManagerLogic,
   PoolManagerLogic__factory,
 } from "../../../types";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import { createFund } from "../utils/createFund";
 import { deployContracts } from "../utils/deployContracts/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
@@ -90,13 +90,11 @@ describe("EasySwapperGuard", () => {
       await USDC.approve(poolLogicProxy.address, units(500, 6));
       await poolLogicProxy.deposit(assets.usdc, units(500, 6));
       // Check token price is $1
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100) as any);
+      expect(await poolLogicProxy.tokenPrice()).to.be.closeTo(oneDollar, oneDollar.div(100));
 
       const approveABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, units(500, 6)]);
       await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
-      dhedgeEasySwapper;
-      const depositEncoded = dhedgeEasySwapper.interface.encodeFunctionData("deposit", [
+      const depositEncoded = dhedgeEasySwapper.interface.encodeFunctionData("depositWithCustomCooldown", [
         torosAssetAddress,
         assets.usdc,
         units(500, 6),
@@ -128,7 +126,7 @@ describe("EasySwapperGuard", () => {
       // Remove toros pool from supported assets
       await poolManagerLogicProxy.connect(manager).changeAssets([], [torosAssetAddress]);
 
-      const depositEncoded = dhedgeEasySwapper.interface.encodeFunctionData("deposit", [
+      const depositEncoded = dhedgeEasySwapper.interface.encodeFunctionData("depositWithCustomCooldown", [
         torosAssetAddress,
         assets.usdc,
         units(500, 6),
@@ -155,7 +153,7 @@ describe("EasySwapperGuard", () => {
       const approveABI = USDC.interface.encodeFunctionData("approve", [dhedgeEasySwapper.address, units(500, 6)]);
       await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
-      const depositEncoded = dhedgeEasySwapper.interface.encodeFunctionData("deposit", [
+      const depositEncoded = dhedgeEasySwapper.interface.encodeFunctionData("depositWithCustomCooldown", [
         torosAssetAddress,
         assets.usdc,
         units(500, 6),
@@ -181,7 +179,7 @@ describe("EasySwapperGuard", () => {
         ]);
 
         // Withdraw via EasySwapper to receive money
-        // EasySwapper has 5 minute lockup
+        // EasySwapper has 15 minute lockup
         await ethers.provider.send("evm_increaseTime", [3600]); // 1 hour
         await poolLogicProxy.connect(manager).execTransaction(dhedgeEasySwapper.address, withdrawEncoded);
       });
@@ -224,7 +222,7 @@ describe("EasySwapperGuard", () => {
         ]);
 
         // Withdraw via EasySwapper to receive money
-        // EasySwapper has 5 minute lockup
+        // EasySwapper has 15 minute lockup
         await ethers.provider.send("evm_increaseTime", [3600]); // 1 hour
         await poolLogicProxy.connect(manager).execTransaction(dhedgeEasySwapper.address, withdrawEncoded);
       });

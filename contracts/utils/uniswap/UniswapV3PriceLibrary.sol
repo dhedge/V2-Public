@@ -11,11 +11,11 @@ import "../DhedgeMath.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library UniswapV3PriceLibrary {
+  using SafeMathUpgradeable for uint24;
   using SafeMathUpgradeable for uint160;
   using SafeMathUpgradeable for uint256;
 
-  // Oracle sqrt price threshold in basis points
-  uint16 public constant BP_THRESHOLD = 35;
+  uint24 public constant MIN_THRESHOLD = 3000;
 
   /// @notice Assets the v3 pool price for the assets given is within the threshold of oracle price
   /// @param dhedgeFactory dHEDGE Factory address
@@ -31,10 +31,14 @@ library UniswapV3PriceLibrary {
     address token1,
     uint24 fee
   ) internal view returns (uint160 sqrtPriceX96) {
-    return assertFairPrice(dhedgeFactory, IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, fee));
+    return assertFairPrice(dhedgeFactory, IUniswapV3Factory(uniswapV3Factory).getPool(token0, token1, fee), fee);
   }
 
-  function assertFairPrice(address dhedgeFactory, address uniswapV3Pool) internal view returns (uint160 sqrtPriceX96) {
+  function assertFairPrice(
+    address dhedgeFactory,
+    address uniswapV3Pool,
+    uint24 fee
+  ) internal view returns (uint160 sqrtPriceX96) {
     IUniswapV3Pool uniPool = IUniswapV3Pool(uniswapV3Pool);
     (sqrtPriceX96, , , , , , ) = uniPool.slot0();
 
@@ -42,10 +46,14 @@ library UniswapV3PriceLibrary {
     // We pass the tokens in the same order as the pool is configured
     uint160 fairSqrtPriceX96 = getFairSqrtPriceX96(dhedgeFactory, uniPool.token0(), uniPool.token1());
 
-    // Check that fair price is close to current pool price (0.25% threshold)
+    // Check that fair price is close to current pool price
+    // Threshold for the check is:
+    // - minimum of 0.3%, and
+    // - 50% higher than pool fee, because the pool may not get arbed if the fee is high
+    uint256 threshold = fee >= MIN_THRESHOLD ? fee.mul(150).div(100) : MIN_THRESHOLD;
     require(
-      sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.mul(BP_THRESHOLD).div(10000)) &&
-        fairSqrtPriceX96 < sqrtPriceX96.add(fairSqrtPriceX96.mul(BP_THRESHOLD).div(10000)),
+      sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.mul(threshold).div(1_000_000)) &&
+        fairSqrtPriceX96 < sqrtPriceX96.add(fairSqrtPriceX96.mul(threshold).div(1_000_000)),
       "Uni v3 LP price mismatch"
     );
   }

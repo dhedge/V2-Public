@@ -1,39 +1,45 @@
-import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
-import { checkAlmostSame, units } from "../../TestHelpers";
+import hre, { ethers } from "hardhat";
+import { expect } from "chai";
+import { checkAlmostSame, units } from "../../testHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { IERC20, IERC20__factory, PoolFactory, PoolLogic } from "../../../types";
+import { IERC20, IERC20__factory, MockContract, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../types";
 import { createFund } from "../utils/createFund";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 const { oneinch, assets, assetsBalanceOfSlot, ZERO_ADDRESS } = polygonChainData;
 import { getAccountToken } from "../utils/getAccountTokens";
-import { deployContracts } from "../utils/deployContracts/deployContracts";
+import { IDeployments, deployContracts } from "../utils/deployContracts/deployContracts";
 import { getOneInchSwapTransaction } from "../utils/oneInchHelpers";
 
 import { utils } from "../utils/utils";
 
-use(solidity);
-
-describe("OneInch V3 Test", function () {
+describe("OneInch Test", function () {
   let USDC: IERC20, USDT: IERC20;
-  let logicOwner: SignerWithAddress, manager: SignerWithAddress;
-  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic;
+  let logicOwner: SignerWithAddress, manager: SignerWithAddress, anon: SignerWithAddress;
+  let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
+  let evilPoolManager: MockContract;
+  let deployments: IDeployments;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 
   let snapId: string;
-  after(async () => {
+  beforeEach(async () => {
+    snapId = await utils.evmTakeSnap();
+  });
+
+  afterEach(async () => {
     await utils.evmRestoreSnap(snapId);
   });
+
   before(async () => {
-    snapId = await utils.evmTakeSnap();
+    [logicOwner, manager, anon] = await ethers.getSigners();
 
-    [logicOwner, manager] = await ethers.getSigners();
-
-    const deployments = await deployContracts("polygon");
+    deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
     USDC = deployments.assets.USDC;
     USDT = deployments.assets.USDT;
+
+    const mockFactory = await ethers.getContractFactory("MockContract");
+    evilPoolManager = await mockFactory.deploy();
+    await evilPoolManager.deployed();
 
     await getAccountToken(units(10000, 6), logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
 
@@ -42,6 +48,7 @@ describe("OneInch V3 Test", function () {
       { asset: assets.usdt, isDeposit: true },
     ]);
     poolLogicProxy = funds.poolLogicProxy;
+    poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
     // Deposit 200 USDC
     await USDC.approve(poolLogicProxy.address, units(200, 6));
@@ -68,6 +75,10 @@ describe("OneInch V3 Test", function () {
     const srcAmount = units(1, 6);
     const fromAddress = poolLogicProxy.address;
     const toAddress = poolLogicProxy.address;
+
+    let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
+    approveABI = iERC20.encodeFunctionData("approve", [oneinch.v5Router, (200e6).toString()]);
+    await poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI);
 
     /**
      * Example Swap Transaction USDT -> USDC
@@ -119,5 +130,53 @@ describe("OneInch V3 Test", function () {
     const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
     checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(srcAmount));
     checkAlmostSame(usdtBalanceAfter, usdtBalanceBefore.add(srcAmount));
+  });
+
+  it("should revert if caller is not the manager but affects the pool of some manager", async () => {
+    const srcAsset = assets.usdc;
+    const dstAsset = assets.usdt;
+    const srcAmount = units(1, 6);
+    const fromAddress = poolLogicProxy.address;
+    const toAddress = poolLogicProxy.address;
+
+    const swapTx = await getOneInchSwapTransaction({
+      srcAsset,
+      dstAsset,
+      srcAmount,
+      fromAddress,
+      toAddress,
+      chainId: 137,
+    });
+
+    const poolManagerABI = await hre.artifacts.readArtifact(
+      "contracts/interfaces/IPoolManagerLogic.sol:IPoolManagerLogic",
+    );
+    const hasSupportedAssetABI = await hre.artifacts.readArtifact(
+      "contracts/interfaces/IHasSupportedAsset.sol:IHasSupportedAsset",
+    );
+    const iHasSupportedAsset = new ethers.utils.Interface(hasSupportedAssetABI.abi);
+    const iPoolManager = new ethers.utils.Interface(poolManagerABI.abi);
+
+    await evilPoolManager.givenCalldataReturnAddress(
+      iPoolManager.encodeFunctionData("poolLogic", []),
+      poolLogicProxy.address,
+    );
+
+    await evilPoolManager.givenCalldataReturnBool(
+      iHasSupportedAsset.encodeFunctionData("isSupportedAsset", [dstAsset]),
+      true,
+    );
+
+    await expect(
+      deployments.oneInchV5Guard?.connect(anon).txGuard(evilPoolManager.address, oneinch.v5Router, swapTx),
+    ).to.be.revertedWith("Caller not authorised");
+
+    await expect(
+      deployments.oneInchV5Guard?.connect(anon).txGuard(poolManagerLogicProxy.address, oneinch.v5Router, swapTx),
+    ).to.be.revertedWith("Caller not authorised");
+
+    expect(
+      (await deployments.slippageAccumulator.managerData(poolManagerLogicProxy.address)).accumulatedSlippage,
+    ).to.equal(ethers.constants.Zero, "Slippage impact detected after");
   });
 });

@@ -51,7 +51,7 @@ import "../contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol";
 import "../../utils/uniswap/UniswapV3PriceLibrary.sol";
 
 /// @title Uniswap V3 asset guard
-/// @dev Asset type = 6
+/// @dev Asset type = 7
 contract UniswapV3AssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
   using PositionValue for INonfungiblePositionManager;
@@ -74,7 +74,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     UniswapV3NonfungiblePositionGuard guard = UniswapV3NonfungiblePositionGuard(
       IHasGuardInfo(factory).getContractGuard(asset)
     );
-    uint256[] memory tokenIds = guard.getOwnedTokenIds(nonfungiblePositionManager, pool);
+    uint256[] memory tokenIds = guard.getOwnedTokenIds(pool);
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
       UniV3PoolParams memory poolParams;
@@ -157,7 +157,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     UniswapV3NonfungiblePositionGuard guard = UniswapV3NonfungiblePositionGuard(
       IHasGuardInfo(factory).getContractGuard(asset)
     );
-    uint256[] memory tokenIds = guard.getOwnedTokenIds(nonfungiblePositionManager, pool);
+    uint256[] memory tokenIds = guard.getOwnedTokenIds(pool);
     uint256 txCount;
     transactions = new MultiTransaction[](tokenIds.length.mul(2));
     for (uint256 i = 0; i < tokenIds.length; ++i) {

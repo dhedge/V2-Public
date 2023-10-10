@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { Address } from "../../../../deployment-scripts/types";
+import { Address } from "../../../../deployment/types";
 import { IDeployments } from "../../utils/deployContracts/deployContracts";
 import { assetSetting } from "../../utils/deployContracts/getChainAssets";
 import { utils } from "../../utils/utils";

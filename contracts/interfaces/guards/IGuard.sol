@@ -42,5 +42,5 @@ interface IGuard {
     address poolManagerLogic,
     address to,
     bytes calldata data
-  ) external returns (uint16 txType, bool isPublic);
+  ) external returns (uint16 txType, bool isPublic); // TODO: eventually update `txType` to be of enum type as per ITransactionTypes
 }

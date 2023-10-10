@@ -3,8 +3,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
-import { Address } from "../../../../deployment-scripts/types";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
+import { Address } from "../../../../deployment/types";
 import {
   IERC20Extended,
   IERC20__factory,
@@ -14,7 +14,7 @@ import {
   PoolFactory,
   PoolLogic,
 } from "../../../../types";
-import { units } from "../../../TestHelpers";
+import { units } from "../../../testHelpers";
 import { createFund } from "../../utils/createFund";
 import { deployContracts } from "../../utils/deployContracts/deployContracts";
 import { getAccountToken } from "../../utils/getAccountTokens/index";

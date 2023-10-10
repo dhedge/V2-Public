@@ -313,7 +313,7 @@ contract PoolFactoryV24 is
     emit SetMaximumManagerFee(numerator, denominator);
   }
 
-  /// @notice Set maximum manager fee numberator change
+  /// @notice Set maximum manager fee numerator change
   /// @param amount The amount for the maximum manager fee numerator change
   function setMaximumPerformanceFeeNumeratorChange(uint256 amount) public onlyOwner {
     maximumPerformanceFeeNumeratorChange = amount;
@@ -321,7 +321,7 @@ contract PoolFactoryV24 is
     emit SetMaximumPerformanceFeeNumeratorChange(amount);
   }
 
-  /// @notice Set manager fee numberator change delay
+  /// @notice Set manager fee numerator change delay
   /// @param delay The delay in seconds for the manager fee numerator change
   function setPerformanceFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
     performanceFeeNumeratorChangeDelay = delay;
@@ -581,7 +581,7 @@ contract PoolFactoryV24 is
     }
   }
 
-  // Hack: New variable added by JHM since initial deployment because of
+  // Hack: New variable added by Jake since initial deployment because of
   // https://forum.openzeppelin.com/t/storage-layout-upgrade-with-hardhat-upgrades/14567/3
   // address public poolPerformanceAddress;
 

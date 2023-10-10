@@ -180,7 +180,7 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
   /// @param data the transaction data
   function afterTxGuard(
     address _poolManagerLogic,
-    address, // to
+    address to,
     bytes calldata data
   ) public virtual override {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
@@ -190,10 +190,11 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
       getParams(data),
       (IOptionMarketWrapper.OptionPositionParams)
     );
-    afterTxGuardHandle(poolLogic, address(params.optionMarket), params.positionId);
+    afterTxGuardHandle(to, poolLogic, address(params.optionMarket), params.positionId);
   }
 
   function afterTxGuardHandle(
+    address contractGuarded,
     address poolLogic,
     address optionMarket,
     uint256 positionId
@@ -207,7 +208,7 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
     if (positionId == 0) {
       // New position created, We use the nextId sub 1 as this code runs after the creation of the option.
       DhedgeNftTrackerStorage(nftTracker).addData(
-        marketWrapper(),
+        contractGuarded,
         NFT_TYPE,
         poolLogic,
         abi.encode(
@@ -243,7 +244,7 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
 
       if (positionState != IOptionToken.PositionState.ACTIVE) {
         // If the position is not active remove it from nft tracker
-        DhedgeNftTrackerStorage(nftTracker).removeData(marketWrapper(), NFT_TYPE, poolLogic, i);
+        DhedgeNftTrackerStorage(nftTracker).removeData(contractGuarded, NFT_TYPE, poolLogic, i);
       }
     }
   }
@@ -274,7 +275,19 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
     }
   }
 
+  /// @notice Function for settling expired options and filtering active options
+  /// @dev Used when interacting with the OptionMarketWrapper contract
   function settleExpiredAndFilterActivePositions(address poolLogic) public {
+    _settleExpiredAndFilterActivePositions(poolLogic, marketWrapper());
+  }
+
+  /// @notice Public function for settling expired options and filtering active options
+  /// @dev Includes a guardecContract input for handling calls directly through the OptionMarket contract (not wrapper)
+  function settleExpiredAndFilterActivePositions(address poolLogic, address guardedContract) public {
+    _settleExpiredAndFilterActivePositions(poolLogic, guardedContract);
+  }
+
+  function _settleExpiredAndFilterActivePositions(address poolLogic, address guardedContract) internal {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(poolLogic).poolManagerLogic());
 
     OptionPosition[] memory optionPositions = getOptionPositions(poolLogic);
@@ -308,7 +321,7 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
         IShortCollateral(optionMarketAddresses.shortCollateral).settleOptions(positionsToSettle);
       }
 
-      DhedgeNftTrackerStorage(nftTracker).removeData(marketWrapper(), NFT_TYPE, poolLogic, index);
+      DhedgeNftTrackerStorage(nftTracker).removeData(guardedContract, NFT_TYPE, poolLogic, index);
     }
   }
 }

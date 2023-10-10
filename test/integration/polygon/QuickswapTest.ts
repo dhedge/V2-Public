@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
-import { checkAlmostSame, getAmountIn, getAmountOut, units } from "../../TestHelpers";
+import { expect } from "chai";
+import { checkAlmostSame, getAmountIn, getAmountOut, units } from "../../testHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   IERC20,
@@ -18,10 +17,8 @@ import { createFund } from "../utils/createFund";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { deployContracts } from "../utils/deployContracts/deployContracts";
 
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 const { assets, assetsBalanceOfSlot, quickswap } = polygonChainData;
-
-use(solidity);
 
 describe("Quickswap V2 Test", function () {
   let WMATIC: IWETH, WETH: IERC20, USDC: IERC20, QuickLPUSDCWETH: IERC20, QUICK: IERC20;

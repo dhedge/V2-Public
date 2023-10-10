@@ -10,6 +10,7 @@
 - [`factory()`](#IPoolManagerLogic-factory--)
 - [`setPoolLogic(address fundAddress)`](#IPoolManagerLogic-setPoolLogic-address-)
 - [`totalFundValue()`](#IPoolManagerLogic-totalFundValue--)
+- [`totalFundValueMutable()`](#IPoolManagerLogic-totalFundValueMutable--)
 - [`isMemberAllowed(address member)`](#IPoolManagerLogic-isMemberAllowed-address-)
 - [`getFee()`](#IPoolManagerLogic-getFee--)
 - [`minDepositUSD()`](#IPoolManagerLogic-minDepositUSD--)
@@ -70,13 +71,19 @@ No description
 
 
 
+# Function `totalFundValueMutable() → uint256` {#IPoolManagerLogic-totalFundValueMutable--}
+No description
+
+
+
+
 # Function `isMemberAllowed(address member) → bool` {#IPoolManagerLogic-isMemberAllowed-address-}
 No description
 
 
 
 
-# Function `getFee() → uint256, uint256, uint256` {#IPoolManagerLogic-getFee--}
+# Function `getFee() → uint256, uint256, uint256, uint256` {#IPoolManagerLogic-getFee--}
 No description
 
 

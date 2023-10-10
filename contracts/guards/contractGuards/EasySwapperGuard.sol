@@ -41,8 +41,8 @@ import "../../utils/TxDataUtils.sol";
 import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
-import "../../EasySwapper/DhedgeEasySwapper.sol";
-import "../../EasySwapper/EasySwapperStructs.sol";
+import "../../swappers/easySwapper/DhedgeEasySwapper.sol";
+import "../../swappers/easySwapper/EasySwapperStructs.sol";
 
 /// @title Transaction guard for Dhedge EasySwapper
 contract EasySwapperGuard is TxDataUtils, IGuard {
@@ -74,7 +74,7 @@ contract EasySwapperGuard is TxDataUtils, IGuard {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
-    if (method == DhedgeEasySwapper.deposit.selector) {
+    if (method == DhedgeEasySwapper.depositWithCustomCooldown.selector) {
       // I.e asset == EthBear2x
       (address assetToReceive, , , , ) = abi.decode(getParams(data), (address, address, uint256, address, uint256));
 
@@ -95,7 +95,7 @@ contract EasySwapperGuard is TxDataUtils, IGuard {
     } else if (method == DhedgeEasySwapper.withdrawSUSD.selector) {
       // I.e from == EthBear2x
       (address withdrawingFrom, , , ) = abi.decode(getParams(data), (address, uint256, address, uint256));
-      (, , , EasySwapperStructs.SynthetixProps memory synthetixProps, , ) = DhedgeEasySwapper(payable(easySwapper))
+      (, EasySwapperStructs.SynthetixProps memory synthetixProps, , ) = DhedgeEasySwapper(payable(easySwapper))
         .withdrawProps();
       address susd = address(synthetixProps.sUSDProxy);
       require(poolManagerLogicAssets.isSupportedAsset(susd), "unsupported asset");

@@ -2,8 +2,10 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { config, ethers, network } from "hardhat";
 import { HttpNetworkConfig } from "hardhat/types";
 import { Func } from "mocha";
-import { currentBlockTimestamp } from "../../TestHelpers";
+import { currentBlockTimestamp } from "../../testHelpers";
 import { NETWORK } from "./deployContracts/deployContracts";
+
+export type ChainIds = 137 | 10;
 
 const evmTakeSnap = async (): Promise<string> => {
   const x = (await network.provider.request({
@@ -97,6 +99,11 @@ const beforeAfterReset = (before: (fn: Func) => void, after: (fn: Func) => void)
   });
 };
 
+const networkToChainIdMap: Record<NETWORK, ChainIds> = {
+  polygon: 137,
+  ovm: 10,
+};
+
 export const utils = {
   evmTakeSnap,
   evmRestoreSnap,
@@ -107,4 +114,5 @@ export const utils = {
   evmForkNetwork,
   evmForkReset,
   beforeAfterReset,
+  networkToChainIdMap,
 };

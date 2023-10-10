@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { polygonChainData } from "../../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../../config/chainData/polygonData";
 import {
   IBalancerV2Vault__factory,
   IERC20,
@@ -12,7 +12,7 @@ import {
   PoolLogic,
   PoolManagerLogic,
 } from "../../../../types";
-import { checkAlmostSame, units } from "../../../TestHelpers";
+import { checkAlmostSame, units } from "../../../testHelpers";
 import { createFund } from "../../utils/createFund";
 import { deployContracts } from "../../utils/deployContracts/deployContracts";
 import { getAccountToken } from "../../utils/getAccountTokens";
@@ -126,7 +126,6 @@ describe("Balancer V2 Gauge Asset Guard Test", function () {
       const gaugeBalanceBefore = await stGauge.balanceOf(poolLogicProxy.address);
 
       // withdraw half
-      await poolFactory.setExitCooldown(0);
       await poolLogicProxy.withdraw((await poolLogicProxy.balanceOf(logicOwner.address)).div(2));
 
       checkAlmostSame(await WMATIC.balanceOf(poolLogicProxy.address), wmaticBalanceBefore.div(2), 0.05); // includes additional rewards, hence 0.05% threshold
@@ -140,7 +139,6 @@ describe("Balancer V2 Gauge Asset Guard Test", function () {
       const claimAmount = await stGauge.claimable_reward(poolLogicProxy.address, assets.balancer);
 
       // withdraw half
-      await poolFactory.setExitCooldown(0);
       await poolLogicProxy.withdraw((await poolLogicProxy.balanceOf(logicOwner.address)).div(2));
 
       checkAlmostSame(await BALANCER.balanceOf(poolLogicProxy.address), claimAmount.div(2), 0.05);
@@ -151,7 +149,6 @@ describe("Balancer V2 Gauge Asset Guard Test", function () {
       const claimAmount = await stGauge.claimable_reward(poolLogicProxy.address, assets.balancer);
 
       // withdraw half
-      await poolFactory.setExitCooldown(0);
       await poolLogicProxy.withdraw((await poolLogicProxy.balanceOf(logicOwner.address)).div(2));
       checkAlmostSame(await BALANCER_STMATIC.balanceOf(logicOwner.address), lpAmount.div(2), 0.05);
       checkAlmostSame(await BALANCER.balanceOf(logicOwner.address), claimAmount.div(2), 0.05);

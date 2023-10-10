@@ -91,35 +91,17 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
   uint256 public uniV3PositionsLimit;
 
   bool public override isTxTrackingGuard = true;
-  mapping(address => bool) public isPoolTracking;
 
   constructor(uint256 _uniV3PositionsLimit, address _nftTracker) {
     uniV3PositionsLimit = _uniV3PositionsLimit;
     nftTracker = _nftTracker;
   }
 
-  function getOwnedTokenIds(INonfungiblePositionManager nonfungiblePositionManager, address poolLogic)
-    public
-    view
-    returns (uint256[] memory tokenIds)
-  {
-    if (isPoolTracking[poolLogic]) {
-      bytes[] memory data = DhedgeNftTrackerStorage(nftTracker).getAllData(NFT_TYPE, poolLogic);
-      tokenIds = new uint256[](data.length);
-      for (uint256 i = 0; i < data.length; i++) {
-        tokenIds[i] = abi.decode(data[i], (uint256));
-      }
-    } else {
-      uint256 length = nonfungiblePositionManager.balanceOf(poolLogic);
-      // restrict to only limited count of positions
-      if (length > uniV3PositionsLimit) {
-        length = uniV3PositionsLimit;
-      }
-
-      tokenIds = new uint256[](length);
-      for (uint256 i = 0; i < length; ++i) {
-        tokenIds[i] = nonfungiblePositionManager.tokenOfOwnerByIndex(poolLogic, i);
-      }
+  function getOwnedTokenIds(address poolLogic) public view returns (uint256[] memory tokenIds) {
+    bytes[] memory data = DhedgeNftTrackerStorage(nftTracker).getAllData(NFT_TYPE, poolLogic);
+    tokenIds = new uint256[](data.length);
+    for (uint256 i = 0; i < data.length; i++) {
+      tokenIds[i] = abi.decode(data[i], (uint256));
     }
   }
 
@@ -147,14 +129,6 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
     address pool = poolManagerLogic.poolLogic();
-
-    if (!isPoolTracking[pool]) {
-      uint256[] memory tokenIds = getOwnedTokenIds(nonfungiblePositionManager, pool);
-      for (uint256 i = 0; i < tokenIds.length; i++) {
-        DhedgeNftTrackerStorage(nftTracker).addData(to, NFT_TYPE, pool, abi.encode(tokenIds[i]));
-      }
-      isPoolTracking[pool] = true;
-    }
 
     if (method == INonfungiblePositionManager.mint.selector) {
       INonfungiblePositionManager.MintParams memory param = abi.decode(
@@ -300,7 +274,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
       uint256 tokenId = abi.decode(getParams(data), (uint256));
 
       // find token ids from nft tracker
-      uint256[] memory tokenIds = getOwnedTokenIds(nonfungiblePositionManager, poolLogic);
+      uint256[] memory tokenIds = getOwnedTokenIds(poolLogic);
       uint256 i;
       for (i = 0; i < tokenIds.length; i++) {
         if (tokenId == tokenIds[i]) {

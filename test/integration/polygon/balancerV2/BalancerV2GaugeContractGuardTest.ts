@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
-import { units } from "../../../TestHelpers";
+import { expect } from "chai";
+import { units } from "../../../testHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   IBalancerV2Vault__factory,
@@ -14,13 +13,11 @@ import {
   PoolManagerLogic,
 } from "../../../../types";
 import { createFund } from "../../utils/createFund";
-import { polygonChainData } from "../../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../../config/chainData/polygonData";
 const { assets, assetsBalanceOfSlot, balancer } = polygonChainData;
 import { getAccountToken } from "../../utils/getAccountTokens";
 import { deployContracts } from "../../utils/deployContracts/deployContracts";
 import { utils } from "../../utils/utils";
-
-use(solidity);
 
 describe("Balancer V2 Gauge Contract Guard Test", function () {
   let WMATIC: IERC20, STMATIC: IERC20, BALANCER_STMATIC: IERC20;

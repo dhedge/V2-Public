@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { ovmChainData } from "../../../config/chainData/ovm-data";
+import { ovmChainData } from "../../../config/chainData/ovmData";
 import { IAggregatorV3Interface, SynthPriceAggregator, USDPriceAggregator } from "../../../types";
 import { utils } from "../utils/utils";
 

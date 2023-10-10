@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { DhedgeStakingV2VDHTCalculator } from "../../../types";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 
 const DAY_IN_SECONDS = 24 * 60 * 60;
 

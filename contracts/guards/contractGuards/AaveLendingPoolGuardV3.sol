@@ -74,6 +74,10 @@ contract AaveLendingPoolGuardV3 is AaveLendingPoolGuardV2 {
       );
 
       txType = _deposit(factory, poolLogic, _poolManagerLogic, to, depositAsset, amount, onBehalfOf);
+    } else if (method == bytes4(keccak256("repayWithATokens(address,uint256,uint256)"))) {
+      (address asset, uint256 amount, ) = abi.decode(getParams(data), (address, uint256, uint256));
+
+      txType = _repayWithATokens(factory, poolLogic, _poolManagerLogic, to, asset, amount);
     } else {
       (txType, isPublic) = super.txGuard(_poolManagerLogic, to, data);
     }
@@ -123,5 +127,27 @@ contract AaveLendingPoolGuardV3 is AaveLendingPoolGuardV2 {
     emit Borrow(poolLogic, borrowAsset, to, amount, block.timestamp);
 
     txType = 12; // Aave `Borrow` type
+  }
+
+  function _repayWithATokens(
+    address factory,
+    address poolLogic,
+    address poolManagerLogic,
+    address to,
+    address repayAsset,
+    uint256 amount
+  ) internal returns (uint16 txType) {
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogic);
+
+    require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
+    require(poolManagerLogicAssets.isSupportedAsset(repayAsset), "unsupported repay asset");
+    require(
+      IHasAssetInfo(factory).getAssetType(repayAsset) == 4 || IHasAssetInfo(factory).getAssetType(repayAsset) == 14,
+      "not borrow enabled"
+    );
+
+    emit Repay(poolLogic, repayAsset, to, amount, block.timestamp);
+
+    txType = 13; // Aave `Repay` type
   }
 }

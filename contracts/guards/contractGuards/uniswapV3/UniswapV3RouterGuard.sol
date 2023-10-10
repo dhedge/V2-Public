@@ -21,25 +21,26 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
 
-import "../../../utils/SlippageChecker.sol";
+import "../../../utils/SlippageAccumulator.sol";
 import "../../../utils/TxDataUtils.sol";
 import "../../../interfaces/guards/IGuard.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";
 import "../../../interfaces/IHasGuardInfo.sol";
 import "../../../interfaces/IManaged.sol";
 import "../../../interfaces/IHasSupportedAsset.sol";
-import "../../../interfaces/uniswapv3/IV3SwapRouter.sol";
-import "../../../interfaces/uniswapv3/IMulticallExtended.sol";
+import "../../../interfaces/uniswapV3/IV3SwapRouter.sol";
+import "../../../interfaces/uniswapV3/IMulticallExtended.sol";
 
-contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
+contract UniswapV3RouterGuard is TxDataUtils, IGuard {
   using Path for bytes;
   using SafeMathUpgradeable for uint256;
 
-  constructor(uint256 _slippageLimitNumerator, uint256 _slippageLimitDenominator)
-    SlippageChecker(_slippageLimitNumerator, _slippageLimitDenominator)
-  // solhint-disable-next-line no-empty-blocks
-  {
+  SlippageAccumulator private immutable slippageAccumulator;
 
+  constructor(address _slippageAccumulator) {
+    require(_slippageAccumulator != address(0), "Null address");
+
+    slippageAccumulator = SlippageAccumulator(_slippageAccumulator);
   }
 
   /// @notice Transaction guard for UniswavpV3SwapGuard
@@ -68,13 +69,21 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
 
     if (method == IV3SwapRouter.exactInput.selector) {
       IV3SwapRouter.ExactInputParams memory params = abi.decode(getParams(data), (IV3SwapRouter.ExactInputParams));
-
       (address srcAsset, address dstAsset) = _decodePath(params.path);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == params.recipient, "recipient is not pool");
 
-      _checkSlippageLimit(srcAsset, dstAsset, params.amountIn, params.amountOutMinimum, address(poolManagerLogic));
+      slippageAccumulator.updateSlippageImpact(
+        SlippageAccumulator.SwapData(
+          srcAsset,
+          dstAsset,
+          params.amountIn,
+          params.amountOutMinimum,
+          to,
+          address(poolManagerLogic)
+        )
+      );
 
       emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
 
@@ -92,7 +101,16 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
 
       require(pool == params.recipient, "recipient is not pool");
 
-      _checkSlippageLimit(srcAsset, dstAsset, params.amountIn, params.amountOutMinimum, address(poolManagerLogic));
+      slippageAccumulator.updateSlippageImpact(
+        SlippageAccumulator.SwapData(
+          srcAsset,
+          dstAsset,
+          params.amountIn,
+          params.amountOutMinimum,
+          to,
+          address(poolManagerLogic)
+        )
+      );
 
       emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
 
@@ -100,12 +118,21 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
     } else if (method == IV3SwapRouter.exactOutput.selector) {
       IV3SwapRouter.ExactOutputParams memory params = abi.decode(getParams(data), (IV3SwapRouter.ExactOutputParams));
 
-      (address srcAsset, address dstAsset) = _decodePath(params.path);
+      (address dstAsset, address srcAsset) = _decodePath(params.path);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
       require(pool == params.recipient, "recipient is not pool");
 
-      _checkSlippageLimit(srcAsset, dstAsset, params.amountInMaximum, params.amountOut, address(poolManagerLogic));
+      slippageAccumulator.updateSlippageImpact(
+        SlippageAccumulator.SwapData(
+          srcAsset,
+          dstAsset,
+          params.amountInMaximum,
+          params.amountOut,
+          to,
+          address(poolManagerLogic)
+        )
+      );
 
       emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
 
@@ -123,7 +150,16 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
 
       require(pool == params.recipient, "recipient is not pool");
 
-      _checkSlippageLimit(srcAsset, dstAsset, params.amountInMaximum, params.amountOut, address(poolManagerLogic));
+      slippageAccumulator.updateSlippageImpact(
+        SlippageAccumulator.SwapData(
+          srcAsset,
+          dstAsset,
+          params.amountInMaximum,
+          params.amountOut,
+          to,
+          address(poolManagerLogic)
+        )
+      );
 
       emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
 
@@ -139,6 +175,12 @@ contract UniswapV3RouterGuard is TxDataUtils, SlippageChecker, IGuard {
 
       txType = 25; // 'Multicall' type
     }
+
+    // Given that there are no return statements above, this tx guard is not used for a public function (callable by anyone).
+    // Make sure that it's the `poolLogic` contract of the `poolManagerLogic` which initiates the check on the tx.
+    // Else, anyone can increase the slippage impact (updated by the call to SlippageAccumulator).
+    // We can trust the poolLogic since it contains check to ensure the caller is authorised.
+    require(IPoolManagerLogic(_poolManagerLogic).poolLogic() == msg.sender, "Caller not authorised");
 
     return (txType, false);
   }

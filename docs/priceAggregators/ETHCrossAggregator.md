@@ -1,14 +1,14 @@
-Convert ETH denominated oracles to to USD denominated oracle
+Convert ETH denominated oracle to USD denominated oracle
 
 
 # Functions:
-- [`constructor(address _token, address _tokenEthAggregator, address _ethUsdAggregator)`](#ETHCrossAggregator-constructor-address-address-address-)
+- [`constructor(address _token, contract IAggregatorV3Interface _tokenEthAggregator, contract IAggregatorV3Interface _ethUsdAggregator)`](#ETHCrossAggregator-constructor-address-contract-IAggregatorV3Interface-contract-IAggregatorV3Interface-)
 - [`decimals()`](#ETHCrossAggregator-decimals--)
 - [`latestRoundData()`](#ETHCrossAggregator-latestRoundData--)
 
 
 
-# Function `constructor(address _token, address _tokenEthAggregator, address _ethUsdAggregator)` {#ETHCrossAggregator-constructor-address-address-address-}
+# Function `constructor(address _token, contract IAggregatorV3Interface _tokenEthAggregator, contract IAggregatorV3Interface _ethUsdAggregator)` {#ETHCrossAggregator-constructor-address-contract-IAggregatorV3Interface-contract-IAggregatorV3Interface-}
 No description
 
 

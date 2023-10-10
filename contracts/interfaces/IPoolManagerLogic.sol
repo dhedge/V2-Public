@@ -53,12 +53,15 @@ interface IPoolManagerLogic {
 
   function totalFundValue() external view returns (uint256);
 
+  function totalFundValueMutable() external returns (uint256);
+
   function isMemberAllowed(address member) external view returns (bool);
 
   function getFee()
     external
     view
     returns (
+      uint256,
       uint256,
       uint256,
       uint256

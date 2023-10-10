@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import { AssetHandler } from "../../../types";
 
 /**
@@ -17,7 +17,7 @@ export const getMinAmountOut = async (
   amountIn: BigNumber,
   tokenInAddress: string,
   tokenOutAddress: string,
-  percentage = 91,
+  percentage = 96,
 ): Promise<BigNumber> => {
   const tokenIn = await ethers.getContractAt("IERC20Extended", tokenInAddress);
   const tokenOut = await ethers.getContractAt("IERC20Extended", tokenOutAddress);

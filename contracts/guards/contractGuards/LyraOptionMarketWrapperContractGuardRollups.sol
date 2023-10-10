@@ -153,7 +153,7 @@ contract LyraOptionMarketWrapperContractGuardRollups is LyraOptionMarketWrapperC
     ) {
       uint256 params = abi.decode(getParams(data), (uint256));
       (IOptionMarketWrapper.OptionPositionParams memory optionPositionParams, ) = _getOptionParam(method, params);
-      afterTxGuardHandle(poolLogic, address(optionPositionParams.optionMarket), optionPositionParams.positionId);
+      afterTxGuardHandle(to, poolLogic, address(optionPositionParams.optionMarket), optionPositionParams.positionId);
     } else {
       super.afterTxGuard(_poolManagerLogic, to, data);
     }

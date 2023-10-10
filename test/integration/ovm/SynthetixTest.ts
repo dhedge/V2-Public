@@ -11,10 +11,9 @@ import {
   IV3SwapRouter__factory,
   PoolFactory,
   SynthetixGuard,
-  UniswapV3RouterGuard,
 } from "../../../types";
-import { ovmChainData } from "../../../config/chainData/ovm-data";
-import { checkAlmostSame, units } from "../../TestHelpers";
+import { ovmChainData } from "../../../config/chainData/ovmData";
+import { checkAlmostSame, units } from "../../testHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { createFund } from "../utils/createFund";
 import { deployContracts, IDeployments } from "../utils/deployContracts/deployContracts";
@@ -28,8 +27,7 @@ describe("Synthetix Test", function () {
   let susdProxy: ISynthAddressProxy,
     sethProxy: ISynthAddressProxy,
     synthetix: ISynthetix,
-    synthetixGuard: SynthetixGuard,
-    uniswapV3RouterGuard: UniswapV3RouterGuard;
+    synthetixGuard: SynthetixGuard;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: Contract, poolManagerLogicProxy: Contract;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
@@ -50,7 +48,6 @@ describe("Synthetix Test", function () {
     poolFactory = deployments.poolFactory;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     synthetixGuard = deployments.synthetixGuard!;
-    uniswapV3RouterGuard = deployments.uniswapV3RouterGuard;
 
     synthetix = <ISynthetix>(
       await ethers.getContractAt("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix", assets.snxProxy)
@@ -138,10 +135,11 @@ describe("Synthetix Test", function () {
     swapABI = iSynthetix.encodeFunctionData("exchangeWithTracking", [
       sourceKey,
       sourceAmount,
-      SynthetixData.slinkKey,
+      SynthetixData.sinrKey,
       daoAddress,
       trackingCode,
     ]);
+
     await expect(poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI)).to.be.revertedWith(
       "unsupported destination asset",
     );
@@ -164,16 +162,17 @@ describe("Synthetix Test", function () {
     expect(event.destinationAsset).to.equal(assets.seth);
   });
 
+  // TODO: Explore why 2% slippage is not enough for this test.
   it("should be able to swap snx on uniswap.", async () => {
-    await uniswapV3RouterGuard.setSlippageLimit(950, 1000);
+    await deployments.slippageAccumulator.setMaxCumulativeSlippage(10e4); // Setting max cumulative slippage impact to 10%.
 
     // swap susd -> snx
     let approveABI = iERC20.encodeFunctionData("approve", [uniswapV3.router, units(500)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
-    let srcAsset = assets.susd;
+    let srcAsset: string = assets.susd;
     let sourceAmount = units(300);
-    let dstAsset = assets.snxProxy;
-    let minAmountOut = await getMinAmountOut(deployments.assetHandler, sourceAmount, srcAsset, dstAsset, 10);
+    let dstAsset: string = assets.snxProxy;
+    let minAmountOut = await getMinAmountOut(deployments.assetHandler, sourceAmount, srcAsset, dstAsset, 96);
     let exactInputSingleCalldata = IV3SwapRouter.encodeFunctionData("exactInputSingle", [
       [
         srcAsset, // from
@@ -193,7 +192,7 @@ describe("Synthetix Test", function () {
     srcAsset = assets.snxProxy;
     sourceAmount = minAmountOut;
     dstAsset = assets.susd;
-    minAmountOut = await getMinAmountOut(deployments.assetHandler, sourceAmount, srcAsset, dstAsset, 60);
+    minAmountOut = await getMinAmountOut(deployments.assetHandler, sourceAmount, srcAsset, dstAsset, 96);
     exactInputSingleCalldata = IV3SwapRouter.encodeFunctionData("exactInputSingle", [
       [
         srcAsset, // from

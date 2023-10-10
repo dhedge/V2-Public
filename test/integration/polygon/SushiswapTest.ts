@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
-import { expect, use } from "chai";
-import { checkAlmostSame, getAmountOut, units } from "../../TestHelpers";
+import { expect } from "chai";
+import { checkAlmostSame, getAmountOut, units } from "../../testHelpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   AssetHandler,
@@ -15,13 +14,11 @@ import {
   SushiMiniChefV2Guard,
 } from "../../../types";
 import { createFund } from "../utils/createFund";
-import { polygonChainData } from "../../../config/chainData/polygon-data";
+import { polygonChainData } from "../../../config/chainData/polygonData";
 const { assets, assetsBalanceOfSlot, sushi } = polygonChainData;
 import { BigNumber } from "ethers";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { deployContracts } from "../utils/deployContracts/deployContracts";
-
-use(solidity);
 
 describe("Sushiswap V2 Test", function () {
   let WMATIC: IERC20, WETH: IERC20, USDC: IERC20, SushiLPUSDCWETH: IERC20, SUSHI: IERC20;
@@ -580,7 +577,7 @@ describe("Sushiswap V2 Test", function () {
       });
 
       // remove manager fee so that performance fee minting doesn't get in the way
-      await poolManagerLogicProxy.connect(manager).setFeeNumerator("0", "0");
+      await poolManagerLogicProxy.connect(manager).setFeeNumerator("0", "0", "0");
 
       const totalSupply = await poolLogicProxy.totalSupply();
 

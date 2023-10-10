@@ -7,21 +7,21 @@ import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "../interfaces/IAggregatorV3Interface.sol";
 
 /**
- * @title USD price aggregator.
- * @notice Convert ETH denominated oracles to to USD denominated oracle
+ * @title USD cross ETH price aggregator.
+ * @notice Convert ETH denominated oracle to USD denominated oracle
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
 contract ETHCrossAggregator is IAggregatorV3Interface {
   using SignedSafeMath for int256;
 
   address public token;
-  address public tokenEthAggregator;
-  address public ethUsdAggregator;
+  IAggregatorV3Interface public tokenEthAggregator;
+  IAggregatorV3Interface public ethUsdAggregator;
 
   constructor(
     address _token,
-    address _tokenEthAggregator,
-    address _ethUsdAggregator
+    IAggregatorV3Interface _tokenEthAggregator,
+    IAggregatorV3Interface _ethUsdAggregator
   ) {
     token = _token;
     tokenEthAggregator = _tokenEthAggregator;
@@ -52,10 +52,10 @@ contract ETHCrossAggregator is IAggregatorV3Interface {
       uint80 answeredInRound
     )
   {
-    (, int256 tokenEthPrice, , uint256 updatedAt1, ) = IAggregatorV3Interface(tokenEthAggregator).latestRoundData();
-    (, int256 ethUsdPrice, , uint256 updatedAt2, ) = IAggregatorV3Interface(ethUsdAggregator).latestRoundData();
+    (, int256 tokenEthPrice, , uint256 tokenEthUpdatedAt, ) = tokenEthAggregator.latestRoundData();
+    (, int256 ethUsdPrice, , uint256 ethUsdUpdatedAt, ) = ethUsdAggregator.latestRoundData();
 
     answer = tokenEthPrice.mul(ethUsdPrice).div(1e18);
-    return (0, answer, 0, updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1, 0);
+    return (0, answer, 0, tokenEthUpdatedAt > ethUsdUpdatedAt ? ethUsdUpdatedAt : tokenEthUpdatedAt, 0);
   }
 }

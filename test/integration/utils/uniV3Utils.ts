@@ -5,7 +5,7 @@ import bn from "bignumber.js";
 import type { Wallet } from "ethers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { Address } from "../../../deployment-scripts/types";
+import { Address } from "../../../deployment/types";
 import {
   IERC20__factory,
   INonfungiblePositionManager,
@@ -13,7 +13,7 @@ import {
   PoolFactory,
   PoolLogic,
 } from "../../../types";
-import { units } from "../../TestHelpers";
+import { units } from "../../testHelpers";
 import { getAccountToken } from "./getAccountTokens";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);

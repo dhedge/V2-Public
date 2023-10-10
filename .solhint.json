@@ -5,7 +5,8 @@
     "compiler-version": ["error", "0.7.6"],
     "no-inline-assembly": ["off"],
     "not-rely-on-time": ["off"],
-    "max-states-count": ["warn", 21],
-    "func-visibility": ["warn", { "ignoreConstructors": true }]
+    "max-states-count": ["warn", 24],
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "no-global-import": ["off"]
   }
 }

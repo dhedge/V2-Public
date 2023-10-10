@@ -82,9 +82,9 @@ contract ArrakisV1RouterStakingGuard is TxDataUtils, IGuard {
 
     bytes4 method = getMethod(data);
     if (method == IArrakisV1RouterStaking.addLiquidityAndStake.selector) {
-      (address gauge, , , , , address receiver) = abi.decode(
+      (address gauge, , , , , , address receiver) = abi.decode(
         getParams(data),
-        (address, uint256, uint256, uint256, uint256, address)
+        (address, uint256, uint256, uint256, uint256, uint256, address)
       );
 
       address stakingToken = ILiquidityGaugeV4(gauge).staking_token();

@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 
 // We import the contract so truffle compiles it, and we have the ABI
 // available when working from truffle console.
-import "../EasySwapper/DhedgeEasySwapper.sol";
+import "../swappers/easySwapper/DhedgeEasySwapper.sol";
 import "../interfaces/IPoolLogic.sol";
 import "../interfaces/IPoolLogic.sol";
 import "../interfaces/IERC20Extended.sol";
@@ -17,7 +17,7 @@ contract FlashSwapperTest {
   ) public {
     depositToken.transferFrom(msg.sender, address(this), amount);
     depositToken.approve(address(swapper), amount);
-    uint256 fundTokenAmount = swapper.deposit(pool, depositToken, amount, depositToken, 1);
+    uint256 fundTokenAmount = swapper.depositWithCustomCooldown(pool, depositToken, amount, depositToken, 1);
     // Should revert, cannot deposit withdraw in same block
     IERC20(pool).approve(address(swapper), fundTokenAmount);
     swapper.withdraw(pool, fundTokenAmount, depositToken, 1);
@@ -32,7 +32,7 @@ contract FlashSwapperTest {
   ) public {
     depositToken.transferFrom(msg.sender, address(this), amount);
     depositToken.approve(address(swapper), amount);
-    uint256 fundTokenAmount = swapper.deposit(pool, depositToken, amount, depositToken, 1);
+    uint256 fundTokenAmount = swapper.depositWithCustomCooldown(pool, depositToken, amount, depositToken, 1);
     // Should revert, cannot deposit withdraw in same bloc
     IPoolLogic(pool).withdraw(fundTokenAmount);
   }

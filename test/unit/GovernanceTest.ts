@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Governance } from "../../types";
-import { toBytes32 } from "../TestHelpers";
+import { toBytes32 } from "../testHelpers";
 
 describe("Governance", async () => {
   let governance: Governance;

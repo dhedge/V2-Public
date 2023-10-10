@@ -1,8 +1,8 @@
 import { TestSystem, TestSystemContractsType } from "@lyrafinance/protocol";
 import { IOptionMarket, IOptionToken } from "@lyrafinance/protocol/dist/typechain-types";
 import { ethers } from "hardhat";
-import { ChainDataCommon } from "../../../../config/chainData/ChainDataType";
-import { ovmChainData } from "../../../../config/chainData/ovm-data";
+import { ChainDataOVM } from "../../../../config/chainData/chainDataTypes";
+import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { ILyraRegistry } from "../../../../types";
 import { IDeployments } from "../../utils/deployContracts/deployContracts";
 import { assetSetting } from "../../utils/deployContracts/getChainAssets";
@@ -90,7 +90,7 @@ export const deployLyraAndConfigureMarket = async (
 
 export const deployLyraTestSystem = async (
   deployments: IDeployments,
-  chainData: ChainDataCommon,
+  chainData: ChainDataOVM,
 ): Promise<TestSystemContractsType> => {
   const { assetHandler, governance, dhedgeNftTrackerStorage, erc721ContractGuard } = deployments;
   // deploy lyra
@@ -116,6 +116,15 @@ export const deployLyraTestSystem = async (
     2,
   );
   await lyraOptionMarketWrapperContractGuard.deployed();
+
+  const LyraOptionMarketContractGuard = await ethers.getContractFactory("LyraOptionMarketContractGuard");
+  const lyraOptionMarketContractGuard = await LyraOptionMarketContractGuard.deploy(
+    testSystem.lyraRegistry.address,
+    dhedgeNftTrackerStorage.address,
+    2,
+  );
+
+  await governance.setContractGuard(testSystem.optionMarket.address, lyraOptionMarketContractGuard.address);
 
   // prepare aave flashloan mock
   const AaveFlashloanMock = await ethers.getContractFactory("AaveFlashloanMock");

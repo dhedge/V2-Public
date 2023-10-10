@@ -54,6 +54,11 @@ contract RewardDistribution is Ownable, Pausable {
     uint256 amount;
   }
 
+  struct EligiblePool {
+    address pool;
+    uint256 tvl;
+  }
+
   event RewardsDistribution(RewardSummary[] distributedRewards, uint256 totalDistributedRewards);
   event OwnerOperation(string operation);
 
@@ -76,7 +81,7 @@ contract RewardDistribution is Ownable, Pausable {
     lastDistributionTime = block.timestamp;
   }
 
-  /** Owner Setters */
+  /** Owner Functions */
 
   /// @notice Setter to change reward token. Mind token precision, resetting rewardAmountPerSecond most likely will be needed
   /// @param _rewardToken ERC20 compliant token address
@@ -88,7 +93,7 @@ contract RewardDistribution is Ownable, Pausable {
 
   /// @notice Setter to change amount of reward token streamed per second
   /// @param _rewardAmountPerSecond Mind reward token precision
-  function setRewardAmountPerSecond(uint256 _rewardAmountPerSecond) external onlyOwner {
+  function setRewardAmountPerSecond(uint256 _rewardAmountPerSecond) public onlyOwner {
     rewardAmountPerSecond = _rewardAmountPerSecond;
     emit OwnerOperation("setRewardAmountPerSecond");
   }
@@ -100,6 +105,23 @@ contract RewardDistribution is Ownable, Pausable {
     emit OwnerOperation("setWhitelistedPools");
   }
 
+  /// @notice Function to launch reward distribution process
+  /// @dev Requires rewardAmountPerSecond to be zero
+  /// @dev Define new starting point from which rewards start accruing
+  /// @param _rewardAmountPerSecond Mind reward token precision
+  function launch(uint256 _rewardAmountPerSecond) external onlyOwner {
+    require(rewardAmountPerSecond == 0, "rewardAmountPerSecond not zero");
+    setRewardAmountPerSecond(_rewardAmountPerSecond);
+    lastDistributionTime = block.timestamp;
+  }
+
+  /// @notice Allows the contract owner to withdraw any ERC20 token in the contract
+  /// @param _token Token address. Usually should be rewardToken
+  /// @param _amount Amount of tokens for emergency withdraw
+  function withdrawAdmin(IERC20 _token, uint256 _amount) external onlyOwner {
+    _token.safeTransfer(msg.sender, _amount);
+  }
+
   /** View functions */
 
   /// @notice Getter for pools whitelisted for rewards
@@ -108,18 +130,21 @@ contract RewardDistribution is Ownable, Pausable {
     return whitelistedPools;
   }
 
-  /// @notice Getter for pools eligible for rewards
-  /// @dev Pool considered not eligible if it doesn't have reward token enabled
-  /// @return List of eligible pools' addresses
-  function getEligiblePools() public view returns (address[] memory) {
+  /// @notice Aggregates total usd value of all eligible pools
+  /// @return tvl Total value in usd
+  /// @return eligiblePools List of eligible pools
+  function getEligiblePoolsWithTvl() public view returns (uint256 tvl, EligiblePool[] memory eligiblePools) {
     uint256 poolsCount = whitelistedPools.length;
-    address[] memory eligiblePools = new address[](poolsCount);
+    eligiblePools = new EligiblePool[](poolsCount);
     uint256 index = 0;
     for (uint256 i = 0; i < poolsCount; i++) {
       if (
         IHasSupportedAsset(IPoolLogic(whitelistedPools[i]).poolManagerLogic()).isSupportedAsset(address(rewardToken))
       ) {
-        eligiblePools[index] = whitelistedPools[i];
+        eligiblePools[index].pool = whitelistedPools[i];
+        eligiblePools[index].tvl = IPoolManagerLogic(IPoolLogic(whitelistedPools[i]).poolManagerLogic())
+          .totalFundValue();
+        tvl += eligiblePools[index].tvl;
         index++;
       }
     }
@@ -127,17 +152,6 @@ contract RewardDistribution is Ownable, Pausable {
     uint256 reducedLength = poolsCount.sub(index);
     assembly {
       mstore(eligiblePools, sub(mload(eligiblePools), reducedLength))
-    }
-    return eligiblePools;
-  }
-
-  /// @notice Aggregates total usd value of all eligible pools
-  /// @return tvl Total value in usd
-  /// @return eligiblePools List of eligible pools' addresses
-  function getEligiblePoolsWithTvl() public view returns (uint256 tvl, address[] memory eligiblePools) {
-    eligiblePools = getEligiblePools();
-    for (uint256 i = 0; i < eligiblePools.length; i++) {
-      tvl += IPoolManagerLogic(IPoolLogic(eligiblePools[i]).poolManagerLogic()).totalFundValue();
     }
   }
 
@@ -185,7 +199,7 @@ contract RewardDistribution is Ownable, Pausable {
     view
     returns (RewardSummary[] memory rewards, uint256 totalRewardsToDistribute)
   {
-    (uint256 eligiblePoolsTvl, address[] memory eligiblePools) = getEligiblePoolsWithTvl();
+    (uint256 eligiblePoolsTvl, EligiblePool[] memory eligiblePools) = getEligiblePoolsWithTvl();
     uint256 totalRewardsForPeriod = calculateTotalRewardsForPeriod(
       rewardAmountPerSecond,
       lastDistributionTime,
@@ -194,31 +208,24 @@ contract RewardDistribution is Ownable, Pausable {
     uint256 poolsCount = eligiblePools.length;
     rewards = new RewardSummary[](poolsCount);
     for (uint256 i = 0; i < poolsCount; i++) {
-      uint256 amount = calculatePoolRewardAmount(
-        IPoolManagerLogic(IPoolLogic(eligiblePools[i]).poolManagerLogic()).totalFundValue(),
-        eligiblePoolsTvl,
-        totalRewardsForPeriod
-      );
-      RewardSummary memory summary;
-      summary.pool = eligiblePools[i];
-      summary.amount = amount;
-      rewards[i] = summary;
-      totalRewardsToDistribute += amount;
+      rewards[i].pool = eligiblePools[i].pool;
+      rewards[i].amount = calculatePoolRewardAmount(eligiblePools[i].tvl, eligiblePoolsTvl, totalRewardsForPeriod);
+      totalRewardsToDistribute += rewards[i].amount;
     }
   }
 
   /// @notice Get APY figure from the rewards distribution
   /// @dev Assumes that if eligiblePoolsTvl is more than 0, eligiblePools are not empty and have at least one item listed
   /// @return apy APY figure (can be multiplied by 100 to get value in percents)
-  function getRewardsAPY() public view returns (uint256 apy) {
-    (uint256 eligiblePoolsTvl, address[] memory eligiblePools) = getEligiblePoolsWithTvl();
+  function getRewardsAPY() external view returns (uint256 apy) {
+    (uint256 eligiblePoolsTvl, EligiblePool[] memory eligiblePools) = getEligiblePoolsWithTvl();
     if (eligiblePoolsTvl == 0) {
       apy = 0;
     } else {
       apy = RewardsAPYCalculator.getAPY(
         eligiblePoolsTvl,
         rewardAmountPerSecond,
-        IPoolLogic(eligiblePools[0]).factory(),
+        IPoolLogic(eligiblePools[0].pool).factory(),
         address(rewardToken)
       );
     }
@@ -230,7 +237,7 @@ contract RewardDistribution is Ownable, Pausable {
   /// @dev Will prevent distribution when eligible pools are not set
   /// @dev Will prevent distribution when reward token amount for distribution equals zero
   /// @dev Will prevent distribution if contract needs to be topped-up with reward token
-  function distributeRewards() public {
+  function distributeRewards() external {
     (RewardSummary[] memory rewards, uint256 totalRewardsToDistribute) = calculateEligiblePoolsRewards();
     uint256 balanceOfContract = rewardToken.balanceOf(address(this));
     require(rewards.length > 0, "no eligible pools or not set");
