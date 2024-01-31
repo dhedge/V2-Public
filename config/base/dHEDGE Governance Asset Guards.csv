@@ -1,0 +1,3 @@
+assetType,guardName,guardAddress,description
+0,ERC20Guard,0x832262aB852F2A95857C72DB8aDF319ED3b69794,ERC20 tokens
+103,SynthetixV3AssetGuard,0x255b4b86101428f8424084943FEfADc8f87f1d56,Synthetix V3 Position Asset

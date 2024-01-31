@@ -48,21 +48,12 @@ export const dhedgeStakingV2Job: IJob<void> = async (
       console.log("dhedgeStakingV2Proxy deployed at ", dhedgeStakingV2Proxy.address);
       console.log("dhedgeStakingV2Impl deployed at ", dhedgeStakingV2Implementation);
 
-      console.log("Initializing implementation...");
-      const dhedgeStakingV2Impl = DhedgeStakingV2.attach(dhedgeStakingV2Implementation);
-      try {
-        await dhedgeStakingV2Impl.implInitializer();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (!e.error.message.includes("already initialized")) {
-          throw e;
-        }
-        console.log("Implementation is initialized.");
-      }
       console.log("setTokenUriGenerator");
       await dhedgeStakingV2Proxy.setTokenUriGenerator(nftJsonAddress);
 
       console.log("setting dhtCap");
+
+      if (!addresses.stakingV2) return console.log("No stakingV2 config found");
 
       await dhedgeStakingV2Proxy.setDHTCap(addresses.stakingV2.dhtCap);
 
@@ -101,17 +92,6 @@ export const dhedgeStakingV2Job: IJob<void> = async (
       const dhedgeStakingV2 = await upgrades.prepareUpgrade(dhedgeStakingV2Proxy, DhedgeStakingV2);
       console.log("dhedgeStakingV2 deployed to: ", dhedgeStakingV2);
 
-      console.log("Initializing implementation...");
-      const dhedgeStakingV2Impl = DhedgeStakingV2.attach(dhedgeStakingV2);
-      try {
-        await dhedgeStakingV2Impl.implInitializer();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (!e.error.message.includes("already initialized")) {
-          throw e;
-        }
-        console.log("Implementation is initialized.");
-      }
       await tryVerify(hre, dhedgeStakingV2, "contracts/stakingV2/DhedgeStakingV2.sol:DhedgeStakingV2", []);
 
       const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");

@@ -210,7 +210,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
 
     const VelodromeV2GaugeContractGuard = await ethers.getContractFactory("VelodromeV2GaugeContractGuard");
     const velodromeV2GaugeContractGuard = await VelodromeV2GaugeContractGuard.deploy();
-    await velodromeGaugeContractGuard.deployed();
+    await velodromeV2GaugeContractGuard.deployed();
 
     const VelodromeV2LPAssetGuard = await ethers.getContractFactory("VelodromeV2LPAssetGuard");
     const velodromeV2LPAssetGuard = await VelodromeV2LPAssetGuard.deploy(ovmChainData.velodromeV2.voter);

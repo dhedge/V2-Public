@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { addOrReplaceGuardInFile } from "../helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
+import { IJob, IAddresses, IUpgradeConfig, IVersions } from "../../../types";
 
 export const v2RouterContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -9,7 +9,7 @@ export const v2RouterContractGuardJob: IJob<void> = async (
   // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
-  addresses: { v2RouterAddresses?: string[] } & IProposeTxProperties,
+  addresses: IAddresses,
 ) => {
   if (!addresses.v2RouterAddresses) {
     console.warn("v2RouterAddresses not configured for v2RouterGuardJob: skipping.");

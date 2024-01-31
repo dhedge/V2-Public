@@ -1,7 +1,6 @@
 import { BigNumber } from "ethers";
 import { ovmChainData } from "../../config/chainData/ovmData";
 import { IAddresses, IFileNames } from "../types";
-import { implementationStorageAddress } from "../common/deploymentData";
 
 const { torosPools } = ovmChainData;
 
@@ -19,8 +18,6 @@ export const ovmProdAddresses: IAddresses = {
   gnosisMultiSendAddress: "0x998739BFdAAdde7C933B942a68053933098f9EDa",
   gnosisApi: "https://safe-transaction-optimism.safe.global",
 
-  // Same for everyone
-  implementationStorageAddress,
   synthetixProxyAddress: ovmChainData.assets.snxProxy,
 
   easySwapperConfig: {
@@ -130,6 +127,11 @@ export const ovmProdAddresses: IAddresses = {
         pool: ovmChainData.torosPools.USDpy,
         cap: BigNumber.from(100_000).mul(BigNumber.from(10).pow(18)),
       },
+      // Ethereum Savings Account https://dhedge.org/vault/0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320 $25,000
+      {
+        pool: "0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320",
+        cap: BigNumber.from(25_000).mul(BigNumber.from(10).pow(18)),
+      },
     ],
   },
 
@@ -145,7 +147,7 @@ export const ovmProdAddresses: IAddresses = {
     factoryV2: ovmChainData.velodromeV2.factory,
   },
 
-  v2RouterAddresses: [],
+  v2RouterAddresses: ovmChainData.v2Routers,
 
   arrakisV1: {
     arrakisV1RouterStakingAddress: ovmChainData.arrakis.v1RouterStaking,
@@ -185,6 +187,7 @@ export const ovmProdAddresses: IAddresses = {
       "0x93701ec795d8f8e16772be05142b2994c045e7dc", // DNY4
       "0xa5d8b370578f9e9eeb9cf7b7fad6cd5ab7d99a64", // DNY5
       "0xb9243c495117343981ec9f8aa2abffee54396fc0", // USDpy
+      // "0x9fc311fc8faa6d6b0d3199f25d9976e1e16de998", // Was added for LINK-PERP Contract guard
     ],
   },
   synthRedeemer: ovmChainData.synthetix.synthRedeemer,
@@ -193,10 +196,39 @@ export const ovmProdAddresses: IAddresses = {
 
   synthetixV3: {
     core: ovmChainData.synthetix.v3Core,
-    allowedLPId: 1,
-    snxUSD: ovmChainData.assets.snxUSD,
-    // DNY3 https://app.dhedge.org/vault/0x90fd55a7ef1af647e93ae96a17bcb3b6a2df0e02
-    dHedgeVaultsWhitelist: ["0x90fd55a7ef1af647e93ae96a17bcb3b6a2df0e02"],
+    dHedgeVaultsWhitelist: [
+      {
+        // DNY3 https://app.dhedge.org/vault/0x90fd55a7ef1af647e93ae96a17bcb3b6a2df0e02
+        poolLogic: "0x90fd55a7ef1af647e93ae96a17bcb3b6a2df0e02",
+        collateralAsset: ovmChainData.assets.snxProxy,
+        debtAsset: ovmChainData.assets.snxUSD,
+        snxLiquidityPoolId: 1,
+      },
+    ],
+    allowedMarkets: [],
+    spotMarket: ovmChainData.synthetix.v3SpotMarket,
+    windows: {
+      delegationWindow: {
+        start: {
+          dayOfWeek: 2,
+          hour: 0,
+        },
+        end: {
+          dayOfWeek: 4,
+          hour: 12,
+        },
+      },
+      undelegationWindow: {
+        start: {
+          dayOfWeek: 4,
+          hour: 12,
+        },
+        end: {
+          dayOfWeek: 5,
+          hour: 0,
+        },
+      },
+    },
   },
 
   poolTokenSwapper: {
@@ -238,6 +270,18 @@ export const ovmProdAddresses: IAddresses = {
         sender: "0x665b06ebce43ae67283a37c8c707c44e6611f025", // DNY
         status: true,
       },
+    ],
+  },
+
+  sonneFinance: {
+    comptroller: ovmChainData.sonne.comptroller,
+    dHedgeVaultsWhitelist: [
+      // Sonne Finance Test https://dhedge.org/vault/0x79fbeba8e8d66622f9f6ba7e505efd39dc68eb27
+      "0x79fbeba8e8d66622f9f6ba7e505efd39dc68eb27",
+      // Sonne Finance Test 2 https://dhedge.org/vault/0x4c1a92e9e32c72936c9a40f6de28984f9aebf480
+      "0x4c1a92e9e32c72936c9a40f6de28984f9aebf480",
+      // Sonne Finance Test 3 https://dhedge.org/vault/0x24bf104de70e0cedc14637947e6b780ffc81f7b5
+      "0x24bf104de70e0cedc14637947e6b780ffc81f7b5",
     ],
   },
 };

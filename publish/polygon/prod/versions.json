@@ -2242,12 +2242,22 @@
         {
           "assetName": "MaticX",
           "assetAddress": "0xfa68FB4628DFF1028CFEc22b4162FCcd0d45efb6",
-          "assetType": "4",
+          "assetType": "0",
           "oracleType": "ChainlinkAggregator",
           "specificOracleConfig": {
             "chainlinkOracleAddress": "0x5d37E4b374E6907de8Fc7fb33EE3b0af403C7403"
           },
           "oracleAddress": "0x5d37E4b374E6907de8Fc7fb33EE3b0af403C7403"
+        },
+        {
+          "assetName": "USDC Native",
+          "assetAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
         }
       ],
       "RemovedAssets": [
@@ -2272,9 +2282,9 @@
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0x473D3BDF01eEb67ceb94EcE429Ce3d667fe9bCd0",
+      "PoolLogic": "0xcD28f536D36269e6623bc17f37A28a513683566f",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x5bF8dFbA76Ab712dAb1096f91482CD49887C709d",
+      "PoolManagerLogic": "0xbeD53Cb9e3eDe200b1DAb9a066A516D6fBb5DdA5",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
       "ERC20Guard": "0x5eC7E3c7C802fBe6BBf2f02Ec4f4502ea9E94c41",
@@ -2298,7 +2308,7 @@
       "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
       "EasySwapperGuard": "0x813a65aCc4b61530075B040f1689531966d62910",
-      "DhedgeSuperSwapper": "0x5E2E3c15827d96c7B4857B9ae9BA83b21ecd6178",
+      "DhedgeSuperSwapper": "0x2b9885b6D7f5e168e56cC7D83c06095647b2ea43",
       "UniswapV3AssetGuard": "0x69d0c7939554f69cA5dAfE661Fea0a118703B754",
       "UniswapV3RouterGuard": "0x1729EF9441822F270b35995D359e1cd1dD2a59A9",
       "UniswapV3NonfungiblePositionGuard": "0xe5f359a189698DDe6734edDdF5627A845F00eee4",
@@ -2331,7 +2341,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Mon, 24 Jul 2023 20:45:14 GMT",
+    "lastUpdated": "Mon, 27 Nov 2023 15:51:34 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [

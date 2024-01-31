@@ -161,8 +161,8 @@ export const CreateSynthetixFuturesMarketAssetGuardPricingTests = (
       const balanceTest = (balanceTest: IBalanceTestCase) => {
         const { name, margin, leverage, isShort, manipulatePriceByPercent } = balanceTest;
         it(name, async () => {
-          // We only support leverage up to 2x
-          if (leverage > 2) {
+          // We only support leverage up to 2.5x
+          if (leverage > 2.5) {
             await expect(
               testHelpers.createDelayedOrder({
                 poolLogicProxy,
@@ -173,7 +173,7 @@ export const CreateSynthetixFuturesMarketAssetGuardPricingTests = (
                 isShort,
                 baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
               }),
-            ).to.be.revertedWith("leverage must be less than 2x");
+            ).to.be.revertedWith("leverage must be less than 2.5x");
             return;
           }
 

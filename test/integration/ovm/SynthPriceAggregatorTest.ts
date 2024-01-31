@@ -4,7 +4,7 @@ import { ovmChainData } from "../../../config/chainData/ovmData";
 import { IAggregatorV3Interface, SynthPriceAggregator, USDPriceAggregator } from "../../../types";
 import { utils } from "../utils/utils";
 
-const { price_feeds } = ovmChainData;
+const { usdPriceFeeds } = ovmChainData;
 
 describe("SynthPriceAggregator Test", function () {
   let ethUsdAggregator: IAggregatorV3Interface;
@@ -23,10 +23,10 @@ describe("SynthPriceAggregator Test", function () {
     usdPriceAggregator.deployed();
 
     const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
-    synthPriceAggregator = await SynthPriceAggregator.deploy(usdPriceAggregator.address, price_feeds.eth);
+    synthPriceAggregator = await SynthPriceAggregator.deploy(usdPriceAggregator.address, usdPriceFeeds.eth);
     synthPriceAggregator.deployed();
 
-    ethUsdAggregator = await ethers.getContractAt("IAggregatorV3Interface", price_feeds.eth);
+    ethUsdAggregator = await ethers.getContractAt("IAggregatorV3Interface", usdPriceFeeds.eth);
   });
 
   it("Should be able to get Price", async function () {
@@ -45,7 +45,7 @@ describe("SynthPriceAggregator Test", function () {
     fixedPriceAggregator.deployed();
 
     const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
-    synthPriceAggregator = await SynthPriceAggregator.deploy(fixedPriceAggregator.address, price_feeds.eth);
+    synthPriceAggregator = await SynthPriceAggregator.deploy(fixedPriceAggregator.address, usdPriceFeeds.eth);
     synthPriceAggregator.deployed();
 
     const { answer: ethUsdPrice } = await ethUsdAggregator.latestRoundData();
@@ -66,7 +66,7 @@ describe("SynthPriceAggregator Test", function () {
     fixedPriceAggregator.deployed();
 
     const SynthPriceAggregator = await ethers.getContractFactory("SynthPriceAggregator");
-    synthPriceAggregator = await SynthPriceAggregator.deploy(fixedPriceAggregator.address, price_feeds.eth);
+    synthPriceAggregator = await SynthPriceAggregator.deploy(fixedPriceAggregator.address, usdPriceFeeds.eth);
     synthPriceAggregator.deployed();
 
     const { answer: ethUsdPrice } = await ethUsdAggregator.latestRoundData();

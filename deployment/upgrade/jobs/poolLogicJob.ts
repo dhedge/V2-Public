@@ -1,3 +1,4 @@
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../deploymentHelpers";
 import { IJob, IUpgradeConfig, IProposeTxProperties, IVersions, IFileNames } from "../../types";
@@ -44,16 +45,12 @@ export const poolLogicJob: IJob<void> = async (
       await poolLogicProxy.deployed();
       console.log("PoolLogicProxy deployed at ", poolLogicProxy.address);
 
-      const poolLogicAddressX = await ethers.provider.getStorageAt(
-        poolLogicProxy.address,
-        addresses.implementationStorageAddress,
-      );
-      const poolLogicAddress = ethers.utils.hexValue(poolLogicAddressX);
+      const poolLogicImplementationAddress = await getImplementationAddress(ethers.provider, poolLogicProxy.address);
 
-      await tryVerify(hre, poolLogicAddress, "contracts/PoolLogic.sol:PoolLogic", []);
+      await tryVerify(hre, poolLogicImplementationAddress, "contracts/PoolLogic.sol:PoolLogic", []);
 
       versions[config.newTag].contracts.PoolLogicProxy = poolLogicProxy.address;
-      versions[config.newTag].contracts.PoolLogic = poolLogicAddress;
+      versions[config.newTag].contracts.PoolLogic = poolLogicImplementationAddress;
     }
   }
 };

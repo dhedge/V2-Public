@@ -21,15 +21,19 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
 
-import "../../contractGuards/synthetixV3/SynthetixV3ContractGuard.sol";
 import "../../../interfaces/guards/IMutableBalanceAssetGuard.sol";
 import "../../../interfaces/synthetixV3/ICollateralModule.sol";
 import "../../../interfaces/synthetixV3/ILiquidationModule.sol";
+import "../../../interfaces/synthetixV3/ISynthetixV3ContractGuard.sol";
+import "../../../interfaces/synthetixV3/ISynthetixV3SpotMarketContractGuard.sol";
 import "../../../interfaces/synthetixV3/IVaultModule.sol";
+import "../../../interfaces/synthetixV3/IWrapperModule.sol";
+import "../../../interfaces/IERC20Extended.sol";
 import "../../../interfaces/IPoolLogic.sol";
 import "../../../interfaces/IHasAssetInfo.sol";
 import "../../../interfaces/IHasGuardInfo.sol";
 import "../../../interfaces/IPoolManagerLogic.sol";
+import "../../../utils/synthetixV3/libraries/SynthetixV3Structs.sol";
 import "../ClosedAssetGuard.sol";
 
 contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
@@ -41,9 +45,25 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
     uint256 timestamp;
   }
 
+  struct WithdrawTxsParams {
+    address snxV3Core;
+    uint128 accountId;
+    address collateralType;
+    uint256 withdrawAmount;
+    address to;
+  }
+
+  address public immutable snxSpotMarket;
+
   bool public override isStateMutatingGuard = true;
 
   mapping(address => DebtRecord) public latestDebtRecords;
+
+  constructor(address _snxSpotMarket) {
+    require(_snxSpotMarket != address(0), "invalid snxSpotMarket");
+
+    snxSpotMarket = _snxSpotMarket;
+  }
 
   /// @notice Returns the balance of Synthetix V3 position, accurate balance is not guaranteed
   /// @dev Returns the balance to be priced in USD
@@ -112,19 +132,25 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
       MultiTransaction[] memory transactions
     )
   {
+    WithdrawTxsParams memory params;
+    params.snxV3Core = _asset;
+    params.to = _to;
     // Collecting data to perform withdrawal
-    (uint128 accountId, address collateralType, , ) = _getPoolPositionDetails(_pool, _asset);
+    (params.accountId, params.collateralType, , ) = _getPoolPositionDetails(_pool, _asset);
     uint256 balance = getBalanceMutable(_pool, _asset);
 
     // My thinking this check is needed for the cases when pool enabled Synthetix V3 position, but never interacted with it or has nothing in it
-    if (accountId == 0 || balance == 0) {
+    if (params.accountId == 0 || balance == 0) {
       return (address(0), 0, transactions);
     }
 
     // Getting total amount of collateral token available for withdrawal
-    uint256 availableCollateral = ICollateralModule(_asset).getAccountAvailableCollateral(accountId, collateralType);
+    uint256 availableCollateral = ICollateralModule(_asset).getAccountAvailableCollateral(
+      params.accountId,
+      params.collateralType
+    );
     // Calculating total value of collateral token available for withdrawal using factory oracles for that collateral
-    uint256 availableWithdrawValue = _assetValue(_pool, collateralType, availableCollateral);
+    uint256 availableWithdrawValue = _assetValue(_pool, params.collateralType, availableCollateral);
     // Getting balance of investor's portion in Synthetix V3 position and then calculating its value
     uint256 portionBalance = balance.mul(_withdrawPortion).div(10**18);
     uint256 withdrawValue = _assetValue(_pool, _asset, portionBalance);
@@ -132,24 +158,85 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
     // Guard to prevent division by zero and to check if there is enough available collateral to perform withdrawal
     require(availableWithdrawValue >= withdrawValue && availableWithdrawValue > 0, "not enough available balance");
     // Calculating how much collateral token should be withdrawn to get investor's portion
-    uint256 collateralAmountToWithdraw = availableCollateral.mul(withdrawValue).div(availableWithdrawValue);
+    params.withdrawAmount = availableCollateral.mul(withdrawValue).div(availableWithdrawValue);
 
+    // Get stored market data for collateral type
+    SynthetixV3Structs.AllowedMarket memory allowedMarket = ISynthetixV3SpotMarketContractGuard(
+      IHasGuardInfo(IPoolLogic(_pool).factory()).getContractGuard(snxSpotMarket)
+    ).allowedMarkets(params.collateralType);
+
+    // Checking if unwrapping is required
+    if (allowedMarket.marketId > 0 && allowedMarket.collateralAsset != address(0)) {
+      // If market data for collateral type is stored, then unwrapping is required
+      transactions = _prepareTransactions(params, allowedMarket);
+    } else {
+      // Otherwise get the transactions for withdrawing without unwrapping
+      transactions = _prepareTransactions(params);
+    }
+
+    return (address(0), 0, transactions);
+  }
+
+  /// @notice Creates transactions for withdrawing when unwrapping IS required
+  /// @param _params WithdrawTxsParams struct
+  /// @param _allowedMarket AllowedMarket struct
+  /// @return transactions Transactions to be executed
+  function _prepareTransactions(
+    WithdrawTxsParams memory _params,
+    SynthetixV3Structs.AllowedMarket memory _allowedMarket
+  ) internal view returns (MultiTransaction[] memory transactions) {
+    transactions = new MultiTransaction[](3);
+
+    // Withdrawing collateral token from Synthetix V3 position to the pool
+    transactions[0].to = _params.snxV3Core;
+    transactions[0].txData = abi.encodeWithSelector(
+      ICollateralModule.withdraw.selector,
+      _params.accountId,
+      _params.collateralType,
+      _params.withdrawAmount
+    );
+
+    // Converting amount to be received after unwrapping to match asset decimals
+    uint256 minAmountReceived = _params.withdrawAmount.div(
+      10**(18 - IERC20Extended(_allowedMarket.collateralAsset).decimals())
+    );
+
+    // Unwrapping collateral token
+    transactions[1].to = snxSpotMarket;
+    transactions[1].txData = abi.encodeWithSelector(
+      IWrapperModule.unwrap.selector,
+      _allowedMarket.marketId,
+      _params.withdrawAmount,
+      minAmountReceived
+    );
+
+    // Transferring unwrapped collateral token from the pool to the investor
+    transactions[2].to = _allowedMarket.collateralAsset;
+    transactions[2].txData = abi.encodeWithSelector(IERC20.transfer.selector, _params.to, minAmountReceived);
+  }
+
+  /// @notice Creates transactions for withdrawing when unwrapping IS NOT required
+  /// @param _params WithdrawTxsParams struct
+  /// @return transactions Transactions to be executed
+  function _prepareTransactions(WithdrawTxsParams memory _params)
+    internal
+    pure
+    returns (MultiTransaction[] memory transactions)
+  {
     transactions = new MultiTransaction[](2);
 
     // Withdrawing collateral token from Synthetix V3 position to the pool
-    transactions[0].to = _asset;
+    transactions[0].to = _params.snxV3Core;
     transactions[0].txData = abi.encodeWithSelector(
       ICollateralModule.withdraw.selector,
-      accountId,
-      collateralType,
-      collateralAmountToWithdraw
+      _params.accountId,
+      _params.collateralType,
+      _params.withdrawAmount
     );
 
     // Transferring collateral token from the pool to the investor
-    transactions[1].to = collateralType;
-    transactions[1].txData = abi.encodeWithSelector(IERC20.transfer.selector, _to, collateralAmountToWithdraw);
-
-    return (address(0), 0, transactions);
+    transactions[1].to = _params.collateralType;
+    transactions[1].txData = abi.encodeWithSelector(IERC20.transfer.selector, _params.to, _params.withdrawAmount);
   }
 
   /// @dev Helper function to calculate value of the asset using factory oracles
@@ -189,13 +276,14 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
       address debtAsset
     )
   {
-    SynthetixV3ContractGuard contractGuard = SynthetixV3ContractGuard(
+    ISynthetixV3ContractGuard contractGuard = ISynthetixV3ContractGuard(
       IHasGuardInfo(IPoolLogic(_pool).factory()).getContractGuard(_synthetixV3Core)
     );
     accountId = contractGuard.getAccountNftTokenId(_pool, _synthetixV3Core);
-    collateralType = contractGuard.collateral();
-    poolId = contractGuard.allowedLiquidityPoolId();
-    debtAsset = contractGuard.debtAsset();
+    SynthetixV3Structs.VaultSetting memory vaultSetting = contractGuard.dHedgeVaultsWhitelist(_pool);
+    collateralType = vaultSetting.collateralAsset;
+    poolId = vaultSetting.snxLiquidityPoolId;
+    debtAsset = vaultSetting.debtAsset;
   }
 
   /// @dev Helper function to calculate balance of the Synthetix V3 position
@@ -235,7 +323,7 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
 
     if (_debt < 0) {
       // Negative debt means credit. With this in mind, we calculate debt value in USD and add it to assigned collateral value
-      balance = balance.add(assignedCollateralValue.add(_assetValue(_pool, _debtAsset, -_debt.toUint256())));
+      balance = balance.add(assignedCollateralValue.add(_assetValue(_pool, _debtAsset, (-_debt).toUint256())));
     } else {
       // When debt is zero or positive, we calculate position's USD balance by subtracting value of the debt from value of the collateral
       // Debt's value which is bigger than collateral value would mean that position can be liquidated

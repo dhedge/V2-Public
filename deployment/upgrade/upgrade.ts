@@ -79,31 +79,36 @@ import { synthetixV3ContractGuardJob } from "./jobs/contractGuards/synthetixV3Co
 import { synthetixV3AssetGuardJob } from "./jobs/assetGuards/synthetixV3AssetGuardJob";
 import { poolTokenSwapperJob } from "./jobs/poolTokenSwapperJob";
 import { poolTokenSwapperGuardJob } from "./jobs/contractGuards/poolTokenSwapperGuardJob";
+import { ramsesLPAssetGuardJob } from "./jobs/assetGuards/ramsesLPAssetGuardJob";
+import { ramsesRouterGuardJob } from "./jobs/contractGuards/ramsesRouterGuardJob";
+import { ramsesXRamGuardJob } from "./jobs/contractGuards/ramsesXRamGuardJob";
+import { ramsesUniV2RouterJob } from "./jobs/swapper/ramsesUniV2RouterJob";
+import { synthetixV3SpotMarketContractGuardJob } from "./jobs/contractGuards/synthetixV3SpotMarketContractGuardJob";
+import { sonneFinanceComptrollerContractGuardJob } from "./jobs/contractGuards/sonneFinanceComptrollerContractGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
-  // External
+  // Swappers related
   velouniv2router: veloUniV2RouterJob,
   velov2univ2router: veloV2UniV2RouterJob,
   univ3v2router: uniV3V2RouterJob,
+  ramsesuniv2router: ramsesUniV2RouterJob,
   superswapper: superSwapperJob,
   easyswapper: easySwapperJob,
   easyswapperconfiguration: easySwapperConfigurationJob,
+
+  // External
   rewarddistribution: rewardDistributionJob,
-  pooltokenswapper: poolTokenSwapperJob,
+  slippageaccumulator: slippageAccumulatorJob,
 
   pause: pauseJob,
 
   // Upgradable
-  assets: assetsJob,
-  removeassets: removeAssetsJob,
   assethandler: assetHandlerJob,
   poolfactory: poolFactoryJob,
   poollogic: poolLogicJob,
   poolmanagerlogic: poolManagerLogicJob,
   nfttracker: nftTrackerJob,
-
-  // Slippage Accumulator
-  slippageaccumulator: slippageAccumulatorJob,
+  pooltokenswapper: poolTokenSwapperJob,
 
   // Dhedge Staking V2
   dhedgestakingv2nftjson: dhedgeStakingV2NFTJSONJob,
@@ -131,6 +136,7 @@ const jobs: { [key: string]: IJob<void> } = {
   synthetixperpsv2marketassetguard: synthetixPerpsV2MarketAssetGuardJob,
   velodromev2lpassetguard: velodromeV2LPAssetGuardJob,
   synthetixv3assetguard: synthetixV3AssetGuardJob,
+  ramseslpassetguard: ramsesLPAssetGuardJob,
 
   // Contract Guards
   closedcontractguard: closedContractGuardJob,
@@ -166,11 +172,17 @@ const jobs: { [key: string]: IJob<void> } = {
   velodromev2routerguard: velodromeV2RouterGuardJob,
   synthetixv3contractguard: synthetixV3ContractGuardJob,
   pooltokenswapperguard: poolTokenSwapperGuardJob,
+  ramsesrouterguard: ramsesRouterGuardJob,
+  ramsesxramguard: ramsesXRamGuardJob,
+  synthetixv3spotmarketcontractguard: synthetixV3SpotMarketContractGuardJob,
+  sonnecomptrollerguard: sonneFinanceComptrollerContractGuardJob,
 
   // Other Weird Guards
   openassetguard: openAssetContractGuardJob,
 
   // Governance
+  assets: assetsJob,
+  removeassets: removeAssetsJob,
   governancenames: governanceNamesJob,
   deprecatecontractguards: deprecateContractGuardsJob,
 

@@ -49,14 +49,29 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     }
   }
 
-  function getRouteHint(address[] memory path) internal view returns (address intermediary) {
+  /// @dev If there is an intermediary swap asset configured, and it's not the asset to swap to, we use it by default. otherwise we use the direct swap
+  /// @param path The path to swap
+  /// @return intermediary The intermediary asset to swap through
+  /// @return enhancedPath The path to swap with
+  function getRouteHint(address[] memory path)
+    internal
+    view
+    returns (address intermediary, address[] memory enhancedPath)
+  {
+    enhancedPath = path;
     if (path.length == 2) {
       intermediary = routeHints[path[0]];
       if (intermediary == address(0)) {
         intermediary = routeHints[path[1]];
       }
       if (path[0] == intermediary || path[1] == intermediary) {
-        intermediary == address(0);
+        intermediary = address(0);
+      }
+      if (intermediary != address(0)) {
+        enhancedPath = new address[](3);
+        enhancedPath[0] = path[0];
+        enhancedPath[1] = intermediary;
+        enhancedPath[2] = path[1];
       }
     }
   }
@@ -70,44 +85,33 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     address to,
     uint256 deadline
   ) external override returns (uint256[] memory amounts) {
-    IUniswapV2Router router;
-    uint256 uniV2BestAmountOut;
-
     // When we call swapExactTokensForTokens from the aaveLendingAssetGuard we only know how much of the collateralAsset we have
     // We don't know the expected amount out.
     // So we pass in amountOutMin = 0, the amountOutMin == 0 is hack so that we can leave that code unchanged
-    address intermediary = getRouteHint(path);
-    // If there is an intermediary swap asset configured, and it's not the asset to swap to, we use it by default
-    if (intermediary != address(0) && path[0] != intermediary && path[1] != intermediary) {
-      address[] memory path2 = new address[](3);
-      path2[0] = path[0];
-      path2[1] = intermediary;
-      path2[2] = path[1];
-      (router, uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, path2);
-      path = path2;
+    (address intermediary, address[] memory enhancedPath) = getRouteHint(path);
+
+    if (intermediary != address(0)) {
       emit Interpolate(intermediary);
-    } else {
-      // If there is no intermediary asset, we use the direct swap
-      (router, uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, path);
     }
 
-    IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
+    (IUniswapV2Router router, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, enhancedPath);
 
     // use Uni v2 router
-    if (path.length == 3) {
+    if (enhancedPath.length == 3) {
       require(
-        uniV2BestAmountOut > 0 && uniV2BestAmountOut > amountOutMin,
-        encodeError("SwapRouter: invalid routing 011", path[0], path[2])
+        uniV2BestAmountOut > 0 && uniV2BestAmountOut >= amountOutMin,
+        encodeError("SwapRouter: invalid routing 011", enhancedPath[0], enhancedPath[2])
       ); // invalid routing with Uni v2 swapExactTokensForTokens with intermediate
     } else {
       require(
-        uniV2BestAmountOut > 0 && uniV2BestAmountOut > amountOutMin,
-        encodeError("SwapRouter: invalid routing 012", path[0], path[1])
+        uniV2BestAmountOut > 0 && uniV2BestAmountOut >= amountOutMin,
+        encodeError("SwapRouter: invalid routing 012", enhancedPath[0], enhancedPath[1])
       ); // invalid routing with Uni v2 swapExactTokensForTokens (no intermediate)
     }
 
-    IERC20(path[0]).approve(address(router), amountIn);
-    amounts = router.swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline);
+    IERC20(enhancedPath[0]).transferFrom(msg.sender, address(this), amountIn);
+    IERC20(enhancedPath[0]).approve(address(router), amountIn);
+    amounts = router.swapExactTokensForTokens(amountIn, amountOutMin, enhancedPath, to, deadline);
     emit Swap(address(router));
   }
 
@@ -118,42 +122,31 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     address to,
     uint256 deadline
   ) external override returns (uint256[] memory amounts) {
-    IUniswapV2Router router;
-    uint256 uniBestAmountIn;
-
     // When we call swapTokensForExactTokens from the aaveLendingAssetGuard we don't know the amount of weth we have
     // So we pass in amountInMax = uint256(-1), the amountInMax == uint256(-1) is hack so that we can leave that code unchanged
-    address intermediary = getRouteHint(path);
-    // If there is an intermediary swap asset configured, we use it by default
-    if (intermediary != address(0) && path[0] != intermediary && path[1] != intermediary) {
-      address[] memory path2 = new address[](3);
-      path2[0] = path[0];
-      path2[1] = intermediary;
-      path2[2] = path[1];
-      (router, uniBestAmountIn) = getBestAmountInUniV2Router(expectedAmountOut, path2);
+    (address intermediary, address[] memory enhancedPath) = getRouteHint(path);
 
-      path = path2;
+    if (intermediary != address(0)) {
       emit Interpolate(intermediary);
-    } else {
-      // If there is no intermediary asset, we use the direct swap
-      (router, uniBestAmountIn) = getBestAmountInUniV2Router(expectedAmountOut, path);
     }
 
-    if (path.length == 3) {
+    (IUniswapV2Router router, uint256 uniBestAmountIn) = getBestAmountInUniV2Router(expectedAmountOut, enhancedPath);
+
+    if (enhancedPath.length == 3) {
       require(
-        uniBestAmountIn > 0 && uniBestAmountIn < uint256(-1) && uniBestAmountIn < amountInMax,
-        encodeError("SwapRouter: invalid routing 021", path[0], path[2])
+        uniBestAmountIn > 0 && uniBestAmountIn < uint256(-1) && uniBestAmountIn <= amountInMax,
+        encodeError("SwapRouter: invalid routing 021", enhancedPath[0], enhancedPath[2])
       ); // invalid routing with Uni v2 swapTokensForExactTokens with intermediate
     } else {
       require(
-        uniBestAmountIn > 0 && uniBestAmountIn < uint256(-1) && uniBestAmountIn < amountInMax,
-        encodeError("SwapRouter: invalid routing 022", path[0], path[1])
+        uniBestAmountIn > 0 && uniBestAmountIn < uint256(-1) && uniBestAmountIn <= amountInMax,
+        encodeError("SwapRouter: invalid routing 022", enhancedPath[0], enhancedPath[1])
       ); // invalid routing with Uni v2 swapTokensForExactTokens (no intermediate)
     }
 
-    IERC20(path[0]).transferFrom(msg.sender, address(this), uniBestAmountIn);
-    IERC20(path[0]).approve(address(router), uniBestAmountIn);
-    amounts = router.swapTokensForExactTokens(expectedAmountOut, amountInMax, path, to, deadline);
+    IERC20(enhancedPath[0]).transferFrom(msg.sender, address(this), uniBestAmountIn);
+    IERC20(enhancedPath[0]).approve(address(router), uniBestAmountIn);
+    amounts = router.swapTokensForExactTokens(expectedAmountOut, amountInMax, enhancedPath, to, deadline);
     emit Swap(address(router));
   }
 
@@ -165,7 +158,8 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     override
     returns (uint256[] memory amounts)
   {
-    (, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, path);
+    (, address[] memory enhancedPath) = getRouteHint(path);
+    (, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, enhancedPath);
     amounts = new uint256[](path.length);
     amounts[path.length - 1] = uniV2BestAmountOut;
   }

@@ -8,7 +8,8 @@ import { getAccountToken } from "../utils/getAccountTokens";
 import { polygonChainData } from "../../../config/chainData/polygonData";
 import { utils } from "../utils/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-const { assets, assetsBalanceOfSlot, quickswap, sushi } = polygonChainData;
+
+const { assets, assetsBalanceOfSlot, quickswap, sushi, routeHints } = polygonChainData;
 
 describe("DhedgeSuperSwapper", () => {
   let logicOwner: SignerWithAddress;
@@ -16,10 +17,6 @@ describe("DhedgeSuperSwapper", () => {
   let USDC: IERC20, DAI: IERC20, WETH: IERC20, AGEUR: IERC20;
   let SwapRouter: DhedgeSuperSwapper__factory;
   let univ3v2Router: DhedgeUniV3V2Router;
-  const hints = [
-    { asset: assets.agEur, intermediary: assets.usdc },
-    { asset: assets.balancer, intermediary: assets.weth },
-  ];
 
   before(async () => {
     [logicOwner] = await ethers.getSigners();
@@ -42,7 +39,7 @@ describe("DhedgeSuperSwapper", () => {
 
   describe("swapExactTokensForTokens", () => {
     it("adds usdc multihop", async () => {
-      const swapRouter: DhedgeSuperSwapper = await SwapRouter.deploy([univ3v2Router.address], hints);
+      const swapRouter: DhedgeSuperSwapper = await SwapRouter.deploy([univ3v2Router.address], routeHints);
       await swapRouter.deployed();
 
       const wethAmount = units(1);
@@ -141,7 +138,7 @@ describe("DhedgeSuperSwapper", () => {
   // Note: Curve is not used for swapTokensForExactTokens
   describe("swapTokensForExactTokens", () => {
     it("adds usdc multihop", async () => {
-      const swapRouter: DhedgeSuperSwapper = await SwapRouter.deploy([univ3v2Router.address], hints);
+      const swapRouter: DhedgeSuperSwapper = await SwapRouter.deploy([univ3v2Router.address], routeHints);
       await swapRouter.deployed();
 
       const wethAmount = units(1);
@@ -192,6 +189,41 @@ describe("DhedgeSuperSwapper", () => {
         Math.floor(Date.now() / 1000 + 100000000),
       );
       expect((await DAI.balanceOf(receiver)).gt(0)).to.be.true;
+    });
+  });
+
+  // Note: getAmountsOut is a method used by EasySwapper to quote the amount of tokens that will be received during deposit
+  describe("getAmountsOut", () => {
+    it("ensures that quote amount matches actual swap amount when multihop is used", async () => {
+      const swapRouter = await SwapRouter.deploy([univ3v2Router.address], routeHints);
+      await swapRouter.deployed();
+
+      const wethAmount = units(1);
+      await getAccountToken(wethAmount, logicOwner.address, assets.weth, assetsBalanceOfSlot.weth);
+      await WETH.approve(swapRouter.address, wethAmount);
+
+      const path = [assets.weth, assets.agEur];
+      const quote = await swapRouter.getAmountsOut(wethAmount, path);
+      await swapRouter.swapExactTokensForTokens(wethAmount, 0, path, logicOwner.address, ethers.constants.MaxUint256);
+
+      const agEurBalance = await AGEUR.balanceOf(logicOwner.address);
+      expect(agEurBalance).to.equal(quote[quote.length - 1]);
+    });
+
+    it("ensures that quote amount matches actual swap amount when multihop is NOT used", async () => {
+      const swapRouter = await SwapRouter.deploy([univ3v2Router.address], routeHints);
+      await swapRouter.deployed();
+
+      const usdcAmount = units(1000, 6);
+      await getAccountToken(usdcAmount, logicOwner.address, assets.usdc, assetsBalanceOfSlot.usdc);
+      await USDC.approve(swapRouter.address, usdcAmount);
+
+      const path = [assets.usdc, assets.weth];
+      const quote = await swapRouter.getAmountsOut(usdcAmount, path);
+      await swapRouter.swapExactTokensForTokens(usdcAmount, 0, path, logicOwner.address, ethers.constants.MaxUint256);
+
+      const wethBalance = await WETH.balanceOf(logicOwner.address);
+      expect(wethBalance).to.equal(quote[quote.length - 1]);
     });
   });
 });

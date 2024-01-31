@@ -1,3 +1,4 @@
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
@@ -26,9 +27,9 @@ export const easySwapperJob: IJob<void> = async (
     } else {
       // first time deploy
       console.log("Deploying new EasySwapper");
-      const { proxy, implementation } = await deployEasySwapper(hre, config, versions, addresses);
+      const { proxy, implementationAddress } = await deployEasySwapper(hre, config, versions, addresses);
       versions[latestVersion].contracts.DhedgeEasySwapperProxy = proxy.address;
-      versions[latestVersion].contracts.DhedgeEasySwapper = implementation.address;
+      versions[latestVersion].contracts.DhedgeEasySwapper = implementationAddress;
       console.log("DhedgeEasySwapper deployed to: ", proxy.address);
     }
   }
@@ -72,21 +73,18 @@ const deployEasySwapper = async (
     nativeAssetWrapper: addresses.assets.nativeAssetWrapper,
   });
 
-  const implementationAddress = ethers.utils.hexValue(
-    await provider.getStorageAt(proxy.address, addresses.implementationStorageAddress),
-  );
-  const implementation = Contract.attach(implementationAddress);
+  const implementationAddress = await getImplementationAddress(provider, proxy.address);
 
   // Verify implementation
   await tryVerify(
     hre,
-    implementation.address,
+    implementationAddress,
     "contracts/swappers/easySwapper/DhedgeEasySwapper.sol:DhedgeEasySwapper",
     [],
   );
 
   console.log("easySwapperProxy deployed to:", proxy.address);
-  console.log("easySwapper implementation:", implementation.address);
+  console.log("easySwapper implementation:", implementationAddress);
 
   console.log("EasySwapper Setting Allowed Pools");
   for (const pool of addresses.easySwapperConfig.customLockupAllowedPools) {
@@ -121,7 +119,7 @@ const deployEasySwapper = async (
     console.log("Deployed successfully, but unable to propose whitelist tx");
   }
 
-  return { proxy, implementation };
+  return { proxy, implementationAddress };
 };
 
 const upgradeEasySwapper = async (

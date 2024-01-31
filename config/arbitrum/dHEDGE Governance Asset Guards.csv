@@ -5,3 +5,4 @@ assetType,guardName,guardAddress,description
 10,BalancerV2GaugeAssetGuard,0x08Dfe9B8017AB3fde66a6A43A154ccC6f07B107B,Balancer Staking Gauge Asset
 0,ERC20Guard,0xa3072C67711cE0FCC222a8824fad345c725D62Ef,ERC20 tokens
 6,ERC20Guard,0xa3072C67711cE0FCC222a8824fad345c725D62Ef,ERC20 tokens
+20,RamsesLPAssetGuard,0x7628433e0FAcc77342161541dc0466e1e0C7C90D,Ramses LP + Gauge Positions

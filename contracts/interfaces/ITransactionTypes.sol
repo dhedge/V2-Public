@@ -23,8 +23,10 @@ interface ITransactionTypes {
   // Transaction Types in execTransaction()
   // 1. Approve: Approving a token for spending by different address/contract
   // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
-  // 3. AddLiquidity: Add liquidity of Uniswap, Sushiswap
-  // 4. RemoveLiquidity: Remove liquidity of Uniswap, Sushiswap
+  // 3. AddLiquidity: Add liquidity
+  event AddLiquidity(address poolLogic, address pair, bytes params, uint256 time);
+  // 4. RemoveLiquidity: Remove liquidity
+  event RemoveLiquidity(address poolLogic, address pair, bytes params, uint256 time);
   // 5. Stake: Stake tokens into a third party contract (eg. Sushi yield farming)
   event Stake(address poolLogic, address stakingToken, address to, uint256 amount, uint256 time);
   // 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
@@ -57,8 +59,30 @@ interface ITransactionTypes {
   event AddLiquiditySingle(address fundAddress, address asset, address liquidityPool, uint256 amount, uint256 time);
   // 31. RemoveLiquidity: Single asset remove liquidity (eg. Stargate)
   event RemoveLiquiditySingle(address fundAddress, address asset, address liquidityPool, uint256 amount, uint256 time);
-  // 36. Redeem Deprecated Synths into sUSD
+  // 32. Redeem Deprecated Synths into sUSD
   event SynthRedeem(address poolAddress, IERC20[] synthProxies);
+  // 33. Synthetix V3 transactions
+  event SynthetixV3Event(address poolLogic, uint256 txType);
+  // 34. Sonne: Mint
+  event SonneMintEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
+  // 35. Sonne: Redeem
+  event SonneRedeemEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
+  // 36. Sonne: Redeem Underlying
+  event SonneRedeemUnderlyingEvent(
+    address indexed fundAddress,
+    address asset,
+    address cToken,
+    uint256 amount,
+    uint256 time
+  );
+  // 37. Sonne: Borrow
+  event SonneBorrowEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
+  // 38. Sonne: Repay
+  event SonneRepayEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
+  // 39. Sonne: Comptroller Enter Markets
+  event SonneEnterMarkets(address indexed poolLogic, address[] cTokens, uint256 time);
+  // 40. Sonne: Comptroller Exit Market
+  event SonneExitMarket(address indexed poolLogic, address cToken, uint256 time);
 
   // Enum representing Transaction Types
   enum TransactionType {
@@ -105,6 +129,20 @@ interface ITransactionTypes {
     SynthetixV3DelegateCollateral, // 40
     SynthetixV3MintUSD, // 41
     SynthetixV3BurnUSD, // 42
-    SynthetixV3Multicall // 43
+    SynthetixV3Multicall, // 43
+    XRamCreateVest, // 44
+    XRamExitVest, // 45
+    SynthetixV3Wrap, // 46
+    SynthetixV3Unwrap, // 47
+    SynthetixV3BuySynth, // 48
+    SynthetixV3SellSynth, // 49
+    SonneMint, // 50
+    SonneRedeem, // 51
+    SonneRedeemUnderlying, // 52
+    SonneBorrow, // 53
+    SonneRepay, // 54
+    SonneComptrollerEnterMarkets, // 55
+    SonneComptrollerExitMarket, // 56
+    SynthetixV3UndelegateCollateral // 57
   }
 }

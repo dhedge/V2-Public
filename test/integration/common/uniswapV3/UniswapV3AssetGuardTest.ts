@@ -433,7 +433,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
         await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
         const tokenPriceAfter = await poolLogicProxy.tokenPrice();
-        const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueBeforeWithdraw = await poolManagerLogicProxy.totalFundValue();
 
         // Assert
         expect(totalFundValueBeforeWithdraw).to.gt(0);
@@ -446,7 +446,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
 
         // Assert that all pool value is withdrawn
-        const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueAfterWithdraw = await poolManagerLogicProxy.totalFundValue();
         expect(totalFundValueAfterWithdraw).to.equal(0);
       });
 
@@ -478,7 +478,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
         await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
         const tokenPriceAfter = await poolLogicProxy.tokenPrice();
-        const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueBeforeWithdraw = await poolManagerLogicProxy.totalFundValue();
 
         // Assert
         expect(totalFundValueBeforeWithdraw).to.gt(0);
@@ -491,7 +491,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
 
         // Assert that all pool value is withdrawn
-        const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueAfterWithdraw = await poolManagerLogicProxy.totalFundValue();
         expect(totalFundValueAfterWithdraw).to.equal(0);
       });
 
@@ -522,7 +522,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
         await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
         const tokenPriceAfter = await poolLogicProxy.tokenPrice();
-        const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueBeforeWithdraw = await poolManagerLogicProxy.totalFundValue();
 
         // Assert
         expect(totalFundValueBeforeWithdraw).to.gt(0);
@@ -535,7 +535,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
 
         // Assert that all pool value is withdrawn
-        const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueAfterWithdraw = await poolManagerLogicProxy.totalFundValue();
         expect(totalFundValueAfterWithdraw).eq(0); // there are no manager fees minted (performance fee set to 0)
       });
 
@@ -566,7 +566,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(user.address, 0);
         await nonfungiblePositionManager.connect(user).transferFrom(user.address, poolLogicProxy.address, tokenId);
         const tokenPriceAfter = await poolLogicProxy.tokenPrice();
-        const totalFundValueBeforeWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueBeforeWithdraw = await poolManagerLogicProxy.totalFundValue();
 
         // Assert
         expect(totalFundValueBeforeWithdraw).to.gt(0);
@@ -579,7 +579,7 @@ export const uniswapV3AssetGuardTest = (params: IUniswapV3AssetGuardTestParamete
         await poolLogicProxy.withdraw(await poolLogicProxy.balanceOf(logicOwner.address));
 
         // Assert that all pool value is withdrawn
-        const totalFundValueAfterWithdraw = (await poolLogicProxy.availableManagerFeeAndTotalFundValue()).fundValue;
+        const totalFundValueAfterWithdraw = await poolManagerLogicProxy.totalFundValue();
         expect(totalFundValueAfterWithdraw).eq(0); // there are no manager fees minted (performance fee set to 0)
       });
     });

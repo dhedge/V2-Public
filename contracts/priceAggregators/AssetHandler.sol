@@ -15,6 +15,7 @@
 // 15 = Velodrome LP/Gauge Asset
 // 16 = Stargate LP/Staking Asset
 // 17 = Mai Vault Asset
+// 20 = Ramses LP/Gauge Asset
 // 25 = Velodrome V2 LP/Gauge Asset
 // 100 = Lyra OptionMarketWrapper Asset
 // 101 = Synthetix Futures Perps v1
@@ -35,8 +36,6 @@ import "../interfaces/IAssetHandler.sol";
 /**
  * @title dHEDGE Asset Price Feeds
  * @dev Returns Chainlink USD price feed with 18 decimals
- * Asset types:
- * 0 = Chainlink direct USD price feed with 8 decimals
  */
 contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   using SafeMathUpgradeable for uint256;

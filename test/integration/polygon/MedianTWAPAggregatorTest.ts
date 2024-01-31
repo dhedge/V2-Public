@@ -7,7 +7,7 @@ import { getAccountToken } from "../utils/getAccountTokens";
 import { utils } from "../utils/utils";
 
 import { polygonChainData } from "../../../config/chainData/polygonData";
-const { sushi, assets, assetsBalanceOfSlot, price_feeds } = polygonChainData;
+const { sushi, assets, assetsBalanceOfSlot, usdPriceFeeds } = polygonChainData;
 
 describe("Median TWAP Oracle Test", function () {
   let logicOwner: SignerWithAddress, other: SignerWithAddress;
@@ -26,7 +26,7 @@ describe("Median TWAP Oracle Test", function () {
     dhedgeMedianTwapAggregator = await MedianTWAPAggregator.deploy(
       sushi.pools.weth_dht.address,
       assets.dht,
-      price_feeds.eth,
+      usdPriceFeeds.eth,
       1000,
       25,
     );
@@ -110,7 +110,7 @@ describe("Median TWAP Oracle Test", function () {
     const wethMedianTwapAggregator = await MedianTWAPAggregator.deploy(
       sushi.pools.usdc_weth.address,
       assets.weth,
-      price_feeds.usdc,
+      usdPriceFeeds.usdc,
       1000,
       25,
     );
@@ -135,7 +135,7 @@ describe("Median TWAP Oracle Test", function () {
     const usdcMedianTwapAggregator = await MedianTWAPAggregator.deploy(
       sushi.pools.usdc_weth.address,
       assets.usdc,
-      price_feeds.eth,
+      usdPriceFeeds.eth,
       1000,
       25,
     );

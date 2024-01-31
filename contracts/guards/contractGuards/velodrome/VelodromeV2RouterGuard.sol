@@ -11,10 +11,6 @@ import "../../../interfaces/IHasSupportedAsset.sol";
 import "../../../interfaces/ITransactionTypes.sol";
 
 contract VelodromeV2RouterGuard is TxDataUtils, IGuard, ITransactionTypes {
-  event AddLiquidity(address fundAddress, address pair, bytes params, uint256 time);
-
-  event RemoveLiquidity(address fundAddress, address pair, bytes params, uint256 time);
-
   /// @notice Transaction guard for Velodrome V2 Router
   /// @dev It supports addLiquidity and removeLiquidity functionalities
   /// @param _poolManagerLogic the pool manager logic

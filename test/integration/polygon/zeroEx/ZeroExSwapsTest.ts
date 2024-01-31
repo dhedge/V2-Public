@@ -9,10 +9,10 @@ launchZeroExSwapsTests({
     dai: polygonChainData.assets.dai,
   },
   usdPriceFeeds: {
-    eth: polygonChainData.price_feeds.eth,
-    usdc: polygonChainData.price_feeds.usdc,
-    usdt: polygonChainData.price_feeds.usdt,
-    dai: polygonChainData.price_feeds.dai,
+    eth: polygonChainData.usdPriceFeeds.eth,
+    usdc: polygonChainData.usdPriceFeeds.usdc,
+    usdt: polygonChainData.usdPriceFeeds.usdt,
+    dai: polygonChainData.usdPriceFeeds.dai,
   },
   assetsBalanceOfSlot: {
     usdc: polygonChainData.assetsBalanceOfSlot.usdc,

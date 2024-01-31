@@ -51,7 +51,7 @@ export const deployLyraAndConfigureMarket = async (
     throw new Error("No agg for quoteAsset");
   }
   await assetHandler.addAssets([
-    assetSetting(lyraConfig.optionMarketWrapper, 100, ovmChainData.price_feeds.susd),
+    assetSetting(lyraConfig.optionMarketWrapper, 100, ovmChainData.usdPriceFeeds.susd),
     assetSetting(baseAsset, 1, baseAssetAgg),
     assetSetting(quoteAsset, 1, quoteAssetAgg),
   ]);
@@ -102,9 +102,9 @@ export const deployLyraTestSystem = async (
   const ethMockAggregator = await MockAggregatorV2V3.deploy();
 
   await assetHandler.addAssets([
-    { asset: testSystem.optionMarketWrapper.address, assetType: 100, aggregator: chainData.price_feeds.susd },
+    { asset: testSystem.optionMarketWrapper.address, assetType: 100, aggregator: chainData.usdPriceFeeds.susd },
     { asset: testSystem.snx.baseAsset.address, assetType: 1, aggregator: ethMockAggregator.address },
-    { asset: testSystem.snx.quoteAsset.address, assetType: 1, aggregator: chainData.price_feeds.susd },
+    { asset: testSystem.snx.quoteAsset.address, assetType: 1, aggregator: chainData.usdPriceFeeds.susd },
   ]);
 
   const LyraOptionMarketWrapperContractGuardRollups = await ethers.getContractFactory(

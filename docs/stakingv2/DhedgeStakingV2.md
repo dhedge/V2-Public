@@ -2,7 +2,6 @@
 
 # Functions:
 - [`initialize(address _dhtAddress)`](#DhedgeStakingV2-initialize-address-)
-- [`implInitializer()`](#DhedgeStakingV2-implInitializer--)
 - [`newStake(uint256 dhtAmount)`](#DhedgeStakingV2-newStake-uint256-)
 - [`addDhtToStake(uint256 tokenId, uint256 dhtAmount)`](#DhedgeStakingV2-addDhtToStake-uint256-uint256-)
 - [`unstakeDHT(uint256 tokenId, uint256 dhtAmount)`](#DhedgeStakingV2-unstakeDHT-uint256-uint256-)
@@ -32,14 +31,6 @@
 
 # Function `initialize(address _dhtAddress)` {#DhedgeStakingV2-initialize-address-}
 No description
-
-
-
-
-# Function `implInitializer()` {#DhedgeStakingV2-implInitializer--}
-implementations should not be left unintialized
-
-
 
 
 

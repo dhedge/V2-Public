@@ -20,9 +20,10 @@ export enum AssetType {
   "Balancer V2 Gauge Asset" = 10,
   "Synthetix + LendingEnabled" = 14,
   "Velodrome LP/Gauge Asset" = 15,
-  "Velodrome V2 LP/Gauge Asset" = 25,
   "Stargate Lp" = 16,
   "Mai Vault Asset" = 17,
+  "Ramses LP/Gauge Asset" = 20,
+  "Velodrome V2 LP/Gauge Asset" = 25,
   "Lyra OptionMarketWrapper Asset" = 100,
   "Synthetix Futures Market Asset" = 101,
   "Synthetix PerpsV2 Market Asset" = 102,
@@ -94,16 +95,17 @@ export const assetsJob: IJob<void> = async (
 
     // Some assets like ones with reward gauges require a contractGuard
     if (!foundInVersions || contractGuardConfigChanged) {
-      console.log("Will Deploy Contract Guard for:", jsonAsset);
       const contractGuardName = jsonAsset.specificContractGuardConfig?.contractGuard;
       const extraContractGuardName = jsonAsset.specificContractGuardConfig?.extraContractGuard;
       if (!config.execute) {
         continue;
       }
       if (contractGuardName) {
+        console.log("Will Deploy Contract Guard for:", jsonAsset);
         await configureContractGuard(config, hre, versions, filenames, addresses, jsonAsset, contractGuardName);
       }
       if (extraContractGuardName) {
+        console.log("Will Deploy Extra Contract Guard for:", jsonAsset);
         await configureContractGuard(config, hre, versions, filenames, addresses, jsonAsset, extraContractGuardName);
       }
     }

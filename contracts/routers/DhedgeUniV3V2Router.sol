@@ -43,10 +43,11 @@ contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
     uniV3Factory = _uniV3Factory;
     uniV3Router = _uniV3Router;
 
-    poolFees.push(500);
-    poolFees.push(3000);
-    poolFees.push(100);
-    // poolFees.push(10000);
+    // Uniswap liquidity pools fee tiers we loop through to obtain best swap quote
+    poolFees.push(100); // 0.01%
+    poolFees.push(500); // 0.05%
+    poolFees.push(3000); // 0.3%
+    // poolFees.push(10000); // 1%
   }
 
   // ---------- Public Functions ---------- //

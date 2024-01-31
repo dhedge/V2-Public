@@ -96,14 +96,16 @@ contract DhedgeVeloV2UniV2Router is IUniswapV2RouterSwapOnly {
     address tokenOut,
     uint256 amountIn
   ) internal view returns (uint256 amountOut, bool stable) {
-    address pair = velodromeV2Router.poolFor(tokenIn, tokenOut, true, address(velodromeV2Factory));
-    if (velodromeV2Factory.isPool(pair)) {
-      amountOut = IVelodromeV2Pair(pair).getAmountOut(amountIn, tokenIn);
+    address stablePair = velodromeV2Router.poolFor(tokenIn, tokenOut, true, address(velodromeV2Factory));
+    address volatilePair = velodromeV2Router.poolFor(tokenIn, tokenOut, false, address(velodromeV2Factory));
+    if (velodromeV2Factory.isPool(stablePair)) {
+      amountOut = IVelodromeV2Pair(stablePair).getAmountOut(amountIn, tokenIn);
       stable = true;
-    } else {
-      pair = velodromeV2Router.poolFor(tokenIn, tokenOut, false, address(velodromeV2Factory));
-      if (velodromeV2Factory.isPool(pair)) {
-        amountOut = IVelodromeV2Pair(pair).getAmountOut(amountIn, tokenIn);
+    } else if (velodromeV2Factory.isPool(volatilePair)) {
+      uint256 amountOutVolatile = IVelodromeV2Pair(volatilePair).getAmountOut(amountIn, tokenIn);
+      if (amountOutVolatile > amountOut) {
+        amountOut = amountOutVolatile;
+        stable = false;
       }
     }
   }

@@ -2,7 +2,6 @@ import fs from "fs";
 import { polygonChainData } from "../../config/chainData/polygonData";
 import { IAddresses, IFileNames } from "../types";
 import { BigNumber } from "ethers";
-import { implementationStorageAddress } from "../common/deploymentData";
 
 const { aaveV3, torosPools, uniswapV3, assets } = polygonChainData;
 
@@ -40,11 +39,10 @@ export const switchPolygonOzFile = (isProduction: boolean) => {
 const polygonAddresses: IAddresses = {
   // Dhedge Internal
   protocolDaoAddress: polygonChainData.protocolDao,
-  protocolTreasuryAddress: "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3",
+  protocolTreasuryAddress: polygonChainData.protocolTreasury,
   // Should be fetched from the oz file
   proxyAdminAddress: polygonChainData.proxyAdmin,
-  // Same for everyone
-  implementationStorageAddress,
+
   // Gnosis safe multicall/send address
   // https://github.com/gnosis/safe-deployments
   gnosisMultiSendAddress: "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761",
@@ -67,7 +65,7 @@ const polygonAddresses: IAddresses = {
   },
 
   quickStakingRewardsFactoryAddress: "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f",
-  v2RouterAddresses: ["0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"], //quickswapRouter, sushiswapV2Router etc etc
+  v2RouterAddresses: polygonChainData.v2Routers,
   quickLpUsdcWethStakingRewardsAddress: "0x4A73218eF2e820987c59F838906A82455F42D98b",
   oneInchV4RouterAddress: polygonChainData.oneinch.v4Router,
   oneInchV5RouterAddress: polygonChainData.oneinch.v5Router,

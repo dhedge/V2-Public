@@ -16,10 +16,6 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
     poolFactory = _poolFactory;
   }
 
-  /// @notice implementations should not be left unintialized
-  // solhint-disable-next-line no-empty-blocks
-  function implInitializer() external initializer {}
-
   modifier checkContractGuard(address _guardedContract) {
     require(IHasGuardInfo(poolFactory).getContractGuard(_guardedContract) == msg.sender, "not correct contract guard");
 
