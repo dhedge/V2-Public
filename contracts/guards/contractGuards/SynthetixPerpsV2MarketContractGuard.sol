@@ -42,7 +42,7 @@ contract SynthetixPerpsV2MarketContractGuard is TxDataUtils, IGuard {
   // Maximum 2.1x leverage is allowed (2x with some additional margin to avoid reverts)
   // This is because of withdrawal processing where the the partial closure of the position is delayed
   // This causes a temporary increase in leverage and increased risk of liquidation
-  uint256 public constant MAX_LEVERAGE = 2.1e18; // 18 decimals
+  uint256 public constant MAX_LEVERAGE = 2.5e18; // 18 decimals
 
   constructor(address _susdProxy, address[] memory _whitelistedDHedgePools) {
     susdProxy = _susdProxy;
@@ -134,6 +134,6 @@ contract SynthetixPerpsV2MarketContractGuard is TxDataUtils, IGuard {
       newPositionValue = uint256(-newPositionSize).mul(fillPrice).div(1e18);
     }
 
-    require(newPositionValue < position.margin.mul(MAX_LEVERAGE).div(1e18), "leverage must be less than 2x");
+    require(newPositionValue < position.margin.mul(MAX_LEVERAGE).div(1e18), "leverage must be less than 2.5x");
   }
 }

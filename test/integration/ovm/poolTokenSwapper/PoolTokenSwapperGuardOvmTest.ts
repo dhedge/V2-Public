@@ -9,10 +9,10 @@ launchPoolTokenSwapperGuardSwapsTests({
     dai: ovmChainData.assets.dai,
   },
   usdPriceFeeds: {
-    eth: ovmChainData.price_feeds.eth,
-    usdc: ovmChainData.price_feeds.usdc,
-    usdt: ovmChainData.price_feeds.usdt,
-    dai: ovmChainData.price_feeds.dai,
+    eth: ovmChainData.usdPriceFeeds.eth,
+    usdc: ovmChainData.usdPriceFeeds.usdc,
+    usdt: ovmChainData.usdPriceFeeds.usdt,
+    dai: ovmChainData.usdPriceFeeds.dai,
   },
   assetsBalanceOfSlot: {
     usdc: ovmChainData.assetsBalanceOfSlot.usdc,

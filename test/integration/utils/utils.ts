@@ -65,6 +65,12 @@ const increaseTime = async (seconds: number) => {
   await network.provider.send("evm_mine");
 };
 
+const increaseBlocks = async (blocks: number) => {
+  const blockNumberInHex = ethers.utils.hexValue(ethers.BigNumber.from(blocks));
+
+  await network.provider.send("hardhat_mine", [blockNumberInHex.toString()]);
+};
+
 const evmForkNetwork = async (networkName: NETWORK, blockNumber?: number) => {
   await network.provider.request({
     method: "hardhat_reset",
@@ -108,6 +114,7 @@ export const utils = {
   evmTakeSnap,
   evmRestoreSnap,
   increaseTime,
+  increaseBlocks,
   impersonateAccounts,
   impersonateAccount,
   currentBlockTimestamp,

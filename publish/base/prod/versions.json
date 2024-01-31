@@ -1,0 +1,114 @@
+{
+  "v2.12.0": {
+    "contracts": {
+      "Assets": [
+        {
+          "assetName": "USDC",
+          "assetAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+        },
+        {
+          "assetName": "USDbC",
+          "assetAddress": "0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+        },
+        {
+          "assetName": "DAI",
+          "assetAddress": "0x50c5725949a6f0c72e6c4a641f24049a917db0cb",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x591e79239a7d679378ec8c847e5038150364c78f"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x591e79239a7d679378ec8c847e5038150364c78f"
+        },
+        {
+          "assetName": "cbETH",
+          "assetAddress": "0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xd7818272b9e248357d13057aab0b417af31e817d"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xd7818272b9e248357d13057aab0b417af31e817d"
+        },
+        {
+          "assetName": "WETH",
+          "assetAddress": "0x4200000000000000000000000000000000000006",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70"
+        },
+        {
+          "assetName": "Synthetix V3 Position",
+          "assetAddress": "0x32C222A9A159782aFD7529c87FA34b96CA72C696",
+          "assetType": "103",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xe84e43dd22a608efbc7f453f16c2bf398876417a"
+          },
+          "oracleAddress": "0xe84e43dd22a608efbc7f453f16c2bf398876417a"
+        },
+        {
+          "assetName": "snxUSD",
+          "assetAddress": "0x09d51516F38980035153a554c26Df3C6f51a23C3",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+        },
+        {
+          "assetName": "sUSDC - Synthetic USD Coin",
+          "assetAddress": "0xC74eA762cF06c9151cE074E6a569a5945b6302E7",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+        }
+      ],
+      "USDPriceAggregator": "0xe84e43dd22a608efbc7f453f16c2bf398876417a",
+      "AssetHandlerProxy": "0x559082da2Be5b23bF4339Fd610Cd4404Fe5f8013",
+      "AssetHandler": "0x9A7D300AaD5F0d59F14c64C7DD607b530fad29a7",
+      "PoolLogicProxy": "0x52C86B1726e671a89d9b1Df38eDF5A8186039098",
+      "PoolLogic": "0xB53FDB35F5C2e2E8aEcE28630Ac26347b3E37988",
+      "PoolManagerLogicProxy": "0x1730970cA8667841a31050F5A03705284295f805",
+      "PoolManagerLogic": "0x5873B73D6B31eecFd304A21bdE1444af83f0de36",
+      "Governance": "0x5f8DEe0D89c9acF30666C1A3cD92C996ca6c3B7B",
+      "ERC20Guard": "0x832262aB852F2A95857C72DB8aDF319ED3b69794",
+      "PoolFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F",
+      "PoolFactory": "0x2d875ad5a35b4B23Cf4F928f2E862e0D44acaf56",
+      "DhedgeNftTrackerStorageProxy": "0x08A664cA241DD50B1Dd5c9EBB97eCA33aC6f744E",
+      "DhedgeNftTrackerStorage": "0xe2317CA7ab6D54608470ae368b04E7a00164Be36",
+      "SlippageAccumulator": "0x3cd9b3A374E6e192BA89271D73dE7187eC02b7dB",
+      "OneInchV5Guard": "0xFeF15116DcdB396932dcBD7D635B35f292C525C5",
+      "ZeroExContractGuard": "0xE0F72C139e6cF7BB2e59E71aa55ac61cc92f7972",
+      "SynthetixV3SpotMarketContractGuard": "0x96AF168456c60Cb240215bc36F814F4fDB30B3Cc",
+      "SynthetixV3AssetGuard": "0x255b4b86101428f8424084943FEfADc8f87f1d56",
+      "WeeklyWindowsHelper": "0x6670c5750d2baa33870f422fe1da8bff72775027",
+      "SynthetixV3ContractGuard": "0x905CFb3FC6e7480439205e2456bf6a519FA35E52"
+    },
+    "network": {
+      "chainId": 8453,
+      "name": "unknown"
+    },
+    "lastUpdated": "Tue, 30 Jan 2024 18:04:21 GMT",
+    "config": {}
+  }
+}

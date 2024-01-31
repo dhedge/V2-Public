@@ -11,9 +11,10 @@ First the most important thing to understand, upgrading is not for the faint of 
 To upgrade, upgradable contracts, the transactions that do the upgrades need to be submitted through the gnosis safe (multisig). So the upgrade script is responsible for proposing those upgrade transactions to gnosis
 For each chain they will be seen here:
 
-- Polygon(staging/prod): https://app.safe.global/home?safe=matic%3A0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4
+- Polygon(staging/prod): https://app.safe.global/home?safe=matic:0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4
 - Optimism(prod): https://app.safe.global/home?safe=oeth:0x90b1a66957914EbbE7a8df254c0c1E455972379C
 - Arbitrum(prod): https://app.safe.global/home?safe=arb1:0x13471A221D6A346556723842A1526C603Dc4d36B
+- Base(prod): https://app.safe.global/home?safe=base:0x4A83129Ce9C8865EF3f91Fc87130dA25b64F9100
 
 New immutable contracts, for example, new implementations or guards, can and are deployed by the upgrade script directly onchain and if they are ownable the ownership is transferred to the gnosis safe address. A tx is then proposed to the gnosis safe that updates the implementation, or sets the guard in governance.
 

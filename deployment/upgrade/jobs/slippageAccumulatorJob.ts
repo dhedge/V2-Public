@@ -15,7 +15,7 @@ export const slippageAccumulatorJob: IJob<void> = async (
   if (config.execute) {
     console.log("Will deploy slippage accumulator");
 
-    console.log("PoolFactory proxy address:", versions[config.oldTag].contracts.PoolFactoryProxy);
+    if (!versions[config.oldTag].contracts.PoolFactoryProxy) return console.log("No pool factory proxy address");
 
     const SlippageAccumulatorFactory = await ethers.getContractFactory("SlippageAccumulator");
     const args: [string, number, number] = [versions[config.oldTag].contracts.PoolFactoryProxy, 86400, 10e4]; // [poolFactory address, decayTime, maxCumulativeSlippage]
@@ -30,19 +30,13 @@ export const slippageAccumulatorJob: IJob<void> = async (
       args,
     );
 
-    console.log("Transfering ownership");
-
     await slippageAccumulator.transferOwnership(addresses.protocolDaoAddress);
 
     versions[config.newTag].contracts.SlippageAccumulator = slippageAccumulator.address;
 
     // NOTE: Whenever a new slippage accumulator is deployed, the following contract guards need to be redeployed:
-    // - BalancerV2Guard.sol
-    // - OneInchV5Guard.sol
-    // - UniswapV2RouterGuard.sol
-    // - UniswapV3RouterGuard.sol
     console.log(
-      "Please re-deploy the following contract guards: \n - BalancerV2Guard\n - OneInchV5Guard\n - UniswapV2RouterGuard\n - UniswapV3RouterGuard\n",
+      "Please re-deploy the following contract guards (if applicable): \n - BalancerV2Guard\n - OneInchV4Guard\n - OneInchV5Guard\n - UniswapV2RouterGuard\n - UniswapV3RouterGuard\n - ZeroExContractGuard\n",
     );
   }
 };

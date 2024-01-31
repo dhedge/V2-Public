@@ -45,7 +45,7 @@ interface StargateTestsChainData {
       };
     };
   };
-  price_feeds: {
+  usdPriceFeeds: {
     usdc: string;
     dai: string;
   };
@@ -82,17 +82,17 @@ export const stargateTestHelpers = {
       {
         asset: chainData.stargate.pools.susdc.address,
         assetType: assetHandlerAssetType,
-        aggregator: chainData.price_feeds.usdc,
+        aggregator: chainData.usdPriceFeeds.usdc,
       },
       {
         asset: chainData.stargate.pools.sdai.address,
         assetType: assetHandlerAssetType,
-        aggregator: chainData.price_feeds.dai,
+        aggregator: chainData.usdPriceFeeds.dai,
       },
       {
         asset: stakingRewardToken,
         assetType: 0,
-        aggregator: chainData.price_feeds.dai, // just make it $1
+        aggregator: chainData.usdPriceFeeds.dai, // just make it $1
       },
     ];
     await assetHandler.addAssets(assets);

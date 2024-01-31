@@ -96,7 +96,7 @@ describe("Balancer V2", () => {
 
     // Fund logic owner with assets
     await getAccountToken(units(100), logicOwner.address, wethAddress, arbitrumChainData.assetsBalanceOfSlot.weth);
-    await getAccountToken(units(100), logicOwner.address, wstETHAddress, arbitrumChainData.assetsBalanceOfSlot.wstETH);
+    await getAccountToken(units(100), logicOwner.address, wstETHAddress, arbitrumChainData.assetsBalanceOfSlot.wsteth);
     await getAccountToken(units(100, 6), logicOwner.address, usdcAddress, arbitrumChainData.assetsBalanceOfSlot.usdc);
 
     // This is to test poolLogicProxy.withdraw()

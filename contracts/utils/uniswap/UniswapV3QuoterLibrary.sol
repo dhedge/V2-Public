@@ -258,7 +258,12 @@ library UniswapV3QuoterLibrary {
     );
 
     uint160 sqrtPriceNextX96;
-    while (state.amountSpecifiedRemaining != 0 && sqrtPriceX96 != sqrtPriceLimitX96 && liquidity > 0) {
+    // Added a state iteration condition less than 8 (magic number) because we faced a case where it couldn't get out of the loop
+    // and thus was reverted with `out of gas` error.
+    // https://dashboard.tenderly.co/tx/optimistic/0x11a84c5cf88d98c635a22c422688fcc28c27758c5b8a1b298ae18f24d3ba49dc?trace=0.1.0.0.10.0.0.2.0.7.0.3.0.17.4.0.0.2.0.5.3.3.14.0.9.0.24.1.0
+    while (
+      state.amountSpecifiedRemaining != 0 && sqrtPriceX96 != sqrtPriceLimitX96 && liquidity > 0 && state.iteration < 8
+    ) {
       (sqrtPriceNextX96, sqrtPriceX96, liquidity) = processSwapWithinTick(
         IUniswapV3Pool(poolAddress),
         initialPoolState,

@@ -11,6 +11,8 @@ import { maiVaultContractGuardJob } from "./contractGuards/maiVaultContractGuard
 import { synthetixPerpsV2MarketContractGuardJob } from "./contractGuards/synthetixPerpsV2MarketContractGuardJob";
 import { velodromeV2GaugeContractGuardJob } from "./contractGuards/velodromeV2GaugeContractGuardJob";
 import { velodromePairContractGuardJob } from "./contractGuards/velodromePairContractGuardJob";
+import { ramsesGaugeGuardJob } from "./contractGuards/ramsesGaugeGuardJob";
+import { sonneFinanceCTokenContractGuardJob } from "./contractGuards/sonneFinanceCTokenContractGuardJob";
 
 type TContractGuardConfigurer = (
   config: IUpgradeConfig,
@@ -67,13 +69,43 @@ const getExistingOrDeployedVelodromeGuard = (
         throw new Error(`No ${guardName} in versions`);
       }
     }
-    if (!addresses.velodrome?.[voterAddressKey]) {
+    const voterAddress = addresses.velodrome?.[voterAddressKey];
+    if (!voterAddress) {
       throw new Error(`No Velodrome ${voterAddressKey} configured in addresses`);
     }
-    const voter = await hre.ethers.getContractAt("IVelodromeVoter", addresses.velodrome[voterAddressKey]);
+    const voter = await hre.ethers.getContractAt("IVelodromeVoter", voterAddress);
     const associatedGauge = await voter.gauges(newAsset.assetAddress);
     if (associatedGauge == hre.ethers.constants.AddressZero) {
       throw new Error("No Velodrome associatedGauge");
+    }
+    return { guardAddress, contractAddress: associatedGauge };
+  };
+};
+
+const getExistingOrDeployedRamsesGuard = (guardName: ContractGuardType, deployer: IJob<void>) => {
+  return async (
+    config: IUpgradeConfig,
+    hre: HardhatRuntimeEnvironment,
+    versions: IVersions,
+    filenames: IFileNames,
+    addresses: IAddresses,
+    newAsset: TAssetConfig,
+  ) => {
+    let guardAddress = versions[config.newTag].contracts[guardName];
+    if (!guardAddress) {
+      await deployer(config, hre, versions, filenames, addresses);
+      guardAddress = versions[config.newTag].contracts[guardName];
+      if (!guardAddress) {
+        throw new Error(`No ${guardName} in versions`);
+      }
+    }
+    if (!addresses.ramses?.voter) {
+      throw new Error(`No Ramses voter configured in addresses`);
+    }
+    const voter = await hre.ethers.getContractAt("IRamsesVoter", addresses.ramses.voter);
+    const associatedGauge = await voter.gauges(newAsset.assetAddress);
+    if (associatedGauge == hre.ethers.constants.AddressZero) {
+      throw new Error(`No ${newAsset.assetName} associated gauge`);
     }
     return { guardAddress, contractAddress: associatedGauge };
   };
@@ -108,6 +140,8 @@ const typeToContractGuardConfigurer: TContractGuardTypeToContractGuardConfigurer
     "voterV2",
   ),
   VelodromePairContractGuard: getExistingOrDeployGuard("VelodromePairContractGuard", velodromePairContractGuardJob),
+  RamsesGaugeContractGuard: getExistingOrDeployedRamsesGuard("RamsesGaugeContractGuard", ramsesGaugeGuardJob),
+  SonneFinanceCTokenGuard: getExistingOrDeployGuard("SonneFinanceCTokenGuard", sonneFinanceCTokenContractGuardJob),
 };
 
 export const configureContractGuard = async (

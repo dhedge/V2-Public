@@ -203,5 +203,47 @@
     "specificContractGuardConfig": {
       "contractGuard": "BalancerV2GaugeContractGuard"
     }
+  },
+  {
+    "assetName": "USDC Native",
+    "assetAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+    "assetType": "4",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Swell Ethereum",
+    "assetAddress": "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
+    "assetType": "0",
+    "oracleType": "RamsesTWAPAggregator",
+    "specificOracleConfig": {
+      "pair": "0xf1a5444a7ed5f24962a118512b076a015b0e6c0b",
+      "mainToken": "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
+      "pairToken": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "pairTokenUsdAggregator": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+    }
+  },
+  {
+    "assetName": "Ramses Variable USDC/swETH",
+    "assetAddress": "0xf1a5444a7ed5f24962a118512b076a015b0e6c0b",
+    "assetType": "20",
+    "oracleType": "RamsesVariableLPAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "RamsesGaugeContractGuard"
+    }
+  },
+  {
+    "assetName": "ARB",
+    "assetAddress": "0x912ce59144191c1204e64559fe8253a0e49e6548",
+    "assetType": "4",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xb2a824043730fe05f3da2efafa1cbbe83fa548d6"
+    },
+    "oracleType": "ChainlinkAggregator"
   }
 ]

@@ -1,3 +1,4 @@
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import axios from "axios";
 import { BigNumber, Contract, utils } from "ethers";
 import fs from "fs";
@@ -11,12 +12,11 @@ import { getDeploymentData, IDeploymentData } from "../upgrade/getDeploymentData
 
 const coingeckoNetwork = "polygon-pos";
 
-const { protocolDao } = polygonChainData;
+const { protocolDao, protocolTreasury } = polygonChainData;
 
 // Addresses
 const depositToken = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174"; // USDC
 const payoutToken = "0x8c92e38eca8210f4fcbf17f0951b198dd7668292"; // DHT
-const treasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3"; // Polygon Protocol Treasury
 
 // Bond terms
 const minBondPrice = utils.parseUnits("0.1", 6); // $0.10 USDC
@@ -34,7 +34,7 @@ const discountOneMonth = 0.07;
 const discountSixMonths = 0.12;
 const discountOneYear = 0.22;
 
-const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment, deploymentData: IDeploymentData) => {
+const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment) => {
   const ethers = hre.ethers;
   const upgrades = hre.upgrades;
   const provider = ethers.provider;
@@ -42,24 +42,19 @@ const deployDynamicBonds = async (hre: HardhatRuntimeEnvironment, deploymentData
   // Deploy
   await hre.run("compile:one", { contractName: "DynamicBonds" });
   const DynamicBonds = await ethers.getContractFactory("DynamicBonds");
-  const dynamicBondsInitParams = [depositToken, payoutToken, treasury, minBondPrice, maxPayoutAvailable];
+  const dynamicBondsInitParams = [depositToken, payoutToken, protocolTreasury, minBondPrice, maxPayoutAvailable];
   const dynamicBonds = await upgrades.deployProxy(DynamicBonds, dynamicBondsInitParams);
   await dynamicBonds.deployed();
 
   const dynamicBondsProxy = DynamicBonds.attach(dynamicBonds.address);
+  const dynamicBondsImplementationAddress = await getImplementationAddress(provider, dynamicBondsProxy.address);
 
-  const dynamicBondsImplementationAddress = ethers.utils.hexValue(
-    await provider.getStorageAt(dynamicBondsProxy.address, deploymentData.addresses.implementationStorageAddress),
-  );
-
-  const dynamicBondsImplementation = DynamicBonds.attach(dynamicBondsImplementationAddress);
-
-  await tryVerify(hre, dynamicBondsImplementation.address, "contracts/DynamicBonds.sol:DynamicBonds", []);
+  await tryVerify(hre, dynamicBondsImplementationAddress, "contracts/DynamicBonds.sol:DynamicBonds", []);
 
   console.log("dynamicBondsProxy deployed to:", dynamicBondsProxy.address);
-  console.log("dynamicBonds implementation:", dynamicBondsImplementation.address);
+  console.log("dynamicBonds implementation:", dynamicBondsImplementationAddress);
 
-  return { dynamicBondsProxy, dynamicBondsImplementation };
+  return { dynamicBondsProxy, dynamicBondsImplementationAddress };
 };
 
 const setBondTerms = async (
@@ -341,8 +336,8 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
 
     if (taskArgs.updateTreasury) {
       const dynamicBondsProxy = await getDynamicBondsContract(hre, version);
-      await dynamicBondsProxy.setTreasury(treasury);
-      console.log("Treasury set to:", treasury);
+      await dynamicBondsProxy.setTreasury(protocolTreasury);
+      console.log("Treasury set to:", protocolTreasury);
     }
 
     if (taskArgs.upgrade) {
@@ -373,7 +368,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
     if (taskArgs.deploy) {
       if (versions[latestVersion].contracts.DynamicBondsProxy) throw "Dynamic Bonds contract already deployed";
 
-      const { dynamicBondsProxy, dynamicBondsImplementation } = await deployDynamicBonds(hre, deploymentData);
+      const { dynamicBondsProxy, dynamicBondsImplementationAddress } = await deployDynamicBonds(hre);
       console.log("Dynamic Bonds proxy deployed to", dynamicBondsProxy.address);
       const transferOwnershipTx = await dynamicBondsProxy.transferOwnership(protocolDao);
       await transferOwnershipTx.wait(5);
@@ -382,7 +377,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
       await addBondOptions(hre, dynamicBondsProxy);
 
       versions[latestVersion].contracts.DynamicBondsProxy = dynamicBondsProxy.address;
-      versions[latestVersion].contracts.DynamicBonds = dynamicBondsImplementation.address;
+      versions[latestVersion].contracts.DynamicBonds = dynamicBondsImplementationAddress;
       versionUpdate = true;
     }
 

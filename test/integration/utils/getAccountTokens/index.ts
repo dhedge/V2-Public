@@ -66,3 +66,19 @@ export const getBalance = async (address: string, token: string): Promise<BigNum
     address,
   );
 };
+
+export const transferTokensFromExistingAddress = async (
+  fromAccount: string,
+  toAccount: string,
+  tokenToTransfer: string,
+  amountToTransfer: BigNumber,
+) => {
+  const from = await ethers.getSigner(fromAccount);
+  const token = await ethers.getContractAt("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20", tokenToTransfer);
+  await network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [fromAccount],
+  });
+  // Make sure `fromAccount` has `tokenToTransfer` balance more than `amountToTransfer`
+  await token.connect(from).transfer(toAccount, amountToTransfer);
+};

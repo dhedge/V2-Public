@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
-import { IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { IAddresses, IJob, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
 
 export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
@@ -8,7 +8,7 @@ export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
-  filenames: { assetGuardsFileName: string },
+  filenames: IFileNames,
   addresses: IAddresses,
 ) => {
   if (!addresses.aaveV2) {

@@ -5,9 +5,9 @@
       "AssetHandlerProxy": "0x1BaF125D53F65a708bCb5559c9a9fdD9D088eDe3",
       "AssetHandler": "0x46c56Ca71F3FCd36d65AB3Ea642D9F777C966c03",
       "PoolLogicProxy": "0xBC1480Cb0dF8884d38cA6F2Af0bAD06A047B508d",
-      "PoolLogic": "0x2539E003C01FB45641aD6f74F783A24125843f22",
+      "PoolLogic": "0xEa13d7Ee169617aAa06d2593Fc70Df34EcfC1f95",
       "PoolManagerLogicProxy": "0x57d6F7ac271FF522B70385A21DF2D2bbb516C8d9",
-      "PoolManagerLogic": "0x7742086eE047dc678ce7f551f86038f1d9858568",
+      "PoolManagerLogic": "0xD635E261fdB7D25fA58E3a99847D1920D9a2F5C0",
       "Governance": "0x0b844847558A5814CD0d5Ca539AdF62A5486c826",
       "ERC20Guard": "0xa3072C67711cE0FCC222a8824fad345c725D62Ef",
       "PoolFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535",
@@ -15,9 +15,9 @@
       "DhedgeNftTrackerStorageProxy": "0xd40ef0EbE8C024CC31c2325B01649A7c024f45A4",
       "DhedgeNftTrackerStorage": "0x67e34Cc20F8A982d7D804C8A5199f1e3E895d398",
       "DhedgeUniV3V2Router": "0x5941E17856F4cF790B7E54BED643777154781CdE",
-      "DhedgeSuperSwapper": "0xbE7f41F325EA70df5dfEa8Fd5037f74c3222F488",
+      "DhedgeSuperSwapper": "0x756D0Aa8A64A55F784F9c8F2dCe517e72FD705A7",
       "DhedgeEasySwapperProxy": "0x80b9411977C4fF8D618f2aC3f29F1e2D623C4d34",
-      "DhedgeEasySwapper": "0x7f797AafEaa2A00E99ba9bE16B9Bb0459fB5f5EE",
+      "DhedgeEasySwapper": "0xe1cF5A93afF792C53BaE56F4093ce76C65e1ceB9",
       "AaveLendingPoolAssetGuardV3": "0xd2C62C80E69802B8b313b00E86cE6dc97853dff0",
       "LendingEnabledAssetGuard": "0xd0392103419ADA46070D7ea49a3BCd8D2256f219",
       "AaveLendingPoolGuardV3": "0x81616A0D45F51A0F4640f281f98400333b802008",
@@ -249,15 +249,68 @@
             "contractGuard": "BalancerV2GaugeContractGuard"
           },
           "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        },
+        {
+          "assetName": "USDC Native",
+          "assetAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+        },
+        {
+          "assetName": "Swell Ethereum",
+          "assetAddress": "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
+          "assetType": "0",
+          "oracleType": "RamsesTWAPAggregator",
+          "specificOracleConfig": {
+            "pair": "0xf1a5444a7ed5f24962a118512b076a015b0e6c0b",
+            "mainToken": "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
+            "pairToken": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+            "pairTokenUsdAggregator": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+          },
+          "oracleAddress": "0x132607164423BD4B94914254F11F0E999168D385"
+        },
+        {
+          "assetName": "Ramses Variable USDC/swETH",
+          "assetAddress": "0xf1a5444a7ed5f24962a118512b076a015b0e6c0b",
+          "assetType": "20",
+          "oracleType": "RamsesVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "RamsesGaugeContractGuard"
+          },
+          "oracleAddress": "0xA62400d8e8624A87C38Ecc59171f81FCaB71c42D"
+        },
+        {
+          "assetName": "ARB",
+          "assetAddress": "0x912ce59144191c1204e64559fe8253a0e49e6548",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xb2a824043730fe05f3da2efafa1cbbe83fa548d6"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xb2a824043730fe05f3da2efafa1cbbe83fa548d6"
         }
       ],
-      "OneInchV5Guard": "0x5A43D435a3F13229c0547f503fA5601324950898",
-      "UniswapV3RouterGuard": "0x380237186c38b37FEDe8BcAeBD0Bc761863C7425",
+      "OneInchV5Guard": "0xc0B92A955C336Bdc85cA60F0DaA9bF5EDB13fb42",
+      "UniswapV3RouterGuard": "0x45D14dE3BCF32dff5517703FE5636eB27dD294a1",
       "UniswapV3AssetGuard": "0x7da7734F4A6A2CA405F5D975b2601543Ea5d4F9a",
       "UniswapV3NonfungiblePositionGuard": "0x94ae37e0B0b56E4a1c69F7c24d0276D0446b0abD",
       "BalancerV2Guard": "0x116157DF6afDFD191cdcb026378F87D2b66E4383",
       "BalancerV2GaugeContractGuard": "0x72232EBf4D5D447AA39685b197d393004807b955",
-      "BalancerV2GaugeAssetGuard": "0x08Dfe9B8017AB3fde66a6A43A154ccC6f07B107B"
+      "BalancerV2GaugeAssetGuard": "0x08Dfe9B8017AB3fde66a6A43A154ccC6f07B107B",
+      "RamsesLPAssetGuard": "0x7628433e0FAcc77342161541dc0466e1e0C7C90D",
+      "RamsesRouterContractGuard": "0xA782433758D3C2520c60De9c0ba91Ab4b8318aA4",
+      "RamsesXRamContractGuard": "0xf9839a9AeB0b882997E29D45c3D26766ED1EcCfD",
+      "RamsesGaugeContractGuard": "0x64608491f5A0082292867fC698254D25E0279286",
+      "SlippageAccumulator": "0x3e1511A1d5637A56f88f9ae31177449797Ee2018",
+      "DhedgeRamsesUniV2Router": "0x68B027DeC5237ffa1b0219d982792A9e9d977Ff3",
+      "ClosedContractGuard": "0x60a30E15bF02Ee355fAf60cDB8B6c0C455697675"
     },
     "network": {
       "name": "arbitrum",
@@ -265,11 +318,13 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Mon, 29 May 2023 18:45:36 GMT",
+    "lastUpdated": "Thu, 18 Jan 2024 08:26:56 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [],
-        "feeByPassManagers": [],
+        "feeByPassManagers": [
+          "0xfbD2B4216f422DC1eEe1Cff4Fb64B726F099dEF5"
+        ],
         "feeNumerator": 10,
         "feeDenominator": 10000
       }

@@ -1,9 +1,12 @@
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../deploymentHelpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../types";
 
-// PoolManagerLogic upgrade is broken for Optimism as far as I can tell.
-// To upgrade, find an object containing address: 0xbc87Becd9b2AED3E282D352b94B80045946CF4b9 and remove storage records coming after nftMembershipCollectionAddress
+// PoolManagerLogic upgrade is broken as far as I can tell.
+// Polygon 0xa1A104211B595834093C2b039334F3633B58a111
+// Optimism 0xbc87Becd9b2AED3E282D352b94B80045946CF4b9
+// To upgrade, find an object containing the above address in .openzeppelin and remove storage records coming after nftMembershipCollectionAddress
 // I don't know why it looks at this particular object during upgrade and ignores all next upgrades which are plenty.
 // Putting there current storage layout might also do the trick.
 
@@ -51,16 +54,20 @@ export const poolManagerLogicJob: IJob<void> = async (
       await poolManagerLogicProxy.deployed();
       console.log("poolManagerLogicProxy deployed at ", poolManagerLogicProxy.address);
 
-      const poolManagerLogicAddressX = await ethers.provider.getStorageAt(
+      const poolManagerLogicImplementationAddress = await getImplementationAddress(
+        ethers.provider,
         poolManagerLogicProxy.address,
-        addresses.implementationStorageAddress,
       );
-      const poolManagerLogicAddress = ethers.utils.hexValue(poolManagerLogicAddressX);
 
-      await tryVerify(hre, poolManagerLogicAddress, "contracts/PoolManagerLogic.sol:PoolManagerLogic", []);
+      await tryVerify(
+        hre,
+        poolManagerLogicImplementationAddress,
+        "contracts/PoolManagerLogic.sol:PoolManagerLogic",
+        [],
+      );
 
       versions[config.newTag].contracts.PoolManagerLogicProxy = poolManagerLogicProxy.address;
-      versions[config.newTag].contracts.PoolManagerLogic = poolManagerLogicAddress;
+      versions[config.newTag].contracts.PoolManagerLogic = poolManagerLogicImplementationAddress;
     }
   }
 };

@@ -2416,9 +2416,9 @@
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
       "PoolFactory": "0x6858d1bdf033F29e2609c878580c70E9339fe9E2",
-      "PoolLogic": "0x0C1cCd956dC8E338008a6F4F4c27902a3B15d5F4",
+      "PoolLogic": "0xB66CF2a4Fe9B1FbE09b03CF28B8893C83B79e177",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x94a45eBCcf2996e95b8f82D4AD8098f1EfA1356A",
+      "PoolManagerLogic": "0x294665F184189d75d55343CEAE7F6E07c2Ef7544",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
       "ERC20Guard": "0xBd651F4a743dCdaC0141a1BEBACb9626D700fe40",
@@ -2446,7 +2446,7 @@
       "UniswapV3NonfungiblePositionGuard": "0x29D45AdF45d7a68544C3BB3C84306d90ff8E3B74",
       "UniswapV3RouterGuard": "0x6FdBd1E5BD9f245491A70795305539877F26060E",
       "UniswapV3AssetGuard": "0xe0354b48EAe09405eCe07300A865FDB45c1341D1",
-      "DhedgeSuperSwapper": "0xaA0031Dae9755Cdc0473a3F25e14a1f639f32E6B",
+      "DhedgeSuperSwapper": "0xBCd6F142c1E522bb6c421a2fAc93375e7da1a8c8",
       "ArrakisLiquidityGaugeV4AssetGuard": "0x358F165232d5C7b68F6Eae1Ac3848bC042B77a59",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6e0949ED2c3Fb19b445ED946C8A317639AEFCF04",
       "ArrakisV1RouterStakingGuard": "0xA7757Ab47adCC9E2cB08ACc967f6AB779B270a2F",
@@ -2473,7 +2473,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 05 Jul 2023 10:09:48 GMT",
+    "lastUpdated": "Wed, 22 Nov 2023 15:15:37 GMT",
     "config": {}
   }
 }

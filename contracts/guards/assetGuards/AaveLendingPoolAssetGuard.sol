@@ -72,7 +72,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   }
 
   /// @notice Returns the pool position of Aave lending pool
-  /// @dev Returns the balance priced in ETH
+  /// @dev Returns the balance priced in USD
   /// @param pool The pool logic address
   /// @return balance The total balance of the pool
   function getBalance(address pool, address) public view override returns (uint256 balance) {
@@ -119,9 +119,9 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   /// @return withdrawBalance are used to withdraw portion of asset balance to investor
   /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function withdrawProcessing(
-    address pool, // pool
-    address, // asset
-    uint256 portion, // portion
+    address pool,
+    address,
+    uint256 portion,
     address to
   )
     external

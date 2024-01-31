@@ -112,7 +112,6 @@ contract PoolFactoryV24 is
 
   mapping(address => bool) public isPool;
 
-  // solhint-disable-next-line var-name-mixedcase
   uint256 private maximumPerformanceFeeNumerator;
   // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;

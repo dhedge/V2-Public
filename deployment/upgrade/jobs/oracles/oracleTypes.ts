@@ -28,6 +28,16 @@ export type IVelodromeV2TWAPAggregatorConfig = IAssetConfig<
   "VelodromeV2TWAPAggregator",
   IVelodromeTWAPAggregatorSpecificConfig
 >;
+export type ISonneFinancePriceAggregatorConfig = IAssetConfig<
+  "SonneFinancePriceAggregator",
+  ISonneFinancePriceAggregatorSpecificConfig
+>;
+
+export type IRamsesTWAPAggregatorConfig = IAssetConfig<"RamsesTWAPAggregator", IVelodromeTWAPAggregatorSpecificConfig>;
+export type IRamsesLPVariableAggregatorConfig = IAssetConfig<
+  "RamsesVariableLPAggregator",
+  IVelodromeVariableLPAggregatorSpecificConfig
+>;
 
 export type TAssetConfig =
   | IAssetConfig<"DhedgeDeployedAggregator", IDhedgeDeployedAggregatorSpecificConfig>
@@ -47,7 +57,10 @@ export type TAssetConfig =
   | IAssetConfig<"VelodromeVariableLPAggregator", IVelodromeVariableLPAggregatorSpecificConfig>
   | IETHCrossAggregatorConfig
   | IVelodromeTWAPAggregatorConfig
-  | IVelodromeV2TWAPAggregatorConfig;
+  | IVelodromeV2TWAPAggregatorConfig
+  | IRamsesTWAPAggregatorConfig
+  | IRamsesLPVariableAggregatorConfig
+  | ISonneFinancePriceAggregatorConfig;
 
 export interface IChainlinkAggregatorSpecificConfig extends ITriggerChange {
   chainlinkOracleAddress: Address;
@@ -117,6 +130,11 @@ export interface IDQUICKPriceAggregatorSpecificConfig extends ITriggerChange {
   QUICK: Address;
   dQUICK: Address;
   dhedgeFactoryProxy: Address;
+}
+
+export interface ISonneFinancePriceAggregatorSpecificConfig extends ITriggerChange {
+  comptroller: Address;
+  initialExchangeRateMantissa: number;
 }
 
 interface IETHCrossAggregatorSpecificConfig extends ITriggerChange {

@@ -21,20 +21,14 @@ import { Address } from "../../../deployment/types";
 
 const SIXTEEN_MINUTES = 60 * 16;
 
-export interface EasySwapperCommonTestCase {
+export interface EasySwapperTestCase {
   testName: string;
   dhedgePoolAddress: string;
   poolDepositToken: string;
-}
-
-export interface EasySwapperTestCase extends EasySwapperCommonTestCase {
   userDepositToken: string;
   userDepositTokenSlot: number;
   withdrawToken: string;
   depositAmount: BigNumber;
-}
-
-export interface EasySwapperNativeTestCase extends EasySwapperCommonTestCase {
   nativeAssetDepositAmount: BigNumber;
 }
 
@@ -61,6 +55,9 @@ interface EasySwapperTestsChainData {
     router: string;
     factory: string;
   };
+  ramses?: {
+    router: string;
+  };
   proxyAdmin: string;
   routeHints: { asset: string; intermediary: string }[];
 }
@@ -68,14 +65,13 @@ interface EasySwapperTestsChainData {
 export const DhedgeEasySwapperTests = (
   poolFactoryProxy: string,
   baseTestDhedgePoolMustAcceptUSDC: Address,
-  withdrawNormalTestCases: EasySwapperTestCase[],
+  testCases: EasySwapperTestCase[],
   withdrawSUSDTestCases: EasySwapperTestCase[],
-  withdrawNativeTestCases: EasySwapperNativeTestCase[],
   chainData: EasySwapperTestsChainData,
   nativeAssetWrapper: Address,
   emptyNeverFundedDhedgePoolMustAcceptWETH: Address,
 ) => {
-  const { assets, assetsBalanceOfSlot, v2Routers, uniswapV3, velodrome, velodromeV2, routeHints } = chainData;
+  const { assets, assetsBalanceOfSlot, v2Routers, uniswapV3, velodrome, velodromeV2, routeHints, ramses } = chainData;
   // Must accept usdc
   const BASE_TEST_POOL = baseTestDhedgePoolMustAcceptUSDC;
   describe("DhedgeEasySwapper Toros Tests", function () {
@@ -112,9 +108,9 @@ export const DhedgeEasySwapperTests = (
       poolFactory.connect(poolFactoryOwner).setMaximumFee(5000, 300, 100);
       poolFactory.connect(poolFactoryOwner).setPerformanceFeeNumeratorChangeDelay(0);
 
-      const UniV3V2SwapRouter = await ethers.getContractFactory("DhedgeUniV3V2Router");
-      const v3v2SwapRouter = await UniV3V2SwapRouter.deploy(uniswapV3.factory, uniswapV3.router);
-      await v3v2SwapRouter.deployed();
+      const DhedgeUniV3V2Router = await ethers.getContractFactory("DhedgeUniV3V2Router");
+      const dhedgeUniV3V2Router = await DhedgeUniV3V2Router.deploy(uniswapV3.factory, uniswapV3.router);
+      await dhedgeUniV3V2Router.deployed();
 
       if (velodrome) {
         const DhedgeVeloUniV2Router = await ethers.getContractFactory("DhedgeVeloUniV2Router");
@@ -130,12 +126,19 @@ export const DhedgeEasySwapperTests = (
         v2Routers.push(dhedgeVeloV2UniV2Router.address);
       }
 
+      if (ramses) {
+        const DhedgeRamsesUniV2Router = await ethers.getContractFactory("DhedgeRamsesUniV2Router");
+        const dhedgeRamsesUniV2Router = await DhedgeRamsesUniV2Router.deploy(ramses.router);
+        await dhedgeRamsesUniV2Router.deployed();
+        v2Routers.push(dhedgeRamsesUniV2Router.address);
+      }
+
       const DHedgePoolAggregator = await ethers.getContractFactory("DHedgePoolAggregator");
       const dHedgePoolAggregator = await DHedgePoolAggregator.deploy(BASE_TEST_POOL);
       await dHedgePoolAggregator.deployed();
 
       const SwapRouter = await ethers.getContractFactory("DhedgeSuperSwapper");
-      const swapRouter = await SwapRouter.deploy([v3v2SwapRouter.address, ...v2Routers], routeHints);
+      const swapRouter = await SwapRouter.deploy([dhedgeUniV3V2Router.address, ...v2Routers], routeHints);
       await swapRouter.deployed();
 
       const EasySwapperGuard = await ethers.getContractFactory("EasySwapperGuard");
@@ -687,7 +690,7 @@ export const DhedgeEasySwapperTests = (
       });
     });
 
-    describe("Real Pool Withdraw Tests", () => {
+    describe("Real Pool Deposit/Withdraw Tests", () => {
       const createTestNormal = (test: EasySwapperTestCase, func: "withdraw" | "withdrawSUSD") => {
         const {
           testName,
@@ -704,8 +707,8 @@ export const DhedgeEasySwapperTests = (
           // Reset token ownership - for when other tests fail
           const balanceBefore = await torosPool.balanceOf(logicOwner.address);
           if (balanceBefore > BigNumber.from(0)) {
-            await torosPool.approve(dhedgeEasySwapper.address, balanceBefore);
-            await dhedgeEasySwapper.withdraw(torosPool.address, balanceBefore, withdrawToken, 0);
+            await torosPool.connect(logicOwner).approve(dhedgeEasySwapper.address, balanceBefore);
+            await dhedgeEasySwapper.connect(logicOwner).withdraw(torosPool.address, balanceBefore, withdrawToken, 0);
           }
           // TokenPrice is in 10**18
           // But usdc is in 10**6
@@ -726,9 +729,9 @@ export const DhedgeEasySwapperTests = (
           );
           await getAccountToken(depositAmount, logicOwner.address, userDepositToken, userDepositTokenSlot);
           expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(depositAmount);
-          await DepositToken.approve(dhedgeEasySwapper.address, depositAmount);
+          await DepositToken.connect(logicOwner).approve(dhedgeEasySwapper.address, depositAmount);
           // deposit the cost of 1 token
-          await dhedgeEasySwapper.depositWithCustomCooldown(
+          await dhedgeEasySwapper.connect(logicOwner).depositWithCustomCooldown(
             torosPool.address,
             userDepositToken,
             depositAmount,
@@ -738,21 +741,21 @@ export const DhedgeEasySwapperTests = (
           );
           // Make sure we received very close to one token
           const balance = await torosPool.balanceOf(logicOwner.address);
-          expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100) as unknown as number);
+          expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100));
           expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(0);
           await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
           await ethers.provider.send("evm_mine", []);
           // Withdraw all
 
           const actualWithdrawToken = func == "withdraw" ? withdrawToken : assets.susd || "";
-          await torosPool.approve(dhedgeEasySwapper.address, balance);
+          await torosPool.connect(logicOwner).approve(dhedgeEasySwapper.address, balance);
           const WithdrawToken = await ethers.getContractAt(
             "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
             actualWithdrawToken,
           );
           const beforeFundsReturnedBalance = await WithdrawToken.balanceOf(logicOwner.address);
           // Here I need update this to calculate the withdrawal amount out in withdraw token
-          await dhedgeEasySwapper[func](torosPool.address, balance, withdrawToken, 0);
+          await dhedgeEasySwapper.connect(logicOwner)[func](torosPool.address, balance, withdrawToken, 0);
           // All tokens were withdrawn
           const balanceAfterWithdraw = await torosPool.balanceOf(logicOwner.address);
           expect(balanceAfterWithdraw).to.equal(0);
@@ -775,11 +778,11 @@ export const DhedgeEasySwapperTests = (
           expect(withdrawAmountUSDC).closeTo(
             depositAssetValueInUSDC,
             // 3% - in and out slippage is quite a bit 605570-595902
-            depositAssetValueInUSDC.div(100).mul(3) as unknown as number,
+            depositAssetValueInUSDC.div(100).mul(3),
           );
         });
       };
-      const createTestNative = (test: EasySwapperNativeTestCase) => {
+      const createTestNative = (test: EasySwapperTestCase) => {
         const { testName, dhedgePoolAddress: torosPoolAddress, nativeAssetDepositAmount, poolDepositToken } = test;
         it("depositNative " + testName, async () => {
           const torosPool = await ethers.getContractAt("PoolLogic", torosPoolAddress);
@@ -795,7 +798,7 @@ export const DhedgeEasySwapperTests = (
           );
           const expectedTokens = depositAssetValueInUSD.mul(units(1)).div(tokenPriceInUSD.toString());
           // deposit the cost of 1 token
-          await dhedgeEasySwapper.depositNativeWithCustomCooldown(
+          await dhedgeEasySwapper.connect(logicOwner).depositNativeWithCustomCooldown(
             torosPool.address,
             poolDepositToken,
             // 3% slippage
@@ -806,13 +809,13 @@ export const DhedgeEasySwapperTests = (
           );
           // Make sure we received very close to one token
           const balance = await torosPool.balanceOf(logicOwner.address);
-          expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100) as unknown as number);
+          expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100));
         });
       };
 
-      withdrawNormalTestCases.forEach((testCase) => createTestNormal(testCase, "withdraw"));
+      testCases.forEach((testCase) => createTestNormal(testCase, "withdraw"));
       withdrawSUSDTestCases.forEach((testCase) => createTestNormal(testCase, "withdrawSUSD"));
-      withdrawNativeTestCases.forEach(createTestNative);
+      testCases.forEach(createTestNative);
     });
   });
 };

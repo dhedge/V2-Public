@@ -42,9 +42,9 @@ export const polygonChainData = Object.freeze({
   proxyAdmin: "0x0C0a10C9785a73018077dBC74B2A006695849252",
   ZERO_ADDRESS: "0x0000000000000000000000000000000000000000",
   protocolDao: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
+  protocolTreasury: "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3",
 
-  // sushi & quick
-  v2Routers: ["0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"],
+  v2Routers: ["0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"], // SushiSwap V2 Router, QuickSwap V2 Router
 
   sushi: {
     factory: "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
@@ -122,7 +122,6 @@ export const polygonChainData = Object.freeze({
     },
     stablePools: {
       BPSP: "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
-
       BPSP_TUSD: "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f",
     },
     gaugePools: {
@@ -201,11 +200,11 @@ export const polygonChainData = Object.freeze({
     stMatic: 0,
   },
 
-  eth_price_feeds: {
+  ethPriceFeeds: {
     ghst: "0xe638249AF9642CdA55A92245525268482eE4C67b",
   },
 
-  price_feeds: {
+  usdPriceFeeds: {
     miMatic: "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428",
     matic: "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
     eth: "0xF9680D99D6C9589e2a93a78A04A279e509205945",
@@ -217,7 +216,6 @@ export const polygonChainData = Object.freeze({
     tusd: "0x7C5D415B64312D38c56B54358449d0a4058339d2",
     link: "0xd9FFdb71EbE7496cC440152d43986Aae0AB76665",
     quick: "0xa058689f4bCa95208bba3F265674AE95dED75B6D",
-
     stMatic: "0x97371dF4492605486e23Da797fA68e55Fc38a13f",
   },
 
@@ -233,6 +231,7 @@ export const polygonChainData = Object.freeze({
   routeHints: [
     { asset: assets.agEur, intermediary: assets.usdc },
     { asset: assets.balancer, intermediary: assets.weth },
+    { asset: assets.maticX, intermediary: assets.wmatic },
   ],
 
   zeroEx: {

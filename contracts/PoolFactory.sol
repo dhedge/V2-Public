@@ -130,7 +130,7 @@ contract PoolFactory is
   uint256 internal _daoFeeDenominator;
 
   mapping(address => bool) public isPool;
-  // solhint-disable-next-line var-name-mixedcase
+
   uint256 private maximumPerformanceFeeNumerator;
   // solhint-disable-next-line var-name-mixedcase
   uint256 private _MANAGER_FEE_DENOMINATOR;
@@ -207,7 +207,10 @@ contract PoolFactory is
     _;
   }
 
-  /// @notice implementations should not be left unintialized
+  /// @notice PoolFactory implementation contracts should not be left unintialized
+  /// @dev There is a risk for PoolFactory that the implementation could be destroyed
+  /// @dev This is because PoolFactory has function upgradePoolBatch that accepts arbitrary data input that's executed on the pool
+  /// @dev So the owner of the implementation of PoolFactory can call upgradePoolBatch and pass selfDestruct data which then destroys the implementation contract
   // solhint-disable-next-line no-empty-blocks
   function implInitializer() external initializer {}
 

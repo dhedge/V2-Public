@@ -6,7 +6,7 @@ import { Input } from "csv-stringify";
 import stringify from "csv-stringify/lib/sync";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SafeService } from "@safe-global/safe-ethers-adapters";
-import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
+import Safe, { EthersAdapter, ContractNetworksConfig } from "@safe-global/protocol-kit";
 import { IProposeTxProperties, IUpgradeConfigProposeTx } from "./types";
 import { retryWithDelay } from "./utils";
 
@@ -155,7 +155,7 @@ export const proposeTx = async (
   const provider = ethers.provider;
   const owner1 = provider.getSigner(0);
   const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: owner1 });
-  const chainId: number = await ethAdapter.getChainId();
+  const chainId = await ethAdapter.getChainId();
 
   if (!addresses.gnosisApi || !addresses.gnosisMultiSendAddress) {
     await owner1.sendTransaction({
@@ -169,18 +169,23 @@ export const proposeTx = async (
   const service = new SafeService(addresses.gnosisApi);
 
   // NOTE: The following is only required in case we want to use custom deployed Safe contracts.
-  // Make sure to enter the correct addresses instead of the quotation marks present as the arguments.
-  // const contractNetworks: ContractNetworksConfig = {
-  //   [chainId]: {
-  //     multiSendAddress: addresses.gnosisMultiSendAddress,
-  //     safeMasterCopyAddress: "",
-  //     safeProxyFactoryAddress: "",
-  //     multiSendCallOnlyAddress: "",
-  //     fallbackHandlerAddress: "",
-  //     signMessageLibAddress: "",
-  //     createCallAddress: "",
-  //   },
-  // };
+  // This is a workaround for Base instead of updating Safe packages to latest which obviously include Base.
+  // Attempt to upgrade Safe packages led to `__classPrivateFieldGet(...).getBytes is not a function` error during `await safeSdk.signTransactionHash(txHash)` execution.
+  // I suspect this might be because we are using ethers v5 version (or maybe not). Anyway it's worth to give a try and update packages again some time later.
+  const contractNetworks: ContractNetworksConfig | undefined =
+    chainId === 8453
+      ? {
+          [8453]: {
+            multiSendAddress: addresses.gnosisMultiSendAddress,
+            safeMasterCopyAddress: "0xfb1bffC9d739B8D520DaF37dF666da4C687191EA",
+            safeProxyFactoryAddress: "0xC22834581EbC8527d974F8a1c97E1bEA4EF910BC",
+            multiSendCallOnlyAddress: "0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B",
+            fallbackHandlerAddress: "0x017062a1dE2FE6b99BE3d9d37841FeD19F573804",
+            signMessageLibAddress: "0x98FFBBF51bb33A056B08ddf711f289936AafF717",
+            createCallAddress: "0xB19D6FFc2182150F8Eb585b79D4ABcd7C5640A9d",
+          },
+        }
+      : undefined;
 
   const chainSafeAddress: string = addresses.protocolDaoAddress;
 
@@ -188,6 +193,7 @@ export const proposeTx = async (
   const safeSdk = await Safe.create({
     ethAdapter,
     safeAddress: chainSafeAddress,
+    contractNetworks,
   });
 
   nonce = nonce

@@ -2108,6 +2108,155 @@
             "extraContractGuard": "VelodromePairContractGuard"
           },
           "oracleAddress": "0x464B790C91A609015e3Af6E0fAf97B04bB59590e"
+        },
+        {
+          "assetName": "Toros Ethereum Bull 2X",
+          "assetAddress": "0x9573c7b691cdcebbfa9d655181f291799dfb7cf5",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x3853c3165139D39579FDeaE9F39647c2A342Eb0A"
+        },
+        {
+          "assetName": "Toros Ethereum Bear 1X",
+          "assetAddress": "0xcacb5a722a36cff6baeb359e21c098a4acbffdfa",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0xF66C42059c7eE60D0B35cB858376e3a6B73Ca460"
+        },
+        {
+          "assetName": "Toros Bitcoin Bull 2X",
+          "assetAddress": "0x32ad28356ef70adc3ec051d8aacdeeaa10135296",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x15bD2B3736e23F9ff4BC4D08f83a6790842CA909"
+        },
+        {
+          "assetName": "Toros Bitcoin Bear 1X",
+          "assetAddress": "0x83d1fa384ec44c2769a3562ede372484f26e141b",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0xA8F85A28f6fBC7d55A5Fc96a7fAe8738D23Aa1D2"
+        },
+        {
+          "assetName": "Toros Chainlink Bull 2X",
+          "assetAddress": "0x9fa29b1f55f57e7af577ea2bc8a8e4488aa150f1",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x37ad8028305c3c00898Dd00FD0286c40749Af7b3"
+        },
+        {
+          "assetName": "Toros Chainlink Bear 1X",
+          "assetAddress": "0xe17a1b2038fa5d725a3cb077ad6c242062b4872b",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0xd72Eb0bAF51e791d375C18876E9FE00dd3bbf0BA"
+        },
+        {
+          "assetName": "Velodrome V2 STABLE USDC/alUSD 0.05%",
+          "assetAddress": "0x4d7959d17B9710BE87e3657e69d946914221BB88",
+          "assetType": "25",
+          "oracleType": "VelodromeStableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeV2GaugeContractGuard"
+          },
+          "oracleAddress": "0x999437b365aF3e40ecD4d4932DCC64Ab6ebbcA29"
+        },
+        {
+          "assetName": "USDC Native",
+          "assetAddress": "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
+        },
+        {
+          "assetName": "Sonne WETH",
+          "assetAddress": "0xf7B5965f5C117Eb1B5450187c9DcFccc3C317e8E",
+          "assetType": "0",
+          "oracleType": "SonneFinancePriceAggregator",
+          "specificOracleConfig": {
+            "priceOracle": "0xEFc0495DA3E48c5A55F73706b249FD49d711A502",
+            "initialExchangeRateMantissa": 0.02
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "SonneFinanceCTokenGuard"
+          },
+          "oracleAddress": "0x602413A31125a056D0daC0646AE33020763BB460"
+        },
+        {
+          "assetName": "Sonne USDC",
+          "assetAddress": "0xEC8FEa79026FfEd168cCf5C627c7f486D77b765F",
+          "assetType": "0",
+          "oracleType": "SonneFinancePriceAggregator",
+          "specificOracleConfig": {
+            "priceOracle": "0xEFc0495DA3E48c5A55F73706b249FD49d711A502",
+            "initialExchangeRateMantissa": 0.02
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "SonneFinanceCTokenGuard"
+          },
+          "oracleAddress": "0x5b3Fa68014cC67C23D0345A45b99afB9003De82d"
+        },
+        {
+          "assetName": "Sonne OP",
+          "assetAddress": "0x8cD6b19A07d754bF36AdEEE79EDF4F2134a8F571",
+          "assetType": "0",
+          "oracleType": "SonneFinancePriceAggregator",
+          "specificOracleConfig": {
+            "priceOracle": "0xEFc0495DA3E48c5A55F73706b249FD49d711A502",
+            "initialExchangeRateMantissa": 0.02
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "SonneFinanceCTokenGuard"
+          },
+          "oracleAddress": "0x190A8ec90506f3BEAa58C033C98861596F2a815D"
+        },
+        {
+          "assetName": "Velodrome V2 VARIABLE wstETH/OP",
+          "assetAddress": "0x7178F61694ba9109205B8d6F686282307625e62D",
+          "assetType": "25",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeV2GaugeContractGuard",
+            "extraContractGuard": "VelodromePairContractGuard"
+          },
+          "oracleAddress": "0xDB37F3972a37b5a0dB62d1372f3Fc8Db196E40c1"
+        },
+        {
+          "assetName": "Velodrome V2 STABLE USDC/USDCe",
+          "assetAddress": "0x36E3c209B373b861c185ecdBb8b2EbDD98587BDb",
+          "assetType": "25",
+          "oracleType": "VelodromeStableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeV2GaugeContractGuard",
+            "extraContractGuard": "VelodromePairContractGuard"
+          },
+          "oracleAddress": "0x3C213fA071dc3f4d25c636d3f2609b683cCf7625"
+        },
+        {
+          "assetName": "Sonne wstETH",
+          "assetAddress": "0x26AaB17f27CD1c8d06a0Ad8E4a1Af8B1032171d5",
+          "assetType": "0",
+          "oracleType": "SonneFinancePriceAggregator",
+          "specificOracleConfig": {
+            "comptroller": "0x60CF091cD3f50420d50fD7f707414d0DF4751C58",
+            "initialExchangeRateMantissa": 0.02
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "SonneFinanceCTokenGuard"
+          },
+          "oracleAddress": "0xf88A1696CbE84f825C129EA6d98096e8aDC20ef8"
         }
       ],
       "ERC20Guard": "0x295922d988800dC6DD1dE3C3083e7E6bda172ED7",
@@ -2140,8 +2289,8 @@
       "SynthetixLendingEnabledAssetGuard": "0xEf4b78348eab4dfD776e1BFfe9C31Cbd76aD24d2",
       "AaveLendingPoolAssetGuardV3": "0x50f51c33755dD75F20EE281cf0EbF19B8cC063C3",
       "AaveLendingPoolGuardV3": "0x58Eb4351F0AD34E7B3c2F1bf3a3EC1244032d7D3",
-      "DhedgeUniV3V2Router": "0xfB4a499126b75568d260e11a2B66E06C5A91EDeD",
-      "DhedgeSuperSwapper": "0x555c9DEEbc1926902cc7EB4Cb2C8F00D240fac03",
+      "DhedgeUniV3V2Router": "0x645dc92aDF7632b433FAeCe370a74C378E7236f8",
+      "DhedgeSuperSwapper": "0x7Acf996f84Af941D97BA49e354770078d6418114",
       "AaveIncentivesControllerV3Guard": "0x2fAC63DBE4BD4f3D118909193Ff2563Da027eB88",
       "DhedgeNftTrackerStorageProxy": "0xd0D2eB0F55F626Ac8ed144f9fE824e416F7e743D",
       "DhedgeNftTrackerStorage": "0x56dda05845F4F334E69d514E12b27B3aE24EaB80",
@@ -2185,7 +2334,7 @@
       "ZeroExContractGuard": "0x1B597bFBAA7cB065b1a361114FC095E15ddc5247",
       "VelodromeV2LPAssetGuard": "0xfF9a741E9481a9B542aa20d855126A8691BC006D",
       "VelodromeV2RouterGuard": "0xF9b12e42964F3899ddD485c517dd90572b801163",
-      "DhedgeVeloV2UniV2Router": "0x6243e9DB93f405d81Ba7B56f48A3C80bBb5A2c4b",
+      "DhedgeVeloV2UniV2Router": "0x2fF5e8e7017e67FDdf80C4ba1A92691d498eDe29",
       "VelodromeV2GaugeContractGuard": "0x9c2525c2eD4baD90da42a7C418D6F43CF24caB76",
       "ClosedContractGuard": "0x60158EfA98fe2c305fE54837f4d01E88a5DE113F",
       "VelodromePairContractGuard": "0xdF1Be9157baCe4CE3037241472e1fa4160eF7afB",
@@ -2194,15 +2343,16 @@
       "PoolTokenSwapperProxy": "0xE2F9b946C4Dcc6EbD1e00A8791E1570E4e6D74D9",
       "PoolTokenSwapper": "0x700e62F15B404287C93Ff86Cd7C9df283e123471",
       "PoolTokenSwapperGuard": "0xe7608020Bf2B2E58e512F0A261e768932F57755b",
-      "SynthetixPerpsV2MarketContractGuard": "0x3cCD75acF038B6D0fFb097B516CC246bd8Fb261E"
+      "SynthetixPerpsV2MarketContractGuard": "0x607208675702bD4505e6e442bFfe417FDCf878C1",
+      "SonneFinanceComptrollerGuard": "0xeb983280C9dEf6132d74b81DF32c17B10D981F6A",
+      "SonneFinanceCTokenGuard": "0x69E8263390734361bcFe1E4dbD0b3259fD987a28"
     },
     "network": {
       "name": "optimism",
       "chainId": 10,
-      "ensAddress": null,
-      "_defaultProvider": null
+      "ensAddress": null
     },
-    "lastUpdated": "Fri, 06 Oct 2023 10:44:12 GMT",
+    "lastUpdated": "Tue, 30 Jan 2024 16:09:30 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -2210,6 +2360,12 @@
           "0x49bf093277bf4dde49c48c6aa55a3bda3eedef68",
           "0xb2cfb909e8657c0ec44d3dd898c1053b87804755",
           "0xb9243c495117343981ec9f8aa2abffee54396fc0",
+          "0x9573c7b691cdcebbfa9d655181f291799dfb7cf5",
+          "0xcacb5a722a36cff6baeb359e21c098a4acbffdfa",
+          "0x32ad28356ef70adc3ec051d8aacdeeaa10135296",
+          "0x83d1fa384ec44c2769a3562ede372484f26e141b",
+          "0x9fa29b1f55f57e7af577ea2bc8a8e4488aa150f1",
+          "0xe17a1b2038fa5d725a3cb077ad6c242062b4872b",
           "0xb52eac0899caf6291c62e9aec06668861138b13b",
           "0xc6f2737e456aa7829934aa7eda2f9ade19672c74",
           "0xafafb723b640b5ce1e20036ea74b4886e31fc4de"

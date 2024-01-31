@@ -877,7 +877,7 @@
   {
     "assetName": "MaticX",
     "assetAddress": "0xfa68FB4628DFF1028CFEc22b4162FCcd0d45efb6",
-    "assetType": "4",
+    "assetType": "0",
     "oracleType": "ChainlinkAggregator",
     "specificOracleConfig": {
       "chainlinkOracleAddress": "0x5d37E4b374E6907de8Fc7fb33EE3b0af403C7403"
@@ -1046,5 +1046,14 @@
       "priceUpperLimit": 1000000000000,
       "updateInterval": 600
     }
+  },
+  {
+    "assetName": "USDC Native",
+    "assetAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+    },
+    "oracleType": "ChainlinkAggregator"
   }
 ]

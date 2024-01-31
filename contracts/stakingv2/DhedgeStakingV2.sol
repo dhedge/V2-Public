@@ -93,10 +93,6 @@ contract DhedgeStakingV2 is
     });
   }
 
-  /// @notice implementations should not be left unintialized
-  // solhint-disable-next-line no-empty-blocks
-  function implInitializer() external initializer {}
-
   /// OVERRIDE
 
   /// @notice Stops the transfering of the token that represents a stake

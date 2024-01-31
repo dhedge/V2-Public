@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 
 import { ovmChainData } from "../../../../config/chainData/ovmData";
-const { assets, price_feeds, uniswapV3 } = ovmChainData;
+const { assets, usdPriceFeeds, uniswapV3 } = ovmChainData;
 import { UniV3TWAPAggregator } from "../../../../types";
 import { utils } from "../../utils/utils";
 import { getTokenPriceFromCoingecko } from "../../utils/coingecko/getTokenPrice";
@@ -23,7 +23,7 @@ describe("UniV3TWAPAggregator Test", function () {
     uniV3TwapAggregator = await UniV3TWAPAggregator.deploy(
       uniswapV3.pools.susd_dai,
       assets.susd,
-      price_feeds.dai,
+      usdPriceFeeds.dai,
       102000000, // $1.02
       104000000, // $1.04
       60 * 10, // 10 mins update interval
@@ -38,7 +38,7 @@ describe("UniV3TWAPAggregator Test", function () {
     uniV3TwapAggregator = await UniV3TWAPAggregator.deploy(
       uniswapV3.pools.susd_dai,
       assets.susd,
-      price_feeds.dai,
+      usdPriceFeeds.dai,
       96000000, // $0.96
       98000000, // $0.98
       60 * 10, // 10 mins update interval
@@ -53,7 +53,7 @@ describe("UniV3TWAPAggregator Test", function () {
     uniV3TwapAggregator = await UniV3TWAPAggregator.deploy(
       uniswapV3.pools.susd_dai,
       assets.susd,
-      price_feeds.dai,
+      usdPriceFeeds.dai,
       98000000, // $0.98 lower limit
       102000000, // $1.02 upper limit
       60 * 10, // 10 mins update interval
@@ -61,7 +61,10 @@ describe("UniV3TWAPAggregator Test", function () {
     await uniV3TwapAggregator.deployed();
 
     const price = (await uniV3TwapAggregator.latestRoundData()).answer;
-    const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assets.susd)).toString(), 8);
+    const priceFromCoingecko = ethers.utils.parseUnits(
+      (await getTokenPriceFromCoingecko(assets.susd, "optimistic-ethereum")).toString(),
+      8,
+    );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(price).to.be.closeTo(priceFromCoingecko, price.mul(5).div(100) as any); // 5% diff
   });

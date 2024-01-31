@@ -25,12 +25,12 @@ library EasySwapperVelodromeLPHelpers {
     address lpAddress,
     bool isV2
   ) internal returns (address[] memory assets) {
-    uint256 bal = IERC20Extended(lpAddress).balanceOf(address(this));
-    if (bal > 0) {
+    uint256 lpBalance = IERC20Extended(lpAddress).balanceOf(address(this));
+    if (lpBalance > 0) {
       address token0 = IUniswapV2Pair(lpAddress).token0();
       address token1 = IUniswapV2Pair(lpAddress).token1();
       // Burn is removeLiquidity.
-      IERC20Extended(lpAddress).transfer(lpAddress, bal);
+      IERC20Extended(lpAddress).transfer(lpAddress, lpBalance);
       IUniswapV2Pair(lpAddress).burn(address(this));
 
       address gauge = VelodromeLPAssetGuard(IHasGuardInfo(poolFactory).getAssetGuard(lpAddress)).voter().gauges(
@@ -62,8 +62,8 @@ library EasySwapperVelodromeLPHelpers {
         } else {
           for (uint256 i = 0; i < rewardsListLength; i++) {
             address rewardToken = IVelodromeGauge(gauge).rewards(i);
-            uint256 rewardBal = IERC20Extended(rewardToken).balanceOf(address(this));
-            if (rewardBal > 0) {
+            uint256 rewardBalance = IERC20Extended(rewardToken).balanceOf(address(this));
+            if (rewardBalance > 0) {
               assets[hits] = rewardToken;
               hits++;
             }

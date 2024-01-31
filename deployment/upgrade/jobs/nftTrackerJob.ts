@@ -38,10 +38,6 @@ export const nftTrackerJob: IJob<void> = async (
       console.log("DhedgeNftTrackerStorageProxy deployed at ", dhedgeNftTrackerStorageProxy.address);
       console.log("DhedgeNftTrackerStorageImpl deployed at ", dhedgeNftTrackerStorageImplementation);
 
-      console.log("implInitializer");
-      const dhedgeStakingV2Impl = DhedgeNftTrackerStorage.attach(dhedgeNftTrackerStorageImplementation);
-      await dhedgeStakingV2Impl.implInitializer();
-
       await tryVerify(
         hre,
         dhedgeNftTrackerStorageImplementation,
@@ -65,10 +61,6 @@ export const nftTrackerJob: IJob<void> = async (
         DhedgeNftTrackerStorage,
       );
       console.log("dhedgeNftTrackerStorage deployed to: ", dhedgeNftTrackerStorage);
-
-      console.log("implInitializer");
-      const dhedgeNftTrackerStorageImpl = DhedgeNftTrackerStorage.attach(dhedgeNftTrackerStorage);
-      await dhedgeNftTrackerStorageImpl.implInitializer();
 
       await tryVerify(
         hre,

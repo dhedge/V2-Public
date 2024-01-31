@@ -1,9 +1,9 @@
 import csv from "csvtojson";
 
 import { writeCsv } from "../../deploymentHelpers";
-import { IDeployedAssetGuard, IDeployedContractGuard } from "../../types";
+import { IDeployedAssetGuard, IDeployedContractGuard, INotSureGuard } from "../../types";
 
-export const addOrReplaceGuardInFile = async <T extends IDeployedContractGuard | IDeployedAssetGuard>(
+export const addOrReplaceGuardInFile = async <T extends IDeployedContractGuard | IDeployedAssetGuard | INotSureGuard>(
   assetGuardFileName: string,
   guard: T,
   matchKey: keyof T,

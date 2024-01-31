@@ -1,13 +1,15 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { Address, IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { addOrReplaceGuardInFile } from "../helpers";
+import { governanceNamesJob } from "../governanceNamesJob";
 
 export const superSwapperJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   // TODO: This optimally should not be mutated
   versions: IVersions,
-  _filenames: IFileNames,
+  filenames: IFileNames,
   addresses: IAddresses,
 ) => {
   const ethers = hre.ethers;
@@ -15,7 +17,7 @@ export const superSwapperJob: IJob<void> = async (
   console.log("Will deploy DhedgeSuperSwapper");
   if (config.execute) {
     const DhedgeSuperSwapper = await ethers.getContractFactory("DhedgeSuperSwapper");
-    const v2Routers = [...(addresses.v2RouterAddresses || [])];
+    const v2Routers = [...addresses.v2RouterAddresses];
 
     if (versions[config.newTag].contracts.DhedgeVeloUniV2Router) {
       v2Routers.push(versions[config.newTag].contracts.DhedgeVeloUniV2Router);
@@ -25,6 +27,9 @@ export const superSwapperJob: IJob<void> = async (
     }
     if (versions[config.newTag].contracts.DhedgeVeloV2UniV2Router) {
       v2Routers.push(versions[config.newTag].contracts.DhedgeVeloV2UniV2Router);
+    }
+    if (versions[config.newTag].contracts.DhedgeRamsesUniV2Router) {
+      v2Routers.push(versions[config.newTag].contracts.DhedgeRamsesUniV2Router);
     }
 
     console.log("Deploying SwapRouter with", v2Routers);
@@ -54,8 +59,16 @@ export const superSwapperJob: IJob<void> = async (
     } catch {
       console.warn("Deployed successfully, but unable to propose whitelist tx");
     }
-    console.warn(
-      "DhedgeSuperSwapper address should be updated in GovernanceNames and the governancenames job executed",
+
+    await addOrReplaceGuardInFile(
+      filenames.governanceNamesFileName,
+      {
+        name: "swapRouter",
+        destination: dhedgeSwapRouter.address,
+      },
+      "name",
     );
+
+    await governanceNamesJob(config, hre, versions, filenames, addresses);
   }
 };

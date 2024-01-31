@@ -9,6 +9,7 @@ import {
 } from "../polygon/deploymentData";
 import { ovmProdAddresses, ovmProdFileNames } from "../ovm/deploymentData";
 import { arbitrumProdData, arbitrumProdFileNames } from "../arbitrum/deploymentData";
+import { baseProdData, baseProdFileNames } from "../base/deploymentData";
 
 export interface IDeploymentData {
   addresses: IAddresses;
@@ -39,6 +40,11 @@ export const getDeploymentData = (chainId: number, deployment: "staging" | "prod
       return {
         addresses: arbitrumProdData,
         filenames: arbitrumProdFileNames,
+      };
+    case "8453-production":
+      return {
+        addresses: baseProdData,
+        filenames: baseProdFileNames,
       };
     // Useful for testing with hardhat local fork node.
     // Note that if any upgrade script runs successfully, the version

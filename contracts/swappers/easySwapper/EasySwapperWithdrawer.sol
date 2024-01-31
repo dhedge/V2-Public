@@ -8,8 +8,6 @@ import "../../interfaces/IERC20Extended.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IPoolFactory.sol";
-import "../../interfaces/stargate/IStargatePool.sol";
-import "../../interfaces/stargate/IStargateRouter.sol";
 import "./EasySwapperV3Helpers.sol";
 import "./EasySwapperV2LpHelpers.sol";
 import "./EasySwapperSwap.sol";
@@ -151,8 +149,8 @@ library EasySwapperWithdrawer {
           address(withdrawalAsset),
           address(withdrawProps.weth)
         );
-        // Velo
-      } else if (assetType == 15) {
+        // Velo V1 and Ramses
+      } else if (assetType == 15 || assetType == 20) {
         unrolledAssets = EasySwapperVelodromeLPHelpers.unrollLpAndGetUnsupportedLpAssetsAndRewards(
           IPoolLogic(pool).factory(),
           asset,
@@ -165,20 +163,9 @@ library EasySwapperWithdrawer {
           asset,
           true
         );
-        // Stargate
-      } else if (assetType == 16) {
-        unrolledAssets = _arr(IStargatePool(asset).token());
-        IStargateRouter(IStargatePool(asset).router()).instantRedeemLocal(
-          uint16(IStargatePool(asset).poolId()),
-          IStargatePool(asset).balanceOf(address(this)),
-          address(this)
-        );
-        // Lyra
-      } else if (assetType == 100) {
-        unrolledAssets = EasySwapperSynthetixHelpers.getLyraWithdrawAssets(asset, pool, withdrawalAsset, withdrawProps);
         // Futures
       } else if (assetType == 101 || assetType == 102) {
-        // All futurs are settled in sUSD
+        // All futures are settled in sUSD
         unrolledAssets = _arr(address(withdrawProps.synthetixProps.sUSDProxy));
       } else {
         revert("assetType not handled");

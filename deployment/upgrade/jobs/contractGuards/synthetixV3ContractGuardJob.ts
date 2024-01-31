@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { addOrReplaceGuardInFile } from "../helpers";
-import { IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses } from "../../../types";
+import { IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses, Address } from "../../../types";
 
 export const synthetixV3ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -23,35 +23,51 @@ export const synthetixV3ContractGuardJob: IJob<void> = async (
   console.log("Will deploy SynthetixV3ContractGuard");
 
   if (config.execute) {
-    const SynthetixV3ContractGuard = await ethers.getContractFactory("SynthetixV3ContractGuard");
+    let weeklyWindowsHelperAddress = versions[config.newTag].contracts.WeeklyWindowsHelper;
+
+    if (!weeklyWindowsHelperAddress) {
+      const WeeklyWindowsHelper = await ethers.getContractFactory("WeeklyWindowsHelper");
+      const weeklyWindowsHelper = await WeeklyWindowsHelper.deploy();
+      await weeklyWindowsHelper.deployed();
+      weeklyWindowsHelperAddress = weeklyWindowsHelper.address;
+      await tryVerify(
+        hre,
+        weeklyWindowsHelperAddress,
+        "contracts/utils/synthetixV3/libraries/WeeklyWindowsHelper.sol:WeeklyWindowsHelper",
+        [],
+      );
+      versions[config.newTag].contracts.WeeklyWindowsHelper = weeklyWindowsHelperAddress;
+    }
+
+    const SynthetixV3ContractGuard = await ethers.getContractFactory("SynthetixV3ContractGuard", {
+      libraries: {
+        WeeklyWindowsHelper: weeklyWindowsHelperAddress,
+      },
+    });
     const nftTrackerStorage = versions[config.oldTag].contracts.DhedgeNftTrackerStorageProxy;
 
     if (!nftTrackerStorage) {
       return console.warn("DhedgeNftTrackerStorage could not be found: skipping.");
     }
 
-    if (!addresses.synthetixProxyAddress) {
-      return console.warn("SNX address could not be found: skipping.");
-    }
-
-    if (!addresses.synthetixV3?.snxUSD) {
-      return console.warn("snxUSD address could not be found: skipping.");
-    }
-
-    if (!addresses.synthetixV3?.allowedLPId) {
-      return console.warn("Allowed LP Id could not be found: skipping.");
-    }
-
     if (!addresses.synthetixV3?.dHedgeVaultsWhitelist || addresses.synthetixV3.dHedgeVaultsWhitelist.length === 0) {
       return console.warn("dHedgeVaultsWhitelist addresses could not be found: skipping.");
     }
 
-    const args: [string, number, string, string, string[]] = [
-      addresses.synthetixProxyAddress,
-      addresses.synthetixV3.allowedLPId,
-      addresses.synthetixV3.snxUSD,
+    if (!addresses.synthetixV3?.windows) {
+      return console.warn("windows could not be found: skipping.");
+    }
+
+    const args: [
+      Address,
+      typeof addresses.synthetixV3.dHedgeVaultsWhitelist,
+      Address,
+      typeof addresses.synthetixV3.windows,
+    ] = [
       nftTrackerStorage,
       addresses.synthetixV3.dHedgeVaultsWhitelist,
+      synthetixV3CoreAddress,
+      addresses.synthetixV3.windows,
     ];
     const synthetixV3ContractGuard = await SynthetixV3ContractGuard.deploy(...args);
     await synthetixV3ContractGuard.deployed();

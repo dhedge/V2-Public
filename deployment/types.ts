@@ -1,6 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TAssetConfig } from "./upgrade/jobs/oracles/oracleTypes";
 import { BigNumber, BigNumberish } from "ethers";
+import { AllowedMarketStruct } from "../types/SynthetixV3SpotMarketContractGuard";
+import { VaultSettingStruct, WeeklyWindowsStruct } from "../types/SynthetixV3ContractGuard";
 
 export interface IUpgradeConfigProposeTx {
   execute: boolean;
@@ -49,7 +51,7 @@ interface ExternalLogicContracts {
   balancerMerkleOrchardAddress?: Address;
 
   quickStakingRewardsFactoryAddress?: Address;
-  v2RouterAddresses?: Address[]; //quickswapRouter, sushiswapV2Router etc etc
+  v2RouterAddresses: Address[];
 
   quickLpUsdcWethStakingRewardsAddress?: Address;
   aaveIncentivesControllerAddress?: Address;
@@ -57,10 +59,10 @@ interface ExternalLogicContracts {
   oneInchV5RouterAddress?: Address;
 
   velodrome?: {
-    router: Address;
-    voter: Address;
+    router?: Address;
+    voter?: Address;
     routerV2: Address;
-    voterV2: Address;
+    voterV2?: Address;
     factoryV2: Address;
   };
 
@@ -72,7 +74,7 @@ interface ExternalLogicContracts {
   uniV3: {
     uniswapV3RouterAddress: Address;
     uniswapV3FactoryAddress: Address;
-    uniSwapV3NonfungiblePositionManagerAddress: Address;
+    uniSwapV3NonfungiblePositionManagerAddress?: Address;
   };
 
   aaveV2?: {
@@ -107,10 +109,10 @@ interface ExternalLogicContracts {
   assets: {
     nativeAssetWrapper: Address;
     weth: Address;
-    usdc: Address;
+    usdc?: Address;
     dai: Address;
     susd?: Address;
-    dht: Address;
+    dht?: Address;
   };
 
   stakingV2?: {
@@ -136,9 +138,11 @@ interface ExternalLogicContracts {
 
   synthetixV3?: {
     core: Address;
-    allowedLPId: number;
-    snxUSD: Address;
-    dHedgeVaultsWhitelist: Address[];
+    dHedgeVaultsWhitelist: VaultSettingStruct[];
+    spotMarket: Address;
+    allowedMarkets: AllowedMarketStruct[];
+    // Weekdays are 1-7, 1 being Monday and 7 being Sunday. Hours are 0-23
+    windows: WeeklyWindowsStruct;
   };
 
   poolTokenSwapper?: {
@@ -157,6 +161,17 @@ interface ExternalLogicContracts {
       status: boolean;
     }[];
   };
+
+  ramses?: {
+    voter: Address;
+    router: Address;
+    xRam: Address;
+  };
+
+  sonneFinance?: {
+    dHedgeVaultsWhitelist: Address[];
+    comptroller: Address;
+  };
 }
 
 interface IDhedgeInternal {
@@ -164,7 +179,6 @@ interface IDhedgeInternal {
   protocolDaoAddress: Address;
   protocolTreasuryAddress: Address;
   proxyAdminAddress: Address;
-  implementationStorageAddress: Address;
 }
 
 export type IProposeTxProperties = IDhedgeInternal & {
@@ -192,7 +206,7 @@ export interface IDeployedContractGuard extends RecordNumberString {
   description: string;
 }
 
-export interface INotSureGuard {
+export interface INotSureGuard extends RecordNumberString {
   name: string;
   destination: string;
 }
@@ -261,6 +275,13 @@ export interface IContracts {
   VelodromePairContractGuard?: Address;
   SynthetixV3ContractGuard?: Address;
   PoolTokenSwapperGuard?: Address;
+  RamsesRouterContractGuard?: Address;
+  RamsesGaugeContractGuard?: Address;
+  RamsesXRamContractGuard?: Address;
+  SynthetixV3SpotMarketContractGuard?: Address;
+  SonneFinanceCTokenGuard?: Address;
+  SonneFinanceComptrollerGuard?: Address;
+  WeeklyWindowsHelper?: Address;
 
   // Asset Guards
   OpenAssetGuard: Address;
@@ -282,6 +303,7 @@ export interface IContracts {
   SynthetixPerpsV2MarketAssetGuard?: Address;
   VelodromeV2LPAssetGuard?: Address;
   SynthetixV3AssetGuard?: Address;
+  RamsesLPAssetGuard?: Address;
 
   DhedgeEasySwapperProxy: Address;
   DhedgeEasySwapper: Address;
@@ -289,6 +311,7 @@ export interface IContracts {
   DhedgeUniV3V2Router: Address;
   DhedgeVeloUniV2Router: Address;
   DhedgeVeloV2UniV2Router: Address;
+  DhedgeRamsesUniV2Router: Address;
 
   Assets: TDeployedAsset[];
   RemovedAssets: TDeployedAsset[];
@@ -320,7 +343,10 @@ export type OracleType =
   | "VelodromeVariableLPAggregator"
   | "MaticXPriceAggregator"
   | "ETHCrossAggregator"
-  | "VelodromeV2TWAPAggregator";
+  | "VelodromeV2TWAPAggregator"
+  | "RamsesTWAPAggregator"
+  | "RamsesVariableLPAggregator"
+  | "SonneFinancePriceAggregator";
 
 export type ContractGuardType =
   | "BalancerV2GaugeContractGuard"
@@ -330,7 +356,9 @@ export type ContractGuardType =
   | "ArrakisLiquidityGaugeV4ContractGuard"
   | "MaiVaultContractGuard"
   | "VelodromeV2GaugeContractGuard"
-  | "VelodromePairContractGuard";
+  | "VelodromePairContractGuard"
+  | "RamsesGaugeContractGuard"
+  | "SonneFinanceCTokenGuard";
 
 export type IVersion = {
   network: {

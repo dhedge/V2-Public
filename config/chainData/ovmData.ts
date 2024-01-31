@@ -20,17 +20,16 @@ const assets = Object.freeze({
   lusd: "0xc40f949f8a4e094d1b49a23ea9241d289b7b2819",
   snxUSD: "0xb2F30A7C980f052f02563fb518dcc39e6bf38175",
   wstETH: "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb",
+  link: "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6",
 });
 
 export const ovmChainData = Object.freeze({
   proxyAdmin: "0x9FEE88a18479bf7f0D41Da03819538AA7A617730",
-  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000",
   protocolDao: "0x90b1a66957914EbbE7a8df254c0c1E455972379C",
   oneinch: {
     v4Router: "0x1111111254760F7ab3F16433eea9304126DCd199",
     v5Router: "0x1111111254eeb25477b68fb85ed929f73a960582",
   },
-  eth_price_feeds: {},
 
   synthetix: {
     snxProxy,
@@ -47,6 +46,7 @@ export const ovmChainData = Object.freeze({
     synthRedeemer: "0xA997BD647AEe62Ef03b41e6fBFAdaB43d8E57535",
     v3Core: "0xffffffaEff0B96Ea8e4f94b2253f31abdD875847",
     accountNFT: "0x0E429603D3Cb1DFae4E6F52Add5fE82d96d77Dac",
+    v3SpotMarket: "0x38908Ee087D7db73A1Bd1ecab9AAb8E8c9C74595",
   },
 
   v2Routers: [],
@@ -101,7 +101,7 @@ export const ovmChainData = Object.freeze({
     snx: 3,
   },
 
-  price_feeds: {
+  usdPriceFeeds: {
     eth: "0x13e3Ee699D1909E989722E753853AE30b17e08c5",
     link: "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450",
     btc: "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593",
@@ -151,6 +151,16 @@ export const ovmChainData = Object.freeze({
     },
   },
 
+  // Contract addresses from https://docs.sonne.finance/protocol/contract-addresses
+  sonne: {
+    comptroller: "0x60CF091cD3f50420d50fD7f707414d0DF4751C58",
+    cTokens: {
+      usdc: "0xEC8FEa79026FfEd168cCf5C627c7f486D77b765F",
+      dai: "0x5569b83de187375d43FBd747598bfe64fC8f6436",
+      weth: "0xf7B5965f5C117Eb1B5450187c9DcFccc3C317e8E",
+    },
+  },
+
   lyra: {
     optionMarketWrapper: "0xCCE7819d65f348c64B7Beb205BA367b3fE33763B",
     synthetixAdapter: "0xbfa31380ED380cEb325153eA08f296A45A489108",
@@ -164,6 +174,12 @@ export const ovmChainData = Object.freeze({
     USDMNY: "0x49bf093277bf4dde49c48c6aa55a3bda3eedef68",
     ETHY: "0xb2cfb909e8657c0ec44d3dd898c1053b87804755",
     USDpy: "0xb9243c495117343981ec9f8aa2abffee54396fc0",
+    ETHBULL2X: "0x9573c7b691cdcebbfa9d655181f291799dfb7cf5",
+    ETHBEAR1X: "0xcacb5a722a36cff6baeb359e21c098a4acbffdfa",
+    BTCBULL2X: "0x32ad28356ef70adc3ec051d8aacdeeaa10135296",
+    BTCBEAR1X: "0x83d1fa384ec44c2769a3562ede372484f26e141b",
+    LINKBULL2X: "0x9fa29b1f55f57e7af577ea2bc8a8e4488aa150f1",
+    LINKBEAR1X: "0xe17a1b2038fa5d725a3cb077ad6c242062b4872b",
   },
 
   velodrome: {
@@ -224,6 +240,7 @@ export const ovmChainData = Object.freeze({
     { asset: assets.alusd, intermediary: assets.usdc },
     { asset: assets.lusd, intermediary: assets.usdc },
     { asset: assets.wstETH, intermediary: assets.weth },
+    { asset: assets.link, intermediary: assets.weth },
   ],
 
   zeroEx: {

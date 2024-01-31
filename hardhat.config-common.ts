@@ -33,6 +33,11 @@ export default {
       url: process.env.ARBITRUM_URL || "https://arb-mainnet.g.alchemy.com/v2/",
       accounts: process.env.ARBITRUM_PRIVATE_KEY ? [process.env.ARBITRUM_PRIVATE_KEY] : [],
     },
+    base: {
+      chainId: 8453,
+      url: process.env.BASE_URL || "https://base-mainnet.g.alchemy.com/v2/",
+      accounts: process.env.BASE_PRIVATE_KEY ? [process.env.BASE_PRIVATE_KEY] : [],
+    },
   },
   solidity: {
     compilers: [
@@ -50,7 +55,43 @@ export default {
           },
         },
       },
+      {
+        version: "0.8.10",
+        settings: {
+          outputSelection: {
+            "*": {
+              "*": ["storageLayout"],
+            },
+          },
+          optimizer: {
+            enabled: true,
+            runs: 20,
+          },
+        },
+      },
     ],
+    overrides: {
+      "@uniswap/lib/contracts/libraries/BitMath.sol": {
+        version: "0.7.6",
+      },
+      "@uniswap/lib/contracts/libraries/FullMath.sol": {
+        version: "0.7.6",
+      },
+      "@uniswap/lib/contracts/libraries/FixedPoint.sol": {
+        version: "0.7.6",
+      },
+      "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol": {
+        version: "0.7.6",
+      },
+      "contracts/test/SonneFinancePriceAggregatorMock.sol": {
+        version: "0.8.10",
+        settings: {
+          optimizer: {
+            enabled: false,
+          },
+        },
+      },
+    },
   },
   mocha: {
     timeout: 0,
@@ -71,14 +112,13 @@ export default {
       "PoolLogic",
       "PoolManagerLogic",
       "AssetHandler",
-      "Governance",
       "DynamicBonds",
       "DhedgeStakingV2",
       "DhedgeEasySwapper",
       "RewardDistribution",
-      "UniswapV3NonfungiblePositionGuard",
-      "PoolTokenSwapper",
+      "contracts/swappers/poolTokenSwapper/PoolTokenSwapper",
     ],
+    except: ["contracts/interfaces", "contracts/test", "contracts/v2.4.1", "contracts/stakingv2/interfaces"],
     spacing: 2,
   },
   etherscan: {
@@ -87,15 +127,23 @@ export default {
       optimisticEthereum: process.env.OPTIMISTICSCAN_API_KEY,
       polygon: process.env.POLYGONSCAN_API_KEY,
       arbitrumOne: process.env.ARBISCAN_API_KEY,
+      base: process.env.BASESCAN_API_KEY,
     },
+    customChains: [
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org/",
+        },
+      },
+    ],
   },
   typechain: {
     outDir: "./types",
     target: "ethers-v5",
   },
-  // contractSizer: {
-  //   only: ["DhedgeEasySwapper"],
-  // },
 };
 
 // Hack console to just print bigNumbers as normal numbers not as an object

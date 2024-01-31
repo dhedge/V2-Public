@@ -70,17 +70,9 @@ export const poolFactoryJob: IJob<void> = async (
         console.log("Governance deployed to:", governance.address);
         versions[config.newTag].contracts.Governance = governance.address;
 
-        const ERC20Guard = await ethers.getContractFactory("ERC20Guard");
-        const erc20Guard = await ERC20Guard.deploy();
-        await erc20Guard.deployed();
-        console.log("ERC20Guard deployed at ", erc20Guard.address);
-        versions[config.newTag].contracts.ERC20Guard = erc20Guard.address;
-
-        await governance.setAssetGuard(0, erc20Guard.address);
         await governance.transferOwnership(addresses.protocolDaoAddress);
 
         await tryVerify(hre, governance.address, "contracts/Governance.sol:Governance", []);
-        await tryVerify(hre, erc20Guard.address, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
 
         governanceAddress = governance.address;
       }

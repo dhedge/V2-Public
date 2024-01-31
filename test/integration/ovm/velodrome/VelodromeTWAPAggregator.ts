@@ -5,7 +5,7 @@ import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { utils } from "../../utils/utils";
 import { getTokenPriceFromCoingecko } from "../../utils/coingecko/getTokenPrice";
 
-const { assets, price_feeds, velodromeV2 } = ovmChainData;
+const { assets, usdPriceFeeds, velodromeV2 } = ovmChainData;
 
 type ITestParam = typeof velodromeV2 & {
   twapAggregatorName: "VelodromeTWAPAggregator" | "VelodromeV2TWAPAggregator";
@@ -24,13 +24,16 @@ const runTests = ({ VARIABLE_WETH_USDC, twapAggregatorName }: ITestParam) => {
         VARIABLE_WETH_USDC.poolAddress,
         assetToTest,
         assets.usdc,
-        price_feeds.usdc,
+        usdPriceFeeds.usdc,
       );
       await velodromeTwapAggregator.deployed();
 
       const price = (await velodromeTwapAggregator.latestRoundData())[1];
       console.log("price = ", price.toString());
-      const priceFromCoingecko = ethers.utils.parseUnits((await getTokenPriceFromCoingecko(assetToTest)).toString(), 8);
+      const priceFromCoingecko = ethers.utils.parseUnits(
+        (await getTokenPriceFromCoingecko(assetToTest, "optimistic-ethereum")).toString(),
+        8,
+      );
       console.log("priceFromCoingecko = ", priceFromCoingecko.toString());
 
       expect(price).to.be.closeTo(priceFromCoingecko, priceFromCoingecko.div(100)); // 1%

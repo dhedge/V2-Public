@@ -2,7 +2,6 @@
 
 # Functions:
 - [`initialize(address _poolFactory)`](#DhedgeNftTrackerStorage-initialize-address-)
-- [`implInitializer()`](#DhedgeNftTrackerStorage-implInitializer--)
 - [`addData(address _guardedContract, bytes32 _nftType, address _pool, bytes _data)`](#DhedgeNftTrackerStorage-addData-address-bytes32-address-bytes-)
 - [`removeData(address _guardedContract, bytes32 _nftType, address _pool, uint256 _index)`](#DhedgeNftTrackerStorage-removeData-address-bytes32-address-uint256-)
 - [`getData(bytes32 _nftType, address _pool, uint256 _index)`](#DhedgeNftTrackerStorage-getData-bytes32-address-uint256-)
@@ -19,12 +18,6 @@
 
 # Function `initialize(address _poolFactory)` {#DhedgeNftTrackerStorage-initialize-address-}
 No description
-
-
-
-
-# Function `implInitializer()` {#DhedgeNftTrackerStorage-implInitializer--}
-implementations should not be left unintialized
 
 
 

@@ -3,7 +3,7 @@ import { MaiVaultAssetGuardTest } from "../../common/mai/MaiVaultAssetGuardTest"
 
 MaiVaultAssetGuardTest("ovm", {
   maiAddress: ovmChainData.assets.maiStableCoin,
-  maiPriceFeed: ovmChainData.price_feeds.maiStableCoin,
+  maiPriceFeed: ovmChainData.usdPriceFeeds.maiStableCoin,
   // Optimism MAI Vault (OPMVT)
   maiVaultAddress: "0xbf1aeA8670D2528E08334083616dD9C5F3B087aE",
   maiVaultCollateralAsset: ovmChainData.assets.op,
