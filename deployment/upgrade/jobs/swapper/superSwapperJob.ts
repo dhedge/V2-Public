@@ -19,9 +19,6 @@ export const superSwapperJob: IJob<void> = async (
     const DhedgeSuperSwapper = await ethers.getContractFactory("DhedgeSuperSwapper");
     const v2Routers = [...addresses.v2RouterAddresses];
 
-    if (versions[config.newTag].contracts.DhedgeVeloUniV2Router) {
-      v2Routers.push(versions[config.newTag].contracts.DhedgeVeloUniV2Router);
-    }
     if (versions[config.newTag].contracts.DhedgeUniV3V2Router) {
       v2Routers.push(versions[config.newTag].contracts.DhedgeUniV3V2Router);
     }

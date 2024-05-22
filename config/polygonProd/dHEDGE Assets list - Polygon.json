@@ -1050,7 +1050,7 @@
   {
     "assetName": "USDC Native",
     "assetAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-    "assetType": "0",
+    "assetType": "4",
     "specificOracleConfig": {
       "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
     },

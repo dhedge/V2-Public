@@ -18,19 +18,11 @@ contract DhedgeSwapTest {
     weth = _weth;
   }
 
-  function swapTokensIn(
-    address from,
-    address to,
-    uint256 amountIn
-  ) public {
+  function swapTokensIn(address from, address to, uint256 amountIn) public {
     swapRouter.swapTokensIn(weth, from, to, amountIn);
   }
 
-  function swapTokensOut(
-    address from,
-    address to,
-    uint256 amountOut
-  ) public {
+  function swapTokensOut(address from, address to, uint256 amountOut) public {
     swapRouter.swapTokensOut(weth, from, to, amountOut);
   }
 }

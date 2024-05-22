@@ -10,11 +10,7 @@ interface IRamsesRouter {
     bool stable;
   }
 
-  function pairFor(
-    address tokenA,
-    address tokenB,
-    bool stable
-  ) external view returns (address pair);
+  function pairFor(address tokenA, address tokenB, bool stable) external view returns (address pair);
 
   function getAmountOut(
     uint256 amountIn,

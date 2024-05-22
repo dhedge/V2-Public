@@ -29,14 +29,8 @@ contract USDPriceAggregator is IAggregatorV3Interface {
     external
     view
     override
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    )
+    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
   {
-    return (0, 10**8, 0, block.timestamp, 0);
+    return (0, 10 ** 8, 0, block.timestamp, 0);
   }
 }

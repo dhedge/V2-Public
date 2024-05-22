@@ -22,7 +22,7 @@ contract SonneFinanceComptrollerGuard is TxDataUtils, IGuard, ITransactionTypes 
   /// @return _txType The transaction type.
   function txGuard(
     address _poolManagerLogic,
-    address, /* _to */
+    address /* _to */,
     bytes calldata _data
   ) external virtual override returns (uint16 _txType, bool _isPublic) {
     bytes4 method = getMethod(_data);
@@ -54,11 +54,7 @@ contract SonneFinanceComptrollerGuard is TxDataUtils, IGuard, ITransactionTypes 
   /// @dev This function isn't strictly required given that to enter a market, the pool must have
   ///      supplied or borrowed in a market (cToken) and the same checks that are done here are also done
   ///      in the SonneFinanceCTokenGuard.
-  function _enterMarkets(
-    address _poolLogic,
-    address _poolManagerLogic,
-    address[] memory _cTokens
-  ) internal {
+  function _enterMarkets(address _poolLogic, address _poolManagerLogic, address[] memory _cTokens) internal {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
     for (uint16 i = 0; i < _cTokens.length; ++i) {

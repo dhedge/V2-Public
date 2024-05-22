@@ -9,7 +9,9 @@ interface ILiquidityGaugeV4 {
   function reward_tokens(uint256 index) external view returns (address);
 
   // solhint-disable-next-line func-name-mixedcase
-  function reward_data(address tokenInput)
+  function reward_data(
+    address tokenInput
+  )
     external
     view
     returns (

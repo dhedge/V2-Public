@@ -125,11 +125,7 @@ contract SonneFinanceCTokenGuard is TxDataUtils, IGuard, ITransactionTypes {
     return uint16(ITransactionTypes.TransactionType.SonneRepay);
   }
 
-  function _unsupportedAssetChecks(
-    address _poolManagerLogic,
-    address _to,
-    address _underlyingAsset
-  ) internal view {
+  function _unsupportedAssetChecks(address _poolManagerLogic, address _to, address _underlyingAsset) internal view {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
     require(poolManagerLogicAssets.isSupportedAsset(_to), "Given cToken not supported");

@@ -66,16 +66,16 @@ contract VelodromeStableLPAggregator is IAggregatorV3Interface {
     uint256 r = DhedgeMath.sqrt(r0.mul(r1)); // decimal = 18
 
     // ratio = px / py
-    uint256 ratio = px.mul(10**18).div(py); // decimal = 18
+    uint256 ratio = px.mul(10 ** 18).div(py); // decimal = 18
     // p0 = sqrt(ratio)
-    uint256 p0 = DhedgeMath.sqrt(ratio.mul(10**18)); // decimal = 18
+    uint256 p0 = DhedgeMath.sqrt(ratio.mul(10 ** 18)); // decimal = 18
     // p1 = sqrt(1 + ratio^2)
-    uint256 p1 = DhedgeMath.sqrt(10**36 + ratio.mul(ratio)); // decimal = 18
+    uint256 p1 = DhedgeMath.sqrt(10 ** 36 + ratio.mul(ratio)); // decimal = 18
     // p = sqrt(sqrt(ratio) * sqrt(1 + ratio^2))
     uint256 p = DhedgeMath.sqrt(p0.mul(p1)); // decimal = 18
 
     // fairX = sqrt(sqrt(x * y) * sqrt(x^2 + y^2)) / sqrt(sqrt(ratio) * sqrt(1 + ratio^2))
-    fairX = r.mul(10**18).div(p);
+    fairX = r.mul(10 ** 18).div(p);
     fairY = fairX.mul(px).div(py);
   }
 
@@ -87,33 +87,22 @@ contract VelodromeStableLPAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     (uint256 answer0, uint256 answer1) = _getTokenPrices();
     uint256 totalSupply = IVelodromePair(pair).totalSupply();
     (uint256 r0, uint256 r1, ) = IVelodromePair(pair).getReserves();
     uint256 decimal0 = IERC20Extended(token0).decimals();
     uint256 decimal1 = IERC20Extended(token1).decimals();
 
-    r0 = r0.mul(10**18).div(10**decimal0); // decimal = 18
-    r1 = r1.mul(10**18).div(10**decimal1); // decimal = 18
+    r0 = r0.mul(10 ** 18).div(10 ** decimal0); // decimal = 18
+    r1 = r1.mul(10 ** 18).div(10 ** decimal1); // decimal = 18
 
     (uint256 fairX, uint256 fairY) = _calculateFairReserves(r0, r1, answer0, answer1);
 
     uint256 answer = fairX.mul(answer0).add(fairY.mul(answer1)).div(totalSupply); // decimal = 18
 
     // we don't need roundId, startedAt and answeredInRound
-    return (0, int256(answer.div(10**10)), 0, block.timestamp, 0);
+    return (0, int256(answer.div(10 ** 10)), 0, block.timestamp, 0);
   }
 
   /* ========== INTERNAL ========== */

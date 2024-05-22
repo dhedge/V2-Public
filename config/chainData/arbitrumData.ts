@@ -10,7 +10,8 @@ const assets = Object.freeze({
   alusd: "0xcb8fa9a76b8e203d8c3797bf438d8fb81ea3326a",
   ram: "0xaaa6c1e32c55a7bfa8066a6fae9b42650f262418",
   sweth: "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
-  usdcnative: "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+  usdcNative: "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+  wbtc: "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
 });
 
 export const arbitrumChainData = Object.freeze({
@@ -43,7 +44,10 @@ export const arbitrumChainData = Object.freeze({
     frax: 0,
     alusd: 51,
     sweth: 7,
-    usdcnative: 9,
+    usdcNative: 9,
+    wbtc: 51,
+    usdt: 51,
+    dai: 2,
   },
 
   v2Routers: ["0x1b02da8cb0d097eb8d57a175b88c7d8b47997506"], // SushiSwap V2 Router
@@ -60,13 +64,23 @@ export const arbitrumChainData = Object.freeze({
   // https://docs.aave.com/developers/deployed-contracts/v3-mainnet/arbitrum
   aaveV3: {
     lendingPool: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
-    incentives: "0x929EC64c34a17401F460460D4B9390518E5B473e",
-    poolDataProvider: "0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654",
+    incentivesController: "0x929EC64c34a17401F460460D4B9390518E5B473e",
+    protocolDataProvider: "0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654",
+    aTokens: {
+      usdc: "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
+      usdt: "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
+      dai: "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE",
+      weth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
+    },
+    variableDebtTokens: {
+      dai: "0x8619d80FB0141ba7F184CbF22fd724116D9f7ffC",
+      weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
+    },
   },
 
   oneInch: {
-    v4Router: "0x1111111254fb6c44bAC0beD2854e76F90643097d",
     v5Router: "0x1111111254EEB25477B68fb85Ed929f73A960582",
+    v6Router: "0x111111125421ca6dc452d289314280a0f8842a65",
   },
 
   balancer: {
@@ -104,5 +118,14 @@ export const arbitrumChainData = Object.freeze({
       pairAddress: "0xf1a5444a7ed5f24962a118512b076a015b0e6c0b",
       gaugeAddress: "0x9765cDAeC6395B04737EdC22C5b3E7d85677328A",
     },
+  },
+
+  torosPools: {
+    ETHBULL3X: "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
+    BTCBULL3X: "0xad38255febd566809ae387d5be66ecd287947cb9",
+  },
+
+  zeroEx: {
+    exchangeProxy: "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
   },
 });

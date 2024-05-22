@@ -57,15 +57,7 @@ interface IPoolManagerLogic {
 
   function isMemberAllowed(address member) external view returns (bool);
 
-  function getFee()
-    external
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    );
+  function getFee() external view returns (uint256, uint256, uint256, uint256);
 
   function minDepositUSD() external view returns (uint256);
 }

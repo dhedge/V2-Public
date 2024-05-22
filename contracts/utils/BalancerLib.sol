@@ -19,10 +19,10 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 library BalancerLib {
-  uint256 public constant BONE = 10**18;
+  uint256 public constant BONE = 10 ** 18;
   uint256 public constant MIN_BPOW_BASE = 1 wei;
   uint256 public constant MAX_BPOW_BASE = (2 * BONE) - 1 wei;
-  uint256 public constant BPOW_PRECISION = BONE / 10**10;
+  uint256 public constant BPOW_PRECISION = BONE / 10 ** 10;
 
   function btoi(uint256 a) internal pure returns (uint256) {
     return a / BONE;
@@ -105,11 +105,7 @@ library BalancerLib {
     return bmul(wholePow, partialResult);
   }
 
-  function bpowApprox(
-    uint256 base,
-    uint256 exp,
-    uint256 precision
-  ) internal pure returns (uint256) {
+  function bpowApprox(uint256 base, uint256 exp, uint256 precision) internal pure returns (uint256) {
     // term 0:
     uint256 a = exp;
     (uint256 x, bool xneg) = bsubSign(base, BONE);

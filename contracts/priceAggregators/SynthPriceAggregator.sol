@@ -36,13 +36,7 @@ contract SynthPriceAggregator is IAggregatorV3Interface {
     external
     view
     override
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    )
+    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
   {
     (, int256 sUSDUsdPrice, , uint256 updatedAt1, ) = IAggregatorV3Interface(susdPriceAggregator).latestRoundData();
     (, int256 tokenUsdPrice, , uint256 updatedAt2, ) = IAggregatorV3Interface(tokenPriceAggregator).latestRoundData();

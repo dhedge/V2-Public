@@ -11,9 +11,6 @@ contract RamsesTWAPAggregator is VelodromeTWAPAggregator {
     address _pairToken,
     IAggregatorV3Interface _pairTokenUsdAggregator
   )
-    VelodromeTWAPAggregator(_pair, _mainToken, _pairToken, _pairTokenUsdAggregator)
-  // solhint-disable-next-line no-empty-blocks
-  {
-
-  }
+    VelodromeTWAPAggregator(_pair, _mainToken, _pairToken, _pairTokenUsdAggregator) // solhint-disable-next-line no-empty-blocks
+  {}
 }

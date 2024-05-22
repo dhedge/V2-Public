@@ -57,24 +57,13 @@ contract BalancerComposableStablePoolAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     uint256 answer = 0;
     uint256[] memory usdTotals = _getUSDBalances();
 
     answer = _getArithmeticMean(usdTotals); // 18 decimals
 
-    return (0, int256(answer.div(10**10)), 0, block.timestamp, 0); // answer in 8 decimals
+    return (0, int256(answer.div(10 ** 10)), 0, block.timestamp, 0); // answer in 8 decimals
   }
 
   /* ========== INTERNAL ========== */
@@ -94,7 +83,7 @@ contract BalancerComposableStablePoolAggregator is IAggregatorV3Interface {
     for (uint256 index = 0; index < tokens.length; index++) {
       // Composable pool, ignore the Balancer pool token
       if (tokens[index] != address(pool)) {
-        usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10**tokenDecimals[index]);
+        usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10 ** tokenDecimals[index]);
       }
     }
   }
@@ -108,6 +97,6 @@ contract BalancerComposableStablePoolAggregator is IAggregatorV3Interface {
     for (uint256 i = 0; i < tokens.length; i++) {
       totalUsd = totalUsd.add(usdTotals[i]);
     }
-    return totalUsd.mul(10**18).div(pool.getActualSupply());
+    return totalUsd.mul(10 ** 18).div(pool.getActualSupply());
   }
 }

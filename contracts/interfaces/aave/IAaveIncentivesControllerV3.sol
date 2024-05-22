@@ -9,9 +9,5 @@ interface IAaveIncentivesControllerV3 {
     address reward
   ) external returns (uint256);
 
-  function getUserRewards(
-    address[] calldata assets,
-    address user,
-    address reward
-  ) external view returns (uint256);
+  function getUserRewards(address[] calldata assets, address user, address reward) external view returns (uint256);
 }

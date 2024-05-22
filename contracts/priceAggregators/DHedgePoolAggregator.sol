@@ -36,21 +36,10 @@ contract DHedgePoolAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     uint256 tokenPrice = IPoolLogic(poolLogic).tokenPrice();
     // adjust decimals -> 8
-    int256 answer = tokenPrice == 0 ? 0 : int256(tokenPrice.div(10**10));
+    int256 answer = tokenPrice == 0 ? 0 : int256(tokenPrice.div(10 ** 10));
     // we don't need roundId, startedAt and answeredInRound
     return (0, answer, 0, block.timestamp, 0);
   }

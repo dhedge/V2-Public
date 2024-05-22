@@ -25,3 +25,29 @@ Set up to accept only one deposit asset on the vault's settings side, which is W
 ### EasySwapper Withdraw assets
 - **WBTC**. Flash loan USDC to cover debt -> unlock WBTC -> withdraw WBTC -> swap WBTC to WETH quoting all swap routers -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to WBTC (all swap routers are quoted) and send it to the user.
 - **USDC**. Flash loan USDC to cover debt -> unlock WBTC -> withdraw WBTC -> swap WBTC to WETH quoting all swap routers -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to USDC (all swap routers are quoted) and send it to the user.
+- **WETH**. Flash loan USDC to cover debt -> unlock WBTC -> withdraw WBTC -> swap WBTC to WETH quoting all swap routers -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> rest WETH sent to the user.
+
+## Ethereum Bear (ETHBEAR)
+Set up to accept only one deposit asset on the vault's settings side, which is USDC.
+
+### EasySwapper Deposit assets
+
+- **USDC**. No slippage. Makes no swaps and puts USDC directly into the vault where it gets picked by the bot and put into the Aave position.
+- **Native ETH**. There might be slippage, as swap is required.
+
+### EasySwapper Withdraw assets
+- **WETH**. Flash loan WETH to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> repay flash loan -> rest WETH sent to the user.
+- **USDC**. Flash loan WETH to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> repay flash loan -> swap rest WETH to USDC (all swap routers are quoted) and send it to the user.
+
+## Bitcoin Bear (BTCBEAR)
+Set up to accept only one deposit asset on the vault's settings side, which is USDC.
+
+### EasySwapper Deposit assets
+
+- **USDC**. No slippage. Makes no swaps and puts USDC directly into the vault where it gets picked by the bot and put into the Aave position.
+- **Native ETH**. There might be slippage, as swap is required.
+
+### EasySwapper Withdraw assets
+- **WBTC**. Flash loan WBTC to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> swap WETH to WBTC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to WBTC (all swap routers are quoted) and send it to the user.
+- **USDC**. Flash loan WBTC to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> swap WETH to WBTC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to USDC (all swap routers are quoted) and send it to the user.
+- **WETH**. Flash loan WBTC to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> swap WETH to WBTC only through DhedgeUniV3V2Router -> repay flash loan -> rest WETH sent to the user.

@@ -106,14 +106,10 @@ contract UniswapV3AssetGuard is ERC20Guard {
     }
   }
 
-  function _assetValue(
-    address factory,
-    address token,
-    uint256 amount
-  ) internal view returns (uint256) {
+  function _assetValue(address factory, address token, uint256 amount) internal view returns (uint256) {
     if (IHasAssetInfo(factory).isValidAsset(token)) {
       uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token);
-      return tokenPriceInUsd.mul(amount).div(10**IERC20Extended(token).decimals());
+      return tokenPriceInUsd.mul(amount).div(10 ** IERC20Extended(token).decimals());
     } else {
       return 0;
     }
@@ -140,11 +136,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     // withdraw Processing
     // for each nft Position:
@@ -240,7 +232,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
 
     ) = nonfungiblePositionManager.positions(tokenId);
 
-    decreaseLiquidity.lpAmount = uint128(portion.mul(liquidity).div(10**18));
+    decreaseLiquidity.lpAmount = uint128(portion.mul(liquidity).div(10 ** 18));
 
     (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(uniswapV3Factory.getPool(token0, token1, fee)).slot0();
 
@@ -252,7 +244,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     );
 
     (uint256 feeAmount0, uint256 feeAmount1) = nonfungiblePositionManager.fees(tokenId);
-    decreaseLiquidity.amount0 = decreaseLiquidity.amount0.add(feeAmount0.mul(portion).div(10**18));
-    decreaseLiquidity.amount1 = decreaseLiquidity.amount1.add(feeAmount1.mul(portion).div(10**18));
+    decreaseLiquidity.amount0 = decreaseLiquidity.amount0.add(feeAmount0.mul(portion).div(10 ** 18));
+    decreaseLiquidity.amount1 = decreaseLiquidity.amount1.add(feeAmount1.mul(portion).div(10 ** 18));
   }
 }

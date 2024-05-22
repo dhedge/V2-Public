@@ -46,18 +46,7 @@ contract UniV2LPAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     (uint256 answer0, uint256 answer1) = _getTokenPrices();
 
     // calculate lp price
@@ -70,14 +59,14 @@ contract UniV2LPAggregator is IAggregatorV3Interface {
     uint256 decimal0 = IERC20Extended(token0).decimals();
     uint256 decimal1 = IERC20Extended(token1).decimals();
 
-    r0 = r0.mul(10**18).div(10**decimal0); // decimal = 18
-    r1 = r1.mul(10**18).div(10**decimal1); // decimal = 18
+    r0 = r0.mul(10 ** 18).div(10 ** decimal0); // decimal = 18
+    r1 = r1.mul(10 ** 18).div(10 ** decimal1); // decimal = 18
 
     uint256 r = DhedgeMath.sqrt(r0.mul(r1)); // decimal = 18
 
     uint256 p = DhedgeMath.sqrt(answer0.mul(answer1)); // decimal = 18
 
-    uint256 answer = r.mul(p).mul(2).div(totalSupply).div(10**10); // decimal = 8
+    uint256 answer = r.mul(p).mul(2).div(totalSupply).div(10 ** 10); // decimal = 8
 
     // we don't need roundId, startedAt and answeredInRound
     return (0, int256(answer), 0, block.timestamp, 0);

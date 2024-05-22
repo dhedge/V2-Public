@@ -36,6 +36,7 @@ const assets = Object.freeze({
   stg: "0x2f6f07cdcf3588944bf4c42ac74ff24bf56e7590",
   ...torosPools,
   agEur: "0xe0b52e49357fd4daf2c15e02058dce6bc0057db4",
+  usdcNative: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
 });
 
 export const polygonChainData = Object.freeze({
@@ -100,6 +101,7 @@ export const polygonChainData = Object.freeze({
       usdt: "0xfb00AC187a8Eb5AFAE4eACE434F493Eb62672df7",
       weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
       link: "0x953A573793604aF8d41F306FEb8274190dB4aE0e",
+      wbtc: "0x92b42c66840c7ad907b4bf74879ff3ef7c529473",
     },
     stableDebtTokens: {
       usdc: "0x307ffe186F84a3bc2613D1eA417A5737D69A7007",
@@ -160,6 +162,7 @@ export const polygonChainData = Object.freeze({
   oneinch: {
     v4Router: "0x1111111254fb6c44bac0bed2854e76f90643097d",
     v5Router: "0x1111111254eeb25477b68fb85ed929f73a960582",
+    v6Router: "0x111111125421ca6dc452d289314280a0f8842a65",
   },
 
   torosPools,
@@ -198,6 +201,7 @@ export const polygonChainData = Object.freeze({
     wmatic: 3,
     miMatic: 0,
     stMatic: 0,
+    usdcNative: 9,
   },
 
   ethPriceFeeds: {
@@ -232,6 +236,7 @@ export const polygonChainData = Object.freeze({
     { asset: assets.agEur, intermediary: assets.usdc },
     { asset: assets.balancer, intermediary: assets.weth },
     { asset: assets.maticX, intermediary: assets.wmatic },
+    { asset: assets.usdcNative, intermediary: assets.usdc },
   ],
 
   zeroEx: {

@@ -166,14 +166,10 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     creator = msg.sender;
     creationTime = block.timestamp;
 
-    tokenPriceAtLastFeeMint = 10**18;
+    tokenPriceAtLastFeeMint = 10 ** 18;
   }
 
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal virtual override {
+  function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
 
     require(getExitRemainingCooldown(from) == 0, "cooldown active");
@@ -241,7 +237,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint256 fundValue = _mintManagerFee();
 
     //calculate the proportion
-    uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
+    uint256 portion = _fundTokenAmount.mul(10 ** 18).div(totalSupply());
 
     //first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
@@ -280,7 +276,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
     }
 
-    uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
+    uint256 valueWithdrawn = portion.mul(fundValue).div(10 ** 18);
 
     emit Withdrawal(
       address(this),
@@ -333,7 +329,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       }
 
       for (uint256 i = 0; i < txCount; i++) {
-        /* solhint-disable-next-line avoid-low-level-calls */
+        // solhint-disable-next-line avoid-low-level-calls
         (success, ) = transactions[i].to.call(transactions[i].txData);
         require(success, "failed to withdraw tokens");
       }
@@ -354,13 +350,10 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   /// @param to The destination address for pool to talk to
   /// @param data The data that going to send in the transaction
   /// @return success A boolean for success or fail transaction
-  function execTransaction(address to, bytes memory data)
-    external
-    onlyManagerOrTrader
-    nonReentrant
-    whenNotPaused
-    returns (bool success)
-  {
+  function execTransaction(
+    address to,
+    bytes memory data
+  ) external onlyManagerOrTrader nonReentrant whenNotPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
 
     address guard = IHasGuardInfoV24(factory).getGuard(to);
@@ -375,7 +368,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
     uint16 txType = IGuardV24(guard).txGuard(poolManagerLogic, to, data);
     require(txType > 0, "invalid transaction");
 
-    /* solhint-disable-next-line avoid-low-level-calls */
+    // solhint-disable-next-line avoid-low-level-calls
     (success, ) = to.call(data);
     require(success, "failed to execute the call");
 
@@ -385,17 +378,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function getFundSummary()
     external
     view
-    returns (
-      string memory,
-      uint256,
-      uint256,
-      address,
-      string memory,
-      uint256,
-      bool,
-      uint256,
-      uint256
-    )
+    returns (string memory, uint256, uint256, address, string memory, uint256, bool, uint256, uint256)
   {
     uint256 performanceFeeNumerator;
     uint256 managerFeeDenominator;
@@ -424,7 +407,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   function _tokenPrice(uint256 _fundValue, uint256 _tokenSupply) internal pure returns (uint256) {
     if (_tokenSupply == 0 || _fundValue == 0) return 0;
 
-    return _fundValue.mul(10**18).div(_tokenSupply);
+    return _fundValue.mul(10 ** 18).div(_tokenSupply);
   }
 
   function availableManagerFee() external view returns (uint256) {
@@ -454,7 +437,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
   ) internal pure returns (uint256) {
     if (_tokenSupply == 0 || _fundValue == 0) return 0;
 
-    uint256 currentTokenPrice = _fundValue.mul(10**18).div(_tokenSupply);
+    uint256 currentTokenPrice = _fundValue.mul(10 ** 18).div(_tokenSupply);
 
     if (currentTokenPrice <= _lastFeeMintPrice) return 0;
 
@@ -579,7 +562,7 @@ contract PoolLogicV24 is ERC20Upgradeable, ReentrancyGuardUpgradeable {
       .flashloanProcessing(address(this), portion, assets, amounts, premiums, interestRateModes);
 
     for (uint256 i = 0; i < transactions.length; i++) {
-      /* solhint-disable-next-line avoid-low-level-calls */
+      // solhint-disable-next-line avoid-low-level-calls
       (success, ) = transactions[i].to.call(transactions[i].txData);
       require(success, "failed to process flashloan");
     }

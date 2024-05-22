@@ -12,11 +12,10 @@ library EasySwapperV3Helpers {
   /// @param pool the pool the swapper is withdrawing from
   /// @param nonfungiblePositionManager the uni v3 nonfungiblePositionManager
   /// @return assets the assets that the pool has/had in v3 lping positions, that need to be swapper upstream
-  function getUnsupportedV3Assets(address pool, address nonfungiblePositionManager)
-    internal
-    view
-    returns (address[] memory assets)
-  {
+  function getUnsupportedV3Assets(
+    address pool,
+    address nonfungiblePositionManager
+  ) internal view returns (address[] memory assets) {
     uint256 nftCount = INonfungiblePositionManager(nonfungiblePositionManager).balanceOf(pool);
     // Each position has two assets
     assets = new address[](nftCount * 2);

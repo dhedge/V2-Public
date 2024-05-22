@@ -56,11 +56,7 @@ interface IVaultModule {
    * @param collateralType The address of the collateral used in the queried position.
    * @return debtD18 The amount of debt held by the position, denominated with 18 decimals of precision.
    */
-  function getPositionDebt(
-    uint128 accountId,
-    uint128 poolId,
-    address collateralType
-  ) external returns (int256 debtD18);
+  function getPositionDebt(uint128 accountId, uint128 poolId, address collateralType) external returns (int256 debtD18);
 
   /**
    * @notice Returns the amount and value of the collateral associated with the specified liquidity position.
@@ -122,9 +118,10 @@ interface IVaultModule {
    * @return collateralAmountD18 The collateral amount of the vault, denominated with 18 decimals of precision.
    * @return collateralValueD18 The collateral value of the vault, denominated with 18 decimals of precision.
    */
-  function getVaultCollateral(uint128 poolId, address collateralType)
-    external
-    returns (uint256 collateralAmountD18, uint256 collateralValueD18);
+  function getVaultCollateral(
+    uint128 poolId,
+    address collateralType
+  ) external returns (uint256 collateralAmountD18, uint256 collateralValueD18);
 
   /**
    * @notice Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.

@@ -6,11 +6,7 @@ interface ICurveCryptoSwap {
   function underlying_coins(uint256 i) external view returns (address);
 
   // solhint-disable-next-line func-name-mixedcase
-  function get_dy_underlying(
-    uint256 i,
-    uint256 j,
-    uint256 dx
-  ) external view returns (uint256);
+  function get_dy_underlying(uint256 i, uint256 j, uint256 dx) external view returns (uint256);
 
   // solhint-disable-next-line func-name-mixedcase
   function exchange_underlying(

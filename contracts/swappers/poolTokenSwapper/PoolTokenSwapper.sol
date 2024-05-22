@@ -233,13 +233,10 @@ contract PoolTokenSwapper is OwnableUpgradeable, PausableUpgradeable, Reentrancy
   /// @param to The destination address for pool to interact with
   /// @param data The data that going to be sent in the transaction
   /// @return success A boolean for success or failure of the transaction
-  function execTransaction(address to, bytes calldata data)
-    external
-    nonReentrant
-    whenNotPaused
-    onlyManager
-    returns (bool success)
-  {
+  function execTransaction(
+    address to,
+    bytes calldata data
+  ) external nonReentrant whenNotPaused onlyManager returns (bool success) {
     require(to != address(0), "PTS: non-zero address required");
 
     address contractGuard = IHasGuardInfo(poolFactory).getContractGuard(to);
@@ -350,11 +347,7 @@ contract PoolTokenSwapper is OwnableUpgradeable, PausableUpgradeable, Reentrancy
   /// @param tokenOut swap to token address (pool or asset)
   /// @param amountIn swap from token amount
   /// @return amountOut swap to quote amount
-  function getSwapQuote(
-    address tokenIn,
-    address tokenOut,
-    uint256 amountIn
-  ) external view returns (uint256 amountOut) {
+  function getSwapQuote(address tokenIn, address tokenOut, uint256 amountIn) external view returns (uint256 amountOut) {
     (bool assetIn, bool poolIn, bool assetOut, bool poolOut) = _getSwapType(tokenIn, tokenOut);
 
     if (assetIn && poolOut) {
@@ -385,8 +378,8 @@ contract PoolTokenSwapper is OwnableUpgradeable, PausableUpgradeable, Reentrancy
     uint8 decimalsIn = IERC20Extended(assetIn).decimals();
     uint256 poolTokenPrice18 = IPoolLogic(poolOut).tokenPrice();
     uint256 assetPrice18 = IFactory(poolFactory).getAssetPrice(assetIn);
-    uint256 assetValue18 = amountIn.mul(assetPrice18).div(10**decimalsIn);
-    amountOut = assetValue18.mul(10**18).div(poolTokenPrice18);
+    uint256 assetValue18 = amountIn.mul(assetPrice18).div(10 ** decimalsIn);
+    amountOut = assetValue18.mul(10 ** 18).div(poolTokenPrice18);
 
     uint256 swapFee = _getSwapFee(amountOut, poolOut);
 
@@ -409,8 +402,8 @@ contract PoolTokenSwapper is OwnableUpgradeable, PausableUpgradeable, Reentrancy
     uint8 toDecimals = IERC20Extended(assetOut).decimals();
     uint256 poolTokenPrice18 = IPoolLogic(poolIn).tokenPrice();
     uint256 assetPrice18 = IFactory(poolFactory).getAssetPrice(assetOut);
-    uint256 poolValue18 = amountIn.mul(poolTokenPrice18).div(10**18);
-    amountOut = poolValue18.mul(10**toDecimals).div(assetPrice18);
+    uint256 poolValue18 = amountIn.mul(poolTokenPrice18).div(10 ** 18);
+    amountOut = poolValue18.mul(10 ** toDecimals).div(assetPrice18);
 
     uint256 swapFee = _getSwapFee(amountOut, poolIn);
 
@@ -432,8 +425,8 @@ contract PoolTokenSwapper is OwnableUpgradeable, PausableUpgradeable, Reentrancy
   ) internal view onlyEnabledPools(poolIn, poolOut) returns (uint256 amountOut) {
     uint256 poolInTokenPrice18 = IPoolLogic(poolIn).tokenPrice();
     uint256 poolToTokenPrice18 = IPoolLogic(poolOut).tokenPrice();
-    uint256 poolInValue18 = amountIn.mul(poolInTokenPrice18).div(10**18);
-    amountOut = poolInValue18.mul(10**18).div(poolToTokenPrice18);
+    uint256 poolInValue18 = amountIn.mul(poolInTokenPrice18).div(10 ** 18);
+    amountOut = poolInValue18.mul(10 ** 18).div(poolToTokenPrice18);
 
     uint256 swapFeeIn = _getSwapFee(amountOut, poolIn);
     uint256 swapFeeOut = _getSwapFee(amountOut, poolOut);
@@ -478,16 +471,10 @@ contract PoolTokenSwapper is OwnableUpgradeable, PausableUpgradeable, Reentrancy
     require(swapFeeAmount > 0, "PTS: invalid swap fee");
   }
 
-  function _getSwapType(address _tokenIn, address _tokenOut)
-    private
-    view
-    returns (
-      bool assetIn,
-      bool poolIn,
-      bool assetOut,
-      bool poolOut
-    )
-  {
+  function _getSwapType(
+    address _tokenIn,
+    address _tokenOut
+  ) private view returns (bool assetIn, bool poolIn, bool assetOut, bool poolOut) {
     if (poolConfiguration[_tokenIn].poolEnabled) poolIn = true;
     if (poolConfiguration[_tokenOut].poolEnabled) poolOut = true;
     if (assetConfiguration[_tokenIn]) assetIn = true;

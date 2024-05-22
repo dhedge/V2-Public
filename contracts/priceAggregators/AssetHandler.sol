@@ -16,7 +16,10 @@
 // 16 = Stargate LP/Staking Asset
 // 17 = Mai Vault Asset
 // 20 = Ramses LP/Gauge Asset
+// 21 = Flat Money's UNIT
+// 22 = Flat Money's Collateral
 // 25 = Velodrome V2 LP/Gauge Asset
+// 26 = Velodrome CL Position Asset
 // 100 = Lyra OptionMarketWrapper Asset
 // 101 = Synthetix Futures Perps v1
 // 102 = Synthetix Futures Perps v2
@@ -81,7 +84,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
       require(updatedAt.add(chainlinkTimeout) >= block.timestamp, "Chainlink price expired");
 
       if (_price > 0) {
-        price = uint256(_price).mul(10**10); // convert Chainlink decimals 8 -> 18
+        price = uint256(_price).mul(10 ** 10); // convert Chainlink decimals 8 -> 18
       }
     } catch {
       revert("Price get failed");
@@ -105,11 +108,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   /// @param asset Address of the asset to add
   /// @param assetType Type of the asset
   /// @param aggregator Address of the aggregator
-  function addAsset(
-    address asset,
-    uint16 assetType,
-    address aggregator
-  ) public override onlyOwner {
+  function addAsset(address asset, uint16 assetType, address aggregator) public override onlyOwner {
     require(asset != address(0), "asset address cannot be 0");
     require(aggregator != address(0), "aggregator address cannot be 0");
 

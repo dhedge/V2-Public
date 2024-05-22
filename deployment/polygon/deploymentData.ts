@@ -3,7 +3,7 @@ import { polygonChainData } from "../../config/chainData/polygonData";
 import { IAddresses, IFileNames } from "../types";
 import { BigNumber } from "ethers";
 
-const { aaveV3, torosPools, uniswapV3, assets } = polygonChainData;
+const { aaveV3, torosPools, uniswapV3, assets, aaveV2 } = polygonChainData;
 
 // Openzepplin doesn't support having two distinct deployments of the same contracts to the same chain.
 // Itt always looks for the file "polygon.json" (previous unknown-137.json as 137 is the chainId).
@@ -52,10 +52,11 @@ const polygonAddresses: IAddresses = {
   balancerV2VaultAddress: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
   balancerMerkleOrchardAddress: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",
   sushiMiniChefV2Address: "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F",
-  aaveIncentivesControllerAddress: "0x357D51124f59836DeD84c8a1730D72B749d8BC23",
+
   aaveV2: {
-    aaveProtocolDataProviderAddress: "0x7551b5D2763519d4e37e8B81929D336De671d46d",
-    aaveLendingPoolAddress: "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
+    aaveProtocolDataProviderAddress: aaveV2.protocolDataProvider,
+    aaveLendingPoolAddress: aaveV2.lendingPool,
+    aaveIncentivesControllerAddress: aaveV2.incentivesController,
   },
 
   aaveV3: {
@@ -64,11 +65,31 @@ const polygonAddresses: IAddresses = {
     aaveIncentivesControllerAddress: aaveV3.incentivesController,
   },
 
+  aaveMigrationHelper: {
+    migrationHelperAddress: "0x3db487975aB1728DB5787b798866c2021B24ec52",
+    dHedgeVaultsWhitelist: [
+      "0xf4b3a195587d2735b656b7ffe9060f478faf1b32", // Test vault with portfolio same as Ethereum Bear 2X
+      "0xcc940b5c6136994bed41bff5d88b170929921e9e", // Test vault with portfolio same as Bitcoin Bear 2X
+      assets.ETHBEAR2X, // Ethereum Bear 2X
+      assets.BTCBEAR2X, // Bitcoin Bear 2X
+      assets.ETHBULL3X, // Ethereum Bull 3X
+      assets.BTCBULL3X, // Bitcoin Bull 3X
+    ],
+    aaveV3DebtTokensWhitelist: [
+      aaveV3.variableDebtTokens.usdc,
+      aaveV3.variableDebtTokens.weth,
+      aaveV3.variableDebtTokens.wbtc,
+    ],
+  },
+
   quickStakingRewardsFactoryAddress: "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f",
   v2RouterAddresses: polygonChainData.v2Routers,
   quickLpUsdcWethStakingRewardsAddress: "0x4A73218eF2e820987c59F838906A82455F42D98b",
+
   oneInchV4RouterAddress: polygonChainData.oneinch.v4Router,
   oneInchV5RouterAddress: polygonChainData.oneinch.v5Router,
+  oneInchV6RouterAddress: polygonChainData.oneinch.v6Router,
+
   uniV3: {
     uniswapV3RouterAddress: uniswapV3.router,
     uniSwapV3NonfungiblePositionManagerAddress: uniswapV3.nonfungiblePositionManager,
@@ -111,6 +132,11 @@ const polygonAddresses: IAddresses = {
   },
 
   zeroExExchangeProxy: polygonChainData.zeroEx.exchangeProxy,
+
+  slippageAccumulator: {
+    decayTime: 86400, // 24 hours
+    maxCumulativeSlippage: 10e4, // 10%
+  },
 };
 
 export const polygonProdAddresses: IAddresses = {

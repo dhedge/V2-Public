@@ -400,17 +400,7 @@ contract PoolFactory is
   /// @return The maximum manager fee numerator
   /// @return The maximum entry fee numerator
   /// @return The maximum manager fee denominator
-  function getMaximumFee()
-    external
-    view
-    override
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    )
-  {
+  function getMaximumFee() external view override returns (uint256, uint256, uint256, uint256) {
     return (
       maximumPerformanceFeeNumerator,
       maximumManagerFeeNumerator,
@@ -577,11 +567,7 @@ contract PoolFactory is
    * @param data Calldata for the target address.
    * @param targetVersion set target version after call
    */
-  function _upgradePool(
-    address pool,
-    bytes calldata data,
-    uint256 targetVersion
-  ) internal {
+  function _upgradePool(address pool, bytes calldata data, uint256 targetVersion) internal {
     require(pool != address(0), "target-invalid");
     require(data.length > 0, "data-invalid");
     require(poolVersion[pool] < targetVersion, "already upgraded");

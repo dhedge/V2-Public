@@ -1,4 +1,4 @@
-name: Run Lint & Test
+name: Run Basic Checks
 
 on:
   pull_request:
@@ -10,37 +10,26 @@ on:
 
 jobs:
   checks:
-    name: Linting & Unit Tests
+    name: Compiling, Linting, Unit Testing
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: 16
-
-      - name: Hit node_modules cache
-        uses: actions/cache@v3
-        id: node-cache
+          version: ^8.0.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
-
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-
-      - name: Hardhat compile
-        run: npx hardhat compile
-
-      - name: Run lint
-        run: npm run lint
-
-      - name: Run test
-        run: npm run test:unit
+          node-version: 18
+          cache: "pnpm"
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./
+      - name: Lint
+        run: pnpm lint
+      - name: Check formatting
+        run: pnpm prettier:check
+      - name: Test (Unit)
+        run: pnpm test:unit

@@ -66,9 +66,9 @@ const deployEasySwapper = async (
     swapRouter: versions[latestVersion].contracts.DhedgeSuperSwapper,
     weth: addresses.assets.weth,
     synthetixProps: {
-      snxProxy: addresses.synthetixProxyAddress || "0x0000000000000000000000000000000000000000",
+      snxProxy: addresses.synthetixProxyAddress || ethers.constants.AddressZero,
       swapSUSDToAsset: addresses.assets.dai,
-      sUSDProxy: addresses.assets.susd || "0x0000000000000000000000000000000000000000",
+      sUSDProxy: addresses.assets.susd || ethers.constants.AddressZero,
     },
     nativeAssetWrapper: addresses.assets.nativeAssetWrapper,
   });

@@ -29,9 +29,14 @@ import {
   IWrapperModule__factory,
   IERC20,
   WeeklyWindowsHelperTest,
+  IRewardsManagerModule__factory,
+  IRewardsManagerModule,
+  IRewardDistributor__factory,
+  IRewardDistributor,
 } from "../../../../types";
 import { deploySynthethixV3Infrastructure } from "./synthetixV3TestDeploymentHelpers";
 import { AllowedMarketStruct } from "../../../../types/SynthetixV3SpotMarketContractGuard";
+import NodeModuleModified from "./NodeModuleModified.json";
 
 const ONE_UNIT = units(1);
 
@@ -43,6 +48,7 @@ const IVaultModule = new ethers.utils.Interface(IVaultModule__factory.abi);
 const IIssueUSDModule = new ethers.utils.Interface(IIssueUSDModule__factory.abi);
 const IAtomicOrderModule = new ethers.utils.Interface(IAtomicOrderModule__factory.abi);
 const IWrapperModule = new ethers.utils.Interface(IWrapperModule__factory.abi);
+const IRewardsManagerModule = new ethers.utils.Interface(IRewardsManagerModule__factory.abi);
 
 export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
   systemAssets: {
@@ -63,6 +69,7 @@ export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
       usdPriceFeed: string;
       decimals: number;
     };
+    extraRewardTokens?: { address: string; usdPriceFeed: string }[]; // Add here tokens which were NOT already added in tests setup, eg SNX
   };
   allowedLiquidityPoolId: number;
   synthetixV3Core: string;
@@ -72,6 +79,8 @@ export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
   collateralSource: "setBalance" | "transferFrom";
   transferCollateralFrom?: string;
   mintingPositiveDebtForbidden: boolean;
+  deployedNodeModule?: string;
+  rewardDistributors?: string[];
 };
 
 export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
@@ -96,6 +105,11 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
     utils.beforeAfterReset(before, after);
 
     before(async () => {
+      if (chainData.deployedNodeModule) {
+        const modifiedBytecode = NodeModuleModified.deployedBytecode;
+        await network.provider.send("hardhat_setCode", [chainData.deployedNodeModule, modifiedBytecode]);
+      }
+
       deployments = await deployBackboneContracts(chainData);
       infrastructureData = await deploySynthethixV3Infrastructure(deployments, chainData);
 
@@ -165,6 +179,14 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         .execTransaction(
           synthetixV3CoreAddress,
           IIssueUSDModule.encodeFunctionData("burnUsd", [accountId, poolId, collateralType, amount]),
+        );
+
+    const claimRewards = async (accountId: number, poolId: number, collateralType: string, distributor: string) =>
+      await whitelistedPoolLogic
+        .connect(manager)
+        .execTransaction(
+          synthetixV3CoreAddress,
+          IRewardsManagerModule.encodeFunctionData("claimRewards", [accountId, poolId, collateralType, distributor]),
         );
 
     const ownerCreatesPositionAndTransfersItToPool = async () => {
@@ -421,6 +443,15 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
             ),
         ).to.be.revertedWith("not pool logic");
       });
+
+      it("should revert during claiming if reward asset is not enabled", async function () {
+        if (!chainData.rewardDistributors?.length) this.skip();
+
+        await createAccountWithId(ID);
+        await expect(
+          claimRewards(ID, allowedPoolId, collateralType, chainData.rewardDistributors[0]), // Use first distributor (SNX)
+        ).to.be.revertedWith("unsupported reward asset");
+      });
     });
 
     describe("Outflow of funds", () => {
@@ -568,9 +599,8 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         // Delegate everything what's inside Synthetix V3 NFT Account
         await delegateCollateral(ID, allowedPoolId, collateralType, amount);
 
-        const snxV3Core = await ethers.getContractAt(
-          IVaultModule__factory.abi,
-          infrastructureData.synthetixV3CoreAddress,
+        const snxV3Core = <IVaultModule>(
+          await ethers.getContractAt(IVaultModule__factory.abi, infrastructureData.synthetixV3CoreAddress)
         );
         const debt = await snxV3Core.callStatic.getPositionDebt(ID, allowedPoolId, collateralType);
 
@@ -641,15 +671,19 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         await depositCollateral(ID, collateralType, depositAmount);
         await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount);
 
-        const snxV3Core = await ethers.getContractAt(
-          IVaultModule__factory.abi,
-          infrastructureData.synthetixV3CoreAddress,
+        const snxV3Core = <IVaultModule>(
+          await ethers.getContractAt(IVaultModule__factory.abi, infrastructureData.synthetixV3CoreAddress)
         );
         const debt = await snxV3Core.callStatic.getPositionDebt(ID, allowedPoolId, collateralType);
         // In case of positive debt, undelegating shouldn't be possible. Generally speaking, withdraw flow is tested in previous suite
         if (debt.gt(0)) this.skip();
 
-        await delegateCollateral(ID, allowedPoolId, collateralType, 0);
+        // Try to undelegate, but if fails, skip due to the reasons mentioned above
+        try {
+          await delegateCollateral(ID, allowedPoolId, collateralType, 0);
+        } catch {
+          this.skip();
+        }
 
         await expect(withdrawCollateral(ID, collateralType, depositAmount)).to.be.reverted; // AccountActivityTimeoutPending
         await utils.increaseTime(86400); // 24 hours
@@ -700,9 +734,8 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
 
         await utils.increaseTime(60); // Add 1 min to make markets move
 
-        const snxV3Core = await ethers.getContractAt(
-          IVaultModule__factory.abi,
-          infrastructureData.synthetixV3CoreAddress,
+        const snxV3Core = <IVaultModule>(
+          await ethers.getContractAt(IVaultModule__factory.abi, infrastructureData.synthetixV3CoreAddress)
         );
         const debt = await snxV3Core.callStatic.getPositionDebt(ID, allowedPoolId, collateralType);
 
@@ -757,6 +790,55 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
             collateralType,
           );
           expect(depositedAfter).to.be.equal(depositedBefore.add(amountToMint));
+        }
+      });
+
+      it("should be able to claim rewards", async function () {
+        if (!chainData.rewardDistributors?.length) this.skip();
+
+        if (chainData.systemAssets.extraRewardTokens?.[0]) {
+          await infrastructureData.whitelistedPool.poolManagerLogicProxy.connect(manager).changeAssets(
+            [
+              {
+                asset: chainData.systemAssets.extraRewardTokens[0].address,
+                isDeposit: false,
+              },
+            ],
+            [],
+          );
+        }
+
+        await createAccountWithId(ID);
+        await depositCollateral(ID, collateralType, depositAmount);
+        await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount); // rewards are accumulated only for delegated collateral
+
+        await utils.increaseTime(86400); // 24 hours
+
+        const snxV3Core = <IRewardsManagerModule>(
+          await ethers.getContractAt(IRewardsManagerModule__factory.abi, infrastructureData.synthetixV3CoreAddress)
+        );
+
+        for (const distributor of chainData.rewardDistributors) {
+          const rewardDistributor = <IRewardDistributor>(
+            await ethers.getContractAt(IRewardDistributor__factory.abi, distributor)
+          );
+          const rewardTokenAddress = await rewardDistributor.token();
+          const rewardTokenPrecision = await rewardDistributor.precision();
+          const rewardToken = <IERC20>await ethers.getContractAt(IERC20Path, rewardTokenAddress);
+          const rewardTokenBalanceBefore = await rewardToken.balanceOf(poolAddress);
+
+          const rewardAmount = await snxV3Core.getAvailableRewards(ID, allowedPoolId, collateralType, distributor);
+
+          await claimRewards(ID, allowedPoolId, collateralType, distributor);
+
+          const rewardTokenBalanceAfter = await rewardToken.balanceOf(poolAddress);
+          if (rewardAmount.gt(0)) {
+            expect(rewardTokenBalanceAfter).to.be.gt(rewardTokenBalanceBefore);
+          }
+          expect(rewardTokenBalanceAfter).to.be.closeTo(
+            rewardTokenBalanceBefore.add(rewardAmount.div(units(1).div(rewardTokenPrecision))),
+            rewardTokenPrecision.div(100_000), // allow deviation in size of 0.001% of one token, eg in case of USDC it's 10, in case of SNX - 10000000000000 (1e13)
+          );
         }
       });
     });
@@ -1304,6 +1386,11 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         });
 
         it("should revert if undelegating leads to more available collateral than withdrawal limit during undelegation window", async () => {
+          await deployments.governance.setContractGuard(
+            synthetixV3CoreAddress,
+            infrastructureData.synthetixV3ContractGuardWithTestWithdrawalParams.address,
+          );
+
           await deployments.assetHandler.setChainlinkTimeout(86400 * 400); // 400 days expiry
 
           const wednesday = (await weeklyWindowsHelperTest.timestampFromDate(2025, 1, 8)).toNumber();

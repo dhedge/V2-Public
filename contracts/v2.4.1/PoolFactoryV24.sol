@@ -436,11 +436,7 @@ contract PoolFactoryV24 is
    * @param data Calldata for the target address.
    * @param targetVersion set target version after call
    */
-  function _upgradePool(
-    address pool,
-    bytes calldata data,
-    uint256 targetVersion
-  ) internal {
+  function _upgradePool(address pool, bytes calldata data, uint256 targetVersion) internal {
     require(pool != address(0), "target-invalid");
     require(data.length > 0, "data-invalid");
     bytes memory _data = data;

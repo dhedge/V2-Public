@@ -114,7 +114,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
     minBondPrice = _minBondPrice;
     maxPayoutAvailable = _maxPayoutAvailable;
 
-    _payoutTokenUnit = 10**IERC20Extended(_payoutToken).decimals();
+    _payoutTokenUnit = 10 ** IERC20Extended(_payoutToken).decimals();
   }
 
   // ========== VIEWS ==========
@@ -224,11 +224,7 @@ contract DynamicBonds is OwnableUpgradeable, PausableUpgradeable {
   /// @notice Creates a new bond for the user
   /// @param _payoutAmount payout amount
   /// @param _bondOptionIndex bond option index
-  function deposit(
-    uint256 _maxDepositAmount,
-    uint256 _payoutAmount,
-    uint256 _bondOptionIndex
-  ) external {
+  function deposit(uint256 _maxDepositAmount, uint256 _payoutAmount, uint256 _bondOptionIndex) external {
     require(block.timestamp <= bondTerms.expiryTimestamp, "expired");
     require(_payoutAmount <= bondTerms.payoutAvailable, "insufficient available payout");
     require(_bondOptionIndex < bondTerms.bondOptions.length, "invalid bond option index");

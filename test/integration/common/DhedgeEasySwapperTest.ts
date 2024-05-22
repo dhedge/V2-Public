@@ -18,6 +18,7 @@ import { toBytes32 } from "../../testHelpers";
 import { utils } from "../utils/utils";
 import { createFund } from "../utils/createFund";
 import { Address } from "../../../deployment/types";
+import { AssetType } from "../../../deployment/upgrade/jobs/assetsJob";
 
 const SIXTEEN_MINUTES = 60 * 16;
 
@@ -36,6 +37,7 @@ interface EasySwapperTestsChainData {
   assets: {
     weth: string;
     usdc: string;
+    dai: string;
     susd?: string;
     snxProxy?: string;
   };
@@ -48,9 +50,6 @@ interface EasySwapperTestsChainData {
     factory: string;
     router: string;
   };
-  velodrome?: {
-    router: string;
-  };
   velodromeV2?: {
     router: string;
     factory: string;
@@ -60,6 +59,10 @@ interface EasySwapperTestsChainData {
   };
   proxyAdmin: string;
   routeHints: { asset: string; intermediary: string }[];
+  aaveV3: {
+    protocolDataProvider: string;
+    lendingPool: string;
+  };
 }
 
 export const DhedgeEasySwapperTests = (
@@ -71,7 +74,7 @@ export const DhedgeEasySwapperTests = (
   nativeAssetWrapper: Address,
   emptyNeverFundedDhedgePoolMustAcceptWETH: Address,
 ) => {
-  const { assets, assetsBalanceOfSlot, v2Routers, uniswapV3, velodrome, velodromeV2, routeHints, ramses } = chainData;
+  const { assets, assetsBalanceOfSlot, v2Routers, uniswapV3, velodromeV2, routeHints, ramses, aaveV3 } = chainData;
   // Must accept usdc
   const BASE_TEST_POOL = baseTestDhedgePoolMustAcceptUSDC;
   describe("DhedgeEasySwapper Toros Tests", function () {
@@ -112,13 +115,6 @@ export const DhedgeEasySwapperTests = (
       const dhedgeUniV3V2Router = await DhedgeUniV3V2Router.deploy(uniswapV3.factory, uniswapV3.router);
       await dhedgeUniV3V2Router.deployed();
 
-      if (velodrome) {
-        const DhedgeVeloUniV2Router = await ethers.getContractFactory("DhedgeVeloUniV2Router");
-        const dhedgeVeloUniV2Router = await DhedgeVeloUniV2Router.deploy(velodrome.router);
-        await dhedgeVeloUniV2Router.deployed();
-        v2Routers.push(dhedgeVeloUniV2Router.address);
-      }
-
       if (velodromeV2) {
         const DhedgeVeloV2UniV2Router = await ethers.getContractFactory("DhedgeVeloV2UniV2Router");
         const dhedgeVeloV2UniV2Router = await DhedgeVeloV2UniV2Router.deploy(velodromeV2.router, velodromeV2.factory);
@@ -156,7 +152,7 @@ export const DhedgeEasySwapperTests = (
         swapRouter: swapRouter.address,
         weth: assets.weth,
         synthetixProps: {
-          swapSUSDToAsset: assets.usdc,
+          swapSUSDToAsset: assets.dai,
           sUSDProxy: assets.susd || ethers.constants.AddressZero,
           snxProxy: assets.snxProxy || ethers.constants.AddressZero,
         },
@@ -166,12 +162,10 @@ export const DhedgeEasySwapperTests = (
       const assetHandler = await ethers.getContractAt("AssetHandler", await poolFactory.getAssetHandler());
 
       const assetHandlerOwner = await utils.impersonateAccount(await assetHandler.owner());
-      // Manual overwriting the synthetix assets to type 1
-      // Can remove these once the assets are configured correctly
       assetHandler.connect(assetHandlerOwner).addAssets([
         {
           asset: BASE_TEST_POOL, // enables Toros pool as an asset
-          assetType: "0",
+          assetType: AssetType["Chainlink direct USD price feed with 8 decimals"],
           aggregator: dHedgePoolAggregator.address,
         },
       ]);
@@ -182,12 +176,26 @@ export const DhedgeEasySwapperTests = (
       );
 
       const govSigner = await utils.impersonateAccount(await governance.owner());
-      await governance.connect(govSigner).setAssetGuard(1, await governance.assetGuards(0));
+      await governance
+        .connect(govSigner)
+        .setAssetGuard(
+          AssetType["Synthetix synth with Chainlink direct USD price feed"],
+          await governance.assetGuards(0),
+        );
       await governance.connect(govSigner).setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
       await governance
         .connect(govSigner)
         .setAddresses([{ name: toBytes32("swapRouter"), destination: swapRouter.address }]);
       await governance.connect(govSigner).setAddresses([{ name: toBytes32("weth"), destination: assets.weth }]);
+      const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+      const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
+        aaveV3.protocolDataProvider,
+        aaveV3.lendingPool,
+      );
+      await aaveLendingPoolAssetGuard.deployed();
+      await governance
+        .connect(govSigner)
+        .setAssetGuard(AssetType["Aave V3 Lending Pool Asset"], aaveLendingPoolAssetGuard.address);
 
       await dhedgeEasySwapper.setFee(0, 0);
 

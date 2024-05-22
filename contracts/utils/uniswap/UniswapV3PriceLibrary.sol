@@ -89,20 +89,20 @@ library UniswapV3PriceLibrary {
     uint8 token0Decimals,
     uint8 token1Decimals
   ) internal pure returns (uint160 sqrtPriceX96) {
-    uint256 priceRatio = token0Price.mul(10**token1Decimals).div(token1Price);
+    uint256 priceRatio = token0Price.mul(10 ** token1Decimals).div(token1Price);
 
     // Overflow protection for the price ratio shift left
     bool overflowProtection;
-    if (priceRatio > 10**18) {
+    if (priceRatio > 10 ** 18) {
       overflowProtection = true;
-      priceRatio = priceRatio.div(10**10); // decrease 10 decimals
+      priceRatio = priceRatio.div(10 ** 10); // decrease 10 decimals
     }
-    require(priceRatio <= 10**18 && priceRatio > 1000, "Uni v3 price ratio out of bounds");
+    require(priceRatio <= 10 ** 18 && priceRatio > 1000, "Uni v3 price ratio out of bounds");
 
-    sqrtPriceX96 = uint160(DhedgeMath.sqrt((priceRatio << 192).div(10**token0Decimals)));
+    sqrtPriceX96 = uint160(DhedgeMath.sqrt((priceRatio << 192).div(10 ** token0Decimals)));
 
     if (overflowProtection) {
-      sqrtPriceX96 = uint160(sqrtPriceX96.mul(10**5)); // increase 5 decimals (revert adjustment)
+      sqrtPriceX96 = uint160(sqrtPriceX96.mul(10 ** 5)); // increase 5 decimals (revert adjustment)
     }
   }
 }

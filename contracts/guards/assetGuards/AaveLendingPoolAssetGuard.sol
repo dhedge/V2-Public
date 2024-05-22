@@ -40,6 +40,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ERC20Guard.sol";
 import "../../interfaces/IERC20Extended.sol";
 import "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import "../../interfaces/guards/ISlippageCheckingGuard.sol";
 import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
@@ -50,23 +51,21 @@ import "../../interfaces/uniswapV2/IUniswapV2Router.sol";
 /// @title Aave lending pool asset guard
 /// @dev Asset type = 3 : v2
 /// @dev Asset type = 8 : v3
-contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
+contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard, ISlippageCheckingGuard {
   using SafeMathUpgradeable for uint256;
 
-  // For Aave decimal calculation
-  // solhint-disable-next-line state-visibility
-  uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
-  // solhint-disable-next-line state-visibility
-  uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
+  bool public override isSlippageCheckingGuard = true;
 
-  IAaveProtocolDataProvider public aaveProtocolDataProvider;
-  address public override aaveLendingPool;
+  IAaveProtocolDataProvider public immutable aaveProtocolDataProvider;
 
+  address public immutable override aaveLendingPool;
+
+  /// @param _aaveProtocolDataProvider Aave protocol data provider address
+  /// @param _aaveLendingPool Aave lending pool address
   constructor(address _aaveProtocolDataProvider, address _aaveLendingPool) {
-    // solhint-disable-next-line reason-string
-    require(_aaveProtocolDataProvider != address(0), "_aaveProtocolDataProvider address cannot be 0");
-    // solhint-disable-next-line reason-string
-    require(_aaveLendingPool != address(0), "_aaveLendingPool address cannot be 0");
+    require(_aaveProtocolDataProvider != address(0), "invalid address");
+    require(_aaveLendingPool != address(0), "invalid address");
+
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveLendingPool = _aaveLendingPool;
   }
@@ -98,8 +97,8 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
 
         if (collateralBalance != 0 || debtBalance != 0) {
           tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(asset);
-          totalCollateralInUsd = totalCollateralInUsd.add(tokenPriceInUsd.mul(collateralBalance).div(10**decimals));
-          totalDebtInUsd = totalDebtInUsd.add(tokenPriceInUsd.mul(debtBalance).div(10**decimals));
+          totalCollateralInUsd = totalCollateralInUsd.add(tokenPriceInUsd.mul(collateralBalance).div(10 ** decimals));
+          totalDebtInUsd = totalDebtInUsd.add(tokenPriceInUsd.mul(debtBalance).div(10 ** decimals));
         }
       }
     }
@@ -128,11 +127,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     (
       address[] memory borrowAssets,
@@ -228,15 +223,10 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   /// @return collateralBalance the AToken balance
   /// @return debtBalance the DebtToken balance
   /// @return decimals the asset decimals
-  function _calculateAaveBalance(address pool, address asset)
-    internal
-    view
-    returns (
-      uint256 collateralBalance,
-      uint256 debtBalance,
-      uint256 decimals
-    )
-  {
+  function _calculateAaveBalance(
+    address pool,
+    address asset
+  ) internal view returns (uint256 collateralBalance, uint256 debtBalance, uint256 decimals) {
     (address aToken, address stableDebtToken, address variableDebtToken) = aaveProtocolDataProvider
       .getReserveTokensAddresses(asset);
     if (aToken != address(0)) {
@@ -252,11 +242,10 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   /// @param portion the portion of assets to be withdrawn
   /// @return collateralAssets the collateral assets list
   /// @return amounts the asset balance per each collateral asset
-  function _calculateCollateralAssets(address pool, uint256 portion)
-    internal
-    view
-    returns (address[] memory collateralAssets, uint256[] memory amounts)
-  {
+  function _calculateCollateralAssets(
+    address pool,
+    uint256 portion
+  ) internal view returns (address[] memory collateralAssets, uint256[] memory amounts) {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
     IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
 
@@ -275,7 +264,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
         amounts[index] = IERC20(aToken).balanceOf(pool);
         if (amounts[index] != 0) {
           collateralAssets[index] = supportedAssets[i].asset;
-          amounts[index] = amounts[index].mul(portion).div(10**18);
+          amounts[index] = amounts[index].mul(portion).div(10 ** 18);
           index++;
         }
       }
@@ -295,14 +284,13 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   /// @return borrowAssets the borrow assets list
   /// @return amounts the asset balance per each borrow asset
   /// @return interestRateModes the interest rate modes per each borrow asset
-  function _calculateBorrowAssets(address pool, uint256 portion)
+  function _calculateBorrowAssets(
+    address pool,
+    uint256 portion
+  )
     internal
     view
-    returns (
-      address[] memory borrowAssets,
-      uint256[] memory amounts,
-      uint256[] memory interestRateModes
-    )
+    returns (address[] memory borrowAssets, uint256[] memory amounts, uint256[] memory interestRateModes)
   {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
     IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
@@ -323,7 +311,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
         amounts[index] = IERC20(stableDebtToken).balanceOf(pool);
         if (amounts[index] != 0) {
           borrowAssets[index] = supportedAssets[i].asset;
-          amounts[index] = amounts[index].mul(portion).div(10**18);
+          amounts[index] = amounts[index].mul(portion).div(10 ** 18);
           interestRateModes[index] = 1;
           index++;
           continue;
@@ -334,7 +322,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
         amounts[index] = IERC20(variableDebtToken).balanceOf(pool);
         if (amounts[index] != 0) {
           borrowAssets[index] = supportedAssets[i].asset;
-          amounts[index] = amounts[index].mul(portion).div(10**18);
+          amounts[index] = amounts[index].mul(portion).div(10 ** 18);
           interestRateModes[index] = 2;
           index++;
           continue;
@@ -468,12 +456,11 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
   ) internal view returns (MultiTransaction[] memory transactions) {
     (address[] memory collateralAssets, uint256[] memory amounts) = _calculateCollateralAssets(pool, portion);
 
-    // We have 4 transactions for each collateral asset.
+    // We have 3 transactions for each collateral asset.
     // 1. Withdraw collateral asset from aave
     // 2. Approve collateral asset for swap router
     // 3. Swap collateral asset to WETH
-    // 4. Approve collateral asset for swap router (zero amount)
-    uint256 length = collateralAssets.length.mul(4);
+    uint256 length = collateralAssets.length.mul(3);
     transactions = new MultiTransaction[](length);
 
     address[] memory path = new address[](2);
@@ -508,14 +495,6 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard {
           path,
           pool,
           uint256(-1)
-        );
-        txCount++;
-
-        transactions[txCount].to = collateralAssets[i];
-        transactions[txCount].txData = abi.encodeWithSelector(
-          bytes4(keccak256("approve(address,uint256)")),
-          swapRouter,
-          0
         );
         txCount++;
       }

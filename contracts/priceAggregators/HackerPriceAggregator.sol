@@ -22,13 +22,7 @@ contract HackerPriceAggregator is IAggregatorV3Interface {
   uint256 public updatedAt;
   uint80 public answeredInRound;
 
-  constructor(
-    uint80 _roundId,
-    int256 _answer,
-    uint256 _startedAt,
-    uint256 _updatedAt,
-    uint80 _answeredInRound
-  ) {
+  constructor(uint80 _roundId, int256 _answer, uint256 _startedAt, uint256 _updatedAt, uint80 _answeredInRound) {
     roundId = _roundId;
     answer = _answer;
     startedAt = _startedAt;
@@ -44,18 +38,7 @@ contract HackerPriceAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     return (roundId, answer, startedAt, updatedAt, answeredInRound);
   }
 

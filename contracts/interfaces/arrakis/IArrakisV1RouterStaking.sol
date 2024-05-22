@@ -10,13 +10,7 @@ interface IArrakisV1RouterStaking {
     uint256 amount1Min,
     uint256 amountSharesMin,
     address receiver
-  )
-    external
-    returns (
-      uint256 amount0,
-      uint256 amount1,
-      uint256 mintAmount
-    );
+  ) external returns (uint256 amount0, uint256 amount1, uint256 mintAmount);
 
   function removeLiquidityAndUnstake(
     address gauge,
@@ -24,11 +18,5 @@ interface IArrakisV1RouterStaking {
     uint256 amount0Min,
     uint256 amount1Min,
     address receiver
-  )
-    external
-    returns (
-      uint256 amount0,
-      uint256 amount1,
-      uint128 liquidityBurned
-    );
+  ) external returns (uint256 amount0, uint256 amount1, uint128 liquidityBurned);
 }

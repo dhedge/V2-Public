@@ -52,10 +52,10 @@ const chainTestData = {
   token0token1Pair: arbitrumChainData.ramses.USDC_swETH.pairAddress,
   token0token1Gauge: arbitrumChainData.ramses.USDC_swETH.gaugeAddress,
   token0token1IsStable: arbitrumChainData.ramses.USDC_swETH.isStable,
-  token0: arbitrumChainData.assets.usdcnative, // to be priced against (has Chainlink price feed)
+  token0: arbitrumChainData.assets.usdcNative, // to be priced against (has Chainlink price feed)
   token1: arbitrumChainData.assets.sweth, // to be priced
   usdPriceFeedToken0: arbitrumChainData.usdPriceFeeds.usdc,
-  token0Slot: arbitrumChainData.assetsBalanceOfSlot.usdcnative,
+  token0Slot: arbitrumChainData.assetsBalanceOfSlot.usdcNative,
   token1Slot: arbitrumChainData.assetsBalanceOfSlot.sweth,
 };
 

@@ -21,6 +21,7 @@ const assets = Object.freeze({
   snxUSD: "0xb2F30A7C980f052f02563fb518dcc39e6bf38175",
   wstETH: "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb",
   link: "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6",
+  usdcNative: "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
 });
 
 export const ovmChainData = Object.freeze({
@@ -29,6 +30,7 @@ export const ovmChainData = Object.freeze({
   oneinch: {
     v4Router: "0x1111111254760F7ab3F16433eea9304126DCd199",
     v5Router: "0x1111111254eeb25477b68fb85ed929f73a960582",
+    v6Router: "0x111111125421ca6dc452d289314280a0f8842a65",
   },
 
   synthetix: {
@@ -99,6 +101,7 @@ export const ovmChainData = Object.freeze({
     susd: 3,
     op: 0,
     snx: 3,
+    usdcNative: 9,
   },
 
   usdPriceFeeds: {
@@ -180,10 +183,12 @@ export const ovmChainData = Object.freeze({
     BTCBEAR1X: "0x83d1fa384ec44c2769a3562ede372484f26e141b",
     LINKBULL2X: "0x9fa29b1f55f57e7af577ea2bc8a8e4488aa150f1",
     LINKBEAR1X: "0xe17a1b2038fa5d725a3cb077ad6c242062b4872b",
+    ETHBULL3X: "0x32b1d1bfd4b3b0cb9ff2dcd9dac757aa64d4cb69",
+    BTCBULL3X: "0xb03818de4992388260b62259361778cf98485dfe",
   },
 
   velodrome: {
-    velo: "0x3c8B650257cFb5f272f799F5e2b4e65093a11a05",
+    velo: assets.velo,
     voter: "0x09236cff45047dbee6b921e00704bed6d6b8cf7e",
     factory: "0x25CbdDb98b35ab1FF77413456B31EC81A6B6B746",
     router: "0x9c12939390052919aF3155f41Bf4160Fd3666A6f",
@@ -226,6 +231,11 @@ export const ovmChainData = Object.freeze({
     },
   },
 
+  velodromeCL: {
+    nonfungiblePositionManager: "0xbb5dfe1380333cee4c2eebd7202c80de2256adf4",
+    factory: "0x548118C7E0B865C2CfA94D15EC86B666468ac758",
+  },
+
   arrakis: {
     v1RouterStaking: "0x9ce88a56d120300061593ef7ad074a1b710094d5",
     usdcWethGauge: "0xb8888ea29e2f70ad62a3b69b1a1342720612a00d",
@@ -241,6 +251,7 @@ export const ovmChainData = Object.freeze({
     { asset: assets.lusd, intermediary: assets.usdc },
     { asset: assets.wstETH, intermediary: assets.weth },
     { asset: assets.link, intermediary: assets.weth },
+    { asset: assets.usdcNative, intermediary: assets.usdc },
   ],
 
   zeroEx: {

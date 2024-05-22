@@ -32,12 +32,7 @@ contract PrivateTokenSwap is Ownable {
   // The user that is alone able to call the withdraw and swap functions
   address public user;
 
-  constructor(
-    IERC20 _originalToken,
-    IERC20 _exchangeToken,
-    uint256 _exchangeRate,
-    address _user
-  ) {
+  constructor(IERC20 _originalToken, IERC20 _exchangeToken, uint256 _exchangeRate, address _user) {
     originalToken = _originalToken;
     exchangeToken = _exchangeToken;
     exchangeRate = _exchangeRate; // 18 decimals
@@ -61,7 +56,7 @@ contract PrivateTokenSwap is Ownable {
     uint256 originalBalance = originalToken.balanceOf(address(this));
 
     uint256 exchangeRateAdjusted = getExchangeRateAdjusted();
-    uint256 withdrawalAmountMax = exchangeBalance.mul(10**EXCHANGE_RATE_DECIMALS).div(exchangeRateAdjusted);
+    uint256 withdrawalAmountMax = exchangeBalance.mul(10 ** EXCHANGE_RATE_DECIMALS).div(exchangeRateAdjusted);
 
     originalToken.safeTransfer(user, withdrawalAmountMax.min(originalBalance));
   }
@@ -73,7 +68,7 @@ contract PrivateTokenSwap is Ownable {
     uint256 exchangeBalance = exchangeToken.balanceOf(address(this));
     uint256 exchangeRateAdjusted = getExchangeRateAdjusted();
 
-    uint256 exchangeAmountMax = originalBalance.mul(exchangeRateAdjusted).div(10**EXCHANGE_RATE_DECIMALS);
+    uint256 exchangeAmountMax = originalBalance.mul(exchangeRateAdjusted).div(10 ** EXCHANGE_RATE_DECIMALS);
 
     if (exchangeBalance >= exchangeAmountMax) {
       // Swap the full balance of originalToken from user's wallet
@@ -84,7 +79,7 @@ contract PrivateTokenSwap is Ownable {
       originalToken.safeTransferFrom(
         msg.sender,
         address(this),
-        exchangeBalance.mul(10**EXCHANGE_RATE_DECIMALS).div(exchangeRateAdjusted)
+        exchangeBalance.mul(10 ** EXCHANGE_RATE_DECIMALS).div(exchangeRateAdjusted)
       );
       exchangeToken.safeTransfer(msg.sender, exchangeBalance);
     }
@@ -106,8 +101,8 @@ contract PrivateTokenSwap is Ownable {
 
   /// @notice Gets a decimals adjusted exchange rate
   function getExchangeRateAdjusted() public view returns (uint256 exchangeRateAdjusted) {
-    uint256 originalTokenUnit = 10**IERC20Extended(address(originalToken)).decimals();
-    uint256 exchangeTokenUnit = 10**IERC20Extended(address(exchangeToken)).decimals();
+    uint256 originalTokenUnit = 10 ** IERC20Extended(address(originalToken)).decimals();
+    uint256 exchangeTokenUnit = 10 ** IERC20Extended(address(exchangeToken)).decimals();
     exchangeRateAdjusted = exchangeRate.mul(exchangeTokenUnit).div(originalTokenUnit);
     require(exchangeRateAdjusted > 0, "Invalid exchange rate");
   }

@@ -139,13 +139,7 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     view
     override
     whenNotPaused
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    )
+    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
   {
     uint256 updatedAt1 = blockTimestampLast;
     require(updatedAt1.add(updateInterval.mul(12)) > block.timestamp, "TWAP price expired");
@@ -154,12 +148,12 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     updatedAt = updatedAt1 > updatedAt2 ? updatedAt2 : updatedAt1;
 
     if (pairTokenDecimals < 8) {
-      answer = consult().mul(usdPrice).mul(int256(10**(8 - pairTokenDecimals))).div(
-        int256(10**pairTokenUsdAggregator.decimals())
+      answer = consult().mul(usdPrice).mul(int256(10 ** (8 - pairTokenDecimals))).div(
+        int256(10 ** pairTokenUsdAggregator.decimals())
       );
     } else {
-      answer = consult().mul(usdPrice).div(int256(10**(pairTokenDecimals - 8))).div(
-        int256(10**pairTokenUsdAggregator.decimals())
+      answer = consult().mul(usdPrice).div(int256(10 ** (pairTokenDecimals - 8))).div(
+        int256(10 ** pairTokenUsdAggregator.decimals())
       );
     }
 
@@ -233,7 +227,7 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
     // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
     twapLastIndex++;
     twaps[twapLastIndex] = (FixedPoint.uq112x112(uint224((priceCumulative - priceCumulativeLast) / timeElapsed)))
-      .mul(10**mainTokenDecimals)
+      .mul(10 ** mainTokenDecimals)
       .decode144();
 
     priceCumulativeLast = priceCumulative;

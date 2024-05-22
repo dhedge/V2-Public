@@ -82,14 +82,10 @@ contract ArrakisLiquidityGaugeV4AssetGuard is ERC20Guard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     uint256 totalAssetBalance = IERC20Extended(asset).balanceOf(pool);
-    uint256 burnAmount = totalAssetBalance.mul(portion).div(10**18);
+    uint256 burnAmount = totalAssetBalance.mul(portion).div(10 ** 18);
 
     if (burnAmount > 0) {
       // should approve gauge asset to unstake
@@ -140,14 +136,10 @@ contract ArrakisLiquidityGaugeV4AssetGuard is ERC20Guard {
     }
   }
 
-  function _assetValue(
-    address factory,
-    address token,
-    uint256 amount
-  ) internal view returns (uint256) {
+  function _assetValue(address factory, address token, uint256 amount) internal view returns (uint256) {
     if (IHasAssetInfo(factory).isValidAsset(token)) {
       uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token);
-      return tokenPriceInUsd.mul(amount).div(10**IERC20Extended(token).decimals());
+      return tokenPriceInUsd.mul(amount).div(10 ** IERC20Extended(token).decimals());
     } else {
       return 0;
     }

@@ -105,6 +105,21 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
     }
   }
 
+  function _isValidOwnedTokenId(
+    address poolLogic,
+    uint256 tokenId
+  ) internal view returns (bool isValid, uint256 index) {
+    // find token ids from nft tracker
+    uint256[] memory tokenIds = getOwnedTokenIds(poolLogic);
+    uint256 i;
+    for (i = 0; i < tokenIds.length; i++) {
+      if (tokenId == tokenIds[i]) {
+        return (true, i);
+      }
+    }
+    return (false, i);
+  }
+
   /// @notice Transaction guard for Uniswap V3 non-fungible Position Manager
   /// @dev Parses the manager transaction data to ensure transaction is valid
   /// @param _poolManagerLogic Pool address
@@ -171,6 +186,10 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
         (INonfungiblePositionManager.IncreaseLiquidityParams)
       );
 
+      // validate token id from nft tracker
+      (bool isValidTokenId, ) = _isValidOwnedTokenId(pool, param.tokenId);
+      require(isValidTokenId, "position is not in track");
+
       emit IncreaseLiquidity(
         poolManagerLogic.poolLogic(),
         param.tokenId,
@@ -236,11 +255,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
   /// @dev It supports close/open/forceClose position
   /// @param poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  function afterTxGuard(
-    address poolManagerLogic,
-    address to,
-    bytes memory data
-  ) public virtual override {
+  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public virtual override {
     afterTxGuardHandle(poolManagerLogic, to, data);
   }
 
@@ -273,16 +288,9 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
     } else if (method == INonfungiblePositionManager.burn.selector) {
       uint256 tokenId = abi.decode(getParams(data), (uint256));
 
-      // find token ids from nft tracker
-      uint256[] memory tokenIds = getOwnedTokenIds(poolLogic);
-      uint256 i;
-      for (i = 0; i < tokenIds.length; i++) {
-        if (tokenId == tokenIds[i]) {
-          break;
-        }
-      }
-
-      require(i < tokenIds.length, "position is not in track");
+      // validate token id from nft tracker
+      (bool isValidTokenId, uint256 i) = _isValidOwnedTokenId(poolLogic, tokenId);
+      require(isValidTokenId, "position is not in track");
 
       DhedgeNftTrackerStorage(nftTracker).removeData(to, NFT_TYPE, poolLogic, i);
 

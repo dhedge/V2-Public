@@ -3,7 +3,7 @@ import { launchSynthetixV3Tests } from "../../common/synthetixV3/SynthetixV3Test
 import { units } from "../../../testHelpers";
 
 launchSynthetixV3Tests({
-  assets: { ...baseChainData.assets, usdt: "0xf99faf12efe98c6b67a4a96cbb5265af846d6319" }, // USDT address is a stub
+  assets: { ...baseChainData.assets },
   usdPriceFeeds: baseChainData.usdPriceFeeds,
   systemAssets: {
     collateral: {
@@ -23,6 +23,12 @@ launchSynthetixV3Tests({
       usdPriceFeed: baseChainData.usdPriceFeeds.usdc,
       decimals: 6,
     },
+    extraRewardTokens: [
+      {
+        address: baseChainData.assets.snx,
+        usdPriceFeed: baseChainData.usdPriceFeeds.snx,
+      },
+    ],
   },
   allowedLiquidityPoolId: 1,
   synthetixV3Core: baseChainData.synthetixV3.core,
@@ -34,4 +40,6 @@ launchSynthetixV3Tests({
   collateralSource: "transferFrom",
   transferCollateralFrom: "0x25ca6760fc0936127a6e34c3cbd63064b8a0de1f", // should be an account which holds sUSDC
   mintingPositiveDebtForbidden: true,
+  deployedNodeModule: "0x67a5a7785D0ebd65e44eaB4FeC55ca81c80c95b1",
+  rewardDistributors: ["0x45063DCd92f56138686810eacB1B510C941d6593", "0xe92bcD40849BE5a5eb90065402e508aF4b28263b"], // Spartan Council Pool SNX Rewards, Spartan Council Pool USDC Rewards
 });

@@ -8,6 +8,7 @@ import { assetSetting } from "../../utils/deployContracts/getChainAssets";
 import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 import { ISynthetixV3TestsParams } from "./SynthetixV3Test";
 import { VaultSettingStruct } from "../../../../types/SynthetixV3ContractGuard";
+import { units } from "../../../testHelpers";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 
@@ -59,6 +60,11 @@ const REAL_WINDOWS = {
   },
 };
 
+// $50k and 10%
+const PROD_WITHDRAWAL_LIMIT = { usdValue: units(50_000), percent: units(1, 17) };
+// $50 and 10%
+const TEST_WITHDRAWAL_LIMIT = { usdValue: units(50), percent: units(1, 17) };
+
 export const deploySynthethixV3Infrastructure = async (
   deployments: IBackboneDeployments,
   deploymentParams: ISynthetixV3TestsParams,
@@ -99,6 +105,14 @@ export const deploySynthethixV3Infrastructure = async (
         deploymentParams.systemAssets.tokenToCollateral.usdPriceFeed,
       ),
     ]);
+  }
+
+  if (deploymentParams.systemAssets.extraRewardTokens) {
+    await deployments.assetHandler.addAssets(
+      deploymentParams.systemAssets.extraRewardTokens.map(({ address, usdPriceFeed }) =>
+        assetSetting(address, AssetType["Chainlink direct USD price feed with 8 decimals"], usdPriceFeed),
+      ),
+    );
   }
 
   const assets = [
@@ -155,13 +169,27 @@ export const deploySynthethixV3Infrastructure = async (
     ],
     deploymentParams.synthetixV3Core,
   ];
-  const synthetixV3ContractGuard = await SynthetixV3ContractGuard.deploy(...coreContractGuardParams, FAKE_WINDOWS);
+  // This is to test core guard logic, but do not care about periods when specific actions are allowed (fake weekly windows params)
+  const synthetixV3ContractGuard = await SynthetixV3ContractGuard.deploy(
+    ...coreContractGuardParams,
+    FAKE_WINDOWS,
+    PROD_WITHDRAWAL_LIMIT,
+  );
   await synthetixV3ContractGuard.deployed();
+  // This is to test guard logic related to weekly windows, thus production windows params are used
   const synthetixV3ContractGuardWithRealWindows = await SynthetixV3ContractGuard.deploy(
     ...coreContractGuardParams,
     REAL_WINDOWS,
+    PROD_WITHDRAWAL_LIMIT,
   );
   await synthetixV3ContractGuardWithRealWindows.deployed();
+  // This is only to test "undelegation limit breached" revert, when total value of the vault to test is too low for the production limit values
+  const synthetixV3ContractGuardWithTestWithdrawalParams = await SynthetixV3ContractGuard.deploy(
+    ...coreContractGuardParams,
+    REAL_WINDOWS,
+    TEST_WITHDRAWAL_LIMIT,
+  );
+  await synthetixV3ContractGuardWithTestWithdrawalParams.deployed();
 
   await deployments.governance.setContractGuard(deploymentParams.synthetixV3Core, synthetixV3ContractGuard.address);
 
@@ -251,5 +279,6 @@ export const deploySynthethixV3Infrastructure = async (
     iERC20,
     synthetixV3ContractGuardWithRealWindows,
     weeklyWindowsHelper,
+    synthetixV3ContractGuardWithTestWithdrawalParams,
   };
 };

@@ -67,11 +67,7 @@ contract SynthetixFuturesMarketAssetGuard is ClosedAssetGuard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     bool canLiquidate = IFuturesMarket(asset).canLiquidate(pool);
     // This should nearly never happen, should always be previously liquidated by keeper.
@@ -91,14 +87,14 @@ contract SynthetixFuturesMarketAssetGuard is ClosedAssetGuard {
     (uint256 margin, ) = IFuturesMarket(asset).remainingMargin(pool);
     // This is the fee for closing this portion of the position
     // We account for it so that withdrawing doesn't negatively impact the performance of the pool
-    uint256 marginPortion = margin.mul(portion).div(10**18);
+    uint256 marginPortion = margin.mul(portion).div(10 ** 18);
     uint256 minMargin = IFuturesMarketSettings(IFuturesMarket(asset).resolver().getAddress("FuturesMarketSettings"))
       .minInitialMargin();
     (, , , , int128 size) = IFuturesMarket(asset).positions(pool);
 
     // If there is an open position and the withdraw brings the margin under the minimum margin we close the whole position
     // This returns the funds to the pool. Where they will be distributed to the withdrawer upstream.
-    if (size != 0 && (margin.sub(marginPortion) < minMargin || portion == 10**18)) {
+    if (size != 0 && (margin.sub(marginPortion) < minMargin || portion == 10 ** 18)) {
       transactions = new MultiTransaction[](2);
       transactions[0].to = asset;
       transactions[0].txData = abi.encodeWithSelector(IFuturesMarket.closePosition.selector);
@@ -107,7 +103,7 @@ contract SynthetixFuturesMarketAssetGuard is ClosedAssetGuard {
       return (withdrawAsset, withdrawBalance, transactions);
     }
 
-    int256 reduceDelta = -size.mul(int256(portion)).div(10**18);
+    int256 reduceDelta = -size.mul(int256(portion)).div(10 ** 18);
     (uint256 fee, ) = IFuturesMarket(asset).orderFee(reduceDelta);
     uint256 marginSubFee = marginPortion > fee ? marginPortion.sub(fee) : 0;
 

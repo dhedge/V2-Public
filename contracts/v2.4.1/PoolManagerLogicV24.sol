@@ -213,7 +213,7 @@ contract PoolManagerLogicV24 is Initializable, IPoolManagerLogicV24, IHasSupport
     uint256 price = IHasAssetInfoV24(factory).getAssetPrice(asset);
     uint256 decimals = assetDecimal(asset);
 
-    return price.mul(amount).div(10**decimals);
+    return price.mul(amount).div(10 ** decimals);
   }
 
   function assetValue(address asset) public view override returns (uint256) {
@@ -228,11 +228,7 @@ contract PoolManagerLogicV24 is Initializable, IPoolManagerLogicV24, IHasSupport
   function getFundComposition()
     public
     view
-    returns (
-      Asset[] memory assets,
-      uint256[] memory balances,
-      uint256[] memory rates
-    )
+    returns (Asset[] memory assets, uint256[] memory balances, uint256[] memory rates)
   {
     uint256 assetCount = supportedAssets.length;
     assets = new Asset[](assetCount);

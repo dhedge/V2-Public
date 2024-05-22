@@ -17,7 +17,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { createFund } from "../../utils/createFund";
 import { getAccountToken } from "../../utils/getAccountTokens";
-import { getCurrentTick, mintLpAsPool, UniV3LpMintSettings } from "../../utils/uniV3Utils";
+import { getCurrentTick, mintLpAsPool, mintLpAsUser, UniV3LpMintSettings } from "../../utils/uniV3Utils";
 import { deployContracts, IAssetSetting, IDeployments, NETWORK } from "../../utils/deployContracts/deployContracts";
 import { utils } from "../../utils/utils";
 
@@ -377,6 +377,48 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         await mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings);
 
         tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(poolLogicProxy.address, 0);
+      });
+
+      it("Should not be able to increase liquidity on other tokenId", async () => {
+        const token0 = bothSupportedPair.token0;
+        const token1 = bothSupportedPair.token1;
+        const fee = bothSupportedPair.fee;
+        const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
+        const tickSpacing = fee / 50;
+        const mintSettings: UniV3LpMintSettings = {
+          token0,
+          token1,
+          fee,
+          amount0: bothSupportedPair.amount0,
+          amount1: bothSupportedPair.amount1,
+          tickLower: tick - tickSpacing * 2,
+          tickUpper: tick + tickSpacing * 2,
+        };
+
+        // manager mints another position outside of the dhedge pool
+        await mintLpAsUser(nonfungiblePositionManager, manager, mintSettings);
+        const tokenIdByManager = await nonfungiblePositionManager.tokenOfOwnerByIndex(manager.address, 0);
+
+        const positionBefore = await nonfungiblePositionManager.positions(tokenId);
+        const managerPositionBefore = await nonfungiblePositionManager.positions(tokenIdByManager);
+
+        // increase manager's own LP position
+        const increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
+          [tokenIdByManager, bothSupportedPair.amount0, bothSupportedPair.amount1, 0, 0, deadLine],
+        ]);
+
+        const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+        await expect(
+          poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, increaseLiquidityABI),
+        ).to.revertedWith("position is not in track");
+
+        const positionAfter = await nonfungiblePositionManager.positions(tokenId);
+        const managerPositionAfter = await nonfungiblePositionManager.positions(tokenIdByManager);
+
+        expect(managerPositionBefore.liquidity).to.eq(managerPositionAfter.liquidity);
+        expect(positionBefore.liquidity).to.eq(positionAfter.liquidity);
+        expect(await poolManagerLogicProxy.totalFundValue()).to.eq(totalFundValueBefore);
       });
 
       it("Should be able to increase liquidity", async () => {

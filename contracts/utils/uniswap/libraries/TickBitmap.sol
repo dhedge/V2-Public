@@ -18,11 +18,7 @@ library TickBitmap {
   }
 
   /// Written by Ithil
-  function computeWordPos(
-    int24 tick,
-    int24 tickSpacing,
-    bool lte
-  ) internal pure returns (int16 wordPos) {
+  function computeWordPos(int24 tick, int24 tickSpacing, bool lte) internal pure returns (int16 wordPos) {
     int24 compressed = tick / tickSpacing;
     if (tick < 0 && tick % tickSpacing != 0) compressed--; // round towards negative infinity
 
@@ -33,11 +29,7 @@ library TickBitmap {
   /// @param selfResult The result of the mapping in which to flip the tick (Ithil modified)
   /// @param tick The tick to flip
   /// @param tickSpacing The spacing between usable ticks
-  function flipTick(
-    uint256 selfResult,
-    int24 tick,
-    int24 tickSpacing
-  ) internal pure {
+  function flipTick(uint256 selfResult, int24 tick, int24 tickSpacing) internal pure {
     // solhint-disable-next-line reason-string
     require(tick % tickSpacing == 0); // ensure that the tick is spaced
     (, uint8 bitPos) = position(tick / tickSpacing);

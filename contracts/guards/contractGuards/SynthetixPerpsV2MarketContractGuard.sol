@@ -118,11 +118,7 @@ contract SynthetixPerpsV2MarketContractGuard is TxDataUtils, IGuard {
     return (txType, false);
   }
 
-  function _maxLeverageCheck(
-    address poolLogic,
-    address to,
-    int256 sizeDelta
-  ) internal view {
+  function _maxLeverageCheck(address poolLogic, address to, int256 sizeDelta) internal view {
     IPerpsV2Market.Position memory position = IPerpsV2Market(to).positions(poolLogic);
     uint256 newPositionValue;
     int256 newPositionSize = position.size.add(sizeDelta);

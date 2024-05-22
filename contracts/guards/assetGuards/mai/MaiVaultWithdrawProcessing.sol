@@ -70,11 +70,7 @@ abstract contract MaiVaultWithdrawProcessing is ClosedAssetGuard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     address maiVaultContactGuard = IHasGuardInfo(IPoolLogic(pool).factory()).getContractGuard(asset);
     uint256[] memory vaultIds = MaiVaultContractGuard(maiVaultContactGuard).getNftIds(pool, asset);
@@ -115,20 +111,15 @@ abstract contract MaiVaultWithdrawProcessing is ClosedAssetGuard {
   /// @param vaultId the vault nftID
   /// @param portion the withdrawers portion
   /// @param withdrawer the withdrawers address
-  function processWithdrawAndReturn(
-    address vault,
-    uint256 vaultId,
-    uint256 portion,
-    address withdrawer
-  ) external {
+  function processWithdrawAndReturn(address vault, uint256 vaultId, uint256 portion, address withdrawer) external {
     address factory = IPoolLogic(msg.sender).factory();
     IStableQiVault maiVault = IStableQiVault(vault);
 
     // This updates the vaults debt - used by qi when streaming fees are enabled
     uint256 debtAmountInMai = maiVault.updateVaultDebt(vaultId);
     uint256 collateralAmount = maiVault.vaultCollateral(vaultId);
-    uint256 debtPortionInMai = debtAmountInMai.mul(portion).div(10**18);
-    uint256 collateralPortion = maiVault.vaultCollateral(vaultId).mul(portion).div(10**18);
+    uint256 debtPortionInMai = debtAmountInMai.mul(portion).div(10 ** 18);
+    uint256 collateralPortion = maiVault.vaultCollateral(vaultId).mul(portion).div(10 ** 18);
     address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
 
     if (collateralAmount != 0) {
@@ -141,7 +132,7 @@ abstract contract MaiVaultWithdrawProcessing is ClosedAssetGuard {
         // assetValue is 10**18 usdc is 10**6 + 1% buffer
         uint256 usdBorrowAmount = IPoolManagerLogic(IPoolLogic(msg.sender).poolManagerLogic())
           .assetValue(maiVault.mai(), debtPortionInMai)
-          .div(10**12)
+          .div(10 ** 12)
           .mul(103)
           .div(100);
         bytes memory params = abi.encode(
@@ -210,12 +201,7 @@ abstract contract MaiVaultWithdrawProcessing is ClosedAssetGuard {
   /// @param mai the vault nftID
   /// @param maiAmount the withdrawers portion
   /// @param usdcAmount the withdrawers address
-  function buyMai(
-    address swapRouter,
-    address mai,
-    uint256 maiAmount,
-    uint256 usdcAmount
-  ) private {
+  function buyMai(address swapRouter, address mai, uint256 maiAmount, uint256 usdcAmount) private {
     address[] memory path = new address[](2);
     path[0] = usdc;
     path[1] = mai;

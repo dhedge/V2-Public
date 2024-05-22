@@ -25,7 +25,10 @@ import "./MaiVaultWithdrawProcessing.sol";
 contract MaiVaultAssetGuard is MaiVaultWithdrawProcessing {
   using SafeMath for uint256;
 
-  constructor(address _usdc, address _aaveLendingPoolV3)
+  constructor(
+    address _usdc,
+    address _aaveLendingPoolV3
+  )
     MaiVaultWithdrawProcessing(_usdc, _aaveLendingPoolV3) // solhint-disable-next-line no-empty-blocks
   {}
 
@@ -59,11 +62,10 @@ contract MaiVaultAssetGuard is MaiVaultWithdrawProcessing {
   /// @param asset address of the maiVault
   /// @return collateralAmount The amount of collateral in all positions
   /// @return debtAmountInMai The amount of mai owing across all positions
-  function _getTotalDebtAndCollateral(address pool, address asset)
-    private
-    view
-    returns (uint256 collateralAmount, uint256 debtAmountInMai)
-  {
+  function _getTotalDebtAndCollateral(
+    address pool,
+    address asset
+  ) private view returns (uint256 collateralAmount, uint256 debtAmountInMai) {
     address maiVaultContactGuard = IHasGuardInfo(IPoolLogic(pool).factory()).getContractGuard(asset);
     IStableQiVault maiVault = IStableQiVault(asset);
 

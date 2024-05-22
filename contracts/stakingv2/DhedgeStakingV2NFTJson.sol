@@ -157,7 +157,7 @@ contract DhedgeStakingV2NFTJson {
       if (stake.dhedgePoolAddress != address(0)) {
         uint256 poolAmount = stake.dhedgePoolAmount;
         // div(10**36) would give us flat dollars, so we div(10**34) and then take the last two digits as decimals
-        uint256 amount = poolAmount.mul(currentTokenPrice).div(10**34);
+        uint256 amount = poolAmount.mul(currentTokenPrice).div(10 ** 34);
         string memory amountStr = Strings.toString(amount);
         uint256 length = bytes(amountStr).length;
         string memory dollars = length > 2 ? substring(amountStr, 0, length.sub(2)) : "0";
@@ -197,13 +197,13 @@ contract DhedgeStakingV2NFTJson {
         guts,
         "<text id='DHTVDHT---' xml:space='preserve'><tspan x='64' y='547' font-size='28' fill='#000000' xml:space='preserve'>DHT:VDHT</tspan><tspan font-size='12' fill='#000000' xml:space='preserve'></tspan></text>"
         "<text id='dht:vdht' xml:space='preserve'><tspan x='64' y='585' font-size='32' font-weight='700' fill='#000000' xml:space='preserve'>",
-        Strings.toString(stake.dhtAmount.div(10**18)),
+        Strings.toString(stake.dhtAmount.div(10 ** 18)),
         ":",
-        Strings.toString(vDHT.div(10**18)),
+        Strings.toString(vDHT.div(10 ** 18)),
         "</tspan><tspan font-size='12' fill='#000000' xml:space='preserve'></tspan></text>",
         "<text id='Rewards---' xml:space='preserve'><tspan x='64' y='636' font-size='28' fill='#000000' xml:space='preserve'>Rewards:</tspan><tspan font-size='12' fill='#000000' xml:space='preserve'></tspan></text>",
         "<text id='10-DHT--' xml:space='preserve'><tspan x='64' y='674' font-size='32' font-weight='700' fill='#000000' xml:space='preserve'>",
-        Strings.toString(rewards.div(10**18)),
+        Strings.toString(rewards.div(10 ** 18)),
         "DHT</tspan><tspan font-size='12' fill='#000000' xml:space='preserve'></tspan></text>"
       )
     );
@@ -246,11 +246,7 @@ contract DhedgeStakingV2NFTJson {
     return string(buffer);
   }
 
-  function substring(
-    string memory str,
-    uint256 startIndex,
-    uint256 endIndex
-  ) public pure returns (string memory) {
+  function substring(string memory str, uint256 startIndex, uint256 endIndex) public pure returns (string memory) {
     bytes memory strBytes = bytes(str);
     bytes memory result = new bytes(endIndex - startIndex);
     for (uint256 i = startIndex; i < endIndex; i++) {

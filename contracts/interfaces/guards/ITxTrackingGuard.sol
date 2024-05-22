@@ -39,9 +39,5 @@ import "./IGuard.sol";
 interface ITxTrackingGuard is IGuard {
   function isTxTrackingGuard() external view returns (bool);
 
-  function afterTxGuard(
-    address poolManagerLogic,
-    address to,
-    bytes calldata data
-  ) external;
+  function afterTxGuard(address poolManagerLogic, address to, bytes calldata data) external;
 }

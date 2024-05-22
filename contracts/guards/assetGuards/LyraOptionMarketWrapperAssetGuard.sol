@@ -112,11 +112,7 @@ contract LyraOptionMarketWrapperAssetGuard is ClosedAssetGuard {
     external
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     // settle expired positions
     address lyraOptionMarketWrapperContractGuard = IHasGuardInfo(IPoolLogic(pool).factory()).getContractGuard(asset);

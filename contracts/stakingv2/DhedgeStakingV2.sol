@@ -79,7 +79,7 @@ contract DhedgeStakingV2 is
     __ReentrancyGuard_init();
     require(_dhtAddress != address(0), "dhtAddress is required");
     dhtAddress = _dhtAddress;
-    dhtCap = 1_000_000 * 10**18;
+    dhtCap = 1_000_000 * 10 ** 18;
     rewardStreamingTime = 7 days;
     maxVDurationTimeSeconds = 273 days; // 9 Months
     rewardParams = RewardParams({
@@ -98,11 +98,7 @@ contract DhedgeStakingV2 is
   /// @notice Stops the transfering of the token that represents a stake
   /// @param from address(0) when minting
   /// @param to address(0) when burning
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 tokenId
-  ) internal virtual override {
+  function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual override {
     require(to == address(0) || from == address(0), "Token is soulbound");
     super._beforeTokenTransfer(from, to, tokenId);
   }
@@ -167,7 +163,7 @@ contract DhedgeStakingV2 is
     IERC20Upgradeable(dhedgePoolAddress).safeTransferFrom(msg.sender, address(this), dhedgePoolAmount);
 
     uint256 tokenPrice = IPoolLogic(dhedgePoolAddress).tokenPrice();
-    uint256 totalDepositValue = tokenPrice.mul(dhedgePoolAmount).div(10**18);
+    uint256 totalDepositValue = tokenPrice.mul(dhedgePoolAmount).div(10 ** 18);
     poolConfiguration[dhedgePoolAddress].stakedSoFar = poolConfiguration[dhedgePoolAddress].stakedSoFar.add(
       totalDepositValue
     );
@@ -193,13 +189,9 @@ contract DhedgeStakingV2 is
   /// @dev DHT is automatically zapped to a new stake that maintains it's existing vDHT. A user can then stake new pool tokens against these dht, or unstake the DHT.
   /// @param tokenId The erc721 id of the existing stake
   /// @return newTokenId the tokenId where the dht were zapped to.
-  function unstakePoolTokens(uint256 tokenId)
-    external
-    override
-    whenNotPaused
-    nonReentrant
-    returns (uint256 newTokenId)
-  {
+  function unstakePoolTokens(
+    uint256 tokenId
+  ) external override whenNotPaused nonReentrant returns (uint256 newTokenId) {
     require(_isApprovedOrOwner(msg.sender, tokenId), "Must be approved or owner.");
     IDhedgeStakingV2Storage.Stake storage stake = stakes[tokenId];
     require(
@@ -234,7 +226,7 @@ contract DhedgeStakingV2 is
     // Once pool tokens have been claimed we teleport the staked DHT to a new Stake
     // The existing stake is used for claiming the rewards
     newTokenId = _newStake(ownerOf(tokenId), stakedDhtAmount, stake.dhtStakeStartTime);
-    uint256 originalValueStaked = stake.stakeStartTokenPrice.mul(stake.dhedgePoolAmount).div(10**18);
+    uint256 originalValueStaked = stake.stakeStartTokenPrice.mul(stake.dhedgePoolAmount).div(10 ** 18);
     poolConfiguration[stake.dhedgePoolAddress].stakedSoFar = poolConfiguration[stake.dhedgePoolAddress].stakedSoFar.sub(
       originalValueStaked
     );
@@ -268,7 +260,7 @@ contract DhedgeStakingV2 is
   function _addToGlobalStake(uint256 dhtAmount) internal {
     uint256 target = globalVDHT();
     dhtStaked = dhtStaked.add(dhtAmount);
-    uint256 unit = 10**18;
+    uint256 unit = 10 ** 18;
     if (dhtStaked > 0) {
       aggregateStakeStartTime = block.timestamp.sub(
         maxVDurationTimeSeconds.mul(target).mul(unit).div(dhtStaked).div(unit)
@@ -282,7 +274,7 @@ contract DhedgeStakingV2 is
     require(dhtAmount >= vDHTAccrued, "dhtAmount must be => vDHTAccrued");
     uint256 target = globalVDHT().sub(vDHTAccrued);
     dhtStaked = dhtStaked.sub(dhtAmount);
-    uint256 unit = 10**18;
+    uint256 unit = 10 ** 18;
     if (dhtStaked == 0) {
       aggregateStakeStartTime = block.timestamp;
     } else {
@@ -304,7 +296,7 @@ contract DhedgeStakingV2 is
     require(additionalDHT > 0, "Must stake some additional dht.");
     IDhedgeStakingV2Storage.Stake storage stake = stakes[tokenId];
     require(stake.unstaked == false, "Already unstaked.");
-    uint256 unit = 10**18;
+    uint256 unit = 10 ** 18;
     uint256 timePassed = block.timestamp - stake.dhtStakeStartTime;
     uint256 currentlyStaked = stake.dhtAmount;
     uint256 newStakeAmount = stake.dhtAmount.add(additionalDHT);
@@ -319,11 +311,7 @@ contract DhedgeStakingV2 is
   /// @param owner The owner of the stake to be created
   /// @param dhtAmount the amount of dht for the new stake
   /// @param stakeStartTime the time the stake should start from
-  function _newStake(
-    address owner,
-    uint256 dhtAmount,
-    uint256 stakeStartTime
-  ) internal returns (uint256 newTokenId) {
+  function _newStake(address owner, uint256 dhtAmount, uint256 stakeStartTime) internal returns (uint256 newTokenId) {
     newTokenId = _mint(owner);
     stakes[newTokenId] = IDhedgeStakingV2Storage.Stake({
       dhtAmount: dhtAmount,
@@ -373,12 +361,9 @@ contract DhedgeStakingV2 is
 
   /// @notice Allows getting configuration of a pool
   /// @param dhedgePoolAddress the dhedge pool address to get the configuration for
-  function getPoolConfiguration(address dhedgePoolAddress)
-    external
-    view
-    override
-    returns (IDhedgeStakingV2Storage.PoolConfiguration memory)
-  {
+  function getPoolConfiguration(
+    address dhedgePoolAddress
+  ) external view override returns (IDhedgeStakingV2Storage.PoolConfiguration memory) {
     return poolConfiguration[dhedgePoolAddress];
   }
 

@@ -53,6 +53,7 @@ import "./interfaces/guards/ITxTrackingGuard.sol";
 import "./interfaces/guards/IAssetGuard.sol";
 import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 import "./interfaces/guards/IERC721VerifyingGuard.sol";
+import "./interfaces/guards/ISlippageCheckingGuard.sol";
 import "./interfaces/IGovernance.sol";
 import "./utils/AddressHelper.sol";
 
@@ -88,6 +89,17 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     bytes data;
   }
 
+  struct WithdrawnAsset {
+    address asset;
+    uint256 amount;
+    bool externalWithdrawProcessed;
+  }
+
+  struct WithdrawProcessing {
+    uint256 portionBalance;
+    uint256 expectedWithdrawValue;
+  }
+
   event Deposit(
     address fundAddress,
     address investor,
@@ -100,12 +112,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     uint256 totalSupply,
     uint256 time
   );
-
-  struct WithdrawnAsset {
-    address asset;
-    uint256 amount;
-    bool externalWithdrawProcessed;
-  }
 
   event Withdrawal(
     address fundAddress,
@@ -200,18 +206,14 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     creationTime = block.timestamp;
     lastFeeMintTime = block.timestamp;
 
-    tokenPriceAtLastFeeMint = 10**18;
+    tokenPriceAtLastFeeMint = 10 ** 18;
   }
 
   /// @notice Before token transfer hook
   /// @param from address of the token owner
   /// @param to address of the token receiver
   /// @param amount amount of tokens to transfer
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal virtual override {
+  function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
     super._beforeTokenTransfer(from, to, amount);
     // Minting
     if (from == address(0)) {
@@ -250,11 +252,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     return _depositFor(msg.sender, _asset, _amount, IHasFeeInfo(factory).getExitCooldown());
   }
 
-  function depositFor(
-    address _recipient,
-    address _asset,
-    uint256 _amount
-  ) external returns (uint256 liquidityMinted) {
+  function depositFor(address _recipient, address _asset, uint256 _amount) external returns (uint256 liquidityMinted) {
     return _depositFor(_recipient, _asset, _amount, IHasFeeInfo(factory).getExitCooldown());
   }
 
@@ -324,7 +322,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     uint256 totalSupplyAfter = totalSupplyBefore.add(liquidityMinted);
 
     require(
-      balance.mul(_tokenPrice(fundValueAfter, totalSupplyAfter)).div(10**18) >=
+      balance.mul(_tokenPrice(fundValueAfter, totalSupplyAfter)).div(10 ** 18) >=
         IPoolManagerLogic(poolManagerLogic).minDepositUSD(),
       "must meet minimum deposit"
     );
@@ -344,21 +342,42 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     emitFactoryEvent();
   }
 
+  /// @notice Not recommended to use. Use `withdrawSafe` instead
+  /// @dev Kept for backward compatibility
   function withdraw(uint256 _fundTokenAmount) external {
-    withdrawTo(msg.sender, _fundTokenAmount);
+    _withdrawTo(msg.sender, _fundTokenAmount, 10_000);
+  }
+
+  /// @notice Not recommended to use. Use `withdrawToSafe` instead
+  /// @dev Kept for backward compatibility
+  function withdrawTo(address _recipient, uint256 _fundTokenAmount) external {
+    _withdrawTo(_recipient, _fundTokenAmount, 10_000);
+  }
+
+  /// @notice Most recent function to be used for withdrawing assets from the vault
+  /// @dev This is for vaults that can have slippage on withdrawal, eg. portfolio has Aave positions with debt
+  function withdrawSafe(uint256 _fundTokenAmount, uint256 _slippageTolerance) external {
+    _withdrawTo(msg.sender, _fundTokenAmount, _slippageTolerance);
+  }
+
+  /// @notice Most recent function to be used for withdrawing assets from the vault to a specific address
+  /// @dev This is for vaults that can have slippage on withdrawal, eg. portfolio has Aave positions with debt
+  function withdrawToSafe(address _recipient, uint256 _fundTokenAmount, uint256 _slippageTolerance) external {
+    _withdrawTo(_recipient, _fundTokenAmount, _slippageTolerance);
   }
 
   /// @notice Withdraw assets based on the fund token amount
-  /// @param _fundTokenAmount the fund token amount
-  function withdrawTo(address _recipient, uint256 _fundTokenAmount)
-    public
-    virtual
-    nonReentrant
-    whenNotFactoryPaused
-    whenNotPaused
-  {
+  /// @param _recipient The address to withdraw to
+  /// @param _fundTokenAmount Amount of fund tokens to withdraw
+  /// @param _slippageTolerance Slippage tolerance, 10_000 = 100%, 100 = 1%, 10 = 0.1%, 1 = 0.01%
+  function _withdrawTo(
+    address _recipient,
+    uint256 _fundTokenAmount,
+    uint256 _slippageTolerance
+  ) internal nonReentrant whenNotFactoryPaused whenNotPaused {
     require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
     require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
+    require(_slippageTolerance <= 10_000, "invalid tolerance");
 
     // Scoping to avoid "stack-too-deep" errors.
     {
@@ -374,7 +393,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     uint256 fundValue = _mintManagerFee();
 
     // calculate the proportion
-    uint256 portion = _fundTokenAmount.mul(10**18).div(totalSupply());
+    uint256 portion = _fundTokenAmount.mul(10 ** 18).div(totalSupply());
 
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
@@ -389,7 +408,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
         _supportedAssets[i].asset,
         _recipient,
-        portion
+        portion,
+        _slippageTolerance
       );
 
       if (portionOfAssetBalance > 0) {
@@ -416,7 +436,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
     }
 
-    uint256 valueWithdrawn = portion.mul(fundValue).div(10**18);
+    uint256 valueWithdrawn = portion.mul(fundValue).div(10 ** 18);
 
     emit Withdrawal(
       address(this),
@@ -437,13 +457,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param asset Asset for withdrawal processing
   /// @param to Investor account to send withdrawed tokens to
   /// @param portion Portion of investor withdrawal of the total dHedge pool
+  /// @param slippageTolerance Slippage tolerance for withdrawal
   /// @return withdrawAsset Asset to be withdrawed
   /// @return withdrawBalance Asset balance amount to be withdrawed
   /// @return externalWithdrawProcessed A boolean for success or fail transaction
   function _withdrawProcessing(
     address asset,
     address to,
-    uint256 portion
+    uint256 portion,
+    uint256 slippageTolerance
   )
     internal
     returns (
@@ -456,6 +478,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address guard = IHasGuardInfo(factory).getAssetGuard(asset);
     require(guard != address(0), "invalid guard");
 
+    WithdrawProcessing memory params;
+    params.portionBalance = IAssetGuard(guard).getBalance(address(this), asset).mul(portion).div(10 ** 18);
+    // Value of the portion of the asset to be withdrawn
+    params.expectedWithdrawValue = IPoolManagerLogic(poolManagerLogic).assetValue(asset, params.portionBalance);
+
     (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransaction[] memory transactions) = IAssetGuard(
       guard
     ).withdrawProcessing(address(this), asset, portion, to);
@@ -466,16 +493,27 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       if (withdrawAsset != address(0)) {
         assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
       }
-
+      // In case of withdraw from aave position with debt, this loop is where flash loan starts and finishes its execution
       for (uint256 i = 0; i < txCount; i++) {
         externalWithdrawProcessed = transactions[i].to.tryAssemblyCall(transactions[i].txData);
       }
-
+      // In case of withdraw from aave position with debt, remaining weth is withdrawAsset and it gets added here
       if (withdrawAsset != address(0)) {
         // get any balance increase after withdraw processing and add it to the withdraw balance
         uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
         withdrawBalance = withdrawBalance.add(assetBalanceAfter.sub(assetBalanceBefore));
       }
+    }
+    // solhint-disable-next-line avoid-low-level-calls
+    (bool hasFunction, bytes memory answer) = guard.call(abi.encodeWithSignature("isSlippageCheckingGuard()"));
+    // check slippage after asset's withdraw processing if required in its guard (eg. Aave)
+    if (hasFunction && abi.decode(answer, (bool)) && withdrawAsset != address(0)) {
+      // Ensure that actual value of tokens transferred is not less than the expected value, corrected by allowed tolerance
+      require(
+        IPoolManagerLogic(poolManagerLogic).assetValue(withdrawAsset, withdrawBalance) >=
+          params.expectedWithdrawValue.mul(10_000 - slippageTolerance).div(10_000),
+        "high withdraw slippage"
+      );
     }
 
     return (withdrawAsset, withdrawBalance, externalWithdrawProcessed);
@@ -486,12 +524,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param to The destination address for pool to talk to
   /// @param data The data that going to send in the transaction
   /// @return success A boolean for success or fail transaction
-  function _execTransaction(address to, bytes memory data)
-    private
-    nonReentrant
-    whenNotFactoryPaused
-    returns (bool success)
-  {
+  function _execTransaction(
+    address to,
+    bytes memory data
+  ) private nonReentrant whenNotFactoryPaused returns (bool success) {
     require(to != address(0), "non-zero address is required");
 
     address contractGuard = IHasGuardInfo(factory).getContractGuard(to);
@@ -617,7 +653,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @return price A price of the asset
   function _tokenPrice(uint256 _fundValue, uint256 _tokenSupply) internal pure returns (uint256 price) {
     if (_tokenSupply == 0 || _fundValue == 0) return 0;
-    price = _fundValue.mul(10**18).div(_tokenSupply);
+    price = _fundValue.mul(10 ** 18).div(_tokenSupply);
   }
 
   /// @notice Get available manager fee of the pool
@@ -664,7 +700,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   ) internal view returns (uint256 available) {
     if (_tokenSupply == 0 || _fundValue == 0) return 0;
 
-    uint256 currentTokenPrice = _fundValue.mul(10**18).div(_tokenSupply);
+    uint256 currentTokenPrice = _fundValue.mul(10 ** 18).div(_tokenSupply);
 
     if (currentTokenPrice > tokenPriceAtLastFeeMint) {
       available = currentTokenPrice
@@ -767,7 +803,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       // Aggregate additional and remaining cooldowns
       uint256 aggregatedCooldown = additionalCooldown.add(remainingCooldown);
       // Resulting value is capped at new cooldown time (shouldn't be bigger) and falls back to one second in case of zero
-      cooldown = aggregatedCooldown > newCooldown ? newCooldown : aggregatedCooldown != 0 ? aggregatedCooldown : 1;
+      cooldown = aggregatedCooldown > newCooldown
+        ? newCooldown
+        : aggregatedCooldown != 0
+          ? aggregatedCooldown
+          : 1;
     }
   }
 

@@ -70,12 +70,10 @@ contract DhedgeVeloV2UniV2Router is IUniswapV2RouterSwapOnly {
     revert("STFET not supported");
   }
 
-  function getAmountsOut(uint256 amountIn, address[] calldata path)
-    external
-    view
-    override
-    returns (uint256[] memory amountsOut)
-  {
+  function getAmountsOut(
+    uint256 amountIn,
+    address[] calldata path
+  ) external view override returns (uint256[] memory amountsOut) {
     require(path.length <= HOPS_LIMIT, "too many hops");
 
     (uint256 amountOut, ) = _getAmountOut(path[0], path[1], amountIn);

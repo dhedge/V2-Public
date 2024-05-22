@@ -26,11 +26,10 @@ contract SonneFinancePriceAggregatorMock is ExponentialNoError {
 
   /* ========== VIEWS ========== */
 
-  function exchangeRate(address cToken_, uint256 intitialExchangeRateMantissa_)
-    public
-    view
-    returns (uint256 exchangeRate_)
-  {
+  function exchangeRate(
+    address cToken_,
+    uint256 intitialExchangeRateMantissa_
+  ) public view returns (uint256 exchangeRate_) {
     CTokenInterface cTokenInterface = CTokenInterface(cToken_);
 
     uint256 _totalSupply = cTokenInterface.totalSupply();
@@ -55,15 +54,9 @@ contract SonneFinancePriceAggregatorMock is ExponentialNoError {
     }
   }
 
-  function _accrueInterest(address cToken_)
-    internal
-    view
-    returns (
-      uint256 cashPrior_,
-      uint256 totalBorrowsNew_,
-      uint256 totalReservesNew_
-    )
-  {
+  function _accrueInterest(
+    address cToken_
+  ) internal view returns (uint256 cashPrior_, uint256 totalBorrowsNew_, uint256 totalReservesNew_) {
     CTokenInterface cTokenInterface = CTokenInterface(cToken_);
 
     /* Remember the initial block number */

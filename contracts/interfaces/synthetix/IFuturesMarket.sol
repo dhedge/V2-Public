@@ -4,16 +4,9 @@ pragma solidity 0.7.6;
 import "./IAddressResolver.sol";
 
 interface IFuturesMarket {
-  function positions(address account)
-    external
-    view
-    returns (
-      uint64 id,
-      uint64 fundingIndex,
-      uint128 margin,
-      uint128 lastPrice,
-      int128 size
-    );
+  function positions(
+    address account
+  ) external view returns (uint64 id, uint64 fundingIndex, uint128 margin, uint128 lastPrice, int128 size);
 
   function resolver() external view returns (IAddressResolver);
 

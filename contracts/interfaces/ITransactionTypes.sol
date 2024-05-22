@@ -143,6 +143,19 @@ interface ITransactionTypes {
     SonneRepay, // 54
     SonneComptrollerEnterMarkets, // 55
     SonneComptrollerExitMarket, // 56
-    SynthetixV3UndelegateCollateral // 57
+    SynthetixV3UndelegateCollateral, // 57
+    AaveMigrateToV3, // 58
+    FlatMoneyStableDeposit, // 59
+    FlatMoneyStableWithdraw, // 60
+    FlatMoneyCancelOrder, // 61
+    SynthetixV3ClaimReward, // 62
+    VelodromeCLStake, // 63
+    VelodromeCLUnstake, // 64
+    VelodromeCLMint, // 65
+    VelodromeCLIncreaseLiquidity, // 66
+    VelodromeCLDecreaseLiquidity, // 67
+    VelodromeCLBurn, // 68
+    VelodromeCLCollect, // 69
+    VelodromeCLMulticall // 70
   }
 }

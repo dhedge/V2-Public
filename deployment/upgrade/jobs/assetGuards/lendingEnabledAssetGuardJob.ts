@@ -2,12 +2,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
-
-type erc20LendingEnabled = 4;
-type synthetixLendingEnabled = 14;
+import { AssetType } from "../assetsJob";
 
 export const lendingEnabledAssetGuardJobGenerator = (
-  assetType: erc20LendingEnabled | synthetixLendingEnabled,
+  assetType: (typeof AssetType)["Lending Enable Asset"] | (typeof AssetType)["Synthetix + LendingEnabled"],
 ): IJob<void> => {
   return async (
     config: IUpgradeConfig,
@@ -24,9 +22,11 @@ export const lendingEnabledAssetGuardJobGenerator = (
       await lendingEnabledAssetGuard.deployed();
       console.log("LendingEnabledAssetGuard deployed at", lendingEnabledAssetGuard.address);
 
-      versions[config.newTag].contracts[
-        assetType == 4 ? "LendingEnabledAssetGuard" : "SynthetixLendingEnabledAssetGuard"
-      ] = lendingEnabledAssetGuard.address;
+      const guardName =
+        assetType === (typeof AssetType)["Lending Enable Asset"]
+          ? "LendingEnabledAssetGuard"
+          : "SynthetixLendingEnabledAssetGuard";
+      versions[config.newTag].contracts[guardName] = lendingEnabledAssetGuard.address;
 
       await tryVerify(
         hre,
@@ -50,8 +50,8 @@ export const lendingEnabledAssetGuardJobGenerator = (
         addresses,
       );
       const deployedGuard = {
-        assetType: assetType,
-        guardName: assetType == 4 ? "LendingEnabledAssetGuard" : "SynthetixLendingEnabledAssetGuard",
+        assetType,
+        guardName,
         guardAddress: lendingEnabledAssetGuard.address,
         description: "Lending Enabled Asset tokens",
       };

@@ -43,14 +43,14 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
     updateInterval = _updateInterval;
 
     mainToken = _mainToken;
-    mainTokenUnit = 10**IERC20Extended(_mainToken).decimals();
+    mainTokenUnit = 10 ** IERC20Extended(_mainToken).decimals();
 
     address _pairToken = _pool.token0();
     if (_mainToken == _pairToken) {
       _pairToken = _pool.token1();
     }
     pairToken = _pairToken;
-    pairTokenUnit = 10**IERC20Extended(_pairToken).decimals();
+    pairTokenUnit = 10 ** IERC20Extended(_pairToken).decimals();
   }
 
   /* ========== VIEWS ========== */
@@ -69,13 +69,7 @@ contract UniV3TWAPAggregator is IAggregatorV3Interface {
     external
     view
     override
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    )
+    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
   {
     (int24 tick, ) = OracleLibrary.consult(address(pool), updateInterval);
 

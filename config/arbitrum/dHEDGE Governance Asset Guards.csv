@@ -1,8 +1,8 @@
 assetType,guardName,guardAddress,description
-8,AaveLendingPoolAssetGuard,0xd2C62C80E69802B8b313b00E86cE6dc97853dff0,Aave V3 Lending Pool
 4,LendingEnabledAssetGuard,0xd0392103419ADA46070D7ea49a3BCd8D2256f219,Lending Enabled Asset tokens
 7,UniswapV3AssetGuard,0x7da7734F4A6A2CA405F5D975b2601543Ea5d4F9a,Uniswap V3 LP positions
 10,BalancerV2GaugeAssetGuard,0x08Dfe9B8017AB3fde66a6A43A154ccC6f07B107B,Balancer Staking Gauge Asset
 0,ERC20Guard,0xa3072C67711cE0FCC222a8824fad345c725D62Ef,ERC20 tokens
 6,ERC20Guard,0xa3072C67711cE0FCC222a8824fad345c725D62Ef,ERC20 tokens
 20,RamsesLPAssetGuard,0x7628433e0FAcc77342161541dc0466e1e0C7C90D,Ramses LP + Gauge Positions
+8,AaveLendingPoolAssetGuard,0x22AAFC69C8002c65e7F0fb0Ec618F8dd302b829f,Aave V3 Lending Pool

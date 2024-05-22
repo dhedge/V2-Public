@@ -77,26 +77,11 @@ interface IBalancerV2Vault {
     uint256 deadline
   ) external payable returns (int256[] memory);
 
-  function joinPool(
-    bytes32 poolId,
-    address sender,
-    address recipient,
-    JoinPoolRequest memory request
-  ) external payable;
+  function joinPool(bytes32 poolId, address sender, address recipient, JoinPoolRequest memory request) external payable;
 
-  function exitPool(
-    bytes32 poolId,
-    address sender,
-    address payable recipient,
-    ExitPoolRequest memory request
-  ) external;
+  function exitPool(bytes32 poolId, address sender, address payable recipient, ExitPoolRequest memory request) external;
 
-  function getPoolTokens(bytes32 poolId)
-    external
-    view
-    returns (
-      address[] memory tokens,
-      uint256[] memory balances,
-      uint256 lastChangeBlock
-    );
+  function getPoolTokens(
+    bytes32 poolId
+  ) external view returns (address[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock);
 }

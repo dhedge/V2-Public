@@ -28,11 +28,7 @@ interface IStableQiVault is IERC721 {
 
   function withdrawCollateral(uint256 vaultID, uint256 amount) external;
 
-  function borrowToken(
-    uint256 vaultID,
-    uint256 amount,
-    uint256 _front
-  ) external;
+  function borrowToken(uint256 vaultID, uint256 amount, uint256 _front) external;
 
   function payBackToken(
     uint256 vaultID,
@@ -51,11 +47,7 @@ interface IStableQiVault is IERC721 {
   // this returns the fee for this promoter - promoFee below
   function promoter(uint256 _front) external view returns (uint256);
 
-  function calculateFee(
-    uint256 fee,
-    uint256 amount,
-    uint256 promoFee
-  ) external view returns (uint256);
+  function calculateFee(uint256 fee, uint256 amount, uint256 promoFee) external view returns (uint256);
 
   function updateVaultDebt(uint256 vaultID) external returns (uint256);
 }

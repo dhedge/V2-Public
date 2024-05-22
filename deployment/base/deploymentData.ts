@@ -1,3 +1,4 @@
+import { BigNumber } from "ethers";
 import { baseChainData } from "../../config/chainData/baseData";
 import { IAddresses } from "../types";
 
@@ -18,10 +19,10 @@ export const baseProdData: IAddresses = {
     feeDenominator: 10000,
   },
 
-  v2RouterAddresses: [],
+  v2RouterAddresses: baseChainData.v2Routers,
 
   superSwapper: {
-    routeHints: [], // Add here what hints we will need for Base
+    routeHints: baseChainData.routeHints,
   },
 
   assets: {
@@ -32,14 +33,16 @@ export const baseProdData: IAddresses = {
 
   uniV3: {
     uniswapV3FactoryAddress: baseChainData.uniswapV3.factory,
-    uniswapV3RouterAddress: baseChainData.uniswapV3.swapRouter,
+    uniswapV3RouterAddress: baseChainData.uniswapV3.router,
   },
 
   oneInchV5RouterAddress: baseChainData.oneInch.v5Router,
+  oneInchV6RouterAddress: baseChainData.oneInch.v6Router,
 
   velodrome: {
-    factoryV2: baseChainData.velodromeV2.factory,
-    routerV2: baseChainData.velodromeV2.router,
+    factoryV2: baseChainData.aerodrome.factory,
+    routerV2: baseChainData.aerodrome.router,
+    voterV2: baseChainData.aerodrome.voter,
   },
 
   zeroExExchangeProxy: baseChainData.zeroEx.exchangeProxy,
@@ -90,6 +93,25 @@ export const baseProdData: IAddresses = {
         },
       },
     },
+    withdrawalLimit: {
+      usdValue: BigNumber.from(50_000).mul(BigNumber.from(10).pow(18)), // $50k
+      percent: BigNumber.from(10).pow(17), // 10%
+    },
+  },
+
+  aaveV3: {
+    aaveLendingPoolAddress: baseChainData.aaveV3.lendingPool,
+    aaveProtocolDataProviderAddress: baseChainData.aaveV3.protocolDataProvider,
+    aaveIncentivesControllerAddress: baseChainData.aaveV3.incentivesController,
+  },
+
+  flatMoney: {
+    delayedOrder: baseChainData.flatMoney.delayedOrder,
+  },
+
+  slippageAccumulator: {
+    decayTime: 86400, // 24 hours
+    maxCumulativeSlippage: 10e4, // 10%
   },
 };
 

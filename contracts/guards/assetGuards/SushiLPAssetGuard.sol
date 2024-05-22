@@ -88,15 +88,11 @@ contract SushiLPAssetGuard is ERC20Guard, Ownable {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     withdrawAsset = asset;
     uint256 totalAssetBalance = IERC20(asset).balanceOf(pool);
-    withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
+    withdrawBalance = totalAssetBalance.mul(portion).div(10 ** 18);
 
     uint256 sushiPoolId = sushiPoolIds[asset];
     (uint256 stakedBalance, ) = IMiniChefV2(sushiStaking).userInfo(sushiPoolId, pool);
@@ -104,7 +100,7 @@ contract SushiLPAssetGuard is ERC20Guard, Ownable {
     // If there is a staked balance in Sushi MiniChefV2 staking contract
     // Then create the withdrawal transaction data to be executed by PoolLogic
     if (stakedBalance > 0) {
-      uint256 withdrawAmount = stakedBalance.mul(portion).div(10**18);
+      uint256 withdrawAmount = stakedBalance.mul(portion).div(10 ** 18);
       if (withdrawAmount > 0) {
         // First harvest rewards to the pool, then withdraw
         transactions = new MultiTransaction[](2);

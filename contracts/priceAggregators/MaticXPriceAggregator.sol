@@ -21,12 +21,7 @@ contract MaticXPriceAggregator is IAggregatorV3Interface {
   address public maticXPool;
   address public factory;
 
-  constructor(
-    address _matic,
-    address _maticX,
-    address _maticXPool,
-    address _factory
-  ) {
+  constructor(address _matic, address _maticX, address _maticXPool, address _factory) {
     require(_matic != address(0), "_matic address cannot be 0");
     require(_maticX != address(0), "_maticX address cannot be 0");
     require(_maticXPool != address(0), "_maticXPool address cannot be 0");
@@ -52,23 +47,12 @@ contract MaticXPriceAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     uint256 maticPrice = _getMaticPrice(); // decimals = 18
 
-    uint256 maticXRatio = IMaticXPool(maticXPool).convertMaticXToMatic(10**18); // decimals = 18
+    uint256 maticXRatio = IMaticXPool(maticXPool).convertMaticXToMatic(10 ** 18); // decimals = 18
 
-    uint256 answer = maticPrice.mul(maticXRatio).div(10**28); // decimals = 8
+    uint256 answer = maticPrice.mul(maticXRatio).div(10 ** 28); // decimals = 8
 
     // we don't need roundId, startedAt and answeredInRound
     return (0, int256(answer), 0, block.timestamp, 0);

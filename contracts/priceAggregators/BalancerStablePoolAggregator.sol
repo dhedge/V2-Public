@@ -55,24 +55,13 @@ contract BalancerStablePoolAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     uint256 answer = 0;
     uint256[] memory usdTotals = _getUSDBalances();
 
     answer = _getArithmeticMean(usdTotals);
 
-    return (0, int256(answer.div(10**10)), 0, block.timestamp, 0);
+    return (0, int256(answer.div(10 ** 10)), 0, block.timestamp, 0);
   }
 
   /* ========== INTERNAL ========== */
@@ -90,7 +79,7 @@ contract BalancerStablePoolAggregator is IAggregatorV3Interface {
     (, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
 
     for (uint256 index = 0; index < tokens.length; index++) {
-      usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10**tokenDecimals[index]);
+      usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10 ** tokenDecimals[index]);
     }
   }
 

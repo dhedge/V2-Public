@@ -12,7 +12,7 @@ export const arbitrumProdData: IAddresses = {
   gnosisApi: "https://safe-transaction-arbitrum.safe.global",
 
   easySwapperConfig: {
-    customLockupAllowedPools: [],
+    customLockupAllowedPools: Object.values(arbitrumChainData.torosPools),
     feeByPassManagers: ["0xfbD2B4216f422DC1eEe1Cff4Fb64B726F099dEF5"], // Toros Manager
     feeNumerator: 10,
     feeDenominator: 10000,
@@ -39,13 +39,13 @@ export const arbitrumProdData: IAddresses = {
   },
 
   aaveV3: {
-    aaveIncentivesControllerAddress: arbitrumChainData.aaveV3.incentives,
+    aaveIncentivesControllerAddress: arbitrumChainData.aaveV3.incentivesController,
     aaveLendingPoolAddress: arbitrumChainData.aaveV3.lendingPool,
-    aaveProtocolDataProviderAddress: arbitrumChainData.aaveV3.poolDataProvider,
+    aaveProtocolDataProviderAddress: arbitrumChainData.aaveV3.protocolDataProvider,
   },
 
-  oneInchV4RouterAddress: arbitrumChainData.oneInch.v4Router,
   oneInchV5RouterAddress: arbitrumChainData.oneInch.v5Router,
+  oneInchV6RouterAddress: arbitrumChainData.oneInch.v6Router,
 
   balancerV2VaultAddress: arbitrumChainData.balancer.v2Vault,
 
@@ -54,6 +54,13 @@ export const arbitrumProdData: IAddresses = {
     router: arbitrumChainData.ramses.router,
     xRam: arbitrumChainData.ramses.xoRAM,
   },
+
+  slippageAccumulator: {
+    decayTime: 86400, // 24 hours
+    maxCumulativeSlippage: 125e3, // 12.5%
+  },
+
+  zeroExExchangeProxy: arbitrumChainData.zeroEx.exchangeProxy,
 };
 
 export const arbitrumProdFileNames = {

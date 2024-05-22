@@ -612,7 +612,7 @@ describe("PoolFactory", function () {
 
   it("should be able to manage assets", async function () {
     await expect(
-      poolManagerLogicProxy.changeAssets(
+      poolManagerLogicProxy.connect(user1).changeAssets(
         [
           {
             asset: slink,
@@ -621,7 +621,7 @@ describe("PoolFactory", function () {
         ],
         [],
       ),
-    ).to.be.revertedWith("only manager, trader or factory");
+    ).to.be.revertedWith("only manager, trader or owner");
 
     const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
     const poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
@@ -800,7 +800,7 @@ describe("PoolFactory", function () {
 
     // Can not remove persist asset
     await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith(
-      "only manager, trader or factory",
+      "only manager, trader or owner",
     );
 
     // Can't add invalid asset
@@ -1096,7 +1096,7 @@ describe("PoolFactory", function () {
 
   it("should be able to manage assets 2", async function () {
     await expect(
-      poolManagerLogicProxy.changeAssets(
+      poolManagerLogicProxy.connect(user1).changeAssets(
         [
           {
             asset: slink,
@@ -1105,7 +1105,7 @@ describe("PoolFactory", function () {
         ],
         [],
       ),
-    ).to.be.revertedWith("only manager, trader or factory");
+    ).to.be.revertedWith("only manager, trader or owner");
 
     const poolManagerLogicManagerProxy = poolManagerLogicProxy.connect(manager);
     const poolManagerLogicUser1Proxy = poolManagerLogicProxy.connect(user1);
@@ -1259,7 +1259,7 @@ describe("PoolFactory", function () {
 
     // Can not remove persist asset
     await expect(poolManagerLogicUser1Proxy.changeAssets([], [slink])).to.be.revertedWith(
-      "only manager, trader or factory",
+      "only manager, trader or owner",
     );
 
     // Can't add invalid asset

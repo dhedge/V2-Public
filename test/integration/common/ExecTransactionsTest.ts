@@ -83,11 +83,11 @@ export const execTransactionsTest = ({
       const srcAmount = units(1000, 6);
       const amountFromLeft = amount.sub(srcAmount);
       const swapTxData = await getOneInchSwapTransaction({
-        srcAsset: usdtAddress,
-        dstAsset: usdcAddress,
-        srcAmount,
-        fromAddress: poolLogicProxy.address,
-        toAddress: poolLogicProxy.address,
+        src: usdtAddress,
+        dst: usdcAddress,
+        amount: srcAmount,
+        from: poolLogicProxy.address,
+        receiver: poolLogicProxy.address,
         chainId: networkToChainIdMap[network],
       });
 
@@ -112,11 +112,11 @@ export const execTransactionsTest = ({
       expect(poolWethBalanceBefore).to.equal("0");
 
       const swapTxData = await getOneInchSwapTransaction({
-        srcAsset: usdcAddress,
-        dstAsset: weth.address,
-        srcAmount: units(900, 6),
-        fromAddress: poolLogicProxy.address,
-        toAddress: poolLogicProxy.address,
+        src: usdcAddress,
+        dst: weth.address,
+        amount: units(900, 6),
+        from: poolLogicProxy.address,
+        receiver: poolLogicProxy.address,
         chainId: networkToChainIdMap[network],
       });
 

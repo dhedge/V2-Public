@@ -9,12 +9,7 @@ import "../interfaces/IPoolLogic.sol";
 import "../interfaces/IERC20Extended.sol";
 
 contract FlashSwapperTest {
-  function flashSwap(
-    DhedgeEasySwapper swapper,
-    address pool,
-    IERC20Extended depositToken,
-    uint256 amount
-  ) public {
+  function flashSwap(DhedgeEasySwapper swapper, address pool, IERC20Extended depositToken, uint256 amount) public {
     depositToken.transferFrom(msg.sender, address(this), amount);
     depositToken.approve(address(swapper), amount);
     uint256 fundTokenAmount = swapper.depositWithCustomCooldown(pool, depositToken, amount, depositToken, 1);

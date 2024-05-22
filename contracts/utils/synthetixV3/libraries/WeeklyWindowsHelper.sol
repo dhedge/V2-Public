@@ -14,11 +14,10 @@ library WeeklyWindowsHelper {
   /// @param _window Window of interest
   /// @param _timestamp Timestamp of interest
   /// @return isWithinAllowedWindow If the timestamp is within allowed window
-  function isWithinAllowedWindow(SynthetixV3Structs.Window calldata _window, uint256 _timestamp)
-    external
-    pure
-    returns (bool)
-  {
+  function isWithinAllowedWindow(
+    SynthetixV3Structs.Window calldata _window,
+    uint256 _timestamp
+  ) external pure returns (bool) {
     uint256 currentDayOfWeek = _timestamp.getDayOfWeek();
     uint256 currentHour = _timestamp.getHour();
 

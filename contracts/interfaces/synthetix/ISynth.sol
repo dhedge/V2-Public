@@ -7,9 +7,5 @@ interface ISynth {
   // Mutative functions
   function transferAndSettle(address to, uint256 value) external returns (bool);
 
-  function transferFromAndSettle(
-    address from,
-    address to,
-    uint256 value
-  ) external returns (bool);
+  function transferFromAndSettle(address from, address to, uint256 value) external returns (bool);
 }

@@ -75,15 +75,11 @@ contract StargateLPAssetGuard is ERC20Guard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     withdrawAsset = asset;
     uint256 totalAssetBalance = IERC20(asset).balanceOf(pool);
-    withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
+    withdrawBalance = totalAssetBalance.mul(portion).div(10 ** 18);
 
     StargatePoolId storage stargatePoolId = stargatePoolIds[asset];
     uint256 stakedBalance = stargateLpStaking.userInfo(stargatePoolId.id, pool).amount;
@@ -91,7 +87,7 @@ contract StargateLPAssetGuard is ERC20Guard {
     // If there is a staked balance in the staking contract
     // Then create the withdrawal transaction data to be executed by PoolLogic
     if (stakedBalance > 0) {
-      uint256 withdrawAmount = stakedBalance.mul(portion).div(10**18);
+      uint256 withdrawAmount = stakedBalance.mul(portion).div(10 ** 18);
       if (withdrawAmount > 0) {
         // Withdraw from staking contract
         transactions = new MultiTransaction[](1);
@@ -120,8 +116,8 @@ contract StargateLPAssetGuard is ERC20Guard {
     balance = stakedBalance.add(poolBalance);
 
     // convert balance from LP token to underlying asset
-    uint256 toUnderlyingConversion = IStargatePool(asset).amountLPtoLD(10**18);
-    balance = balance.mul(toUnderlyingConversion).div(10**18);
+    uint256 toUnderlyingConversion = IStargatePool(asset).amountLPtoLD(10 ** 18);
+    balance = balance.mul(toUnderlyingConversion).div(10 ** 18);
   }
 
   /// @notice Returns decimal of the asset

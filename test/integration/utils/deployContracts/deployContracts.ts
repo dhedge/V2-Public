@@ -184,13 +184,16 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     );
     await v3v2SwapRouter.deployed();
 
-    const DhedgeVeloUniV2Router = await ethers.getContractFactory("DhedgeVeloUniV2Router");
-    const dhedgeVeloUniV2Router = await DhedgeVeloUniV2Router.deploy(ovmChainData.velodrome.router);
-    await dhedgeVeloUniV2Router.deployed();
+    const DhedgeVeloV2UniV2Router = await ethers.getContractFactory("DhedgeVeloV2UniV2Router");
+    const dhedgeVeloV2UniV2Router = await DhedgeVeloV2UniV2Router.deploy(
+      ovmChainData.velodromeV2.router,
+      ovmChainData.velodromeV2.factory,
+    );
+    await dhedgeVeloV2UniV2Router.deployed();
 
     const SwapRouter = await ethers.getContractFactory("DhedgeSuperSwapper");
     const routeHints = [];
-    const swapRouter = await SwapRouter.deploy([v3v2SwapRouter.address, dhedgeVeloUniV2Router.address], routeHints);
+    const swapRouter = await SwapRouter.deploy([v3v2SwapRouter.address, dhedgeVeloV2UniV2Router.address], routeHints);
     await swapRouter.deployed();
     const VelodromeRouterGuard = await ethers.getContractFactory("VelodromeRouterGuard");
     const velodromeRouterGuard = await VelodromeRouterGuard.deploy();

@@ -13,11 +13,7 @@ interface IAssetHandler {
     address aggregator;
   }
 
-  function addAsset(
-    address asset,
-    uint16 assetType,
-    address aggregator
-  ) external;
+  function addAsset(address asset, uint16 assetType, address aggregator) external;
 
   function addAssets(Asset[] memory assets) external;
 

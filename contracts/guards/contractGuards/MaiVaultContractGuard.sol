@@ -57,11 +57,7 @@ contract MaiVaultContractGuard is TxDataUtils, IGuard, ITxTrackingGuard, ITransa
   /// @param _poolManagerLogic the pool manager logic
   /// @param to the mai vault
   /// @param data the transaction data
-  function afterTxGuard(
-    address _poolManagerLogic,
-    address to,
-    bytes calldata data
-  ) public virtual override {
+  function afterTxGuard(address _poolManagerLogic, address to, bytes calldata data) public virtual override {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
     require(msg.sender == poolLogic, "not pool logic");
     bytes4 method = getMethod(data);

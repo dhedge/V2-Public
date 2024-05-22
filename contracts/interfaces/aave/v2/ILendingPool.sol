@@ -45,18 +45,9 @@ interface ILendingPool {
     uint8 id;
   }
 
-  function deposit(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode
-  ) external;
+  function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
-  function withdraw(
-    address asset,
-    uint256 amount,
-    address to
-  ) external returns (uint256);
+  function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
   function borrow(
     address asset,
@@ -66,12 +57,7 @@ interface ILendingPool {
     address onBehalfOf
   ) external;
 
-  function repay(
-    address asset,
-    uint256 amount,
-    uint256 rateMode,
-    address onBehalfOf
-  ) external returns (uint256);
+  function repay(address asset, uint256 amount, uint256 rateMode, address onBehalfOf) external returns (uint256);
 
   function flashLoan(
     address receiverAddress,
@@ -93,7 +79,9 @@ interface ILendingPool {
 
   function getConfiguration(address asset) external view returns (ReserveConfigurationMap memory);
 
-  function getUserAccountData(address user)
+  function getUserAccountData(
+    address user
+  )
     external
     view
     returns (

@@ -47,20 +47,10 @@ interface IVelodromeV2Router {
   /// @param tokenB   Address of token to query
   /// @param stable   True if pool is stable, false if volatile
   /// @param _factory Address of factory which created the pool
-  function poolFor(
-    address tokenA,
-    address tokenB,
-    bool stable,
-    address _factory
-  ) external view returns (address pool);
+  function poolFor(address tokenA, address tokenB, bool stable, address _factory) external view returns (address pool);
 
   /// @notice Wraps around poolFor(tokenA,tokenB,stable,_factory) for backwards compatibility to Velodrome v1
-  function pairFor(
-    address tokenA,
-    address tokenB,
-    bool stable,
-    address _factory
-  ) external view returns (address pool);
+  function pairFor(address tokenA, address tokenB, bool stable, address _factory) external view returns (address pool);
 
   /// @notice Fetch and sort the reserves for a pool
   /// @param tokenA       .
@@ -98,14 +88,7 @@ interface IVelodromeV2Router {
     address _factory,
     uint256 amountADesired,
     uint256 amountBDesired
-  )
-    external
-    view
-    returns (
-      uint256 amountA,
-      uint256 amountB,
-      uint256 liquidity
-    );
+  ) external view returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
   /// @notice Quote the amount of liquidity removed from a Pool
   /// @param tokenA       .
@@ -146,13 +129,7 @@ interface IVelodromeV2Router {
     uint256 amountBMin,
     address to,
     uint256 deadline
-  )
-    external
-    returns (
-      uint256 amountA,
-      uint256 amountB,
-      uint256 liquidity
-    );
+  ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
   /// @notice Add liquidity of a token and WETH (transferred as ETH) to a Pool
   /// @param token                .
@@ -173,14 +150,7 @@ interface IVelodromeV2Router {
     uint256 amountETHMin,
     address to,
     uint256 deadline
-  )
-    external
-    payable
-    returns (
-      uint256 amountToken,
-      uint256 amountETH,
-      uint256 liquidity
-    );
+  ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
 
   // **** REMOVE LIQUIDITY ****
 
@@ -400,15 +370,7 @@ interface IVelodromeV2Router {
     uint256 amountInB,
     Route[] calldata routesA,
     Route[] calldata routesB
-  )
-    external
-    view
-    returns (
-      uint256 amountOutMinA,
-      uint256 amountOutMinB,
-      uint256 amountAMin,
-      uint256 amountBMin
-    );
+  ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin);
 
   /// @notice Used to generate params required for zapping out.
   ///         Zap out => swap then add liquidity.
@@ -433,15 +395,7 @@ interface IVelodromeV2Router {
     uint256 liquidity,
     Route[] calldata routesA,
     Route[] calldata routesB
-  )
-    external
-    view
-    returns (
-      uint256 amountOutMinA,
-      uint256 amountOutMinB,
-      uint256 amountAMin,
-      uint256 amountBMin
-    );
+  ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin);
 
   /// @notice Used by zapper to determine appropriate ratio of A to B to deposit liquidity. Assumes stable pool.
   /// @dev Returns stable liquidity ratio of B to (A + B).

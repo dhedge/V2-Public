@@ -19,8 +19,8 @@ interface IPoolModule {
    * @param collateralType The address of the collateral.
    * @return config The PoolCollateralConfiguration object that describes the requested collateral configuration of the pool.
    */
-  function getPoolCollateralConfiguration(uint128 poolId, address collateralType)
-    external
-    view
-    returns (PoolCollateralConfiguration memory config);
+  function getPoolCollateralConfiguration(
+    uint128 poolId,
+    address collateralType
+  ) external view returns (PoolCollateralConfiguration memory config);
 }

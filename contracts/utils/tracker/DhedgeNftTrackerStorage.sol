@@ -46,11 +46,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
    * @param _pool the poolLogic address
    * @param _data the nft track data to be recorded in storage
    */
-  function _addData(
-    bytes32 _nftType,
-    address _pool,
-    bytes memory _data
-  ) private {
+  function _addData(bytes32 _nftType, address _pool, bytes memory _data) private {
     _nftTrackData[_nftType][_pool].push(_data);
   }
 
@@ -78,11 +74,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
    * @param _pool the poolLogic address
    * @param _index the nft track data index to be removed from storage
    */
-  function _removeData(
-    bytes32 _nftType,
-    address _pool,
-    uint256 _index
-  ) private {
+  function _removeData(bytes32 _nftType, address _pool, uint256 _index) private {
     uint256 length = _nftTrackData[_nftType][_pool].length;
     require(_index < length, "invalid index");
 
@@ -97,11 +89,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
    * @param _index the index of nft track data
    * @return data the nft track data of given NFT_TYPE & poolLogic & index
    */
-  function getData(
-    bytes32 _nftType,
-    address _pool,
-    uint256 _index
-  ) external view returns (bytes memory) {
+  function getData(bytes32 _nftType, address _pool, uint256 _index) external view returns (bytes memory) {
     return _nftTrackData[_nftType][_pool][_index];
   }
 
@@ -183,11 +171,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
     revert("not found");
   }
 
-  function removeDataByUintId(
-    bytes32 _nftType,
-    address _pool,
-    uint256 _nftID
-  ) external onlyOwner {
+  function removeDataByUintId(bytes32 _nftType, address _pool, uint256 _nftID) external onlyOwner {
     bytes[] memory data = getAllData(_nftType, _pool);
     for (uint256 i = 0; i < data.length; i++) {
       if (abi.decode(data[i], (uint256)) == _nftID) {
@@ -198,19 +182,11 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
     revert("not found");
   }
 
-  function removeDataByIndex(
-    bytes32 _nftType,
-    address _pool,
-    uint256 _index
-  ) external onlyOwner {
+  function removeDataByIndex(bytes32 _nftType, address _pool, uint256 _index) external onlyOwner {
     _removeData(_nftType, _pool, _index);
   }
 
-  function addDataByUintId(
-    bytes32 _nftType,
-    address _pool,
-    uint256 _nftID
-  ) external onlyOwner {
+  function addDataByUintId(bytes32 _nftType, address _pool, uint256 _nftID) external onlyOwner {
     _addData(_nftType, _pool, abi.encode(_nftID));
   }
 }

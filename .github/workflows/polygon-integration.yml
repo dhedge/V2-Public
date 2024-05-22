@@ -16,7 +16,7 @@ jobs:
       message: ${{ steps.get_commit_message.outputs.headCommitMsg }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Print head git commit message
@@ -32,59 +32,53 @@ jobs:
       POLYGON_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: 16
-      - name: Hit node_modules cache
-        uses: actions/cache@v3
-        id: node-cache
+          version: ^8.0.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
+          node-version: 18
+          cache: "pnpm"
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./
       - name: Run Polygon fork in background
         run: |
-          npx hardhat node --config hardhat.config-compile.ts --fork $POLYGON_URL &
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-      - name: Hardhat compile
-        run: npx hardhat compile
+          pnpm hardhat node --fork $POLYGON_URL &
 
       - name: BalancerComposableStablePoolAggregatorTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/balancerV2/BalancerComposableStablePoolAggregatorTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/balancerV2/BalancerComposableStablePoolAggregatorTest.ts
 
       - name: BalancerRewardsTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/balancerV2/BalancerRewardsTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/balancerV2/BalancerRewardsTest.ts
 
       - name: BalancerStablePoolAggregatorTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/balancerV2/BalancerStablePoolAggregatorTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/balancerV2/BalancerStablePoolAggregatorTest.ts
 
       - name: BalancerTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/balancerV2/BalancerTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/balancerV2/BalancerTest.ts
 
       - name: Balancer V2 Staking (Asset Guard)
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/balancerV2/BalancerV2GaugeAssetGuardTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/balancerV2/BalancerV2GaugeAssetGuardTest.ts
 
       - name: Balancer V2 Staking (Contract Guard)
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/balancerV2/BalancerV2GaugeContractGuardTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/balancerV2/BalancerV2GaugeContractGuardTest.ts
 
   polygon-integration2:
     name: PIT 2
@@ -93,66 +87,61 @@ jobs:
     if: ${{ contains(needs.check_flags.outputs.message, '[run-integration]') || contains(needs.check_flags.outputs.message, '[run-polygon]') }}
     env:
       POLYGON_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
+      ONE_INCH_API_KEY: ${{ secrets.ONE_INCH_API_KEY }}
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: 16
-      - name: Hit node_modules cache
-        uses: actions/cache@v3
-        id: node-cache
+          version: ^8.0.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
+          node-version: 18
+          cache: "pnpm"
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./
       - name: Run Polygon fork in background
         run: |
-          npx hardhat node --config hardhat.config-compile.ts --fork $POLYGON_URL &
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-      - name: Hardhat compile
-        run: npx hardhat compile
+          pnpm hardhat node --fork $POLYGON_URL &
 
-      - name: OneInchTest
+      - name: OneInchV6GuardTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/OneInchTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/oneInch/OneInchV6GuardTest.ts
 
       - name: ArrakisTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/arrakis/*.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/arrakis/*.ts
 
       - name: UniswapV3NonfungiblePositionGuardTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/uniswapV3/UniswapV3NonfungiblePositionGuardTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/uniswapV3/UniswapV3NonfungiblePositionGuardTest.ts
 
       - name: UniswapV3AssetGuardTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/uniswapV3/UniswapV3AssetGuardTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/uniswapV3/UniswapV3AssetGuardTest.ts
 
       - name: UniswapV3PriceLibraryTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/uniswapV3/UniswapV3PriceLibraryTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/uniswapV3/UniswapV3PriceLibraryTest.ts
 
       - name: UniswapV3SwapRouterGuardTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/uniswapV3/UniswapV3SwapRouterGuardTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/uniswapV3/UniswapV3SwapRouterGuardTest.ts
 
       - name: ZeroExSwapsTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/zeroEx/ZeroExSwapsTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/zeroEx/ZeroExSwapsTest.ts
 
   polygon-integration3:
     name: PIT 3 - Aave
@@ -163,59 +152,53 @@ jobs:
       POLYGON_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: 16
-      - name: Hit node_modules cache
-        uses: actions/cache@v3
-        id: node-cache
+          version: ^8.0.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
+          node-version: 18
+          cache: "pnpm"
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./
       - name: Run Polygon fork in background
         run: |
-          npx hardhat node --config hardhat.config-compile.ts --fork $POLYGON_URL &
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-      - name: Hardhat compile
-        run: npx hardhat compile
+          pnpm hardhat node --fork $POLYGON_URL &
 
       - name: LendingEnabledAssetGuardTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/aave/LendingEnabledAssetGuardTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/aave/LendingEnabledAssetGuardTest.ts
 
       - name: AaveV2Test
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/aave/AaveV2Test.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/aave/AaveV2Test.ts
 
       - name: AaveV2TestWithWETH
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/aave/AaveV2TestWithWETH.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/aave/AaveV2TestWithWETH.ts
 
       - name: AaveV3Test
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/aave/AaveV3Test.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/aave/AaveV3Test.ts
 
       - name: AaveV3TestWithWETH
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/aave/AaveV3TestWithWETH.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/aave/AaveV3TestWithWETH.ts
 
       - name: AaveV2V3Test
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/aave/AaveV2V3Test.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/aave/AaveV2V3Test.ts
 
   polygon-integration4:
     name: PIT 4 - EasySwapper
@@ -226,39 +209,33 @@ jobs:
       POLYGON_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: 16
-      - name: Hit node_modules cache
-        uses: actions/cache@v3
-        id: node-cache
+          version: ^8.0.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
+          node-version: 18
+          cache: "pnpm"
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./
       - name: Run Polygon fork in background
         run: |
-          npx hardhat node --config hardhat.config-compile.ts --fork $POLYGON_URL &
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-      - name: Hardhat compile
-        run: npx hardhat compile
+          pnpm hardhat node --fork $POLYGON_URL &
 
       - name: DhedgeEasySwapperTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/DhedgeEasySwapperTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/DhedgeEasySwapperTest.ts
 
       - name: EasySwapperGuardTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/EasySwapperGuardTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/EasySwapperGuardTest.ts
 
   polygon-integration5:
     name: PIT 5 - Core contracts related
@@ -269,66 +246,60 @@ jobs:
       POLYGON_URL: ${{ secrets.POLYGON_ALCHEMY_URL_INTEGRATION_TEST }}
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          node-version: 16
-      - name: Hit node_modules cache
-        uses: actions/cache@v3
-        id: node-cache
+          version: ^8.0.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: "**/node_modules"
-          key: npm-v2-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: npm-v2-
-      - name: Install dependencies
-        run: npm ci
-        if: steps.node-cache.outputs.cache-hit != 'true'
+          node-version: 18
+          cache: "pnpm"
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./
       - name: Run Polygon fork in background
         run: |
-          npx hardhat node --config hardhat.config-compile.ts --fork $POLYGON_URL &
-      - name: Hardhat compile TypeChain
-        run: npx hardhat --config hardhat.config-compile.ts typechain
-      - name: Hardhat compile
-        run: npx hardhat compile
+          pnpm hardhat node --fork $POLYGON_URL &
 
       - name: DhedgePoolAggregatorTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/DhedgePoolAggregatorTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/DhedgePoolAggregatorTest.ts
 
       - name: DhedgeSuperSwapperTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/DhedgeSuperSwapperTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/DhedgeSuperSwapperTest.ts
 
       - name: DhedgeUniV3V2RouterTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/DhedgeUniV3V2RouterTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/DhedgeUniV3V2RouterTest.ts
 
       - name: ExecTransactionsTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/ExecTransactionsTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/ExecTransactionsTest.ts
 
       - name: ETHCrossAggregatorTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/priceAggregators/ETHCrossAggregatorTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/priceAggregators/ETHCrossAggregatorTest.ts
 
       - name: MaticXPriceAggregatorTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/priceAggregators/MaticXPriceAggregatorTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/priceAggregators/MaticXPriceAggregatorTest.ts
 
       - name: ManagerFeeTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/ManagerFeeTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/ManagerFeeTest.ts
 
       - name: WithdrawToTest
         if: always()
         run: |
-          npx hardhat test ./test/integration/polygon/WithdrawToTest.ts --network localhost
+          pnpm test:integr ./test/integration/polygon/WithdrawToTest.ts

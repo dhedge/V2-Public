@@ -1,3 +1,8 @@
 assetType,guardName,guardAddress,description
 0,ERC20Guard,0x832262aB852F2A95857C72DB8aDF319ED3b69794,ERC20 tokens
 103,SynthetixV3AssetGuard,0x255b4b86101428f8424084943FEfADc8f87f1d56,Synthetix V3 Position Asset
+25,VelodromeV2LPAssetGuard,0xb6DBC9113BDaA82C6249bFdF0DF104C7F86f3A1a,Velodrome V2 LP + Gauge Positions
+4,LendingEnabledAssetGuard,0xb5DB5311B305ECB90e1D65da3A69264d1F307A4B,Lending Enabled Asset tokens
+22,FlatMoneyCollateralAssetGuard,0x71AD1b448E9b680c0751E197eAc5380d9B39c36a,Flat Money Collateral Asset Guard
+21,FlatMoneyUNITAssetGuard,0xbC089E2b38a348396d3325Bfbf2da5c9f059836D,Flat Money UNIT Asset Guard
+8,AaveLendingPoolAssetGuard,0x555EF25fe2D2231BEC476284002627327472a5Eb,Aave V3 Lending Pool

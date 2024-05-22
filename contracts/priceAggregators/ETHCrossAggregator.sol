@@ -18,11 +18,7 @@ contract ETHCrossAggregator is IAggregatorV3Interface {
   IAggregatorV3Interface public tokenEthAggregator;
   IAggregatorV3Interface public ethUsdAggregator;
 
-  constructor(
-    address _token,
-    IAggregatorV3Interface _tokenEthAggregator,
-    IAggregatorV3Interface _ethUsdAggregator
-  ) {
+  constructor(address _token, IAggregatorV3Interface _tokenEthAggregator, IAggregatorV3Interface _ethUsdAggregator) {
     token = _token;
     tokenEthAggregator = _tokenEthAggregator;
     ethUsdAggregator = _ethUsdAggregator;
@@ -44,13 +40,7 @@ contract ETHCrossAggregator is IAggregatorV3Interface {
     external
     view
     override
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    )
+    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
   {
     (, int256 tokenEthPrice, , uint256 tokenEthUpdatedAt, ) = tokenEthAggregator.latestRoundData();
     (, int256 ethUsdPrice, , uint256 ethUsdUpdatedAt, ) = ethUsdAggregator.latestRoundData();

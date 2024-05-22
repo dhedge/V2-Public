@@ -1,6 +1,6 @@
 # dHEDGE
 
-dHEDGE is all-in-one destination for managing vaults on Ethereum, Polygon and Optimism. Put your capital to work with confidence in various strategies backed by a transparent track record.
+dHEDGE is all-in-one destination for managing vaults on Arbitrum, Polygon and Optimism. Put your capital to work with confidence in various strategies backed by a transparent track record.
 
 - 🔒 **Non-custodial**: Users retain ownership over their funds. Vault managers can't make off with deposited money.
 
@@ -25,5 +25,3 @@ For the most up-to-date system documentation, visit [dHEDGE Docs](https://docs.d
 ## Repository Guide 📖
 
 📚 All the technical documentation is in the `./readmes/` directory.
-
-📝 Check out generated contract documentation in `./docs/` directory.

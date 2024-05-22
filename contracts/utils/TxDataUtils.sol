@@ -52,11 +52,7 @@ contract TxDataUtils {
     return read32(data, 32 * inputNum + 4, 32);
   }
 
-  function getBytes(
-    bytes memory data,
-    uint8 inputNum,
-    uint256 offset
-  ) public pure returns (bytes memory) {
+  function getBytes(bytes memory data, uint8 inputNum, uint256 offset) public pure returns (bytes memory) {
     require(offset < 20, "invalid offset"); // offset is in byte32 slots, not bytes
     offset = offset * 32; // convert offset to bytes
     uint256 bytesLenPos = uint256(read32(data, 32 * inputNum + 4 + offset, 32));
@@ -76,11 +72,7 @@ contract TxDataUtils {
     return uint256(read32(data, uint256(arrayPos) + 4, 32));
   }
 
-  function getArrayIndex(
-    bytes memory data,
-    uint8 inputNum,
-    uint8 arrayIndex
-  ) public pure returns (bytes32) {
+  function getArrayIndex(bytes memory data, uint8 inputNum, uint8 arrayIndex) public pure returns (bytes32) {
     bytes32 arrayPos = read32(data, 32 * inputNum + 4, 32);
     bytes32 arrayLen = read32(data, uint256(arrayPos) + 4, 32);
     require(arrayLen > 0, "input is not array");
@@ -95,11 +87,7 @@ contract TxDataUtils {
     }
   }
 
-  function read32(
-    bytes memory data,
-    uint256 offset,
-    uint256 length
-  ) public pure returns (bytes32 o) {
+  function read32(bytes memory data, uint256 offset, uint256 length) public pure returns (bytes32 o) {
     require(data.length >= offset + length, "Reading bytes out of bounds");
     assembly {
       o := mload(add(data, add(32, offset)))

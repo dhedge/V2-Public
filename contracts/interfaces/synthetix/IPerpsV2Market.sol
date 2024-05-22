@@ -57,17 +57,7 @@ interface IPerpsV2Market {
     uint256 tradePrice,
     OrderType orderType,
     address sender
-  )
-    external
-    view
-    returns (
-      uint256 margin,
-      int256 size,
-      uint256 price,
-      uint256 liqPrice,
-      uint256 fee,
-      Status status
-    );
+  ) external view returns (uint256 margin, int256 size, uint256 price, uint256 liqPrice, uint256 fee, Status status);
 
   function fillPrice(int256 sizeDelta) external view returns (uint256 price, bool invalid);
 
@@ -87,11 +77,7 @@ interface IPerpsV2Market {
 
   function modifyPosition(int256 sizeDelta, uint256 desiredFillPrice) external;
 
-  function modifyPositionWithTracking(
-    int256 sizeDelta,
-    uint256 desiredFillPrice,
-    bytes32 trackingCode
-  ) external;
+  function modifyPositionWithTracking(int256 sizeDelta, uint256 desiredFillPrice, bytes32 trackingCode) external;
 
   function transferMargin(int256 marginDelta) external;
 
@@ -113,11 +99,7 @@ interface IPerpsV2Market {
 
   function cancelOffchainDelayedOrder(address account) external;
 
-  function submitDelayedOrder(
-    int256 sizeDelta,
-    uint256 desiredFillPrice,
-    uint256 desiredTimeDelta
-  ) external;
+  function submitDelayedOrder(int256 sizeDelta, uint256 desiredFillPrice, uint256 desiredTimeDelta) external;
 
   function submitDelayedOrderWithTracking(
     int256 sizeDelta,

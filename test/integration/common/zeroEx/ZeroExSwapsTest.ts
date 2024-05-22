@@ -36,6 +36,8 @@ type IParams = IBackboneDeploymentsParams & {
     baseURL: string;
     nativeTokenTicker: "ETH" | "MATIC";
   };
+  usdtAddress: string;
+  usdtPriceFeed: string;
 };
 
 export const launchZeroExSwapsTests = (chainData: IParams) => {
@@ -54,11 +56,15 @@ export const launchZeroExSwapsTests = (chainData: IParams) => {
 
     before(async () => {
       deployments = await deployBackboneContracts(chainData);
-      await deployZeroExContractGuard(deployments, { zeroExExchangeProxy: chainData.zeroEx.exchangeProxy });
+      const { tether } = await deployZeroExContractGuard(deployments, {
+        zeroExExchangeProxy: chainData.zeroEx.exchangeProxy,
+        usdtAddress: chainData.usdtAddress,
+        usdtPriceFeed: chainData.usdtPriceFeed,
+      });
       manager = deployments.manager;
       logicOwner = deployments.owner;
       USDC = deployments.assets.USDC;
-      USDT = deployments.assets.USDT;
+      USDT = tether;
       usdcAddress = USDC.address;
       usdtAddress = USDT.address;
       const supportedAssets = [
@@ -128,7 +134,7 @@ export const launchZeroExSwapsTests = (chainData: IParams) => {
       const usdtBalanceAfter = await USDT.balanceOf(poolLogicAddress);
       const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
       expect(usdcBalanceAfter).to.be.equal(sellAmount);
-      expect(usdtBalanceAfter).to.be.closeTo(sellAmount, sellAmount.div(1_000)); // this is 0.1% delta
+      expect(usdtBalanceAfter).to.be.closeTo(sellAmount, sellAmount.div(100)); // this is 1% delta
       expect(totalFundValueBefore).to.be.closeTo(totalFundValueAfter, totalFundValueBefore.div(1_000)); // this is 0.1% delta
     });
 

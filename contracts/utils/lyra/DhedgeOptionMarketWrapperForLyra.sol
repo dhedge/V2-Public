@@ -58,9 +58,9 @@ contract DhedgeOptionMarketWrapperForLyra {
         positionId: position.positionId,
         iterations: 1,
         currentCollateral: position.collateral,
-        setCollateralTo: position.collateral.sub(position.collateral.mul(portion).div(10**18)),
+        setCollateralTo: position.collateral.sub(position.collateral.mul(portion).div(10 ** 18)),
         optionType: position.optionType,
-        amount: position.amount.mul(portion).div(10**18),
+        amount: position.amount.mul(portion).div(10 ** 18),
         minCost: 0,
         maxCost: type(uint256).max,
         inputAmount: 0,
@@ -223,11 +223,9 @@ contract DhedgeOptionMarketWrapperForLyra {
     return true;
   }
 
-  function getAmountOfQuoteToBorrow(IOptionMarketWrapper.OptionPositionParams memory closeParams)
-    public
-    view
-    returns (uint256)
-  {
+  function getAmountOfQuoteToBorrow(
+    IOptionMarketWrapper.OptionPositionParams memory closeParams
+  ) public view returns (uint256) {
     uint256 expectedCollateralReturned = closeParams.currentCollateral - closeParams.setCollateralTo;
     ISynthetixAdapter synthetixAdapter = getSynthetixAdapter();
     bytes32 synthQuoteKey = synthetixAdapter.quoteKey(address(closeParams.optionMarket));

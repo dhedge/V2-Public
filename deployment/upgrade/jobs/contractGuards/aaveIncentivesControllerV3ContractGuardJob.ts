@@ -6,7 +6,6 @@ import { IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses } from "../../.
 export const aaveIncentivesControllerV3ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: IFileNames,
   addresses: IAddresses,
@@ -17,9 +16,6 @@ export const aaveIncentivesControllerV3ContractGuardJob: IJob<void> = async (
     );
     return;
   }
-  //
-  // Todo: This Job needs to be made more generic not all chains will have wmatic incentives
-  //
 
   const ethers = hre.ethers;
   const Governance = await hre.artifacts.readArtifact("Governance");

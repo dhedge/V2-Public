@@ -63,11 +63,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
   /// @param _feeSink Address of the fee recipient
   /// @param _feeNumerator Fee numerator ie 1
   /// @param _feeDenominator Fee denominator ie 100
-  function initialize(
-    address payable _feeSink,
-    uint256 _feeNumerator,
-    uint256 _feeDenominator
-  ) external initializer {
+  function initialize(address payable _feeSink, uint256 _feeNumerator, uint256 _feeDenominator) external initializer {
     __Ownable_init();
 
     feeSink = _feeSink;
@@ -303,7 +299,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
     if (tokenPrice == 0) {
       expectedLiquidityMinted = depositValue;
     } else {
-      expectedLiquidityMinted = depositValue.mul(10**18).div(tokenPrice);
+      expectedLiquidityMinted = depositValue.mul(10 ** 18).div(tokenPrice);
     }
 
     (, , uint256 entryFeeNumerator, uint256 denominator) = managerLogic.getFee();

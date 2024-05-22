@@ -28,6 +28,8 @@ import "../../../interfaces/synthetixV3/ICollateralModule.sol";
 import "../../../interfaces/synthetixV3/ICollateralConfigurationModule.sol";
 import "../../../interfaces/synthetixV3/IIssueUSDModule.sol";
 import "../../../interfaces/synthetixV3/IPoolConfigurationModule.sol";
+import "../../../interfaces/synthetixV3/IRewardDistributor.sol";
+import "../../../interfaces/synthetixV3/IRewardsManagerModule.sol";
 import "../../../interfaces/synthetixV3/IVaultModule.sol";
 import "../../../interfaces/IERC721Enumerable.sol";
 import "../../../interfaces/IHasAssetInfo.sol";
@@ -56,10 +58,7 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
 
   SynthetixV3Structs.WeeklyWindows public windows;
 
-  /// @notice 50k$ and 10%
-  /// @dev We can redeploy the guard with new parameters if needed
-  SynthetixV3Structs.WeeklyWithdrawalLimit public withdrawalLimit =
-    SynthetixV3Structs.WeeklyWithdrawalLimit({usdValue: 50_000e18, percent: 1e17});
+  SynthetixV3Structs.WeeklyWithdrawalLimit public withdrawalLimit;
 
   bool public override isTxTrackingGuard = true;
 
@@ -68,11 +67,13 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
   /// @param _whitelisteddHedgeVaults dHEDGE vaults that are allowed to use Synthetix V3, each with own parameters we are going to support
   /// @param _snxV3Core Synthetix V3 Core contract address
   /// @param _windows Periods when specific actions are allowed
+  /// @param _withdrawalLimit Params for withdrawal limit
   constructor(
     address _nftTracker,
     SynthetixV3Structs.VaultSetting[] memory _whitelisteddHedgeVaults,
     address _snxV3Core,
-    SynthetixV3Structs.WeeklyWindows memory _windows
+    SynthetixV3Structs.WeeklyWindows memory _windows,
+    SynthetixV3Structs.WeeklyWithdrawalLimit memory _withdrawalLimit
   ) {
     require(_nftTracker != address(0), "invalid nftTracker");
     require(_snxV3Core != address(0), "invalid snxV3Core");
@@ -95,6 +96,8 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
 
     _windows.validateWindows();
     windows = _windows;
+
+    withdrawalLimit = _withdrawalLimit;
   }
 
   /// @notice Returns Synthetix Account NFT ID associated with the pool stored in dHEDGE NFT Tracker contract
@@ -134,19 +137,18 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
     // First calculate how much USD is percent limit
     uint256 percentUsdLimit = _poolManagerLogic.assetValue(
       _collateralType,
-      _totalCollateral.mul(withdrawalLimit.percent).div(10**18)
+      _totalCollateral.mul(withdrawalLimit.percent).div(10 ** 18)
     );
     // Pick the biggest one
     uint256 usdLimit = percentUsdLimit.max(withdrawalLimit.usdValue);
     // Get the limit in collateral tokens
-    limit = usdLimit.mul(10**18).div(IHasAssetInfo(_poolManagerLogic.factory()).getAssetPrice(_collateralType));
+    limit = usdLimit.mul(10 ** 18).div(IHasAssetInfo(_poolManagerLogic.factory()).getAssetPrice(_collateralType));
   }
 
   /// @notice Transaction guard for Synthetix V3 Core
   /// @dev Supports general flow for Synthetix V3 Protocol
   /// @dev Can be called only by PoolLogic during execTransaction
   /// @dev Includes account creation, collateral deposit/withdrawal, delegate collateral, mint/burn snxUSD
-  /// @dev TODO: Claiming rewards?
   /// @param _poolManagerLogic Pool manager logic address
   /// @param _to Synthetix V3 Core address
   /// @param _data Transaction data
@@ -246,6 +248,29 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       txType = uint16(TransactionType.SynthetixV3BurnUSD);
 
       emit SynthetixV3Event(poolLogic, txType);
+    } else if (method == IRewardsManagerModule.claimRewards.selector) {
+      (uint128 accountId, uint128 poolId, address collateralType, address distributor) = abi.decode(
+        params,
+        (uint128, uint128, address, address)
+      );
+
+      require(getAccountNftTokenId(poolLogic, _to) == accountId, "account not owned by pool");
+
+      require(vaultSetting.snxLiquidityPoolId == poolId, "lp not allowed");
+
+      require(
+        collateralType == vaultSetting.collateralAsset || collateralType == vaultSetting.debtAsset,
+        "unsupported collateral type"
+      );
+
+      require(
+        poolManagerLogicAssets.isSupportedAsset(IRewardDistributor(distributor).token()),
+        "unsupported reward asset"
+      );
+
+      txType = uint16(TransactionType.SynthetixV3ClaimReward);
+
+      emit SynthetixV3Event(poolLogic, txType);
     }
 
     return (txType, isPublic);
@@ -268,11 +293,7 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
   /// @param _poolManagerLogic Pool manager logic address
   /// @param _to Synthetix V3 Core address
   /// @param _data Transaction data
-  function afterTxGuard(
-    address _poolManagerLogic,
-    address _to,
-    bytes memory _data
-  ) external override {
+  function afterTxGuard(address _poolManagerLogic, address _to, bytes memory _data) external override {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
     require(msg.sender == poolLogic, "not pool logic");
@@ -303,11 +324,7 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
   /// @param _id Synthetix V3 NFT Account ID associated with the pool
   /// @param _poolLogic Pool logic address
   /// @param _to Synthetix V3 Core address
-  function _afterTxGuardHelper(
-    uint256 _id,
-    address _poolLogic,
-    address _to
-  ) internal {
+  function _afterTxGuardHelper(uint256 _id, address _poolLogic, address _to) internal {
     bytes32 nftType = _getNftType(IAccountModule(_to).getAccountTokenAddress());
     // Storing Synthetix V3 NFT Account ID associated with the pool in dHEDGE NFT Tracker contract by NFT type
     // It ensures that max positions limit is not breached
@@ -343,7 +360,7 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
     // Delegate should happen only from the account owned by the pool
     require(getAccountNftTokenId(_poolLogic, _to) == accountId, "account not owned by pool");
     // Make sure leverage is 1, as it can change in the future
-    require(leverage == 10**18, "unsupported leverage");
+    require(leverage == 10 ** 18, "unsupported leverage");
     // Must delegate collateral only to allowed liquidity pool
     require(_vaultSetting.snxLiquidityPoolId == poolId, "lp not allowed");
     // Must match collateral we support

@@ -113,11 +113,7 @@ contract ArrakisLiquidityGaugeV4ContractGuard is TxDataUtils, IGuard {
     }
   }
 
-  function checkRewardTokens(
-    address gauge,
-    address poolManagerLogic,
-    address poolLogic
-  ) internal view {
+  function checkRewardTokens(address gauge, address poolManagerLogic, address poolLogic) internal view {
     address factory = IPoolLogic(poolLogic).factory();
     uint256 rewardCount = ILiquidityGaugeV4(gauge).reward_count();
     for (uint256 i = 0; i < rewardCount; i++) {

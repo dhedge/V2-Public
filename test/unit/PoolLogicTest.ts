@@ -324,7 +324,7 @@ describe("dHEDGE Pool Deposit", () => {
       await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(86400);
       await expect(
-        poolLogicProxy.connect(investor).transfer(dao.address, await poolLogicProxy.balanceOf(managerAddress)),
+        poolLogicProxy.connect(investor).transfer(dao.address, await poolLogicProxy.balanceOf(investorAddress)),
       ).to.be.revertedWith("cooldown active");
     });
 
@@ -332,14 +332,14 @@ describe("dHEDGE Pool Deposit", () => {
       await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(86400);
       await poolFactory.addReceiverWhitelist(dao.address);
-      await poolLogicProxy.connect(investor).transfer(dao.address, await poolLogicProxy.balanceOf(managerAddress));
+      await poolLogicProxy.connect(investor).transfer(dao.address, await poolLogicProxy.balanceOf(investorAddress));
     });
 
     it("removing an address for receiverWhitelist stops it from being able to receive tokens under lockup", async () => {
       await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(86400);
       await poolFactory.addReceiverWhitelist(dao.address);
-      const balance = await poolLogicProxy.balanceOf(managerAddress);
+      const balance = await poolLogicProxy.balanceOf(investorAddress);
       await poolLogicProxy.connect(investor).transfer(dao.address, balance.div(2));
       await poolFactory.removeReceiverWhitelist(dao.address);
       await expect(poolLogicProxy.connect(investor).transfer(dao.address, balance.div(2))).to.revertedWith(

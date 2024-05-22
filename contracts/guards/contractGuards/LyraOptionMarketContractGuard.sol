@@ -38,11 +38,8 @@ contract LyraOptionMarketContractGuard is LyraOptionMarketWrapperContractGuard {
     address _nftTracker,
     uint256 _maxPositionCount
   )
-    LyraOptionMarketWrapperContractGuard(_lyraRegistry, _nftTracker, _maxPositionCount)
-  // solhint-disable-next-line no-empty-blocks
-  {
-
-  }
+    LyraOptionMarketWrapperContractGuard(_lyraRegistry, _nftTracker, _maxPositionCount) // solhint-disable-next-line no-empty-blocks
+  {}
 
   /// @notice Transaction guard for a Lyra Option Market
   /// @dev It supports the functions for opening, closing, addingCollateral and Liquidating
@@ -121,11 +118,7 @@ contract LyraOptionMarketContractGuard is LyraOptionMarketWrapperContractGuard {
   /// @dev It supports close/open/forceClose position
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  function afterTxGuard(
-    address _poolManagerLogic,
-    address to,
-    bytes calldata data
-  ) public virtual override {
+  function afterTxGuard(address _poolManagerLogic, address to, bytes calldata data) public virtual override {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
     require(msg.sender == poolLogic, "not pool logic");
 

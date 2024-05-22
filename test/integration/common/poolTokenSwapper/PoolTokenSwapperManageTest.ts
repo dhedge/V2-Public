@@ -162,11 +162,11 @@ export const testPoolTokenSwapperManage = (testParams: PoolTokenSwapperManageTes
 
         // swap USDC -> DAI
         const swapTx = await getOneInchSwapTransaction({
-          srcAsset: usdc.address,
-          dstAsset: dai.address,
-          srcAmount: USDC_AMOUNT,
-          fromAddress: poolTokenSwapper.address,
-          toAddress: poolTokenSwapper.address,
+          src: usdc.address,
+          dst: dai.address,
+          amount: USDC_AMOUNT,
+          from: poolTokenSwapper.address,
+          receiver: poolTokenSwapper.address,
           chainId,
         });
 
@@ -191,11 +191,11 @@ export const testPoolTokenSwapperManage = (testParams: PoolTokenSwapperManageTes
 
         // swap USDC -> DAI
         const swapTx = await getOneInchSwapTransaction({
-          srcAsset: usdc.address,
-          dstAsset: dai.address,
-          srcAmount: USDC_AMOUNT,
-          fromAddress: poolTokenSwapper.address,
-          toAddress: user.address, // send to user after swap
+          src: usdc.address,
+          dst: dai.address,
+          amount: USDC_AMOUNT,
+          from: poolTokenSwapper.address,
+          receiver: user.address, // send to user after swap
           chainId,
         });
 
@@ -223,11 +223,11 @@ export const testPoolTokenSwapperManage = (testParams: PoolTokenSwapperManageTes
 
         // swap USDC -> unsupported token
         const swapTx = await getOneInchSwapTransaction({
-          srcAsset: usdc.address,
-          dstAsset: chainData.assets.weth,
-          srcAmount: USDC_AMOUNT,
-          fromAddress: poolTokenSwapper.address,
-          toAddress: poolTokenSwapper.address,
+          src: usdc.address,
+          dst: chainData.assets.weth,
+          amount: USDC_AMOUNT,
+          from: poolTokenSwapper.address,
+          receiver: poolTokenSwapper.address,
           chainId,
         });
         await expect(poolTokenSwapper.connect(manager).execTransaction(oneInchRouter, swapTx)).to.be.revertedWith(

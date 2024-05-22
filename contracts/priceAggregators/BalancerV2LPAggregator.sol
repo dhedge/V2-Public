@@ -39,11 +39,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
   uint256[] public weights;
   PriceDeviationParams public params;
 
-  constructor(
-    address _factory,
-    IBalancerWeightedPool _pool,
-    PriceDeviationParams memory _params
-  ) {
+  constructor(address _factory, IBalancerWeightedPool _pool, PriceDeviationParams memory _params) {
     require(_factory != address(0), "_factory address cannot be 0");
     require(address(_pool) != address(0), "_pool address cannot be 0");
 
@@ -84,18 +80,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     uint256 answer = 0;
     uint256[] memory usdTotals = _getUSDBalances();
 
@@ -105,7 +90,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
       answer = _getArithmeticMean(usdTotals);
     }
 
-    return (0, int256(answer.div(10**10)), 0, block.timestamp, 0);
+    return (0, int256(answer.div(10 ** 10)), 0, block.timestamp, 0);
   }
 
   /* ========== INTERNAL ========== */
@@ -123,7 +108,7 @@ contract BalancerV2LPAggregator is IAggregatorV3Interface {
     (, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
 
     for (uint256 index = 0; index < tokens.length; index++) {
-      usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10**tokenDecimals[index]);
+      usdBalances[index] = _getTokenPrice(tokens[index]).mul(balances[index]).div(10 ** tokenDecimals[index]);
     }
   }
 

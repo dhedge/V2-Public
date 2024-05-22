@@ -63,11 +63,13 @@ export const synthetixV3ContractGuardJob: IJob<void> = async (
       typeof addresses.synthetixV3.dHedgeVaultsWhitelist,
       Address,
       typeof addresses.synthetixV3.windows,
+      typeof addresses.synthetixV3.withdrawalLimit,
     ] = [
       nftTrackerStorage,
       addresses.synthetixV3.dHedgeVaultsWhitelist,
       synthetixV3CoreAddress,
       addresses.synthetixV3.windows,
+      addresses.synthetixV3.withdrawalLimit,
     ];
     const synthetixV3ContractGuard = await SynthetixV3ContractGuard.deploy(...args);
     await synthetixV3ContractGuard.deployed();

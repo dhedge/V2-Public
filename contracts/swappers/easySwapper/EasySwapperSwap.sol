@@ -11,11 +11,7 @@ library EasySwapperSwap {
   /// @param swapRouter the swapRouter to use
   /// @param from asset to swap from
   /// @param to asset to swap to
-  function swapThat(
-    IUniswapV2RouterSwapOnly swapRouter,
-    IERC20Extended from,
-    IERC20Extended to
-  ) internal {
+  function swapThat(IUniswapV2RouterSwapOnly swapRouter, IERC20Extended from, IERC20Extended to) internal {
     if (from == to) {
       return;
     }

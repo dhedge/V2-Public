@@ -123,15 +123,7 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
     address _asset,
     uint256 _withdrawPortion,
     address _to
-  )
-    external
-    override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
-  {
+  ) external override returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions) {
     WithdrawTxsParams memory params;
     params.snxV3Core = _asset;
     params.to = _to;
@@ -152,7 +144,7 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
     // Calculating total value of collateral token available for withdrawal using factory oracles for that collateral
     uint256 availableWithdrawValue = _assetValue(_pool, params.collateralType, availableCollateral);
     // Getting balance of investor's portion in Synthetix V3 position and then calculating its value
-    uint256 portionBalance = balance.mul(_withdrawPortion).div(10**18);
+    uint256 portionBalance = balance.mul(_withdrawPortion).div(10 ** 18);
     uint256 withdrawValue = _assetValue(_pool, _asset, portionBalance);
 
     // Guard to prevent division by zero and to check if there is enough available collateral to perform withdrawal
@@ -198,7 +190,7 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
 
     // Converting amount to be received after unwrapping to match asset decimals
     uint256 minAmountReceived = _params.withdrawAmount.div(
-      10**(18 - IERC20Extended(_allowedMarket.collateralAsset).decimals())
+      10 ** (18 - IERC20Extended(_allowedMarket.collateralAsset).decimals())
     );
 
     // Unwrapping collateral token
@@ -218,11 +210,9 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
   /// @notice Creates transactions for withdrawing when unwrapping IS NOT required
   /// @param _params WithdrawTxsParams struct
   /// @return transactions Transactions to be executed
-  function _prepareTransactions(WithdrawTxsParams memory _params)
-    internal
-    pure
-    returns (MultiTransaction[] memory transactions)
-  {
+  function _prepareTransactions(
+    WithdrawTxsParams memory _params
+  ) internal pure returns (MultiTransaction[] memory transactions) {
     transactions = new MultiTransaction[](2);
 
     // Withdrawing collateral token from Synthetix V3 position to the pool
@@ -245,11 +235,7 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
   /// @param _asset Asset address
   /// @param _amount Amount of the asset
   /// @return assetValue Value of the asset
-  function _assetValue(
-    address _pool,
-    address _asset,
-    uint256 _amount
-  ) internal view returns (uint256 assetValue) {
+  function _assetValue(address _pool, address _asset, uint256 _amount) internal view returns (uint256 assetValue) {
     if (IHasAssetInfo(IPoolLogic(_pool).factory()).isValidAsset(_asset)) {
       address poolManagerLogic = IPoolLogic(_pool).poolManagerLogic();
       assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
@@ -266,16 +252,10 @@ contract SynthetixV3AssetGuard is ClosedAssetGuard, IMutableBalanceAssetGuard {
   /// @return collateralType Collateral token address
   /// @return poolId Liquidity Pool ID from Synthetix V3 system
   /// @return debtAsset Debt token address in Synthetix V3 system
-  function _getPoolPositionDetails(address _pool, address _synthetixV3Core)
-    internal
-    view
-    returns (
-      uint128 accountId,
-      address collateralType,
-      uint128 poolId,
-      address debtAsset
-    )
-  {
+  function _getPoolPositionDetails(
+    address _pool,
+    address _synthetixV3Core
+  ) internal view returns (uint128 accountId, address collateralType, uint128 poolId, address debtAsset) {
     ISynthetixV3ContractGuard contractGuard = ISynthetixV3ContractGuard(
       IHasGuardInfo(IPoolLogic(_pool).factory()).getContractGuard(_synthetixV3Core)
     );

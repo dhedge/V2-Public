@@ -20,14 +20,7 @@ interface IAggregationRouterV3 {
     address caller,
     SwapDescription calldata desc,
     bytes calldata data
-  )
-    external
-    payable
-    returns (
-      uint256 returnAmount,
-      uint256 gasLeft,
-      uint256 chiSpent
-    );
+  ) external payable returns (uint256 returnAmount, uint256 gasLeft, uint256 chiSpent);
 
   function unoswap(
     IERC20 srcToken,

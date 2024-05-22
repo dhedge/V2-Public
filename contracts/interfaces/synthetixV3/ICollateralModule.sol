@@ -16,11 +16,7 @@ interface ICollateralModule {
    *
    * Emits a {Deposited} event.
    */
-  function deposit(
-    uint128 accountId,
-    address collateralType,
-    uint256 tokenAmount
-  ) external;
+  function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external;
 
   /**
    * @notice Withdraws `tokenAmount` of collateral of type `collateralType` from account `accountId`.
@@ -35,11 +31,7 @@ interface ICollateralModule {
    * Emits a {Withdrawn} event.
    *
    */
-  function withdraw(
-    uint128 accountId,
-    address collateralType,
-    uint256 tokenAmount
-  ) external;
+  function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external;
 
   /**
    * @notice Returns the total values pertaining to account `accountId` for `collateralType`.
@@ -49,14 +41,10 @@ interface ICollateralModule {
    * @return totalAssigned The amount of collateral in the account that is delegated to pools, denominated with 18 decimals of precision.
    * @return totalLocked The amount of collateral in the account that cannot currently be undelegated from a pool, denominated with 18 decimals of precision.
    */
-  function getAccountCollateral(uint128 accountId, address collateralType)
-    external
-    view
-    returns (
-      uint256 totalDeposited,
-      uint256 totalAssigned,
-      uint256 totalLocked
-    );
+  function getAccountCollateral(
+    uint128 accountId,
+    address collateralType
+  ) external view returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked);
 
   /**
    * @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated to pools.
@@ -64,10 +52,10 @@ interface ICollateralModule {
    * @param collateralType The address of the collateral type whose amount is being queried.
    * @return amountD18 The amount of collateral that is available for withdrawal or delegation, denominated with 18 decimals of precision.
    */
-  function getAccountAvailableCollateral(uint128 accountId, address collateralType)
-    external
-    view
-    returns (uint256 amountD18);
+  function getAccountAvailableCollateral(
+    uint128 accountId,
+    address collateralType
+  ) external view returns (uint256 amountD18);
 
   /**
    * @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited).
@@ -93,10 +81,5 @@ interface ICollateralModule {
    * @param amount The amount of collateral tokens to wrap in the lock being created, denominated with 18 decimals of precision.
    * @param expireTimestamp The date in which the lock will become clearable.
    */
-  function createLock(
-    uint128 accountId,
-    address collateralType,
-    uint256 amount,
-    uint64 expireTimestamp
-  ) external;
+  function createLock(uint128 accountId, address collateralType, uint256 amount, uint64 expireTimestamp) external;
 }

@@ -56,6 +56,7 @@ export const ovmProdAddresses: IAddresses = {
 
   oneInchV4RouterAddress: ovmChainData.oneinch.v4Router,
   oneInchV5RouterAddress: ovmChainData.oneinch.v5Router,
+  oneInchV6RouterAddress: ovmChainData.oneinch.v6Router,
 
   aaveV3: {
     aaveLendingPoolAddress: ovmChainData.aaveV3.lendingPool,
@@ -147,6 +148,30 @@ export const ovmProdAddresses: IAddresses = {
     factoryV2: ovmChainData.velodromeV2.factory,
   },
 
+  velodromeCL: {
+    nonfungiblePositionManager: ovmChainData.velodromeCL.nonfungiblePositionManager,
+    factory: ovmChainData.velodromeCL.factory,
+    voter: ovmChainData.velodromeV2.voter, // same as the v2 voter
+    enabledGauges: [
+      "0xB55A8d2A2775D72BC204049C598d1aCd19ECbBCe", //  CL1-wstETH/WETH
+      "0xb634f40D77600Db4a61458Af9312C7925A2D65d1", //  CL1-USDC/sUSD
+      "0x1DFAb7699121fEF702d07932a447868dCcCFb029", //  CL1 - USDC / USDC.e
+      "0x8d8d1CdDD5960276A1CDE360e7b5D210C3387948", //  CL100-USDC/WETH
+      "0x45DEF76558a038cA3236F3F634c888945c7f925A", //  CL1-USDC/USDT
+      "0xEFBA2550E43565925Ca3182D0583942b29498212", //  CL200-WETH/OP
+      "0x6456f8f4216CfD5E3bECb4C10b8852aaA2d3ECdF", //  CL100-USDC/wstETH
+      "0x661760F86a1D819ed0a0cF5D187547E31ce021Bc", //  CL1-USDC/LUSD
+      "0xb93d54c8A34FfE669033551Dcc2A6408234E35bC", //  CL1-USDC/DAI
+      "0x3914e354979e6bc63782512Bddb24C224E81a1bD", //  CL200-USDC/OP
+      "0x8150C44429890375F3eF9f87D07ae4bae4803E71", //  CL100-WETH/WBTC
+      "0xe0BD3D38f352157e22c85faDFfDf7C215773DbB4", //  CL200-USDC/SNX
+      "0x1A5e02366716Fca893f72271180D80CAA27Cd361", // CL200-wstETH/OP
+      "0x6496C0B14A5aFe1bC26A611E7D338B4527e9D59A", //  CL1-USDT/LUSD
+      "0x560b7e9289739cdA821A4c084e087e1a7d3Ef879", //  CL100-WETH/LUSD
+      "0xB2afdBf04c68989212DE04f9347Ea9bc649aE18b", //  CL100-WETH/DAI
+    ],
+  },
+
   v2RouterAddresses: ovmChainData.v2Routers,
 
   arrakisV1: {
@@ -229,6 +254,10 @@ export const ovmProdAddresses: IAddresses = {
         },
       },
     },
+    withdrawalLimit: {
+      usdValue: BigNumber.from(50_000).mul(BigNumber.from(10).pow(18)), // $50k
+      percent: BigNumber.from(10).pow(17), // 10%
+    },
   },
 
   poolTokenSwapper: {
@@ -282,7 +311,14 @@ export const ovmProdAddresses: IAddresses = {
       "0x4c1a92e9e32c72936c9a40f6de28984f9aebf480",
       // Sonne Finance Test 3 https://dhedge.org/vault/0x24bf104de70e0cedc14637947e6b780ffc81f7b5
       "0x24bf104de70e0cedc14637947e6b780ffc81f7b5",
+      // Sonne Finance Test 4 https://dhedge.org/vault/0xf57aefbd8f6f1e5e90109f8c6a200ad25a4575ec
+      "0xf57aefbd8f6f1e5e90109f8c6a200ad25a4575ec",
     ],
+  },
+
+  slippageAccumulator: {
+    decayTime: 86400, // 24 hours
+    maxCumulativeSlippage: 10e4, // 10%
   },
 };
 

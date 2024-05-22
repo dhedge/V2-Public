@@ -38,6 +38,10 @@ export type IRamsesLPVariableAggregatorConfig = IAssetConfig<
   "RamsesVariableLPAggregator",
   IVelodromeVariableLPAggregatorSpecificConfig
 >;
+export type IFlatMoneyUNITPriceAggregatorConfig = IAssetConfig<
+  "FlatMoneyUNITPriceAggregator",
+  IFlatMoneyUNITPriceAggregatorConfigSpecificConfig
+>;
 
 export type TAssetConfig =
   | IAssetConfig<"DhedgeDeployedAggregator", IDhedgeDeployedAggregatorSpecificConfig>
@@ -60,7 +64,8 @@ export type TAssetConfig =
   | IVelodromeV2TWAPAggregatorConfig
   | IRamsesTWAPAggregatorConfig
   | IRamsesLPVariableAggregatorConfig
-  | ISonneFinancePriceAggregatorConfig;
+  | ISonneFinancePriceAggregatorConfig
+  | IFlatMoneyUNITPriceAggregatorConfig;
 
 export interface IChainlinkAggregatorSpecificConfig extends ITriggerChange {
   chainlinkOracleAddress: Address;
@@ -140,4 +145,8 @@ export interface ISonneFinancePriceAggregatorSpecificConfig extends ITriggerChan
 interface IETHCrossAggregatorSpecificConfig extends ITriggerChange {
   assetToEthChainlinkOracleAddress: Address;
   ethToUsdChainlinkOracleAddress: Address;
+}
+
+interface IFlatMoneyUNITPriceAggregatorConfigSpecificConfig extends ITriggerChange {
+  flatMoneyViewerAddress: Address;
 }

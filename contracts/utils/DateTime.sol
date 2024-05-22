@@ -29,19 +29,11 @@ library DateTime {
     require(hour < 24, "invalid hour");
   }
 
-  function timestampFromDate(
-    uint256 year,
-    uint256 month,
-    uint256 day
-  ) internal pure returns (uint256 timestamp) {
+  function timestampFromDate(uint256 year, uint256 month, uint256 day) internal pure returns (uint256 timestamp) {
     timestamp = _daysFromDate(year, month, day) * SECONDS_PER_DAY;
   }
 
-  function _daysFromDate(
-    uint256 year,
-    uint256 month,
-    uint256 day
-  ) internal pure returns (uint256 _days) {
+  function _daysFromDate(uint256 year, uint256 month, uint256 day) internal pure returns (uint256 _days) {
     require(year >= 1970, "1970 and later only");
     int256 _year = int256(year);
     int256 _month = int256(month);

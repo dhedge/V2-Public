@@ -25,12 +25,7 @@ contract VelodromeTWAPAggregator is IAggregatorV3Interface {
   uint256 public immutable pairTokenUnit; // 1 pair token in wei
   IAggregatorV3Interface public immutable pairTokenUsdAggregator; // Chainlink USD aggregator of pairing token (eg WETH)
 
-  constructor(
-    address _pair,
-    address _mainToken,
-    address _pairToken,
-    IAggregatorV3Interface _pairTokenUsdAggregator
-  ) {
+  constructor(address _pair, address _mainToken, address _pairToken, IAggregatorV3Interface _pairTokenUsdAggregator) {
     require(_pair != address(0), "_pair address cannot be 0");
     address token0 = IVelodromePair(_pair).token0();
     address token1 = IVelodromePair(_pair).token1();
@@ -42,8 +37,8 @@ contract VelodromeTWAPAggregator is IAggregatorV3Interface {
     pair = _pair;
     mainToken = _mainToken;
     pairToken = _pairToken;
-    mainTokenUnit = 10**IERC20Extended(_mainToken).decimals();
-    pairTokenUnit = 10**IERC20Extended(_pairToken).decimals();
+    mainTokenUnit = 10 ** IERC20Extended(_mainToken).decimals();
+    pairTokenUnit = 10 ** IERC20Extended(_pairToken).decimals();
     pairTokenUsdAggregator = _pairTokenUsdAggregator;
   }
 
@@ -61,18 +56,7 @@ contract VelodromeTWAPAggregator is IAggregatorV3Interface {
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     (, int256 pairUsdPrice, , , ) = pairTokenUsdAggregator.latestRoundData(); // decimals 8
     uint256 quoteAmount = IVelodromePair(pair).current(mainToken, mainTokenUnit);
     uint256 answer = uint256(pairUsdPrice).mul(quoteAmount).div(pairTokenUnit);

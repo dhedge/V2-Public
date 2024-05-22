@@ -48,13 +48,7 @@ interface IAssetGuard {
     address asset,
     uint256 withdrawPortion,
     address to
-  )
-    external
-    returns (
-      address,
-      uint256,
-      MultiTransaction[] memory transactions
-    );
+  ) external returns (address, uint256, MultiTransaction[] memory transactions);
 
   function getBalance(address pool, address asset) external view returns (uint256 balance);
 

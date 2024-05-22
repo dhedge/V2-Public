@@ -2252,7 +2252,7 @@
         {
           "assetName": "USDC Native",
           "assetAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-          "assetType": "0",
+          "assetType": "4",
           "specificOracleConfig": {
             "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
           },
@@ -2282,9 +2282,9 @@
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0xcD28f536D36269e6623bc17f37A28a513683566f",
+      "PoolLogic": "0xE0E910BbAFa15c02aB424A7c2738A6e1Ed9710E3",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0xbeD53Cb9e3eDe200b1DAb9a066A516D6fBb5DdA5",
+      "PoolManagerLogic": "0x807FB0f055f8d52CE015467F323768f9D057C992",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
       "ERC20Guard": "0x5eC7E3c7C802fBe6BBf2f02Ec4f4502ea9E94c41",
@@ -2296,7 +2296,7 @@
       "QuickLPAssetGuard": "0x624484f6a600ab9b785E53b620fB4d641dcDecd6",
       "QuickStakingRewardsGuard": "0x66509140E08A58a1CC0eEF29C565FE9c68E3EFAF",
       "AaveIncentivesControllerGuard": "0xAF33891D6DD4e6fF6b1D676D77001B0F73197689",
-      "AaveLendingPoolAssetGuardV2": "0x037Ea3b6613E18476D80f630766E19CeD5142E9e",
+      "AaveLendingPoolAssetGuardV2": "0x7B3635C220eb7F1cb1e0dD57A83acDeb1aA86136",
       "AaveLendingPoolGuardV2": "0x373AC828d05058D646b9106A3DCda89f2626149e",
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
       "BalancerV2Guard": "0xf6c1f2fEFa1d77D9EF4f5aF90AE7B7B746772E97",
@@ -2308,11 +2308,11 @@
       "DynamicBondsProxy": "0x72308AAeB6C48Cb10E370F66542D6f16bcf4c90a",
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
       "EasySwapperGuard": "0x813a65aCc4b61530075B040f1689531966d62910",
-      "DhedgeSuperSwapper": "0x2b9885b6D7f5e168e56cC7D83c06095647b2ea43",
+      "DhedgeSuperSwapper": "0xd4A9Fd5925bD85554D22C6359B83B4501A3ABa76",
       "UniswapV3AssetGuard": "0x69d0c7939554f69cA5dAfE661Fea0a118703B754",
       "UniswapV3RouterGuard": "0x1729EF9441822F270b35995D359e1cd1dD2a59A9",
-      "UniswapV3NonfungiblePositionGuard": "0xe5f359a189698DDe6734edDdF5627A845F00eee4",
-      "AaveLendingPoolAssetGuardV3": "0x27A4Fa61924F016C7f81a5531D56b21aBA0157c0",
+      "UniswapV3NonfungiblePositionGuard": "0xf9FE480465f96835ab8bb141f6C7e5B9d0AECB3a",
+      "AaveLendingPoolAssetGuardV3": "0xbc16514da2D9033BC015dB7503376fDC1775AA8C",
       "AaveLendingPoolGuardV3": "0xc906D8f37f8833471f1bf317ff5cA623De7914f4",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6ABB2f1373c06b21655e90864433A3E0d5d8bdC1",
       "ArrakisV1RouterStakingGuard": "0xCA6C89dfF08E4040052088eaF21f59b1D4bc5fA2",
@@ -2333,15 +2333,18 @@
       "DhedgeStakingV2": "0xc07e348f669bbe839d95743A1e4a57985AAE29ED",
       "SlippageAccumulator": "0xD4f6cd5864984EfD1b494d7bE9dE6EEe9EBe6e4a",
       "ZeroExContractGuard": "0xa5D6BD983Fc7c4618D0a476bD15e7748E7795d39",
-      "ClosedContractGuard": "0x32f9AEE0AB90D01917dCb4ECDE4E8eFA9B827Cdc"
+      "ClosedContractGuard": "0x32f9AEE0AB90D01917dCb4ECDE4E8eFA9B827Cdc",
+      "AaveDebtTokenContractGuard": "0xd0DD27DC984c1AC18a6fec6FCdB4C18af08887d4",
+      "AaveMigrationHelperGuard": "0xD131aff6138155cA384C0A7e5e91e73f0Ab7dd0E",
+      "AaveIncentivesControllerV3Guard": "0x91d3602Dfe4B150E6c39119AcB5e50AbfC7204e9",
+      "OneInchV6Guard": "0x22BE9515eE8FF734675232e8D7135A863E7e08C7"
     },
     "network": {
       "name": "matic",
       "chainId": 137,
-      "ensAddress": null,
-      "_defaultProvider": null
+      "ensAddress": null
     },
-    "lastUpdated": "Mon, 27 Nov 2023 15:51:34 GMT",
+    "lastUpdated": "Mon, 13 May 2024 09:28:55 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [

@@ -164,7 +164,7 @@ export const configureContractGuard = async (
   });
 };
 
-const proposeContractGuardConfiguration = async (
+export const proposeContractGuardConfiguration = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   versions: IVersions,

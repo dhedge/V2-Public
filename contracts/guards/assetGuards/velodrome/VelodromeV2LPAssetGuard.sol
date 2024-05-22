@@ -42,14 +42,10 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     withdrawAsset = asset;
-    withdrawBalance = IERC20(asset).balanceOf(pool).mul(portion).div(10**18);
+    withdrawBalance = IERC20(asset).balanceOf(pool).mul(portion).div(10 ** 18);
 
     IVelodromeV2Gauge gauge = IVelodromeV2Gauge(voter.gauges(asset));
 
@@ -71,7 +67,7 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
           transactions[txCount].txData = abi.encodeWithSelector(
             bytes4(keccak256("transfer(address,uint256)")),
             to,
-            feeAmount0.mul(portion).div(10**18)
+            feeAmount0.mul(portion).div(10 ** 18)
           );
           txCount = txCount.add(1);
         }
@@ -80,7 +76,7 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
           transactions[txCount].txData = abi.encodeWithSelector(
             bytes4(keccak256("transfer(address,uint256)")),
             to,
-            feeAmount1.mul(portion).div(10**18)
+            feeAmount1.mul(portion).div(10 ** 18)
           );
           txCount = txCount.add(1);
         }
@@ -93,7 +89,7 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
         // include to gauge withdraw transaction
         uint256 gaugeLpBalance = gauge.balanceOf(pool);
         if (gaugeLpBalance > 0) {
-          uint256 portionBalance = gaugeLpBalance.mul(portion).div(10**18);
+          uint256 portionBalance = gaugeLpBalance.mul(portion).div(10 ** 18);
 
           transactions[txCount].to = address(gauge);
           transactions[txCount].txData = abi.encodeWithSelector(bytes4(keccak256("withdraw(uint256)")), portionBalance);
@@ -114,7 +110,7 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
           transactions[txCount].txData = abi.encodeWithSelector(
             bytes4(keccak256("transfer(address,uint256)")),
             to,
-            rewardAmount.mul(portion).div(10**18)
+            rewardAmount.mul(portion).div(10 ** 18)
           );
           txCount = txCount.add(1);
         }
@@ -179,6 +175,6 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
     }
 
     // convert rewards value in lp price
-    balance = balance.add(rewardsValue.mul(10**18).div(IHasAssetInfo(factory).getAssetPrice(asset)));
+    balance = balance.add(rewardsValue.mul(10 ** 18).div(IHasAssetInfo(factory).getAssetPrice(asset)));
   }
 }

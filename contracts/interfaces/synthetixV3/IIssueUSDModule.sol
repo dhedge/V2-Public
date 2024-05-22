@@ -20,12 +20,7 @@ interface IIssueUSDModule {
    *
    * Emits a {UsdMinted} event.
    */
-  function mintUsd(
-    uint128 accountId,
-    uint128 poolId,
-    address collateralType,
-    uint256 amount
-  ) external;
+  function mintUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external;
 
   /**
    * @notice Burns {amount} of snxUSD with the specified liquidity position.
@@ -36,10 +31,5 @@ interface IIssueUSDModule {
    *
    * Emits a {UsdMinted} event.
    */
-  function burnUsd(
-    uint128 accountId,
-    uint128 poolId,
-    address collateralType,
-    uint256 amount
-  ) external;
+  function burnUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external;
 }

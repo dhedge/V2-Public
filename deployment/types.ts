@@ -54,9 +54,10 @@ interface ExternalLogicContracts {
   v2RouterAddresses: Address[];
 
   quickLpUsdcWethStakingRewardsAddress?: Address;
-  aaveIncentivesControllerAddress?: Address;
+
   oneInchV4RouterAddress?: Address;
   oneInchV5RouterAddress?: Address;
+  oneInchV6RouterAddress?: Address;
 
   velodrome?: {
     router?: Address;
@@ -64,6 +65,13 @@ interface ExternalLogicContracts {
     routerV2: Address;
     voterV2?: Address;
     factoryV2: Address;
+  };
+
+  velodromeCL?: {
+    nonfungiblePositionManager: Address;
+    factory: Address;
+    enabledGauges: Address[];
+    voter: Address;
   };
 
   stargate?: {
@@ -80,12 +88,19 @@ interface ExternalLogicContracts {
   aaveV2?: {
     aaveProtocolDataProviderAddress: Address;
     aaveLendingPoolAddress: Address;
+    aaveIncentivesControllerAddress: Address;
   };
 
   aaveV3?: {
     aaveProtocolDataProviderAddress: Address;
     aaveLendingPoolAddress: Address;
     aaveIncentivesControllerAddress: Address;
+  };
+
+  aaveMigrationHelper?: {
+    migrationHelperAddress: Address;
+    dHedgeVaultsWhitelist: Address[];
+    aaveV3DebtTokensWhitelist: Address[];
   };
 
   perpsV2?: {
@@ -143,6 +158,10 @@ interface ExternalLogicContracts {
     allowedMarkets: AllowedMarketStruct[];
     // Weekdays are 1-7, 1 being Monday and 7 being Sunday. Hours are 0-23
     windows: WeeklyWindowsStruct;
+    withdrawalLimit: {
+      usdValue: BigNumber;
+      percent: BigNumber;
+    };
   };
 
   poolTokenSwapper?: {
@@ -172,6 +191,10 @@ interface ExternalLogicContracts {
     dHedgeVaultsWhitelist: Address[];
     comptroller: Address;
   };
+
+  flatMoney?: {
+    delayedOrder: Address;
+  };
 }
 
 interface IDhedgeInternal {
@@ -179,6 +202,10 @@ interface IDhedgeInternal {
   protocolDaoAddress: Address;
   protocolTreasuryAddress: Address;
   proxyAdminAddress: Address;
+  slippageAccumulator: {
+    decayTime: number;
+    maxCumulativeSlippage: number;
+  };
 }
 
 export type IProposeTxProperties = IDhedgeInternal & {
@@ -282,6 +309,12 @@ export interface IContracts {
   SonneFinanceCTokenGuard?: Address;
   SonneFinanceComptrollerGuard?: Address;
   WeeklyWindowsHelper?: Address;
+  AaveMigrationHelperGuard?: Address;
+  AaveDebtTokenContractGuard?: Address;
+  FlatMoneyDelayedOrderContractGuard?: Address;
+  OneInchV6Guard?: Address;
+  VelodromeNonfungiblePositionGuard?: Address;
+  VelodromeCLGaugeContractGuard?: Address;
 
   // Asset Guards
   OpenAssetGuard: Address;
@@ -304,6 +337,9 @@ export interface IContracts {
   VelodromeV2LPAssetGuard?: Address;
   SynthetixV3AssetGuard?: Address;
   RamsesLPAssetGuard?: Address;
+  FlatMoneyUNITAssetGuard?: Address;
+  FlatMoneyCollateralAssetGuard?: Address;
+  VelodromeCLAssetGuard?: Address;
 
   DhedgeEasySwapperProxy: Address;
   DhedgeEasySwapper: Address;
@@ -346,7 +382,8 @@ export type OracleType =
   | "VelodromeV2TWAPAggregator"
   | "RamsesTWAPAggregator"
   | "RamsesVariableLPAggregator"
-  | "SonneFinancePriceAggregator";
+  | "SonneFinancePriceAggregator"
+  | "FlatMoneyUNITPriceAggregator";
 
 export type ContractGuardType =
   | "BalancerV2GaugeContractGuard"

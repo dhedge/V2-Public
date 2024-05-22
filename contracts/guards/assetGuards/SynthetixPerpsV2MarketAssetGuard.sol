@@ -80,15 +80,7 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
     address pool,
     address asset,
     int256 reduceDelta
-  )
-    internal
-    view
-    returns (
-      uint256 postTradeMargin,
-      uint256 tradeFee,
-      uint256 keeperFee
-    )
-  {
+  ) internal view returns (uint256 postTradeMargin, uint256 tradeFee, uint256 keeperFee) {
     (uint256 fillPrice, ) = IPerpsV2Market(asset).fillPrice(reduceDelta);
     IPerpsV2Market.Status status;
     (postTradeMargin, , , , tradeFee, status) = IPerpsV2Market(asset).postTradeDetails(
@@ -181,11 +173,7 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     require(IPerpsV2Market(asset).delayedOrders(pool).sizeDelta == 0, "delayed order in progress");
 
@@ -204,7 +192,7 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
     Withdrawal memory withdrawal; // Note: this struct helps with stack too deep error
 
     IPerpsV2Market.Position memory position = IPerpsV2Market(asset).positions(pool);
-    withdrawal.reduceDelta = -position.size.mul(int256(portion)).div(10**18);
+    withdrawal.reduceDelta = -position.size.mul(int256(portion)).div(10 ** 18);
 
     if (withdrawal.reduceDelta == 0) {
       // `remainingMargin` uses the spot price rather than the fill price
@@ -213,7 +201,7 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
       {
         bool invalid;
         (withdrawal.margin, invalid) = IPerpsV2Market(asset).remainingMargin(pool);
-        withdrawal.marginPortion = withdrawal.margin.mul(portion).div(10**18);
+        withdrawal.marginPortion = withdrawal.margin.mul(portion).div(10 ** 18);
         require(!invalid, "perp v2 margin is invalid");
       }
     } else {
@@ -236,13 +224,13 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
 
         // The margin returned from postTradeDetails is sans Fee. The totalMargin pre trade is this plus the fee.
         withdrawal.margin = postTradeMargin.add(withdrawal.tradeFee);
-        withdrawal.marginPortion = withdrawal.margin.mul(portion).div(10**18);
+        withdrawal.marginPortion = withdrawal.margin.mul(portion).div(10 ** 18);
 
         // Make sure that the withdrawal doesn't temporarily increase the leverage beyond 3x
         if (position.size >= 0) {
-          withdrawal.positionValue = uint256(position.size).mul(position.lastPrice).div(10**18);
+          withdrawal.positionValue = uint256(position.size).mul(position.lastPrice).div(10 ** 18);
         } else {
-          withdrawal.positionValue = uint256(-position.size).mul(position.lastPrice).div(10**18);
+          withdrawal.positionValue = uint256(-position.size).mul(position.lastPrice).div(10 ** 18);
         }
         require(
           withdrawal.positionValue < postTradeMargin.sub(withdrawal.marginPortion).mul(MAX_LEVERAGE_DURING_WITHDRAWAL),
@@ -263,7 +251,7 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
       // This returns the funds to the pool. Where they will be distributed to the withdrawer upstream.
       if (
         withdrawal.reduceDelta != 0 &&
-        (withdrawal.margin.sub(withdrawal.marginPortion) < minMargin || portion == 10**18)
+        (withdrawal.margin.sub(withdrawal.marginPortion) < minMargin || portion == 10 ** 18)
       ) {
         // Can't handle this scenario with the delayed offchain transaction
         // Assumes that for whitelisted vaults, there will always be enough margin above the minimum

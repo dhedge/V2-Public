@@ -21,6 +21,7 @@ import { deployETHCrossAggregator } from "./deployETHCrossAggregator";
 import { deployRamsesTWAPAggregator } from "./deployRamsesTWAPAggregator";
 import { deployRamsesVariableLPAggregator } from "./deployRamsesVariableLPAggregator";
 import { deploySonneFinancePriceAggregator } from "./deploySonneFinancePriceAggregator";
+import { deployFlatMoneyUNITPriceAggregator } from "./deployFlatMoneyUNITPriceAggregator";
 
 export const getOracle = async (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig): Promise<TDeployedAsset> => {
   const oracleAddress = await typeToDeployer[assetConfig.oracleType](hre, assetConfig);
@@ -58,4 +59,5 @@ const typeToDeployer: TOracleTypeToDeployer = {
   RamsesTWAPAggregator: deployRamsesTWAPAggregator,
   RamsesVariableLPAggregator: deployRamsesVariableLPAggregator,
   SonneFinancePriceAggregator: deploySonneFinancePriceAggregator,
+  FlatMoneyUNITPriceAggregator: deployFlatMoneyUNITPriceAggregator,
 };

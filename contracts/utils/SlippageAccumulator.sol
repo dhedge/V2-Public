@@ -73,11 +73,7 @@ contract SlippageAccumulator is Ownable {
     _;
   }
 
-  constructor(
-    address _poolFactory,
-    uint64 _decayTime,
-    uint128 _maxCumulativeSlippage
-  ) {
+  constructor(address _poolFactory, uint64 _decayTime, uint128 _maxCumulativeSlippage) {
     require(_poolFactory != address(0), "Null address");
 
     poolFactory = _poolFactory;
@@ -117,7 +113,7 @@ contract SlippageAccumulator is Ownable {
   /// @param asset The asset whose price oracle exists.
   /// @param amount The amount of the `asset`.
   function _assetValue(address asset, uint256 amount) internal view returns (uint256 value) {
-    value = amount.mul(IHasAssetInfo(poolFactory).getAssetPrice(asset)).div(10**IERC20Extended(asset).decimals()); // to USD amount
+    value = amount.mul(IHasAssetInfo(poolFactory).getAssetPrice(asset)).div(10 ** IERC20Extended(asset).decimals()); // to USD amount
   }
 
   /// @notice Function to get the cumulative slippage adjusted using decayTime (current cumulative slippage impact).

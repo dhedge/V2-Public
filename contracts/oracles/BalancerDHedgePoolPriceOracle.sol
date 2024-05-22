@@ -58,6 +58,6 @@ contract BalancerDHedgePoolPriceOracle is IRateProvider {
   /// @notice returns the price of the token to provided decimals
   /// @return The price
   function getRate() external view override returns (uint256) {
-    return IPoolLogic(poolAddress).tokenPrice().div(10**(18 - decimals));
+    return IPoolLogic(poolAddress).tokenPrice().div(10 ** (18 - decimals));
   }
 }

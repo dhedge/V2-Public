@@ -104,8 +104,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public announcedEntryFeeNumerator;
   uint256 public entryFeeNumerator;
 
-  modifier onlyManagerOrTraderOrFactory() {
-    require(msg.sender == manager || msg.sender == trader || msg.sender == factory, "only manager, trader or factory");
+  modifier onlyManagerOrTraderOrOwner() {
+    require(
+      msg.sender == manager || msg.sender == trader || msg.sender == IHasOwnable(factory).owner(),
+      "only manager, trader or owner"
+    );
     _;
   }
 
@@ -159,10 +162,10 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Change assets of the pool
   /// @param _addAssets array of assets to add
   /// @param _removeAssets array of asset addresses to remove
-  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets)
-    external
-    onlyManagerOrTraderOrFactory
-  {
+  function changeAssets(
+    Asset[] calldata _addAssets,
+    address[] calldata _removeAssets
+  ) external onlyManagerOrTraderOrOwner {
     _changeAssets(_addAssets, _removeAssets);
     emitFactoryEvent();
   }
@@ -291,7 +294,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint256 price = IHasAssetInfo(factory).getAssetPrice(asset);
     uint256 decimals = assetDecimal(asset);
 
-    value = price.mul(amount).div(10**decimals);
+    value = price.mul(amount).div(10 ** decimals);
   }
 
   /// @notice Get value of the asset
@@ -309,11 +312,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function getFundComposition()
     public
     view
-    returns (
-      Asset[] memory assets,
-      uint256[] memory balances,
-      uint256[] memory rates
-    )
+    returns (Asset[] memory assets, uint256[] memory balances, uint256[] memory rates)
   {
     uint256 assetCount = supportedAssets.length;
     assets = new Asset[](assetCount);
@@ -362,17 +361,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /* ========== MANAGER FEES ========== */
 
   /// @notice Return the manager fees
-  function getFee()
-    external
-    view
-    override
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    )
-  {
+  function getFee() external view override returns (uint256, uint256, uint256, uint256) {
     (, , , uint256 managerFeeDenominator) = IHasFeeInfo(factory).getMaximumFee();
     return (performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, managerFeeDenominator);
   }
@@ -381,16 +370,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @return numerator numerator of the maximum manager fee
   /// @return entryFeeNumerator numerator of the maximum entry fee
   /// @return denominator denominator of the maximum manager fee
-  function getMaximumFee()
-    public
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    )
-  {
+  function getMaximumFee() public view returns (uint256, uint256, uint256, uint256) {
     return IHasFeeInfo(factory).getMaximumFee();
   }
 
@@ -519,16 +499,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   }
 
   /// @notice Get manager fee increase information
-  function getFeeIncreaseInfo()
-    external
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    )
-  {
+  function getFeeIncreaseInfo() external view returns (uint256, uint256, uint256, uint256) {
     return (
       announcedPerformanceFeeNumerator,
       announcedManagerFeeNumerator,

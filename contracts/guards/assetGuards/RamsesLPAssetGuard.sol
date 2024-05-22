@@ -63,7 +63,7 @@ contract RamsesLPAssetGuard is ERC20Guard {
 
     // Convert rewards value in LP price
     balance = balance.add(
-      rewardsValue.mul(10**18).div(IHasAssetInfo(IPoolLogic(_pool).factory()).getAssetPrice(_asset))
+      rewardsValue.mul(10 ** 18).div(IHasAssetInfo(IPoolLogic(_pool).factory()).getAssetPrice(_asset))
     );
   }
 
@@ -85,14 +85,10 @@ contract RamsesLPAssetGuard is ERC20Guard {
     external
     view
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     withdrawAsset = _asset;
-    withdrawBalance = IERC20(_asset).balanceOf(_pool).mul(_portion).div(10**18);
+    withdrawBalance = IERC20(_asset).balanceOf(_pool).mul(_portion).div(10 ** 18);
 
     IVelodromeGauge gauge = IVelodromeGauge(voter.gauges(_asset));
     // If there is no gauge, no transactions required, only portion of LP Pair token is returned to investor
@@ -122,7 +118,7 @@ contract RamsesLPAssetGuard is ERC20Guard {
         transactions[params.txCount].to = address(gauge);
         transactions[params.txCount].txData = abi.encodeWithSelector(
           IVelodromeGauge.withdraw.selector,
-          gaugeLPBalance.mul(_portion).div(10**18)
+          gaugeLPBalance.mul(_portion).div(10 ** 18)
         );
         params.txCount = params.txCount.add(1);
       }
@@ -168,7 +164,7 @@ contract RamsesLPAssetGuard is ERC20Guard {
         transactions[params.txCount].txData = abi.encodeWithSelector(
           IERC20.transfer.selector,
           _to,
-          rewardAmount.mul(_portion).div(10**18)
+          rewardAmount.mul(_portion).div(10 ** 18)
         );
         params.txCount = params.txCount.add(1);
       }

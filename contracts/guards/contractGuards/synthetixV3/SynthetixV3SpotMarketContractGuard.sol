@@ -30,11 +30,7 @@ contract SynthetixV3SpotMarketContractGuard is IGuard, TxDataUtils, ITransaction
   /// @dev Address is required to get its contract guard which stores the whitelist of dHEDGE vaults
   /// @param _snxV3Core Synthetix V3 core address
   /// @param _allowedMarkets Synthetix markets ids allowed for trading
-  constructor(
-    address _snxV3Core,
-    address _snxSpotMarket,
-    SynthetixV3Structs.AllowedMarket[] memory _allowedMarkets
-  ) {
+  constructor(address _snxV3Core, address _snxSpotMarket, SynthetixV3Structs.AllowedMarket[] memory _allowedMarkets) {
     require(_snxV3Core != address(0), "invalid snxV3Core");
     require(_snxSpotMarket != address(0), "invalid snxSpotMarket");
 
@@ -88,7 +84,7 @@ contract SynthetixV3SpotMarketContractGuard is IGuard, TxDataUtils, ITransaction
 
       SynthetixV3Structs.AllowedMarket storage allowedMarket = _validateMarketId(marketId);
       uint8 decimals = IERC20Extended(allowedMarket.collateralAsset).decimals();
-      wrapAmount = wrapAmount.mul(10**(18 - decimals));
+      wrapAmount = wrapAmount.mul(10 ** (18 - decimals));
 
       require(wrapAmount == minAmountReceived, "amounts don't match");
 
@@ -103,7 +99,7 @@ contract SynthetixV3SpotMarketContractGuard is IGuard, TxDataUtils, ITransaction
 
       SynthetixV3Structs.AllowedMarket storage allowedMarket = _validateMarketId(marketId);
       uint8 decimals = IERC20Extended(allowedMarket.collateralAsset).decimals();
-      minAmountReceived = minAmountReceived.mul(10**(18 - decimals));
+      minAmountReceived = minAmountReceived.mul(10 ** (18 - decimals));
 
       require(unwrapAmount == minAmountReceived, "amounts don't match");
 
@@ -135,11 +131,9 @@ contract SynthetixV3SpotMarketContractGuard is IGuard, TxDataUtils, ITransaction
     return (txType, false);
   }
 
-  function _validateMarketId(uint128 _marketId)
-    internal
-    view
-    returns (SynthetixV3Structs.AllowedMarket storage allowedMarket)
-  {
+  function _validateMarketId(
+    uint128 _marketId
+  ) internal view returns (SynthetixV3Structs.AllowedMarket storage allowedMarket) {
     require(_marketId > 0, "invalid marketId");
     address synthAddress = snxSpotMarket.getSynth(_marketId);
     allowedMarket = allowedMarkets[synthAddress];

@@ -5,7 +5,7 @@ import { Func } from "mocha";
 import { currentBlockTimestamp } from "../../testHelpers";
 import { NETWORK } from "./deployContracts/deployContracts";
 
-export type ChainIds = 137 | 10;
+export type ChainIds = 137 | 10 | 42161 | 8453;
 
 const evmTakeSnap = async (): Promise<string> => {
   const x = (await network.provider.request({
@@ -110,6 +110,8 @@ const networkToChainIdMap: Record<NETWORK, ChainIds> = {
   ovm: 10,
 };
 
+const delay = async (seconds = 4) => new Promise((_) => setTimeout(_, seconds * 1000));
+
 export const utils = {
   evmTakeSnap,
   evmRestoreSnap,
@@ -122,4 +124,5 @@ export const utils = {
   evmForkReset,
   beforeAfterReset,
   networkToChainIdMap,
+  delay,
 };

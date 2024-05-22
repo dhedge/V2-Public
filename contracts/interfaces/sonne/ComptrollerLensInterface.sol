@@ -9,14 +9,7 @@ interface ComptrollerLensInterface {
 
   function oracle() external view returns (PriceOracle);
 
-  function getAccountLiquidity(address)
-    external
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256
-    );
+  function getAccountLiquidity(address) external view returns (uint256, uint256, uint256);
 
   function getAssetsIn(address) external view returns (CTokenInterface[] memory);
 

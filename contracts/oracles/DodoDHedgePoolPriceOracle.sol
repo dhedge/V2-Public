@@ -57,6 +57,6 @@ contract DodoDHedgePoolPriceOracle {
   /// @notice returns the price of the token to provided decimals
   /// @return The price
   function getPrice() external view returns (uint256) {
-    return IPoolLogic(poolAddress).tokenPrice().div(10**(18 - decimals));
+    return IPoolLogic(poolAddress).tokenPrice().div(10 ** (18 - decimals));
   }
 }

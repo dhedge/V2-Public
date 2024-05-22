@@ -29,11 +29,7 @@ contract SonneFinancePriceAggregator is IAggregatorV3Interface, ExponentialNoErr
   ///        to find the initial exchange rate.
   uint256 private immutable _initialExchangeRateMantissa;
 
-  constructor(
-    address cToken_,
-    address comptrollerLens_,
-    uint256 initialExchangeRateMantissa_
-  ) {
+  constructor(address cToken_, address comptrollerLens_, uint256 initialExchangeRateMantissa_) {
     require(cToken_ != address(0), "cToken address cannot be 0");
     require(comptrollerLens_ != address(0), "price oracle address cannot be 0");
 
@@ -43,7 +39,7 @@ contract SonneFinancePriceAggregator is IAggregatorV3Interface, ExponentialNoErr
     _underlyingDecimals = IERC20Extended(CErc20Interface(cToken_).underlying()).decimals();
     _cTokenDecimals = CTokenInterface(cToken_).decimals();
 
-    _denominator = 10**(18 + _underlyingDecimals - _cTokenDecimals);
+    _denominator = 10 ** (18 + _underlyingDecimals - _cTokenDecimals);
     _initialExchangeRateMantissa = initialExchangeRateMantissa_;
   }
 
@@ -61,21 +57,10 @@ contract SonneFinancePriceAggregator is IAggregatorV3Interface, ExponentialNoErr
    * @return updatedAt Timestamp of when the round was updated.
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
-  function latestRoundData()
-    external
-    view
-    override
-    returns (
-      uint80,
-      int256,
-      uint256,
-      uint256,
-      uint80
-    )
-  {
+  function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
     PriceOracle priceOracle = comptrollerLens.oracle();
 
-    uint256 scalingFactor = 10**(36 - _underlyingDecimals);
+    uint256 scalingFactor = 10 ** (36 - _underlyingDecimals);
 
     // We are scaling up the value by 1e18 for more precision.
     uint256 oneCTokenInUnderlying = (exchangeRate() * 1e18) / _denominator;
@@ -138,11 +123,7 @@ contract SonneFinancePriceAggregator is IAggregatorV3Interface, ExponentialNoErr
   function _accrueInterest()
     internal
     view
-    returns (
-      uint256 cashPrior_,
-      uint256 totalBorrowsNew_,
-      uint256 totalReservesNew_
-    )
+    returns (uint256 cashPrior_, uint256 totalBorrowsNew_, uint256 totalReservesNew_)
   {
     address cachedCToken = cToken;
     CTokenInterface cTokenInterface = CTokenInterface(cachedCToken);

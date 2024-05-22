@@ -1,22 +1,22 @@
 import { ethers, upgrades } from "hardhat";
 
-import { AssetHandler, IERC20, PoolFactory } from "../../../../types";
+import { AssetHandler, IERC20, IERC20__factory, PoolFactory } from "../../../../types";
 import { assetSetting } from "./getChainAssets";
 import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 
 export const IERC20Path = "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20";
 
+export const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
+
 export type IBackboneDeploymentsParams = {
   assets: {
     weth: string;
     usdc: string;
-    usdt: string;
     dai: string;
   };
   usdPriceFeeds: {
     eth: string;
     usdc: string;
-    usdt: string;
     dai: string;
   };
 };
@@ -42,7 +42,6 @@ export const deployBackboneContracts = async ({ assets, usdPriceFeeds }: IBackbo
       [
         assetSetting(assets.weth, AssetType["Lending Enable Asset"], usdPriceFeeds.eth),
         assetSetting(assets.usdc, AssetType["Lending Enable Asset"], usdPriceFeeds.usdc),
-        assetSetting(assets.usdt, AssetType["Lending Enable Asset"], usdPriceFeeds.usdt),
         assetSetting(assets.dai, AssetType["Lending Enable Asset"], usdPriceFeeds.dai),
       ],
     ])
@@ -83,7 +82,6 @@ export const deployBackboneContracts = async ({ assets, usdPriceFeeds }: IBackbo
 
   const WETH = <IERC20>await ethers.getContractAt(IERC20Path, assets.weth);
   const USDC = <IERC20>await ethers.getContractAt(IERC20Path, assets.usdc);
-  const USDT = <IERC20>await ethers.getContractAt(IERC20Path, assets.usdt);
   const DAI = <IERC20>await ethers.getContractAt(IERC20Path, assets.dai);
 
   return {
@@ -98,10 +96,10 @@ export const deployBackboneContracts = async ({ assets, usdPriceFeeds }: IBackbo
     poolManagerLogic,
     slippageAccumulator,
     usdPriceAggregator,
+    lendingEnabledAssetGuard,
     assets: {
       WETH,
       USDC,
-      USDT,
       DAI,
     },
   };

@@ -112,15 +112,11 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     external
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     withdrawAsset = asset;
     uint256 totalAssetBalance = getBalance(pool, asset);
-    withdrawBalance = totalAssetBalance.mul(portion).div(10**18);
+    withdrawBalance = totalAssetBalance.mul(portion).div(10 ** 18);
     return (withdrawAsset, withdrawBalance, transactions);
   }
 

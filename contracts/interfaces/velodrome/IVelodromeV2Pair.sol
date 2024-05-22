@@ -12,22 +12,11 @@ interface IVelodromeV2Pair {
 
   function totalSupply() external view returns (uint256);
 
-  function quote(
-    address tokenIn,
-    uint256 amountIn,
-    uint256 granularity
-  ) external view returns (uint256 amountOut);
+  function quote(address tokenIn, uint256 amountIn, uint256 granularity) external view returns (uint256 amountOut);
 
   function burn(address to) external returns (uint256 amount0, uint256 amount1);
 
-  function getReserves()
-    external
-    view
-    returns (
-      uint112 reserve0,
-      uint112 reserve1,
-      uint32 blockTimestampLast
-    );
+  function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
 
   function claimFees() external returns (uint256 claimed0, uint256 claimed1);
 

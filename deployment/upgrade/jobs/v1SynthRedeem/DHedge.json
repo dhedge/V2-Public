@@ -1,0 +1,57 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "sourceKey",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sourceAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "destinationKey",
+        "type": "bytes32"
+      }
+    ],
+    "name": "exchange",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "key",
+        "type": "bytes32"
+      }
+    ],
+    "name": "removeFromSupportedAssets",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "key",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isAssetSupported",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

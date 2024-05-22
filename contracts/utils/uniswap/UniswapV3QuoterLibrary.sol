@@ -96,15 +96,10 @@ library UniswapV3QuoterLibrary {
     poolState = PoolState(sqrtPriceX96, tick, tickSpacing, fee, liquidity, unlocked);
   }
 
-  function setInitialState(PoolState memory initialPoolState, int256 amountSpecified)
-    internal
-    pure
-    returns (
-      SwapState memory state,
-      uint128 liquidity,
-      uint160 sqrtPriceX96
-    )
-  {
+  function setInitialState(
+    PoolState memory initialPoolState,
+    int256 amountSpecified
+  ) internal pure returns (SwapState memory state, uint128 liquidity, uint160 sqrtPriceX96) {
     liquidity = initialPoolState.liquidity;
 
     sqrtPriceX96 = initialPoolState.sqrtPriceX96;
@@ -124,15 +119,7 @@ library UniswapV3QuoterLibrary {
     int24 currentTick,
     IUniswapV3Pool pool,
     bool zeroForOne
-  )
-    internal
-    view
-    returns (
-      int24 tickNext,
-      bool initialized,
-      uint160 sqrtPriceNextX96
-    )
-  {
+  ) internal view returns (int24 tickNext, bool initialized, uint160 sqrtPriceNextX96) {
     int24 compressed = currentTick / tickSpacing;
     if (!zeroForOne) compressed++;
     if (currentTick < 0 && currentTick % tickSpacing != 0) compressed--; // round towards negative infinity
@@ -163,15 +150,7 @@ library UniswapV3QuoterLibrary {
     uint160 sqrtPriceLimitX96,
     bool zeroForOne,
     bool exactAmount
-  )
-    internal
-    view
-    returns (
-      uint160 sqrtPriceNextX96,
-      uint160 finalSqrtPriceX96,
-      uint128 finalLiquidity
-    )
-  {
+  ) internal view returns (uint160 sqrtPriceNextX96, uint160 finalSqrtPriceX96, uint128 finalLiquidity) {
     StepComputations memory step;
 
     step.sqrtPriceStartX96 = firstSqrtPriceX96;

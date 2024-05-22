@@ -66,14 +66,10 @@ contract BalancerV2GaugeAssetGuard is ERC20Guard {
     view
     virtual
     override
-    returns (
-      address withdrawAsset,
-      uint256 withdrawBalance,
-      MultiTransaction[] memory transactions
-    )
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
     uint256 totalAssetBalance = IERC20Extended(asset).balanceOf(pool);
-    uint256 burnAmount = totalAssetBalance.mul(portion).div(10**18);
+    uint256 burnAmount = totalAssetBalance.mul(portion).div(10 ** 18);
 
     if (burnAmount > 0) {
       transactions = new MultiTransaction[](2);

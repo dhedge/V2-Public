@@ -1,27 +1,6 @@
 {
   "v2.12.0": {
     "contracts": {
-      "USDPriceAggregator": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76",
-      "AssetHandlerProxy": "0x1BaF125D53F65a708bCb5559c9a9fdD9D088eDe3",
-      "AssetHandler": "0x46c56Ca71F3FCd36d65AB3Ea642D9F777C966c03",
-      "PoolLogicProxy": "0xBC1480Cb0dF8884d38cA6F2Af0bAD06A047B508d",
-      "PoolLogic": "0xEa13d7Ee169617aAa06d2593Fc70Df34EcfC1f95",
-      "PoolManagerLogicProxy": "0x57d6F7ac271FF522B70385A21DF2D2bbb516C8d9",
-      "PoolManagerLogic": "0xD635E261fdB7D25fA58E3a99847D1920D9a2F5C0",
-      "Governance": "0x0b844847558A5814CD0d5Ca539AdF62A5486c826",
-      "ERC20Guard": "0xa3072C67711cE0FCC222a8824fad345c725D62Ef",
-      "PoolFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535",
-      "PoolFactory": "0x68f44a498AF5CdC40e87F73f5D199f662803C802",
-      "DhedgeNftTrackerStorageProxy": "0xd40ef0EbE8C024CC31c2325B01649A7c024f45A4",
-      "DhedgeNftTrackerStorage": "0x67e34Cc20F8A982d7D804C8A5199f1e3E895d398",
-      "DhedgeUniV3V2Router": "0x5941E17856F4cF790B7E54BED643777154781CdE",
-      "DhedgeSuperSwapper": "0x756D0Aa8A64A55F784F9c8F2dCe517e72FD705A7",
-      "DhedgeEasySwapperProxy": "0x80b9411977C4fF8D618f2aC3f29F1e2D623C4d34",
-      "DhedgeEasySwapper": "0xe1cF5A93afF792C53BaE56F4093ce76C65e1ceB9",
-      "AaveLendingPoolAssetGuardV3": "0xd2C62C80E69802B8b313b00E86cE6dc97853dff0",
-      "LendingEnabledAssetGuard": "0xd0392103419ADA46070D7ea49a3BCd8D2256f219",
-      "AaveLendingPoolGuardV3": "0x81616A0D45F51A0F4640f281f98400333b802008",
-      "EasySwapperGuard": "0x60b8a1972f0f43809fEA643cFd4Dce86528a0b59",
       "Assets": [
         {
           "assetName": "USDC",
@@ -295,12 +274,47 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0xb2a824043730fe05f3da2efafa1cbbe83fa548d6"
+        },
+        {
+          "assetName": "Toros Ethereum Bull 3X",
+          "assetAddress": "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x9720dBA2dC471a17DAa586013D6b1B88266bfD48"
+        },
+        {
+          "assetName": "Toros Bitcoin Bull 3X",
+          "assetAddress": "0xad38255febd566809ae387d5be66ecd287947cb9",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0xf6F5683c8BAe193164366e1906B89eB5c6967DeE"
         }
       ],
+      "USDPriceAggregator": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76",
+      "AssetHandlerProxy": "0x1BaF125D53F65a708bCb5559c9a9fdD9D088eDe3",
+      "AssetHandler": "0x46c56Ca71F3FCd36d65AB3Ea642D9F777C966c03",
+      "PoolLogicProxy": "0xBC1480Cb0dF8884d38cA6F2Af0bAD06A047B508d",
+      "PoolLogic": "0x8d968d87582af6DFC0756109c51799075fBB6894",
+      "PoolManagerLogicProxy": "0x57d6F7ac271FF522B70385A21DF2D2bbb516C8d9",
+      "PoolManagerLogic": "0xD635E261fdB7D25fA58E3a99847D1920D9a2F5C0",
+      "Governance": "0x0b844847558A5814CD0d5Ca539AdF62A5486c826",
+      "ERC20Guard": "0xa3072C67711cE0FCC222a8824fad345c725D62Ef",
+      "PoolFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535",
+      "PoolFactory": "0x68f44a498AF5CdC40e87F73f5D199f662803C802",
+      "DhedgeNftTrackerStorageProxy": "0xd40ef0EbE8C024CC31c2325B01649A7c024f45A4",
+      "DhedgeNftTrackerStorage": "0x67e34Cc20F8A982d7D804C8A5199f1e3E895d398",
+      "DhedgeUniV3V2Router": "0x5941E17856F4cF790B7E54BED643777154781CdE",
+      "DhedgeSuperSwapper": "0x756D0Aa8A64A55F784F9c8F2dCe517e72FD705A7",
+      "DhedgeEasySwapperProxy": "0x80b9411977C4fF8D618f2aC3f29F1e2D623C4d34",
+      "DhedgeEasySwapper": "0xe1cF5A93afF792C53BaE56F4093ce76C65e1ceB9",
+      "AaveLendingPoolAssetGuardV3": "0x22AAFC69C8002c65e7F0fb0Ec618F8dd302b829f",
+      "LendingEnabledAssetGuard": "0xd0392103419ADA46070D7ea49a3BCd8D2256f219",
+      "AaveLendingPoolGuardV3": "0x81616A0D45F51A0F4640f281f98400333b802008",
+      "EasySwapperGuard": "0x60b8a1972f0f43809fEA643cFd4Dce86528a0b59",
       "OneInchV5Guard": "0xc0B92A955C336Bdc85cA60F0DaA9bF5EDB13fb42",
       "UniswapV3RouterGuard": "0x45D14dE3BCF32dff5517703FE5636eB27dD294a1",
       "UniswapV3AssetGuard": "0x7da7734F4A6A2CA405F5D975b2601543Ea5d4F9a",
-      "UniswapV3NonfungiblePositionGuard": "0x94ae37e0B0b56E4a1c69F7c24d0276D0446b0abD",
+      "UniswapV3NonfungiblePositionGuard": "0x0c2465bdE01878F97022945624CFd60341310b74",
       "BalancerV2Guard": "0x116157DF6afDFD191cdcb026378F87D2b66E4383",
       "BalancerV2GaugeContractGuard": "0x72232EBf4D5D447AA39685b197d393004807b955",
       "BalancerV2GaugeAssetGuard": "0x08Dfe9B8017AB3fde66a6A43A154ccC6f07B107B",
@@ -310,7 +324,10 @@
       "RamsesGaugeContractGuard": "0x64608491f5A0082292867fC698254D25E0279286",
       "SlippageAccumulator": "0x3e1511A1d5637A56f88f9ae31177449797Ee2018",
       "DhedgeRamsesUniV2Router": "0x68B027DeC5237ffa1b0219d982792A9e9d977Ff3",
-      "ClosedContractGuard": "0x60a30E15bF02Ee355fAf60cDB8B6c0C455697675"
+      "ClosedContractGuard": "0x60a30E15bF02Ee355fAf60cDB8B6c0C455697675",
+      "AaveIncentivesControllerV3Guard": "0xD52d10651686E9E27160B7Ec85534f0Fb76173D9",
+      "OneInchV6Guard": "0x3855b5934723b5E30E3A078456d203E40f012c18",
+      "ZeroExContractGuard": "0x22f1836C5a024852f66EeC893E9a96518063300b"
     },
     "network": {
       "name": "arbitrum",
@@ -318,10 +335,13 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 18 Jan 2024 08:26:56 GMT",
+    "lastUpdated": "Tue, 21 May 2024 18:19:02 GMT",
     "config": {
       "easySwapperConfig": {
-        "customLockupAllowedPools": [],
+        "customLockupAllowedPools": [
+          "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
+          "0xad38255febd566809ae387d5be66ecd287947cb9"
+        ],
         "feeByPassManagers": [
           "0xfbD2B4216f422DC1eEe1Cff4Fb64B726F099dEF5"
         ],

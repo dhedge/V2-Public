@@ -106,20 +106,17 @@ contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
     require(amountIn <= amountInMax, "too much slippage");
   }
 
-  function getAmountsOut(uint256 amountIn, address[] calldata path)
-    external
-    view
-    override
-    returns (uint256[] memory amountsOut)
-  {
+  function getAmountsOut(
+    uint256 amountIn,
+    address[] calldata path
+  ) external view override returns (uint256[] memory amountsOut) {
     (amountsOut, ) = _getAmountsOut(amountIn, path);
   }
 
-  function _getAmountsOut(uint256 amountIn, address[] calldata path)
-    internal
-    view
-    returns (uint256[] memory amountsOut, bytes memory swapPath)
-  {
+  function _getAmountsOut(
+    uint256 amountIn,
+    address[] calldata path
+  ) internal view returns (uint256[] memory amountsOut, bytes memory swapPath) {
     amountsOut = new uint256[](path.length);
     amountsOut[0] = amountIn;
     swapPath = abi.encodePacked(path[0]);
@@ -151,11 +148,10 @@ contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
     (amountsIn, ) = _getAmountsIn(amountOut, path);
   }
 
-  function _getAmountsIn(uint256 amountOut, address[] calldata path)
-    internal
-    view
-    returns (uint256[] memory amountsIn, bytes memory swapPath)
-  {
+  function _getAmountsIn(
+    uint256 amountOut,
+    address[] calldata path
+  ) internal view returns (uint256[] memory amountsIn, bytes memory swapPath) {
     amountsIn = new uint256[](path.length);
     amountsIn[path.length - 1] = amountOut;
     swapPath = abi.encodePacked(path[path.length - 1]);

@@ -63,11 +63,8 @@ contract LyraOptionMarketWrapperContractGuardRollups is LyraOptionMarketWrapperC
     address _nftTracker,
     uint256 _maxPositionCount
   )
-    LyraOptionMarketWrapperContractGuard(_lyraRegistry, _nftTracker, _maxPositionCount)
-  // solhint-disable-next-line no-empty-blocks
-  {
-
-  }
+    LyraOptionMarketWrapperContractGuard(_lyraRegistry, _nftTracker, _maxPositionCount) // solhint-disable-next-line no-empty-blocks
+  {}
 
   /// @notice Transaction guard for OptionMarketWrapper - used for Toros
   /// @dev It supports close/open/forceClose position
@@ -132,11 +129,7 @@ contract LyraOptionMarketWrapperContractGuardRollups is LyraOptionMarketWrapperC
   /// @dev It supports close/open/forceClose position
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  function afterTxGuard(
-    address _poolManagerLogic,
-    address to,
-    bytes calldata data
-  ) public override {
+  function afterTxGuard(address _poolManagerLogic, address to, bytes calldata data) public override {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
     require(msg.sender == poolLogic, "not pool logic");
 
@@ -159,11 +152,10 @@ contract LyraOptionMarketWrapperContractGuardRollups is LyraOptionMarketWrapperC
     }
   }
 
-  function _getOptionParam(bytes4 method, uint256 params)
-    internal
-    view
-    returns (IOptionMarketWrapper.OptionPositionParams memory optionPositionParams, bool isForceClose)
-  {
+  function _getOptionParam(
+    bytes4 method,
+    uint256 params
+  ) internal view returns (IOptionMarketWrapper.OptionPositionParams memory optionPositionParams, bool isForceClose) {
     if (method == IOptionMarketWrapper.openLong.selector) {
       address inputAsset = _getOptionInputAsset(params);
       optionPositionParams = IOptionMarketWrapper.OptionPositionParams({
@@ -348,7 +340,7 @@ contract LyraOptionMarketWrapperContractGuardRollups is LyraOptionMarketWrapperC
   }
 
   function _convertDecimal(uint256 amount, address inputAsset) internal view returns (uint256 newAmount) {
-    newAmount = amount * (10**(IERC20Extended(inputAsset).decimals() - 2));
+    newAmount = amount * (10 ** (IERC20Extended(inputAsset).decimals() - 2));
   }
 
   function _getOptionMarket(uint256 params) internal view returns (address) {

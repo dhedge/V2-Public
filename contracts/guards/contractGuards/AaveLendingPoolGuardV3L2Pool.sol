@@ -121,15 +121,7 @@ contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
    * @return The amount to supply
    * @return The referralCode
    */
-  function decodeSupplyParams(bytes32 args)
-    internal
-    view
-    returns (
-      address,
-      uint256,
-      uint16
-    )
-  {
+  function decodeSupplyParams(bytes32 args) internal view returns (address, uint256, uint16) {
     uint16 assetId;
     uint256 amount;
     uint16 referralCode;
@@ -169,16 +161,7 @@ contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
    * @return The interestRateMode, 1 for stable or 2 for variable debt
    * @return The referralCode
    */
-  function decodeBorrowParams(bytes32 args)
-    internal
-    view
-    returns (
-      address,
-      uint256,
-      uint256,
-      uint16
-    )
-  {
+  function decodeBorrowParams(bytes32 args) internal view returns (address, uint256, uint256, uint16) {
     uint16 assetId;
     uint256 amount;
     uint256 interestRateMode;
@@ -201,15 +184,7 @@ contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
    * @return The amount to repay
    * @return The interestRateMode, 1 for stable or 2 for variable debt
    */
-  function decodeRepayParams(bytes32 args)
-    internal
-    view
-    returns (
-      address,
-      uint256,
-      uint256
-    )
-  {
+  function decodeRepayParams(bytes32 args) internal view returns (address, uint256, uint256) {
     uint16 assetId;
     uint256 amount;
     uint256 interestRateMode;

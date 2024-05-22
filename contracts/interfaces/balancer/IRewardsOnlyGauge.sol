@@ -33,11 +33,7 @@ interface IRewardsOnlyGauge {
 
   function deposit(uint256 amount, address user) external;
 
-  function deposit(
-    uint256 amount,
-    address onBehalf,
-    bool isClaimRewards
-  ) external;
+  function deposit(uint256 amount, address onBehalf, bool isClaimRewards) external;
 
   function withdraw(uint256 amount) external;
 

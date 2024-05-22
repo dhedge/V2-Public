@@ -19,7 +19,7 @@ import { sushiLpAssetGuardJob } from "./jobs/assetGuards/sushiLpAssetGuardJob";
 import { uniV3AssetGuardJob } from "./jobs/assetGuards/uniV3AssetGuardJob";
 import { velodromeLPAssetGuardJob } from "./jobs/assetGuards/velodromeLPAssetGuardJob";
 import { assetHandlerJob } from "./jobs/assetHandlerJob";
-import { assetsJob } from "./jobs/assetsJob";
+import { AssetType, assetsJob } from "./jobs/assetsJob";
 import { aaveIncentivesControllerContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerContractGuardJob";
 import { aaveIncentivesControllerV3ContractGuardJob } from "./jobs/contractGuards/aaveIncentivesControllerV3ContractGuardJob";
 import { aaveV2LendingPoolContractGuardJob } from "./jobs/contractGuards/aaveV2LendingPoolContractGuardJob";
@@ -85,6 +85,16 @@ import { ramsesXRamGuardJob } from "./jobs/contractGuards/ramsesXRamGuardJob";
 import { ramsesUniV2RouterJob } from "./jobs/swapper/ramsesUniV2RouterJob";
 import { synthetixV3SpotMarketContractGuardJob } from "./jobs/contractGuards/synthetixV3SpotMarketContractGuardJob";
 import { sonneFinanceComptrollerContractGuardJob } from "./jobs/contractGuards/sonneFinanceComptrollerContractGuardJob";
+import { aaveDebtTokenContractGuardJob } from "./jobs/contractGuards/aaveDebtTokenContractGuardJob";
+import { aaveMigrationHelperGuardJob } from "./jobs/contractGuards/aaveMigrationHelperGuardJob";
+import { flatMoneyDelayedOrderGuardJob } from "./jobs/contractGuards/flatMoneyDelayedOrderGuardJob";
+import { flatMoneyCollateralAssetGuardJob } from "./jobs/assetGuards/flatMoneyCollateralAssetGuardJob";
+import { flatMoneyUNITAssetGuardJob } from "./jobs/assetGuards/flatMoneyUNITAssetGuardJob";
+import { v1SynthRedeemJob } from "./jobs/v1SynthRedeem/v1SynthRedeemJob";
+import { oneInchV6ContractGuardJob } from "./jobs/contractGuards/oneInchV6ContractGuardJob";
+import { velodromeCLAssetGuardJob } from "./jobs/assetGuards/velodromeCLAssetGuardJob";
+import { velodromeNonfungiblePositionGuardJob } from "./jobs/contractGuards/velodromeNonfungiblePositionGuardJob";
+import { enableVelodromeCLGaugeContractGuardJob } from "./jobs/velodromeCL/enableVelodromeCLGaugeContractGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   // Swappers related
@@ -99,6 +109,7 @@ const jobs: { [key: string]: IJob<void> } = {
   // External
   rewarddistribution: rewardDistributionJob,
   slippageaccumulator: slippageAccumulatorJob,
+  v1synthredeem: v1SynthRedeemJob,
 
   pause: pauseJob,
 
@@ -121,8 +132,8 @@ const jobs: { [key: string]: IJob<void> } = {
   sushilpassetguard: sushiLpAssetGuardJob,
   erc20guard: erc20GuardJob,
   erc721guard: erc721ContractGuardJob,
-  lendingenabledassetguard: lendingEnabledAssetGuardJobGenerator(4),
-  synthetixlendingenabledassetguard: lendingEnabledAssetGuardJobGenerator(14),
+  lendingenabledassetguard: lendingEnabledAssetGuardJobGenerator(AssetType["Lending Enable Asset"]),
+  synthetixlendingenabledassetguard: lendingEnabledAssetGuardJobGenerator(AssetType["Synthetix + LendingEnabled"]),
   quicklpassetguard: quickLpAssetGuardJob,
   univ3assetguard: uniV3AssetGuardJob,
   arrakisliquiditygaugev4assetguard: arrakisLiquidityGaugeV4AssetGuardJob,
@@ -137,6 +148,9 @@ const jobs: { [key: string]: IJob<void> } = {
   velodromev2lpassetguard: velodromeV2LPAssetGuardJob,
   synthetixv3assetguard: synthetixV3AssetGuardJob,
   ramseslpassetguard: ramsesLPAssetGuardJob,
+  flatmoneycollateralassetguard: flatMoneyCollateralAssetGuardJob,
+  flatmoneyunitassetguard: flatMoneyUNITAssetGuardJob,
+  velodromeclassetguard: velodromeCLAssetGuardJob,
 
   // Contract Guards
   closedcontractguard: closedContractGuardJob,
@@ -176,6 +190,12 @@ const jobs: { [key: string]: IJob<void> } = {
   ramsesxramguard: ramsesXRamGuardJob,
   synthetixv3spotmarketcontractguard: synthetixV3SpotMarketContractGuardJob,
   sonnecomptrollerguard: sonneFinanceComptrollerContractGuardJob,
+  aavedebttokencontractguard: aaveDebtTokenContractGuardJob,
+  aavemigrationhelperguard: aaveMigrationHelperGuardJob,
+  flatmoneydelayedorderguard: flatMoneyDelayedOrderGuardJob,
+  oneinchv6guard: oneInchV6ContractGuardJob,
+  velodromenonfungiblepositionguard: velodromeNonfungiblePositionGuardJob,
+  enablevelodromeclgaugecontractguard: enableVelodromeCLGaugeContractGuardJob,
 
   // Other Weird Guards
   openassetguard: openAssetContractGuardJob,
@@ -199,19 +219,13 @@ const jobs: { [key: string]: IJob<void> } = {
 
   // Example of how to verify any contract that isn't verified
   // Can edit this job
-  verifycontract: async (config, hre, versions) => {
-    const assets = versions[config.newTag].contracts.Assets;
-
-    for (const a of assets) {
-      if (a.oracleType == "VelodromeVariableLPAggregator") {
-        await tryVerify(
-          hre,
-          a.oracleAddress,
-          "contracts/priceAggregators/VelodromeVariableLPAggregator.sol:VelodromeVariableLPAggregator",
-          [a.assetAddress, a.specificOracleConfig.dhedgeFactoryProxy],
-        );
-      }
-    }
+  verifycontract: async (config, hre, versions, _, addresses) => {
+    await tryVerify(
+      hre,
+      versions[config.newTag].contracts.DhedgeUniV3V2Router,
+      "contracts/routers/DhedgeUniV3V2Router.sol:DhedgeUniV3V2Router",
+      [addresses.uniV3.uniswapV3FactoryAddress, addresses.uniV3.uniswapV3RouterAddress],
+    );
   },
 
   // has to be last

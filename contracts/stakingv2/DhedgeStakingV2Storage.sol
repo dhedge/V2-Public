@@ -143,7 +143,7 @@ contract DhedgeStakingV2Storage is IDhedgeStakingV2Storage, OwnableUpgradeable {
   /// @dev to disable new staking set to 0
   /// @param newDHTCap max amount of aggregate value of pool tokens that can be staked
   function setDHTCap(uint256 newDHTCap) external override onlyOwner {
-    require(newDHTCap <= 7_000_000 * 10**18, "Must be lower than 7 million dht");
+    require(newDHTCap <= 7_000_000 * 10 ** 18, "Must be lower than 7 million dht");
     dhtCap = newDHTCap;
     emit OwnerOperation("setDHTCap");
   }

@@ -245,5 +245,17 @@
       "chainlinkOracleAddress": "0xb2a824043730fe05f3da2efafa1cbbe83fa548d6"
     },
     "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Toros Ethereum Bull 3X",
+    "assetAddress": "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros Bitcoin Bull 3X",
+    "assetAddress": "0xad38255febd566809ae387d5be66ecd287947cb9",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
   }
 ]

@@ -70,11 +70,7 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
   bool public override isTxTrackingGuard = true;
   ILyraRegistry public immutable lyraRegistry;
 
-  constructor(
-    ILyraRegistry _lyraRegistry,
-    address _nftTracker,
-    uint256 _maxPositionCount
-  ) {
+  constructor(ILyraRegistry _lyraRegistry, address _nftTracker, uint256 _maxPositionCount) {
     lyraRegistry = _lyraRegistry;
     nftTracker = _nftTracker;
     maxPositionCount = _maxPositionCount;
@@ -178,11 +174,7 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
   /// @dev It supports close/open/forceClose position
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  function afterTxGuard(
-    address _poolManagerLogic,
-    address to,
-    bytes calldata data
-  ) public virtual override {
+  function afterTxGuard(address _poolManagerLogic, address to, bytes calldata data) public virtual override {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
     require(msg.sender == poolLogic, "not pool logic");
 
@@ -249,11 +241,7 @@ contract LyraOptionMarketWrapperContractGuard is TxDataUtils, ITxTrackingGuard {
     }
   }
 
-  function removeClosedPosition(
-    address poolLogic,
-    address optionMarket,
-    uint256 positionId
-  ) external {
+  function removeClosedPosition(address poolLogic, address optionMarket, uint256 positionId) external {
     OptionPosition[] memory optionPositions = getOptionPositions(poolLogic);
     // We need to find which array index is the position we want to delete
     for (uint256 i = 0; i < optionPositions.length; i++) {

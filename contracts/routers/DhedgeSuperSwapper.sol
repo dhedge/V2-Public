@@ -53,11 +53,9 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
   /// @param path The path to swap
   /// @return intermediary The intermediary asset to swap through
   /// @return enhancedPath The path to swap with
-  function getRouteHint(address[] memory path)
-    internal
-    view
-    returns (address intermediary, address[] memory enhancedPath)
-  {
+  function getRouteHint(
+    address[] memory path
+  ) internal view returns (address intermediary, address[] memory enhancedPath) {
     enhancedPath = path;
     if (path.length == 2) {
       intermediary = routeHints[path[0]];
@@ -152,23 +150,20 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
 
   // ========== VIEWS ========== //
 
-  function getAmountsOut(uint256 amountIn, address[] memory path)
-    external
-    view
-    override
-    returns (uint256[] memory amounts)
-  {
+  function getAmountsOut(
+    uint256 amountIn,
+    address[] memory path
+  ) external view override returns (uint256[] memory amounts) {
     (, address[] memory enhancedPath) = getRouteHint(path);
     (, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, enhancedPath);
     amounts = new uint256[](path.length);
     amounts[path.length - 1] = uniV2BestAmountOut;
   }
 
-  function getBestAmountOutUniV2Router(uint256 amountIn, address[] memory path)
-    public
-    view
-    returns (IUniswapV2Router router, uint256 bestAmountOut)
-  {
+  function getBestAmountOutUniV2Router(
+    uint256 amountIn,
+    address[] memory path
+  ) public view returns (IUniswapV2Router router, uint256 bestAmountOut) {
     for (uint256 i = 0; i < uniV2Routers.length; i++) {
       uint256 amount = getAmountOutUniV2(uniV2Routers[i], amountIn, path);
 
@@ -191,11 +186,10 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     }
   }
 
-  function getBestAmountInUniV2Router(uint256 amountOut, address[] memory path)
-    public
-    view
-    returns (IUniswapV2Router router, uint256 bestAmountIn)
-  {
+  function getBestAmountInUniV2Router(
+    uint256 amountOut,
+    address[] memory path
+  ) public view returns (IUniswapV2Router router, uint256 bestAmountIn) {
     bestAmountIn = uint256(-1); // first set to largest value to find lowest amountIn
     for (uint256 i = 0; i < uniV2Routers.length; i++) {
       uint256 amount = getAmountInUniV2(uniV2Routers[i], amountOut, path);
@@ -236,11 +230,7 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     return string(buffer);
   }
 
-  function encodeError(
-    string memory error,
-    address from,
-    address to
-  ) internal pure returns (string memory) {
+  function encodeError(string memory error, address from, address to) internal pure returns (string memory) {
     return string(abi.encodePacked(error, ": ", addressToString(from), ": ", addressToString(to)));
   }
 }

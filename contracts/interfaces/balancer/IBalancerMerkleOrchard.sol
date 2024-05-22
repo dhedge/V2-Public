@@ -13,9 +13,5 @@ interface IBalancerMerkleOrchard {
     bytes32[] merkleProof;
   }
 
-  function claimDistributions(
-    address claimer,
-    Claim[] memory claims,
-    IERC20[] memory tokens
-  ) external;
+  function claimDistributions(address claimer, Claim[] memory claims, IERC20[] memory tokens) external;
 }

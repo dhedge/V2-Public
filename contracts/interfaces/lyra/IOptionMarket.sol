@@ -61,14 +61,9 @@ interface IOptionMarket {
 
   function getStrikeAndExpiry(uint256 strikeId) external view returns (uint256 strikePrice, uint256 expiry);
 
-  function getSettlementParameters(uint256 strikeId)
-    external
-    view
-    returns (
-      uint256 strikePrice,
-      uint256 priceAtExpiry,
-      uint256 strikeToBaseReturned
-    );
+  function getSettlementParameters(
+    uint256 strikeId
+  ) external view returns (uint256 strikePrice, uint256 priceAtExpiry, uint256 strikeToBaseReturned);
 
   ///
 

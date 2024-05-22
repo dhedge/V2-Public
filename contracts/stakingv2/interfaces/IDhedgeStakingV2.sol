@@ -60,11 +60,7 @@ interface IDhedgeStakingV2 {
   /// @param tokenId The erc721 id of the existing stake
   /// @param dhedgePoolAddress the address of the pool being staked
   /// @param dhedgePoolAmount the amount of pool tokens being staked
-  function stakePoolTokens(
-    uint256 tokenId,
-    address dhedgePoolAddress,
-    uint256 dhedgePoolAmount
-  ) external;
+  function stakePoolTokens(uint256 tokenId, address dhedgePoolAddress, uint256 dhedgePoolAmount) external;
 
   /// @notice Allows the user to unstake their dhedge pool tokens, when called will be allocated rewards at this point.
   /// @dev Once the user unstakes their pooltokens the rewards to be recieved are calculated and assigned to the user. This stake is retired.
@@ -102,10 +98,9 @@ interface IDhedgeStakingV2 {
   /// @notice Allows getting configuration of a pool
   /// @param poolAddress the dhedge pool address to get the configuration for
   /// @return poolConfiguration the configuration for the given pool
-  function getPoolConfiguration(address poolAddress)
-    external
-    view
-    returns (IDhedgeStakingV2Storage.PoolConfiguration memory);
+  function getPoolConfiguration(
+    address poolAddress
+  ) external view returns (IDhedgeStakingV2Storage.PoolConfiguration memory);
 
   /// @notice Allows getting stake info
   /// @param tokenId the erc721 id of the stake

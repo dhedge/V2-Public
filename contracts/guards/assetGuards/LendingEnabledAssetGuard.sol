@@ -61,11 +61,7 @@ contract LendingEnabledAssetGuard is ERC20Guard {
     _checkBalance(pool, asset, IGovernance(governance).nameToDestination("aaveProtocolDataProviderV3"));
   }
 
-  function _checkBalance(
-    address pool,
-    address asset,
-    address aaveProtocolDataProvider
-  ) internal view {
+  function _checkBalance(address pool, address asset, address aaveProtocolDataProvider) internal view {
     if (aaveProtocolDataProvider != address(0)) {
       (address aToken, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(
         aaveProtocolDataProvider

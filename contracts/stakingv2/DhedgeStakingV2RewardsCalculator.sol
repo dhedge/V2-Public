@@ -43,8 +43,8 @@ pragma abicoder v2;
 contract DhedgeStakingV2RewardsCalculator {
   using SafeMath for uint256;
 
-  uint256 public constant UNIT = 10**18;
-  uint256 public constant POOL_TOKEN_UNIT = 10**18;
+  uint256 public constant UNIT = 10 ** 18;
+  uint256 public constant POOL_TOKEN_UNIT = 10 ** 18;
 
   /// @notice Calculates how many DHT a staker should recieve
   /// @dev This should take into account:

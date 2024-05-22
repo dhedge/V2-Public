@@ -2,9 +2,8 @@
 node_modules
 coverage
 artifacts
-artifacts-ovm
 cache
 types
 *.md
-*.hbs
 *.json
+pnpm-lock.yaml
