@@ -1,7 +1,7 @@
 import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { units } from "../../../testHelpers";
 import { velodromeCLAssetGuardTest } from "../../common/velodromeCL/VelodromeCLAssetGuardTest";
-import { velodromeCLGaugeContractGuardTest } from "../../common/velodromeCL/VelodromeCLGaugeContractGuardTest";
+import { velodromeCLGaugeContractGuardTest } from "../../common/velodromeCL/CLGaugeVelodromeContractGuardTest";
 import { velodromeCLMultiplePositionTest } from "../../common/velodromeCL/VelodromeCLMultiplePositionTest";
 import { velodromeCLNonfungiblePositionGuardTest } from "../../common/velodromeCL/VelodromeNonfungiblePositionGuardTest";
 

@@ -212,6 +212,8 @@ export const ovmProdAddresses: IAddresses = {
       "0x93701ec795d8f8e16772be05142b2994c045e7dc", // DNY4
       "0xa5d8b370578f9e9eeb9cf7b7fad6cd5ab7d99a64", // DNY5
       "0xb9243c495117343981ec9f8aa2abffee54396fc0", // USDpy
+      "0x7d3c9c6566375d7ad6e89169ca5c01b5edc15364", // SOLBULL2X
+      "0xcc7d6ed524760539311ed0cdb41d0852b4eb77eb", // SOLBULL3X
       // "0x9fc311fc8faa6d6b0d3199f25d9976e1e16de998", // Was added for LINK-PERP Contract guard
     ],
   },

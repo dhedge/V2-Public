@@ -95,6 +95,7 @@ import { oneInchV6ContractGuardJob } from "./jobs/contractGuards/oneInchV6Contra
 import { velodromeCLAssetGuardJob } from "./jobs/assetGuards/velodromeCLAssetGuardJob";
 import { velodromeNonfungiblePositionGuardJob } from "./jobs/contractGuards/velodromeNonfungiblePositionGuardJob";
 import { enableVelodromeCLGaugeContractGuardJob } from "./jobs/velodromeCL/enableVelodromeCLGaugeContractGuardJob";
+import { byPassAssetGuardJob } from "./jobs/assetGuards/byPassAssetGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   // Swappers related
@@ -151,6 +152,7 @@ const jobs: { [key: string]: IJob<void> } = {
   flatmoneycollateralassetguard: flatMoneyCollateralAssetGuardJob,
   flatmoneyunitassetguard: flatMoneyUNITAssetGuardJob,
   velodromeclassetguard: velodromeCLAssetGuardJob,
+  bypassassetguard: byPassAssetGuardJob,
 
   // Contract Guards
   closedcontractguard: closedContractGuardJob,

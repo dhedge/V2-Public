@@ -31,6 +31,7 @@ export enum AssetType {
   "Synthetix Futures Market Asset" = 101,
   "Synthetix PerpsV2 Market Asset" = 102,
   "Synthetix V3 Position Asset" = 103,
+  "Deprecated Asset" = 999,
 }
 
 export const assetsJob: IJob<void> = async (

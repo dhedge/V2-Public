@@ -7,6 +7,8 @@ import {
   IVelodromeCLGauge__factory,
   DhedgeNftTrackerStorage,
   IERC721__factory,
+  VelodromeCLGaugeContractGuard,
+  AerodromeCLGaugeContractGuard,
 } from "../../../../types";
 import { BigNumber } from "ethers";
 import { assetSetting } from "../../utils/deployContracts/getChainAssets";
@@ -17,6 +19,7 @@ export type IVelodromeCLTestParams = IBackboneDeploymentsParams & {
   factory: string;
   protocolToken: string;
   VARIABLE_PROTOCOLTOKEN_USDC: { poolAddress: string; isStable: boolean; gaugeAddress: string };
+  isAerodrome?: boolean;
   pairs: {
     bothSupportedPair: {
       tickSpacing: number;
@@ -77,9 +80,17 @@ export const deployVelodromeCLInfrastructure = async (
     velodromeNonfungiblePositionGuard.address,
   );
 
-  const VelodromeCLGaugeContractGuard = await ethers.getContractFactory("VelodromeCLGaugeContractGuard");
-  const velodromeCLGaugeContractGuard = await VelodromeCLGaugeContractGuard.deploy();
-  await velodromeCLGaugeContractGuard.deployed();
+  // note: gaugeContractGuard is different on velodrome and aerodrome
+  let velodromeCLGaugeContractGuard: VelodromeCLGaugeContractGuard | AerodromeCLGaugeContractGuard;
+  if (testParams.isAerodrome) {
+    const AerodromeCLGaugeContractGuard = await ethers.getContractFactory("AerodromeCLGaugeContractGuard");
+    velodromeCLGaugeContractGuard = await AerodromeCLGaugeContractGuard.deploy();
+    await velodromeCLGaugeContractGuard.deployed();
+  } else {
+    const VelodromeCLGaugeContractGuard = await ethers.getContractFactory("VelodromeCLGaugeContractGuard");
+    velodromeCLGaugeContractGuard = await VelodromeCLGaugeContractGuard.deploy();
+    await velodromeCLGaugeContractGuard.deployed();
+  }
 
   await deployments.governance.setContractGuard(
     testParams.pairs.bothSupportedPair.gauge,

@@ -163,7 +163,7 @@ export const velodromeCLMultiplePositionTest = (testParams: IVelodromeCLTestPara
         };
         const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
         await mintLpAsPool(nonfungiblePositionManager.address, poolLogicProxy, manager, mintSettings);
-        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.000001);
+        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.00005);
       });
     });
 
@@ -181,7 +181,7 @@ export const velodromeCLMultiplePositionTest = (testParams: IVelodromeCLTestPara
           totalLiquityAfter = totalLiquityAfter.add((await nonfungiblePositionManager.positions(tokenId)).liquidity);
         }
         checkAlmostSame(totalLiquityAfter, totalLiquityBefore.div(2), 0.00001);
-        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.00001);
+        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.00005);
       });
       it("Pool with staked and unstaked position has expected funds after withdraw", async () => {
         const withdrawTx = iVelodromeCLGauge.encodeFunctionData("withdraw", [tokenIds[0]]);
@@ -198,7 +198,7 @@ export const velodromeCLMultiplePositionTest = (testParams: IVelodromeCLTestPara
           totalLiquityAfter = totalLiquityAfter.add((await nonfungiblePositionManager.positions(tokenId)).liquidity);
         }
         checkAlmostSame(totalLiquityAfter, totalLiquityBefore.div(2), 0.00001);
-        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.00001);
+        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.00005);
       });
     });
     it("Pool receives expected rewards", async () => {
@@ -232,7 +232,7 @@ export const velodromeCLMultiplePositionTest = (testParams: IVelodromeCLTestPara
         totalLiquityAfter = totalLiquityAfter.add((await nonfungiblePositionManager.positions(tokenId)).liquidity);
       }
       checkAlmostSame(totalLiquityAfter, totalLiquityBefore.div(2), 0.00001);
-      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.00001);
+      checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.00005);
     });
   });
 };

@@ -59,6 +59,10 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     address gauge;
     bool isStaked;
     uint256 tokenId;
+    bool isToUnstakeForWithdrawal;
+    bool isToWithdrawAllLP; // bool to check if stakeBack needed
+    uint256 rewardAmount;
+    address rewardToken;
   }
 
   /// @notice Returns the pool position of Velodrome CL
@@ -175,10 +179,10 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     );
     uint256[] memory tokenIds = guard.getOwnedTokenIds(pool);
     uint256 txCount;
-    // Allows up to 5 transactions per owned tokenId.
-    // For the staked case in _addDecreaseLiquidityTransactions, a maximum of 3 txs is expected.
+    // Allows up to 7 transactions per owned tokenId.
+    // For the staked case in _addDecreaseLiquidityTransactions, a maximum of 5 txs is expected.
     // Similarly, in _addRewardTransactions, a maximum of 2 txs is expected.
-    transactions = new MultiTransaction[](tokenIds.length.mul(5));
+    transactions = new MultiTransaction[](tokenIds.length.mul(7));
     WithdrawParams memory withdrawParams = WithdrawParams({pool: pool, asset: asset, portion: portion, to: to});
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       DecreaseLiquidityData memory decreaseLiquidityData = _calcPrincipalsForDecreaseLiquidity(
@@ -186,10 +190,11 @@ contract VelodromeCLAssetGuard is ERC20Guard {
         tokenIds[i],
         portion
       );
-      decreaseLiquidityData = _calcFeesForDecreaseLiquidity(
+      decreaseLiquidityData = _calcFeesAndRewardForDecreaseLiquidity(
         nonfungiblePositionManager,
         tokenIds[i],
         portion,
+        withdrawParams,
         decreaseLiquidityData
       );
       (transactions, txCount) = _addDecreaseLiquidityTransactions(
@@ -209,23 +214,34 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     return (withdrawAsset, withdrawBalance, transactions);
   }
 
-  /// @notice Calculates liquidity withdraw fees;
+  /// @notice Calculates liquidity withdraw fees, and reward if it's staked;
   /// @dev Also to avoid stack too deep error
   ///
   /// @param nonfungiblePositionManager VelodromeNonfungiblePositionManager
   /// @param tokenId nft position id
   /// @param portion withdraw portion
+  /// @param withdrawParams info includes the pool address
   /// @param decreaseLiquidityData withdraw info
   /// @return decreaseLiquidity withdraw info with added data
-  function _calcFeesForDecreaseLiquidity(
+  function _calcFeesAndRewardForDecreaseLiquidity(
     IVelodromeNonfungiblePositionManager nonfungiblePositionManager,
     uint256 tokenId,
     uint256 portion,
+    WithdrawParams memory withdrawParams,
     DecreaseLiquidityData memory decreaseLiquidityData
   ) internal view returns (DecreaseLiquidityData memory) {
     (uint256 feeAmount0, uint256 feeAmount1) = nonfungiblePositionManager.fees(tokenId);
     decreaseLiquidityData.amount0FeesToCollect = (feeAmount0.mul(portion).div(10 ** 18)).toUint128();
     decreaseLiquidityData.amount1FeesToCollect = (feeAmount1.mul(portion).div(10 ** 18)).toUint128();
+    // gauge rewards
+    if (decreaseLiquidityData.isStaked) {
+      IVelodromeCLGauge clGauge = IVelodromeCLGauge(decreaseLiquidityData.gauge);
+      decreaseLiquidityData.rewardAmount = clGauge.earned(withdrawParams.pool, decreaseLiquidityData.tokenId).add(
+        clGauge.rewards(decreaseLiquidityData.tokenId)
+      );
+      decreaseLiquidityData.rewardToken = clGauge.rewardToken();
+    }
+
     return decreaseLiquidityData;
   }
 
@@ -262,7 +278,9 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     IVelodromeCLPool clPool = IVelodromeCLPool(velodromeCLFactory.getPool(token0, token1, tickSpacing));
     decreaseLiquidity.gauge = clPool.gauge();
     decreaseLiquidity.isStaked = nonfungiblePositionManager.ownerOf(tokenId) == decreaseLiquidity.gauge;
+    decreaseLiquidity.isToWithdrawAllLP = portion == uint256(10 ** 18);
     decreaseLiquidity.tokenId = tokenId;
+    decreaseLiquidity.isToUnstakeForWithdrawal = decreaseLiquidity.isStaked && decreaseLiquidity.lpAmount != 0;
 
     (uint160 sqrtPriceX96, , , , , ) = clPool.slot0();
 
@@ -282,39 +300,35 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     DecreaseLiquidityData memory decreaseLiquidityData,
     WithdrawParams memory withdrawParams
   ) internal view returns (MultiTransaction[] memory, uint256) {
-    if (!decreaseLiquidityData.isStaked) {
+    if (!decreaseLiquidityData.isStaked || decreaseLiquidityData.rewardAmount == 0) {
       return (transactions, txCount);
     }
 
-    // withdraw gauge rewards
-    IVelodromeCLGauge clGauge = IVelodromeCLGauge(decreaseLiquidityData.gauge);
-    uint256 rewardAmount = clGauge.earned(withdrawParams.pool, decreaseLiquidityData.tokenId).add(
-      clGauge.rewards(decreaseLiquidityData.tokenId)
-    );
-
-    if (rewardAmount == 0) {
-      return (transactions, txCount);
+    // unstaking will claim reward internally, so only call getReward if isToUnstakeForWithdrawal is not true
+    if (!decreaseLiquidityData.isToUnstakeForWithdrawal) {
+      // include gauge reward claim transaction
+      transactions[txCount++] = MultiTransaction({
+        to: decreaseLiquidityData.gauge,
+        txData: abi.encodeWithSelector(bytes4(keccak256("getReward(uint256)")), decreaseLiquidityData.tokenId)
+      });
     }
 
-    // include gauge reward claim transaction
-    transactions[txCount++] = MultiTransaction({
-      to: decreaseLiquidityData.gauge,
-      txData: abi.encodeWithSelector(bytes4(keccak256("getReward(uint256)")), decreaseLiquidityData.tokenId)
-    });
-    address rewardToken = clGauge.rewardToken();
-
-    if (IHasSupportedAsset(IPoolLogic(withdrawParams.pool).poolManagerLogic()).isSupportedAsset(rewardToken)) {
+    if (
+      IHasSupportedAsset(IPoolLogic(withdrawParams.pool).poolManagerLogic()).isSupportedAsset(
+        decreaseLiquidityData.rewardToken
+      )
+    ) {
       // to avoid double transferring;
       //  rewardToken as supportedAsset would have its own AssetGuard to handle the transfer
       return (transactions, txCount);
     }
 
     transactions[txCount++] = MultiTransaction({
-      to: rewardToken,
+      to: decreaseLiquidityData.rewardToken,
       txData: abi.encodeWithSelector(
         bytes4(keccak256("transfer(address,uint256)")),
         withdrawParams.to,
-        rewardAmount.mul(withdrawParams.portion).div(10 ** 18)
+        decreaseLiquidityData.rewardAmount.mul(withdrawParams.portion).div(10 ** 18)
       )
     });
 
@@ -329,83 +343,68 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     DecreaseLiquidityData memory decreaseLiquidityData,
     WithdrawParams memory withdrawParams
   ) internal pure returns (MultiTransaction[] memory, uint256) {
-    // decreaseStakedLiquidity from gauge (principals sent from gauge to the vault)
-    if (decreaseLiquidityData.isStaked && decreaseLiquidityData.lpAmount != 0) {
+    // to decrease liquidity, staked nft position needs to be unstaked first. after withdrawing, we stake it back.
+    if (decreaseLiquidityData.isToUnstakeForWithdrawal) {
       transactions[txCount++] = MultiTransaction({
         to: decreaseLiquidityData.gauge,
+        txData: abi.encodeWithSelector(IVelodromeCLGauge.withdraw.selector, decreaseLiquidityData.tokenId)
+      });
+    }
+
+    // decreaseLiquidity
+    if (decreaseLiquidityData.lpAmount != 0) {
+      transactions[txCount++] = MultiTransaction({
+        to: address(withdrawParams.asset), // nonfungiblePositionManager
         txData: abi.encodeWithSelector(
-          IVelodromeCLGauge.decreaseStakedLiquidity.selector,
-          decreaseLiquidityData.tokenId,
-          decreaseLiquidityData.lpAmount,
-          0,
-          0,
-          type(uint256).max
+          IVelodromeNonfungiblePositionManager.decreaseLiquidity.selector,
+          IVelodromeNonfungiblePositionManager.DecreaseLiquidityParams(
+            decreaseLiquidityData.tokenId,
+            decreaseLiquidityData.lpAmount,
+            0,
+            0,
+            type(uint256).max
+          )
         )
       });
+    }
 
-      if (decreaseLiquidityData.amount0PrincipalToCollect > 0) {
-        // amount0 principal sent from this vault to the user
-        transactions[txCount++] = MultiTransaction({
-          to: decreaseLiquidityData.token0,
-          txData: abi.encodeWithSelector(
-            bytes4(keccak256("transfer(address,uint256)")),
+    // Collect principals and fees
+    if (
+      decreaseLiquidityData.amount0PrincipalToCollect != 0 ||
+      decreaseLiquidityData.amount1PrincipalToCollect != 0 ||
+      decreaseLiquidityData.amount0FeesToCollect != 0 ||
+      decreaseLiquidityData.amount1FeesToCollect != 0
+    ) {
+      transactions[txCount++] = MultiTransaction({
+        to: withdrawParams.asset, // nonfungiblePositionManager
+        txData: abi.encodeWithSelector(
+          IVelodromeNonfungiblePositionManager.collect.selector,
+          IVelodromeNonfungiblePositionManager.CollectParams(
+            decreaseLiquidityData.tokenId,
             withdrawParams.to, // recipient
-            decreaseLiquidityData.amount0PrincipalToCollect
+            (decreaseLiquidityData.amount0PrincipalToCollect.add(decreaseLiquidityData.amount0FeesToCollect))
+              .toUint128(),
+            (decreaseLiquidityData.amount1PrincipalToCollect.add(decreaseLiquidityData.amount1FeesToCollect))
+              .toUint128()
           )
-        });
-      }
+        )
+      });
+    }
 
-      if (decreaseLiquidityData.amount1PrincipalToCollect > 0) {
-        // amount1 principal sent from this vault to the user
-        transactions[txCount++] = MultiTransaction({
-          to: decreaseLiquidityData.token1,
-          txData: abi.encodeWithSelector(
-            bytes4(keccak256("transfer(address,uint256)")),
-            withdrawParams.to, // recipient
-            decreaseLiquidityData.amount1PrincipalToCollect
-          )
-        });
-      }
-      // decreaseLiquidity
-    } else {
-      if (decreaseLiquidityData.lpAmount != 0) {
-        transactions[txCount++] = MultiTransaction({
-          to: address(withdrawParams.asset), // nonfungiblePositionManager
-          txData: abi.encodeWithSelector(
-            IVelodromeNonfungiblePositionManager.decreaseLiquidity.selector,
-            IVelodromeNonfungiblePositionManager.DecreaseLiquidityParams(
-              decreaseLiquidityData.tokenId,
-              decreaseLiquidityData.lpAmount,
-              0,
-              0,
-              type(uint256).max
-            )
-          )
-        });
-      }
-
-      // Collect principals and fees
-      if (
-        decreaseLiquidityData.amount0PrincipalToCollect != 0 ||
-        decreaseLiquidityData.amount1PrincipalToCollect != 0 ||
-        decreaseLiquidityData.amount0FeesToCollect != 0 ||
-        decreaseLiquidityData.amount1FeesToCollect != 0
-      ) {
-        transactions[txCount++] = MultiTransaction({
-          to: withdrawParams.asset, // nonfungiblePositionManager
-          txData: abi.encodeWithSelector(
-            IVelodromeNonfungiblePositionManager.collect.selector,
-            IVelodromeNonfungiblePositionManager.CollectParams(
-              decreaseLiquidityData.tokenId,
-              withdrawParams.to, // recipient
-              (decreaseLiquidityData.amount0PrincipalToCollect.add(decreaseLiquidityData.amount0FeesToCollect))
-                .toUint128(),
-              (decreaseLiquidityData.amount1PrincipalToCollect.add(decreaseLiquidityData.amount1FeesToCollect))
-                .toUint128()
-            )
-          )
-        });
-      }
+    // stake it back
+    if (decreaseLiquidityData.isToUnstakeForWithdrawal && !decreaseLiquidityData.isToWithdrawAllLP) {
+      transactions[txCount++] = MultiTransaction({
+        to: withdrawParams.asset, // nonfungiblePositionManager
+        txData: abi.encodeWithSelector(
+          bytes4(keccak256("approve(address,uint256)")),
+          decreaseLiquidityData.gauge,
+          decreaseLiquidityData.tokenId
+        )
+      });
+      transactions[txCount++] = MultiTransaction({
+        to: decreaseLiquidityData.gauge,
+        txData: abi.encodeWithSelector(IVelodromeCLGauge.deposit.selector, decreaseLiquidityData.tokenId)
+      });
     }
 
     return (transactions, txCount);

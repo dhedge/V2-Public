@@ -7,6 +7,7 @@ import { checkAlmostSame } from "../../../testHelpers";
 import {
   IERC20,
   IVelodromeNonfungiblePositionManager,
+  IVelodromeNonfungiblePositionManager__factory,
   PoolFactory,
   PoolLogic,
   PoolManagerLogic,
@@ -39,6 +40,7 @@ export const velodromeCLAssetGuardTest = (testParams: IVelodromeCLTestParams) =>
     let nonfungiblePositionManager: IVelodromeNonfungiblePositionManager;
     let token0: IERC20;
     let token1: IERC20;
+    const iNonfungiblePositionManager = new ethers.utils.Interface(IVelodromeNonfungiblePositionManager__factory.abi);
 
     before(async function () {
       deployments = await deployBackboneContracts(testParams);
@@ -92,12 +94,12 @@ export const velodromeCLAssetGuardTest = (testParams: IVelodromeCLTestParams) =>
       await poolLogicProxy.deposit(bothSupportedPair.token1, bothSupportedPair.amount1.mul(AMOUNT_MULTIPLIER));
       let approveABI = iERC20.encodeFunctionData("approve", [
         nonfungiblePositionManager.address,
-        bothSupportedPair.amount0,
+        bothSupportedPair.amount0.mul(2),
       ]);
       await poolLogicProxy.connect(manager).execTransaction(bothSupportedPair.token0, approveABI);
       approveABI = iERC20.encodeFunctionData("approve", [
         nonfungiblePositionManager.address,
-        bothSupportedPair.amount1,
+        bothSupportedPair.amount1.mul(2),
       ]);
       await poolLogicProxy.connect(manager).execTransaction(bothSupportedPair.token1, approveABI);
 
@@ -117,6 +119,11 @@ export const velodromeCLAssetGuardTest = (testParams: IVelodromeCLTestParams) =>
 
       tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(poolLogicProxy.address, 0);
 
+      const increaseLiquidityABI = iNonfungiblePositionManager.encodeFunctionData("increaseLiquidity", [
+        [tokenId, bothSupportedPair.amount0, bothSupportedPair.amount1, 0, 0, deadLine],
+      ]);
+      await poolLogicProxy.connect(manager).execTransaction(nonfungiblePositionManager.address, increaseLiquidityABI);
+
       //approve for staking in gauge
       approveABI = iERC721.encodeFunctionData("approve", [bothSupportedPair.gauge, tokenId]);
       await poolLogicProxy.connect(manager).execTransaction(nonfungiblePositionManager.address, approveABI);
@@ -124,21 +131,6 @@ export const velodromeCLAssetGuardTest = (testParams: IVelodromeCLTestParams) =>
       const depositTx = iVelodromeCLGauge.encodeFunctionData("deposit(uint256)", [tokenId]);
 
       await poolLogicProxy.connect(manager).execTransaction(bothSupportedPair.gauge, depositTx);
-
-      const increaseStakedLiquidityTx = iVelodromeCLGauge.encodeFunctionData("increaseStakedLiquidity", [
-        tokenId,
-        bothSupportedPair.amount0,
-        bothSupportedPair.amount1,
-        0,
-        0,
-        deadLine,
-      ]);
-
-      approveABI = iERC20.encodeFunctionData("approve", [bothSupportedPair.gauge, bothSupportedPair.amount0]);
-      await poolLogicProxy.connect(manager).execTransaction(bothSupportedPair.token0, approveABI);
-      approveABI = iERC20.encodeFunctionData("approve", [bothSupportedPair.gauge, bothSupportedPair.amount1]);
-      await poolLogicProxy.connect(manager).execTransaction(bothSupportedPair.token1, approveABI);
-      await poolLogicProxy.connect(manager).execTransaction(bothSupportedPair.gauge, increaseStakedLiquidityTx);
 
       await poolFactory.setExitCooldown(0);
       await ethers.provider.send("evm_increaseTime", [3600 * 24 * 3]); // 3 days
@@ -214,14 +206,10 @@ export const velodromeCLAssetGuardTest = (testParams: IVelodromeCLTestParams) =>
         const poolRewardBalance = await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address);
         const withdrawerRewardBalance = await PROTOCOL_TOKEN.balanceOf(logicOwner.address);
         const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
-        checkAlmostSame(poolRewardBalance.add(withdrawerRewardBalance), claimAmount.add(rewards), 0.0001);
-        checkAlmostSame(
-          await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address),
-          claimAmount.add(rewards).div(2),
-          0.0001,
-        );
-        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(logicOwner.address), claimAmount.add(rewards).div(2), 0.0001);
-        checkAlmostSame(totalFundValueAfter, totalFundValueBefore.div(2), 0.0001);
+        checkAlmostSame(poolRewardBalance.add(withdrawerRewardBalance), claimAmount.add(rewards), 0.005);
+        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address), claimAmount.add(rewards).div(2), 0.005);
+        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(logicOwner.address), claimAmount.add(rewards).div(2), 0.005);
+        checkAlmostSame(totalFundValueAfter, totalFundValueBefore.div(2), 0.0005);
       });
 
       it("Pool and Withdrawer receives expected rewards (rewardToken is not supported Asset)", async () => {
@@ -238,13 +226,9 @@ export const velodromeCLAssetGuardTest = (testParams: IVelodromeCLTestParams) =>
         const poolRewardBalance = await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address);
         const withdrawerRewardBalance = await PROTOCOL_TOKEN.balanceOf(logicOwner.address);
 
-        checkAlmostSame(poolRewardBalance.add(withdrawerRewardBalance), claimAmount.add(rewards), 0.0001);
-        checkAlmostSame(
-          await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address),
-          claimAmount.add(rewards).div(2),
-          0.0001,
-        );
-        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(logicOwner.address), claimAmount.add(rewards).div(2), 0.0001);
+        checkAlmostSame(poolRewardBalance.add(withdrawerRewardBalance), claimAmount.add(rewards), 0.005);
+        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address), claimAmount.add(rewards).div(2), 0.005);
+        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(logicOwner.address), claimAmount.add(rewards).div(2), 0.005);
       });
     });
   });

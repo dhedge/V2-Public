@@ -24,6 +24,7 @@
 // 101 = Synthetix Futures Perps v1
 // 102 = Synthetix Futures Perps v2
 // 103 = Synthetix V3 Position Asset
+// 999 = Deprecated Asset
 
 // SPDX-License-Identifier: BUSL-1.1
 

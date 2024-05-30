@@ -648,9 +648,9 @@
     "assetType": "0",
     "oracleType": "VelodromeV2TWAPAggregator",
     "specificOracleConfig": {
-      "pair": "0x4d7959d17B9710BE87e3657e69d946914221BB88",
+      "pair": "0x124D69DaeDA338b1b31fFC8e429e39c9A991164e",
       "mainToken": "0xcb8fa9a76b8e203d8c3797bf438d8fb81ea3326a",
-      "pairToken": "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
+      "pairToken": "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
       "pairTokenUsdAggregator": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
     }
   },
@@ -705,9 +705,9 @@
     "assetType": "0",
     "oracleType": "VelodromeV2TWAPAggregator",
     "specificOracleConfig": {
-      "pair": "0x56770b94279539416855fe29Ef14b26438B5e421",
+      "pair": "0x1dE84E1324BaF5a9f3A49A48892fE90cE48456f1",
       "mainToken": "0x296f55f8fb28e498b858d0bcda06d955b2cb3f97",
-      "pairToken": "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
+      "pairToken": "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
       "pairTokenUsdAggregator": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
     }
   },
@@ -1011,7 +1011,7 @@
     "oracleType": "ChainlinkAggregator",
     "specificOracleConfig": {
       "Notes": "sUSDOracleAddress",
-      "chainlinkOracleAddress": "0xcE17BbEEE29159f08a61a89259c2E9aDedA3EC70"
+      "chainlinkOracleAddress": "0x46cdf214F7bC1d6E464ADA134D6f778ACBFA61B9"
     },
     "specificContractGuardConfig": {
       "contractGuard": "SynthetixPerpsV2MarketContractGuard"
@@ -1994,7 +1994,7 @@
   {
     "assetName": "Sonne WETH",
     "assetAddress": "0xf7B5965f5C117Eb1B5450187c9DcFccc3C317e8E",
-    "assetType": "0",
+    "assetType": "999",
     "oracleType": "SonneFinancePriceAggregator",
     "specificOracleConfig": {
       "priceOracle": "0xEFc0495DA3E48c5A55F73706b249FD49d711A502",
@@ -2007,7 +2007,7 @@
   {
     "assetName": "Sonne USDC",
     "assetAddress": "0xEC8FEa79026FfEd168cCf5C627c7f486D77b765F",
-    "assetType": "0",
+    "assetType": "999",
     "oracleType": "SonneFinancePriceAggregator",
     "specificOracleConfig": {
       "priceOracle": "0xEFc0495DA3E48c5A55F73706b249FD49d711A502",
@@ -2020,7 +2020,7 @@
   {
     "assetName": "Sonne OP",
     "assetAddress": "0x8cD6b19A07d754bF36AdEEE79EDF4F2134a8F571",
-    "assetType": "0",
+    "assetType": "999",
     "oracleType": "SonneFinancePriceAggregator",
     "specificOracleConfig": {
       "priceOracle": "0xEFc0495DA3E48c5A55F73706b249FD49d711A502",
@@ -2059,7 +2059,7 @@
   {
     "assetName": "Sonne wstETH",
     "assetAddress": "0x26AaB17f27CD1c8d06a0Ad8E4a1Af8B1032171d5",
-    "assetType": "0",
+    "assetType": "999",
     "oracleType": "SonneFinancePriceAggregator",
     "specificOracleConfig": {
       "comptroller": "0x60CF091cD3f50420d50fD7f707414d0DF4751C58",

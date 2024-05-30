@@ -185,6 +185,8 @@ export const ovmChainData = Object.freeze({
     LINKBEAR1X: "0xe17a1b2038fa5d725a3cb077ad6c242062b4872b",
     ETHBULL3X: "0x32b1d1bfd4b3b0cb9ff2dcd9dac757aa64d4cb69",
     BTCBULL3X: "0xb03818de4992388260b62259361778cf98485dfe",
+    SOLBULL2X: "0x7d3c9c6566375d7ad6e89169ca5c01b5edc15364",
+    SOLBULL3X: "0xcc7d6ed524760539311ed0cdb41d0852b4eb77eb",
   },
 
   velodrome: {

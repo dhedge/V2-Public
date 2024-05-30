@@ -340,6 +340,7 @@ export interface IContracts {
   FlatMoneyUNITAssetGuard?: Address;
   FlatMoneyCollateralAssetGuard?: Address;
   VelodromeCLAssetGuard?: Address;
+  ByPassAssetGuard?: Address;
 
   DhedgeEasySwapperProxy: Address;
   DhedgeEasySwapper: Address;
