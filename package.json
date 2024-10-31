@@ -56,7 +56,7 @@
     "@typechain/hardhat": "^3.0.0",
     "@types/chai": "^5.0.0",
     "@types/mocha": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.14.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "5.14.0",
     "axios": "^1.6.8",
     "chai": "^4.3.4",
