@@ -137,22 +137,21 @@ export const runTests = (testParams: IVelodromeV2TestParams) => {
       });
 
       it("Reverts if invalid claimer", async () => {
-        await poolManagerLogicProxy.connect(manager).changeAssets(
-          [
-            {
-              asset: protocolToken,
-              isDeposit: false,
-            },
-          ],
-          [],
-        );
-
         const getRewardParams = [userNotPool.address];
         const claimTx = iVelodromeGauge.encodeFunctionData("getReward", getRewardParams);
 
         await expect(
           poolLogicProxy.connect(manager).execTransaction(STABLE_USDC_DAI.gaugeAddress, claimTx),
         ).to.revertedWith("invalid claimer");
+      });
+
+      it("Reverts if reward token not enabled", async () => {
+        const getRewardParams = [poolLogicProxy.address];
+        const claimTx = iVelodromeGauge.encodeFunctionData("getReward", getRewardParams);
+
+        await expect(
+          poolLogicProxy.connect(manager).execTransaction(STABLE_USDC_DAI.gaugeAddress, claimTx),
+        ).to.revertedWith("enable reward token");
       });
 
       it("Allow claim", async () => {

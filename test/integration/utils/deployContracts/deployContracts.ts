@@ -136,7 +136,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(slippageAccumulator.address);
+    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy();
     await uniswapV2RouterGuard.deployed();
 
     const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
@@ -166,7 +166,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await aaveLendingPoolAssetGuard.deployed();
 
     const AaveLendingL2PoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
-    const aaveLendingPoolGuard = await AaveLendingL2PoolGuard.deploy(ovmChainData.aaveV3.lendingPool);
+    const aaveLendingPoolGuard = await AaveLendingL2PoolGuard.deploy();
     await aaveLendingPoolGuard.deployed();
 
     const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
@@ -359,7 +359,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await openAssetGuard.deployed();
 
     const UniswapV2RouterGuard = await ethers.getContractFactory("UniswapV2RouterGuard");
-    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy(slippageAccumulator.address);
+    const uniswapV2RouterGuard = await UniswapV2RouterGuard.deploy();
     await uniswapV2RouterGuard.deployed();
 
     const QuickStakingRewardsGuard = await ethers.getContractFactory("QuickStakingRewardsGuard");
@@ -412,7 +412,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await aaveIncentivesControllerGuard.deployed();
 
     const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
-    const balancerV2Guard = await BalancerV2Guard.deploy(slippageAccumulator.address);
+    const balancerV2Guard = await BalancerV2Guard.deploy();
     await balancerV2Guard.deployed();
 
     const BalancerMerkleOrchardGuard = await ethers.getContractFactory("BalancerMerkleOrchardGuard");
@@ -420,7 +420,7 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
     await balancerMerkleOrchardGuard.deployed();
 
     const OneInchV5Guard = await ethers.getContractFactory("OneInchV5Guard");
-    const oneInchV5Guard = await OneInchV5Guard.deploy(slippageAccumulator.address);
+    const oneInchV5Guard = await OneInchV5Guard.deploy();
     await oneInchV5Guard.deployed();
 
     const SwapRouter = await ethers.getContractFactory("DhedgeSuperSwapper");
@@ -462,9 +462,9 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       swapRouter: polygonChainData.quickswap.router,
       weth: polygonChainData.assets.weth,
       synthetixProps: {
-        snxProxy: polygonChainData.ZERO_ADDRESS,
+        snxProxy: ethers.constants.AddressZero,
         swapSUSDToAsset: polygonChainData.assets.dai,
-        sUSDProxy: polygonChainData.ZERO_ADDRESS,
+        sUSDProxy: ethers.constants.AddressZero,
       },
       nativeAssetWrapper: polygonChainData.assets.wmatic,
     });

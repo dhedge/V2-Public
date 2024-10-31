@@ -48,10 +48,10 @@ const polygonAddresses: IAddresses = {
   gnosisMultiSendAddress: "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761",
   gnosisApi: "https://safe-transaction-polygon.safe.global",
 
-  // External Logic Contracts
-  balancerV2VaultAddress: "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
-  balancerMerkleOrchardAddress: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e",
-  sushiMiniChefV2Address: "0x0769fd68dFb93167989C6f7254cd0D766Fb2841F",
+  balancerV2VaultAddress: polygonChainData.balancer.v2Vault,
+  balancerMerkleOrchardAddress: polygonChainData.balancer.merkleOrchard,
+
+  sushiMiniChefV2Address: polygonChainData.sushi.minichef,
 
   aaveV2: {
     aaveProtocolDataProviderAddress: aaveV2.protocolDataProvider,
@@ -70,10 +70,10 @@ const polygonAddresses: IAddresses = {
     dHedgeVaultsWhitelist: [
       "0xf4b3a195587d2735b656b7ffe9060f478faf1b32", // Test vault with portfolio same as Ethereum Bear 2X
       "0xcc940b5c6136994bed41bff5d88b170929921e9e", // Test vault with portfolio same as Bitcoin Bear 2X
-      assets.ETHBEAR2X, // Ethereum Bear 2X
-      assets.BTCBEAR2X, // Bitcoin Bear 2X
-      assets.ETHBULL3X, // Ethereum Bull 3X
-      assets.BTCBULL3X, // Bitcoin Bull 3X
+      assets.ETHBEAR2X,
+      assets.BTCBEAR2X,
+      assets.ETHBULL3X,
+      assets.BTCBULL3X,
     ],
     aaveV3DebtTokensWhitelist: [
       aaveV3.variableDebtTokens.usdc,
@@ -82,13 +82,21 @@ const polygonAddresses: IAddresses = {
     ],
   },
 
-  quickStakingRewardsFactoryAddress: "0x5eec262B05A57da9beb5FE96a34aa4eD0C5e029f",
+  quickStakingRewardsFactoryAddress: polygonChainData.quickswap.stakingRewardsFactory,
+  quickLpUsdcWethStakingRewardsAddress: polygonChainData.quickswap.pools.usdc_weth.stakingRewards,
+  quickswap: {
+    uniV2Factory: polygonChainData.quickswap.factoryV2,
+  },
+
   v2RouterAddresses: polygonChainData.v2Routers,
-  quickLpUsdcWethStakingRewardsAddress: "0x4A73218eF2e820987c59F838906A82455F42D98b",
 
   oneInchV4RouterAddress: polygonChainData.oneinch.v4Router,
   oneInchV5RouterAddress: polygonChainData.oneinch.v5Router,
   oneInchV6RouterAddress: polygonChainData.oneinch.v6Router,
+
+  uniV2: {
+    factory: polygonChainData.uniswapV2.factory,
+  },
 
   uniV3: {
     uniswapV3RouterAddress: uniswapV3.router,
@@ -96,14 +104,9 @@ const polygonAddresses: IAddresses = {
     uniswapV3FactoryAddress: uniswapV3.factory,
   },
 
-  // Arakis V1 contract addresses
   arrakisV1: {
     arrakisV1RouterStakingAddress: polygonChainData.arrakis.v1RouterStaking,
   },
-
-  // Token Addresses
-  sushiTokenAddress: "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a",
-  wmaticTokenAddress: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
 
   assets: {
     nativeAssetWrapper: assets.wmatic,
@@ -112,6 +115,7 @@ const polygonAddresses: IAddresses = {
     dai: assets.dai,
     dht: assets.dht,
   },
+
   easySwapperConfig: {
     customLockupAllowedPools: Object.values(torosPools),
     feeByPassManagers: [
@@ -136,6 +140,21 @@ const polygonAddresses: IAddresses = {
   slippageAccumulator: {
     decayTime: 86400, // 24 hours
     maxCumulativeSlippage: 10e4, // 10%
+  },
+
+  flatMoney: {
+    swapper: polygonChainData.flatMoney.swapper,
+  },
+
+  easySwapperV2: {
+    customCooldownDepositsWhitelist: [
+      torosPools.BTCBEAR1X,
+      torosPools.BTCBULL3X,
+      torosPools.ETHBEAR1X,
+      torosPools.ETHBULL3X,
+      torosPools.MATICBEAR1X,
+      torosPools.MATICBULL2X,
+    ],
   },
 };
 

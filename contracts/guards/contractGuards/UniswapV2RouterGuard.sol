@@ -35,7 +35,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../../utils/TxDataUtils.sol";
-import "../../utils/SlippageAccumulator.sol";
 import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/uniswapV2/IUniswapV2Factory.sol";
 import "../../interfaces/uniswapV2/IUniswapV2Router.sol";
@@ -76,14 +75,6 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     uint256 amountBMin,
     uint256 time
   );
-
-  SlippageAccumulator private immutable slippageAccumulator;
-
-  constructor(address _slippageAccumulator) {
-    require(_slippageAccumulator != address(0), "Null address");
-
-    slippageAccumulator = SlippageAccumulator(_slippageAccumulator);
-  }
 
   /// @notice Transaction guard for Uniswap V2
   /// @dev It supports exchange, addLiquidity and removeLiquidity functionalities
@@ -206,16 +197,11 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
       txType = 4; // `Remove Liquidity` type
     }
 
-    // Given that there are no return statements above, this tx guard is not used for a public function (callable by anyone).
-    // Make sure that it's the `poolLogic` contract of the `poolManagerLogic` which initiates the check on the tx.
-    // Else, anyone can increase the slippage impact (updated by the call to SlippageAccumulator).
-    // We can trust the poolLogic since it contains check to ensure the caller is authorised.
     require(IPoolManagerLogic(_poolManagerLogic).poolLogic() == msg.sender, "Caller not authorised");
 
     return (txType, false);
   }
 
-  /// @dev Internal function to update cumulative slippage. This is required to avoid stack-too-deep errors.
   /// @param swapData The data used in a swap.
   /// @param poolManagerLogicAssets Contains supported assets mapping.
   /// @param poolManagerLogic The poolManager address.
@@ -230,17 +216,6 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
     require(poolManagerLogicAssets.isSupportedAsset(swapData.dstAsset), "unsupported destination asset");
 
     require(poolLogic == swapData.recipient, "recipient is not pool");
-
-    slippageAccumulator.updateSlippageImpact(
-      SlippageAccumulator.SwapData(
-        swapData.srcAsset,
-        swapData.dstAsset,
-        swapData.srcAmount,
-        swapData.dstAmount,
-        swapData.to,
-        address(poolManagerLogic)
-      )
-    );
 
     if (exchangeType == 1) {
       emit ExchangeTo(poolLogic, swapData.srcAsset, swapData.dstAsset, swapData.dstAmount, block.timestamp);

@@ -19,7 +19,7 @@ describe("SynthetixPerpsV2MarketAssetGuard Delayed Order Tests", function () {
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
   const ETH_FUTURES_MARKET = ovmChainData.perpsV2.ethMarket;
-  const HUNDRED_SUSD = units(100);
+  const THOUSAND_SUSD = units(1000);
   let assetHandler: AssetHandler;
 
   utils.beforeAfterReset(before, after);
@@ -34,8 +34,8 @@ describe("SynthetixPerpsV2MarketAssetGuard Delayed Order Tests", function () {
 
     susdProxy = await ethers.getContractAt("ISynthAddressProxy", assets.susd);
 
-    await getAccountToken(HUNDRED_SUSD, logicOwner.address, ovmChainData.synthetix.sUSDProxy_target_tokenState, 3);
-    expect(await susdProxy.balanceOf(logicOwner.address)).to.equal(HUNDRED_SUSD);
+    await getAccountToken(THOUSAND_SUSD, logicOwner.address, ovmChainData.synthetix.sUSDProxy_target_tokenState, 3);
+    expect(await susdProxy.balanceOf(logicOwner.address)).to.equal(THOUSAND_SUSD);
 
     const fund = await createFund(poolFactory, logicOwner, manager, [{ asset: assets.susd, isDeposit: true }], {
       performance: ethers.BigNumber.from("0"),
@@ -51,8 +51,8 @@ describe("SynthetixPerpsV2MarketAssetGuard Delayed Order Tests", function () {
       .connect(manager)
       .changeAssets([{ asset: ETH_FUTURES_MARKET, isDeposit: false }], []);
 
-    await susdProxy.approve(poolLogicProxy.address, HUNDRED_SUSD);
-    await poolLogicProxy.deposit(assets.susd, HUNDRED_SUSD);
+    await susdProxy.approve(poolLogicProxy.address, THOUSAND_SUSD);
+    await poolLogicProxy.deposit(assets.susd, THOUSAND_SUSD);
   });
 
   describe("WithdrawProcessing", () => {
@@ -61,7 +61,7 @@ describe("SynthetixPerpsV2MarketAssetGuard Delayed Order Tests", function () {
         poolLogicProxy,
         poolManager: manager,
         marketAddress: ETH_FUTURES_MARKET,
-        margin: HUNDRED_SUSD,
+        margin: THOUSAND_SUSD,
         leverage: 1,
         isShort: true,
         baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
@@ -88,7 +88,7 @@ describe("SynthetixPerpsV2MarketAssetGuard Delayed Order Tests", function () {
         marketAddress: ETH_FUTURES_MARKET,
         poolLogicProxy: poolLogicProxy,
         poolManager: manager,
-        margin: HUNDRED_SUSD,
+        margin: THOUSAND_SUSD,
         leverage: 1,
         isShort: false,
         baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
@@ -98,8 +98,119 @@ describe("SynthetixPerpsV2MarketAssetGuard Delayed Order Tests", function () {
 
       expect(await poolManagerLogicProxy.totalFundValue()).to.be.closeTo(
         totalFundValueBefore.sub(fee).sub(keeperFee),
-        totalFundValueBefore.div(200), // taking into account dynamic keeper fees
+        totalFundValueBefore.div(100), // taking into account dynamic keeper fees
       );
+    });
+  });
+
+  describe("Max Leverage Checks", () => {
+    it("able to create position if leverage is ok (2x)", async () => {
+      const keeperFee = await perpsV2TestHelpers.getMinKeeperFee(ovmChainData.perpsV2.addressResolver);
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+      const fee = await perpsV2TestHelpers.createDelayedOrder({
+        marketAddress: ETH_FUTURES_MARKET,
+        poolLogicProxy: poolLogicProxy,
+        poolManager: manager,
+        margin: THOUSAND_SUSD,
+        leverage: 2,
+        isShort: false,
+        baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
+      });
+      // Assert it's all in margin
+      expect(await susdProxy.balanceOf(poolLogicProxy.address)).to.equal(0);
+
+      expect(await poolManagerLogicProxy.totalFundValue()).to.be.closeTo(
+        totalFundValueBefore.sub(fee).sub(keeperFee),
+        totalFundValueBefore.div(100), // taking into account dynamic keeper fees
+      );
+    });
+
+    it("fail to create position if leverage is too much (6x)", async () => {
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+      await expect(
+        perpsV2TestHelpers.createDelayedOrder({
+          marketAddress: ETH_FUTURES_MARKET,
+          poolLogicProxy: poolLogicProxy,
+          poolManager: manager,
+          margin: THOUSAND_SUSD,
+          leverage: 6,
+          isShort: false,
+          baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
+        }),
+      ).to.be.revertedWith("leverage must be less");
+
+      expect(await poolManagerLogicProxy.totalFundValue()).eq(totalFundValueBefore);
+    });
+
+    it("able to withdraw margin if resulting leverage is ok (4x)", async () => {
+      const keeperFee = await perpsV2TestHelpers.getMinKeeperFee(ovmChainData.perpsV2.addressResolver);
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+      const fee = await perpsV2TestHelpers.createDelayedOrder({
+        marketAddress: ETH_FUTURES_MARKET,
+        poolLogicProxy: poolLogicProxy,
+        poolManager: manager,
+        margin: THOUSAND_SUSD,
+        leverage: 2,
+        isShort: true,
+        baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
+      });
+      // Assert it's all in margin
+      expect(await susdProxy.balanceOf(poolLogicProxy.address)).to.equal(0);
+
+      const totalFundValueAfterFirst = await poolManagerLogicProxy.totalFundValue();
+      expect(totalFundValueAfterFirst).to.be.closeTo(
+        totalFundValueBefore.sub(fee).sub(keeperFee),
+        totalFundValueBefore.div(100), // taking into account dynamic keeper fees
+      );
+      await perpsV2TestHelpers.increaseRealTime(2);
+      const fee2 = await perpsV2TestHelpers.createDelayedOrder({
+        marketAddress: ETH_FUTURES_MARKET,
+        poolLogicProxy: poolLogicProxy,
+        poolManager: manager,
+        margin: THOUSAND_SUSD.mul(-1).div(2),
+        leverage: 0, //only will do margin transfer
+        isShort: true,
+        baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
+      });
+      expect(await susdProxy.balanceOf(poolLogicProxy.address)).gt(0);
+      expect(await poolManagerLogicProxy.totalFundValue()).to.be.closeTo(
+        totalFundValueAfterFirst.sub(fee2),
+        totalFundValueAfterFirst.div(100), // taking into account dynamic keeper fees
+      );
+    });
+
+    it("fail to withdraw margin if resulting leverage is too much (> 5x)", async () => {
+      const keeperFee = await perpsV2TestHelpers.getMinKeeperFee(ovmChainData.perpsV2.addressResolver);
+      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+      const fee = await perpsV2TestHelpers.createDelayedOrder({
+        marketAddress: ETH_FUTURES_MARKET,
+        poolLogicProxy: poolLogicProxy,
+        poolManager: manager,
+        margin: THOUSAND_SUSD,
+        leverage: 2,
+        isShort: true,
+        baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
+      });
+      // Assert it's all in margin
+      expect(await susdProxy.balanceOf(poolLogicProxy.address)).to.equal(0);
+
+      const totalFundValueAfterFirst = await poolManagerLogicProxy.totalFundValue();
+      expect(totalFundValueAfterFirst).to.be.closeTo(
+        totalFundValueBefore.sub(fee).sub(keeperFee),
+        totalFundValueBefore.div(100), // taking into account dynamic keeper fees
+      );
+      await expect(
+        perpsV2TestHelpers.createDelayedOrder({
+          marketAddress: ETH_FUTURES_MARKET,
+          poolLogicProxy: poolLogicProxy,
+          poolManager: manager,
+          margin: THOUSAND_SUSD.mul(-60).div(100),
+          leverage: 0, //only will do margin transfer
+          isShort: true,
+          baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
+        }),
+      ).to.be.revertedWith("leverage must be less");
     });
   });
 });

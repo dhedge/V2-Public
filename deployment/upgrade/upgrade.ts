@@ -34,15 +34,12 @@ import { erc721ContractGuardJob } from "./jobs/contractGuards/erc721ContractGuar
 import { synthetixFuturesMarketContractGuardJob } from "./jobs/contractGuards/synthetixFuturesMarketContractGuardJob";
 import { lyraMarketsContractGuardJob } from "./jobs/contractGuards/lyraMarketsContractGuardJob";
 import { lyraOptionMarketWrapperContractGuardJob } from "./jobs/contractGuards/lyraOptionMarketWrapperContractGuardJob";
-import { oneInchV4ContractGuardJob } from "./jobs/contractGuards/oneInchV4ContractGuardJob";
-import { oneInchV5ContractGuardJob } from "./jobs/contractGuards/oneInchV5ContractGuardJob";
 import { quickStakingRewardsContractGuardJob } from "./jobs/contractGuards/quickStakingRewardsContractGuardJob";
 import { stargateLpStakingContractGuardJob } from "./jobs/contractGuards/stargateLpStakingContractGuardJob";
 import { stargateRouterContractGuardJob } from "./jobs/contractGuards/stargateRouterContractGuardJob";
 import { sushiMiniChefV2ContractGuardJob } from "./jobs/contractGuards/sushiMiniChefV2ContractGuardJob";
 import { uniswapV3NonFungiblePositionGuardJob } from "./jobs/contractGuards/uniswapV3NonFungiblePositionContractGuardJob";
 import { uniswapV3RouterContractGuardJob } from "./jobs/contractGuards/uniswapV3RouterContractGuardJob";
-import { v2RouterContractGuardJob } from "./jobs/contractGuards/v2RouterContractGuardJob"; //quickswapRouter, sushiswapV2Router etc etc
 import { velodromeGaugeContractGuardJob } from "./jobs/contractGuards/velodromeGaugeContractGuardJob";
 import { velodromeRouterGuardJob } from "./jobs/contractGuards/velodromeRouterGuardJob";
 import { governanceNamesJob } from "./jobs/governanceNamesJob";
@@ -57,7 +54,7 @@ import { rewardDistributionJob } from "./jobs/rewardDistributionJob";
 import { dhedgeStakingV2NFTJSONJob } from "./jobs/stakingV2/dhedgeStakingNFTJsonJob";
 import { dhedgeStakingV2Job } from "./jobs/stakingV2/dhedgeStakingV2Job";
 import { easySwapperJob } from "./jobs/swapper/easySwapperJob";
-import { easySwapperConfigurationJob } from "./jobs/swapper/easySwapperJobConfigurationJob";
+import { easySwapperConfigurationJob } from "./jobs/swapper/easySwapperConfigurationJob";
 import { superSwapperJob } from "./jobs/swapper/superSwapperJob";
 import { uniV3V2RouterJob } from "./jobs/swapper/uniV3V2RouterJob";
 import { veloUniV2RouterJob } from "./jobs/swapper/veloUniV2RouterJob";
@@ -77,6 +74,7 @@ import { deprecateContractGuardsJob } from "./jobs/deprecateContractGuardsJob";
 import { closedContractGuardJob } from "./jobs/contractGuards/closedContractGuardJob";
 import { synthetixV3ContractGuardJob } from "./jobs/contractGuards/synthetixV3ContractGuardJob";
 import { synthetixV3AssetGuardJob } from "./jobs/assetGuards/synthetixV3AssetGuardJob";
+import { synthetixV3PerpsAssetGuardJob } from "./jobs/assetGuards/synthetixV3PerpsAssetGuardJob";
 import { poolTokenSwapperJob } from "./jobs/poolTokenSwapperJob";
 import { poolTokenSwapperGuardJob } from "./jobs/contractGuards/poolTokenSwapperGuardJob";
 import { ramsesLPAssetGuardJob } from "./jobs/assetGuards/ramsesLPAssetGuardJob";
@@ -84,6 +82,7 @@ import { ramsesRouterGuardJob } from "./jobs/contractGuards/ramsesRouterGuardJob
 import { ramsesXRamGuardJob } from "./jobs/contractGuards/ramsesXRamGuardJob";
 import { ramsesUniV2RouterJob } from "./jobs/swapper/ramsesUniV2RouterJob";
 import { synthetixV3SpotMarketContractGuardJob } from "./jobs/contractGuards/synthetixV3SpotMarketContractGuardJob";
+import { synthetixV3PerpsMarketContractGuardJob } from "./jobs/contractGuards/synthetixV3PerpsMarketContractGuardJob";
 import { sonneFinanceComptrollerContractGuardJob } from "./jobs/contractGuards/sonneFinanceComptrollerContractGuardJob";
 import { aaveDebtTokenContractGuardJob } from "./jobs/contractGuards/aaveDebtTokenContractGuardJob";
 import { aaveMigrationHelperGuardJob } from "./jobs/contractGuards/aaveMigrationHelperGuardJob";
@@ -96,6 +95,18 @@ import { velodromeCLAssetGuardJob } from "./jobs/assetGuards/velodromeCLAssetGua
 import { velodromeNonfungiblePositionGuardJob } from "./jobs/contractGuards/velodromeNonfungiblePositionGuardJob";
 import { enableVelodromeCLGaugeContractGuardJob } from "./jobs/velodromeCL/enableVelodromeCLGaugeContractGuardJob";
 import { byPassAssetGuardJob } from "./jobs/assetGuards/byPassAssetGuardJob";
+import { flatMoneyPerpMarketAssetGuardJob } from "./jobs/assetGuards/flatMoneyPerpMarketAssetGuardJob";
+import { velodromeNonfungiblePositionGuardOldJob } from "./jobs/contractGuards/velodromeNonfungiblePositionGuardOldJob";
+import { rewardAssetGuardJob } from "./jobs/assetGuards/rewardAssetGuardJob";
+import { compoundV3CometRewardsContractGuardJob } from "./jobs/contractGuards/compoundV3CometRewardsContractGuardJob";
+import { compoundV3CometAssetGuardJob } from "./jobs/assetGuards/compoundV3CometAssetGuardJob";
+import { easySwapperV2Job } from "./jobs/easySwapperV2/easySwapperV2Job";
+import { withdrawalVaultJob } from "./jobs/easySwapperV2/withdrawalVaultJob";
+import { easySwapperV2ConfigurationJob } from "./jobs/easySwapperV2/easySwapperV2ConfigurationJob";
+import { easySwapperV2ContractGuardJob } from "./jobs/contractGuards/easySwapperV2ContractGuardJob";
+import { ramsesNonfungiblePositionGuardJob } from "./jobs/contractGuards/ramsesNonfungiblePositionGuardJob";
+import { ramsesCLAssetGuardJob } from "./jobs/assetGuards/ramsesCLAssetGuardJob";
+import { easySwapperV2UnrolledAssetsGuardJob } from "./jobs/assetGuards/easySwapperV2UnrolledAssetsGuardJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   // Swappers related
@@ -148,17 +159,22 @@ const jobs: { [key: string]: IJob<void> } = {
   synthetixperpsv2marketassetguard: synthetixPerpsV2MarketAssetGuardJob,
   velodromev2lpassetguard: velodromeV2LPAssetGuardJob,
   synthetixv3assetguard: synthetixV3AssetGuardJob,
+  synthetixv3perpsassetguard: synthetixV3PerpsAssetGuardJob,
   ramseslpassetguard: ramsesLPAssetGuardJob,
   flatmoneycollateralassetguard: flatMoneyCollateralAssetGuardJob,
   flatmoneyunitassetguard: flatMoneyUNITAssetGuardJob,
   velodromeclassetguard: velodromeCLAssetGuardJob,
   bypassassetguard: byPassAssetGuardJob,
+  flatmoneyperpmarketassetguard: flatMoneyPerpMarketAssetGuardJob,
+  rewardassetguard: rewardAssetGuardJob,
+  compoundv3cometassetguard: compoundV3CometAssetGuardJob,
+  ramsesclassetguard: ramsesCLAssetGuardJob,
+  easyswapperv2unrolledassetsguard: easySwapperV2UnrolledAssetsGuardJob,
 
   // Contract Guards
   closedcontractguard: closedContractGuardJob,
   aavev2lendingpoolguard: aaveV2LendingPoolContractGuardJob,
   aavev3lendingpoolguard: aaveV3LendingPoolContractGuardJob,
-  uniswapv2routerguard: v2RouterContractGuardJob,
   uniswapv3routerguard: uniswapV3RouterContractGuardJob,
   velodromerouterguard: velodromeRouterGuardJob,
   balancerv2guard: balancerv2ContractGuard,
@@ -169,8 +185,6 @@ const jobs: { [key: string]: IJob<void> } = {
   easyswapperguard: easySwapperContractGuardJob,
   aaveincentivescontrollerguard: aaveIncentivesControllerContractGuardJob,
   aaveincentivescontrollerv3guard: aaveIncentivesControllerV3ContractGuardJob,
-  oneinchv4guard: oneInchV4ContractGuardJob,
-  oneinchv5guard: oneInchV5ContractGuardJob,
   uniswapv3nonfungiblepositionguard: uniswapV3NonFungiblePositionGuardJob,
   arrakisliquiditygaugev4guard: arrakisLiquidityGaugeV4ContractGuardJob,
   arrakisv1routerstakingguard: arrakisV1RouterStakingContractGuardJob,
@@ -191,6 +205,7 @@ const jobs: { [key: string]: IJob<void> } = {
   ramsesrouterguard: ramsesRouterGuardJob,
   ramsesxramguard: ramsesXRamGuardJob,
   synthetixv3spotmarketcontractguard: synthetixV3SpotMarketContractGuardJob,
+  synthetixv3perpsmarketcontractguard: synthetixV3PerpsMarketContractGuardJob,
   sonnecomptrollerguard: sonneFinanceComptrollerContractGuardJob,
   aavedebttokencontractguard: aaveDebtTokenContractGuardJob,
   aavemigrationhelperguard: aaveMigrationHelperGuardJob,
@@ -198,6 +213,10 @@ const jobs: { [key: string]: IJob<void> } = {
   oneinchv6guard: oneInchV6ContractGuardJob,
   velodromenonfungiblepositionguard: velodromeNonfungiblePositionGuardJob,
   enablevelodromeclgaugecontractguard: enableVelodromeCLGaugeContractGuardJob,
+  velodromenonfungiblepositionguardold: velodromeNonfungiblePositionGuardOldJob,
+  compoundv3cometrewardscontractguard: compoundV3CometRewardsContractGuardJob,
+  easyswapperv2contractguard: easySwapperV2ContractGuardJob,
+  ramsesnonfungiblepositionguard: ramsesNonfungiblePositionGuardJob,
 
   // Other Weird Guards
   openassetguard: openAssetContractGuardJob,
@@ -207,6 +226,11 @@ const jobs: { [key: string]: IJob<void> } = {
   removeassets: removeAssetsJob,
   governancenames: governanceNamesJob,
   deprecatecontractguards: deprecateContractGuardsJob,
+
+  // EasySwapperV2
+  easyswapperv2: easySwapperV2Job,
+  withdrawalvault: withdrawalVaultJob,
+  easyswapperv2configuration: easySwapperV2ConfigurationJob,
 
   lyraGroup: async (...args) => {
     await nftTrackerJob(...args);

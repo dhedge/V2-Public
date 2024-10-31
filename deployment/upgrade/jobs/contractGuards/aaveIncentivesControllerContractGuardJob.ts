@@ -6,7 +6,6 @@ import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../
 export const aaveIncentivesControllerContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
   addresses: { aaveIncentivesControllerAddress?: string; wmaticTokenAddress?: string } & IProposeTxProperties,

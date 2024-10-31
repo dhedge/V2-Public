@@ -20,7 +20,7 @@ export const deployBalancerGuards = async (deployments: IBackboneDeployments): P
   await deployments.governance.setAssetGuard(AssetType["Balancer V2 Gauge Asset"], balancerV2GaugeAssetGuard.address);
 
   const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
-  const balancerV2Guard = await BalancerV2Guard.deploy(deployments.slippageAccumulator.address);
+  const balancerV2Guard = await BalancerV2Guard.deploy();
   await balancerV2Guard.deployed();
   await deployments.governance.setContractGuard(balancerV2VaultAddress, balancerV2Guard.address);
 

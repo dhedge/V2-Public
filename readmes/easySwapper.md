@@ -10,7 +10,7 @@ EasySwapper was designed to mitigate several unfriendly flaws which affected use
 
 - `deposit()` - Performs a deposit into arbitrary dHEDGE pool. The difference from PoolLogic.deposit() is that deposit token is not limited by tokens pool is set to accept. If caller's deposit token doesn't match pool deposit token, it makes a swap under the hood. Implements high slippage protection. Charges no fee. Received pool tokens have 24 hours lockup.
 
-- `depositWithCustomCooldown()` - Same as `deposit()`, but can be called only on certain set of pools. Changes default time tokens are locked up after depositing from 24 hours to 15 minutes. Takes 0.1% entry fee (frontrunning protection). Current use cases are buying high volatility derivative products (ETHBULL3X, BTCBEAR2X), as well as bying Toros products inside dHEDGE pools not to block investors from exiting these pools.
+- `depositWithCustomCooldown()` - Same as `deposit()`, but can be called only on certain set of pools. Changes default time tokens are locked up after depositing from 24 hours to 60 minutes. Takes 0.1% entry fee (frontrunning protection). Current use cases are buying high volatility derivative products (ETHBULL3X, BTCBEAR2X), as well as bying Toros products inside dHEDGE pools not to block investors from exiting these pools.
 
 - `depositNative()` - Performs a deposit into dHEDGE pool with chain native asset (e.g. ETH on Optimism, MATIC on Polygon). Wraps native asset under the hood and swaps it (if needed) to the asset accepted by the pool. Rest of behaviour is the same as `deposit()`.
 
@@ -32,9 +32,9 @@ EasySwapper was designed to mitigate several unfriendly flaws which affected use
 
 ## Different Storage Mappings for Deeper Dive
 
-- `allowedPools` - mapping inside EasySwapper contract where pools which are allowed to have 15 minutes lockup are stored. (e.g. USDy, USDmny, Bull/Bear, etc.). `depositWithCustomCooldown()` and `depositNativeWithCustomCooldown()` check against this mapping before making deposits.
+- `allowedPools` - mapping inside EasySwapper contract where pools which are allowed to have 60 minutes lockup are stored. (e.g. USDy, USDmny, Bull/Bear, etc.). `depositWithCustomCooldown()` and `depositNativeWithCustomCooldown()` check against this mapping before making deposits.
 
-- `customCooldownWhitelist` - mapping inside PoolFactory contract where addresses which can call PoolLogic's `depositForWithCustomCooldown()` are stored (e.g. EasySwapper). This makes possible EasySwapper to have 15 minutes cooldown deposit functions.
+- `customCooldownWhitelist` - mapping inside PoolFactory contract where addresses which can call PoolLogic's `depositForWithCustomCooldown()` are stored (e.g. EasySwapper). This makes possible EasySwapper to have 60 minutes cooldown deposit functions.
 
 - `receiverWhitelist` - mapping inside PoolFactory contract where addresses which can receive pool tokens under lockup are stored (e.g. DhedgeStakingV2 contract).
 

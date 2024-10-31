@@ -6,7 +6,6 @@ import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions } from "../../../
 export const sushiMiniChefV2ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
   addresses: {

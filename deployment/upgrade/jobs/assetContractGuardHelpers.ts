@@ -13,6 +13,7 @@ import { velodromeV2GaugeContractGuardJob } from "./contractGuards/velodromeV2Ga
 import { velodromePairContractGuardJob } from "./contractGuards/velodromePairContractGuardJob";
 import { ramsesGaugeGuardJob } from "./contractGuards/ramsesGaugeGuardJob";
 import { sonneFinanceCTokenContractGuardJob } from "./contractGuards/sonneFinanceCTokenContractGuardJob";
+import { compoundV3CometContractGuardJob } from "./contractGuards/compoundV3CometContractGuardJob";
 
 type TContractGuardConfigurer = (
   config: IUpgradeConfig,
@@ -142,6 +143,10 @@ const typeToContractGuardConfigurer: TContractGuardTypeToContractGuardConfigurer
   VelodromePairContractGuard: getExistingOrDeployGuard("VelodromePairContractGuard", velodromePairContractGuardJob),
   RamsesGaugeContractGuard: getExistingOrDeployedRamsesGuard("RamsesGaugeContractGuard", ramsesGaugeGuardJob),
   SonneFinanceCTokenGuard: getExistingOrDeployGuard("SonneFinanceCTokenGuard", sonneFinanceCTokenContractGuardJob),
+  CompoundV3CometContractGuard: getExistingOrDeployGuard(
+    "CompoundV3CometContractGuard",
+    compoundV3CometContractGuardJob,
+  ),
 };
 
 export const configureContractGuard = async (

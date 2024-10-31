@@ -212,7 +212,7 @@ describe("Synthetix Test", function () {
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [assets.susd, (100e18).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.slink, approveABI)).to.be.revertedWith(
-      "asset not enabled in pool",
+      "asset disabled",
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI)).to.be.revertedWith(
@@ -260,10 +260,6 @@ describe("Synthetix Test", function () {
       daoAddress,
       trackingCode,
     ]);
-
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
-    ).to.be.revertedWith("non-zero address is required");
 
     await expect(poolLogicProxy.connect(manager).execTransaction(synthetix.address, "0xaaaaaaaa")).to.be.revertedWith(
       "invalid transaction",

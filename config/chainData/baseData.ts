@@ -39,6 +39,10 @@ export const baseChainData = Object.freeze({
     reth: 0,
   },
 
+  uniswapV2: {
+    factory: "0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6",
+  },
+
   // https://docs.uniswap.org/contracts/v3/reference/deployments
   uniswapV3: {
     factory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
@@ -58,6 +62,8 @@ export const baseChainData = Object.freeze({
     core: "0x32C222A9A159782aFD7529c87FA34b96CA72C696",
     accountNFT: "0x63f4Dd0434BEB5baeCD27F3778a909278d8cf5b8",
     spotMarket: "0x18141523403e2595D31b22604AcB8Fc06a4CaA61",
+    perpsMarket: "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce",
+    perpsAccountNFT: "0xcb68b813210afa0373f076239ad4803f8809e8cf",
   },
 
   aerodrome: {
@@ -82,7 +88,7 @@ export const baseChainData = Object.freeze({
     },
   },
 
-  velodromeCL: {
+  aerodromeCL: {
     nonfungiblePositionManager: "0x827922686190790b37229fd06084350E74485b72",
     factory: "0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A",
   },
@@ -91,16 +97,6 @@ export const baseChainData = Object.freeze({
     lendingPool: "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
     protocolDataProvider: "0x2d8A3C5677189723C4cB8873CfC9C8976FDF38Ac",
     incentivesController: "0xf9cc4F0D883F1a1eb2c253bdb46c254Ca51E1F44",
-    aTokens: {
-      usdc: "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB",
-      usdbc: "0x0a1d576f3eFeF75b330424287a95A366e8281D54",
-      weth: "0xD4a0e0b9149BCee3C920d2E00b5dE09138fd8bb7",
-    },
-    variableDebtTokens: {
-      usdc: "0x59dca05b6c26dbd64b5381374aAaC5CD05644C28",
-      usdbc: "0x7376b2F323dC56fCd4C191B34163ac8a84702DAB",
-      weth: "0x24e6e0795b3c7c71D965fCc4f371803d1c1DcA1E",
-    },
   },
 
   v2Routers: ["0x6bded42c6da8fbf0d2ba55b2fa120c5e0c8d7891"], // SushiSwap V2 Router https://basescan.org/address/0x6bded42c6da8fbf0d2ba55b2fa120c5e0c8d7891
@@ -111,9 +107,18 @@ export const baseChainData = Object.freeze({
     delayedOrder: "0x6D857e9D24a7566bB72a3FB0847A3E0e4E1c2879",
     viewer: "0x509b85EEF0df77992b29aeDdD22C7119Db87ce16",
     pointsModule: "0x59525b9b23ADc475EF91d98dAe06B568BA574Ce5",
+    leverageModule: "0xdB0Cd65dcc7fE07003cE1201f91E1F966fA95768",
+    oracleModule: "0xaba633927bd8622fbbdd35d291a914c2fdaae1ff",
+    swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
   },
 
   torosPools: {
     USDMNY: "0xede61eefa4850b459e3b09fe6d8d371480d6ff00",
+    sUSDCy: "0xc1e02884af4a283ca25ab63c45360d220d69da52",
+    STETHBULL2X: "0xa672e882acbb96486393d43e0efdab5ebebddc1d",
+    STETHBULL3X: "0x15e2f06138aed58ca2a6afb5a1333bbc5f728f80",
+    STETHBULL4X: "0xba5f6a0d2ac21a3fec7a6c40facd23407aa84663",
+    ETHy: "0x53a4716a8f7dbc9543ebf9cd711952033cc64d43",
+    FAy: "0xd258da1a96c53676301b60000918a1406e367d3e",
   },
 });

@@ -10,7 +10,7 @@ export const getAccountToken = async (
   amount: BigNumber,
   userAddress: string,
   tokenAddress: string,
-  slot: number,
+  slot: number | string,
   retries = 0,
 ) => {
   try {

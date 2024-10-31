@@ -13,6 +13,7 @@ launchSynthetixV3Tests({
       proxyTargetTokenState: ovmChainData.synthetix.SNXProxy_target_tokenState,
       ownerBalanceTotal: units(50_000),
       balanceToThePool: units(25_000),
+      decimals: 18,
     },
     debt: {
       address: ovmChainData.assets.snxUSD,

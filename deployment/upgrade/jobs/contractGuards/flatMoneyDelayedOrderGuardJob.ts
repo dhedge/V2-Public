@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
-import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { Address, IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
 
 export const flatMoneyDelayedOrderGuardJob: IJob<void> = async (
@@ -17,11 +17,25 @@ export const flatMoneyDelayedOrderGuardJob: IJob<void> = async (
     return console.warn("DelayedOrder address not configured for FlatMoneyDelayedOrderContractGuard. skipping.");
   }
 
+  if (!addresses.flatMoney?.perpMarketWhitelistedVaults) {
+    return console.warn("PerpMarketWhitelistedVaults not configured for FlatMoneyDelayedOrderContractGuard. skipping.");
+  }
+
+  const nftTrackerStorage = versions[config.oldTag].contracts.DhedgeNftTrackerStorageProxy;
+
+  if (!nftTrackerStorage) {
+    return console.warn("DhedgeNftTrackerStorage could not be found: skipping.");
+  }
+
   if (config.execute) {
     const ethers = hre.ethers;
 
+    const args: [Address, typeof addresses.flatMoney.perpMarketWhitelistedVaults] = [
+      nftTrackerStorage,
+      addresses.flatMoney.perpMarketWhitelistedVaults,
+    ];
     const FlatMoneyDelayedOrderContractGuard = await ethers.getContractFactory("FlatMoneyDelayedOrderContractGuard");
-    const flatMoneyDelayedOrderContractGuard = await FlatMoneyDelayedOrderContractGuard.deploy();
+    const flatMoneyDelayedOrderContractGuard = await FlatMoneyDelayedOrderContractGuard.deploy(...args);
     await flatMoneyDelayedOrderContractGuard.deployed();
     const flatMoneyDelayedOrderContractGuardAddress = flatMoneyDelayedOrderContractGuard.address;
     console.log("FlatMoneyDelayedOrderContractGuard deployed at", flatMoneyDelayedOrderContractGuardAddress);
@@ -32,7 +46,7 @@ export const flatMoneyDelayedOrderGuardJob: IJob<void> = async (
       hre,
       flatMoneyDelayedOrderContractGuardAddress,
       "contracts/guards/contractGuards/flatMoney/FlatMoneyDelayedOrderContractGuard.sol:FlatMoneyDelayedOrderContractGuard",
-      [],
+      args,
     );
 
     const Governance = await hre.artifacts.readArtifact("Governance");

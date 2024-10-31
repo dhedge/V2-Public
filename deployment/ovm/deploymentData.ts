@@ -39,6 +39,10 @@ export const ovmProdAddresses: IAddresses = {
     feeDenominator: 10000,
   },
 
+  uniV2: {
+    factory: ovmChainData.uniswapV2.factory,
+  },
+
   uniV3: {
     uniswapV3RouterAddress: ovmChainData.uniswapV3.router,
     uniSwapV3NonfungiblePositionManagerAddress: ovmChainData.uniswapV3.nonfungiblePositionManager,
@@ -70,17 +74,17 @@ export const ovmProdAddresses: IAddresses = {
     whitelistedPools: [
       // Optimism	Stablecoin Yield	https://app.dhedge.org/pool/0x1ec50880101022c11530a069690f5446d1464592	$500,000
       {
-        pool: ovmChainData.torosPools.USDY,
+        pool: torosPools.USDY,
         cap: BigNumber.from(500_000).mul(BigNumber.from(10).pow(18)),
       },
       // Optimism	Ethereum Yield	https://app.dhedge.org/pool/0xb2cfb909e8657c0ec44d3dd898c1053b87804755	$200,000
       {
-        pool: ovmChainData.torosPools.ETHY,
+        pool: torosPools.ETHY,
         cap: BigNumber.from(200_000).mul(BigNumber.from(10).pow(18)),
       },
       // Optimism	USD Market Neutral Yield	https://app.dhedge.org/pool/0x49bf093277bf4dde49c48c6aa55a3bda3eedef68	$100,000
       {
-        pool: ovmChainData.torosPools.USDMNY,
+        pool: torosPools.USDMNY,
         cap: BigNumber.from(100_000).mul(BigNumber.from(10).pow(18)),
       },
       // Optimism	Dybart Izak	https://app.dhedge.org/pool/0x6ae8d896b32c71107d1a49af212bc70892a06720	$25,000
@@ -150,25 +154,14 @@ export const ovmProdAddresses: IAddresses = {
 
   velodromeCL: {
     nonfungiblePositionManager: ovmChainData.velodromeCL.nonfungiblePositionManager,
+    nonfungiblePositionManagerOld: ovmChainData.velodromeCL.nonfungiblePositionManagerOld,
     factory: ovmChainData.velodromeCL.factory,
     voter: ovmChainData.velodromeV2.voter, // same as the v2 voter
     enabledGauges: [
-      "0xB55A8d2A2775D72BC204049C598d1aCd19ECbBCe", //  CL1-wstETH/WETH
-      "0xb634f40D77600Db4a61458Af9312C7925A2D65d1", //  CL1-USDC/sUSD
-      "0x1DFAb7699121fEF702d07932a447868dCcCFb029", //  CL1 - USDC / USDC.e
-      "0x8d8d1CdDD5960276A1CDE360e7b5D210C3387948", //  CL100-USDC/WETH
-      "0x45DEF76558a038cA3236F3F634c888945c7f925A", //  CL1-USDC/USDT
-      "0xEFBA2550E43565925Ca3182D0583942b29498212", //  CL200-WETH/OP
-      "0x6456f8f4216CfD5E3bECb4C10b8852aaA2d3ECdF", //  CL100-USDC/wstETH
-      "0x661760F86a1D819ed0a0cF5D187547E31ce021Bc", //  CL1-USDC/LUSD
-      "0xb93d54c8A34FfE669033551Dcc2A6408234E35bC", //  CL1-USDC/DAI
-      "0x3914e354979e6bc63782512Bddb24C224E81a1bD", //  CL200-USDC/OP
-      "0x8150C44429890375F3eF9f87D07ae4bae4803E71", //  CL100-WETH/WBTC
-      "0xe0BD3D38f352157e22c85faDFfDf7C215773DbB4", //  CL200-USDC/SNX
-      "0x1A5e02366716Fca893f72271180D80CAA27Cd361", // CL200-wstETH/OP
-      "0x6496C0B14A5aFe1bC26A611E7D338B4527e9D59A", //  CL1-USDT/LUSD
-      "0x560b7e9289739cdA821A4c084e087e1a7d3Ef879", //  CL100-WETH/LUSD
-      "0xB2afdBf04c68989212DE04f9347Ea9bc649aE18b", //  CL100-WETH/DAI
+      "0x15D715C142169bf93BC6C8C670C208dC3ACCe17e", //  CL1-USDC/sUSD
+      "0xa75127121d28a9BF848F3B70e7Eea26570aa7700", //  CL100-USDC/WETH
+      "0x09f9E0E05c0a66248F3c098C2c14AB92e22F8a1E", // CL1-USDy/USDpy
+      "0x434e3122f5d8d4e6C5B6b7b1Dc71cFf25f3b5A97", // CL1-WETH/cbETH
     ],
   },
 
@@ -183,23 +176,25 @@ export const ovmProdAddresses: IAddresses = {
     staking: ovmChainData.stargate.staking,
   },
 
-  rewardDistribution: {
-    token: ovmChainData.assets.op,
-    amountPerSecond: BigNumber.from(210000) // 210K
-      .mul(BigNumber.from(10).pow(18))
-      .div(180 * 24 * 60 * 60), // 180 days in seconds
-    whitelistedPools: [
-      torosPools.USDY,
-      torosPools.USDMNY,
-      torosPools.ETHY,
-      "0x178175f4092d6ba11a8372ee968dc34704397a62", // Momentum Ensemble
-      "0x6ae8d896b32c71107d1a49af212bc70892a06720", // Dybart Izak
-      "0x2fbd33f07d414be3e3e112916504b9bdc5617b69", // Apollo Partners
-      "0x56da1e11923b298d70dae1b4749f4cdd56a02532", // Horizons Strategy Optimism
-      "0x54eaa41979695a641ac0fd14f71e165bf65d4689", // Remuage Absolute Return
-      "0x189a36c62c1ce9d9fd7a543df0a6dbe3a73a2c14", // Pure Boomer Alpha 0/10 fees
-    ],
-  },
+  rewardDistribution: [
+    {
+      token: ovmChainData.assets.op,
+      amountPerSecond: BigNumber.from(210000) // 210K
+        .mul(BigNumber.from(10).pow(18))
+        .div(180 * 24 * 60 * 60), // 180 days in seconds
+      whitelistedPools: [
+        torosPools.USDY,
+        torosPools.USDMNY,
+        torosPools.ETHY,
+        "0x178175f4092d6ba11a8372ee968dc34704397a62", // Momentum Ensemble
+        "0x6ae8d896b32c71107d1a49af212bc70892a06720", // Dybart Izak
+        "0x2fbd33f07d414be3e3e112916504b9bdc5617b69", // Apollo Partners
+        "0x56da1e11923b298d70dae1b4749f4cdd56a02532", // Horizons Strategy Optimism
+        "0x54eaa41979695a641ac0fd14f71e165bf65d4689", // Remuage Absolute Return
+        "0x189a36c62c1ce9d9fd7a543df0a6dbe3a73a2c14", // Pure Boomer Alpha 0/10 fees
+      ],
+    },
+  ],
   superSwapper: {
     routeHints: ovmChainData.routeHints,
   },
@@ -211,9 +206,12 @@ export const ovmProdAddresses: IAddresses = {
       "0x90fd55a7ef1af647e93ae96a17bcb3b6a2df0e02", // DNY3
       "0x93701ec795d8f8e16772be05142b2994c045e7dc", // DNY4
       "0xa5d8b370578f9e9eeb9cf7b7fad6cd5ab7d99a64", // DNY5
-      "0xb9243c495117343981ec9f8aa2abffee54396fc0", // USDpy
-      "0x7d3c9c6566375d7ad6e89169ca5c01b5edc15364", // SOLBULL2X
-      "0xcc7d6ed524760539311ed0cdb41d0852b4eb77eb", // SOLBULL3X
+      torosPools.USDpy,
+      torosPools.SOLBULL2X,
+      torosPools.SOLBULL3X,
+      torosPools.BTCBULL2X,
+      torosPools.BTCBULL3X,
+      torosPools.BTCBULL4X,
       // "0x9fc311fc8faa6d6b0d3199f25d9976e1e16de998", // Was added for LINK-PERP Contract guard
     ],
   },
@@ -321,6 +319,38 @@ export const ovmProdAddresses: IAddresses = {
   slippageAccumulator: {
     decayTime: 86400, // 24 hours
     maxCumulativeSlippage: 10e4, // 10%
+  },
+
+  rewardAssetSetting: [
+    {
+      rewardToken: ovmChainData.velodromeV2.velo,
+      linkedAssetTypes: [
+        26, // "Velodrome CL NFT Position Asset" = 26
+      ],
+      underlyingAssetType: 0, //  AssetType["Chainlink direct USD price feed with 8 decimals"],
+    },
+  ],
+
+  flatMoney: {
+    swapper: ovmChainData.flatMoney.swapper,
+  },
+
+  easySwapperV2: {
+    customCooldownDepositsWhitelist: [
+      torosPools.ETHBEAR1X,
+      torosPools.ETHBULL2X,
+      torosPools.ETHBULL3X,
+      torosPools.BTCBEAR1X,
+      torosPools.BTCBULL2X,
+      torosPools.BTCBULL3X,
+      torosPools.BTCBULL4X,
+      torosPools.SOLBULL2X,
+      torosPools.SOLBULL3X,
+      torosPools.ETHY,
+      torosPools.USDMNY,
+      torosPools.USDpy,
+      torosPools.USDY,
+    ],
   },
 };
 

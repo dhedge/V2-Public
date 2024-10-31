@@ -16,7 +16,7 @@ import { deployContracts } from "../utils/deployContracts/deployContracts";
 import { getAccountToken } from "../utils/getAccountTokens";
 import { utils } from "../utils/utils";
 
-const { assets, assetsBalanceOfSlot, ZERO_ADDRESS } = polygonChainData;
+const { assets, assetsBalanceOfSlot } = polygonChainData;
 
 const oneDollar = units(1);
 
@@ -75,7 +75,7 @@ describe("EasySwapperGuard", () => {
 
   it("manager cannot use other functions", async () => {
     const setPoolAllowedEncoded = dhedgeEasySwapper.interface.encodeFunctionData("setPoolAllowed", [
-      ZERO_ADDRESS,
+      ethers.constants.AddressZero,
       true,
     ]);
 

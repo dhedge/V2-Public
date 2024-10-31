@@ -2,9 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../../deploymentHelpers";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
-/***
- * Deploys the SynthetixPerpsV2MarketContractGuard
- */
 export const synthetixPerpsV2MarketContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
@@ -27,7 +24,6 @@ export const synthetixPerpsV2MarketContractGuardJob: IJob<void> = async (
     const args: [string, string[]] = [addresses.assets.susd, addresses.perpsV2.whitelistedPools];
     const contractGuard = await ContractGuard.deploy(...args);
     await contractGuard.deployed();
-    await contractGuard.deployTransaction.wait(5);
     console.log("contract guard deployed at", contractGuard.address);
 
     await tryVerify(

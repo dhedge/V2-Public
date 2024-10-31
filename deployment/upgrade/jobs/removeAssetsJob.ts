@@ -24,7 +24,7 @@ export const removeAssetsJob: IJob<void> = async (
 
   // Here we find assets that have been removed from the Assets.json
   for (const versionAsset of versions[config.newTag].contracts.Assets) {
-    if (!jsonAssets.find((ja) => ja.assetAddress === versionAsset.assetAddress)) {
+    if (!jsonAssets.find((ja) => ja.assetAddress.toLowerCase() === versionAsset.assetAddress.toLowerCase())) {
       assetsRemovedFromJson.push(versionAsset);
     }
   }

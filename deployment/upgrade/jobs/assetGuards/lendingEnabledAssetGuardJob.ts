@@ -10,7 +10,6 @@ export const lendingEnabledAssetGuardJobGenerator = (
   return async (
     config: IUpgradeConfig,
     hre: HardhatRuntimeEnvironment,
-    // TODO: This optimally should not be mutated
     versions: IVersions,
     filenames: { assetGuardsFileName: string },
     addresses: IProposeTxProperties,

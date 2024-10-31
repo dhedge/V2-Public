@@ -2,20 +2,16 @@
 
 pragma solidity 0.7.6;
 
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "../../interfaces/IHasAssetInfo.sol";
-import "../../interfaces/IERC20Extended.sol";
-import "../DhedgeMath.sol";
+import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {CLPriceLibrary} from "../commonCL/CLPriceLibrary.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library UniswapV3PriceLibrary {
   using SafeMathUpgradeable for uint24;
   using SafeMathUpgradeable for uint160;
   using SafeMathUpgradeable for uint256;
-
-  uint24 public constant MIN_THRESHOLD = 3000;
 
   /// @notice Assets the v3 pool price for the assets given is within the threshold of oracle price
   /// @param dhedgeFactory dHEDGE Factory address
@@ -46,16 +42,9 @@ library UniswapV3PriceLibrary {
     // We pass the tokens in the same order as the pool is configured
     uint160 fairSqrtPriceX96 = getFairSqrtPriceX96(dhedgeFactory, uniPool.token0(), uniPool.token1());
 
-    // Check that fair price is close to current pool price
-    // Threshold for the check is:
-    // - minimum of 0.3%, and
-    // - 50% higher than pool fee, because the pool may not get arbed if the fee is high
-    uint256 threshold = fee >= MIN_THRESHOLD ? fee.mul(150).div(100) : MIN_THRESHOLD;
-    require(
-      sqrtPriceX96 < fairSqrtPriceX96.add(fairSqrtPriceX96.mul(threshold).div(1_000_000)) &&
-        fairSqrtPriceX96 < sqrtPriceX96.add(fairSqrtPriceX96.mul(threshold).div(1_000_000)),
-      "Uni v3 LP price mismatch"
-    );
+    bool isPriceInRange = CLPriceLibrary.isSqrtPriceDeviationInRange(fee, sqrtPriceX96, fairSqrtPriceX96);
+
+    require(isPriceInRange, "Uni v3 LP price mismatch");
   }
 
   /// @notice Returns the Uni pool square root price based on underlying oracle prices
@@ -69,11 +58,7 @@ library UniswapV3PriceLibrary {
     address token0,
     address token1
   ) internal view returns (uint160 sqrtPriceX96) {
-    uint256 token0Price = IHasAssetInfo(factory).getAssetPrice(token0);
-    uint256 token1Price = IHasAssetInfo(factory).getAssetPrice(token1);
-    uint8 token0Decimals = IERC20Extended(token0).decimals();
-    uint8 token1Decimals = IERC20Extended(token1).decimals();
-    sqrtPriceX96 = calculateSqrtPrice(token0Price, token1Price, token0Decimals, token1Decimals);
+    sqrtPriceX96 = CLPriceLibrary.getFairSqrtPriceX96(factory, token0, token1);
   }
 
   /// @notice Returns the Uni pool square root price based on prices and token decimals
@@ -89,20 +74,6 @@ library UniswapV3PriceLibrary {
     uint8 token0Decimals,
     uint8 token1Decimals
   ) internal pure returns (uint160 sqrtPriceX96) {
-    uint256 priceRatio = token0Price.mul(10 ** token1Decimals).div(token1Price);
-
-    // Overflow protection for the price ratio shift left
-    bool overflowProtection;
-    if (priceRatio > 10 ** 18) {
-      overflowProtection = true;
-      priceRatio = priceRatio.div(10 ** 10); // decrease 10 decimals
-    }
-    require(priceRatio <= 10 ** 18 && priceRatio > 1000, "Uni v3 price ratio out of bounds");
-
-    sqrtPriceX96 = uint160(DhedgeMath.sqrt((priceRatio << 192).div(10 ** token0Decimals)));
-
-    if (overflowProtection) {
-      sqrtPriceX96 = uint160(sqrtPriceX96.mul(10 ** 5)); // increase 5 decimals (revert adjustment)
-    }
+    sqrtPriceX96 = CLPriceLibrary.calculateSqrtPrice(token0Price, token1Price, token0Decimals, token1Decimals);
   }
 }

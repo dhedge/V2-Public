@@ -349,19 +349,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "availableManagerFee",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "fee",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -397,50 +384,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "currentBalance",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "liquidityMinted",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newCooldown",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lastCooldown",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lastDepositTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "blockTimestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "calculateCooldown",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "cooldown",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "pure",
     "type": "function"
   },
   {
@@ -638,13 +581,7 @@
       }
     ],
     "name": "execTransactions",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "success",
-        "type": "bool"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -667,7 +604,7 @@
       },
       {
         "internalType": "address",
-        "name": "originator",
+        "name": "initiator",
         "type": "address"
       },
       {
@@ -855,25 +792,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "member",
-        "type": "address"
-      }
-    ],
-    "name": "isMemberAllowed",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -935,19 +853,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "managerName",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "_managerName",
-        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -1042,13 +947,7 @@
       }
     ],
     "name": "setPoolManagerLogic",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },

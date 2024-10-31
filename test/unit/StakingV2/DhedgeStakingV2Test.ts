@@ -1,11 +1,11 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers, network } from "hardhat";
-import { DhedgeStakingV2, ERC20Asset, PoolLogic__factory, PoolLogic, PoolFactory__factory } from "../../../types";
+import { ethers, network, waffle } from "hardhat";
+import { DhedgeStakingV2, ERC20Asset, PoolLogic__factory, PoolFactory__factory } from "../../../types";
 import { utils } from "../../integration/utils/utils";
 import { checkDelta, units } from "../../testHelpers";
-import { smock, MockContract } from "@defi-wonderland/smock";
-import { BigNumber } from "ethers";
+import { BaseContract, BigNumber } from "ethers";
+import type { MockContract } from "ethereum-waffle";
 
 const START_MOCK_TOKEN_PRICE = units(1);
 
@@ -187,7 +187,7 @@ describe("Dhedge DHT Staking V2", () => {
       await dhtStaking.connect(staker).newStake(dhtAmountToStake.div(2));
       const tokenId = await dhtStaking.tokenOfOwnerByIndex(staker.address, 0);
       await expect(dhtStaking.connect(other).addDhtToStake(tokenId, dhtAmountToStake.div(2))).to.be.revertedWith(
-        "Must be approved or owner.",
+        "approved or owner",
       );
     });
 
@@ -241,7 +241,7 @@ describe("Dhedge DHT Staking V2", () => {
     it("Must be owner or approved", async () => {
       // Note we connect here as the `other`
       await expect(dhtStaking.connect(other).unstakeDHT(tokenId, dhtAmountToStake)).to.be.revertedWith(
-        "Must be approved or owner.",
+        "approved or owner",
       );
     });
 
@@ -277,28 +277,27 @@ describe("Dhedge DHT Staking V2", () => {
   });
 
   describe("Staking Pool Tokens", () => {
-    let mockPool: MockContract<PoolLogic>;
+    let mockPool: MockContract<BaseContract>;
     let tokenId: BigNumber;
 
     beforeEach(async () => {
-      // https://smock.readthedocs.io/en/latest/mocks.html
-      // Create a fake pool
-      const PoolFactoryFactory = await smock.mock<PoolFactory__factory>("PoolFactory");
-      const poolFactory = await PoolFactoryFactory.deploy();
-      const PoolLogicFactory = await smock.mock<PoolLogic__factory>("PoolLogic");
-      mockPool = await PoolLogicFactory.deploy();
+      const mockedPoolFactory = await waffle.deployMockContract(owner, PoolFactory__factory.abi);
+
+      mockPool = await waffle.deployMockContract(owner, PoolLogic__factory.abi);
       // We need to set the factory for _beforeTokenTransfer
-      await mockPool.setVariable("factory", poolFactory.address);
+      await mockPool.mock.factory.returns(mockedPoolFactory.address);
       // Give some pool tokens to the staker
-      await mockPool.setVariable("_balances", {
-        [staker.address]: AMOUNT_TO_STAKE,
-      });
+      await mockPool.mock.balanceOf.returns(AMOUNT_TO_STAKE);
       // Set the pools token price to return $1
-      mockPool.tokenPrice.returns(START_MOCK_TOKEN_PRICE);
+      await mockPool.mock.tokenPrice.returns(START_MOCK_TOKEN_PRICE);
       // Enabled the Pool for staking and set the cap to what where staking
       await dhtStaking.configurePool(mockPool.address, AMOUNT_TO_STAKE.mul(START_MOCK_TOKEN_PRICE).div(units(1)));
       // Approve staking contract to take pool tokens
+      await mockPool.mock.approve.returns(true);
       await mockPool.connect(staker).approve(dhtStaking.address, AMOUNT_TO_STAKE);
+      await mockPool.mock.transferFrom.returns(true);
+      await mockPool.mock.transfer.returns(true);
+      await mockPool.mock.getExitRemainingCooldown.returns(0);
 
       await dhtStaking.connect(staker).newStake(dhtAmountToStake);
       tokenId = await dhtStaking.tokenOfOwnerByIndex(staker.address, 0);
@@ -308,7 +307,7 @@ describe("Dhedge DHT Staking V2", () => {
       it("Must be owner or approved", async () => {
         await expect(
           dhtStaking.connect(other).stakePoolTokens(tokenId, mockPool.address, AMOUNT_TO_STAKE),
-        ).to.be.revertedWith("Must be approved or owner.");
+        ).to.be.revertedWith("approved or owner");
       });
 
       it("Contract receives poolTokens", async () => {
@@ -317,7 +316,7 @@ describe("Dhedge DHT Staking V2", () => {
       });
 
       it("Stake data is recorded correctly", async () => {
-        mockPool.getExitRemainingCooldown.returns(84600);
+        await mockPool.mock.getExitRemainingCooldown.returns(84600);
         await dhtStaking.connect(staker).stakePoolTokens(tokenId, mockPool.address, AMOUNT_TO_STAKE);
         const stake = await dhtStaking.stakes(tokenId);
         expect(stake.dhedgePoolAddress).to.equal(mockPool.address);
@@ -365,9 +364,7 @@ describe("Dhedge DHT Staking V2", () => {
         await dht.transfer(other.address, dhtAmountToStake);
         await dht.connect(other).approve(dhtStaking.address, dhtAmountToStake);
         await dhtStaking.connect(other).newStake(dhtAmountToStake);
-        await mockPool.setVariable("_balances", {
-          [other.address]: AMOUNT_TO_STAKE,
-        });
+        await mockPool.mock.balanceOf.returns(AMOUNT_TO_STAKE);
         await mockPool.connect(other).approve(dhtStaking.address, AMOUNT_TO_STAKE);
         // ^ Finish setup
         const tokenIdOfOther = await dhtStaking.tokenOfOwnerByIndex(other.address, 0);
@@ -391,13 +388,11 @@ describe("Dhedge DHT Staking V2", () => {
       });
 
       it("Must be owner or approved", async () => {
-        await expect(dhtStaking.connect(other).unstakePoolTokens(tokenId)).to.be.revertedWith(
-          "Must be approved or owner.",
-        );
+        await expect(dhtStaking.connect(other).unstakePoolTokens(tokenId)).to.be.revertedWith("approved or owner");
       });
 
       it("Cannot unstake if tokens are under lockup (receiverWhitelist)", async () => {
-        mockPool.getExitRemainingCooldown.returns(84600);
+        await mockPool.mock.getExitRemainingCooldown.returns(84600);
         await dhtStaking.connect(staker).stakePoolTokens(tokenId, mockPool.address, AMOUNT_TO_STAKE);
         await expect(dhtStaking.connect(staker).unstakePoolTokens(tokenId)).to.be.revertedWith("cooldown active");
       });
@@ -432,7 +427,7 @@ describe("Dhedge DHT Staking V2", () => {
         const newTokenPrice = START_MOCK_TOKEN_PRICE.mul(
           rewardParams.maxPerformanceBoostNumerator.add(rewardParams.maxPerformanceBoostDenominator),
         ).div(rewardParams.maxPerformanceBoostDenominator);
-        mockPool.tokenPrice.returns(newTokenPrice);
+        await mockPool.mock.tokenPrice.returns(newTokenPrice);
         // Fastforward time to get max multiplier and increase vDHT
         await utils.increaseTime(rewardParams.maxDurationBoostSeconds.toNumber());
         const vdhtAccrued = await dhtStaking.vDHTBalanceOfStake(tokenId);
@@ -454,7 +449,7 @@ describe("Dhedge DHT Staking V2", () => {
         const newTokenPrice = START_MOCK_TOKEN_PRICE.mul(
           rewardParams.maxPerformanceBoostNumerator.add(rewardParams.maxPerformanceBoostDenominator),
         ).div(rewardParams.maxPerformanceBoostDenominator);
-        mockPool.tokenPrice.returns(newTokenPrice);
+        await mockPool.mock.tokenPrice.returns(newTokenPrice);
         // Fastforward time until 90% way through the stakeDurationDelay
         await utils.increaseTime(
           rewardParams.stakeDurationDelaySeconds.sub(rewardParams.stakeDurationDelaySeconds.div(10)).toNumber(),
@@ -479,7 +474,7 @@ describe("Dhedge DHT Staking V2", () => {
           await utils.increaseTime(MAX_V_DURATION_TIME.toNumber());
           await dhtStaking.connect(staker).stakePoolTokens(tokenId, mockPool.address, AMOUNT_TO_STAKE);
           // Increase the tokenPrice to get the max multiplier
-          mockPool.tokenPrice.returns(
+          await mockPool.mock.tokenPrice.returns(
             START_MOCK_TOKEN_PRICE.mul(
               rewardParams.maxPerformanceBoostNumerator.add(rewardParams.maxPerformanceBoostDenominator),
             ).div(rewardParams.maxPerformanceBoostDenominator),
@@ -597,7 +592,7 @@ describe("Dhedge DHT Staking V2", () => {
 
         await utils.increaseTime(MAX_V_DURATION_TIME.toNumber());
         // Increase the tokenPrice by 100%
-        mockPool.tokenPrice.returns(START_MOCK_TOKEN_PRICE.mul(2));
+        await mockPool.mock.tokenPrice.returns(START_MOCK_TOKEN_PRICE.mul(2));
         expect(await mockPool.tokenPrice()).to.equal(START_MOCK_TOKEN_PRICE.mul(2));
         await dhtStaking.connect(staker).unstakePoolTokens(tokenId);
         // Fast forward to the end of the escrow time
@@ -617,7 +612,7 @@ describe("Dhedge DHT Staking V2", () => {
 
         await utils.increaseTime(MAX_V_DURATION_TIME.toNumber());
         // Increase the tokenPrice by 100%
-        mockPool.tokenPrice.returns(START_MOCK_TOKEN_PRICE.mul(2));
+        await mockPool.mock.tokenPrice.returns(START_MOCK_TOKEN_PRICE.mul(2));
         expect(await mockPool.tokenPrice()).to.equal(START_MOCK_TOKEN_PRICE.mul(2));
         await dhtStaking.connect(staker).unstakePoolTokens(tokenId);
         // Fast forward to the end of the escrow time
@@ -636,7 +631,7 @@ describe("Dhedge DHT Staking V2", () => {
 
         await utils.increaseTime(MAX_V_DURATION_TIME.toNumber());
         // Increase the tokenPrice by 100%
-        mockPool.tokenPrice.returns(START_MOCK_TOKEN_PRICE.mul(2));
+        await mockPool.mock.tokenPrice.returns(START_MOCK_TOKEN_PRICE.mul(2));
         expect(await mockPool.tokenPrice()).to.equal(START_MOCK_TOKEN_PRICE.mul(2));
         await dhtStaking.connect(staker).unstakePoolTokens(tokenId);
         // Fast forward to the end of the escrow time
@@ -662,7 +657,7 @@ describe("Dhedge DHT Staking V2", () => {
       const expectedDhtRewards = dhtAmountToStake.div(2);
       await dhtStaking.connect(staker).stakePoolTokens(tokenId, mockPool.address, amountToStake);
       // Increase the tokenPrice to get the max multiplier
-      mockPool.tokenPrice.returns(
+      await mockPool.mock.tokenPrice.returns(
         START_MOCK_TOKEN_PRICE.mul(
           rewardParams.maxPerformanceBoostNumerator.add(rewardParams.maxPerformanceBoostDenominator),
         ).div(rewardParams.maxPerformanceBoostDenominator),
@@ -680,13 +675,11 @@ describe("Dhedge DHT Staking V2", () => {
 
       // Setup `other` to be able to stake
       // Reset the mockToken price to the OG Price
-      mockPool.tokenPrice.returns(START_MOCK_TOKEN_PRICE);
+      await mockPool.mock.tokenPrice.returns(START_MOCK_TOKEN_PRICE);
       await dht.transfer(other.address, dhtAmountToStake);
       await dht.connect(other).approve(dhtStaking.address, dhtAmountToStake);
       await dhtStaking.connect(other).newStake(dhtAmountToStake);
-      await mockPool.setVariable("_balances", {
-        [other.address]: AMOUNT_TO_STAKE,
-      });
+      await mockPool.mock.balanceOf.returns(AMOUNT_TO_STAKE);
       await mockPool.connect(other).approve(dhtStaking.address, AMOUNT_TO_STAKE);
       // ^ Finish setup
       const tokenIdOfOther = await dhtStaking.tokenOfOwnerByIndex(other.address, 0);

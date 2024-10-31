@@ -115,4 +115,14 @@ interface IAaveV3Pool {
     bytes calldata params,
     uint16 referralCode
   ) external;
+
+  function getReserveAddressById(uint16 id) external view returns (address);
+
+  function liquidationCall(
+    address collateral,
+    address debt,
+    address user,
+    uint256 debtToCover,
+    bool receiveAToken
+  ) external;
 }

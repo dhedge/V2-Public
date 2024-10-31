@@ -13,47 +13,40 @@
 // Copyright (c) 2023 dHEDGE DAO
 //
 // SPDX-License-Identifier: MIT
-
-import "../../interfaces/guards/IGuard.sol";
-import "../../interfaces/zeroEx/ITransformERC20Feature.sol";
-import "../../interfaces/IPoolManagerLogic.sol";
-import "../../interfaces/IHasSupportedAsset.sol";
-import "../../interfaces/ITransactionTypes.sol";
-import "../../utils/SlippageAccumulator.sol";
-import "../../utils/TxDataUtils.sol";
-
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-contract ZeroExContractGuard is TxDataUtils, IGuard, ITransactionTypes {
-  SlippageAccumulator private immutable slippageAccumulator;
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-  constructor(address _slippageAccumulator) {
-    require(_slippageAccumulator != address(0), "Null address");
+import {ITransformERC20Feature} from "../../interfaces/zeroEx/ITransformERC20Feature.sol";
+import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
+import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
+import {ITransactionTypes} from "../../interfaces/ITransactionTypes.sol";
+import {SlippageAccumulator, SlippageAccumulatorUser} from "../../utils/SlippageAccumulatorUser.sol";
+import {TxDataUtils} from "../../utils/TxDataUtils.sol";
 
-    slippageAccumulator = SlippageAccumulator(_slippageAccumulator);
-  }
+contract ZeroExContractGuard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUser {
+  constructor(address _slippageAccumulator) SlippageAccumulatorUser(_slippageAccumulator) {}
 
   /// @notice Transaction guard for ZeroEx protocol swaps
   /// @dev Parses the manager transaction data to ensure transaction is valid
   /// @param _poolManagerLogic The pool manager logic address
-  /// @param _to Transaction target address
   /// @param _data Transaction call data attempt by manager
   /// @return txType Transaction type described in PoolLogic
   /// @return isPublic If the transaction is public or private
   function txGuard(
     address _poolManagerLogic,
-    address _to,
+    address /* _to */,
     bytes calldata _data
   ) external override returns (uint16 txType, bool) {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
-    require(poolLogic == msg.sender, "Caller not authorised");
+    require(poolLogic == msg.sender, "not pool logic");
 
     if (getMethod(_data) == ITransformERC20Feature.transformERC20.selector) {
-      (IERC20 inputToken, IERC20 outputToken, uint256 inputTokenAmount, uint256 minOutputTokenAmount) = abi.decode(
+      (IERC20 inputToken, IERC20 outputToken, uint256 inputTokenAmount) = abi.decode(
         getParams(_data),
-        (IERC20, IERC20, uint256, uint256)
+        (IERC20, IERC20, uint256)
       );
 
       require(
@@ -61,16 +54,12 @@ contract ZeroExContractGuard is TxDataUtils, IGuard, ITransactionTypes {
         "unsupported destination asset"
       );
 
-      slippageAccumulator.updateSlippageImpact(
-        SlippageAccumulator.SwapData(
-          address(inputToken),
-          address(outputToken),
-          inputTokenAmount,
-          minOutputTokenAmount,
-          _to,
-          _poolManagerLogic
-        )
-      );
+      intermediateSwapData = SlippageAccumulator.SwapData({
+        srcAsset: address(inputToken),
+        dstAsset: address(outputToken),
+        srcAmount: _getBalance(address(inputToken), poolLogic),
+        dstAmount: _getBalance(address(outputToken), poolLogic)
+      });
 
       emit ExchangeFrom(poolLogic, address(inputToken), inputTokenAmount, address(outputToken), block.timestamp);
 

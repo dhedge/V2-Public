@@ -173,7 +173,7 @@ export const CreateSynthetixFuturesMarketAssetGuardPricingTests = (
                 isShort,
                 baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
               }),
-            ).to.be.revertedWith("leverage must be less than 2.5x");
+            ).to.be.revertedWith("leverage must be less");
             return;
           }
 

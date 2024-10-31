@@ -10,7 +10,6 @@ import { IJob, IUpgradeConfig, IVersions } from "../../../types";
 export const arrakisLiquidityGaugeV4ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
 ) => {
   console.log("Will deploy arrakisliquiditygaugev4guard");

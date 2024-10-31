@@ -41,7 +41,6 @@ const assets = Object.freeze({
 
 export const polygonChainData = Object.freeze({
   proxyAdmin: "0x0C0a10C9785a73018077dBC74B2A006695849252",
-  ZERO_ADDRESS: "0x0000000000000000000000000000000000000000",
   protocolDao: "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4",
   protocolTreasury: "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3",
 
@@ -77,11 +76,6 @@ export const polygonChainData = Object.freeze({
       usdt: "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3",
       weth: "0xeDe17e9d79fc6f9fF9250D9EEfbdB88Cc18038b5",
     },
-    stableDebtTokens: {
-      dai: "0x2238101B7014C279aaF6b408A284E49cDBd5DB55",
-      usdt: "0xe590cfca10e81FeD9B0e4496381f02256f5d2f61",
-      weth: "0xc478cBbeB590C76b01ce658f8C4dda04f30e2C6f",
-    },
   },
 
   aaveV3: {
@@ -91,24 +85,11 @@ export const polygonChainData = Object.freeze({
     aTokens: {
       weth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
       usdc: "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
-      usdt: "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
-      dai: "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE",
-      link: "0x191c10Aa4AF7C30e871E70C95dB0E4eb77237530",
     },
     variableDebtTokens: {
       usdc: "0xFCCf3cAbbe80101232d343252614b6A3eE81C989",
-      dai: "0x8619d80FB0141ba7F184CbF22fd724116D9f7ffC",
-      usdt: "0xfb00AC187a8Eb5AFAE4eACE434F493Eb62672df7",
       weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
-      link: "0x953A573793604aF8d41F306FEb8274190dB4aE0e",
       wbtc: "0x92b42c66840c7ad907b4bf74879ff3ef7c529473",
-    },
-    stableDebtTokens: {
-      usdc: "0x307ffe186F84a3bc2613D1eA417A5737D69A7007",
-      dai: "0xd94112B5B62d53C9402e7A60289c6810dEF1dC9B",
-      usdt: "0x70eFfc565DB6EEf7B927610155602d31b670e802",
-      weth: "0xD8Ad37849950903571df17049516a5CD4cbE55F6",
-      link: "0x89D976629b7055ff1ca02b927BA3e020F22A44e4",
     },
   },
 
@@ -148,6 +129,11 @@ export const polygonChainData = Object.freeze({
       },
     },
     dQUICK: "0xf28164A485B0B2C90639E47b0f377b4a438a16B1",
+    factoryV2: "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32",
+  },
+
+  uniswapV2: {
+    factory: "0x9e5A52f57b3038F1B8EeE45F28b3C1967e22799C",
   },
 
   uniswapV3: {
@@ -212,6 +198,7 @@ export const polygonChainData = Object.freeze({
     miMatic: "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428",
     matic: "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
     eth: "0xF9680D99D6C9589e2a93a78A04A279e509205945",
+    btc: "0xc907E116054Ad103354f2D350FD2514433D57F6f",
     usdc: "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",
     usdt: "0x0A6513e40db6EB1b165753AD52E80663aeA50545",
     dai: "0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D",
@@ -241,5 +228,9 @@ export const polygonChainData = Object.freeze({
 
   zeroEx: {
     exchangeProxy: "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+  },
+
+  flatMoney: {
+    swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
   },
 });

@@ -27,10 +27,16 @@ export enum AssetType {
   "Flat Money's Collateral" = 22,
   "Velodrome V2 LP/Gauge Asset" = 25,
   "Velodrome CL NFT Position Asset" = 26,
+  "Flat Money's Leverage Asset" = 27,
+  "Compound V3 Comet Asset" = 28,
+  "Ramses CL NFT Position Asset" = 29,
+  "EasySwapperV2 Unrolled Assets" = 30,
   "Lyra OptionMarketWrapper Asset" = 100,
   "Synthetix Futures Market Asset" = 101,
   "Synthetix PerpsV2 Market Asset" = 102,
   "Synthetix V3 Position Asset" = 103,
+  "Synthetix V3 Perps Position Asset" = 104,
+  "Reward Asset" = 200,
   "Deprecated Asset" = 999,
 }
 

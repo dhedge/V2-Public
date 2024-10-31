@@ -6,17 +6,17 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {FlatcoinModuleKeys} from "../../../utils/flatMoney/libraries/FlatcoinModuleKeys.sol";
-import {IDelayerOrder} from "../../../interfaces/flatMoney/IDelayerOrder.sol";
 import {IFlatcoinVault} from "../../../interfaces/flatMoney/IFlatcoinVault.sol";
 import {IPointsModule} from "../../../interfaces/flatMoney/IPointsModule.sol";
 import {IStableModule} from "../../../interfaces/flatMoney/IStableModule.sol";
 import {ERC20Guard} from "../ERC20Guard.sol";
+import {FlatMoneyOrderHelperGuard} from "./FlatMoneyOrderHelperGuard.sol";
 
-/// @dev AssetType - 21
+/// @notice AssetType - 21
 /// @dev `removeAssetCheck` from inherited contract will also revert in case of pending order, because
 /// @dev `getBalance` from derived contract overrides the one from ERC20Guard.
 /// @dev This will prevent the scenario when deposit/withdraw order is announced and manager can disable corresponding asset.
-contract FlatMoneyUNITAssetGuard is ERC20Guard {
+contract FlatMoneyUNITAssetGuard is FlatMoneyOrderHelperGuard, ERC20Guard {
   using SafeMath for uint256;
 
   uint256 private constant DECIMAL_FACTOR = 1e18;
@@ -30,7 +30,7 @@ contract FlatMoneyUNITAssetGuard is ERC20Guard {
   /// @param _asset UNIT asset address
   /// @return balance Balance of the UNIT asset in the vault
   function getBalance(address _pool, address _asset) public view override returns (uint256 balance) {
-    require(_hasNoPendingOrder(_pool, _asset), "order in progress");
+    require(_hasNoBlockingOrder(_pool, _asset), "order in progress");
 
     balance = IERC20(_asset).balanceOf(_pool);
   }
@@ -77,17 +77,5 @@ contract FlatMoneyUNITAssetGuard is ERC20Guard {
     transactions[1].txData = abi.encodeWithSelector(IERC20.transfer.selector, _to, pointsLeftToTransfer);
 
     return (withdrawAsset, withdrawBalance, transactions);
-  }
-
-  /// @dev Types of orders which in theory can appear on behalf of the vault are limited by the contract guard for the DelayedOrder.
-  /// @dev Guard's name is FlatMoneyDelayedOrderContractGuard. This way, check against OrderType.None is sufficient.
-  /// @param _pool Vault address
-  /// @param _asset UNIT asset address
-  /// @return noOrder True if there is no pending order
-  function _hasNoPendingOrder(address _pool, address _asset) internal view returns (bool noOrder) {
-    IDelayerOrder delayedOrder = IDelayerOrder(
-      IStableModule(_asset).vault().moduleAddress(FlatcoinModuleKeys._DELAYED_ORDER_KEY)
-    );
-    noOrder = delayedOrder.getAnnouncedOrder(_pool).orderType == IDelayerOrder.OrderType.None;
   }
 }

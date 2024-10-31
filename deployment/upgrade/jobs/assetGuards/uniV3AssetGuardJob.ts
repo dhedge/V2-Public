@@ -2,11 +2,11 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
+import { AssetType } from "../assetsJob";
 
 export const uniV3AssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: IFileNames,
   addresses: IProposeTxProperties,
@@ -30,7 +30,7 @@ export const uniV3AssetGuardJob: IJob<void> = async (
       "contracts/guards/assetGuards/UniswapV3AssetGuard.sol:UniswapV3AssetGuard",
       [],
     );
-    const assetHandlerAssetType = 7;
+    const assetHandlerAssetType = AssetType["Uniswap V3 NFT Position Asset"];
     const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [
       assetHandlerAssetType,
       uniV3AssetGuard.address,
@@ -45,7 +45,7 @@ export const uniV3AssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      assetType: 7,
+      assetType: assetHandlerAssetType,
       guardName: "UniswapV3AssetGuard",
       guardAddress: uniV3AssetGuard.address,
       description: "Uniswap V3 LP positions",

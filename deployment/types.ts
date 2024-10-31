@@ -3,6 +3,7 @@ import { TAssetConfig } from "./upgrade/jobs/oracles/oracleTypes";
 import { BigNumber, BigNumberish } from "ethers";
 import { AllowedMarketStruct } from "../types/SynthetixV3SpotMarketContractGuard";
 import { VaultSettingStruct, WeeklyWindowsStruct } from "../types/SynthetixV3ContractGuard";
+import { RewardAssetSettingStruct } from "../types/RewardAssetGuard";
 
 export interface IUpgradeConfigProposeTx {
   execute: boolean;
@@ -36,24 +37,32 @@ export interface IFileNames {
   externalAssetFileName?: string;
 }
 
-interface EasySwapperConfig {
+interface IEasySwapperConfig {
   customLockupAllowedPools: Address[];
   feeByPassManagers: Address[];
   feeNumerator: 10;
   feeDenominator: 10000;
 }
 
-interface ExternalLogicContracts {
+interface IEasySwapperV2Config {
+  customCooldownDepositsWhitelist: Address[];
+}
+
+interface IDeploymentsConfig {
   synthetixProxyAddress?: Address;
 
   balancerV2VaultAddress?: Address;
-  sushiMiniChefV2Address?: Address;
   balancerMerkleOrchardAddress?: Address;
 
-  quickStakingRewardsFactoryAddress?: Address;
+  sushiMiniChefV2Address?: Address;
+
   v2RouterAddresses: Address[];
 
+  quickStakingRewardsFactoryAddress?: Address;
   quickLpUsdcWethStakingRewardsAddress?: Address;
+  quickswap?: {
+    uniV2Factory: Address;
+  };
 
   oneInchV4RouterAddress?: Address;
   oneInchV5RouterAddress?: Address;
@@ -69,6 +78,7 @@ interface ExternalLogicContracts {
 
   velodromeCL?: {
     nonfungiblePositionManager: Address;
+    nonfungiblePositionManagerOld?: Address;
     factory: Address;
     enabledGauges: Address[];
     voter: Address;
@@ -77,6 +87,10 @@ interface ExternalLogicContracts {
   stargate?: {
     router: Address;
     staking: Address;
+  };
+
+  uniV2: {
+    factory: Address;
   };
 
   uniV3: {
@@ -117,10 +131,6 @@ interface ExternalLogicContracts {
     lyraRegistry: Address;
   };
 
-  // Token Addresses
-  sushiTokenAddress?: Address;
-  wmaticTokenAddress?: Address;
-
   assets: {
     nativeAssetWrapper: Address;
     weth: Address;
@@ -140,8 +150,9 @@ interface ExternalLogicContracts {
     token: Address;
     amountPerSecond: BigNumberish;
     whitelistedPools: string[];
-  };
-  easySwapperConfig: EasySwapperConfig;
+  }[];
+
+  easySwapperConfig: IEasySwapperConfig;
 
   superSwapper: {
     routeHints: { asset: Address; intermediary: Address }[];
@@ -155,6 +166,8 @@ interface ExternalLogicContracts {
     core: Address;
     dHedgeVaultsWhitelist: VaultSettingStruct[];
     spotMarket: Address;
+    perpsMarket?: Address;
+    perpsWithdrawAsset?: Address; // for SynthetixV3PerpsAssetGuard
     allowedMarkets: AllowedMarketStruct[];
     // Weekdays are 1-7, 1 being Monday and 7 being Sunday. Hours are 0-23
     windows: WeeklyWindowsStruct;
@@ -187,36 +200,50 @@ interface ExternalLogicContracts {
     xRam: Address;
   };
 
+  ramsesCL?: {
+    nonfungiblePositionManager: Address;
+    voter: Address;
+  };
+
   sonneFinance?: {
     dHedgeVaultsWhitelist: Address[];
     comptroller: Address;
   };
 
   flatMoney?: {
-    delayedOrder: Address;
+    delayedOrder?: Address;
+    perpMarketWhitelistedVaults?: {
+      poolLogic: Address;
+      withdrawalAsset: Address;
+    }[];
+    swapper: Address;
   };
-}
 
-interface IDhedgeInternal {
-  // Dhedge
-  protocolDaoAddress: Address;
-  protocolTreasuryAddress: Address;
-  proxyAdminAddress: Address;
+  rewardAssetSetting?: RewardAssetSettingStruct[];
+
+  compoundV3?: {
+    rewards: Address;
+  };
+
   slippageAccumulator: {
     decayTime: number;
     maxCumulativeSlippage: number;
   };
+
+  easySwapperV2: IEasySwapperV2Config;
 }
 
-export type IProposeTxProperties = IDhedgeInternal & {
+export type IProposeTxProperties = {
+  protocolDaoAddress: Address;
+  protocolTreasuryAddress: Address;
+  proxyAdminAddress: Address;
   // Gnosis safe multicall/send address
   // https://github.com/gnosis/safe-deployments
   gnosisMultiSendAddress: string;
   gnosisApi: string;
 };
 
-// Addresses
-export type IAddresses = IProposeTxProperties & ExternalLogicContracts;
+export type IAddresses = IProposeTxProperties & IDeploymentsConfig;
 
 type RecordNumberString = Record<string, number | string>;
 export interface IDeployedAssetGuard extends RecordNumberString {
@@ -258,7 +285,7 @@ export interface IContracts {
   ProxyAdmin?: Address;
   DhedgeNftTrackerStorageProxy: Address;
   DhedgeNftTrackerStorage: Address;
-  RewardDistribution?: Address;
+  RewardDistribution?: Address[];
   SlippageAccumulator?: Address;
   PoolTokenSwapperProxy?: Address;
   PoolTokenSwapper?: Address;
@@ -306,6 +333,7 @@ export interface IContracts {
   RamsesGaugeContractGuard?: Address;
   RamsesXRamContractGuard?: Address;
   SynthetixV3SpotMarketContractGuard?: Address;
+  SynthetixV3PerpsMarketContractGuard?: Address;
   SonneFinanceCTokenGuard?: Address;
   SonneFinanceComptrollerGuard?: Address;
   WeeklyWindowsHelper?: Address;
@@ -315,6 +343,11 @@ export interface IContracts {
   OneInchV6Guard?: Address;
   VelodromeNonfungiblePositionGuard?: Address;
   VelodromeCLGaugeContractGuard?: Address;
+  VelodromeNonfungiblePositionGuardOld?: Address;
+  CompoundV3CometContractGuard?: Address;
+  CompoundV3CometRewardsContractGuard?: Address;
+  EasySwapperV2ContractGuard?: Address;
+  RamsesNonfungiblePositionGuard?: Address;
 
   // Asset Guards
   OpenAssetGuard: Address;
@@ -336,11 +369,17 @@ export interface IContracts {
   SynthetixPerpsV2MarketAssetGuard?: Address;
   VelodromeV2LPAssetGuard?: Address;
   SynthetixV3AssetGuard?: Address;
+  SynthetixV3PerpsAssetGuard?: Address;
   RamsesLPAssetGuard?: Address;
   FlatMoneyUNITAssetGuard?: Address;
   FlatMoneyCollateralAssetGuard?: Address;
   VelodromeCLAssetGuard?: Address;
   ByPassAssetGuard?: Address;
+  FlatMoneyPerpMarketAssetGuard?: Address;
+  RewardAssetGuard?: Address;
+  CompoundV3CometAssetGuard?: Address;
+  RamsesCLAssetGuard?: Address;
+  EasySwapperV2UnrolledAssetsGuard: Address;
 
   DhedgeEasySwapperProxy: Address;
   DhedgeEasySwapper: Address;
@@ -352,6 +391,11 @@ export interface IContracts {
 
   Assets: TDeployedAsset[];
   RemovedAssets: TDeployedAsset[];
+
+  EasySwapperV2: Address;
+  EasySwapperV2Proxy: Address;
+  WithdrawalVault: Address;
+  WithdrawalVaultProxy: Address;
 }
 
 export type TDeployedAsset = TAssetConfig & { oracleAddress: string };
@@ -396,7 +440,8 @@ export type ContractGuardType =
   | "VelodromeV2GaugeContractGuard"
   | "VelodromePairContractGuard"
   | "RamsesGaugeContractGuard"
-  | "SonneFinanceCTokenGuard";
+  | "SonneFinanceCTokenGuard"
+  | "CompoundV3CometContractGuard";
 
 export type IVersion = {
   network: {
@@ -406,7 +451,8 @@ export type IVersion = {
   lastUpdated: string;
   contracts: IContracts;
   config: {
-    easySwapperConfig?: EasySwapperConfig;
+    easySwapperConfig?: IEasySwapperConfig;
+    easySwapperV2?: IEasySwapperV2Config;
   };
 };
 

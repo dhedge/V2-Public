@@ -18,6 +18,11 @@ const assetPairs: IV3AssetPair[] = [
     token0: assets.weth,
     token1: assets.usdc,
   },
+  {
+    fee: 500,
+    token0: assets.wmatic,
+    token1: assets.wbtc,
+  },
 ];
 
 uniswapV3PriceLibraryTest({

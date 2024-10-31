@@ -7,7 +7,6 @@ import { AssetType } from "../assetsJob";
 export const aaveV3LendingPoolAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: IFileNames,
   addresses: IAddresses,

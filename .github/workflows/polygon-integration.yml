@@ -37,7 +37,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: ^8.0.0
+          version: ^9.0.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -95,7 +95,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: ^8.0.0
+          version: ^9.0.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -157,7 +157,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: ^8.0.0
+          version: ^9.0.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -190,11 +190,6 @@ jobs:
         run: |
           pnpm test:integr ./test/integration/polygon/aave/AaveV3Test.ts
 
-      - name: AaveV3TestWithWETH
-        if: always()
-        run: |
-          pnpm test:integr ./test/integration/polygon/aave/AaveV3TestWithWETH.ts
-
       - name: AaveV2V3Test
         if: always()
         run: |
@@ -214,7 +209,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: ^8.0.0
+          version: ^9.0.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -251,7 +246,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: ^8.0.0
+          version: ^9.0.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

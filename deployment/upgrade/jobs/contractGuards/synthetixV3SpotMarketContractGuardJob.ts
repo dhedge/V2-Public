@@ -19,6 +19,12 @@ export const synthetixV3SpotMarketContractGuardJob: IJob<void> = async (
     return console.warn("No config for SynthetixV3SpotMarketContractGuard: skipping.");
   }
 
+  const slippageAccumulatorAddress = versions[config.oldTag].contracts.SlippageAccumulator;
+
+  if (!slippageAccumulatorAddress) {
+    return console.warn("SlippageAccumulator could not be found: skipping.");
+  }
+
   const ethers = hre.ethers;
   const Governance = await hre.artifacts.readArtifact("Governance");
   const governanceABI = new ethers.utils.Interface(Governance.abi);
@@ -27,15 +33,11 @@ export const synthetixV3SpotMarketContractGuardJob: IJob<void> = async (
 
   if (config.execute) {
     const SynthetixV3SpotMarketContractGuard = await ethers.getContractFactory("SynthetixV3SpotMarketContractGuard");
-    const nftTrackerStorage = versions[config.oldTag].contracts.DhedgeNftTrackerStorageProxy;
 
-    if (!nftTrackerStorage) {
-      return console.warn("DhedgeNftTrackerStorage could not be found: skipping.");
-    }
-
-    const args: [Address, Address, AllowedMarketStruct[]] = [
+    const args: [Address, Address, Address, AllowedMarketStruct[]] = [
       synthetixV3CoreAddress,
       synthetixV3SpotMarketAddress,
+      slippageAccumulatorAddress,
       allowedMarkets,
     ];
     const synthetixV3SpotMarketContractGuard = await SynthetixV3SpotMarketContractGuard.deploy(...args);

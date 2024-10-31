@@ -24,6 +24,9 @@ const IAggregationRouterV6 = new ethers.utils.Interface(IAggregationRouterV6__fa
 type ITestParams = IBackboneDeploymentsParams & {
   chainId: ChainIds;
   aggregationRouterV6: string;
+  uniV2Factory: string;
+  uniV3Factory: string;
+  quickswapUniV2Factory?: string;
   assetsBalanceOfSlot: {
     usdc: number;
     dai: number;
@@ -57,7 +60,12 @@ export const runOneInchV6GuardTest = async (testParams: ITestParams) => {
     before(async () => {
       deployments = await deployBackboneContracts(testParams);
       const OneInchV6Guard = await ethers.getContractFactory("OneInchV6Guard");
-      const oneInchV6Guard = await OneInchV6Guard.deploy(deployments.slippageAccumulator.address);
+      const oneInchV6Guard = await OneInchV6Guard.deploy(
+        deployments.slippageAccumulator.address,
+        testParams.uniV2Factory,
+        testParams.uniV3Factory,
+        testParams.quickswapUniV2Factory || ethers.constants.AddressZero,
+      );
       await oneInchV6Guard.deployed();
       v6Guard = oneInchV6Guard;
 

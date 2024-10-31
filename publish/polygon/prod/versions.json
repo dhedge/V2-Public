@@ -2258,6 +2258,16 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
+        },
+        {
+          "assetName": "EasySwapperV2 Unrolled Assets",
+          "assetAddress": "0x45b90480D6F643dE2f128db091A357C3c90399f2",
+          "assetType": "30",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+          },
+          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
         }
       ],
       "RemovedAssets": [
@@ -2282,9 +2292,9 @@
       ],
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0xE0E910BbAFa15c02aB424A7c2738A6e1Ed9710E3",
+      "PoolLogic": "0x575d353E5990b285d68121ec632BD9bbEd116B28",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x807FB0f055f8d52CE015467F323768f9D057C992",
+      "PoolManagerLogic": "0x55133034d95068EC88f2A47Ac8F1Dbd26eEafc50",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
       "ERC20Guard": "0x5eC7E3c7C802fBe6BBf2f02Ec4f4502ea9E94c41",
@@ -2296,12 +2306,12 @@
       "QuickLPAssetGuard": "0x624484f6a600ab9b785E53b620fB4d641dcDecd6",
       "QuickStakingRewardsGuard": "0x66509140E08A58a1CC0eEF29C565FE9c68E3EFAF",
       "AaveIncentivesControllerGuard": "0xAF33891D6DD4e6fF6b1D676D77001B0F73197689",
-      "AaveLendingPoolAssetGuardV2": "0x7B3635C220eb7F1cb1e0dD57A83acDeb1aA86136",
-      "AaveLendingPoolGuardV2": "0x373AC828d05058D646b9106A3DCda89f2626149e",
+      "AaveLendingPoolAssetGuardV2": "0x8a517255676A45F6dc58B49B905cb09518084154",
+      "AaveLendingPoolGuardV2": "0xeDcAfe2D359871aBF2d9A3CFeb49fCe62FEFbdca",
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
       "BalancerV2Guard": "0xf6c1f2fEFa1d77D9EF4f5aF90AE7B7B746772E97",
       "OneInchV4Guard": "0x708Fb18D76Ca9E80792810758aCd81E60C6D987d",
-      "PoolFactory": "0xcC4A31Ac7BcC67336b278AF63812Cee07936FA99",
+      "PoolFactory": "0x46c89397aA6e8aeD9721e6e3b933E41FaE9528dB",
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",
       "PoolPerformance": "0xb7De1766d13f845C91f6552880DCeC75ee670DA9",
@@ -2309,11 +2319,11 @@
       "DynamicBonds": "0x04965f01e531311f1686be8d6904e9a361191749",
       "EasySwapperGuard": "0x813a65aCc4b61530075B040f1689531966d62910",
       "DhedgeSuperSwapper": "0xd4A9Fd5925bD85554D22C6359B83B4501A3ABa76",
-      "UniswapV3AssetGuard": "0x69d0c7939554f69cA5dAfE661Fea0a118703B754",
+      "UniswapV3AssetGuard": "0xEc127Cf6A71ec8C0A66f07DF104fF58B7A47FDd5",
       "UniswapV3RouterGuard": "0x1729EF9441822F270b35995D359e1cd1dD2a59A9",
-      "UniswapV3NonfungiblePositionGuard": "0xf9FE480465f96835ab8bb141f6C7e5B9d0AECB3a",
-      "AaveLendingPoolAssetGuardV3": "0xbc16514da2D9033BC015dB7503376fDC1775AA8C",
-      "AaveLendingPoolGuardV3": "0xc906D8f37f8833471f1bf317ff5cA623De7914f4",
+      "UniswapV3NonfungiblePositionGuard": "0x6D736562dd51C71a69714FC0a9dE17A74E3917ca",
+      "AaveLendingPoolAssetGuardV3": "0x66389f651dE501C156Ee9576C29cbfDc94a15D90",
+      "AaveLendingPoolGuardV3": "0x6F22168AdBED7e6734c746EEB5e391C27db34F88",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6ABB2f1373c06b21655e90864433A3E0d5d8bdC1",
       "ArrakisV1RouterStakingGuard": "0xCA6C89dfF08E4040052088eaF21f59b1D4bc5fA2",
       "ArrakisLiquidityGaugeV4AssetGuard": "0x5A74eCFd320728534f30924812427595af96684B",
@@ -2324,7 +2334,7 @@
       "DhedgeNftTrackerStorageProxy": "0x195AFA2ef88b0A52DFE561E12Fac30F28860A489",
       "DhedgeNftTrackerStorage": "0x4150a35D8b2cD2a485750540efd3D546011bCccc",
       "DhedgeEasySwapperProxy": "0xB2F1498983bf9c9442c35F772e6C1AdE66a8DeDE",
-      "DhedgeEasySwapper": "0x5efAa7451f2E4F35E70c80F6Bf56b4787ef7dB5F",
+      "DhedgeEasySwapper": "0x59F68B80A0F6C6400BE2E62F58c1DD89Ab832268",
       "StargateLPAssetGuard": "0xE3a2625e5DED7a5c406a772a814c388381041486",
       "StargateRouterContractGuard": "0xe8d20D2105aC0d66C9A9a44266b93606EAf2a840",
       "StargateLpStakingContractGuard": "0x0bAa2c1943B9c8BE74792Af7387f024ed5C33265",
@@ -2337,14 +2347,20 @@
       "AaveDebtTokenContractGuard": "0xd0DD27DC984c1AC18a6fec6FCdB4C18af08887d4",
       "AaveMigrationHelperGuard": "0xD131aff6138155cA384C0A7e5e91e73f0Ab7dd0E",
       "AaveIncentivesControllerV3Guard": "0x91d3602Dfe4B150E6c39119AcB5e50AbfC7204e9",
-      "OneInchV6Guard": "0x22BE9515eE8FF734675232e8D7135A863E7e08C7"
+      "OneInchV6Guard": "0xB8B4Af8286Ce0CB3177d4a2B8D17b132d550a89D",
+      "WithdrawalVaultProxy": "0x22b865a33381690e75a4289f61890C8CEe751F81",
+      "WithdrawalVault": "0x64fde67589B3Ed07a51b0e5DBceca2758eB9b3D2",
+      "EasySwapperV2Proxy": "0x45b90480D6F643dE2f128db091A357C3c90399f2",
+      "EasySwapperV2": "0xDEfdd9D066611EFfa1eb044FaCCF998961a09e10",
+      "EasySwapperV2ContractGuard": "0x8D8b39c1557E1a32b8A9cb3F525e26E40bb940bf",
+      "EasySwapperV2UnrolledAssetsGuard": "0xDcA7Ee1Cf0B1aD24900F06A805322ca7e2e4A071"
     },
     "network": {
       "name": "matic",
       "chainId": 137,
       "ensAddress": null
     },
-    "lastUpdated": "Mon, 13 May 2024 09:28:55 GMT",
+    "lastUpdated": "Mon, 28 Oct 2024 18:06:32 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -2365,6 +2381,16 @@
         ],
         "feeNumerator": 10,
         "feeDenominator": 10000
+      },
+      "easySwapperV2": {
+        "customCooldownDepositsWhitelist": [
+          "0x86c3dd18baf4370495d9228b58fd959771285c55",
+          "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+          "0x79d2aefe6a21b26b024d9341a51f6b7897852499",
+          "0x460b60565cb73845d56564384ab84bf84c13e47d",
+          "0x8987ca55e635d0d3ba9469ee31e9b8a7d447e9cc",
+          "0x7dab035a8a65f7d33f1628a450c6780323d3c5e1"
+        ]
       }
     }
   }

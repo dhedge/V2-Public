@@ -9,11 +9,12 @@ import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 import { ISynthetixV3TestsParams } from "./SynthetixV3Test";
 import { VaultSettingStruct } from "../../../../types/SynthetixV3ContractGuard";
 import { units } from "../../../testHelpers";
+import { arbitrumChainData } from "../../../../config/chainData/arbitrumData";
 
 const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
 
 // Windows that don't make sense to make tests pass
-const FAKE_WINDOWS = {
+export const FAKE_WINDOWS = {
   delegationWindow: {
     start: {
       dayOfWeek: 1,
@@ -61,7 +62,7 @@ const REAL_WINDOWS = {
 };
 
 // $50k and 10%
-const PROD_WITHDRAWAL_LIMIT = { usdValue: units(50_000), percent: units(1, 17) };
+export const PROD_WITHDRAWAL_LIMIT = { usdValue: units(50_000), percent: units(1, 17) };
 // $50 and 10%
 const TEST_WITHDRAWAL_LIMIT = { usdValue: units(50), percent: units(1, 17) };
 
@@ -97,6 +98,16 @@ export const deploySynthethixV3Infrastructure = async (
     ),
   ]);
 
+  if (deploymentParams.synthetixV3PerpsMarket) {
+    await deployments.assetHandler.addAssets([
+      assetSetting(
+        deploymentParams.synthetixV3PerpsMarket,
+        AssetType["Synthetix V3 Perps Position Asset"],
+        usdPriceAggregator.address,
+      ),
+    ]);
+  }
+
   if (deploymentParams.systemAssets.tokenToCollateral) {
     await deployments.assetHandler.addAssets([
       assetSetting(
@@ -129,7 +140,7 @@ export const deploySynthethixV3Infrastructure = async (
       isDeposit: false,
     },
   ];
-  const supportedAssets = deploymentParams.systemAssets.tokenToCollateral
+  let supportedAssets = deploymentParams.systemAssets.tokenToCollateral
     ? [
         ...assets,
         {
@@ -138,6 +149,17 @@ export const deploySynthethixV3Infrastructure = async (
         },
       ]
     : assets;
+
+  supportedAssets = deploymentParams.synthetixV3PerpsMarket
+    ? [
+        ...supportedAssets,
+        {
+          asset: deploymentParams.synthetixV3PerpsMarket,
+          isDeposit: false,
+        },
+      ]
+    : supportedAssets;
+
   const poolProxies = await createFund(
     deployments.poolFactory,
     deployments.owner,
@@ -197,6 +219,7 @@ export const deploySynthethixV3Infrastructure = async (
   const synthetixV3SpotMarketContractGuard = await SynthetixV3SpotMarketContractGuard.deploy(
     deploymentParams.synthetixV3Core,
     deploymentParams.synthetixV3SpotMarket,
+    deployments.slippageAccumulator.address,
     deploymentParams.allowedMarketIds,
   );
   await synthetixV3SpotMarketContractGuard.deployed();
@@ -206,12 +229,37 @@ export const deploySynthethixV3Infrastructure = async (
     synthetixV3SpotMarketContractGuard.address,
   );
 
+  if (deploymentParams.synthetixV3PerpsMarket) {
+    const SynthetixV3PerpsMarketContractGuard = await ethers.getContractFactory("SynthetixV3PerpsMarketContractGuard");
+    const synthetixV3PerpsMarketContractGuard = await SynthetixV3PerpsMarketContractGuard.deploy(
+      dhedgeNftTrackerStorage.address,
+      deploymentParams.synthetixV3Core,
+    );
+    await synthetixV3PerpsMarketContractGuard.deployed();
+
+    await deployments.governance.setContractGuard(
+      deploymentParams.synthetixV3PerpsMarket,
+      synthetixV3PerpsMarketContractGuard.address,
+    );
+  }
+
   const SynthetixV3AssetGuard = await ethers.getContractFactory("SynthetixV3AssetGuard");
   const synthetixV3AssetGuard = await SynthetixV3AssetGuard.deploy(deploymentParams.synthetixV3SpotMarket);
   await synthetixV3AssetGuard.deployed();
 
   const assetType = AssetType["Synthetix V3 Position Asset"];
   await deployments.governance.setAssetGuard(assetType, synthetixV3AssetGuard.address);
+
+  if (deploymentParams.systemAssets.withdrawalAsset && deploymentParams.synthetixV3PerpsMarket) {
+    const SynthetixV3PerpsAssetGuard = await ethers.getContractFactory("SynthetixV3PerpsAssetGuard");
+    const synthetixV3PerpsAssetGuard = await SynthetixV3PerpsAssetGuard.deploy(
+      deploymentParams.systemAssets.withdrawalAsset.address,
+    );
+    await synthetixV3PerpsAssetGuard.deployed();
+
+    const assetType = AssetType["Synthetix V3 Perps Position Asset"];
+    await deployments.governance.setAssetGuard(assetType, synthetixV3PerpsAssetGuard.address);
+  }
 
   const COLLATERAL_ASSET = <IERC20>(
     await ethers.getContractAt(IERC20Path, deploymentParams.systemAssets.collateral.address)
@@ -262,11 +310,33 @@ export const deploySynthethixV3Infrastructure = async (
       ]),
     );
 
+  // chain specific deployment
+  if (deploymentParams.network === "arbitrum") {
+    await deployments.assetHandler.addAssets([
+      assetSetting(
+        arbitrumChainData.assets.arb,
+        AssetType["Lending Enable Asset"],
+        arbitrumChainData.usdPriceFeeds.arb,
+      ),
+      assetSetting(
+        arbitrumChainData.assets.susdc,
+        AssetType["Chainlink direct USD price feed with 8 decimals"],
+        arbitrumChainData.usdPriceFeeds.usdc,
+      ),
+      assetSetting(
+        arbitrumChainData.assets.usdc,
+        AssetType["Chainlink direct USD price feed with 8 decimals"],
+        arbitrumChainData.usdPriceFeeds.usdc,
+      ),
+    ]);
+  }
+
   return {
     whitelistedPool: poolProxies,
     COLLATERAL_ASSET,
     DEBT_ASSET,
     synthetixV3CoreAddress: deploymentParams.synthetixV3Core,
+    synthetixV3PerpsAddress: deploymentParams.synthetixV3PerpsMarket,
     accountNFT,
     dhedgeNftTrackerStorage,
     allowedLiquidityPoolId: deploymentParams.allowedLiquidityPoolId,

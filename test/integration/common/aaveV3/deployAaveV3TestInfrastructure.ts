@@ -7,11 +7,14 @@ import { assetSetting } from "../../utils/deployContracts/getChainAssets";
 import { IAaveV3Pool__factory } from "../../../../types";
 
 export type IAaveV3TestParameters = IBackboneDeploymentsParams & {
-  assets: {
-    usdt: string;
-  };
+  borrowAsset: string; // 18 decimals
   usdPriceFeeds: {
-    usdt: string;
+    borrowAsset: string;
+  };
+  assetsBalanceOfSlot: {
+    usdc: number;
+    weth: number;
+    borrowAsset: number;
   };
   lendingPool: string;
   protocolDataProvider: string;
@@ -24,22 +27,6 @@ export type IAaveV3TestParameters = IBackboneDeploymentsParams & {
     router: string;
   };
   v2Routers: string[];
-  aTokens: {
-    usdc: string;
-    usdt: string;
-    dai?: string;
-    weth: string;
-  };
-  variableDebtTokens: {
-    dai?: string;
-    weth: string;
-  };
-  assetsBalanceOfSlot: {
-    usdc: number;
-    usdt: number;
-    dai: number;
-    weth: number;
-  };
   incentivesController?: string;
   rewardToken?: string;
 };
@@ -62,7 +49,7 @@ export const deployAaveV3TestInfrastructure = async (
   );
 
   const AaveLendingPoolGuardV3L2Pool = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
-  const aaveLendingPoolGuardV3L2Pool = await AaveLendingPoolGuardV3L2Pool.deploy(testParams.lendingPool);
+  const aaveLendingPoolGuardV3L2Pool = await AaveLendingPoolGuardV3L2Pool.deploy();
   await aaveLendingPoolGuardV3L2Pool.deployed();
   await deployments.governance.setContractGuard(testParams.lendingPool, aaveLendingPoolGuardV3L2Pool.address);
 
@@ -118,13 +105,13 @@ export const deployAaveV3TestInfrastructure = async (
       AssetType["Aave V3 Lending Pool Asset"],
       deployments.usdPriceAggregator.address,
     ),
-    // Change USDT to be non-lending enabled asset
+    // Re-set DAI to be non lending enabled
     assetSetting(
-      testParams.assets.usdt,
+      testParams.assets.dai,
       AssetType["Chainlink direct USD price feed with 8 decimals"],
-      testParams.usdPriceFeeds.usdt,
+      testParams.usdPriceFeeds.dai,
     ),
   ]);
 
-  await deployments.assetHandler.setChainlinkTimeout((3600 * 24 * 7).toString()); // 1 week expiry
+  await deployments.assetHandler.setChainlinkTimeout(3600 * 24 * 7); // 1 week expiry
 };

@@ -48,9 +48,11 @@ contract VelodromeV2GaugeContractGuard is TxDataUtils, IGuard, ITransactionTypes
 
       txType = uint16(TransactionType.Unstake);
     } else if (method == IVelodromeV2Gauge.getReward.selector) {
-      // it's possible to claim any reward token and sell it, we don't check if the reward token is supported
       address account = abi.decode(params, (address));
       require(account == poolLogic, "invalid claimer");
+
+      address rewardToken = IVelodromeV2Gauge(_to).rewardToken();
+      require(poolManagerLogicAssets.isSupportedAsset(rewardToken), "enable reward token");
 
       emit Claim(poolLogic, _to, block.timestamp);
 

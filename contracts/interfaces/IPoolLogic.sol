@@ -39,9 +39,9 @@ interface IPoolLogic {
 
   function poolManagerLogic() external view returns (address);
 
-  function setPoolManagerLogic(address _poolManagerLogic) external returns (bool);
+  function setPoolManagerLogic(address _poolManagerLogic) external;
 
-  function availableManagerFee() external view returns (uint256 fee);
+  function calculateAvailableManagerFee(uint256 _fundValue) external view returns (uint256 fee);
 
   function tokenPrice() external view returns (uint256 price);
 
@@ -61,6 +61,10 @@ interface IPoolLogic {
   ) external returns (uint256 liquidityMinted);
 
   function withdraw(uint256 _fundTokenAmount) external;
+
+  function withdrawSafe(uint256 _fundTokenAmount, uint256 _slippageTolerance) external;
+
+  function withdrawToSafe(address _recipient, uint256 _fundTokenAmount, uint256 _slippageTolerance) external;
 
   function transfer(address to, uint256 value) external returns (bool);
 

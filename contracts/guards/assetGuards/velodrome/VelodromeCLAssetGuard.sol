@@ -11,9 +11,10 @@ import {IHasAssetInfo} from "../../../interfaces/IHasAssetInfo.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
 
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
-import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
+
+import {IVelodromeVoter} from "../../../interfaces/velodrome/IVelodromeVoter.sol";
 
 import {ERC20Guard} from "../ERC20Guard.sol";
 import {VelodromeNonfungiblePositionGuard} from "../../contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol";
@@ -58,6 +59,7 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     uint128 amount1FeesToCollect;
     address gauge;
     bool isStaked;
+    bool isGaugeAlive;
     uint256 tokenId;
     bool isToUnstakeForWithdrawal;
     bool isToWithdrawAllLP; // bool to check if stakeBack needed
@@ -108,12 +110,6 @@ contract VelodromeCLAssetGuard is ERC20Guard {
       poolParams.tickSpacing
     );
 
-    (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, poolParams.sqrtPriceX96);
-
-    tokenBalance = tokenBalance.add(_assetValue(pool, poolParams.token0, amount0)).add(
-      _assetValue(pool, poolParams.token1, amount1)
-    );
-
     IVelodromeCLGauge clGauge = IVelodromeCLGauge(
       IVelodromeCLPool(
         IVelodromeCLFactory(nonfungiblePositionManager.factory()).getPool(
@@ -127,10 +123,21 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     bool isStaked = nonfungiblePositionManager.ownerOf(tokenId) == address(clGauge);
 
     if (isStaked) {
+      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.principal(tokenId, poolParams.sqrtPriceX96);
+
+      tokenBalance = tokenBalance.add(_assetValue(pool, poolParams.token0, amount0)).add(
+        _assetValue(pool, poolParams.token1, amount1)
+      );
       //during increasing/decreasing staked liquidity the rewards move from earned to rewards
       address rewardToken = clGauge.rewardToken();
       tokenBalance = tokenBalance.add(_assetValue(pool, rewardToken, clGauge.earned(pool, tokenId)));
       tokenBalance = tokenBalance.add(_assetValue(pool, rewardToken, clGauge.rewards(tokenId)));
+    } else {
+      (uint256 amount0, uint256 amount1) = nonfungiblePositionManager.total(tokenId, poolParams.sqrtPriceX96);
+
+      tokenBalance = tokenBalance.add(_assetValue(pool, poolParams.token0, amount0)).add(
+        _assetValue(pool, poolParams.token1, amount1)
+      );
     }
     return tokenBalance;
   }
@@ -230,16 +237,18 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     WithdrawParams memory withdrawParams,
     DecreaseLiquidityData memory decreaseLiquidityData
   ) internal view returns (DecreaseLiquidityData memory) {
-    (uint256 feeAmount0, uint256 feeAmount1) = nonfungiblePositionManager.fees(tokenId);
-    decreaseLiquidityData.amount0FeesToCollect = (feeAmount0.mul(portion).div(10 ** 18)).toUint128();
-    decreaseLiquidityData.amount1FeesToCollect = (feeAmount1.mul(portion).div(10 ** 18)).toUint128();
     // gauge rewards
     if (decreaseLiquidityData.isStaked) {
       IVelodromeCLGauge clGauge = IVelodromeCLGauge(decreaseLiquidityData.gauge);
       decreaseLiquidityData.rewardAmount = clGauge.earned(withdrawParams.pool, decreaseLiquidityData.tokenId).add(
         clGauge.rewards(decreaseLiquidityData.tokenId)
       );
+      decreaseLiquidityData.isGaugeAlive = IVelodromeVoter(clGauge.voter()).isAlive(decreaseLiquidityData.gauge);
       decreaseLiquidityData.rewardToken = clGauge.rewardToken();
+    } else {
+      (uint256 feeAmount0, uint256 feeAmount1) = nonfungiblePositionManager.fees(tokenId);
+      decreaseLiquidityData.amount0FeesToCollect = (feeAmount0.mul(portion).div(10 ** 18)).toUint128();
+      decreaseLiquidityData.amount1FeesToCollect = (feeAmount1.mul(portion).div(10 ** 18)).toUint128();
     }
 
     return decreaseLiquidityData;
@@ -299,7 +308,7 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     uint256 txCount,
     DecreaseLiquidityData memory decreaseLiquidityData,
     WithdrawParams memory withdrawParams
-  ) internal view returns (MultiTransaction[] memory, uint256) {
+  ) internal pure returns (MultiTransaction[] memory, uint256) {
     if (!decreaseLiquidityData.isStaked || decreaseLiquidityData.rewardAmount == 0) {
       return (transactions, txCount);
     }
@@ -313,16 +322,8 @@ contract VelodromeCLAssetGuard is ERC20Guard {
       });
     }
 
-    if (
-      IHasSupportedAsset(IPoolLogic(withdrawParams.pool).poolManagerLogic()).isSupportedAsset(
-        decreaseLiquidityData.rewardToken
-      )
-    ) {
-      // to avoid double transferring;
-      //  rewardToken as supportedAsset would have its own AssetGuard to handle the transfer
-      return (transactions, txCount);
-    }
-
+    // RewardAssetGuard has a higher # of AssetType (withdrawProcessing will be processed first),
+    // so always transfer the withdrawParams.portion of the claimed reward
     transactions[txCount++] = MultiTransaction({
       to: decreaseLiquidityData.rewardToken,
       txData: abi.encodeWithSelector(
@@ -392,7 +393,11 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     }
 
     // stake it back
-    if (decreaseLiquidityData.isToUnstakeForWithdrawal && !decreaseLiquidityData.isToWithdrawAllLP) {
+    if (
+      decreaseLiquidityData.isToUnstakeForWithdrawal &&
+      !decreaseLiquidityData.isToWithdrawAllLP &&
+      decreaseLiquidityData.isGaugeAlive
+    ) {
       transactions[txCount++] = MultiTransaction({
         to: withdrawParams.asset, // nonfungiblePositionManager
         txData: abi.encodeWithSelector(

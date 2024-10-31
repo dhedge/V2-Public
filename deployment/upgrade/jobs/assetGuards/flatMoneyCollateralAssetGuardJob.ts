@@ -15,7 +15,7 @@ export const flatMoneyCollateralAssetGuardJob: IJob<void> = async (
   const delayedOrder = addresses.flatMoney?.delayedOrder;
 
   if (!delayedOrder) {
-    return console.warn("DelayedOrder address not configured for FlatMoneyDelayedOrderContractGuard. skipping.");
+    return console.warn("DelayedOrder address not configured for FlatMoneyCollateralAssetGuard. skipping.");
   }
 
   if (config.execute) {

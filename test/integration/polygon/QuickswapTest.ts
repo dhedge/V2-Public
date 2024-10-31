@@ -61,7 +61,7 @@ describe("Quickswap V2 Test", function () {
   it("Should be able to approve", async () => {
     let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI)).to.be.revertedWith(
-      "asset not enabled in pool",
+      "asset disabled",
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
@@ -81,10 +81,6 @@ describe("Quickswap V2 Test", function () {
       poolManagerLogicProxy.address,
       0,
     ]);
-
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
-    ).to.be.revertedWith("non-zero address is required");
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapTokensForExactTokens", [
       dstAmount,
@@ -153,10 +149,6 @@ describe("Quickswap V2 Test", function () {
       poolManagerLogicProxy.address,
       0,
     ]);
-
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
-    ).to.be.revertedWith("non-zero address is required");
 
     swapABI = iQuickswapRouter.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
@@ -358,7 +350,7 @@ describe("Quickswap V2 Test", function () {
     let approveABI = iERC20.encodeFunctionData("approve", [assets.dai, depositAmount]);
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.dai, approveABI)).to.be.revertedWith(
-      "asset not enabled in pool",
+      "asset disabled",
     );
 
     approveABI = iERC20.encodeFunctionData("approve", [quickswap.router, depositAmount]);

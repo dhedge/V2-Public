@@ -13,58 +13,38 @@
 //
 // Copyright (c) 2021 dHEDGE DAO
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "./interfaces/IERC20Extended.sol";
-import "./interfaces/IHasDaoInfo.sol";
-import "./interfaces/IHasFeeInfo.sol";
-import "./interfaces/IHasGuardInfo.sol";
-import "./interfaces/IPoolFactory.sol";
-import "./interfaces/IHasAssetInfo.sol";
-import "./interfaces/IHasPausable.sol";
-import "./interfaces/IPoolManagerLogic.sol";
-import "./interfaces/IHasSupportedAsset.sol";
-import "./interfaces/IHasOwnable.sol";
-import "./interfaces/IHasDaoInfo.sol";
-import "./interfaces/IManaged.sol";
-import "./interfaces/guards/IGuard.sol";
-import "./interfaces/guards/ITxTrackingGuard.sol";
-import "./interfaces/guards/IAssetGuard.sol";
-import "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
-import "./interfaces/guards/IERC721VerifyingGuard.sol";
-import "./interfaces/guards/ISlippageCheckingGuard.sol";
-import "./interfaces/IGovernance.sol";
-import "./utils/AddressHelper.sol";
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/introspection/IERC165Upgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IFlashLoanReceiver} from "./interfaces/aave/IFlashLoanReceiver.sol";
+import {IAaveLendingPoolAssetGuard} from "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import {IAssetGuard} from "./interfaces/guards/IAssetGuard.sol";
+import {IERC721VerifyingGuard} from "./interfaces/guards/IERC721VerifyingGuard.sol";
+import {IGuard} from "./interfaces/guards/IGuard.sol";
+import {ITxTrackingGuard} from "./interfaces/guards/ITxTrackingGuard.sol";
+import {IGovernance} from "./interfaces/IGovernance.sol";
+import {IHasDaoInfo} from "./interfaces/IHasDaoInfo.sol";
+import {IHasFeeInfo} from "./interfaces/IHasFeeInfo.sol";
+import {IHasGuardInfo} from "./interfaces/IHasGuardInfo.sol";
+import {IHasOwnable} from "./interfaces/IHasOwnable.sol";
+import {IHasPausable} from "./interfaces/IHasPausable.sol";
+import {IHasSupportedAsset} from "./interfaces/IHasSupportedAsset.sol";
+import {IManaged} from "./interfaces/IManaged.sol";
+import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
+import {IPoolManagerLogic} from "./interfaces/IPoolManagerLogic.sol";
+import {AddressHelper} from "./utils/AddressHelper.sol";
 
 /// @notice Logic implementation for pool
-contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721ReceiverUpgradeable {
+contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721ReceiverUpgradeable, IFlashLoanReceiver {
   using SafeMathUpgradeable for uint256;
   using AddressHelper for address;
 
@@ -141,13 +121,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   event PoolManagerLogicSet(address poolManagerLogic, address from);
 
   bool public privatePool;
+
   address public creator;
 
   uint256 public creationTime;
 
   address public factory;
 
-  // Manager fees
   uint256 public tokenPriceAtLastFeeMint;
 
   mapping(address => uint256) public lastDeposit;
@@ -160,28 +140,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
   mapping(address => uint256) public lastExitCooldown;
 
-  modifier onlyAllowed(address _recipient) {
-    require(_recipient == manager() || !privatePool || isMemberAllowed(_recipient), "only members allowed");
-    _;
-  }
-
-  modifier onlyManager() {
-    require(msg.sender == manager(), "only manager");
-    _;
-  }
-
   modifier whenNotFactoryPaused() {
     require(!IHasPausable(factory).isPaused(), "contracts paused");
     _;
   }
 
-  modifier whitelistedForCustomCooldown() {
-    require(IPoolFactory(factory).customCooldownWhitelist(msg.sender), "only whitelisted sender");
-    _;
-  }
-
   modifier whenNotPaused() {
-    require(!IHasPausable(factory).pausedPools(address(this)), "pool is paused");
+    require(!IHasPausable(factory).pausedPools(address(this)), "pool paused");
     _;
   }
 
@@ -196,16 +161,14 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     string memory _fundName,
     string memory _fundSymbol
   ) external initializer {
-    require(_factory != address(0), "Invalid factory");
     __ERC20_init(_fundName, _fundSymbol);
     __ReentrancyGuard_init();
 
     factory = _factory;
-    _setPoolPrivacy(_privatePool);
+    privatePool = _privatePool;
     creator = msg.sender;
     creationTime = block.timestamp;
     lastFeeMintTime = block.timestamp;
-
     tokenPriceAtLastFeeMint = 10 ** 18;
   }
 
@@ -220,6 +183,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       return;
     }
 
+    // If the pool is private, either the recipient has to be a pool member or the transaction should be burning the fund tokens.
+    // The latter is required in case a user deposited into the pool when the pool was public and then the pool was made private
+    // in which case the user should be able to withdraw their funds.
+    require(!privatePool || _isMemberAllowed(to) || to == address(0), "only members");
+
     if (IPoolFactory(factory).receiverWhitelist(to) == true) {
       return;
     }
@@ -229,19 +197,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
   /// @notice Set the pool privacy
   /// @param _privatePool true if the pool is private, false otherwise
-  function setPoolPrivate(bool _privatePool) external onlyManager {
-    require(privatePool != _privatePool, "flag must be different");
+  function setPoolPrivate(bool _privatePool) external {
+    require(msg.sender == _manager(), "only manager");
 
-    _setPoolPrivacy(_privatePool);
-    emitFactoryEvent();
-  }
+    privatePool = _privatePool;
 
-  /// @notice Set the pool privacy internal call
-  /// @param _privacy true if the pool is private, false otherwise
-  function _setPoolPrivacy(bool _privacy) internal {
-    privatePool = _privacy;
-
-    emit PoolPrivacyUpdated(_privacy);
+    emit PoolPrivacyUpdated(_privatePool);
+    _emitFactoryEvent();
   }
 
   /// @notice Deposit funds into the pool
@@ -249,11 +211,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param _amount Amount of tokens to deposit
   /// @return liquidityMinted Amount of liquidity minted
   function deposit(address _asset, uint256 _amount) external returns (uint256 liquidityMinted) {
-    return _depositFor(msg.sender, _asset, _amount, IHasFeeInfo(factory).getExitCooldown());
+    return _depositFor(msg.sender, _asset, _amount, _exitCooldown());
   }
 
   function depositFor(address _recipient, address _asset, uint256 _amount) external returns (uint256 liquidityMinted) {
-    return _depositFor(_recipient, _asset, _amount, IHasFeeInfo(factory).getExitCooldown());
+    return _depositFor(_recipient, _asset, _amount, _exitCooldown());
   }
 
   function depositForWithCustomCooldown(
@@ -261,9 +223,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address _asset,
     uint256 _amount,
     uint256 _cooldown
-  ) external whitelistedForCustomCooldown returns (uint256 liquidityMinted) {
-    require(_cooldown >= 5 minutes, "cooldown must exceed 5 mins");
-    require(_cooldown <= IHasFeeInfo(factory).getExitCooldown(), "cant exceed default cooldown");
+  ) external returns (uint256 liquidityMinted) {
+    require(IPoolFactory(factory).customCooldownWhitelist(msg.sender), "only allowed");
+    require(_cooldown >= 5 minutes && _cooldown <= _exitCooldown(), "invalid cooldown");
 
     return _depositFor(_recipient, _asset, _amount, _cooldown);
   }
@@ -273,8 +235,24 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address _asset,
     uint256 _amount,
     uint256 _cooldown
-  ) private onlyAllowed(_recipient) whenNotFactoryPaused whenNotPaused returns (uint256 liquidityMinted) {
+  ) private nonReentrant whenNotFactoryPaused whenNotPaused returns (uint256 liquidityMinted) {
+    require(_recipient == _manager() || !privatePool || _isMemberAllowed(_recipient), "only members");
+
     require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+
+    // Checks that the `_asset` is not a ERC721 token.
+    // As per ERC721 spec, a compliant contract must implement the ERC165 interface.
+    // The interface id for IERC721 is 0x80ac58cd as per <https://ethtools.com/interface-database/ERC721>
+    // Also, the `supportsInterface` function should only consume at most 30_000 gas as per ERC165 standard.
+    {
+      // If the asset supports IERC165, then it should not support IERC721.
+      (bool success, bytes memory data) = _asset.staticcall{gas: 30_000}(
+        abi.encodeWithSelector(IERC165Upgradeable.supportsInterface.selector, bytes4(0x80ac58cd))
+      );
+
+      // Either the call to `supportsInterface` should revert or the IERC721 interface should not be supported.
+      require(!success || !abi.decode(data, (bool)), "NFTs not supported");
+    }
 
     uint256 fundValue = _mintManagerFee();
 
@@ -284,28 +262,37 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
     );
 
-    uint256 usdAmount = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
+    uint256 usdAmount = _assetValue(_asset, _amount);
 
     // Scoping to avoid stack too deep errors.
     {
-      (, , uint256 entryFeeNumerator, uint256 denominator) = IPoolManagerLogic(poolManagerLogic).getFee();
-
       if (totalSupplyBefore > 0) {
-        // Accounting for entry fee while calculating liquidity to be minted.
-        liquidityMinted = usdAmount.mul(totalSupplyBefore).mul(denominator.sub(entryFeeNumerator)).div(fundValue).div(
-          denominator
-        );
+        liquidityMinted = usdAmount.mul(totalSupplyBefore).div(fundValue);
       } else {
-        // This is equivalent to doing liquidityMinted = liquidityMinted * (1 - entryFeeNumerator/denominator).
-        liquidityMinted = usdAmount.mul(denominator.sub(entryFeeNumerator)).div(denominator);
+        liquidityMinted = usdAmount;
       }
+
+      (, , uint256 entryFeeNumerator, , uint256 denominator) = _managerFees();
+
+      if (entryFeeNumerator > 0) {
+        uint256 entryFee = liquidityMinted.mul(entryFeeNumerator).div(denominator);
+
+        // Note: From here on, `liquidityMinted` will refer to the fund tokens minted with entry fee accounted for.
+        liquidityMinted = liquidityMinted.sub(entryFee);
+
+        _mint(_manager(), entryFee);
+      }
+
+      // Note: We are making it impossible for someone to mint liquidity < 100_000.
+      // This is so that we can mitigate the inflation attack.
+      require(liquidityMinted >= 100_000, "invalid liquidityMinted");
+
+      // As the `_mint` function doesn't hand over the execution control to the caller, we can safely
+      // call it before calculating cooldown and other effects.
+      _mint(_recipient, liquidityMinted);
     }
 
-    // Note: We are making it impossible for someone to mint liquidity < 100_000.
-    // This is so that we can mitigate the inflation attack.
-    require(liquidityMinted >= 100_000, "invalid liquidityMinted");
-
-    lastExitCooldown[_recipient] = calculateCooldown(
+    lastExitCooldown[_recipient] = _calculateCooldown(
       balanceOf(_recipient),
       liquidityMinted,
       _cooldown,
@@ -315,31 +302,33 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     );
     lastDeposit[_recipient] = block.timestamp;
 
-    _mint(_recipient, liquidityMinted);
-
     uint256 balance = balanceOf(_recipient);
     uint256 fundValueAfter = fundValue.add(usdAmount);
-    uint256 totalSupplyAfter = totalSupplyBefore.add(liquidityMinted);
 
-    require(
-      balance.mul(_tokenPrice(fundValueAfter, totalSupplyAfter)).div(10 ** 18) >=
-        IPoolManagerLogic(poolManagerLogic).minDepositUSD(),
-      "must meet minimum deposit"
-    );
+    {
+      uint256 totalSupplyAfter = totalSupply();
 
-    emit Deposit(
-      address(this),
-      _recipient,
-      _asset,
-      _amount,
-      usdAmount,
-      liquidityMinted,
-      balance,
-      fundValueAfter,
-      totalSupplyAfter,
-      block.timestamp
-    );
-    emitFactoryEvent();
+      require(
+        balance.mul(_tokenPrice(fundValueAfter, totalSupplyAfter)).div(10 ** 18) >=
+          IPoolManagerLogic(poolManagerLogic).minDepositUSD(),
+        "need min deposit"
+      );
+
+      emit Deposit(
+        address(this),
+        _recipient,
+        _asset,
+        _amount,
+        usdAmount,
+        liquidityMinted,
+        balance,
+        fundValueAfter,
+        totalSupplyAfter,
+        block.timestamp
+      );
+    }
+
+    _emitFactoryEvent();
   }
 
   /// @notice Not recommended to use. Use `withdrawSafe` instead
@@ -348,7 +337,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     _withdrawTo(msg.sender, _fundTokenAmount, 10_000);
   }
 
-  /// @notice Not recommended to use. Use `withdrawToSafe` instead
+  /// @notice Not recommended to use. Use `withdrawSafe` instead
   /// @dev Kept for backward compatibility
   function withdrawTo(address _recipient, uint256 _fundTokenAmount) external {
     _withdrawTo(_recipient, _fundTokenAmount, 10_000);
@@ -375,8 +364,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     uint256 _fundTokenAmount,
     uint256 _slippageTolerance
   ) internal nonReentrant whenNotFactoryPaused whenNotPaused {
-    require(lastDeposit[msg.sender] < block.timestamp, "can withdraw shortly");
-    require(balanceOf(msg.sender) >= _fundTokenAmount, "insufficient balance");
+    require(lastDeposit[msg.sender] < block.timestamp, "can withdraw soon");
+    require(balanceOf(msg.sender) >= _fundTokenAmount, "not enough balance");
     require(_slippageTolerance <= 10_000, "invalid tolerance");
 
     // Scoping to avoid "stack-too-deep" errors.
@@ -389,8 +378,21 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       require(supplyAfter >= 100_000 || supplyAfter == 0, "below supply threshold");
     }
 
-    // calculate the exit fee
+    // calculate the manager fee
     uint256 fundValue = _mintManagerFee();
+
+    {
+      // Scope to avoid stack too deep error
+      (, , , uint256 exitFeeNumerator, uint256 denominator) = _managerFees();
+
+      if (exitFeeNumerator > 0) {
+        uint256 exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(denominator);
+
+        _fundTokenAmount = _fundTokenAmount.sub(exitFee);
+
+        require(transfer(_manager(), exitFee), "exit fee transfer failed");
+      }
+    }
 
     // calculate the proportion
     uint256 portion = _fundTokenAmount.mul(10 ** 18).div(totalSupply());
@@ -398,11 +400,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     // first return funded tokens
     _burn(msg.sender, _fundTokenAmount);
 
+    if (totalSupply() == 0) {
+      tokenPriceAtLastFeeMint = 1e18;
+    }
+
     // TODO: Combining into one line to fix stack too deep,
     //       need to refactor some variables into struct in order to have more variables
     IHasSupportedAsset.Asset[] memory _supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](_supportedAssets.length);
-    uint16 index = 0;
+    uint256 index = 0;
 
     for (uint256 i = 0; i < _supportedAssets.length; i++) {
       (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(
@@ -413,7 +419,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       );
 
       if (portionOfAssetBalance > 0) {
-        require(asset != address(0), "requires asset to withdraw");
+        require(asset != address(0), "need withdraw asset");
         // Ignoring return value for transfer as want to transfer no matter what happened
         asset.tryAssemblyCall(
           abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, _recipient, portionOfAssetBalance)
@@ -449,7 +455,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       withdrawnAssets,
       block.timestamp
     );
-    emitFactoryEvent();
+    _emitFactoryEvent();
   }
 
   /// @notice Perform any additional processing on withdrawal of asset
@@ -481,7 +487,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     WithdrawProcessing memory params;
     params.portionBalance = IAssetGuard(guard).getBalance(address(this), asset).mul(portion).div(10 ** 18);
     // Value of the portion of the asset to be withdrawn
-    params.expectedWithdrawValue = IPoolManagerLogic(poolManagerLogic).assetValue(asset, params.portionBalance);
+    params.expectedWithdrawValue = _assetValue(asset, params.portionBalance);
 
     (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransaction[] memory transactions) = IAssetGuard(
       guard
@@ -497,7 +503,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       for (uint256 i = 0; i < txCount; i++) {
         externalWithdrawProcessed = transactions[i].to.tryAssemblyCall(transactions[i].txData);
       }
-      // In case of withdraw from aave position with debt, remaining weth is withdrawAsset and it gets added here
+      // In case of withdraw from aave position with debt, remaining withdrawAsset gets added here
       if (withdrawAsset != address(0)) {
         // get any balance increase after withdraw processing and add it to the withdraw balance
         uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));
@@ -510,7 +516,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     if (hasFunction && abi.decode(answer, (bool)) && withdrawAsset != address(0)) {
       // Ensure that actual value of tokens transferred is not less than the expected value, corrected by allowed tolerance
       require(
-        IPoolManagerLogic(poolManagerLogic).assetValue(withdrawAsset, withdrawBalance) >=
+        _assetValue(withdrawAsset, withdrawBalance) >=
           params.expectedWithdrawValue.mul(10_000 - slippageTolerance).div(10_000),
         "high withdraw slippage"
       );
@@ -528,7 +534,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address to,
     bytes memory data
   ) private nonReentrant whenNotFactoryPaused returns (bool success) {
-    require(to != address(0), "non-zero address is required");
+    require(to != address(0), "invalid address");
 
     address contractGuard = IHasGuardInfo(factory).getContractGuard(to);
     address assetGuard;
@@ -553,15 +559,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
         assetGuard = IGovernance(governanceAddress).assetGuards(0); // get ERC20Guard (assetType 0)
       } else {
         // if asset is configured, ensure that it's enabled in the pool
-        require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset not enabled in pool");
+        require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "asset disabled");
       }
       guard = assetGuard;
       (txType, isPublic) = IGuard(assetGuard).txGuard(poolManagerLogic, to, data);
     }
 
     require(txType > 0, "invalid transaction");
-    // solhint-disable-next-line reason-string
-    require(isPublic || msg.sender == manager() || msg.sender == trader(), "only manager or trader or public function");
+
+    require(isPublic || msg.sender == _manager() || msg.sender == _trader(), "only manager, trader, public");
 
     success = to.tryAssemblyCall(data);
 
@@ -574,8 +580,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       ITxTrackingGuard(guard).afterTxGuard(poolManagerLogic, to, data);
     }
 
-    emit TransactionExecuted(address(this), manager(), txType, block.timestamp);
-    emitFactoryEvent();
+    emit TransactionExecuted(address(this), _manager(), txType, block.timestamp);
+    _emitFactoryEvent();
   }
 
   /// @notice Exposed function to let pool talk to other protocol
@@ -590,16 +596,10 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @notice Exposed function to let pool talk to other protocol
   /// @dev Execute multiple transactions for the pool
   /// @param txs Array of structs, each consisting of address and data
-  /// @return success A boolean indicating if all transactions succeeded
-  function execTransactions(TxToExecute[] calldata txs) external returns (bool success) {
-    require(txs.length > 0, "no transactions to execute");
-
+  function execTransactions(TxToExecute[] calldata txs) external {
     for (uint256 i = 0; i < txs.length; i++) {
-      bool result = _execTransaction(txs[i].to, txs[i].data);
-      require(result, "transaction failure");
+      require(_execTransaction(txs[i].to, txs[i].data), "tx failed");
     }
-
-    return true;
   }
 
   /// @notice Get fund summary of the pool
@@ -607,26 +607,26 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   function getFundSummary() external view returns (FundSummary memory) {
     (
       uint256 performanceFeeNumerator,
-      uint256 managerFeeNumerator,
+      uint256 managementFeeNumerator,
       uint256 entryFeeNumerator,
-      uint256 managerFeeDenominator
-    ) = IPoolManagerLogic(poolManagerLogic).getFee();
-    (uint256 exitFeeNumerator, uint256 exitFeeDenominator) = IHasFeeInfo(factory).getExitFee();
+      uint256 exitFeeNumerator,
+      uint256 denominator
+    ) = _managerFees();
 
     return
       FundSummary(
         name(),
         totalSupply(),
-        IPoolManagerLogic(poolManagerLogic).totalFundValue(),
-        manager(),
-        managerName(),
+        _totalValue(),
+        _manager(),
+        IManaged(poolManagerLogic).managerName(),
         creationTime,
         privatePool,
         performanceFeeNumerator,
-        managerFeeNumerator,
-        managerFeeDenominator,
+        managementFeeNumerator,
+        denominator,
         exitFeeNumerator,
-        exitFeeDenominator,
+        denominator,
         entryFeeNumerator
       );
   }
@@ -634,17 +634,14 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @notice Get price of the asset adjusted for any unminted manager fees
   /// @param price A price of the asset
   function tokenPrice() external view returns (uint256 price) {
-    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
-    uint256 managerFee = calculateAvailableManagerFee(fundValue);
-    uint256 tokenSupply = totalSupply().add(managerFee);
+    uint256 fundValue = _totalValue();
+    uint256 tokenSupply = totalSupply().add(calculateAvailableManagerFee(fundValue));
 
     price = _tokenPrice(fundValue, tokenSupply);
   }
 
   function tokenPriceWithoutManagerFee() external view returns (uint256 price) {
-    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
-    uint256 tokenSupply = totalSupply();
-    price = _tokenPrice(fundValue, tokenSupply);
+    price = _tokenPrice(_totalValue(), totalSupply());
   }
 
   /// @notice Get price of the asset internal call
@@ -657,31 +654,21 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   }
 
   /// @notice Get available manager fee of the pool
-  /// @dev Keep this for backward compatibility (currently used by frontend and backend)
-  /// @return fee available manager fee of the pool
-  function availableManagerFee() external view returns (uint256 fee) {
-    uint256 fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
-    fee = calculateAvailableManagerFee(fundValue);
-  }
-
-  /// @notice Get available manager fee of the pool
   /// @dev Can be used on the frontend by passing in fund value
   /// @param fundValue The total fund value of the pool
   /// @return fee available manager fee of the pool
   function calculateAvailableManagerFee(uint256 fundValue) public view returns (uint256 fee) {
-    uint256 tokenSupply = totalSupply();
+    (uint256 performanceFeeNumerator, uint256 managementFeeNumerator, , , uint256 denominator) = _managerFees();
 
-    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(
-      poolManagerLogic
-    ).getFee();
-
-    fee = _availableManagerFee(
+    (uint256 performanceFee, uint256 streamingFee) = _availableManagerFee(
       fundValue,
-      tokenSupply,
+      totalSupply(),
       performanceFeeNumerator,
-      managerFeeNumerator,
-      managerFeeDenominator
+      managementFeeNumerator,
+      denominator
     );
+
+    return performanceFee.add(streamingFee);
   }
 
   /// @notice Get available manager fee of the pool internal call
@@ -690,32 +677,30 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param _performanceFeeNumerator The manager fee numerator
   /// @param _managerFeeNumerator The streaming fee numerator
   /// @param _feeDenominator The fee denominator
-  /// @return available manager fee of the pool
+  /// @return performanceFee The performance fee generated by the pool
+  /// @return streamingFee The streaming fee generated by the pool
   function _availableManagerFee(
     uint256 _fundValue,
     uint256 _tokenSupply,
     uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
     uint256 _feeDenominator
-  ) internal view returns (uint256 available) {
-    if (_tokenSupply == 0 || _fundValue == 0) return 0;
+  ) internal view returns (uint256 performanceFee, uint256 streamingFee) {
+    if (_tokenSupply == 0 || _fundValue == 0) return (0, 0);
 
     uint256 currentTokenPrice = _fundValue.mul(10 ** 18).div(_tokenSupply);
 
     if (currentTokenPrice > tokenPriceAtLastFeeMint) {
-      available = currentTokenPrice
-        .sub(tokenPriceAtLastFeeMint)
-        .mul(_tokenSupply)
-        .mul(_performanceFeeNumerator)
-        .div(_feeDenominator)
-        .div(currentTokenPrice);
+      uint256 feeUsdAmount = (
+        (currentTokenPrice.sub(tokenPriceAtLastFeeMint)).mul(_performanceFeeNumerator).mul(_tokenSupply)
+      ).div(_feeDenominator.mul(1e18));
+      performanceFee = feeUsdAmount.mul(_tokenSupply).div(_fundValue.sub(feeUsdAmount));
     }
 
     // this timestamp for old pools would be zero at the first time
     if (lastFeeMintTime != 0) {
       uint256 timeChange = block.timestamp.sub(lastFeeMintTime);
-      uint256 streamingFee = _tokenSupply.mul(timeChange).mul(_managerFeeNumerator).div(_feeDenominator).div(365 days);
-      available = available.add(streamingFee);
+      streamingFee = _tokenSupply.mul(timeChange).mul(_managerFeeNumerator).div(_feeDenominator).div(365 days);
     }
   }
 
@@ -730,40 +715,37 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValueMutable();
     uint256 tokenSupply = totalSupply();
 
-    (uint256 performanceFeeNumerator, uint256 managerFeeNumerator, , uint256 managerFeeDenominator) = IPoolManagerLogic(
-      poolManagerLogic
-    ).getFee();
+    (uint256 performanceFeeNumerator, uint256 managementFeeNumerator, , , uint256 denominator) = _managerFees();
 
-    uint256 available = _availableManagerFee(
+    (uint256 performanceFee, uint256 streamingFee) = _availableManagerFee(
       fundValue,
       tokenSupply,
       performanceFeeNumerator,
-      managerFeeNumerator,
-      managerFeeDenominator
+      managementFeeNumerator,
+      denominator
     );
+    uint256 available = performanceFee.add(streamingFee);
 
-    address daoAddress = IHasDaoInfo(factory).daoAddress();
-    uint256 daoFeeNumerator;
-    uint256 daoFeeDenominator;
-
-    (daoFeeNumerator, daoFeeDenominator) = IHasDaoInfo(factory).getDaoFee();
+    (uint256 daoFeeNumerator, uint256 daoFeeDenominator) = IHasDaoInfo(factory).getDaoFee();
 
     uint256 daoFee = available.mul(daoFeeNumerator).div(daoFeeDenominator);
     uint256 managerFee = available.sub(daoFee);
-
-    if (daoFee > 0) _mint(daoAddress, daoFee);
-
-    if (managerFee > 0) _mint(manager(), managerFee);
-
     uint256 currentTokenPrice = _tokenPrice(fundValue, tokenSupply);
+
     if (tokenPriceAtLastFeeMint < currentTokenPrice) {
       tokenPriceAtLastFeeMint = currentTokenPrice;
     }
 
-    lastFeeMintTime = block.timestamp;
+    // If the `streamingFee` is 0 then updating `lastFeeMintTime` can result in reduced streaming fee revenue.
+    // This is due to rounding down when calculating `streamingFee` in `_availableManagerFee`.
+    if (streamingFee > 0) lastFeeMintTime = block.timestamp;
 
-    emit ManagerFeeMinted(address(this), manager(), available, daoFee, managerFee, tokenPriceAtLastFeeMint);
-    emitFactoryEvent();
+    if (daoFee > 0) _mint(IHasDaoInfo(factory).daoAddress(), daoFee);
+
+    if (managerFee > 0) _mint(_manager(), managerFee);
+
+    emit ManagerFeeMinted(address(this), _manager(), available, daoFee, managerFee, tokenPriceAtLastFeeMint);
+    _emitFactoryEvent();
   }
 
   /// @notice Calculate lockup cooldown applied to the investor after pool deposit
@@ -774,14 +756,14 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param lastDepositTime Timestamp when last pool deposit happened
   /// @param blockTimestamp Timestamp of a block
   /// @return cooldown New lockup cooldown to be applied to investor address
-  function calculateCooldown(
+  function _calculateCooldown(
     uint256 currentBalance,
     uint256 liquidityMinted,
     uint256 newCooldown,
     uint256 lastCooldown,
     uint256 lastDepositTime,
     uint256 blockTimestamp
-  ) public pure returns (uint256 cooldown) {
+  ) internal pure returns (uint256 cooldown) {
     // Get timestamp when current cooldown ends
     uint256 cooldownEndsAt = lastDepositTime.add(lastCooldown);
     // Current exit remaining cooldown
@@ -799,9 +781,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     } else {
       // If the user already owns liquidity, the additional lockup should be in proportion to their existing liquidity.
       // Calculated as newCooldown * liquidityMinted / currentBalance
-      uint256 additionalCooldown = newCooldown.mul(liquidityMinted).div(currentBalance);
       // Aggregate additional and remaining cooldowns
-      uint256 aggregatedCooldown = additionalCooldown.add(remainingCooldown);
+      uint256 aggregatedCooldown = newCooldown.mul(liquidityMinted).div(currentBalance).add(remainingCooldown);
       // Resulting value is capped at new cooldown time (shouldn't be bigger) and falls back to one second in case of zero
       cooldown = aggregatedCooldown > newCooldown
         ? newCooldown
@@ -822,58 +803,55 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   }
 
   /// @notice Set address for pool manager logic
-  function setPoolManagerLogic(address _poolManagerLogic) external returns (bool) {
-    require(_poolManagerLogic != address(0), "Invalid poolManagerLogic address");
-    require(
-      msg.sender == address(factory) || msg.sender == IHasOwnable(factory).owner(),
-      "only owner or factory allowed"
-    );
+  function setPoolManagerLogic(address _poolManagerLogic) external {
+    require(_poolManagerLogic != address(0), "invalid address");
+    require(msg.sender == factory || msg.sender == IHasOwnable(factory).owner(), "only owner, factory");
 
     poolManagerLogic = _poolManagerLogic;
     emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
-    return true;
   }
 
-  /// @notice Get address of the manager
-  /// @return _manager The address of the manager
-  function manager() internal view returns (address _manager) {
-    _manager = IManaged(poolManagerLogic).manager();
+  function _manager() internal view returns (address manager) {
+    manager = IManaged(poolManagerLogic).manager();
   }
 
-  /// @notice Get address of the trader
-  /// @return _trader The address of the trader
-  function trader() internal view returns (address _trader) {
-    _trader = IManaged(poolManagerLogic).trader();
+  function _trader() internal view returns (address trader) {
+    trader = IManaged(poolManagerLogic).trader();
   }
 
-  /// @notice Get name of the manager
-  /// @return _managerName The name of the manager
-  function managerName() public view returns (string memory _managerName) {
-    _managerName = IManaged(poolManagerLogic).managerName();
+  function _exitCooldown() internal view returns (uint256 cooldown) {
+    cooldown = IHasFeeInfo(factory).getExitCooldown();
   }
 
-  /// @notice Return boolean if the address is a member of the list
-  /// @param member The address of the member
-  /// @return True if the address is a member of the list, false otherwise
-  function isMemberAllowed(address member) public view returns (bool) {
-    return IPoolManagerLogic(poolManagerLogic).isMemberAllowed(member);
+  function _totalValue() internal view returns (uint256 totalValue) {
+    totalValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
   }
 
-  /// @notice execute function of aave flash loan
-  /// @dev This function is called after your contract has received the flash loaned amount
-  /// @param assets the loaned assets
-  /// @param amounts the loaned amounts per each asset
-  /// @param premiums the additional owed amount per each asset
-  /// @param originator the origin caller address of the flash loan
-  /// @param params Variadic packed params to pass to the receiver as extra information
+  function _assetValue(address _asset, uint256 _amount) internal view returns (uint256 assetValue) {
+    assetValue = IPoolManagerLogic(poolManagerLogic).assetValue(_asset, _amount);
+  }
+
+  function _managerFees()
+    internal
+    view
+    returns (uint256 performance, uint256 management, uint256 entry, uint256 exit, uint256 denominator)
+  {
+    (performance, management, entry, exit, denominator) = IPoolManagerLogic(poolManagerLogic).getFee();
+  }
+
+  function _isMemberAllowed(address _member) internal view returns (bool allowed) {
+    allowed = IPoolManagerLogic(poolManagerLogic).isMemberAllowed(_member);
+  }
+
+  /// @inheritdoc IFlashLoanReceiver
   function executeOperation(
-    address[] memory assets,
-    uint256[] memory amounts,
-    uint256[] memory premiums,
-    address originator,
-    bytes memory params
-  ) external returns (bool success) {
-    require(originator == address(this), "only pool flash loan origin");
+    address[] calldata assets,
+    uint256[] calldata amounts,
+    uint256[] calldata premiums,
+    address initiator,
+    bytes calldata params
+  ) external override returns (bool success) {
+    require(initiator == address(this), "only pool flash loan origin");
 
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(msg.sender);
     require(
@@ -882,32 +860,25 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       "invalid lending pool"
     );
 
-    (uint256[] memory interestRateModes, uint256 portion) = abi.decode(params, (uint256[], uint256));
-
-    address weth = IHasGuardInfo(factory).getAddress("weth");
-    uint256 wethBalanceBefore = IERC20Upgradeable(weth).balanceOf(address(this));
+    uint256 withdrawAssetBalanceBefore = IERC20Upgradeable(assets[0]).balanceOf(address(this));
 
     IAssetGuard.MultiTransaction[] memory transactions = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard)
-      .flashloanProcessing(address(this), portion, assets, amounts, premiums, interestRateModes);
+      .flashloanProcessing(address(this), assets[0], amounts[0], premiums[0], params);
 
-    for (uint256 i = 0; i < transactions.length; i++) {
+    for (uint256 i; i < transactions.length; ++i) {
       success = transactions[i].to.tryAssemblyCall(transactions[i].txData);
     }
 
-    // Liquidation of collateral not enough to pay off debt, flashloan repayment stealing pool's weth
-    require(
-      wethBalanceBefore == 0 || wethBalanceBefore <= IERC20Upgradeable(weth).balanceOf(address(this)),
-      "too high slippage"
-    );
+    // Liquidation of collateral not enough to pay off debt, flashloan repayment stealing pool's asset
+    require(withdrawAssetBalanceBefore <= IERC20Upgradeable(assets[0]).balanceOf(address(this)), "high slippage");
   }
 
   /// @notice Emits an event through the factory, so we can just listen to the factory offchain
-  function emitFactoryEvent() internal {
+  function _emitFactoryEvent() internal {
     IPoolFactory(factory).emitPoolEvent();
   }
 
   /// @notice Support safeTransfers from ERC721 asset contracts
-  /// @dev Currently used for Synthetix V3
   function onERC721Received(
     address operator,
     address from,
@@ -917,12 +888,9 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address contractGuard = IHasGuardInfo(factory).getContractGuard(operator);
 
     // Only guarded contract can initiate ERC721 transfers
-    require(contractGuard != address(0), "only guarded address allowed");
+    require(contractGuard != address(0), "only guarded address");
 
-    require(
-      IERC721VerifyingGuard(contractGuard).verifyERC721(operator, from, tokenId, data),
-      "ERC721 token not verified"
-    );
+    require(IERC721VerifyingGuard(contractGuard).verifyERC721(operator, from, tokenId, data), "not verified");
 
     magicSelector = IERC721ReceiverUpgradeable.onERC721Received.selector;
   }

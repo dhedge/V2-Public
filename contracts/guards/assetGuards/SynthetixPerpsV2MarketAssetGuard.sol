@@ -10,9 +10,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// SPDX-License-Identifier: BUSL-1.1
-//
-// TODO: Intended for whitelisted vaults only. Not open to any vault.
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
@@ -36,10 +34,10 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
   IAddressResolver public immutable addressResolver;
   address public immutable susdProxy;
 
-  // During withdrawal, temporary maximum leverage of 4x is permitted
+  // Temporary maximum leverage that is permitted during withdrawal
   // while the delayed offchain transaction is executed to reduce the perp position.
   // Any higher leverage than this could risk liquidation of the position during the temporary period.
-  uint8 private constant MAX_LEVERAGE_DURING_WITHDRAWAL = 4;
+  uint8 private constant MAX_LEVERAGE_DURING_WITHDRAWAL = 5;
 
   struct Withdrawal {
     uint256 positionValue;
@@ -220,13 +218,13 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
         // The solution to handle delayed closing of positions, temporarily lowers the margin without closing the position (delayed close)
         // Therefore the leverage is temporarily increased before the delayed transaction to partially close the position is executed.
         // We want to make sure that the leverage does not exceed a threshold to risk liquidation.
-        // We block withdrawal sizes that would temporarily increase leverage >4x.
+        // We block withdrawal sizes that would temporarily increase MAX_LEVERAGE_DURING_WITHDRAWAL.
 
         // The margin returned from postTradeDetails is sans Fee. The totalMargin pre trade is this plus the fee.
         withdrawal.margin = postTradeMargin.add(withdrawal.tradeFee);
         withdrawal.marginPortion = withdrawal.margin.mul(portion).div(10 ** 18);
 
-        // Make sure that the withdrawal doesn't temporarily increase the leverage beyond 4x
+        // Make sure that the withdrawal doesn't temporarily increase MAX_LEVERAGE_DURING_WITHDRAWAL
         if (position.size >= 0) {
           withdrawal.positionValue = uint256(position.size).mul(position.lastPrice).div(10 ** 18);
         } else {

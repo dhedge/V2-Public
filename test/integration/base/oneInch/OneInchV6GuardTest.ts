@@ -6,4 +6,6 @@ runOneInchV6GuardTest({
   assets: { ...baseChainData.assets },
   chainId: 8453,
   aggregationRouterV6: baseChainData.oneInch.v6Router,
+  uniV2Factory: baseChainData.uniswapV2.factory,
+  uniV3Factory: baseChainData.uniswapV3.factory,
 });

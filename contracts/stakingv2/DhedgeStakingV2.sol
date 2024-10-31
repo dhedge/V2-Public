@@ -123,7 +123,7 @@ contract DhedgeStakingV2 is
   /// @param tokenId the erc721 tokenId
   /// @param dhtAmount the amount of dht being staked
   function addDhtToStake(uint256 tokenId, uint256 dhtAmount) external override whenNotPaused nonReentrant {
-    require(_isApprovedOrOwner(msg.sender, tokenId), "Must be approved or owner.");
+    require(_isApprovedOrOwner(msg.sender, tokenId), "approved or owner");
     require(stakes[tokenId].unstaked == false, "Already unstaked");
     require(dhtAmount > 0, "Must add some dht");
     IERC20Upgradeable(dhtAddress).safeTransferFrom(msg.sender, address(this), dhtAmount);
@@ -136,7 +136,7 @@ contract DhedgeStakingV2 is
   /// @dev This should only be called on an empty stake (i.e no pooltokens staked), otherwise can miss out on rewards
   /// @param tokenId the tokenId that represents the Stake
   function unstakeDHT(uint256 tokenId, uint256 dhtAmount) external override whenNotPaused nonReentrant {
-    require(_isApprovedOrOwner(msg.sender, tokenId), "Must be approved or owner.");
+    require(_isApprovedOrOwner(msg.sender, tokenId), "approved or owner");
     IDhedgeStakingV2Storage.Stake storage stake = stakes[tokenId];
     require(stake.dhtAmount >= dhtAmount, "Not enough staked dht.");
     uint256 vDHTBefore = vDHTBalanceOfStake(tokenId);
@@ -154,7 +154,7 @@ contract DhedgeStakingV2 is
     address dhedgePoolAddress,
     uint256 dhedgePoolAmount
   ) external override whenNotPaused nonReentrant {
-    require(_isApprovedOrOwner(msg.sender, tokenId), "Must be approved or owner.");
+    require(_isApprovedOrOwner(msg.sender, tokenId), "approved or owner");
     _checkPoolConfigured(dhedgePoolAddress);
     IDhedgeStakingV2Storage.Stake storage stake = stakes[tokenId];
     require(stake.unstaked == false, "Already unstaked");
@@ -192,7 +192,7 @@ contract DhedgeStakingV2 is
   function unstakePoolTokens(
     uint256 tokenId
   ) external override whenNotPaused nonReentrant returns (uint256 newTokenId) {
-    require(_isApprovedOrOwner(msg.sender, tokenId), "Must be approved or owner.");
+    require(_isApprovedOrOwner(msg.sender, tokenId), "approved or owner");
     IDhedgeStakingV2Storage.Stake storage stake = stakes[tokenId];
     require(
       stake.dhedgePoolStakeStartTime.add(stake.dhedgePoolRemainingExitCooldownAtStakeTime) < block.timestamp,
@@ -242,7 +242,7 @@ contract DhedgeStakingV2 is
   /// @dev The user can claim all rewards once the rewardStreamingTime has passed or a pro-rate amount
   /// @param tokenId the tokenId that represents the Stake that has been unstaked
   function claim(uint256 tokenId) external override nonReentrant {
-    require(_isApprovedOrOwner(msg.sender, tokenId), "Must be approved or owner.");
+    require(_isApprovedOrOwner(msg.sender, tokenId), "approved or owner");
     IDhedgeStakingV2Storage.Stake storage stake = stakes[tokenId];
     require(stake.unstaked == true, "Not Unstaked.");
     uint256 claimAmount = canClaimAmount(tokenId);
@@ -253,6 +253,13 @@ contract DhedgeStakingV2 is
     require(stake.claimedReward <= stake.reward, "Claiming to much.");
     IERC20Upgradeable(dhtAddress).safeTransfer(msg.sender, claimAmount);
     emit Claim(tokenId, claimAmount);
+  }
+
+  /// @notice Allows the contract owner to withdraw DHT from the contract
+  /// @param amount the amount of DHT to withdraw
+  function salvage(uint256 amount) external onlyOwner {
+    checkEnoughDht(amount);
+    IERC20Upgradeable(dhtAddress).safeTransfer(owner(), amount);
   }
 
   /// WRITE Internal

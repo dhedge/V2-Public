@@ -6,7 +6,6 @@ import { IJob, IUpgradeConfig, IVersions, IDeployedContractGuard, IAddresses, IF
 export const uniswapV3RouterContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: IFileNames,
   addresses: IAddresses,

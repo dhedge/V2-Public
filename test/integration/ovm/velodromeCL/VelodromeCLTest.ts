@@ -1,7 +1,7 @@
 import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { units } from "../../../testHelpers";
 import { velodromeCLAssetGuardTest } from "../../common/velodromeCL/VelodromeCLAssetGuardTest";
-import { velodromeCLGaugeContractGuardTest } from "../../common/velodromeCL/CLGaugeVelodromeContractGuardTest";
+import { clGaugeContractGuardCommonTest } from "../../common/velodromeCL/CLGaugeContractGuardCommonTest";
 import { velodromeCLMultiplePositionTest } from "../../common/velodromeCL/VelodromeCLMultiplePositionTest";
 import { velodromeCLNonfungiblePositionGuardTest } from "../../common/velodromeCL/VelodromeNonfungiblePositionGuardTest";
 
@@ -24,7 +24,7 @@ const testParams = [
         token1Slot: assetsBalanceOfSlot.weth,
         token0PriceFeed: ovmChainData.usdPriceFeeds.usdc,
         token1PriceFeed: ovmChainData.usdPriceFeeds.eth,
-        gauge: "0x8d8d1CdDD5960276A1CDE360e7b5D210C3387948",
+        gauge: "0xa75127121d28a9BF848F3B70e7Eea26570aa7700",
       },
       token0UnsupportedPair: {
         tickSpacing: 1,
@@ -49,16 +49,16 @@ const testParams = [
     VARIABLE_PROTOCOLTOKEN_USDC: ovmChainData.velodromeV2.VARIABLE_VELO_USDC,
     pairs: {
       bothSupportedPair: {
-        tickSpacing: 100,
-        token0: assets.weth,
-        token1: assets.dai,
+        tickSpacing: 1,
+        token0: assets.usdcNative,
+        token1: assets.usdt,
         amount0: units(1, 18),
         amount1: units(4000, 18),
-        token0Slot: assetsBalanceOfSlot.weth,
-        token1Slot: assetsBalanceOfSlot.dai,
-        token0PriceFeed: ovmChainData.usdPriceFeeds.eth,
-        token1PriceFeed: ovmChainData.usdPriceFeeds.dai,
-        gauge: "0xB2afdBf04c68989212DE04f9347Ea9bc649aE18b",
+        token0Slot: assetsBalanceOfSlot.usdcNative,
+        token1Slot: assetsBalanceOfSlot.usdt,
+        token0PriceFeed: ovmChainData.usdPriceFeeds.usdc,
+        token1PriceFeed: ovmChainData.usdPriceFeeds.usdt,
+        gauge: "0xC762d18800B3f78ae56E9e61aD7BE98a413D59dE",
       },
       token0UnsupportedPair: {
         tickSpacing: 100,
@@ -68,11 +68,11 @@ const testParams = [
         amount1: units(1, 18).div(100),
       },
       token1UnsupportedPair: {
-        tickSpacing: 100,
-        token0: assets.weth,
-        token1: assets.usdc,
+        tickSpacing: 1,
+        token0: assets.usdt,
+        token1: assets.lusd,
         amount0: units(1, 18).div(100),
-        amount1: units(3000, 6),
+        amount1: units(1, 18).div(100),
       },
     },
   },
@@ -80,7 +80,7 @@ const testParams = [
 
 testParams.forEach((params) => {
   velodromeCLNonfungiblePositionGuardTest(params);
-  velodromeCLGaugeContractGuardTest(params);
+  clGaugeContractGuardCommonTest(params);
   velodromeCLAssetGuardTest(params);
   velodromeCLMultiplePositionTest(params);
 });

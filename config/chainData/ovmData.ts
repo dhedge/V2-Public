@@ -117,6 +117,10 @@ export const ovmChainData = Object.freeze({
     maiStableCoin: "0xECAF977A599cD94c71e7292BA0c9cEA9eA227d2a",
   },
 
+  uniswapV2: {
+    factory: "0x0c3c1c532F1e39EdF36BE9Fe0bE1410313E074Bf",
+  },
+
   uniswapV3: {
     factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
     router: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
@@ -134,23 +138,11 @@ export const ovmChainData = Object.freeze({
     aTokens: {
       weth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
       usdc: "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
-      dai: "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE",
-      usdt: "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
-      link: "0x191c10Aa4AF7C30e871E70C95dB0E4eb77237530",
     },
     variableDebtTokens: {
       weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
-      usdc: "0xFCCf3cAbbe80101232d343252614b6A3eE81C989",
       dai: "0x8619d80FB0141ba7F184CbF22fd724116D9f7ffC",
       usdt: "0xfb00AC187a8Eb5AFAE4eACE434F493Eb62672df7",
-      link: "0x953A573793604aF8d41F306FEb8274190dB4aE0e",
-    },
-    stableDebtTokens: {
-      weth: "0xD8Ad37849950903571df17049516a5CD4cbE55F6",
-      usdc: "0x307ffe186F84a3bc2613D1eA417A5737D69A7007",
-      dai: "0xd94112B5B62d53C9402e7A60289c6810dEF1dC9B",
-      usdt: "0x70eFfc565DB6EEf7B927610155602d31b670e802",
-      link: "0x89D976629b7055ff1ca02b927BA3e020F22A44e4",
     },
   },
 
@@ -187,6 +179,7 @@ export const ovmChainData = Object.freeze({
     BTCBULL3X: "0xb03818de4992388260b62259361778cf98485dfe",
     SOLBULL2X: "0x7d3c9c6566375d7ad6e89169ca5c01b5edc15364",
     SOLBULL3X: "0xcc7d6ed524760539311ed0cdb41d0852b4eb77eb",
+    BTCBULL4X: "0x11b55966527ff030ca9c7b1c548b4be5e7eaee6d",
   },
 
   velodrome: {
@@ -234,8 +227,9 @@ export const ovmChainData = Object.freeze({
   },
 
   velodromeCL: {
-    nonfungiblePositionManager: "0xbb5dfe1380333cee4c2eebd7202c80de2256adf4",
-    factory: "0x548118C7E0B865C2CfA94D15EC86B666468ac758",
+    nonfungiblePositionManager: "0x416b433906b1B72FA758e166e239c43d68dC6F29",
+    nonfungiblePositionManagerOld: "0xbB5DFE1380333CEE4c2EeBd7202c80dE2256AdF4",
+    factory: "0xCc0bDDB707055e04e497aB22a59c2aF4391cd12F",
   },
 
   arrakis: {
@@ -245,18 +239,25 @@ export const ovmChainData = Object.freeze({
 
   // Swap router route hints for lower slippage swaps
   routeHints: [
-    { asset: assets.maiStableCoin, intermediary: assets.usdc },
     { asset: assets.velo, intermediary: assets.usdc },
-    { asset: assets.susd, intermediary: assets.usdc },
+    { asset: assets.susd, intermediary: assets.usdcNative },
     { asset: assets.dht, intermediary: assets.op },
-    { asset: assets.alusd, intermediary: assets.usdc },
     { asset: assets.lusd, intermediary: assets.usdc },
     { asset: assets.wstETH, intermediary: assets.weth },
     { asset: assets.link, intermediary: assets.weth },
-    { asset: assets.usdcNative, intermediary: assets.usdc },
   ],
 
   zeroEx: {
     exchangeProxy: "0xDEF1ABE32c034e558Cdd535791643C58a13aCC10",
+  },
+
+  compoundV3: {
+    cUSDCv3: "0x2e44e174f7d53f0212823acc11c01a11d58c5bcb",
+    cWETHv3: "0xE36A30D249f7761327fd973001A32010b521b6Fd",
+    rewards: "0x443EA0340cb75a160F31A440722dec7b5bc3C2E9",
+  },
+
+  flatMoney: {
+    swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
   },
 });

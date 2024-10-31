@@ -133,7 +133,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
     return _deposit(pool, depositAsset, amount, poolDepositAsset, expectedLiquidityMinted, false);
   }
 
-  /// @notice deposit into underlying pool and receive tokens with 15 minutes lockup
+  /// @notice deposit into underlying pool and receive tokens with 60 minutes lockup
   /// @dev function name mimics the naming of PoolLogic's function
   /// @param pool the pool to deposit into
   /// @param depositAsset the asset the user wants to deposit
@@ -172,7 +172,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
     return _deposit(pool, depositAsset, amount, poolDepositAsset, expectedLiquidityMinted, false);
   }
 
-  /// @notice deposit native asset into underlying pool and receive tokens with 15 minutes lockup
+  /// @notice deposit native asset into underlying pool and receive tokens with 60 minutes lockup
   /// @dev Function name mimics the naming of PoolLogic's function
   /// @param pool the pool to deposit into
   /// @param poolDepositAsset the asset that the pool accepts
@@ -226,7 +226,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
         msg.sender,
         address(poolDepositAsset),
         poolDepositAsset.balanceOf(address(this)),
-        15 minutes
+        60 minutes
       );
     } else {
       liquidityMinted = IPoolLogic(pool).depositFor(
@@ -250,7 +250,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
     }
 
     IPoolLogic poolLogic = IPoolLogic(pool);
-    (, , uint256 entryFeeNumerator, ) = IPoolManagerLogic(poolLogic.poolManagerLogic()).getFee();
+    (, , uint256 entryFeeNumerator, , ) = IPoolManagerLogic(poolLogic.poolManagerLogic()).getFee();
     // Do not charge Swapper's fee if the pool has an entry fee set
     if (entryFeeNumerator > 0) {
       fee = 0;
@@ -302,7 +302,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
       expectedLiquidityMinted = depositValue.mul(10 ** 18).div(tokenPrice);
     }
 
-    (, , uint256 entryFeeNumerator, uint256 denominator) = managerLogic.getFee();
+    (, , uint256 entryFeeNumerator, , uint256 denominator) = managerLogic.getFee();
     if (entryFeeNumerator > 0) {
       expectedLiquidityMinted = expectedLiquidityMinted.mul(denominator.sub(entryFeeNumerator)).div(denominator);
     }

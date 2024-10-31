@@ -73,6 +73,18 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "entryFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "exitFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "announcedFeeActivationTime",
         "type": "uint256"
       }
@@ -117,6 +129,12 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "entryFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "exitFeeNumerator",
         "type": "uint256"
       },
       {
@@ -222,6 +240,11 @@
         "internalType": "uint256",
         "name": "_entryFeeNumerator",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_exitFeeNumerator",
+        "type": "uint256"
       }
     ],
     "name": "announceFeeIncrease",
@@ -232,6 +255,19 @@
   {
     "inputs": [],
     "name": "announcedEntryFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "announcedExitFeeNumerator",
     "outputs": [
       {
         "internalType": "uint256",
@@ -451,6 +487,19 @@
   },
   {
     "inputs": [],
+    "name": "exitFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "factory",
     "outputs": [
       {
@@ -498,6 +547,11 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -507,6 +561,11 @@
     "inputs": [],
     "name": "getFeeIncreaseInfo",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "",
@@ -570,6 +629,11 @@
     "inputs": [],
     "name": "getMaximumFee",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "",
@@ -936,6 +1000,11 @@
         "internalType": "uint256",
         "name": "_entryFeeNumerator",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_exitFeeNumerator",
+        "type": "uint256"
       }
     ],
     "name": "setFeeNumerator",
@@ -1004,6 +1073,19 @@
   {
     "inputs": [
       {
+        "internalType": "bool",
+        "name": "_disabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setTraderAssetChangeDisabled",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
@@ -1059,6 +1141,19 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "traderAssetChangeDisabled",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

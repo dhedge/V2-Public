@@ -33,7 +33,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.7.6;
-
 pragma experimental ABIEncoderV2;
 
 import "./PoolLogic.sol";
@@ -95,8 +94,6 @@ contract PoolFactory is
 
   event DaoFeeSet(uint256 numerator, uint256 denominator);
 
-  event ExitFeeSet(uint256 numerator, uint256 denominator);
-
   event ExitCooldownSet(uint256 cooldown);
 
   event MaximumSupportedAssetCountSet(uint256 count);
@@ -109,6 +106,7 @@ contract PoolFactory is
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
     uint256 entryFeeNumerator,
+    uint256 exitFeeNumerator,
     uint256 denominator
   );
 
@@ -147,8 +145,8 @@ contract PoolFactory is
 
   // Added after initial deployment
   address public poolPerformanceAddress; // not used now
-  uint256 private _exitFeeNumerator;
-  uint256 private _exitFeeDenominator;
+  uint256 private _exitFeeNumerator; // Deprecated here but similar thing is used in PoolManagerLogic
+  uint256 private _exitFeeDenominator; // Deprecated here but similar thing is used in PoolManagerLogic
 
   // allows to perform pool deposit with lockup cooldown passed as param
   mapping(address => bool) public customCooldownWhitelist;
@@ -161,6 +159,8 @@ contract PoolFactory is
   uint256 private maximumEntryFeeNumerator;
 
   mapping(address => bool) public override pausedPools;
+
+  uint256 private maximumExitFeeNumerator;
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -184,15 +184,14 @@ contract PoolFactory is
 
     _setGovernanceAddress(_governanceAddress);
 
-    _setMaximumFee(5000, 300, 100, 10000); // 50% manager fee, 3% streaming fee, 1% entry fee
+    _setMaximumFee(5000, 300, 100, 100, 10000); // 50% manager fee, 3% streaming fee, 1% entry fee, 1% exit fee
 
     _setDaoFee(10, 100); // 10%
-    _setExitFee(5, 1000); // 0.5%
     _setExitCooldown(1 days);
-    setPerformanceFeeNumeratorChangeDelay(4 weeks);
+    setPerformanceFeeNumeratorChangeDelay(2 weeks);
     setMaximumPerformanceFeeNumeratorChange(1000);
 
-    _setMaximumSupportedAssetCount(10);
+    _setMaximumSupportedAssetCount(12);
 
     _setPoolStorageVersion(230); // V2.3.0;
   }
@@ -203,7 +202,8 @@ contract PoolFactory is
   }
 
   modifier onlyPoolManager() {
-    require(isPool[IPoolManagerLogic(msg.sender).poolLogic()] == true, "only managers");
+    address poolLogic = IPoolManagerLogic(msg.sender).poolLogic();
+    require(isPool[poolLogic] == true && IPoolLogic(poolLogic).poolManagerLogic() == msg.sender, "only managers");
     _;
   }
 
@@ -368,70 +368,62 @@ contract PoolFactory is
     return (_daoFeeNumerator, _daoFeeDenominator);
   }
 
-  /// @notice Set the Exit fee
-  /// @param numerator The numerator of the Exit fee
-  /// @param denominator The denominator of the Exit fee
-  function setExitFee(uint256 numerator, uint256 denominator) external onlyOwner {
-    _setExitFee(numerator, denominator);
-  }
-
-  /// @notice Set the Exit fee internal call
-  /// @param numerator The numerator of the Exit fee
-  /// @param denominator The denominator of the Exit fee
-  function _setExitFee(uint256 numerator, uint256 denominator) internal {
-    require(numerator <= denominator, "invalid fraction");
-
-    _exitFeeNumerator = numerator;
-    _exitFeeDenominator = denominator;
-
-    emit ExitFeeSet(numerator, denominator);
-  }
-
-  /// @notice Get the Exit fee
-  /// @return The numerator of the Exit fee
-  /// @return The denominator of the Exit fee
-  function getExitFee() external view override returns (uint256, uint256) {
-    return (_exitFeeNumerator, _exitFeeDenominator);
-  }
-
   // Manager fees
 
   /// @notice Get the maximum manager fee
-  /// @return The maximum manager fee numerator
+  /// @return The maximum performance fee numerator
+  /// @return The maximum management/streaming fee numerator
   /// @return The maximum entry fee numerator
-  /// @return The maximum manager fee denominator
-  function getMaximumFee() external view override returns (uint256, uint256, uint256, uint256) {
+  /// @return The maximum exit fee numerator
+  /// @return The maximum fee denominator
+  function getMaximumFee() external view override returns (uint256, uint256, uint256, uint256, uint256) {
     return (
       maximumPerformanceFeeNumerator,
       maximumManagerFeeNumerator,
       maximumEntryFeeNumerator,
+      maximumExitFeeNumerator,
       _MANAGER_FEE_DENOMINATOR
     );
   }
 
   /// @notice Set the maximum manager fee
   /// @param performanceFeeNumerator The numerator of the maximum manager fee
-  /// @param managerFeeNumerator The numerator of the maximum streaming fee
+  /// @param managerFeeNumerator The numerator of the maximum management/streaming fee
+  /// @param entryFeeNumerator The numerator of the maximum entry fee
+  /// @param exitFeeNumerator The numerator of the maximum exit fee
   function setMaximumFee(
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
-    uint256 entryFeeNumerator
+    uint256 entryFeeNumerator,
+    uint256 exitFeeNumerator
   ) external onlyOwner {
-    _setMaximumFee(performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+    _setMaximumFee(
+      performanceFeeNumerator,
+      managerFeeNumerator,
+      entryFeeNumerator,
+      exitFeeNumerator,
+      _MANAGER_FEE_DENOMINATOR
+    );
   }
 
   /// @notice Set the maximum manager fee internal call
   /// @param performanceFeeNumerator The numerator of the maximum manager fee
   /// @param managerFeeNumerator The numerator of the maximum streaming fee
-  /// @param denominator The denominator of the maximum manager fee
+  /// @param entryFeeNumerator The numerator of the maximum entry fee
+  /// @param exitFeeNumerator The numerator of the maximum exit fee
+  /// @param denominator The denominator of the maximum fee
   function _setMaximumFee(
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
     uint256 entryFeeNumerator,
+    uint256 exitFeeNumerator,
     uint256 denominator
   ) internal {
     require(
-      performanceFeeNumerator <= denominator && managerFeeNumerator <= denominator && entryFeeNumerator <= denominator,
+      performanceFeeNumerator <= denominator &&
+        managerFeeNumerator <= denominator &&
+        entryFeeNumerator <= denominator &&
+        exitFeeNumerator <= denominator,
       "invalid fraction"
     );
 
@@ -439,8 +431,9 @@ contract PoolFactory is
     maximumManagerFeeNumerator = managerFeeNumerator;
     _MANAGER_FEE_DENOMINATOR = denominator;
     maximumEntryFeeNumerator = entryFeeNumerator;
+    maximumExitFeeNumerator = exitFeeNumerator;
 
-    emit SetMaximumFee(performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, denominator);
+    emit SetMaximumFee(performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, exitFeeNumerator, denominator);
   }
 
   /// @notice Set maximum manager fee numerator change

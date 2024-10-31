@@ -8,7 +8,7 @@ import { baseChainData } from "../../../../config/chainData/baseData";
 const baseTestParams = {
   ...baseChainData,
   ...baseChainData.aerodrome,
-  assets: { ...baseChainData.assets, usdt: "0xf99faf12efe98c6b67a4a96cbb5265af846d6319" }, // Fake USDT address (not used in these tests)
+  assets: baseChainData.assets,
   protocolToken: baseChainData.aerodrome.aero,
   VARIABLE_PROTOCOLTOKEN_USDC: baseChainData.aerodrome.VARIABLE_AERO_USDC,
 };

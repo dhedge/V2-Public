@@ -38,7 +38,6 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../../utils/TxDataUtils.sol";
-import "../../utils/SlippageAccumulator.sol";
 import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/uniswapV2/IUniswapV2Pair.sol";
 import "../../interfaces/uniswapV3/IUniswapV3Pool.sol";
@@ -46,27 +45,18 @@ import "../../interfaces/oneInch/IAggregationRouterV3.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasSupportedAsset.sol";
 
-/// @notice Transaction guard for OneInchV3Router
+/// @notice Transaction guard for OneInchV4Router
 contract OneInchV4Guard is TxDataUtils, IGuard {
   struct SwapData {
     address srcAsset;
     address dstAsset;
     uint256 srcAmount;
-    uint256 dstAmount;
     address to;
   }
 
   uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
 
-  SlippageAccumulator private immutable slippageAccumulator;
-
-  constructor(address _slippageAccumulator) {
-    require(_slippageAccumulator != address(0), "Null address");
-
-    slippageAccumulator = SlippageAccumulator(_slippageAccumulator);
-  }
-
-  /// @notice Transaction guard for OneInchV3
+  /// @notice Transaction guard for OneInchV4
   /// @dev It supports swap functionalities
   /// @param _poolManagerLogic the pool manager logic
   /// @param data the transaction data
@@ -98,7 +88,7 @@ contract OneInchV4Guard is TxDataUtils, IGuard {
       );
 
       _verifyExchange(
-        SwapData(desc.srcToken, desc.dstToken, desc.amount, desc.minReturnAmount, to),
+        SwapData(desc.srcToken, desc.dstToken, desc.amount, to),
         poolManagerLogicAssets,
         poolManagerLogic
       );
@@ -107,7 +97,7 @@ contract OneInchV4Guard is TxDataUtils, IGuard {
 
       txType = 2; // 'Exchange' type
     } else if (method == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
-      (address srcAsset, uint256 srcAmount, uint256 amountOutMin, bytes32[] memory pools) = abi.decode(
+      (address srcAsset, uint256 srcAmount, , bytes32[] memory pools) = abi.decode(
         getParams(data),
         (address, uint256, uint256, bytes32[])
       );
@@ -126,18 +116,11 @@ contract OneInchV4Guard is TxDataUtils, IGuard {
         }
       }
 
-      _verifyExchange(
-        SwapData(srcAsset, dstAsset, srcAmount, amountOutMin, to),
-        poolManagerLogicAssets,
-        poolManagerLogic
-      );
+      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets, poolManagerLogic);
 
       txType = 2; // 'Exchange' type
     } else if (method == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])"))) {
-      (uint256 srcAmount, uint256 amountOutMin, uint256[] memory pools) = abi.decode(
-        getParams(data),
-        (uint256, uint256, uint256[])
-      );
+      (uint256 srcAmount, , uint256[] memory pools) = abi.decode(getParams(data), (uint256, uint256, uint256[]));
 
       address srcAsset = (pools[0] & _ONE_FOR_ZERO_MASK == 0)
         ? IUniswapV3Pool(pools[0]).token0()
@@ -155,11 +138,7 @@ contract OneInchV4Guard is TxDataUtils, IGuard {
         }
       }
 
-      _verifyExchange(
-        SwapData(srcAsset, dstAsset, srcAmount, amountOutMin, to),
-        poolManagerLogicAssets,
-        poolManagerLogic
-      );
+      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets, poolManagerLogic);
 
       txType = 2; // 'Exchange' type
     } else if (method == bytes4(keccak256("uniswapV3SwapTo(address,uint256,uint256,uint256[])"))) {
@@ -197,25 +176,16 @@ contract OneInchV4Guard is TxDataUtils, IGuard {
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
       }
 
-      _verifyExchange(
-        SwapData(srcAsset, dstAsset, srcAmount, amountOutMin, to),
-        poolManagerLogicAssets,
-        poolManagerLogic
-      );
+      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets, poolManagerLogic);
 
       txType = 2; // 'Exchange' type
     }
 
-    // Given that there are no return statements above, this tx guard is not used for a public function (callable by anyone).
-    // Make sure that it's the `poolLogic` contract of the `poolManagerLogic` which initiates the check on the tx.
-    // Else, anyone can increase the slippage impact (updated by the call to SlippageAccumulator).
-    // We can trust the poolLogic since it contains check to ensure the caller is authorised.
     require(IPoolManagerLogic(_poolManagerLogic).poolLogic() == msg.sender, "Caller not authorised");
 
     return (txType, false);
   }
 
-  /// @dev Internal function to update cumulative slippage. This is required to avoid stack-too-deep errors.
   /// @param swapData The data used in a swap.
   /// @param poolManagerLogicAssets Contains supported assets mapping.
   /// @param poolManagerLogic The poolManager address.
@@ -226,23 +196,8 @@ contract OneInchV4Guard is TxDataUtils, IGuard {
   ) internal {
     require(poolManagerLogicAssets.isSupportedAsset(swapData.dstAsset), "unsupported destination asset");
 
-    slippageAccumulator.updateSlippageImpact(
-      SlippageAccumulator.SwapData(
-        swapData.srcAsset,
-        swapData.dstAsset,
-        swapData.srcAmount,
-        swapData.dstAmount,
-        swapData.to,
-        address(poolManagerLogic)
-      )
-    );
+    address poolLogic = address(poolManagerLogic.poolLogic());
 
-    emit ExchangeFrom(
-      poolManagerLogic.poolLogic(),
-      swapData.srcAsset,
-      swapData.srcAmount,
-      swapData.dstAsset,
-      block.timestamp
-    );
+    emit ExchangeFrom(poolLogic, swapData.srcAsset, swapData.srcAmount, swapData.dstAsset, block.timestamp);
   }
 }

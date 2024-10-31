@@ -22,16 +22,16 @@ export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (
   console.log("Will deploy aavev3lendingpoolguard");
   if (config.execute) {
     const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy(addresses.aaveV3.aaveLendingPoolAddress);
+    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
     await aaveLendingPoolGuard.deployed();
-    console.log("AaveLendingPoolGuard deployed at", aaveLendingPoolGuard.address);
+    console.log("AaveLendingPoolGuardV3L2Pool deployed at", aaveLendingPoolGuard.address);
     versions[config.newTag].contracts.AaveLendingPoolGuardV3 = aaveLendingPoolGuard.address;
 
     await tryVerify(
       hre,
       aaveLendingPoolGuard.address,
       "contracts/guards/contractGuards/AaveLendingPoolGuardV3L2Pool.sol:AaveLendingPoolGuardV3L2Pool",
-      [addresses.aaveV3.aaveLendingPoolAddress],
+      [],
     );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
@@ -41,7 +41,7 @@ export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
       setContractGuardABI,
-      "setContractGuard for aaveLendingPoolGuard",
+      "setContractGuard for Aave V3 Lending Pool",
       config,
       addresses,
     );

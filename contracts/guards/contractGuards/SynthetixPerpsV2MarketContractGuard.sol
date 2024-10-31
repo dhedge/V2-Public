@@ -10,9 +10,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// SPDX-License-Identifier: BUSL-1.1
-//
-// TODO: Intended for whitelisted vaults only. Not open to any vault.
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma abicoder v2;
@@ -39,10 +37,10 @@ contract SynthetixPerpsV2MarketContractGuard is TxDataUtils, IGuard {
   address public immutable susdProxy;
   mapping(address => bool) public isPoolWhitelisted;
 
-  // Maximum 3.5x leverage is allowed (3x with some additional margin to avoid reverts)
+  // Maximum leverage which is allowed (with some additional margin to avoid reverts)
   // This is because of withdrawal processing where the the partial closure of the position is delayed
   // This causes a temporary increase in leverage and increased risk of liquidation
-  uint256 public constant MAX_LEVERAGE = 3.5e18; // 18 decimals
+  uint256 public constant MAX_LEVERAGE = 4.4e18; // 18 decimals
 
   constructor(address _susdProxy, address[] memory _whitelistedDHedgePools) {
     susdProxy = _susdProxy;
@@ -98,6 +96,13 @@ contract SynthetixPerpsV2MarketContractGuard is TxDataUtils, IGuard {
 
       emit PerpsV2MarketEvent(poolLogic, to);
       txType = uint16(ITransactionTypes.TransactionType.KwentaPerpsV2Market);
+    } else if (method == IPerpsV2Market.transferMargin.selector) {
+      int256 marginDelta = abi.decode(getParams(data), (int256));
+
+      _maxLeverageCheckTransferMargin(poolLogic, to, marginDelta);
+
+      emit PerpsV2MarketEvent(poolLogic, to);
+      txType = uint16(ITransactionTypes.TransactionType.KwentaPerpsV2Market);
     } else if (
       // These functions have been removed since only offchain Perps v2 orders are now supported
       // method == IPerpsV2Market.modifyPosition.selector ||
@@ -106,7 +111,6 @@ contract SynthetixPerpsV2MarketContractGuard is TxDataUtils, IGuard {
       // method == IPerpsV2Market.submitDelayedOrderWithTracking.selector ||
       // method == IPerpsV2Market.closePosition.selector ||
       // method == IPerpsV2Market.closePositionWithTracking.selector ||
-      method == IPerpsV2Market.transferMargin.selector ||
       method == IPerpsV2Market.withdrawAllMargin.selector ||
       method == IPerpsV2Market.cancelDelayedOrder.selector ||
       method == IPerpsV2Market.cancelOffchainDelayedOrder.selector
@@ -118,18 +122,39 @@ contract SynthetixPerpsV2MarketContractGuard is TxDataUtils, IGuard {
     return (txType, false);
   }
 
-  function _maxLeverageCheck(address poolLogic, address to, int256 sizeDelta) internal view {
-    IPerpsV2Market.Position memory position = IPerpsV2Market(to).positions(poolLogic);
-    uint256 newPositionValue;
-    int256 newPositionSize = position.size.add(sizeDelta);
+  function _getNewPositionValue(
+    address to,
+    int128 positionSize,
+    int256 sizeDelta
+  ) internal view returns (uint256 newPositionValue) {
+    int256 newPositionSize = positionSize.add(sizeDelta);
     (uint256 fillPrice, ) = IPerpsV2Market(to).fillPrice(sizeDelta);
-
     if (newPositionSize >= 0) {
       newPositionValue = uint256(newPositionSize).mul(fillPrice).div(1e18);
     } else {
       newPositionValue = uint256(-newPositionSize).mul(fillPrice).div(1e18);
     }
+  }
 
-    require(newPositionValue < position.margin.mul(MAX_LEVERAGE).div(1e18), "leverage must be less than 3.5x");
+  function _maxLeverageCheckTransferMargin(address poolLogic, address to, int256 marginDelta) internal view {
+    IPerpsV2Market.Position memory position = IPerpsV2Market(to).positions(poolLogic);
+    uint256 positionValue = _getNewPositionValue(to, position.size, 0);
+
+    if (marginDelta < 0 && positionValue > 0 && uint256(position.margin) > uint256(-marginDelta)) {
+      uint256 newMargin = uint256(position.margin).sub(uint256(-marginDelta));
+      require(positionValue < newMargin.mul(MAX_LEVERAGE).div(1e18), "leverage must be less");
+    }
+  }
+
+  function _maxLeverageCheck(address poolLogic, address to, int256 sizeDelta) internal view {
+    IPerpsV2Market.Position memory position = IPerpsV2Market(to).positions(poolLogic);
+    uint256 newPositionValue = _getNewPositionValue(to, position.size, sizeDelta);
+
+    if (
+      (position.size >= 0 && (sizeDelta > 0 || -sizeDelta > position.size)) ||
+      (position.size <= 0 && (sizeDelta < 0 || -sizeDelta < position.size))
+    ) {
+      require(newPositionValue < position.margin.mul(MAX_LEVERAGE).div(1e18), "leverage must be less");
+    }
   }
 }

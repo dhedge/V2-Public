@@ -6,7 +6,6 @@ import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames } from "../../.
 export const balancerv2ContractGuard: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: IFileNames,
   addresses: IAddresses,
@@ -23,13 +22,8 @@ export const balancerv2ContractGuard: IJob<void> = async (
   console.log("Will deploy balancerv2guard");
   if (config.execute) {
     const BalancerV2Guard = await ethers.getContractFactory("BalancerV2Guard");
-    const slippageaccumulatorAddress = versions[config.oldTag].contracts.SlippageAccumulator;
-    if (!slippageaccumulatorAddress) {
-      console.warn("SlippageAccumulator could not be found: skipping.");
-      return;
-    }
-    const args: [string] = [slippageaccumulatorAddress];
-    const balancerV2Guard = await BalancerV2Guard.deploy(...args);
+
+    const balancerV2Guard = await BalancerV2Guard.deploy();
     await balancerV2Guard.deployed();
     console.log("BalancerV2Guard deployed at", balancerV2Guard.address);
     versions[config.newTag].contracts.BalancerV2Guard = balancerV2Guard.address;
@@ -38,7 +32,7 @@ export const balancerv2ContractGuard: IJob<void> = async (
       hre,
       balancerV2Guard.address,
       "contracts/guards/contractGuards/BalancerV2Guard.sol:BalancerV2Guard",
-      args,
+      [],
     );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [

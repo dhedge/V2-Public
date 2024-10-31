@@ -6,7 +6,6 @@ import { IJob, IUpgradeConfig, IProposeTxProperties, IVersions, IFileNames } fro
 export const poolLogicJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   _: IFileNames,
   addresses: IProposeTxProperties,

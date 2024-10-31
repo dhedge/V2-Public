@@ -6,7 +6,6 @@ import csv from "csvtojson";
 export const governanceNamesJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: IFileNames,
   addresses: IProposeTxProperties,
@@ -26,10 +25,7 @@ export const governanceNamesJob: IJob<void> = async (
     const destination: string = csvGovernanceName.destination;
     const nameBytes = ethers.utils.formatBytes32String(name);
     const configuredDestination = (await governance.nameToDestination(nameBytes)).toLowerCase();
-    if (
-      configuredDestination === "0x0000000000000000000000000000000000000000" ||
-      destination.toLowerCase() != configuredDestination
-    ) {
+    if (configuredDestination === ethers.constants.AddressZero || destination.toLowerCase() != configuredDestination) {
       console.log(name, "old destination:", configuredDestination, ". New destination:", destination);
       const setAddressesABI = governanceABI.encodeFunctionData("setAddresses", [[[nameBytes, destination]]]);
       if (config.execute) {

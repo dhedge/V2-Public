@@ -150,22 +150,13 @@ export const launchZeroExSwapsTests = (chainData: IParams) => {
     });
 
     it("doesn't allow to make trades with slippage more than allowed in SlippageAccumulator", async () => {
+      await deployments.slippageAccumulator.setMaxCumulativeSlippage(1e3); // 0.1% slippage allowed
+
       const response = await getTxDataFromAPI(USDC_AMOUNT.toString());
       await approveZeroExAsSpender();
 
-      const decodedData = iTransformERC20Feature.decodeFunctionData("transformERC20", response.data);
-      const { inputToken, outputToken, inputTokenAmount, minOutputTokenAmount, transformations } = decodedData;
-      const editedminOutputTokenAmount = minOutputTokenAmount.mul(95).div(100); // set minOutputTokenAmount to 95% of original
-      const encodedData = iTransformERC20Feature.encodeFunctionData("transformERC20", [
-        inputToken,
-        outputToken,
-        inputTokenAmount,
-        editedminOutputTokenAmount,
-        transformations,
-      ]);
-
       await expect(
-        poolLogicProxy.connect(manager).execTransaction(chainData.zeroEx.exchangeProxy, encodedData),
+        poolLogicProxy.connect(manager).execTransaction(chainData.zeroEx.exchangeProxy, response.data),
       ).to.be.revertedWith("slippage impact exceeded");
     });
 

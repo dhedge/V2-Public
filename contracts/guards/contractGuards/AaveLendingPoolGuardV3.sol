@@ -37,7 +37,6 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../../interfaces/IPoolManagerLogic.sol";
-import "../../interfaces/aave/v3/ILendingL2Pool.sol";
 import "./AaveLendingPoolGuardV2.sol";
 
 /// @title Transaction guard for Aave V3 lending pool contract
@@ -91,8 +90,11 @@ contract AaveLendingPoolGuardV3 is AaveLendingPoolGuardV2 {
     address to,
     address borrowAsset,
     uint256 amount,
+    uint256 interestRateMode,
     address onBehalfOf
   ) internal override returns (uint16 txType) {
+    require(interestRateMode == 2, "only variable rate");
+
     require(
       IHasAssetInfo(factory).getAssetType(borrowAsset) == 4 || IHasAssetInfo(factory).getAssetType(borrowAsset) == 14,
       "not borrow enabled"

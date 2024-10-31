@@ -16,6 +16,12 @@ library SynthetixV3Structs {
     uint128 marketId;
     address collateralSynth;
     address collateralAsset;
+    AtomicSwapSettings atomicSwapSettings;
+  }
+
+  struct AtomicSwapSettings {
+    bool isAtomicSwapAllowed;
+    bool isOneToOneSwap; // if allowed, is it 1:1 swap snxUSD <=> synth (e.g. sUSDC)
   }
 
   struct TimePeriod {

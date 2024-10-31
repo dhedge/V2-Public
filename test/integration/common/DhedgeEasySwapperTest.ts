@@ -20,7 +20,7 @@ import { createFund } from "../utils/createFund";
 import { Address } from "../../../deployment/types";
 import { AssetType } from "../../../deployment/upgrade/jobs/assetsJob";
 
-const SIXTEEN_MINUTES = 60 * 16;
+const SKIP_TIME = 60 * 61; // 1 hour and 1 second
 
 export interface EasySwapperTestCase {
   testName: string;
@@ -108,7 +108,7 @@ export const DhedgeEasySwapperTests = (
       poolFactory
         .connect(poolFactoryOwner)
         .setLogic((await PoolLogic.deploy()).address, (await PoolManagerLogic.deploy()).address);
-      poolFactory.connect(poolFactoryOwner).setMaximumFee(5000, 300, 100);
+      poolFactory.connect(poolFactoryOwner).setMaximumFee(5000, 300, 100, 100);
       poolFactory.connect(poolFactoryOwner).setPerformanceFeeNumeratorChangeDelay(0);
 
       const DhedgeUniV3V2Router = await ethers.getContractFactory("DhedgeUniV3V2Router");
@@ -284,7 +284,7 @@ export const DhedgeEasySwapperTests = (
         ]);
         await dhedgeEasySwapper.setFee(1, 100); // 1%
         await dhedgeEasySwapper.setPoolAllowed(poolLogicProxy.address, true);
-        await poolManagerLogicProxy.connect(user1).announceFeeIncrease(5000, 0, 100); // 1% entry fee
+        await poolManagerLogicProxy.connect(user1).announceFeeIncrease(5000, 0, 100, 100); // 1% entry fee, 1% exit fee
         await poolManagerLogicProxy.connect(user1).commitFeeIncrease();
 
         const depositAmount = units(10, 6); // 10 USDC
@@ -353,7 +353,7 @@ export const DhedgeEasySwapperTests = (
             assets.usdc,
             depositAmount,
           ),
-        ).to.be.revertedWith("can withdraw shortly");
+        ).to.be.revertedWith("can withdraw soon");
       });
     });
 
@@ -484,7 +484,7 @@ export const DhedgeEasySwapperTests = (
         const balanceLogicOwner = await torosPool.balanceOf(logicOwner.address);
         const balanceUser2 = await torosPool.balanceOf(user2.address);
 
-        await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
+        await ethers.provider.send("evm_increaseTime", [SKIP_TIME]);
         await ethers.provider.send("evm_mine", []);
 
         // Withdraw all
@@ -527,7 +527,7 @@ export const DhedgeEasySwapperTests = (
         );
         const balanceLogicOwner = await torosPool.balanceOf(logicOwner.address);
 
-        await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
+        await ethers.provider.send("evm_increaseTime", [SKIP_TIME]);
 
         // Withdraw all
         await dhedgeEasySwapper
@@ -538,7 +538,7 @@ export const DhedgeEasySwapperTests = (
         await torosPool.approve(dhedgeEasySwapper.address, balanceLogicOwner);
         await dhedgeEasySwapper.withdraw(torosPool.address, balanceLogicOwner, withdrawToken, 0);
 
-        await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
+        await ethers.provider.send("evm_increaseTime", [SKIP_TIME]);
         await ethers.provider.send("evm_mine", []);
         await torosPool.connect(user2).approve(dhedgeEasySwapper.address, balanceUser2);
         await dhedgeEasySwapper.connect(user2).withdraw(torosPool.address, balanceUser2, withdrawToken, 0);
@@ -682,7 +682,7 @@ export const DhedgeEasySwapperTests = (
         const { poolLogicProxy, poolManagerLogicProxy } = await createFund(poolFactory, logicOwner, user1, [
           { asset: assets.usdc, isDeposit: true },
         ]);
-        await poolManagerLogicProxy.connect(user1).announceFeeIncrease(5000, 0, 100); // 1% entry fee
+        await poolManagerLogicProxy.connect(user1).announceFeeIncrease(5000, 0, 100, 100); // 1% entry fee, 1% exit fee
         await poolManagerLogicProxy.connect(user1).commitFeeIncrease();
 
         const depositAmount = units(10, 6); // 10 USDC
@@ -751,8 +751,7 @@ export const DhedgeEasySwapperTests = (
           const balance = await torosPool.balanceOf(logicOwner.address);
           expect(balance).to.be.closeTo(expectedTokens, expectedTokens.div(100));
           expect(await DepositToken.balanceOf(logicOwner.address)).to.equal(0);
-          await ethers.provider.send("evm_increaseTime", [SIXTEEN_MINUTES]);
-          await ethers.provider.send("evm_mine", []);
+          await utils.increaseTime(SKIP_TIME);
           // Withdraw all
 
           const actualWithdrawToken = func == "withdraw" ? withdrawToken : assets.susd || "";
@@ -763,7 +762,9 @@ export const DhedgeEasySwapperTests = (
           );
           const beforeFundsReturnedBalance = await WithdrawToken.balanceOf(logicOwner.address);
           // Here I need update this to calculate the withdrawal amount out in withdraw token
-          await dhedgeEasySwapper.connect(logicOwner)[func](torosPool.address, balance, withdrawToken, 0);
+          await dhedgeEasySwapper
+            .connect(logicOwner)
+            [func](torosPool.address, balance, withdrawToken, 0, { gasLimit: 30000000 });
           // All tokens were withdrawn
           const balanceAfterWithdraw = await torosPool.balanceOf(logicOwner.address);
           expect(balanceAfterWithdraw).to.equal(0);

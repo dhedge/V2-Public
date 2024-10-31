@@ -3,13 +3,9 @@ import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { Address, IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
 
-/***
- * Deploys and sets the LyraOptionMarketWrapperContractGuard
- */
 export const lyraOptionMarketWrapperContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
   addresses: IAddresses,

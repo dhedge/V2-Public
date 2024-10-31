@@ -41,7 +41,7 @@ export const dhedgeStakingV2Job: IJob<void> = async (
       await tryVerify(
         hre,
         dhedgeStakingV2Implementation,
-        "contracts/stakingV2/DhedgeStakingV2.sol:DhedgeStakingV2",
+        "contracts/stakingv2/DhedgeStakingV2.sol:DhedgeStakingV2",
         [],
       );
 
@@ -92,7 +92,7 @@ export const dhedgeStakingV2Job: IJob<void> = async (
       const dhedgeStakingV2 = await upgrades.prepareUpgrade(dhedgeStakingV2Proxy, DhedgeStakingV2);
       console.log("dhedgeStakingV2 deployed to: ", dhedgeStakingV2);
 
-      await tryVerify(hre, dhedgeStakingV2, "contracts/stakingV2/DhedgeStakingV2.sol:DhedgeStakingV2", []);
+      await tryVerify(hre, dhedgeStakingV2, "contracts/stakingv2/DhedgeStakingV2.sol:DhedgeStakingV2", []);
 
       const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
       const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);

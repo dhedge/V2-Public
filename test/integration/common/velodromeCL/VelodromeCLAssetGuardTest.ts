@@ -211,25 +211,6 @@ export const velodromeCLAssetGuardTest = (testParams: IVelodromeCLTestParams) =>
         checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(logicOwner.address), claimAmount.add(rewards).div(2), 0.005);
         checkAlmostSame(totalFundValueAfter, totalFundValueBefore.div(2), 0.0005);
       });
-
-      it("Pool and Withdrawer receives expected rewards (rewardToken is not supported Asset)", async () => {
-        // set rewardToken as not supported Asset
-        // to test withdrawal will handle transfer of rewardToken even if it is not a supported Asset
-        await poolManagerLogicProxy.changeAssets([], [PROTOCOL_TOKEN.address]);
-
-        const gauge = await ethers.getContractAt("IVelodromeCLGauge", bothSupportedPair.gauge);
-        const claimAmount = await gauge.earned(poolLogicProxy.address, tokenId);
-        const rewards = await gauge.rewards(tokenId);
-        expect(claimAmount).to.gt(0);
-        // withdraw half
-        await poolLogicProxy.withdraw((await poolLogicProxy.balanceOf(logicOwner.address)).div(2));
-        const poolRewardBalance = await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address);
-        const withdrawerRewardBalance = await PROTOCOL_TOKEN.balanceOf(logicOwner.address);
-
-        checkAlmostSame(poolRewardBalance.add(withdrawerRewardBalance), claimAmount.add(rewards), 0.005);
-        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(poolLogicProxy.address), claimAmount.add(rewards).div(2), 0.005);
-        checkAlmostSame(await PROTOCOL_TOKEN.balanceOf(logicOwner.address), claimAmount.add(rewards).div(2), 0.005);
-      });
     });
   });
 };

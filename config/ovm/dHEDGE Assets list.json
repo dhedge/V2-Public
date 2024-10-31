@@ -985,7 +985,7 @@
     "oracleType": "ChainlinkAggregator",
     "specificOracleConfig": {
       "Notes": "sUSDOracleAddress",
-      "chainlinkOracleAddress": "0xcE17BbEEE29159f08a61a89259c2E9aDedA3EC70"
+      "chainlinkOracleAddress": "0x46cdf214F7bC1d6E464ADA134D6f778ACBFA61B9"
     },
     "specificContractGuardConfig": {
       "contractGuard": "SynthetixPerpsV2MarketContractGuard"
@@ -1295,10 +1295,10 @@
     "assetType": "0",
     "oracleType": "VelodromeV2TWAPAggregator",
     "specificOracleConfig": {
-      "pair": "0x7e1357fa56C0eCfE69dAF22E08489aE8De56d86C",
+      "pair": "0x6da87897bB36D0E2bC4E69c407935bcC7FA9D9c9",
       "mainToken": "0xaf9fe3b5ccdae78188b1f8b9a49da7ae9510f151",
-      "pairToken": "0x4200000000000000000000000000000000000042",
-      "pairTokenUsdAggregator": "0x0D276FC14719f9292D5C1eA2198673d1f4269246"
+      "pairToken": "0x4200000000000000000000000000000000000006",
+      "pairTokenUsdAggregator": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
     }
   },
   {
@@ -1867,7 +1867,7 @@
   {
     "assetName": "Velodrome Finance V2",
     "assetAddress": "0x9560e827af36c94d2ac33a39bce1fe78631088db",
-    "assetType": "0",
+    "assetType": "200",
     "oracleType": "VelodromeV2TWAPAggregator",
     "specificOracleConfig": {
       "pair": "0x8134A2fDC127549480865fB8E5A9E8A8a95a54c5",
@@ -2160,9 +2160,75 @@
     "oracleType": "DHedgePoolAggregator"
   },
   {
-    "assetName": "Velodrome NonfungiblePositionManager",
-    "assetAddress": "0xbb5dfe1380333cee4c2eebd7202c80de2256adf4",
+    "assetName": "Velodrome NonfungiblePositionManager V1.2",
+    "assetAddress": "0x416b433906b1B72FA758e166e239c43d68dC6F29",
     "assetType": "26",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+    }
+  },
+  {
+    "assetName": "Velodrome V2 VARIABLE WETH/DHT 0.3%",
+    "assetAddress": "0x6da87897bB36D0E2bC4E69c407935bcC7FA9D9c9",
+    "assetType": "25",
+    "oracleType": "VelodromeVariableLPAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "VelodromeV2GaugeContractGuard"
+    }
+  },
+  {
+    "assetName": "cbETH",
+    "assetAddress": "0xadDb6A0412DE1BA0F936DCaeb8Aaa24578dcF3B2",
+    "assetType": "0",
+    "oracleType": "ETHCrossAggregator",
+    "specificOracleConfig": {
+      "assetToEthChainlinkOracleAddress": "0x138b809B8472fF09Cd3E075E6EcbB2e42D41d870",
+      "ethToUsdChainlinkOracleAddress": "0x13e3Ee699D1909E989722E753853AE30b17e08c5"
+    }
+  },
+  {
+    "assetName": "Velodrome V2 VARIABLE USDC/OP 0.3%",
+    "assetAddress": "0x67F56Ac099F11aD5F65E2ec804f75F2cEa6ab8C5",
+    "assetType": "25",
+    "oracleType": "VelodromeVariableLPAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "VelodromeV2GaugeContractGuard",
+      "extraContractGuard": "VelodromePairContractGuard"
+    }
+  },
+  {
+    "assetName": "tBTC",
+    "assetAddress": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x5a61374950D4BFa5a3D4f2CA36FC1d23A92b6f21"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Velodrome V2 VARIABLE USDC/VELO 0.9%",
+    "assetAddress": "0xa0A215dE234276CAc1b844fD58901351a50fec8A",
+    "assetType": "25",
+    "oracleType": "VelodromeVariableLPAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "VelodromeV2GaugeContractGuard",
+      "extraContractGuard": "VelodromePairContractGuard"
+    }
+  },
+  {
+    "assetName": "EasySwapperV2 Unrolled Assets",
+    "assetAddress": "0x2Ed1bd7f66e47113672f3870308b5E867C5bb743",
+    "assetType": "30",
     "oracleType": "USDPriceAggregator",
     "specificOracleConfig": {
       "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"

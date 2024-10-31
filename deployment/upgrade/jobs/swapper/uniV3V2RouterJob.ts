@@ -5,7 +5,6 @@ import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../.
 export const uniV3V2RouterJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   _filenames: IFileNames,
   addresses: IAddresses,

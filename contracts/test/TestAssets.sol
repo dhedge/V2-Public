@@ -52,3 +52,30 @@ contract ERC20Asset is ERC20 {
     _burn(owner, balanceOf(owner));
   }
 }
+
+contract TestAssetWithFallback is ERC20 {
+  using SafeMathUpgradeable for uint256;
+
+  uint256 internal dummyVar;
+
+  constructor(uint256 totalSupply) ERC20("Test Fallback Asset", "tFALL") {
+    _mint(msg.sender, totalSupply.mul(10 ** uint256(decimals())));
+  }
+
+  /* solhint-disable */
+  fallback() external {
+    // Loop to consume all gas
+    while (true) {
+      ++dummyVar;
+    }
+  }
+  /* solhint-enable */
+
+  function burnAll(address owner) public {
+    _burn(owner, balanceOf(owner));
+  }
+
+  function mint(address account, uint256 amount) public {
+    _mint(account, amount);
+  }
+}

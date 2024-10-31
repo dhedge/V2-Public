@@ -17,30 +17,31 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/utils/SafeCast.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/Math.sol";
+import {Math} from "@openzeppelin/contracts/math/Math.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
 
-import "../../../interfaces/guards/ITxTrackingGuard.sol";
-import "../../../interfaces/guards/IERC721VerifyingGuard.sol";
-import "../../../interfaces/synthetixV3/IAccountModule.sol";
-import "../../../interfaces/synthetixV3/ICollateralModule.sol";
-import "../../../interfaces/synthetixV3/ICollateralConfigurationModule.sol";
-import "../../../interfaces/synthetixV3/IIssueUSDModule.sol";
-import "../../../interfaces/synthetixV3/IPoolConfigurationModule.sol";
-import "../../../interfaces/synthetixV3/IRewardDistributor.sol";
-import "../../../interfaces/synthetixV3/IRewardsManagerModule.sol";
-import "../../../interfaces/synthetixV3/IVaultModule.sol";
-import "../../../interfaces/IERC721Enumerable.sol";
-import "../../../interfaces/IHasAssetInfo.sol";
-import "../../../interfaces/IHasSupportedAsset.sol";
-import "../../../interfaces/IPoolFactory.sol";
-import "../../../interfaces/IPoolManagerLogic.sol";
-import "../../../interfaces/ITransactionTypes.sol";
-import "../../../utils/synthetixV3/libraries/SynthetixV3Structs.sol";
-import "../../../utils/synthetixV3/libraries/WeeklyWindowsHelper.sol";
-import "../../../utils/tracker/DhedgeNftTrackerStorage.sol";
-import "../../../utils/TxDataUtils.sol";
+import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
+import {IERC721VerifyingGuard} from "../../../interfaces/guards/IERC721VerifyingGuard.sol";
+import {IAccountModule} from "../../../interfaces/synthetixV3/IAccountModule.sol";
+import {ICollateralModule} from "../../../interfaces/synthetixV3/ICollateralModule.sol";
+import {ICollateralConfigurationModule} from "../../../interfaces/synthetixV3/ICollateralConfigurationModule.sol";
+import {IIssueUSDModule} from "../../../interfaces/synthetixV3/IIssueUSDModule.sol";
+import {IPoolConfigurationModule} from "../../../interfaces/synthetixV3/IPoolConfigurationModule.sol";
+import {IRewardDistributor} from "../../../interfaces/synthetixV3/IRewardDistributor.sol";
+import {IRewardsManagerModule} from "../../../interfaces/synthetixV3/IRewardsManagerModule.sol";
+import {IVaultModule} from "../../../interfaces/synthetixV3/IVaultModule.sol";
+import {IERC721Enumerable} from "../../../interfaces/IERC721Enumerable.sol";
+import {IHasAssetInfo} from "../../../interfaces/IHasAssetInfo.sol";
+import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
+import {IPoolFactory} from "../../../interfaces/IPoolFactory.sol";
+import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
+import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";
+import {SynthetixV3Structs} from "../../../utils/synthetixV3/libraries/SynthetixV3Structs.sol";
+import {WeeklyWindowsHelper} from "../../../utils/synthetixV3/libraries/WeeklyWindowsHelper.sol";
+import {DhedgeNftTrackerStorage} from "../../../utils/tracker/DhedgeNftTrackerStorage.sol";
+import {PrecisionHelper} from "../../../utils/PrecisionHelper.sol";
+import {TxDataUtils} from "../../../utils/TxDataUtils.sol";
 
 contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransactionTypes, IERC721VerifyingGuard {
   using Math for uint256;
@@ -48,6 +49,7 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
   using SafeCast for uint256;
   using WeeklyWindowsHelper for SynthetixV3Structs.Window;
   using WeeklyWindowsHelper for SynthetixV3Structs.WeeklyWindows;
+  using PrecisionHelper for address;
 
   /// @dev Hardcoded limit of Synthetix V3 NFT account per pool
   uint256 public constant MAX_ACCOUNT_LIMIT = 1;
@@ -125,24 +127,26 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
   }
 
   /// @notice Helper function to calculate withdrawal limit
-  /// @param _totalCollateral Total collateral deposited
+  /// @param _totalCollateralD18 Total collateral deposited, denominated with 18 decimals of precision
   /// @param _collateralType Collateral asset address
   /// @param _poolManagerLogic Pool manager logic address
-  /// @return limit Amount of withdrawal limit
+  /// @return limitD18 Amount of withdrawal limit
   function calculateWithdrawalLimit(
-    uint256 _totalCollateral,
+    uint256 _totalCollateralD18,
     address _collateralType,
     IPoolManagerLogic _poolManagerLogic
-  ) public view returns (uint256 limit) {
-    // First calculate how much USD is percent limit
+  ) public view returns (uint256 limitD18) {
+    // Pass the amount, denominated with asset's native decimal representation
+    uint256 amountToPass = _totalCollateralD18.div(_collateralType.getPrecisionForConversion());
+    // Calculate how much USD is percent limit
     uint256 percentUsdLimit = _poolManagerLogic.assetValue(
       _collateralType,
-      _totalCollateral.mul(withdrawalLimit.percent).div(10 ** 18)
+      amountToPass.mul(withdrawalLimit.percent).div(10 ** 18)
     );
     // Pick the biggest one
     uint256 usdLimit = percentUsdLimit.max(withdrawalLimit.usdValue);
-    // Get the limit in collateral tokens
-    limit = usdLimit.mul(10 ** 18).div(IHasAssetInfo(_poolManagerLogic.factory()).getAssetPrice(_collateralType));
+    // Get the limit in collateral tokens, denominated with 18 decimals of precision
+    limitD18 = usdLimit.mul(10 ** 18).div(IHasAssetInfo(_poolManagerLogic.factory()).getAssetPrice(_collateralType));
   }
 
   /// @notice Transaction guard for Synthetix V3 Core
@@ -262,11 +266,10 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
         collateralType == vaultSetting.collateralAsset || collateralType == vaultSetting.debtAsset,
         "unsupported collateral type"
       );
-
-      require(
-        poolManagerLogicAssets.isSupportedAsset(IRewardDistributor(distributor).token()),
-        "unsupported reward asset"
-      );
+      address rewardToken = IRewardDistributor(distributor).token();
+      if (IHasAssetInfo(IPoolManagerLogic(_poolManagerLogic).factory()).isValidAsset(rewardToken)) {
+        require(poolManagerLogicAssets.isSupportedAsset(rewardToken), "unsupported reward asset");
+      }
 
       txType = uint16(TransactionType.SynthetixV3ClaimReward);
 
@@ -374,19 +377,19 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       // During undelegation window anyone is allowed to undelegate only
     } else if (windows.undelegationWindow.isWithinAllowedWindow(block.timestamp)) {
       // Total deposited = total available + total assigned
-      (uint256 totalDeposited, uint256 totalAssigned, ) = ICollateralModule(_to).getAccountCollateral(
+      (uint256 totalDepositedD18, uint256 totalAssignedD18, ) = ICollateralModule(_to).getAccountCollateral(
         accountId,
         collateralType
       );
       // Forbidden to delegate more during undelegation window
-      require(newCollateralAmountD18 < totalAssigned, "only undelegation allowed");
+      require(newCollateralAmountD18 < totalAssignedD18, "only undelegation allowed");
 
-      uint256 totalAvailable = totalDeposited.sub(totalAssigned);
-      uint256 amountToUndelegate = totalAssigned.sub(newCollateralAmountD18);
+      uint256 totalAvailableD18 = totalDepositedD18.sub(totalAssignedD18);
+      uint256 amountToUndelegateD18 = totalAssignedD18.sub(newCollateralAmountD18);
       // Can proceed only if total available for withdrawal + amount to be undelegated is less than withdrawal limit
       require(
-        totalAvailable.add(amountToUndelegate) <=
-          calculateWithdrawalLimit(totalDeposited, collateralType, IPoolManagerLogic(_poolManagerLogic)),
+        totalAvailableD18.add(amountToUndelegateD18) <=
+          calculateWithdrawalLimit(totalDepositedD18, collateralType, IPoolManagerLogic(_poolManagerLogic)),
         "undelegation limit breached"
       );
 

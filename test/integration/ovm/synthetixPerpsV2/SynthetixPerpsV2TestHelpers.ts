@@ -359,7 +359,7 @@ export const perpsV2TestHelpers: FuturesTestHelpers & PerpsV2Helper = {
     const timestamp = Number((Date.now() / 1000).toFixed(0));
     await ethers.provider.send("evm_mine", [timestamp]);
 
-    const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network"); // See Price Service endpoints section below for other endpoints
+    const connection = new EvmPriceServiceConnection("https://hermes.pyth.network"); // See Price Service endpoints section below for other endpoints
 
     const priceIds = [
       // You can find the ids of prices at https://pyth.network/developers/price-feed-ids

@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import "@nomicfoundation/hardhat-foundry";
 import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-waffle";
 import "@nomicfoundation/hardhat-verify";
@@ -104,25 +105,14 @@ export default {
       "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol": {
         version: "0.7.6",
       },
-      "contracts/test/SonneFinancePriceAggregatorMock.sol": {
-        version: "0.8.10",
-        settings: {
-          optimizer: {
-            enabled: false,
-          },
-        },
+      "contracts/test/WETH9.sol": {
+        version: "0.5.17",
       },
     },
   },
   mocha: {
     timeout: 0,
-    // Jake: During integration tests we sometimes get
-    // ProviderError: Errors encountered in param 1: Invalid value "0x02e5dda5c51be531e95b2e5b22389b23cd39a929c1a594052162ebe432d897e9" supplied to : QUANTITY
-    // Usually retrying the test works.
-    // Chinmay: If the tests fail and it turns out they are being run multiple times and the state being used
-    // is persistent, comment this out and re-run the tests. You will probably find the reason the
-    // tests were failing.
-    retries: process.env.TEST_RETRIES !== undefined ? process.env.TEST_RETRIES : 3,
+    retries: 0,
   },
   abiExporter: {
     path: "./abi",
@@ -137,7 +127,9 @@ export default {
       "DhedgeStakingV2",
       "DhedgeEasySwapper",
       "RewardDistribution",
+      "Governance",
       "contracts/swappers/poolTokenSwapper/PoolTokenSwapper",
+      "contracts/swappers/easySwapperV2/EasySwapperV2",
     ],
     except: ["contracts/interfaces", "contracts/test", "contracts/v2.4.1", "contracts/stakingv2/interfaces"],
     spacing: 2,

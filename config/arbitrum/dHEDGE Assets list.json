@@ -163,48 +163,6 @@
     }
   },
   {
-    "assetName": "Balancer wstETH-WETH Stable Pool",
-    "assetAddress": "0x36bf227d6bac96e2ab1ebb5492ecec69c691943f",
-    "assetType": "6",
-    "oracleType": "BalancerStablePoolAggregator",
-    "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
-    }
-  },
-  {
-    "assetName": "Balancer B-wstETH-WETH-Stable RewardGauge Deposit",
-    "assetAddress": "0x251e51b25afa40f2b6b9f05aaf1bc7eaa0551771",
-    "assetType": "10",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-    },
-    "specificContractGuardConfig": {
-      "contractGuard": "BalancerV2GaugeContractGuard"
-    }
-  },
-  {
-    "assetName": "Balancer 50wstETH-50USDC",
-    "assetAddress": "0x178e029173417b1f9c8bc16dcec6f697bc323746",
-    "assetType": "6",
-    "oracleType": "BalancerV2LPAggregator",
-    "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
-    }
-  },
-  {
-    "assetName": "Balancer 50WSTETH-50USDC RewardGauge Deposit",
-    "assetAddress": "0x9232ee56ab3167e2d77e491fba82babf963ccace",
-    "assetType": "10",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-    },
-    "specificContractGuardConfig": {
-      "contractGuard": "BalancerV2GaugeContractGuard"
-    }
-  },
-  {
     "assetName": "USDC Native",
     "assetAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
     "assetType": "4",
@@ -212,30 +170,6 @@
       "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
     },
     "oracleType": "ChainlinkAggregator"
-  },
-  {
-    "assetName": "Swell Ethereum",
-    "assetAddress": "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
-    "assetType": "0",
-    "oracleType": "RamsesTWAPAggregator",
-    "specificOracleConfig": {
-      "pair": "0xf1a5444a7ed5f24962a118512b076a015b0e6c0b",
-      "mainToken": "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
-      "pairToken": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
-      "pairTokenUsdAggregator": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
-    }
-  },
-  {
-    "assetName": "Ramses Variable USDC/swETH",
-    "assetAddress": "0xf1a5444a7ed5f24962a118512b076a015b0e6c0b",
-    "assetType": "20",
-    "oracleType": "RamsesVariableLPAggregator",
-    "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
-    },
-    "specificContractGuardConfig": {
-      "contractGuard": "RamsesGaugeContractGuard"
-    }
   },
   {
     "assetName": "ARB",
@@ -257,5 +191,102 @@
     "assetAddress": "0xad38255febd566809ae387d5be66ecd287947cb9",
     "assetType": "0",
     "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Synthetix V3 Position",
+    "assetAddress": "0xffffffaEff0B96Ea8e4f94b2253f31abdD875847",
+    "assetType": "103",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "sUSDC - Synthetic USD Coin",
+    "assetAddress": "0xE81Be4495f138FAE5846d21AC2cA822BEf452365",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "USDx",
+    "assetAddress": "0xb2F30A7C980f052f02563fb518dcc39e6bf38175",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    },
+    "oracleType": "USDPriceAggregator"
+  },
+  {
+    "assetName": "sgETH",
+    "assetAddress": "0xB2393C436a29edc40BA90b9944edB84466565E0c",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Wrapped OETH",
+    "assetAddress": "0xD8724322f44E5c58D7A815F542036fb17DbbF839",
+    "assetType": "0",
+    "oracleType": "ETHCrossAggregator",
+    "specificOracleConfig": {
+      "assetToEthChainlinkOracleAddress": "0x03a1f4b19aaeA6e68f0f104dc4346dA3E942cC45",
+      "ethToUsdChainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+    }
+  },
+  {
+    "assetName": "cWETHv3",
+    "assetAddress": "0x6f7D514bbD4aFf3BcD1140B7344b32f063dEe486",
+    "assetType": "28",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "CompoundV3CometContractGuard"
+    }
+  },
+  {
+    "assetName": "cUSDCv3",
+    "assetAddress": "0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf",
+    "assetType": "28",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "CompoundV3CometContractGuard"
+    }
+  },
+  {
+    "assetName": "Ramses CL NFT Position Manager",
+    "assetAddress": "0xAA277CB7914b7e5514946Da92cb9De332Ce610EF",
+    "assetType": "29",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "tBTC",
+    "assetAddress": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xE808488e8627F6531bA79a13A9E0271B39abEb1C"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "EasySwapperV2 Unrolled Assets",
+    "assetAddress": "0xA5679C4272A056Bb83f039961fae7D99C48529F5",
+    "assetType": "30",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
   }
 ]

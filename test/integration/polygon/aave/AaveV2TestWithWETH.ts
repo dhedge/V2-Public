@@ -32,15 +32,10 @@ describe("Aave Edge Test", function () {
   const iLendingPool = new ethers.utils.Interface(ILendingPool__factory.abi);
   const iSushiswapV2Router = new ethers.utils.Interface(IUniswapV2Router__factory.abi);
 
-  let snapId: string;
-
-  after(async () => {
-    await utils.evmRestoreSnap(snapId);
-  });
+  utils.beforeAfterReset(before, after);
 
   before(async function () {
     [logicOwner, manager] = await ethers.getSigners();
-    snapId = await utils.evmTakeSnap();
     await ethers.provider.send("evm_mine", []);
     const deployments = await deployContracts("polygon");
     poolFactory = deployments.poolFactory;
@@ -171,24 +166,24 @@ describe("Aave Edge Test", function () {
     // Withdraw 40%
     const withdrawAmount = (await poolLogicProxy.totalSupply()).mul(40).div(100);
 
-    const usdcBalanceBefore = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
-    const daiBalanceBefore = ethers.BigNumber.from(await DAI.balanceOf(logicOwner.address));
-    const totalFundValueBefore = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    const usdcBalanceBefore = await USDC.balanceOf(logicOwner.address);
+    const wethBalanceBefore = await WETH.balanceOf(logicOwner.address);
+    const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
     // Unapprove WETH in Sushiswap to test conditional approval logic
-    const approveABI = iERC20.encodeFunctionData("approve", [sushi.router, (0).toString()]);
+    const approveABI = iERC20.encodeFunctionData("approve", [sushi.router, 0]);
     await poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI);
 
-    await ethers.provider.send("evm_increaseTime", [86400]);
+    await utils.increaseTime(86400);
     await poolLogicProxy.withdraw(withdrawAmount);
 
-    const totalFundValueAfter = ethers.BigNumber.from(await poolManagerLogicProxy.totalFundValue());
+    const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
     checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(60).div(100));
-    const usdcBalanceAfter = ethers.BigNumber.from(await USDC.balanceOf(logicOwner.address));
-    const daiBalanceAfter = ethers.BigNumber.from(await DAI.balanceOf(logicOwner.address));
-    checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add((20e6).toString()));
-    checkAlmostSame(daiBalanceAfter, daiBalanceBefore.add((20e6).toString()));
+    const usdcBalanceAfter = await USDC.balanceOf(logicOwner.address);
+    const wethBalanceAfter = await WETH.balanceOf(logicOwner.address);
+    checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(units(40, 6)));
+    checkAlmostSame(wethBalanceAfter, wethBalanceBefore.add(units(40)));
   });
 
   it("Should be able to borrow more DAI", async () => {

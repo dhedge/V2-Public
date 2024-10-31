@@ -20,10 +20,16 @@
 // 22 = Flat Money's Collateral
 // 25 = Velodrome V2 LP/Gauge Asset
 // 26 = Velodrome CL Position Asset
+// 27 = Flat Money's Leverage Asset
+// 28 = Compound V3 Comet Asset
+// 29 = Ramses CL Position Asset
+// 30 = EasySwapperV2 Unrolled Assets
 // 100 = Lyra OptionMarketWrapper Asset
 // 101 = Synthetix Futures Perps v1
 // 102 = Synthetix Futures Perps v2
 // 103 = Synthetix V3 Position Asset
+// 104 = Synthetix V3 Perps Position Asset
+// 200 - Reward Asset (which is linked to other asset types)
 // 999 = Deprecated Asset
 
 // SPDX-License-Identifier: BUSL-1.1

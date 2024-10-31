@@ -1055,5 +1055,14 @@
       "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
     },
     "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "EasySwapperV2 Unrolled Assets",
+    "assetAddress": "0x45b90480D6F643dE2f128db091A357C3c90399f2",
+    "assetType": "30",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+    }
   }
 ]

@@ -860,5 +860,37 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
         poolLogicProxy.connect(manager).execTransaction(uniswapV3.nonfungiblePositionManager, multicallABI),
       ).to.revertedWith("invalid multicall");
     });
+
+    it("shouldn't be able to deposit UniV3 position NFT to the pool", async () => {
+      // Mint Uniswap v3 LP
+      const token0 = bothSupportedPair.token0;
+      const token1 = bothSupportedPair.token1;
+      const fee = bothSupportedPair.fee;
+      const tick = await getCurrentTick(uniswapV3.factory, bothSupportedPair);
+      const tickSpacing = fee / 50;
+      const mintSettings: UniV3LpMintSettings = {
+        token0,
+        token1,
+        fee,
+        amount0: bothSupportedPair.amount0,
+        amount1: bothSupportedPair.amount1,
+        tickLower: tick - tickSpacing,
+        tickUpper: tick + tickSpacing,
+      };
+      await mintLpAsUser(nonfungiblePositionManager, manager, mintSettings);
+
+      // Make the NFT as a deposit asset.
+      await poolManagerLogicProxy
+        .connect(manager)
+        .changeAssets([{ asset: uniswapV3.nonfungiblePositionManager, isDeposit: true }], []);
+
+      const tokenId = await nonfungiblePositionManager.tokenOfOwnerByIndex(manager.address, 0);
+      await nonfungiblePositionManager.connect(manager).approve(poolLogicProxy.address, tokenId);
+
+      // Deposit the NFT to the pool.
+      await expect(
+        poolLogicProxy.connect(manager).deposit(uniswapV3.nonfungiblePositionManager, tokenId),
+      ).to.be.revertedWith("NFTs not supported");
+    });
   });
 };

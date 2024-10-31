@@ -19,11 +19,12 @@ import { utils } from "../../utils/utils";
 import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 import { SonneFinanceCTokenGuard } from "../../../../types/SonneFinanceCTokenGuard";
 import { SonneFinancePriceAggregator } from "../../../../types";
-import { parseUnits } from "@ethersproject/units";
 import { IERC20Extended } from "../../../../types/IERC20Extended";
 import { constants } from "ethers";
 import { IBackboneDeployments, deployBackboneContracts } from "../../utils/deployContracts/deployBackboneContracts";
 import { ovmChainData } from "../../../../config/chainData/ovmData";
+
+const parseUnits = ethers.utils.parseUnits;
 
 interface SonneToken {
   address: string;
@@ -150,10 +151,6 @@ export const testSonneFinance = ({ comptroller, weth, dai, usdc }: ISonneFinance
       const amount = units(10000, 6);
 
       let mintABI = icErc20.encodeFunctionData("mint", [amount]);
-
-      await expect(
-        poolLogicProxy.connect(manager).execTransaction(ethers.constants.AddressZero, mintABI),
-      ).to.be.revertedWith("non-zero address is required");
 
       await expect(poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, mintABI)).to.be.revertedWith(
         "invalid transaction",

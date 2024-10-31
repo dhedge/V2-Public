@@ -1,13 +1,13 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { addOrReplaceGuardInFile } from "../helpers";
-import { IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { IAddresses, IJob, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 
 export const aaveV2LendingPoolContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   versions: IVersions,
-  filenames: { contractGuardsFileName: string },
+  filenames: IFileNames,
   addresses: IAddresses,
 ) => {
   if (!addresses.aaveV2?.aaveLendingPoolAddress) {
@@ -41,7 +41,7 @@ export const aaveV2LendingPoolContractGuardJob: IJob<void> = async (
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
       setContractGuardABI,
-      "setContractGuard for aaveLendingPoolGuard",
+      "setContractGuard for Aave V2 Lending Pool",
       config,
       addresses,
     );

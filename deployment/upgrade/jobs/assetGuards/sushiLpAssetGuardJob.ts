@@ -6,7 +6,6 @@ import { addOrReplaceGuardInFile } from "../helpers";
 export const sushiLpAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { assetGuardsFileName: string },
   addresses: { sushiMiniChefV2Address?: string } & IProposeTxProperties,

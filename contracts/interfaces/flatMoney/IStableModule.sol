@@ -8,7 +8,8 @@ import {IFlatcoinVault} from "./IFlatcoinVault.sol";
 interface IStableModule is IERC20Extended {
   struct AnnouncedStableDeposit {
     uint256 depositAmount;
-    uint256 minAmountOut; // The minimum amount of tokens expected to receive back
+    uint256 minAmountOut;
+    address announcedBy;
   }
 
   function vault() external view returns (IFlatcoinVault vaultAddress);

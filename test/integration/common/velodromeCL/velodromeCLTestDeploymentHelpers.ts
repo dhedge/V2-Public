@@ -7,8 +7,6 @@ import {
   IVelodromeCLGauge__factory,
   DhedgeNftTrackerStorage,
   IERC721__factory,
-  VelodromeCLGaugeContractGuard,
-  AerodromeCLGaugeContractGuard,
 } from "../../../../types";
 import { BigNumber } from "ethers";
 import { assetSetting } from "../../utils/deployContracts/getChainAssets";
@@ -19,7 +17,6 @@ export type IVelodromeCLTestParams = IBackboneDeploymentsParams & {
   factory: string;
   protocolToken: string;
   VARIABLE_PROTOCOLTOKEN_USDC: { poolAddress: string; isStable: boolean; gaugeAddress: string };
-  isAerodrome?: boolean;
   pairs: {
     bothSupportedPair: {
       tickSpacing: number;
@@ -80,17 +77,9 @@ export const deployVelodromeCLInfrastructure = async (
     velodromeNonfungiblePositionGuard.address,
   );
 
-  // note: gaugeContractGuard is different on velodrome and aerodrome
-  let velodromeCLGaugeContractGuard: VelodromeCLGaugeContractGuard | AerodromeCLGaugeContractGuard;
-  if (testParams.isAerodrome) {
-    const AerodromeCLGaugeContractGuard = await ethers.getContractFactory("AerodromeCLGaugeContractGuard");
-    velodromeCLGaugeContractGuard = await AerodromeCLGaugeContractGuard.deploy();
-    await velodromeCLGaugeContractGuard.deployed();
-  } else {
-    const VelodromeCLGaugeContractGuard = await ethers.getContractFactory("VelodromeCLGaugeContractGuard");
-    velodromeCLGaugeContractGuard = await VelodromeCLGaugeContractGuard.deploy();
-    await velodromeCLGaugeContractGuard.deployed();
-  }
+  const VelodromeCLGaugeContractGuard = await ethers.getContractFactory("VelodromeCLGaugeContractGuard");
+  const velodromeCLGaugeContractGuard = await VelodromeCLGaugeContractGuard.deploy();
+  await velodromeCLGaugeContractGuard.deployed();
 
   await deployments.governance.setContractGuard(
     testParams.pairs.bothSupportedPair.gauge,
@@ -105,6 +94,18 @@ export const deployVelodromeCLInfrastructure = async (
     AssetType["Velodrome CL NFT Position Asset"],
     velodromeCLAssetGuard.address,
   );
+
+  const RewardAssetGuard = await ethers.getContractFactory("RewardAssetGuard");
+  const rewardAssetGuard = await RewardAssetGuard.deploy([
+    {
+      rewardToken: testParams.protocolToken,
+      linkedAssetTypes: [AssetType["Velodrome CL NFT Position Asset"]],
+      underlyingAssetType: 0,
+    },
+  ]);
+  await rewardAssetGuard.deployed();
+
+  await deployments.governance.setAssetGuard(AssetType["Reward Asset"], rewardAssetGuard.address);
 
   const nonfungiblePositionManager = await ethers.getContractAt(
     "IVelodromeNonfungiblePositionManager",
@@ -149,11 +150,7 @@ export const deployVelodromeCLInfrastructure = async (
       AssetType["Velodrome CL NFT Position Asset"],
       usdPriceAggregator.address,
     ),
-    assetSetting(
-      testParams.protocolToken,
-      AssetType["Chainlink direct USD price feed with 8 decimals"],
-      velodromeV2TwapAggregator.address,
-    ),
+    assetSetting(testParams.protocolToken, AssetType["Reward Asset"], velodromeV2TwapAggregator.address),
   ]);
   await deployments.assetHandler.setChainlinkTimeout(86400 * 365); // 365 days expiry
 

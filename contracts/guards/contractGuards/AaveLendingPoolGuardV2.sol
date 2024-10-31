@@ -105,12 +105,12 @@ contract AaveLendingPoolGuardV2 is TxDataUtils, IGuard {
 
       txType = _setUserUseReserveAsCollateral(factory, poolLogic, _poolManagerLogic, to, asset, useAsCollateral);
     } else if (method == bytes4(keccak256("borrow(address,uint256,uint256,uint16,address)"))) {
-      (address borrowAsset, uint256 amount, , , address onBehalfOf) = abi.decode(
+      (address borrowAsset, uint256 amount, uint256 rateMode, , address onBehalfOf) = abi.decode(
         getParams(data),
         (address, uint256, uint256, uint16, address)
       );
 
-      txType = _borrow(factory, poolLogic, _poolManagerLogic, to, borrowAsset, amount, onBehalfOf);
+      txType = _borrow(factory, poolLogic, _poolManagerLogic, to, borrowAsset, amount, rateMode, onBehalfOf);
     } else if (method == bytes4(keccak256("repay(address,uint256,uint256,address)"))) {
       (address repayAsset, uint256 amount, , address onBehalfOf) = abi.decode(
         getParams(data),
@@ -206,8 +206,11 @@ contract AaveLendingPoolGuardV2 is TxDataUtils, IGuard {
     address to,
     address borrowAsset,
     uint256 amount,
+    uint256 rateMode,
     address onBehalfOf
   ) internal virtual returns (uint16 txType) {
+    require(rateMode == 2, "only variable rate");
+
     require(
       IHasAssetInfo(factory).getAssetType(borrowAsset) == 4 || IHasAssetInfo(factory).getAssetType(borrowAsset) == 14,
       "not borrow enabled"
@@ -277,6 +280,8 @@ contract AaveLendingPoolGuardV2 is TxDataUtils, IGuard {
     address asset,
     uint256 rateMode
   ) internal returns (uint16 txType) {
+    require(rateMode == 1, "only variable rate"); // can swap only from stable to variable, not the other way around
+
     require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(asset), "unsupported asset");
 
     emit SwapBorrowRateMode(IPoolManagerLogic(poolManagerLogic).poolLogic(), asset, rateMode);

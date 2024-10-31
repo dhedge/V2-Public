@@ -190,6 +190,18 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
       (bool isValidTokenId, ) = _isValidOwnedTokenId(pool, param.tokenId);
       require(isValidTokenId, "position is not in track");
 
+      (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(
+        param.tokenId
+      );
+
+      UniswapV3PriceLibrary.assertFairPrice(
+        IPoolLogic(pool).factory(),
+        nonfungiblePositionManager.factory(),
+        token0,
+        token1,
+        fee
+      );
+
       emit IncreaseLiquidity(
         poolManagerLogic.poolLogic(),
         param.tokenId,

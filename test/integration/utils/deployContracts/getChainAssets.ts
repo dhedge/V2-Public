@@ -237,6 +237,7 @@ export const getChainAssets = async (poolFactory: PoolFactory, network: NETWORK)
       assetSetting(polygonChainData.assets.tusd, 0, polygonChainData.usdPriceFeeds.tusd),
       assetSetting(polygonChainData.aaveV2.lendingPool, 3, usdPriceAggregator.address),
       assetSetting(polygonChainData.assets.weth, 4, polygonChainData.usdPriceFeeds.eth),
+      assetSetting(polygonChainData.assets.wbtc, 4, polygonChainData.usdPriceFeeds.btc),
       assetSetting(polygonChainData.assets.dai, 4, polygonChainData.usdPriceFeeds.dai),
       assetSetting(polygonChainData.assets.link, 4, polygonChainData.usdPriceFeeds.link),
       assetSetting(polygonChainData.assets.usdc, 4, polygonChainData.usdPriceFeeds.usdc),

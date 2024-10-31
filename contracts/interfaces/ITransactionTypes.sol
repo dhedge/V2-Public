@@ -156,6 +156,26 @@ interface ITransactionTypes {
     VelodromeCLDecreaseLiquidity, // 67
     VelodromeCLBurn, // 68
     VelodromeCLCollect, // 69
-    VelodromeCLMulticall // 70
+    VelodromeCLMulticall, // 70
+    FlatMoneyLeverageOpen, // 71
+    FlatMoneyLeverageAdjust, // 72
+    FlatMoneyLeverageClose, // 73
+    SynthetixV3PerpsCreateAccount, // 74
+    SynthetixV3PerpsModifyCollateral, //75
+    SynthetixV3PerpsCommitOrder, //76
+    CompoundDeposit, // 77
+    CompoundWithdraw, // 78
+    CompoundClaimRewards, // 79
+    RamsesCLMint, // 80
+    RamsesCLIncreaseLiquidity, // 81
+    RamsesCLDecreaseLiquidity, // 82
+    RamsesCLBurn, // 83
+    RamsesCLCollect, // 84
+    RamsesCLMulticall, // 85
+    RamsesCLGetReward, // 86
+    EasySwapperV2Deposit, // 87
+    EasySwapperV2InitWithdraw, // 88
+    EasySwapperV2CompleteWithdrawSingle, // 89
+    EasySwapperV2CompleteWithdrawMultiple // 90
   }
 }

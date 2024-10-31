@@ -12,175 +12,133 @@
 //
 // Copyright (c) 2022 dHEDGE DAO
 //
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
-import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
+import {Path} from "@uniswap/v3-periphery/contracts/libraries/Path.sol";
 
-import "../../../utils/SlippageAccumulator.sol";
-import "../../../utils/TxDataUtils.sol";
-import "../../../interfaces/guards/IGuard.sol";
-import "../../../interfaces/IPoolManagerLogic.sol";
-import "../../../interfaces/IHasGuardInfo.sol";
-import "../../../interfaces/IManaged.sol";
-import "../../../interfaces/IHasSupportedAsset.sol";
-import "../../../interfaces/uniswapV3/IV3SwapRouter.sol";
-import "../../../interfaces/uniswapV3/IMulticallExtended.sol";
+import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
+import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
+import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";
+import {IV3SwapRouter} from "../../../interfaces/uniswapV3/IV3SwapRouter.sol";
+import {SlippageAccumulator, SlippageAccumulatorUser} from "../../../utils/SlippageAccumulatorUser.sol";
+import {TxDataUtils} from "../../../utils/TxDataUtils.sol";
 
-contract UniswapV3RouterGuard is TxDataUtils, IGuard {
+contract UniswapV3RouterGuard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUser {
   using Path for bytes;
-  using SafeMathUpgradeable for uint256;
 
-  SlippageAccumulator private immutable slippageAccumulator;
+  constructor(address _slippageAccumulator) SlippageAccumulatorUser(_slippageAccumulator) {}
 
-  constructor(address _slippageAccumulator) {
-    require(_slippageAccumulator != address(0), "Null address");
-
-    slippageAccumulator = SlippageAccumulator(_slippageAccumulator);
-  }
-
-  /// @notice Transaction guard for UniswavpV3SwapGuard
+  /// @notice Transaction guard for UniswapV3 Swap Router
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param _poolManagerLogic Pool address
+  /// @param poolManagerLogic Pool manager logic address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address _poolManagerLogic,
+    address poolManagerLogic,
     address to,
     bytes memory data
-  )
-    public
-    override
-    returns (
-      uint16 txType, // transaction type
-      bool // isPublic
-    )
-  {
-    bytes4 method = getMethod(data);
+  ) public override returns (uint16 txType, bool) {
+    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
-    address pool = poolManagerLogic.poolLogic();
+    require(msg.sender == poolLogic, "not pool logic");
+
+    bytes4 method = getMethod(data);
+    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogic);
 
     if (method == IV3SwapRouter.exactInput.selector) {
       IV3SwapRouter.ExactInputParams memory params = abi.decode(getParams(data), (IV3SwapRouter.ExactInputParams));
       (address srcAsset, address dstAsset) = _decodePath(params.path);
+
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
-      require(pool == params.recipient, "recipient is not pool");
+      require(poolLogic == params.recipient, "recipient is not pool");
 
-      slippageAccumulator.updateSlippageImpact(
-        SlippageAccumulator.SwapData(
-          srcAsset,
-          dstAsset,
-          params.amountIn,
-          params.amountOutMinimum,
-          to,
-          address(poolManagerLogic)
-        )
-      );
+      intermediateSwapData = SlippageAccumulator.SwapData({
+        srcAsset: srcAsset,
+        dstAsset: dstAsset,
+        srcAmount: _getBalance(srcAsset, poolLogic),
+        dstAmount: _getBalance(dstAsset, poolLogic)
+      });
 
-      emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
+      emit ExchangeFrom(poolLogic, srcAsset, params.amountIn, dstAsset, block.timestamp);
 
-      txType = 2; // 'Exchange' type
+      txType = uint16(TransactionType.Exchange);
     } else if (method == IV3SwapRouter.exactInputSingle.selector) {
       IV3SwapRouter.ExactInputSingleParams memory params = abi.decode(
         getParams(data),
         (IV3SwapRouter.ExactInputSingleParams)
       );
 
-      address srcAsset = params.tokenIn;
-      address dstAsset = params.tokenOut;
+      require(poolManagerLogicAssets.isSupportedAsset(params.tokenOut), "unsupported destination asset");
 
-      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+      require(poolLogic == params.recipient, "recipient is not pool");
 
-      require(pool == params.recipient, "recipient is not pool");
+      intermediateSwapData = SlippageAccumulator.SwapData({
+        srcAsset: params.tokenIn,
+        dstAsset: params.tokenOut,
+        srcAmount: _getBalance(params.tokenIn, poolLogic),
+        dstAmount: _getBalance(params.tokenOut, poolLogic)
+      });
 
-      slippageAccumulator.updateSlippageImpact(
-        SlippageAccumulator.SwapData(
-          srcAsset,
-          dstAsset,
-          params.amountIn,
-          params.amountOutMinimum,
-          to,
-          address(poolManagerLogic)
-        )
-      );
+      emit ExchangeFrom(poolLogic, params.tokenIn, params.amountIn, params.tokenOut, block.timestamp);
 
-      emit ExchangeFrom(pool, srcAsset, params.amountIn, dstAsset, block.timestamp);
-
-      txType = 2; // 'Exchange' type
+      txType = uint16(TransactionType.Exchange);
     } else if (method == IV3SwapRouter.exactOutput.selector) {
       IV3SwapRouter.ExactOutputParams memory params = abi.decode(getParams(data), (IV3SwapRouter.ExactOutputParams));
-
       (address dstAsset, address srcAsset) = _decodePath(params.path);
+
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
 
-      require(pool == params.recipient, "recipient is not pool");
+      require(poolLogic == params.recipient, "recipient is not pool");
 
-      slippageAccumulator.updateSlippageImpact(
-        SlippageAccumulator.SwapData(
-          srcAsset,
-          dstAsset,
-          params.amountInMaximum,
-          params.amountOut,
-          to,
-          address(poolManagerLogic)
-        )
-      );
+      intermediateSwapData = SlippageAccumulator.SwapData({
+        srcAsset: srcAsset,
+        dstAsset: dstAsset,
+        srcAmount: _getBalance(srcAsset, poolLogic),
+        dstAmount: _getBalance(dstAsset, poolLogic)
+      });
 
-      emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
+      emit ExchangeTo(poolLogic, srcAsset, dstAsset, params.amountOut, block.timestamp);
 
-      txType = 2; // 'Exchange' type
+      txType = uint16(TransactionType.Exchange);
     } else if (method == IV3SwapRouter.exactOutputSingle.selector) {
       IV3SwapRouter.ExactOutputSingleParams memory params = abi.decode(
         getParams(data),
         (IV3SwapRouter.ExactOutputSingleParams)
       );
 
-      address srcAsset = params.tokenIn;
-      address dstAsset = params.tokenOut;
+      require(poolManagerLogicAssets.isSupportedAsset(params.tokenOut), "unsupported destination asset");
 
-      require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
+      require(poolLogic == params.recipient, "recipient is not pool");
 
-      require(pool == params.recipient, "recipient is not pool");
+      intermediateSwapData = SlippageAccumulator.SwapData({
+        srcAsset: params.tokenIn,
+        dstAsset: params.tokenOut,
+        srcAmount: _getBalance(params.tokenIn, poolLogic),
+        dstAmount: _getBalance(params.tokenOut, poolLogic)
+      });
 
-      slippageAccumulator.updateSlippageImpact(
-        SlippageAccumulator.SwapData(
-          srcAsset,
-          dstAsset,
-          params.amountInMaximum,
-          params.amountOut,
-          to,
-          address(poolManagerLogic)
-        )
-      );
+      emit ExchangeTo(poolLogic, params.tokenIn, params.tokenOut, params.amountOut, block.timestamp);
 
-      emit ExchangeTo(pool, srcAsset, dstAsset, params.amountOut, block.timestamp);
-
-      txType = 2; // 'Exchange' type
+      txType = uint16(TransactionType.Exchange);
     } else if (method == bytes4(keccak256("multicall(uint256,bytes[])"))) {
       // function selector doesn't work because of multiple 'multicall' functions
       (, bytes[] memory transactions) = abi.decode(getParams(data), (uint256, bytes[]));
 
-      for (uint256 i = 0; i < transactions.length; i++) {
-        (txType, ) = txGuard(_poolManagerLogic, to, transactions[i]);
+      // allow only one swap tx in multicall so that slippage can be calculated correctly
+      require(transactions.length == 1, "invalid multicall");
+
+      for (uint256 i; i < transactions.length; ++i) {
+        (txType, ) = txGuard(poolManagerLogic, to, transactions[i]);
         require(txType > 0, "invalid transaction");
       }
 
-      txType = 25; // 'Multicall' type
+      txType = uint16(TransactionType.UniswapV3Multicall);
     }
-
-    // Given that there are no return statements above, this tx guard is not used for a public function (callable by anyone).
-    // Make sure that it's the `poolLogic` contract of the `poolManagerLogic` which initiates the check on the tx.
-    // Else, anyone can increase the slippage impact (updated by the call to SlippageAccumulator).
-    // We can trust the poolLogic since it contains check to ensure the caller is authorised.
-    require(IPoolManagerLogic(_poolManagerLogic).poolLogic() == msg.sender, "Caller not authorised");
 
     return (txType, false);
   }

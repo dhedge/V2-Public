@@ -8,7 +8,6 @@ const MAX_NUMBER_LP_POSITIONS = 3;
 export const uniswapV3NonFungiblePositionGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: IFileNames,
   addresses: IAddresses,

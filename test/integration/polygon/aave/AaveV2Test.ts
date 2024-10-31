@@ -2,7 +2,6 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { checkAlmostSame, units } from "../../../testHelpers";
 import { polygonChainData } from "../../../../config/chainData/polygonData";
-const { ZERO_ADDRESS, sushi, aaveV2, assets, assetsBalanceOfSlot } = polygonChainData;
 import {
   IAaveIncentivesController__factory,
   IERC20,
@@ -18,6 +17,8 @@ import { getAccountToken } from "../../utils/getAccountTokens";
 import { deployContracts, IDeployments } from "../../utils/deployContracts/deployContracts";
 import { BigNumber } from "ethers";
 import { utils } from "../../utils/utils";
+
+const { sushi, aaveV2, assets, assetsBalanceOfSlot } = polygonChainData;
 
 describe("Aave Test", function () {
   let USDC: IERC20, DAI: IERC20, AMUSDC: IERC20, WMATIC: IERC20;
@@ -102,10 +103,6 @@ describe("Aave Test", function () {
 
     let depositABI = iLendingPool.encodeFunctionData("deposit", [assets.usdc, amount, poolLogicProxy.address, 0]);
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, depositABI)).to.be.revertedWith(
-      "non-zero address is required",
-    );
-
     await expect(
       poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, depositABI),
     ).to.be.revertedWith("invalid transaction");
@@ -180,10 +177,6 @@ describe("Aave Test", function () {
       const amount = (50e6).toString();
 
       let withdrawABI = iLendingPool.encodeFunctionData("withdraw", [assets.usdc, amount, poolLogicProxy.address]);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, withdrawABI)).to.be.revertedWith(
-        "non-zero address is required",
-      );
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, withdrawABI),
@@ -273,10 +266,6 @@ describe("Aave Test", function () {
       const amount = units(25).toString();
 
       let borrowABI = iLendingPool.encodeFunctionData("borrow", [assets.dai, amount, 2, 0, poolLogicProxy.address]);
-
-      await expect(poolLogicProxy.connect(manager).execTransaction(ZERO_ADDRESS, borrowABI)).to.be.revertedWith(
-        "non-zero address is required",
-      );
 
       await expect(
         poolLogicProxy.connect(manager).execTransaction(poolLogicProxy.address, borrowABI),
@@ -419,7 +408,7 @@ describe("Aave Test", function () {
         swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [assets.dai, 2]);
         await expect(
           poolLogicProxy.connect(manager).execTransaction(aaveV2.lendingPool, swapRateABI),
-        ).to.be.revertedWith("12");
+        ).to.be.revertedWith("only variable rate");
       });
 
       it("should be able to rebalance stable borrow rate", async function () {

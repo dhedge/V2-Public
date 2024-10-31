@@ -3,13 +3,9 @@ import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { addOrReplaceGuardInFile } from "../helpers";
 import { IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
-/***
- * Deploys and sets the ArrakisV1RouterStakingGuard
- */
 export const arrakisV1RouterStakingContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { contractGuardsFileName: string },
   addresses: IAddresses,

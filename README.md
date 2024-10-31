@@ -1,6 +1,6 @@
 # dHEDGE
 
-dHEDGE is all-in-one destination for managing vaults on Optimism, Base, Arbitrum and Polygon. Put your capital to work with confidence in various strategies backed by a transparent track record.
+dHEDGE is all-in-one destination for managing vaults on Polygon, Optimism, Arbitrum and Base. Put your capital to work with confidence in various strategies backed by a transparent track record.
 
 - 🔒 **Non-custodial**: Users retain ownership over their funds. Vault managers can't make off with deposited money.
 

@@ -48,7 +48,6 @@ export const setupGaugeContractGuardTestBefore = async (
     [
       { asset: bothSupportedPair.token0, isDeposit: true },
       { asset: bothSupportedPair.token1, isDeposit: true },
-      { asset: PROTOCOL_TOKEN.address, isDeposit: false },
     ],
     {
       performance: BigNumber.from("0"),

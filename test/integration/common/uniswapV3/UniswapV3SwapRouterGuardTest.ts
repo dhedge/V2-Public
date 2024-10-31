@@ -9,6 +9,7 @@ import {
   PoolFactory,
   PoolLogic,
   PoolManagerLogic,
+  MockContract,
 } from "../../../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { createFund } from "../../utils/createFund";
@@ -18,7 +19,6 @@ import { deployContracts, IDeployments, NETWORK } from "../../utils/deployContra
 import { getMinAmountOut } from "../../utils/getMinAmountOut";
 import { utils } from "../../utils/utils";
 import { encodePath, FeeAmount } from "../../utils/uniswap";
-import { MockContract } from "@defi-wonderland/smock";
 
 interface IUniswapV3SwapRouterGuardTestParameter {
   network: NETWORK;
@@ -207,7 +207,9 @@ export const uniswapV3SwapRouterGuardTest = (params: IUniswapV3SwapRouterGuardTe
     });
 
     it("should revert in case of high cumulative slippage impact", async () => {
-      const minAmountOut = await getMinAmountOut(deployments.assetHandler, pair.amount0, pair.token0, pair.token1, 98);
+      await deployments.slippageAccumulator.setMaxCumulativeSlippage(1e2); // 0.01%
+
+      const minAmountOut = await getMinAmountOut(deployments.assetHandler, pair.amount0, pair.token0, pair.token1);
 
       const exactInputSingleCalldata = IV3SwapRouter.encodeFunctionData("exactInputSingle", [
         [
@@ -221,15 +223,15 @@ export const uniswapV3SwapRouterGuardTest = (params: IUniswapV3SwapRouterGuardTe
         ],
       ]);
 
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
       await expect(
         poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata),
       ).to.be.revertedWith("slippage impact exceeded");
     });
 
     it("should not revert 6 hours (decay time) after high slippage accumulation", async () => {
-      const minAmountOut = await getMinAmountOut(deployments.assetHandler, pair.amount0, pair.token0, pair.token1, 98);
+      await deployments.slippageAccumulator.setMaxCumulativeSlippage(1e3); // 0.1%
+
+      const minAmountOut = await getMinAmountOut(deployments.assetHandler, pair.amount0, pair.token0, pair.token1);
 
       const exactInputSingleCalldata = IV3SwapRouter.encodeFunctionData("exactInputSingle", [
         [
@@ -243,7 +245,6 @@ export const uniswapV3SwapRouterGuardTest = (params: IUniswapV3SwapRouterGuardTe
         ],
       ]);
 
-      await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
       await poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata);
       await expect(
         poolLogicProxy.connect(manager).execTransaction(uniswapV3.router, exactInputSingleCalldata),
@@ -293,13 +294,13 @@ export const uniswapV3SwapRouterGuardTest = (params: IUniswapV3SwapRouterGuardTe
         deployments.uniswapV3RouterGuard
           .connect(anon)
           .txGuard(evilPoolManager.address, uniswapV3.router, exactInputSingleCalldata),
-      ).to.be.revertedWith("Caller not authorised");
+      ).to.be.revertedWith("not pool logic");
 
       await expect(
         deployments.uniswapV3RouterGuard
           .connect(anon)
           .txGuard(poolManagerLogicProxy.address, uniswapV3.router, exactInputSingleCalldata),
-      ).to.be.revertedWith("Caller not authorised");
+      ).to.be.revertedWith("not pool logic");
 
       expect(
         (await deployments.slippageAccumulator.managerData(poolManagerLogicProxy.address)).accumulatedSlippage,

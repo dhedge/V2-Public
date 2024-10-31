@@ -82,4 +82,9 @@ interface IAtomicOrderModule {
     uint256 minUsdAmount,
     address referrer
   ) external returns (uint256 usdAmountReceived, OrderFees memory fees);
+
+  /**
+   * @notice Returns the USD token associated with this synthetix core system
+   */
+  function getUsdToken() external view returns (address);
 }

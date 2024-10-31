@@ -1,8 +1,20 @@
 import { testAaveV3 } from "../../common/aaveV3/AaveV3Test";
+import { testAaveV3Multiple } from "../../common/aaveV3/AaveV3TestMultiple";
 import { ovmChainData } from "../../../../config/chainData/ovmData";
 
-testAaveV3({
+const testParams = {
   ...ovmChainData,
   ...ovmChainData.aaveV3,
-  rewardToken: ovmChainData.assets.op,
-});
+  usdPriceFeeds: {
+    ...ovmChainData.usdPriceFeeds,
+    borrowAsset: ovmChainData.usdPriceFeeds.dai,
+  },
+  assetsBalanceOfSlot: {
+    ...ovmChainData.assetsBalanceOfSlot,
+    borrowAsset: ovmChainData.assetsBalanceOfSlot.dai,
+  },
+  borrowAsset: ovmChainData.assets.dai,
+};
+
+testAaveV3(testParams);
+testAaveV3Multiple(testParams);

@@ -5,6 +5,9 @@ interface IVelodromeCLGauge {
   /// @notice NonfungiblePositionManager used to create nfts this gauge accepts
   function nft() external view returns (address);
 
+  /// @notice Voter contract gauge receives emissions from
+  function voter() external view returns (address);
+
   /// @notice Address of the emissions token
   function rewardToken() external view returns (address);
 

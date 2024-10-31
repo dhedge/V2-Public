@@ -2,13 +2,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../../deploymentHelpers";
 import { IJob, IUpgradeConfig, IVersions } from "../../../types";
 
-/***
- * Deploys the BalancerV2GaugeContractGuard
- */
 export const balancerV2GaugeContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
 ) => {
   const ethers = hre.ethers;

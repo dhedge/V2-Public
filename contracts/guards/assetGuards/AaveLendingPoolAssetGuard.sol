@@ -1,3 +1,4 @@
+//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -10,49 +11,41 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2021 dHEDGE DAO
+// Copyright (c) 2024 dHEDGE DAO
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "./ERC20Guard.sol";
-import "../../interfaces/IERC20Extended.sol";
-import "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
-import "../../interfaces/guards/ISlippageCheckingGuard.sol";
-import "../../interfaces/aave/IAaveProtocolDataProvider.sol";
-import "../../interfaces/IHasAssetInfo.sol";
-import "../../interfaces/IHasSupportedAsset.sol";
-import "../../interfaces/IPoolLogic.sol";
-import "../../interfaces/IHasGuardInfo.sol";
-import "../../interfaces/uniswapV2/IUniswapV2Router.sol";
+import {IAaveProtocolDataProvider} from "../../interfaces/aave/IAaveProtocolDataProvider.sol";
+import {IAaveLendingPoolAssetGuard} from "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import {ISlippageCheckingGuard} from "../../interfaces/guards/ISlippageCheckingGuard.sol";
+import {IERC20Extended} from "../../interfaces/IERC20Extended.sol";
+import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
+import {IHasGuardInfo} from "../../interfaces/IHasGuardInfo.sol";
+import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
+import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
+import {ClosedAssetGuard} from "./ClosedAssetGuard.sol";
 
 /// @title Aave lending pool asset guard
-/// @dev Asset type = 3 : v2
-/// @dev Asset type = 8 : v3
-contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard, ISlippageCheckingGuard {
-  using SafeMathUpgradeable for uint256;
+/// @dev Asset type 3 is for v2
+///      Asset type 8 is for v3
+contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGuard, ISlippageCheckingGuard {
+  using SafeMath for uint256;
+
+  struct AssetInAave {
+    address asset;
+    uint256 amount;
+  }
+
+  struct RepayData {
+    address asset;
+    uint256 amount;
+    uint256 premium;
+  }
 
   bool public override isSlippageCheckingGuard = true;
 
@@ -63,8 +56,7 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard, IS
   /// @param _aaveProtocolDataProvider Aave protocol data provider address
   /// @param _aaveLendingPool Aave lending pool address
   constructor(address _aaveProtocolDataProvider, address _aaveLendingPool) {
-    require(_aaveProtocolDataProvider != address(0), "invalid address");
-    require(_aaveLendingPool != address(0), "invalid address");
+    require(_aaveProtocolDataProvider != address(0) && _aaveLendingPool != address(0), "invalid address");
 
     aaveProtocolDataProvider = IAaveProtocolDataProvider(_aaveProtocolDataProvider);
     aaveLendingPool = _aaveLendingPool;
@@ -72,28 +64,129 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard, IS
 
   /// @notice Returns the pool position of Aave lending pool
   /// @dev Returns the balance priced in USD
-  /// @param pool The pool logic address
+  /// @param _pool The pool logic address
   /// @return balance The total balance of the pool
-  function getBalance(address pool, address) public view override returns (uint256 balance) {
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
-    IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
+  function getBalance(address _pool, address) public view override returns (uint256 balance) {
+    (uint256 totalCollateralInUsd, uint256 totalDebtInUsd) = _getBalance(_pool);
+
+    if (totalCollateralInUsd > totalDebtInUsd) {
+      balance = totalCollateralInUsd.sub(totalDebtInUsd);
+    }
+  }
+
+  /// @notice Returns decimals of the Aave lending pool asset
+  /// @return decimals The decimals of the asset
+  function getDecimals(address) external pure override returns (uint256 decimals) {
+    decimals = 18;
+  }
+
+  /// @notice Creates transaction data for withdrawing tokens
+  /// @param _pool The pool logic address
+  /// @param _portion The portion of asset to be withdrawn
+  /// @param _to The recipient address
+  /// @return withdrawAsset and
+  /// @return withdrawBalance are used to withdraw portion of asset balance to depositor
+  /// @return transactions are used to execute the withdrawal transaction in PoolLogic
+  function withdrawProcessing(
+    address _pool,
+    address,
+    uint256 _portion,
+    address _to
+  )
+    external
+    view
+    override
+    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
+  {
+    AssetInAave memory borrowAsset = _calculateBorrowAsset(_pool, _portion);
+
+    if (borrowAsset.asset == address(0)) {
+      transactions = _withdrawAndTransfer(_pool, _to, _portion);
+      // There is no asset to withdraw as the above executes the withdraw to the withdrawer(_to)
+      return (address(0), 0, transactions);
+    }
+
+    // Changing the withdraw asset to borrow asset as this is the asset used for the remaining after flashloan repay
+    withdrawAsset = borrowAsset.asset;
+    // This adds a transaction that will initiate the flashloan flow from aave,
+    // Aave will callback the higher level PoolLogic.executeOperation
+    transactions = _prepareFlashLoan(_pool, _portion, borrowAsset);
+    return (withdrawAsset, 0, transactions);
+  }
+
+  /// @notice Checks that asset can be removed from supported pool assets
+  /// @dev Should not be abled to remove if pool has any collateral or debt in aave
+  ///      This mitigates issue discovered by sherlock, that in theory when totalCollateralInUsd equals totalDebtInUsd,
+  ///      aave position balance will be 0 and aave position asset could be removed, which should not happen
+  /// @param _pool The pool logic address
+  function removeAssetCheck(address _pool, address) public view override {
+    (uint256 totalCollateralInUsd, uint256 totalDebtInUsd) = _getBalance(_pool);
+
+    require(totalCollateralInUsd == 0 && totalDebtInUsd == 0, "cannot remove non-empty asset");
+  }
+
+  /// @notice process flash loan and return the transactions for execution
+  /// @param _pool The pool logic address
+  /// @param _repayAsset Asset to be repaid
+  /// @param _repayAmount Amounts to be repaid
+  /// @param _premium Premium to be paid for flash loan
+  /// @param _params Arbitrary bytes-encoded params that will be passed to executeOperation() method of the receiver contract
+  /// @return transactions Array of transactions to be executed
+  function flashloanProcessing(
+    address _pool,
+    address _repayAsset,
+    uint256 _repayAmount,
+    uint256 _premium,
+    bytes calldata _params
+  ) external view virtual override returns (MultiTransaction[] memory transactions) {
+    uint256 portion = abi.decode(_params, (uint256));
+    RepayData memory repayData = RepayData({asset: _repayAsset, amount: _repayAmount, premium: _premium});
+
+    // At this stage we have the flashloan
+    // Repay the debt with the flashloan
+    // This will unlock our portion of the collateral
+    MultiTransaction[] memory repayDebtTransactions = _repayDebtTransactions(_pool, repayData);
+
+    // Withdraw our collateral from aave and swap everything to repay asset
+    MultiTransaction[] memory withdrawCollateralTransactions = _withdrawCollateralTransactions(
+      _pool,
+      portion,
+      IHasGuardInfo(IPoolLogic(_pool).factory()).getAddress("swapRouter"),
+      repayData.asset
+    );
+
+    transactions = new MultiTransaction[](repayDebtTransactions.length + withdrawCollateralTransactions.length);
+
+    uint256 i;
+    uint256 txCount;
+    for (i = 0; i < repayDebtTransactions.length; i++) {
+      transactions[txCount].to = repayDebtTransactions[i].to;
+      transactions[txCount].txData = repayDebtTransactions[i].txData;
+      txCount++;
+    }
+    for (i = 0; i < withdrawCollateralTransactions.length; i++) {
+      transactions[txCount].to = withdrawCollateralTransactions[i].to;
+      transactions[txCount].txData = withdrawCollateralTransactions[i].txData;
+      txCount++;
+    }
+  }
+
+  function _getBalance(address _pool) internal view returns (uint256 totalCollateralInUsd, uint256 totalDebtInUsd) {
+    (IHasSupportedAsset.Asset[] memory supportedAssets, uint256 length) = _getPoolSupportedAssets(_pool);
 
     address asset;
     uint256 decimals;
     uint256 tokenPriceInUsd;
     uint256 collateralBalance;
     uint256 debtBalance;
-    uint256 totalCollateralInUsd;
-    uint256 totalDebtInUsd;
-    address factory = IPoolLogic(pool).factory();
+    address factory = IPoolLogic(_pool).factory();
 
-    uint256 length = supportedAssets.length;
-    for (uint256 i = 0; i < length; i++) {
+    for (uint256 i; i < length; ++i) {
       asset = supportedAssets[i].asset;
 
       // Lending/Borrowing enabled asset
       if (IHasAssetInfo(factory).getAssetType(asset) == 4 || IHasAssetInfo(factory).getAssetType(asset) == 14) {
-        (collateralBalance, debtBalance, decimals) = _calculateAaveBalance(pool, asset);
+        (collateralBalance, debtBalance, decimals) = _calculateAaveBalance(_pool, asset);
 
         if (collateralBalance != 0 || debtBalance != 0) {
           tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(asset);
@@ -102,475 +195,231 @@ contract AaveLendingPoolAssetGuard is ERC20Guard, IAaveLendingPoolAssetGuard, IS
         }
       }
     }
-
-    balance = totalCollateralInUsd.sub(totalDebtInUsd);
   }
 
-  /// @notice Returns decimal of the Aave lending pool asset
-  /// @dev Returns decimal 18
-  function getDecimals(address) external pure override returns (uint256 decimals) {
-    decimals = 18;
+  function _calculateAaveBalance(
+    address _pool,
+    address _asset
+  ) internal view returns (uint256 collateralBalance, uint256 debtBalance, uint256 decimals) {
+    (address aToken, address variableDebtToken) = _getReserveTokensAddresses(_asset);
+    if (aToken != address(0)) {
+      collateralBalance = IERC20Extended(aToken).balanceOf(_pool);
+      debtBalance = IERC20Extended(variableDebtToken).balanceOf(_pool);
+    }
+
+    decimals = IERC20Extended(_asset).decimals();
   }
 
-  /// @notice Creates transaction data for withdrawing tokens
-  /// @dev Withdrawal processing is not applicable for this guard
-  /// @return withdrawAsset and
-  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
-  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
-  function withdrawProcessing(
-    address pool,
-    address,
-    uint256 portion,
-    address to
-  )
-    external
-    view
-    virtual
-    override
-    returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
-  {
-    (
-      address[] memory borrowAssets,
-      uint256[] memory borrowAmounts,
-      uint256[] memory interestRateModes
-    ) = _calculateBorrowAssets(pool, portion);
+  function _calculateCollateralAssets(
+    address _pool,
+    uint256 _portion
+  ) internal view returns (AssetInAave[] memory collateralAssets, uint256 length) {
+    (IHasSupportedAsset.Asset[] memory supportedAssets, uint256 supportedAssetsLength) = _getPoolSupportedAssets(_pool);
 
-    if (borrowAssets.length > 0) {
-      address factory = IPoolLogic(pool).factory();
-      // Changing the withdraw asset to WETH here as this is the asset used in `_repayFlashloanTransactions`
-      // for the remaining after flashloan replay.
-      withdrawAsset = IHasGuardInfo(factory).getAddress("weth");
-      // This adds a transaction that will initiate the flashloan flow from aave,
-      // Aave will callback the higher level PoolLogic.executeOperation
-      transactions = _prepareFlashLoan(pool, portion, borrowAssets, borrowAmounts, interestRateModes);
-      return (withdrawAsset, 0, transactions);
-    } else {
-      transactions = _withdrawAndTransfer(pool, to, portion);
-      // There is no asset to withdraw as the above executes the withdraw to the withdrawer(to)
-      return (address(0), 0, transactions);
+    collateralAssets = new AssetInAave[](supportedAssetsLength);
+
+    address aToken;
+    for (uint256 i; i < supportedAssetsLength; ++i) {
+      (aToken, ) = _getReserveTokensAddresses(supportedAssets[i].asset);
+
+      if (aToken != address(0)) {
+        collateralAssets[length].amount = IERC20Extended(aToken).balanceOf(_pool);
+        if (collateralAssets[length].amount != 0) {
+          collateralAssets[length].amount = collateralAssets[length].amount.mul(_portion).div(10 ** 18);
+          if (collateralAssets[length].amount == 0) continue; // sherlock issue: skip if the amount got rounded down to 0, which will cause revert
+          collateralAssets[length].asset = supportedAssets[i].asset;
+          length++;
+        }
+      }
+    }
+
+    // Reduce length the empty items
+    uint256 reduceLength = supportedAssetsLength.sub(length);
+    assembly {
+      mstore(collateralAssets, sub(mload(collateralAssets), reduceLength))
     }
   }
 
-  /// @notice Prepare flashlan transaction data
-  /// @param pool the PoolLogic address
-  /// @param borrowAssets the borrowed assets list
-  /// @param borrowAmounts the borrowed amount per each asset
-  /// @param interestRateModes the interest rate mode per each asset
-  /// @param portion the portion of assets to be withdrawn
-  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
+  function _calculateBorrowAsset(
+    address _pool,
+    uint256 _portion
+  ) internal view returns (AssetInAave memory borrowAsset) {
+    (IHasSupportedAsset.Asset[] memory supportedAssets, uint256 length) = _getPoolSupportedAssets(_pool);
+
+    address variableDebtToken;
+    for (uint256 i; i < length; ++i) {
+      // returns address(0) if it's not supported in aave
+      (, variableDebtToken) = _getReserveTokensAddresses(supportedAssets[i].asset);
+
+      if (variableDebtToken != address(0)) {
+        borrowAsset.amount = IERC20Extended(variableDebtToken).balanceOf(_pool);
+        if (borrowAsset.amount != 0) {
+          borrowAsset.amount = borrowAsset.amount.mul(_portion).div(10 ** 18);
+          if (borrowAsset.amount == 0) continue; // sherlock issue: skip if the amount got rounded down to 0, which will cause revert
+          borrowAsset.asset = supportedAssets[i].asset;
+          break;
+        }
+      }
+    }
+  }
+
+  function _getPoolSupportedAssets(
+    address _pool
+  ) internal view returns (IHasSupportedAsset.Asset[] memory supportedAssets, uint256 length) {
+    supportedAssets = IHasSupportedAsset(IPoolLogic(_pool).poolManagerLogic()).getSupportedAssets();
+    length = supportedAssets.length;
+  }
+
+  function _getReserveTokensAddresses(
+    address _asset
+  ) internal view returns (address aToken, address variableDebtToken) {
+    (aToken, , variableDebtToken) = aaveProtocolDataProvider.getReserveTokensAddresses(_asset);
+  }
+
   function _prepareFlashLoan(
-    address pool,
-    uint256 portion,
-    address[] memory borrowAssets,
-    uint256[] memory borrowAmounts,
-    uint256[] memory interestRateModes
+    address _pool,
+    uint256 _portion,
+    AssetInAave memory _borrowAsset
   ) internal view returns (MultiTransaction[] memory transactions) {
+    address[] memory borrowAssets = new address[](1);
+    borrowAssets[0] = _borrowAsset.asset;
+
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = _borrowAsset.amount;
+
+    uint256[] memory modes = new uint256[](1); // 0 mode - no debt
+
     transactions = new MultiTransaction[](1);
 
     transactions[0].to = aaveLendingPool;
-
-    bytes memory params = abi.encode(interestRateModes, portion);
-    uint256[] memory modes = new uint256[](borrowAssets.length);
     transactions[0].txData = abi.encodeWithSelector(
       bytes4(keccak256("flashLoan(address,address[],uint256[],uint256[],address,bytes,uint16)")),
-      pool, // receiverAddress
+      _pool, // receiverAddress
       borrowAssets,
-      borrowAmounts,
+      amounts,
       modes,
-      pool, // onBehalfOf
-      params,
+      _pool,
+      abi.encode(_portion), // arbitrary bytes-encoded params that will be passed to executeOperation() method of the receiver contract
       196 // referralCode
     );
   }
 
-  /// @notice Prepare withdraw/transfer transacton data
-  /// @param pool the PoolLogic address
-  /// @param to the recipient address
-  /// @param portion the portion of assets to be withdrawn
-  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
   function _withdrawAndTransfer(
-    address pool,
-    address to,
-    uint256 portion
+    address _pool,
+    address _to,
+    uint256 _portion
   ) internal view returns (MultiTransaction[] memory transactions) {
-    (address[] memory collateralAssets, uint256[] memory amounts) = _calculateCollateralAssets(pool, portion);
-    transactions = new MultiTransaction[](collateralAssets.length * 2);
+    (AssetInAave[] memory collateralAssets, uint256 collateralAssetsLength) = _calculateCollateralAssets(
+      _pool,
+      _portion
+    );
+    transactions = new MultiTransaction[](collateralAssetsLength * 2);
 
     uint256 txCount;
-    for (uint256 i = 0; i < collateralAssets.length; i++) {
+    for (uint256 i; i < collateralAssetsLength; ++i) {
       transactions[txCount].to = aaveLendingPool;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("withdraw(address,uint256,address)")),
-        collateralAssets[i], // receiverAddress
-        amounts[i],
-        pool // onBehalfOf
+        collateralAssets[i].asset,
+        collateralAssets[i].amount,
+        _pool // onBehalfOf
       );
       txCount++;
 
-      transactions[txCount].to = collateralAssets[i];
+      transactions[txCount].to = collateralAssets[i].asset;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("transfer(address,uint256)")),
-        to, // recipient
-        amounts[i]
+        _to, // recipient
+        collateralAssets[i].amount
       );
       txCount++;
     }
   }
 
-  /// @notice Calculates AToken/DebtToken balances
-  /// @param pool the PoolLogic address
-  /// @param asset the asset address
-  /// @return collateralBalance the AToken balance
-  /// @return debtBalance the DebtToken balance
-  /// @return decimals the asset decimals
-  function _calculateAaveBalance(
-    address pool,
-    address asset
-  ) internal view returns (uint256 collateralBalance, uint256 debtBalance, uint256 decimals) {
-    (address aToken, address stableDebtToken, address variableDebtToken) = aaveProtocolDataProvider
-      .getReserveTokensAddresses(asset);
-    if (aToken != address(0)) {
-      collateralBalance = IERC20(aToken).balanceOf(pool);
-      debtBalance = IERC20(stableDebtToken).balanceOf(pool).add(IERC20(variableDebtToken).balanceOf(pool));
-    }
-
-    decimals = IERC20Extended(asset).decimals();
-  }
-
-  /// @notice Calculates AToken balances
-  /// @param pool the PoolLogic address
-  /// @param portion the portion of assets to be withdrawn
-  /// @return collateralAssets the collateral assets list
-  /// @return amounts the asset balance per each collateral asset
-  function _calculateCollateralAssets(
-    address pool,
-    uint256 portion
-  ) internal view returns (address[] memory collateralAssets, uint256[] memory amounts) {
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
-    IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
-
-    uint256 length = supportedAssets.length;
-    collateralAssets = new address[](length);
-    amounts = new uint256[](length);
-
-    address aToken;
-    uint256 index;
-    for (uint256 i = 0; i < length; i++) {
-      (aToken, , ) = IAaveProtocolDataProvider(aaveProtocolDataProvider).getReserveTokensAddresses(
-        supportedAssets[i].asset
-      );
-
-      if (aToken != address(0)) {
-        amounts[index] = IERC20(aToken).balanceOf(pool);
-        if (amounts[index] != 0) {
-          collateralAssets[index] = supportedAssets[i].asset;
-          amounts[index] = amounts[index].mul(portion).div(10 ** 18);
-          index++;
-        }
-      }
-    }
-
-    // Reduce length the empty items
-    uint256 reduceLength = length.sub(index);
-    assembly {
-      mstore(collateralAssets, sub(mload(collateralAssets), reduceLength))
-      mstore(amounts, sub(mload(amounts), reduceLength))
-    }
-  }
-
-  /// @notice Calculates DebtToken balances
-  /// @param pool the PoolLogic address
-  /// @param portion the portion of assets to be withdrawn
-  /// @return borrowAssets the borrow assets list
-  /// @return amounts the asset balance per each borrow asset
-  /// @return interestRateModes the interest rate modes per each borrow asset
-  function _calculateBorrowAssets(
-    address pool,
-    uint256 portion
-  )
-    internal
-    view
-    returns (address[] memory borrowAssets, uint256[] memory amounts, uint256[] memory interestRateModes)
-  {
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic());
-    IHasSupportedAsset.Asset[] memory supportedAssets = poolManagerLogicAssets.getSupportedAssets();
-    uint256 length = supportedAssets.length;
-    borrowAssets = new address[](length);
-    amounts = new uint256[](length);
-    interestRateModes = new uint256[](length);
-
-    address stableDebtToken;
-    address variableDebtToken;
-    uint256 index;
-    for (uint256 i = 0; i < length; i++) {
-      // returns address(0) if it's not supported in aave
-      (, stableDebtToken, variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProvider)
-        .getReserveTokensAddresses(supportedAssets[i].asset);
-
-      if (stableDebtToken != address(0)) {
-        amounts[index] = IERC20(stableDebtToken).balanceOf(pool);
-        if (amounts[index] != 0) {
-          borrowAssets[index] = supportedAssets[i].asset;
-          amounts[index] = amounts[index].mul(portion).div(10 ** 18);
-          interestRateModes[index] = 1;
-          index++;
-          continue;
-        }
-      }
-
-      if (variableDebtToken != address(0)) {
-        amounts[index] = IERC20(variableDebtToken).balanceOf(pool);
-        if (amounts[index] != 0) {
-          borrowAssets[index] = supportedAssets[i].asset;
-          amounts[index] = amounts[index].mul(portion).div(10 ** 18);
-          interestRateModes[index] = 2;
-          index++;
-          continue;
-        }
-      }
-    }
-
-    // Reduce length the empty items
-    uint256 reduceLength = length.sub(index);
-    assembly {
-      mstore(borrowAssets, sub(mload(borrowAssets), reduceLength))
-      mstore(amounts, sub(mload(amounts), reduceLength))
-      mstore(interestRateModes, sub(mload(interestRateModes), reduceLength))
-    }
-  }
-
-  /// @notice process flash loan and return the transactions for execution
-  /// @param pool the PoolLogic address
-  /// @param portion the portion of assets to be withdrawn
-  /// @param repayAssets Array of assets to be repaid
-  /// @param repayAmounts Array of amounts to be repaid
-  /// @param premiums Array of premiums to be paid for flash loan
-  /// @param interestRateModes Array of interest rate modes of the debts
-  /// @return transactions Array of transactions to be executed
-  function flashloanProcessing(
-    address pool,
-    uint256 portion,
-    address[] memory repayAssets,
-    uint256[] memory repayAmounts,
-    uint256[] memory premiums,
-    uint256[] memory interestRateModes
-  ) external view virtual override returns (MultiTransaction[] memory transactions) {
-    address factory = IPoolLogic(pool).factory();
-    address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
-    address weth = IHasGuardInfo(factory).getAddress("weth");
-
-    // At this stage we have the flashloan.
-
-    // Repay the debt with out flashloans
-    // This will unlock our portion of the collateral
-    MultiTransaction[] memory aaveRepayTransactions = _repayAaveTransactions(
-      pool,
-      repayAssets,
-      repayAmounts,
-      interestRateModes
-    );
-    // Withdraw our collateral from aave and swap everything to weth
-    MultiTransaction[] memory aaveWithdrawTransactions = _withdrawAaveTransactions(pool, portion, swapRouter, weth);
-    // Swaps weth to the flashloaned amounts and approves aave to take back funds for loan
-    MultiTransaction[] memory flashloanWithdrawTransactions = _repayFlashloanTransactions(
-      pool,
-      swapRouter,
-      weth,
-      repayAssets,
-      repayAmounts,
-      premiums
-    );
-
-    transactions = new MultiTransaction[](
-      aaveRepayTransactions.length + aaveWithdrawTransactions.length + flashloanWithdrawTransactions.length
-    );
-
-    uint256 i;
-    uint256 txCount;
-    for (i = 0; i < aaveRepayTransactions.length; i++) {
-      transactions[txCount].to = aaveRepayTransactions[i].to;
-      transactions[txCount].txData = aaveRepayTransactions[i].txData;
-      txCount++;
-    }
-    for (i = 0; i < aaveWithdrawTransactions.length; i++) {
-      transactions[txCount].to = aaveWithdrawTransactions[i].to;
-      transactions[txCount].txData = aaveWithdrawTransactions[i].txData;
-      txCount++;
-    }
-    for (i = 0; i < flashloanWithdrawTransactions.length; i++) {
-      transactions[txCount].to = flashloanWithdrawTransactions[i].to;
-      transactions[txCount].txData = flashloanWithdrawTransactions[i].txData;
-      txCount++;
-    }
-  }
-
-  /// @notice calculate and return repay Aave transactions for execution
-  /// @param pool the PoolLogic address
-  /// @param repayAssets Array of assets to be repaid
-  /// @param repayAmounts Array of amounts to be repaid
-  /// @param interestRateModes Array of interest rate modes of the debts
-  /// @return transactions Array of transactions to be executed
-  function _repayAaveTransactions(
-    address pool,
-    address[] memory repayAssets,
-    uint256[] memory repayAmounts,
-    uint256[] memory interestRateModes
+  function _repayDebtTransactions(
+    address _pool,
+    RepayData memory _repayData
   ) internal view returns (MultiTransaction[] memory transactions) {
-    transactions = new MultiTransaction[](repayAssets.length * 2);
+    transactions = new MultiTransaction[](2);
 
-    uint256 txCount;
-    for (uint256 i = 0; i < repayAssets.length; i++) {
-      transactions[txCount].to = repayAssets[i];
-      transactions[txCount].txData = abi.encodeWithSelector(
-        bytes4(keccak256("approve(address,uint256)")),
-        aaveLendingPool,
-        repayAmounts[i]
-      );
-      txCount++;
+    // Repay amount is multiplied by 2, because approving lending pool contract happens single time here,
+    // but available allowance is required for transactions to repay debt (_repayDebtTransactions),
+    // as well as downstream during repaying flashloan which requires allowance for _repayData.amount + _repayData.premium
+    (bool result, uint256 newAllowance) = IERC20Extended(_repayData.asset).allowance(_pool, aaveLendingPool).tryAdd(
+      _repayData.amount.mul(2).add(_repayData.premium)
+    );
 
-      transactions[txCount].to = aaveLendingPool;
-      transactions[txCount].txData = abi.encodeWithSelector(
-        bytes4(keccak256("repay(address,uint256,uint256,address)")),
-        repayAssets[i],
-        repayAmounts[i],
-        interestRateModes[i],
-        pool // onBehalfOf
-      );
-      txCount++;
-    }
+    transactions[0].to = _repayData.asset;
+    transactions[0].txData = abi.encodeWithSelector(
+      bytes4(keccak256("approve(address,uint256)")),
+      aaveLendingPool,
+      result ? newAllowance : type(uint256).max
+    );
+
+    transactions[1].to = aaveLendingPool;
+    transactions[1].txData = abi.encodeWithSelector(
+      bytes4(keccak256("repay(address,uint256,uint256,address)")),
+      _repayData.asset,
+      _repayData.amount,
+      2, // Interest rate mode for variable borrowing
+      _pool // onBehalfOf
+    );
   }
 
-  // take flashloan for debt asset
-
-  /// @notice calculate and return withdraw Aave transactions for execution
-  /// @param pool the PoolLogic address
-  /// @param portion the portion of assets to be withdrawn
-  /// @param swapRouter the swapRouter address
-  /// @param weth the weth address to swap in the path
-  /// @return transactions Array of transactions to be executed
-  function _withdrawAaveTransactions(
-    address pool,
-    uint256 portion,
-    address swapRouter,
-    address weth
+  function _withdrawCollateralTransactions(
+    address _pool,
+    uint256 _portion,
+    address _swapRouter,
+    address _repayAsset
   ) internal view returns (MultiTransaction[] memory transactions) {
-    (address[] memory collateralAssets, uint256[] memory amounts) = _calculateCollateralAssets(pool, portion);
+    (AssetInAave[] memory collateralAssets, uint256 collateralAssetsLength) = _calculateCollateralAssets(
+      _pool,
+      _portion
+    );
 
-    // We have 3 transactions for each collateral asset.
+    // We have 3 transactions for each collateral asset:
     // 1. Withdraw collateral asset from aave
     // 2. Approve collateral asset for swap router
-    // 3. Swap collateral asset to WETH
-    uint256 length = collateralAssets.length.mul(3);
+    // 3. Swap collateral asset to repay asset
+    uint256 length = collateralAssetsLength.mul(3);
     transactions = new MultiTransaction[](length);
 
     address[] memory path = new address[](2);
-    path[1] = weth;
+    path[1] = _repayAsset;
 
     uint256 txCount;
-    for (uint256 i = 0; i < collateralAssets.length; i++) {
+    for (uint256 i; i < collateralAssetsLength; ++i) {
       transactions[txCount].to = aaveLendingPool;
       transactions[txCount].txData = abi.encodeWithSelector(
         bytes4(keccak256("withdraw(address,uint256,address)")),
-        collateralAssets[i],
-        amounts[i],
-        pool
+        collateralAssets[i].asset,
+        collateralAssets[i].amount,
+        _pool
       );
       txCount++;
 
-      if (collateralAssets[i] != weth) {
-        transactions[txCount].to = collateralAssets[i];
+      if (collateralAssets[i].asset != _repayAsset) {
+        transactions[txCount].to = collateralAssets[i].asset;
         transactions[txCount].txData = abi.encodeWithSelector(
           bytes4(keccak256("approve(address,uint256)")),
-          swapRouter,
-          amounts[i]
+          _swapRouter,
+          collateralAssets[i].amount
         );
         txCount++;
 
-        path[0] = collateralAssets[i];
-        transactions[txCount].to = swapRouter;
+        path[0] = collateralAssets[i].asset;
+        transactions[txCount].to = _swapRouter;
         transactions[txCount].txData = abi.encodeWithSelector(
           bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)")),
-          amounts[i],
+          collateralAssets[i].amount,
           0,
           path,
-          pool,
+          _pool,
           uint256(-1)
         );
         txCount++;
       }
     }
-
-    // Reduce length the empty items
-    uint256 reduceLength = length.sub(txCount);
-    assembly {
-      mstore(transactions, sub(mload(transactions), reduceLength))
-    }
-  }
-
-  /// @notice calculate and return repay flash loan transactions for execution
-  /// @param pool the PoolLogic address
-  /// @param swapRouter the swapRouter address
-  /// @param weth the weth address to swap in the path
-  /// @param repayAssets Array of assets to be repaid
-  /// @param repayAmounts Array of amounts to be repaid
-  /// @param premiums Array of premiums to be paid for flash loan
-  /// @return transactions Array of transactions to be executed
-  function _repayFlashloanTransactions(
-    address pool,
-    address swapRouter,
-    address weth,
-    address[] memory repayAssets,
-    uint256[] memory repayAmounts,
-    uint256[] memory premiums
-  ) internal view returns (MultiTransaction[] memory transactions) {
-    // 1. Approve WETH for swap router (maximum approve)
-    // 2. For each repay asset -> swap WETH to repay asset
-    // 3. For each repay asset -> approve repay asset for aave lending pool (for flashloan repay)
-    // 4. Approve WETH for swap router (zero amount)
-    uint256 length = repayAssets.length.mul(2).add(2);
-    transactions = new MultiTransaction[](length);
-
-    address[] memory path = new address[](2);
-    path[0] = weth;
-
-    uint256 txCount;
-    transactions[txCount].to = weth;
-    transactions[txCount].txData = abi.encodeWithSelector(
-      bytes4(keccak256("approve(address,uint256)")),
-      swapRouter,
-      uint256(-1)
-    );
-    txCount++;
-
-    for (uint256 i = 0; i < repayAssets.length; i++) {
-      uint256 amountOwing = repayAmounts[i].add(premiums[i]);
-
-      if (repayAssets[i] != weth) {
-        path[1] = repayAssets[i];
-        transactions[txCount].to = swapRouter;
-        transactions[txCount].txData = abi.encodeWithSelector(
-          bytes4(keccak256("swapTokensForExactTokens(uint256,uint256,address[],address,uint256)")),
-          amountOwing,
-          uint256(-1),
-          path,
-          pool,
-          uint256(-1)
-        );
-        txCount++;
-      }
-
-      transactions[txCount].to = repayAssets[i];
-      transactions[txCount].txData = abi.encodeWithSelector(
-        bytes4(keccak256("approve(address,uint256)")),
-        aaveLendingPool,
-        amountOwing
-      );
-      txCount++;
-    }
-
-    transactions[txCount].to = weth;
-    transactions[txCount].txData = abi.encodeWithSelector(bytes4(keccak256("approve(address,uint256)")), swapRouter, 0);
-    txCount++;
 
     // Reduce length the empty items
     uint256 reduceLength = length.sub(txCount);

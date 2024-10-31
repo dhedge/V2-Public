@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { addOrReplaceGuardInFile } from "../helpers";
-import { IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses } from "../../../types";
+import { IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses, Address } from "../../../types";
 
 export const oneInchV6ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -27,7 +27,12 @@ export const oneInchV6ContractGuardJob: IJob<void> = async (
     }
 
     const OneInchV6Guard = await ethers.getContractFactory("OneInchV6Guard");
-    const args: [string] = [slippageAccumulatorAddress];
+    const args: [Address, Address, Address, Address] = [
+      slippageAccumulatorAddress,
+      addresses.uniV2.factory,
+      addresses.uniV3.uniswapV3FactoryAddress,
+      addresses.quickswap?.uniV2Factory || ethers.constants.AddressZero,
+    ];
     const oneInchV6Guard = await OneInchV6Guard.deploy(...args);
     await oneInchV6Guard.deployed();
     const oneInchV6GuardAddress = oneInchV6Guard.address;

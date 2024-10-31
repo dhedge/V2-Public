@@ -38,7 +38,9 @@ export const getOneInchSwapTransaction = async ({
       headers: { Authorization: `Bearer ${process.env.ONE_INCH_API_KEY}` },
     });
     return data.tx.data;
-  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    console.log(error?.response?.data);
     throw new Error("Failed to get oneInch swap transaction data");
   }
 };

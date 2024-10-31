@@ -5,7 +5,6 @@ import { IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
 export const dhedgeOptionMarketWrapperForLyraJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   _filenames: { assetGuardsFileName: string },
   addresses: IAddresses,

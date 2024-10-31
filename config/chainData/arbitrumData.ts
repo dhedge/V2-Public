@@ -12,6 +12,16 @@ const assets = Object.freeze({
   sweth: "0xbc011A12Da28e8F0f528d9eE5E7039E22F91cf18",
   usdcNative: "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
   wbtc: "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
+  usdx: "0xb2F30A7C980f052f02563fb518dcc39e6bf38175", // Synthetix USD
+  arb: "0x912ce59144191c1204e64559fe8253a0e49e6548",
+  susdc: "0xE81Be4495f138FAE5846d21AC2cA822BEf452365", // Synthetix USDC
+  tbtc: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+  stbtc: "0xFA86aB03412Ab63Fea238d43D1E839c4F7A80232", // Synthetix tBTC
+  seth: "0x3Ec3FedA50b718b5A9ff387F93EeA7841D795B1E", // Synthetix ETH
+  susde: "0xE3eE09c200584228F7C45d50E12BcC3fb65c19Ca", // Synthetix USDe
+  usde: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+  swsol: "0x7301a8DBd293b85A06726aE12E433a829ba3B871", // Synthetix wSOL
+  wsol: "0xb74Da9FE2F96B9E0a5f4A3cf0b92dd2bEC617124", // Wormhole SOL
 });
 
 export const arbitrumChainData = Object.freeze({
@@ -32,6 +42,8 @@ export const arbitrumChainData = Object.freeze({
     dai: "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB",
     bal: "0xBE5eA816870D11239c543F84b71439511D70B94f",
     frax: "0x0809e3d38d1b4214958faf06d8b1b1a2b73f2ab8",
+    arb: "0xb2a824043730fe05f3da2efafa1cbbe83fa548d6",
+    wbtc: "0x6ce185860a4963106506C203335A2910413708e9",
   },
   ethPriceFeeds: {
     wsteth: "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
@@ -48,11 +60,18 @@ export const arbitrumChainData = Object.freeze({
     wbtc: 51,
     usdt: 51,
     dai: 2,
+    arb: 51,
+    tbtc: 51,
+    usde: 5,
   },
 
   v2Routers: ["0x1b02da8cb0d097eb8d57a175b88c7d8b47997506"], // SushiSwap V2 Router
 
   routeHints: [],
+
+  uniswapV2: {
+    factory: "0xf1D7CC64Fb4452F05c498126312eBE29f30Fbcf9",
+  },
 
   // https://docs.uniswap.org/contracts/v3/reference/deployments
   uniswapV3: {
@@ -66,16 +85,6 @@ export const arbitrumChainData = Object.freeze({
     lendingPool: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
     incentivesController: "0x929EC64c34a17401F460460D4B9390518E5B473e",
     protocolDataProvider: "0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654",
-    aTokens: {
-      usdc: "0x625E7708f30cA75bfd92586e17077590C60eb4cD",
-      usdt: "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
-      dai: "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE",
-      weth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
-    },
-    variableDebtTokens: {
-      dai: "0x8619d80FB0141ba7F184CbF22fd724116D9f7ffC",
-      weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
-    },
   },
 
   oneInch: {
@@ -120,12 +129,42 @@ export const arbitrumChainData = Object.freeze({
     },
   },
 
+  ramsesCL: {
+    nonfungiblePositionManager: "0xAA277CB7914b7e5514946Da92cb9De332Ce610EF",
+    ramsesV2Factory: "0xAA2cd7477c451E703f3B9Ba5663334914763edF8",
+  },
+
   torosPools: {
     ETHBULL3X: "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
     BTCBULL3X: "0xad38255febd566809ae387d5be66ecd287947cb9",
+    sUSDy: "0xc3198eb5102fb3335c0e911ef1da4bc07e403dd1",
+    sARBy: "0xddd6b1f34e12c0230ab23cbd4514560b24438514",
+    sETHy: "0xe9b5260d99d283ff887859c569baf8ad1bd12aac",
+    ETHBULL2X: "0x696f6d66c2da2aa4a400a4317eec8da88f7a378c",
+    BTCBULL2X: "0xe3254397f5d9c0b69917ebb49b49e103367b406f",
+    ETHBEAR1X: "0x40d30b13666c55b1f41ee11645b5ea3ea2ca31f8",
+    BTCBEAR1X: "0x27d8fdb0251b48d8edd1ad7bedf553cf99abe7b0",
+    ETHy: "0x43DA9b0aB53242c55A9Ff9c722FfC2a373D639c7",
   },
 
   zeroEx: {
     exchangeProxy: "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+  },
+
+  synthetixV3: {
+    core: "0xffffffaEff0B96Ea8e4f94b2253f31abdD875847",
+    accountNFT: "0x0E429603D3Cb1DFae4E6F52Add5fE82d96d77Dac",
+    spotMarket: "0xa65538A6B9A8442854dEcB6E3F85782C60757D60",
+    perpsMarket: "0xd762960c31210Cf1bDf75b06A5192d395EEDC659",
+  },
+
+  compoundV3: {
+    cUSDCv3: "0x9c4ec768c28520b50860ea7a15bd7213a9ff58bf",
+    cWETHv3: "0x6f7D514bbD4aFf3BcD1140B7344b32f063dEe486",
+    rewards: "0x88730d254A2f7e6AC8388c3198aFd694bA9f7fae",
+  },
+
+  flatMoney: {
+    swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
   },
 });

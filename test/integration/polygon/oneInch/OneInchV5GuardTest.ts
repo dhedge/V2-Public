@@ -10,7 +10,7 @@ import { IDeployments, deployContracts } from "../../utils/deployContracts/deplo
 import { getOneInchSwapTransaction } from "../../utils/oneInchHelpers";
 import { utils } from "../../utils/utils";
 
-const { oneinch, assets, assetsBalanceOfSlot, ZERO_ADDRESS } = polygonChainData;
+const { oneinch, assets, assetsBalanceOfSlot } = polygonChainData;
 
 describe("OneInch Test", function () {
   let USDC: IERC20, USDT: IERC20;
@@ -58,7 +58,7 @@ describe("OneInch Test", function () {
   it("Should be able to approve", async () => {
     let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI)).to.be.revertedWith(
-      "asset not enabled in pool",
+      "asset disabled",
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
@@ -100,7 +100,7 @@ describe("OneInch Test", function () {
       dst,
       amount,
       from,
-      receiver: ZERO_ADDRESS,
+      receiver: ethers.constants.AddressZero,
       chainId: 137,
     });
 

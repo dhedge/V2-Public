@@ -7,7 +7,6 @@ import { IJob, INotSureGuard, IUpgradeConfig, IVersions } from "../../../types";
 export const openAssetContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   filenames: { externalAssetFileName?: string; governanceNamesFileName: string },
 ) => {

@@ -5,4 +5,6 @@ runOneInchV6GuardTest({
   ...arbitrumChainData,
   chainId: 42161,
   aggregationRouterV6: arbitrumChainData.oneInch.v6Router,
+  uniV2Factory: arbitrumChainData.uniswapV2.factory,
+  uniV3Factory: arbitrumChainData.uniswapV3.factory,
 });

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
-import { BigNumber, BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import {
@@ -50,7 +50,10 @@ const IAtomicOrderModule = new ethers.utils.Interface(IAtomicOrderModule__factor
 const IWrapperModule = new ethers.utils.Interface(IWrapperModule__factory.abi);
 const IRewardsManagerModule = new ethers.utils.Interface(IRewardsManagerModule__factory.abi);
 
+const getPrecisionForConversion = (decimals: number): number => 10 ** (18 - decimals);
+
 export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
+  network?: "base" | "arbitrum" | "ovm";
   systemAssets: {
     collateral: {
       address: string;
@@ -59,6 +62,7 @@ export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
       proxyTargetTokenState: string;
       ownerBalanceTotal: BigNumber;
       balanceToThePool: BigNumber;
+      decimals: number;
     };
     debt: {
       address: string;
@@ -69,6 +73,11 @@ export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
       usdPriceFeed: string;
       decimals: number;
     };
+    withdrawalAsset?: {
+      address: string;
+      usdPriceFeed: string;
+      decimals: number;
+    }; //For Perps Market Tets
     extraRewardTokens?: { address: string; usdPriceFeed: string }[]; // Add here tokens which were NOT already added in tests setup, eg SNX
   };
   allowedLiquidityPoolId: number;
@@ -81,6 +90,7 @@ export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
   mintingPositiveDebtForbidden: boolean;
   deployedNodeModule?: string;
   rewardDistributors?: string[];
+  synthetixV3PerpsMarket?: string;
 };
 
 export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
@@ -135,7 +145,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         .connect(manager)
         .execTransaction(synthetixV3CoreAddress, IAccountModule.encodeFunctionData("createAccount(uint128)", [id]));
 
-    const depositCollateral = async (accountId: number, collateralType: string, amount: BigNumberish) =>
+    const depositCollateral = async (accountId: number, collateralType: string, amount: BigNumber) =>
       await whitelistedPoolLogic
         .connect(manager)
         .execTransaction(
@@ -143,7 +153,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
           ICollateralModule.encodeFunctionData("deposit", [accountId, collateralType, amount]),
         );
 
-    const withdrawCollateral = async (accountId: number, collateralType: string, amount: BigNumberish) =>
+    const withdrawCollateral = async (accountId: number, collateralType: string, amount: BigNumber) =>
       await whitelistedPoolLogic
         .connect(manager)
         .execTransaction(
@@ -155,17 +165,23 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
       accountId: number,
       poolId: number,
       collateralType: string,
-      amount: BigNumberish,
+      amount: BigNumber,
       leverage = ONE_UNIT,
     ) =>
       await whitelistedPoolLogic
         .connect(manager)
         .execTransaction(
           synthetixV3CoreAddress,
-          IVaultModule.encodeFunctionData("delegateCollateral", [accountId, poolId, collateralType, amount, leverage]),
+          IVaultModule.encodeFunctionData("delegateCollateral", [
+            accountId,
+            poolId,
+            collateralType,
+            amount.mul(getPrecisionForConversion(chainData.systemAssets.collateral.decimals)),
+            leverage,
+          ]),
         );
 
-    const mintUSD = async (accountId: number, poolId: number, collateralType: string, amount: BigNumberish) =>
+    const mintUSD = async (accountId: number, poolId: number, collateralType: string, amount: BigNumber) =>
       await whitelistedPoolLogic
         .connect(manager)
         .execTransaction(
@@ -173,7 +189,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
           IIssueUSDModule.encodeFunctionData("mintUsd", [accountId, poolId, collateralType, amount]),
         );
 
-    const burnUSD = async (accountId: number, poolId: number, collateralType: string, amount: BigNumberish) =>
+    const burnUSD = async (accountId: number, poolId: number, collateralType: string, amount: BigNumber) =>
       await whitelistedPoolLogic
         .connect(manager)
         .execTransaction(
@@ -210,7 +226,9 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         ID,
         allowedPoolId,
         collateralType,
-        infrastructureData.collateralBalanceInOwner,
+        infrastructureData.collateralBalanceInOwner.mul(
+          getPrecisionForConversion(chainData.systemAssets.collateral.decimals),
+        ),
         ONE_UNIT,
       );
       await infrastructureData.accountNFT["transferFrom(address,address,uint256)"](
@@ -447,6 +465,14 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
       it("should revert during claiming if reward asset is not enabled", async function () {
         if (!chainData.rewardDistributors?.length) this.skip();
 
+        // rewardToken is same as the collateral
+        if (
+          chainData.systemAssets.extraRewardTokens?.[0].address.toLowerCase() ===
+          chainData.systemAssets.collateral.address.toLowerCase()
+        ) {
+          this.skip();
+        }
+
         await createAccountWithId(ID);
         await expect(
           claimRewards(ID, allowedPoolId, collateralType, chainData.rewardDistributors[0]), // Use first distributor (SNX)
@@ -536,7 +562,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         await createAccountWithId(ID);
         await depositCollateral(ID, collateralType, depositAmount);
         await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount);
-        const desiredAmountToBorrow = depositAmount.div(2);
+        const desiredAmountToBorrow = depositAmount.div(20);
         await mintUSD(ID, allowedPoolId, collateralType, desiredAmountToBorrow);
 
         const synthetixV3CoreCollateralModule = <ICollateralModule>(
@@ -563,12 +589,14 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         await createAccountWithId(ID);
         await depositCollateral(ID, collateralType, depositAmount);
         await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount);
-        const desiredAmountToBorrow = depositAmount.div(2);
+        const desiredAmountToBorrow = depositAmount
+          .div(20)
+          .mul(getPrecisionForConversion(chainData.systemAssets.collateral.decimals));
         await mintUSD(ID, allowedPoolId, collateralType, desiredAmountToBorrow);
 
         await utils.increaseTime(86400); // 24 hours
 
-        await burnUSD(ID, allowedPoolId, collateralType, desiredAmountToBorrow.div(2));
+        await burnUSD(ID, allowedPoolId, collateralType, desiredAmountToBorrow.div(10));
 
         const totalValueAfter = await whitelistedManagerLogic.callStatic.totalFundValueMutable();
         expect(totalValueAfter).to.be.closeTo(totalValueBefore, totalValueBefore.div(10000)); // 0.01%
@@ -582,7 +610,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         await createAccountWithId(ID);
         await depositCollateral(ID, collateralType, depositAmount);
         await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount);
-        await delegateCollateral(ID, allowedPoolId, collateralType, 0);
+        await delegateCollateral(ID, allowedPoolId, collateralType, BigNumber.from(0));
 
         const totalValueAfter = await whitelistedManagerLogic.totalFundValue();
         expect(totalValueBefore).to.equal(totalValueAfter);
@@ -592,7 +620,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         if (!chainData.mintingPositiveDebtForbidden) this.skip();
 
         const totalValueBefore = await whitelistedManagerLogic.totalFundValue();
-        const amount = depositAmount.sub(ONE_UNIT);
+        const amount = depositAmount.sub(units(1, chainData.systemAssets.collateral.decimals));
         await createAccountWithId(ID);
         // Deposit almost everything into Synthetix V3 NFT Account, some dust remains sitting in the pool to burn debt if any
         await depositCollateral(ID, collateralType, amount);
@@ -633,7 +661,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         }
 
         // Undelegate everything
-        await delegateCollateral(ID, allowedPoolId, collateralType, 0);
+        await delegateCollateral(ID, allowedPoolId, collateralType, BigNumber.from(0));
 
         const totalValueAfter = await whitelistedManagerLogic.totalFundValue();
 
@@ -680,7 +708,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
 
         // Try to undelegate, but if fails, skip due to the reasons mentioned above
         try {
-          await delegateCollateral(ID, allowedPoolId, collateralType, 0);
+          await delegateCollateral(ID, allowedPoolId, collateralType, BigNumber.from(0));
         } catch {
           this.skip();
         }
@@ -706,7 +734,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         await createAccountWithId(ID);
         await depositCollateral(ID, collateralType, depositAmount);
         await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount);
-        const desiredAmountToBorrow = depositAmount.div(2);
+        const desiredAmountToBorrow = depositAmount.div(20);
         await mintUSD(ID, allowedPoolId, collateralType, desiredAmountToBorrow);
         await utils.increaseTime(86400); // 24 hours
         await withdrawCollateral(ID, debtAsset, desiredAmountToBorrow);
@@ -837,7 +865,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
           }
           expect(rewardTokenBalanceAfter).to.be.closeTo(
             rewardTokenBalanceBefore.add(rewardAmount.div(units(1).div(rewardTokenPrecision))),
-            rewardTokenPrecision.div(100_000), // allow deviation in size of 0.001% of one token, eg in case of USDC it's 10, in case of SNX - 10000000000000 (1e13)
+            rewardTokenPrecision.div(10_000), // allow deviation in size of 0.01% of one token, eg in case of USDC it's 10, in case of SNX - 10000000000000 (1e13)
           );
         }
       });
@@ -886,35 +914,43 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         await depositCollateral(ID, collateralType, depositAmount);
         // Delegate half of it to the pool
         await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount.div(2));
-        const borrowAmount = depositAmount.div(4);
+        const borrowAmount = depositAmount.div(40);
         await mintUSD(ID, allowedPoolId, collateralType, borrowAmount);
 
         await utils.increaseTime(86400); // 24 hours
 
         const totalValueBeforeWithdraw = await whitelistedManagerLogic.callStatic.totalFundValueMutable();
         const ownerPoolTokenBalanceBefore = await whitelistedPoolLogic.balanceOf(deployments.owner.address);
-        // Withdraw 50% of the pool tokens
-        const tokensToWithdraw = ownerPoolTokenBalanceBefore.div(2);
+        // Withdraw 25% of the pool tokens
+        const tokensToWithdraw = ownerPoolTokenBalanceBefore.div(4);
         await whitelistedPoolLogic.withdraw(tokensToWithdraw);
         const totalValueAfterWithdraw = await whitelistedManagerLogic.callStatic.totalFundValueMutable();
         const ownerCollateralBalanceAfter = await infrastructureData.COLLATERAL_ASSET.balanceOf(
           deployments.owner.address,
         );
 
-        // Asserting that pool's TVL decreased by 50% after withdraw as pool has only one investor
+        // Asserting that pool's TVL decreased by 25% after withdraw as pool has only one investor
         expect(totalValueAfterWithdraw).to.be.closeTo(
-          totalValueBeforeWithdraw.div(2),
+          totalValueBeforeWithdraw.div(4).mul(3),
           totalValueBeforeWithdraw.div(100000), // 0.001%
         );
 
         // It's safe to get tokenPrice right after withdraw as AssetGuard has fresh debt value stored
         const tokenPrice = await whitelistedPoolLogic.tokenPrice();
         const collateralWithdrawnValue = tokensToWithdraw.mul(tokenPrice).div(ONE_UNIT);
-        const collateralPrice = await whitelistedManagerLogic["assetValue(address,uint256)"](collateralType, ONE_UNIT);
-        const estimatedCollateralReceived = collateralWithdrawnValue.mul(ONE_UNIT).div(collateralPrice);
+        const collateralPrice = await whitelistedManagerLogic["assetValue(address,uint256)"](
+          collateralType,
+          units(1, chainData.systemAssets.collateral.decimals),
+        );
+        const estimatedCollateralReceived = collateralWithdrawnValue
+          .mul(units(1, chainData.systemAssets.collateral.decimals))
+          .div(collateralPrice);
 
         // Asserting that investor received correct portion of COLLATERAL_ASSET
-        expect(ownerCollateralBalanceAfter).to.equal(ownerCollateralBalanceBefore.add(estimatedCollateralReceived));
+        expect(ownerCollateralBalanceAfter).to.be.closeTo(
+          ownerCollateralBalanceBefore.add(estimatedCollateralReceived),
+          ownerCollateralBalanceAfter.div(10000000), // 0.00001%
+        );
       });
 
       it("should receive a portion of undelegated collateral during withdraw when debt is zero", async function () {
@@ -935,8 +971,8 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
 
         const totalValueBeforeWithdraw = await whitelistedManagerLogic.callStatic.totalFundValueMutable();
         const ownerPoolTokenBalanceBefore = await whitelistedPoolLogic.balanceOf(deployments.owner.address);
-        // Withdraw 50% of the pool tokens
-        const tokensToWithdraw = ownerPoolTokenBalanceBefore.div(2);
+        // Withdraw 25% of the pool tokens
+        const tokensToWithdraw = ownerPoolTokenBalanceBefore.div(4);
         await whitelistedPoolLogic.withdraw(tokensToWithdraw);
         const totalValueAfterWithdraw = await whitelistedManagerLogic.callStatic.totalFundValueMutable();
         const ownerCollateralBalanceAfter = await infrastructureData.COLLATERAL_ASSET.balanceOf(
@@ -945,18 +981,26 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
 
         // Asserting that pool's TVL decreased by 50% after withdraw as pool has only one investor
         expect(totalValueAfterWithdraw).to.be.closeTo(
-          totalValueBeforeWithdraw.div(2),
+          totalValueBeforeWithdraw.div(4).mul(3),
           totalValueBeforeWithdraw.div(100000), // 0.001%
         );
 
         // It's safe to get tokenPrice right after withdraw as AssetGuard has fresh debt value stored
         const tokenPrice = await whitelistedPoolLogic.tokenPrice();
-        const collateralWithdrawnValue = tokensToWithdraw.mul(tokenPrice);
-        const collateralPrice = await whitelistedManagerLogic["assetValue(address,uint256)"](collateralType, ONE_UNIT);
-        const estimatedCollateralReceived = collateralWithdrawnValue.div(collateralPrice);
+        const collateralWithdrawnValue = tokensToWithdraw.mul(tokenPrice).div(ONE_UNIT);
+        const collateralPrice = await whitelistedManagerLogic["assetValue(address,uint256)"](
+          collateralType,
+          units(1, chainData.systemAssets.collateral.decimals),
+        );
+        const estimatedCollateralReceived = collateralWithdrawnValue
+          .mul(units(1, chainData.systemAssets.collateral.decimals))
+          .div(collateralPrice);
 
         // Asserting that investor received correct portion of COLLATERAL_ASSET
-        expect(ownerCollateralBalanceAfter).to.equal(ownerCollateralBalanceBefore.add(estimatedCollateralReceived));
+        expect(ownerCollateralBalanceAfter).to.be.closeTo(
+          ownerCollateralBalanceBefore.add(estimatedCollateralReceived),
+          ownerCollateralBalanceAfter.div(10000000), // 0.00001%
+        );
       });
 
       it("should not be able to withdraw if available undelegated collateral is not enough to make a withdraw", async () => {
@@ -1006,11 +1050,14 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         // It's safe to get tokenPrice right after withdraw as AssetGuard has fresh debt value stored
         const tokenPrice = await whitelistedPoolLogic.tokenPrice();
         const collateralWithdrawnValue = tokensToWithdraw.mul(tokenPrice);
-        const collateralPrice = await whitelistedManagerLogic["assetValue(address,uint256)"](collateralType, ONE_UNIT);
+        const collateralPrice = await whitelistedManagerLogic["assetValue(address,uint256)"](
+          collateralType,
+          units(1, chainData.systemAssets.collateral.decimals),
+        );
         const tokenToCollateralDecimals = chainData.systemAssets.tokenToCollateral?.decimals ?? 18;
         const estimatedTokenToCollateralReceived = collateralWithdrawnValue
           .div(collateralPrice)
-          .div(10 ** (18 - tokenToCollateralDecimals));
+          .div(getPrecisionForConversion(tokenToCollateralDecimals));
 
         // Asserting that investor received correct portion of TOKEN_TO_COLLATERAL_ASSET
         expect(ownerTokenToCollateralBalanceAfter).to.equal(
@@ -1057,8 +1104,8 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         expect(await infrastructureData.COLLATERAL_ASSET.balanceOf(poolAddress)).to.equal(depositAmount);
 
         const tokenToCollateralDecimals = chainData.systemAssets.tokenToCollateral?.decimals ?? 18;
-        const precisionForConvertion = 10 ** (18 - tokenToCollateralDecimals);
-        const minAmountReceived = depositAmount.div(precisionForConvertion);
+        const precisionForConversion = getPrecisionForConversion(tokenToCollateralDecimals);
+        const minAmountReceived = depositAmount.div(precisionForConversion);
 
         // Approve is not required for unwrapping
         await whitelistedPoolLogic
@@ -1092,7 +1139,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
             IWrapperModule.encodeFunctionData("wrap", [
               chainData.allowedMarketIds[0].marketId,
               wrapAmount,
-              wrapAmount.mul(precisionForConvertion),
+              wrapAmount.mul(precisionForConversion),
             ]),
           );
 
@@ -1165,6 +1212,138 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
         expect(await infrastructureData.COLLATERAL_ASSET.balanceOf(poolAddress)).to.equal(depositAmount);
         expect(await infrastructureData.DEBT_ASSET.balanceOf(poolAddress)).to.equal(0);
       });
+
+      it("should revert when wrapping if collateral asset is not supported", async () => {
+        // Sell everything to get zero balance
+        await whitelistedPoolLogic
+          .connect(manager)
+          .execTransaction(
+            chainData.synthetixV3SpotMarket,
+            IAtomicOrderModule.encodeFunctionData("sell", [
+              chainData.allowedMarketIds[0].marketId,
+              depositAmount,
+              depositAmount,
+              REFERRER_ADDRESS,
+            ]),
+          );
+
+        await infrastructureData.whitelistedPool.poolManagerLogicProxy
+          .connect(manager)
+          .changeAssets([], [infrastructureData.COLLATERAL_ASSET.address]);
+
+        await expect(
+          whitelistedPoolLogic
+            .connect(manager)
+            .execTransaction(
+              chainData.synthetixV3SpotMarket,
+              IWrapperModule.encodeFunctionData("wrap", [
+                chainData.allowedMarketIds[0].marketId,
+                ethers.constants.Zero,
+                ethers.constants.Zero,
+              ]),
+            ),
+        ).to.be.revertedWith("unsupported asset");
+      });
+
+      it("should revert when unwrapping if token to collateral asset is not supported", async () => {
+        await infrastructureData.whitelistedPool.poolManagerLogicProxy
+          .connect(manager)
+          .changeAssets([], [TOKEN_TO_COLLATERAL_ASSET.address]);
+
+        await expect(
+          whitelistedPoolLogic
+            .connect(manager)
+            .execTransaction(
+              chainData.synthetixV3SpotMarket,
+              IWrapperModule.encodeFunctionData("unwrap", [
+                chainData.allowedMarketIds[0].marketId,
+                depositAmount,
+                ethers.constants.Zero,
+              ]),
+            ),
+        ).to.be.revertedWith("unsupported asset");
+      });
+
+      it("should revert when buying synths if synth is not supported", async () => {
+        // Sell everything to get zero balance
+        await whitelistedPoolLogic
+          .connect(manager)
+          .execTransaction(
+            chainData.synthetixV3SpotMarket,
+            IAtomicOrderModule.encodeFunctionData("sell", [
+              chainData.allowedMarketIds[0].marketId,
+              depositAmount,
+              depositAmount,
+              REFERRER_ADDRESS,
+            ]),
+          );
+
+        await infrastructureData.whitelistedPool.poolManagerLogicProxy
+          .connect(manager)
+          .changeAssets([], [infrastructureData.COLLATERAL_ASSET.address]);
+
+        await expect(
+          whitelistedPoolLogic
+            .connect(manager)
+            .execTransaction(
+              chainData.synthetixV3SpotMarket,
+              IAtomicOrderModule.encodeFunctionData("buy", [
+                chainData.allowedMarketIds[0].marketId,
+                depositAmount,
+                depositAmount,
+                REFERRER_ADDRESS,
+              ]),
+            ),
+        ).to.be.revertedWith("unsupported asset");
+
+        await expect(
+          whitelistedPoolLogic
+            .connect(manager)
+            .execTransaction(
+              chainData.synthetixV3SpotMarket,
+              IAtomicOrderModule.encodeFunctionData("buyExactIn", [
+                chainData.allowedMarketIds[0].marketId,
+                depositAmount,
+                depositAmount,
+                REFERRER_ADDRESS,
+              ]),
+            ),
+        ).to.be.revertedWith("unsupported asset");
+      });
+
+      it("should revert when selling synths if sUSD is not supported", async () => {
+        await infrastructureData.whitelistedPool.poolManagerLogicProxy
+          .connect(manager)
+          .changeAssets([], [infrastructureData.DEBT_ASSET.address]);
+
+        await expect(
+          whitelistedPoolLogic
+            .connect(manager)
+            .execTransaction(
+              chainData.synthetixV3SpotMarket,
+              IAtomicOrderModule.encodeFunctionData("sell", [
+                chainData.allowedMarketIds[0].marketId,
+                depositAmount,
+                depositAmount,
+                REFERRER_ADDRESS,
+              ]),
+            ),
+        ).to.be.revertedWith("unsupported asset");
+
+        await expect(
+          whitelistedPoolLogic
+            .connect(manager)
+            .execTransaction(
+              chainData.synthetixV3SpotMarket,
+              IAtomicOrderModule.encodeFunctionData("sellExactIn", [
+                chainData.allowedMarketIds[0].marketId,
+                depositAmount,
+                depositAmount,
+                REFERRER_ADDRESS,
+              ]),
+            ),
+        ).to.be.revertedWith("unsupported asset");
+      });
     });
 
     describe("Weekly Windows", () => {
@@ -1186,12 +1365,15 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
 
       describe("Withdraw limit calculated correctly", () => {
         it("should return $50k as withdraw limit if 10% of collateral is less value", async () => {
-          const limit = await infrastructureData.synthetixV3ContractGuardWithRealWindows.calculateWithdrawalLimit(
+          const limitD18 = await infrastructureData.synthetixV3ContractGuardWithRealWindows.calculateWithdrawalLimit(
             units(100),
             collateralType,
             whitelistedManagerLogic.address,
           );
-          const collateralValue = await whitelistedManagerLogic["assetValue(address,uint256)"](collateralType, limit);
+          const collateralValue = await whitelistedManagerLogic["assetValue(address,uint256)"](
+            collateralType,
+            limitD18.div(getPrecisionForConversion(chainData.systemAssets.collateral.decimals)),
+          );
           expect(collateralValue).to.be.closeTo(units(50_000), units(50_000).div(1_000_000)); // 0.0001%;
         });
 
@@ -1351,11 +1533,11 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
                   ID,
                   allowedPoolId,
                   collateralType,
-                  depositAmount,
+                  depositAmount.mul(getPrecisionForConversion(chainData.systemAssets.collateral.decimals)),
                   ONE_UNIT,
                 ]),
               ),
-          ).to.be.revertedWith("only manager or trader or public function");
+          ).to.be.revertedWith("only manager, trader, public");
         });
 
         it("should be able to delegate more collateral on behalf of manager during delegation window", async () => {
@@ -1372,7 +1554,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
 
           await depositCollateral(ID, collateralType, depositAmount);
           await delegateCollateral(ID, allowedPoolId, collateralType, depositAmount);
-          await delegateCollateral(ID, allowedPoolId, collateralType, 0);
+          await delegateCollateral(ID, allowedPoolId, collateralType, BigNumber.from(0));
         });
 
         it("should revert if delegating more collateral during undelegation window", async () => {
@@ -1402,7 +1584,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
           const thursday = (await weeklyWindowsHelperTest.timestampFromDate(2025, 1, 10)).toNumber() - 3600;
           await network.provider.send("evm_setNextBlockTimestamp", [thursday]);
 
-          await expect(delegateCollateral(ID, allowedPoolId, collateralType, 0)).to.be.revertedWith(
+          await expect(delegateCollateral(ID, allowedPoolId, collateralType, BigNumber.from(0))).to.be.revertedWith(
             "undelegation limit breached",
           );
         });
@@ -1427,7 +1609,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
                 ID,
                 allowedPoolId,
                 collateralType,
-                depositAmount.sub(ONE_UNIT),
+                depositAmount.mul(getPrecisionForConversion(chainData.systemAssets.collateral.decimals)).sub(ONE_UNIT),
                 ONE_UNIT,
               ]),
             );

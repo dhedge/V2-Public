@@ -5,6 +5,8 @@ runOneInchV6GuardTest({
   ...ovmChainData,
   chainId: 10,
   aggregationRouterV6: ovmChainData.oneinch.v6Router,
+  uniV2Factory: ovmChainData.uniswapV2.factory,
+  uniV3Factory: ovmChainData.uniswapV3.factory,
   assetsOptimism: {
     snx: {
       address: ovmChainData.assets.snxProxy,

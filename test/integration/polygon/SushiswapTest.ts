@@ -69,7 +69,7 @@ describe("Sushiswap V2 Test", function () {
   it("Should be able to approve", async () => {
     let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdt, approveABI)).to.be.revertedWith(
-      "asset not enabled in pool",
+      "asset disabled",
     );
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
@@ -89,10 +89,6 @@ describe("Sushiswap V2 Test", function () {
       poolManagerLogicProxy.address,
       0,
     ]);
-
-    await expect(
-      poolLogicProxy.connect(manager).execTransaction("0x0000000000000000000000000000000000000000", swapABI),
-    ).to.be.revertedWith("non-zero address is required");
 
     swapABI = iSushiswapV2Router.encodeFunctionData("swapExactTokensForTokens", [
       sourceAmount,
@@ -577,7 +573,7 @@ describe("Sushiswap V2 Test", function () {
       });
 
       // remove manager fee so that performance fee minting doesn't get in the way
-      await poolManagerLogicProxy.connect(manager).setFeeNumerator("0", "0", "0");
+      await poolManagerLogicProxy.connect(manager).setFeeNumerator("0", "0", "0", "0");
 
       const totalSupply = await poolLogicProxy.totalSupply();
 

@@ -5,9 +5,7 @@ node_modules
 
 #Hardhat files
 cache
-cache-ovm
 artifacts
-artifacts-ovm
 types
 
 #VIM
@@ -20,8 +18,9 @@ types
 coverage/
 coverage.json
 
-# VScode
+#VScode
 .vscode
 
-# OVM
-cache-ovm
+#Foundry
+cache_forge
+out

@@ -2415,10 +2415,10 @@
       ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
-      "PoolFactory": "0x6858d1bdf033F29e2609c878580c70E9339fe9E2",
-      "PoolLogic": "0xB66CF2a4Fe9B1FbE09b03CF28B8893C83B79e177",
+      "PoolFactory": "0x14A690b67062994b3b2e829AeD7d096C53Cc6A58",
+      "PoolLogic": "0x2E590e6DD1C425aAFa7611EDE935bC192494E4aE",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x294665F184189d75d55343CEAE7F6E07c2Ef7544",
+      "PoolManagerLogic": "0xE7A587b82c55DD6229df00Fe73880F6b23593054",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0xdc490C84bCEBf445fFd4eAc895FC213FA7CD6f6d",
       "ERC20Guard": "0xBd651F4a743dCdaC0141a1BEBACb9626D700fe40",
@@ -2458,7 +2458,7 @@
       "DhedgeUniV3V2Router": "0x9cc0D93b2872D9768e3568975DC58B352C610C36",
       "OneInchV5Guard": "0x1051dBEa189c0520A4E83a0D5850c788c7DeD119",
       "DhedgeEasySwapperProxy": "0x0d7b2114dF22A954868a89b28D6f868114f3c285",
-      "DhedgeEasySwapper": "0xF7F631DBB3c8f82d27B6C23524FAF2822A4BFc37",
+      "DhedgeEasySwapper": "0x3c3FC739E861C7bfb64563d6c69AfCC49e86B59a",
       "DhedgeNftTrackerStorageProxy": "0x025bB4319dAB451360f4Fb34F567785d4cF73c2F",
       "DhedgeNftTrackerStorage": "0x93127FeE7DCafeC3e04c40B2C05a582827C84e65",
       "StargateLpStakingContractGuard": "0x62046FFEd342090540C8692f0A5b77ECE608DBaF",
@@ -2470,10 +2470,9 @@
     "network": {
       "name": "matic",
       "chainId": 137,
-      "ensAddress": null,
-      "_defaultProvider": null
+      "ensAddress": null
     },
-    "lastUpdated": "Wed, 22 Nov 2023 15:15:37 GMT",
+    "lastUpdated": "Sun, 25 Aug 2024 15:12:05 GMT",
     "config": {}
   }
 }

@@ -1,6 +1,6 @@
 import { baseChainData } from "../../../../config/chainData/baseData";
 import { units } from "../../../testHelpers";
-import { aerodromeCLGaugeContractGuardTest } from "../../common/velodromeCL/CLGaugeAerodromeContractGuardTest";
+import { clGaugeContractGuardCommonTest } from "../../common/velodromeCL/CLGaugeContractGuardCommonTest";
 import { velodromeCLAssetGuardTest } from "../../common/velodromeCL/VelodromeCLAssetGuardTest";
 import { velodromeCLMultiplePositionTest } from "../../common/velodromeCL/VelodromeCLMultiplePositionTest";
 import { velodromeCLNonfungiblePositionGuardTest } from "../../common/velodromeCL/VelodromeNonfungiblePositionGuardTest";
@@ -10,10 +10,9 @@ const { assets, assetsBalanceOfSlot } = baseChainData;
 const testParams = [
   {
     ...baseChainData,
-    ...baseChainData.velodromeCL,
+    ...baseChainData.aerodromeCL,
     protocolToken: baseChainData.aerodrome.aero,
     VARIABLE_PROTOCOLTOKEN_USDC: baseChainData.aerodrome.VARIABLE_AERO_USDC,
-    isAerodrome: true,
     pairs: {
       bothSupportedPair: {
         tickSpacing: 100,
@@ -45,10 +44,9 @@ const testParams = [
   },
   {
     ...baseChainData,
-    ...baseChainData.velodromeCL,
+    ...baseChainData.aerodromeCL,
     protocolToken: baseChainData.aerodrome.aero,
     VARIABLE_PROTOCOLTOKEN_USDC: baseChainData.aerodrome.VARIABLE_AERO_USDC,
-    isAerodrome: true,
     pairs: {
       bothSupportedPair: {
         tickSpacing: 1,
@@ -82,7 +80,7 @@ const testParams = [
 
 testParams.forEach((params) => {
   velodromeCLNonfungiblePositionGuardTest(params);
-  aerodromeCLGaugeContractGuardTest(params);
+  clGaugeContractGuardCommonTest(params);
   velodromeCLAssetGuardTest(params);
   velodromeCLMultiplePositionTest(params);
 });

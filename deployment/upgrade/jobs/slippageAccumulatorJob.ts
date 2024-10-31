@@ -5,7 +5,6 @@ import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames } from "../../t
 export const slippageAccumulatorJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
-  // TODO: This optimally should not be mutated
   versions: IVersions,
   _: IFileNames,
   addresses: IAddresses,

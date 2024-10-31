@@ -69,12 +69,15 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
     uint256 entryFeeNumerator,
+    uint256 exitFeeNumerator,
     uint256 denominator
   );
 
   event ManagerFeeIncreaseAnnounced(
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
+    uint256 entryFeeNumerator,
+    uint256 exitFeeNumerator,
     uint256 announcedFeeActivationTime
   );
 
@@ -104,13 +107,11 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   uint256 public announcedEntryFeeNumerator;
   uint256 public entryFeeNumerator;
 
-  modifier onlyManagerOrTraderOrOwner() {
-    require(
-      msg.sender == manager || msg.sender == trader || msg.sender == IHasOwnable(factory).owner(),
-      "only manager, trader or owner"
-    );
-    _;
-  }
+  uint256 public announcedExitFeeNumerator;
+  uint256 public exitFeeNumerator;
+
+  // By default, traders can change supported assets.
+  bool public traderAssetChangeDisabled;
 
   /// @notice initialize the pool manager
   /// @param _factory address of the factory
@@ -135,7 +136,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     factory = _factory;
     poolLogic = _poolLogic;
-    _setFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator, 0); // By default entry fee will be set as 0%
+    _setFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator, 0, 0); // By default entry and exit fees will be set to 0%.
     _changeAssets(_supportedAssets, new address[](0));
   }
 
@@ -162,10 +163,16 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Change assets of the pool
   /// @param _addAssets array of assets to add
   /// @param _removeAssets array of asset addresses to remove
-  function changeAssets(
-    Asset[] calldata _addAssets,
-    address[] calldata _removeAssets
-  ) external onlyManagerOrTraderOrOwner {
+  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets) external {
+    /* solhint-disable reason-string */
+    require(
+      (msg.sender == trader && !traderAssetChangeDisabled) ||
+        msg.sender == manager ||
+        msg.sender == IHasOwnable(factory).owner(),
+      "only manager, owner or trader enabled"
+    );
+    /* solhint-enable reason-string */
+
     _changeAssets(_addAssets, _removeAssets);
     emitFactoryEvent();
   }
@@ -361,16 +368,16 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /* ========== MANAGER FEES ========== */
 
   /// @notice Return the manager fees
-  function getFee() external view override returns (uint256, uint256, uint256, uint256) {
-    (, , , uint256 managerFeeDenominator) = IHasFeeInfo(factory).getMaximumFee();
-    return (performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, managerFeeDenominator);
+  function getFee() external view override returns (uint256, uint256, uint256, uint256, uint256) {
+    (, , , , uint256 managerFeeDenominator) = IHasFeeInfo(factory).getMaximumFee();
+    return (performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, exitFeeNumerator, managerFeeDenominator);
   }
 
   /// @notice Get maximum manager fee
   /// @return numerator numerator of the maximum manager fee
   /// @return entryFeeNumerator numerator of the maximum entry fee
   /// @return denominator denominator of the maximum manager fee
-  function getMaximumFee() public view returns (uint256, uint256, uint256, uint256) {
+  function getMaximumFee() public view returns (uint256, uint256, uint256, uint256, uint256) {
     return IHasFeeInfo(factory).getMaximumFee();
   }
 
@@ -388,15 +395,17 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function setFeeNumerator(
     uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
-    uint256 _entryFeeNumerator
+    uint256 _entryFeeNumerator,
+    uint256 _exitFeeNumerator
   ) external onlyManager {
     require(
       _performanceFeeNumerator <= performanceFeeNumerator &&
         _managerFeeNumerator <= managerFeeNumerator &&
-        _entryFeeNumerator <= entryFeeNumerator,
+        _entryFeeNumerator <= entryFeeNumerator &&
+        _exitFeeNumerator <= exitFeeNumerator,
       "manager fee too high"
     );
-    _setFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator, _entryFeeNumerator);
+    _setFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator, _entryFeeNumerator, _exitFeeNumerator);
     emitFactoryEvent();
   }
 
@@ -406,24 +415,28 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function _setFeeNumerator(
     uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
-    uint256 _entryFeeNumerator
+    uint256 _entryFeeNumerator,
+    uint256 _exitFeeNumerator
   ) internal {
     (
       uint256 maximumPerformanceFeeNumerator,
       uint256 maximumManagerFeeNumerator,
       uint256 maximumEntryFeeNumerator,
+      uint256 maximumExitFeeNumerator,
       uint256 denominator
     ) = getMaximumFee();
     require(
       _performanceFeeNumerator <= maximumPerformanceFeeNumerator &&
         _managerFeeNumerator <= maximumManagerFeeNumerator &&
-        _entryFeeNumerator <= maximumEntryFeeNumerator,
+        _entryFeeNumerator <= maximumEntryFeeNumerator &&
+        _exitFeeNumerator <= maximumExitFeeNumerator,
       "invalid manager fee"
     );
 
     performanceFeeNumerator = _performanceFeeNumerator;
     managerFeeNumerator = _managerFeeNumerator;
     entryFeeNumerator = _entryFeeNumerator;
+    exitFeeNumerator = _exitFeeNumerator;
 
     emit ManagerFeeSet(
       poolLogic,
@@ -431,6 +444,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       _performanceFeeNumerator,
       _managerFeeNumerator,
       _entryFeeNumerator,
+      _exitFeeNumerator,
       denominator
     );
   }
@@ -444,12 +458,14 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   function announceFeeIncrease(
     uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
-    uint256 _entryFeeNumerator
+    uint256 _entryFeeNumerator,
+    uint256 _exitFeeNumerator
   ) external onlyManager {
     (
       uint256 maximumPerformanceFeeNumerator,
       uint256 maximumManagerFeeNumerator,
       uint256 maximumEntryFeeNumerator,
+      uint256 maximumExitFeeNumerator,
 
     ) = getMaximumFee();
     uint256 maximumAllowedChange = getMaximumPerformanceFeeChange();
@@ -458,6 +474,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       _performanceFeeNumerator <= maximumPerformanceFeeNumerator &&
         _managerFeeNumerator <= maximumManagerFeeNumerator &&
         _entryFeeNumerator <= maximumEntryFeeNumerator &&
+        _exitFeeNumerator <= maximumExitFeeNumerator &&
         _performanceFeeNumerator <= performanceFeeNumerator.add(maximumAllowedChange),
       "exceeded allowed increase"
     );
@@ -467,8 +484,17 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     announcedPerformanceFeeNumerator = _performanceFeeNumerator;
     announcedManagerFeeNumerator = _managerFeeNumerator;
     announcedEntryFeeNumerator = _entryFeeNumerator;
+    announcedExitFeeNumerator = _exitFeeNumerator;
     announcedFeeIncreaseTimestamp = block.timestamp + feeChangeDelay;
-    emit ManagerFeeIncreaseAnnounced(_performanceFeeNumerator, _managerFeeNumerator, announcedFeeIncreaseTimestamp);
+
+    emit ManagerFeeIncreaseAnnounced(
+      _performanceFeeNumerator,
+      _managerFeeNumerator,
+      _entryFeeNumerator,
+      _exitFeeNumerator,
+      announcedFeeIncreaseTimestamp
+    );
+
     emitFactoryEvent();
   }
 
@@ -478,7 +504,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     announcedPerformanceFeeNumerator = 0;
     announcedManagerFeeNumerator = 0;
     announcedEntryFeeNumerator = 0;
+    announcedExitFeeNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
+
     emit ManagerFeeIncreaseRenounced();
     emitFactoryEvent();
   }
@@ -490,20 +518,34 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     IPoolLogic(poolLogic).mintManagerFee();
 
-    _setFeeNumerator(announcedPerformanceFeeNumerator, announcedManagerFeeNumerator, announcedEntryFeeNumerator);
+    _setFeeNumerator(
+      announcedPerformanceFeeNumerator,
+      announcedManagerFeeNumerator,
+      announcedEntryFeeNumerator,
+      announcedExitFeeNumerator
+    );
 
     announcedPerformanceFeeNumerator = 0;
     announcedManagerFeeNumerator = 0;
     announcedEntryFeeNumerator = 0;
+    announcedExitFeeNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
   }
 
+  /// @notice Set `traderAssetChangeDisabled` to `true` to disable trader asset change
+  /// @dev Can only be called by the manager
+  /// @param _disabled boolean value to set trader asset change disabled status
+  function setTraderAssetChangeDisabled(bool _disabled) external onlyManager {
+    traderAssetChangeDisabled = _disabled;
+  }
+
   /// @notice Get manager fee increase information
-  function getFeeIncreaseInfo() external view returns (uint256, uint256, uint256, uint256) {
+  function getFeeIncreaseInfo() external view returns (uint256, uint256, uint256, uint256, uint256) {
     return (
       announcedPerformanceFeeNumerator,
       announcedManagerFeeNumerator,
       announcedEntryFeeNumerator,
+      announcedExitFeeNumerator,
       announcedFeeIncreaseTimestamp
     );
   }
@@ -570,5 +612,5 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     IPoolFactory(factory).emitPoolManagerEvent();
   }
 
-  uint256[45] private __gap;
+  uint256[42] private __gap;
 }

@@ -1,23 +1,37 @@
-// SPDX-License-Identifier: BUSL-1.1
+//
+//        __  __    __  ________  _______    ______   ________
+//       /  |/  |  /  |/        |/       \  /      \ /        |
+//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
+//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
+// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
+// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
+// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
+// $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
+//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
+//
+// dHEDGE DAO - https://dhedge.org
+//
+// Copyright (c) 2024 dHEDGE DAO
+//
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/SafeCast.sol";
-import "../interfaces/IERC20Extended.sol";
-import "../interfaces/IPoolManagerLogic.sol";
-import "../interfaces/IPoolFactory.sol";
-import "../interfaces/IHasSupportedAsset.sol";
-import "../interfaces/IHasAssetInfo.sol";
-import "../interfaces/IHasGuardInfo.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Math} from "@openzeppelin/contracts/math/Math.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
 
-/// @title SlippageAccumulator
-/// @notice Contract to check for accumulated slippage impact for a poolManager.
+import {IERC20Extended} from "../interfaces/IERC20Extended.sol";
+import {IHasAssetInfo} from "../interfaces/IHasAssetInfo.sol";
+import {IHasGuardInfo} from "../interfaces/IHasGuardInfo.sol";
+import {IHasSupportedAsset} from "../interfaces/IHasSupportedAsset.sol";
+
+/// @notice Contract to check for accumulated slippage impact for a pool manager.
 /// @author dHEDGE
 contract SlippageAccumulator is Ownable {
-  using SafeMathUpgradeable for *;
+  using SafeMath for *;
   using Math for *;
   using SafeCast for *;
 
@@ -26,15 +40,11 @@ contract SlippageAccumulator is Ownable {
   /// @param dstAsset Destination asset (asset being exchanged for).
   /// @param srcAmount Source asset amount.
   /// @param dstAmount Destination asset amount.
-  /// @param to Address of the external contract used for swapping.
-  /// @param poolManagerLogic The poolManager contract address performing the swap.
   struct SwapData {
     address srcAsset;
     address dstAsset;
     uint256 srcAmount;
     uint256 dstAmount;
-    address to;
-    address poolManagerLogic;
   }
 
   /// @dev Struct to track the slippage data for a poolManager.
@@ -84,27 +94,32 @@ contract SlippageAccumulator is Ownable {
   /// @notice Updates the cumulative slippage impact and reverts if it's beyond limit.
   /// @dev NOTE: It's important that the calling guard checks if the msg.sender in it's scope is authorised.
   /// @dev If the caller is not checked for in the guard, anyone can trigger the `txGuard` transaction and update slippage impact.
+  /// @param poolManagerLogic Address of the poolManager whose cumulative impact is stored.
+  /// @param router Address of the router contract used for swapping.
   /// @param swapData Common swap data for all guards.
-  function updateSlippageImpact(SwapData calldata swapData) external onlyContractGuard(swapData.to) {
-    if (IHasSupportedAsset(swapData.poolManagerLogic).isSupportedAsset(swapData.srcAsset)) {
-      uint256 srcAmount = _assetValue(swapData.srcAsset, swapData.srcAmount);
-      uint256 dstAmount = _assetValue(swapData.dstAsset, swapData.dstAmount);
+  function updateSlippageImpact(
+    address poolManagerLogic,
+    address router,
+    SwapData calldata swapData
+  ) external onlyContractGuard(router) {
+    if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(swapData.srcAsset)) {
+      uint256 srcValue = assetValue(swapData.srcAsset, swapData.srcAmount);
+      uint256 dstValue = assetValue(swapData.dstAsset, swapData.dstAmount);
 
       // Only update the cumulative slippage in case the amount received is lesser than amount sent/traded.
-      if (dstAmount < srcAmount) {
-        uint128 newSlippage = srcAmount.sub(dstAmount).mul(SCALING_FACTOR).div(srcAmount).toUint128();
+      if (dstValue < srcValue) {
+        uint128 newSlippage = srcValue.sub(dstValue).mul(SCALING_FACTOR).div(srcValue).toUint128();
 
-        uint128 newCumulativeSlippage = (
-          uint256(newSlippage).add(getCumulativeSlippageImpact(swapData.poolManagerLogic))
-        ).toUint128();
+        uint128 newCumulativeSlippage = (uint256(newSlippage).add(getCumulativeSlippageImpact(poolManagerLogic)))
+          .toUint128();
 
         require(newCumulativeSlippage < maxCumulativeSlippage, "slippage impact exceeded");
 
         // Update the last traded timestamp.
-        managerData[swapData.poolManagerLogic].lastTradeTimestamp = (block.timestamp).toUint64();
+        managerData[poolManagerLogic].lastTradeTimestamp = (block.timestamp).toUint64();
 
         // Update the accumulated slippage impact for the poolManager.
-        managerData[swapData.poolManagerLogic].accumulatedSlippage = newCumulativeSlippage;
+        managerData[poolManagerLogic].accumulatedSlippage = newCumulativeSlippage;
       }
     }
   }
@@ -112,7 +127,7 @@ contract SlippageAccumulator is Ownable {
   /// Function to calculate an asset amount's value in usd.
   /// @param asset The asset whose price oracle exists.
   /// @param amount The amount of the `asset`.
-  function _assetValue(address asset, uint256 amount) internal view returns (uint256 value) {
+  function assetValue(address asset, uint256 amount) public view returns (uint256 value) {
     value = amount.mul(IHasAssetInfo(poolFactory).getAssetPrice(asset)).div(10 ** IERC20Extended(asset).decimals()); // to USD amount
   }
 

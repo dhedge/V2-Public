@@ -14,6 +14,8 @@ import "./EasySwapperSwap.sol";
 import "./EasySwapperBalancerV2Helpers.sol";
 import "./EasySwapperSynthetixHelpers.sol";
 import "./EasySwapperVelodromeLPHelpers.sol";
+
+import "./EasySwapperVelodromeCLHelpers.sol";
 import "./EasySwapperArrakisHelpers.sol";
 import "./EasySwapperStructs.sol";
 
@@ -53,7 +55,8 @@ library EasySwapperWithdrawer {
     uint256 balanceAfterSwaps = finalAsset.balanceOf(address(this));
 
     require(balanceAfterSwaps >= expectedAmountFinalAsset, "Withdraw Slippage detected");
-    finalAsset.transfer(recipient, balanceAfterSwaps);
+    require(finalAsset.transfer(recipient, balanceAfterSwaps), "Final asset transfer failed");
+
     emit Withdraw(pool, fundTokenAmount, address(finalAsset), balanceAfterSwaps);
   }
 
@@ -106,7 +109,7 @@ library EasySwapperWithdrawer {
       address[] memory unrolledAssets;
 
       // erc20 + lendingEnabled
-      if (assetType == 0 || assetType == 4) {
+      if (assetType == 0 || assetType == 4 || assetType == 22 || assetType == 200) {
         unrolledAssets = erc20Helper(asset, pool, withdrawalAsset, withdrawProps);
       }
       // Synthetix & Synthetix+LendingEnabled
@@ -125,7 +128,7 @@ library EasySwapperWithdrawer {
         unrolledAssets = EasySwapperV2LpHelpers.unrollLpsAndGetUnsupportedLpAssets(asset);
       }
       // solhint-disable-next-line no-empty-blocks
-      else if (assetType == 3 || assetType == 8) {
+      else if (assetType == 3 || assetType == 8 || assetType == 27) {
         // Aave do nothing
       }
       // Balancer Lp
@@ -163,6 +166,9 @@ library EasySwapperWithdrawer {
           asset,
           true
         );
+        // Velodrome CL
+      } else if (assetType == 26) {
+        unrolledAssets = EasySwapperVelodromeCLHelpers.getUnsupportedCLAssetsAndRewards(pool, asset);
         // Futures
       } else if (assetType == 101 || assetType == 102) {
         // All futures are settled in sUSD
@@ -191,7 +197,7 @@ library EasySwapperWithdrawer {
 
     if (recipient != address(this)) {
       if (balanceAfterSwaps > 0) {
-        IERC20Extended(address(withdrawalAsset)).transfer(recipient, balanceAfterSwaps);
+        require(withdrawalAsset.transfer(recipient, balanceAfterSwaps), "Withdrawal asset transfer failed");
       }
       emit Withdraw(pool, fundTokenAmount, address(withdrawalAsset), balanceAfterSwaps);
     }
