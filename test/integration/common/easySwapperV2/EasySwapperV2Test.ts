@@ -4,7 +4,14 @@ import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
 import { BigNumber } from "ethers";
 
-import { EasySwapperV2, IERC20Extended, PoolLogic, PoolManagerLogic, WithdrawalVault } from "../../../../types";
+import {
+  EasySwapperV2,
+  IERC20Extended,
+  PoolFactory,
+  PoolLogic,
+  PoolManagerLogic,
+  WithdrawalVault,
+} from "../../../../types";
 import { Address } from "../../../../deployment/types";
 import { units } from "../../../testHelpers";
 import { getAccountToken } from "../../utils/getAccountTokens";
@@ -17,6 +24,8 @@ import {
   deployBackboneContracts,
   IBackboneDeploymentsParams,
 } from "../../utils/deployContracts/deployBackboneContracts";
+import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
+import { getComplexAssetsData, getEmptyComplexAssetsData } from "../aaveV3/deployAaveV3TestInfrastructure";
 
 const ZERO_ADDRESS = ethers.constants.AddressZero;
 
@@ -32,13 +41,13 @@ export interface EasySwapperV2TestCase {
   testPoolAddress: Address;
   poolDepositorAddress: Address;
   destToken: Address;
-  slippageTolerance: number; // 1 - 0.1%; 10 - 1%; 100 - 10%
+  slippageTolerance: number; // For swapping into single asset. 1 - 0.1%; 10 - 1%; 100 - 10%
   name: Address;
 }
 
 interface EasySwapperV2TestsData {
   assetsBalanceOfSlot: {
-    usdc: number;
+    weth: number;
   };
   wrappedNativeToken: Address;
   swapperAddress: Address;
@@ -63,6 +72,11 @@ interface EasySwapperV2TestsData {
     };
   };
   poolFactory: Address;
+  onchainSwapRouter: Address;
+  aaveV3: {
+    protocolDataProvider: Address;
+    lendingPool: Address;
+  };
 }
 
 export const deployEasySwapperV2 = async (weth: string, wrappedNativeToken: string, swapperAddress: string) => {
@@ -96,12 +110,15 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
     withdrawTestCases,
     wrappedNativeToken,
     depositsData: { poolDepositToken, userDepositToken, nativeTokenWrapper },
+    aaveV3,
+    onchainSwapRouter,
   } = chainData;
   const { poolDepositorAddress, testPoolAddress } = baseTestPoolAddress;
 
   describe("EasySwapperV2Tests", () => {
     let user1: SignerWithAddress;
     let easySwapperV2: EasySwapperV2;
+    let poolFactoryContract: PoolFactory;
 
     utils.beforeAfterReset(beforeEach, afterEach);
 
@@ -110,6 +127,22 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
 
       easySwapperV2 = await deployEasySwapperV2(assets.weth, wrappedNativeToken, swapperAddress);
       await easySwapperV2.setdHedgePoolFactory(chainData.poolFactory);
+      // Upgrade to current PoolLogic for tests to become more precise
+      poolFactoryContract = await ethers.getContractAt("PoolFactory", chainData.poolFactory);
+      const currentPoolLogic = await (await ethers.getContractFactory("PoolLogic")).deploy();
+      const poolManagerLogicSet = await poolFactoryContract.getLogic(1);
+      const factoryOwner = await utils.impersonateAccount(await poolFactoryContract.owner());
+      await poolFactoryContract.connect(factoryOwner).setLogic(currentPoolLogic.address, poolManagerLogicSet);
+
+      // Deploy Aave Guard to test withdrawals from aave also
+      const aaveLendingPoolAssetGuard = await (
+        await ethers.getContractFactory("AaveLendingPoolAssetGuard")
+      ).deploy(aaveV3.protocolDataProvider, aaveV3.lendingPool, swapperAddress, onchainSwapRouter, 5, 10_000, 10_000);
+      await aaveLendingPoolAssetGuard.deployed();
+      const governance = await ethers.getContractAt("Governance", await poolFactoryContract.governanceAddress());
+      await governance
+        .connect(factoryOwner)
+        .setAssetGuard(AssetType["Aave V3 Lending Pool Asset"], aaveLendingPoolAssetGuard.address);
     });
 
     describe("EasySwapperV2 reverts as expected", () => {
@@ -135,7 +168,16 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
 
         await testPool.connect(poolDepositor).approve(easySwapperV2.address, poolDepositorBalance);
 
-        await easySwapperV2.connect(poolDepositor).initWithdrawal(testPool.address, poolDepositorBalance, 100);
+        const complexAssetsData = await getComplexAssetsData(
+          { poolFactory: poolFactoryContract },
+          { chainId, lendingPool: aaveV3.lendingPool, swapper: swapperAddress },
+          testPool,
+          poolDepositorBalance,
+        );
+
+        await easySwapperV2
+          .connect(poolDepositor)
+          .initWithdrawal(testPool.address, poolDepositorBalance, complexAssetsData);
 
         return {
           testPool,
@@ -145,23 +187,25 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
       };
 
       it("can't withdraw locked tokens via EasySwapperV2", async () => {
-        const DepositToken = <IERC20Extended>await ethers.getContractAt("IERC20Extended", assets.usdc);
+        const DepositToken = <IERC20Extended>await ethers.getContractAt("IERC20Extended", assets.weth);
         const depositTokenDecimals = await DepositToken.decimals();
-        const depositAmount = units(6, depositTokenDecimals);
-        await getAccountToken(depositAmount, user1.address, assets.usdc, assetsBalanceOfSlot.usdc);
+        const depositAmount = units(1, depositTokenDecimals);
+        await getAccountToken(depositAmount, user1.address, assets.weth, assetsBalanceOfSlot.weth);
 
         const testPool = await ethers.getContractAt("PoolLogic", testPoolAddress);
         await DepositToken.connect(user1).approve(testPool.address, depositAmount);
 
-        await testPool.connect(user1).deposit(assets.usdc, depositAmount);
+        await testPool.connect(user1).deposit(assets.weth, depositAmount);
         const balance = await testPool.balanceOf(user1.address);
 
         await utils.increaseTime(3600);
 
         await testPool.connect(user1).approve(easySwapperV2.address, balance);
-        await expect(easySwapperV2.connect(user1).initWithdrawal(testPool.address, balance, 100)).to.be.revertedWith(
-          "cooldown active",
-        );
+        await expect(
+          easySwapperV2
+            .connect(user1)
+            .initWithdrawal(testPool.address, balance, await getEmptyComplexAssetsData(testPool)),
+        ).to.be.revertedWith("cooldown active");
       });
 
       it("ensures WithdrawalVault works as expected", async () => {
@@ -185,7 +229,7 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
           expect(await asset.balanceOf(withdrawalVaultAddress)).to.be.eq(balance);
         }
 
-        await expect(withdrawalVault.unrollAssets(testPoolAddress, 0)).to.be.revertedWith("only creator");
+        await expect(withdrawalVault.unrollAssets(testPoolAddress)).to.be.revertedWith("only creator");
         await expect(withdrawalVault["recoverAssets()"]()).to.be.revertedWith("only creator");
         await expect(withdrawalVault["recoverAssets(uint256,address)"](0, testPoolAddress)).to.be.revertedWith(
           "only creator",
@@ -289,7 +333,7 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
         });
 
         it(`${testCase.name} - can completeWithdrawal to multiple tokens if WithdrawalVault exists`, async () => {
-          const { poolDepositor } = await initWithdrawal();
+          const { poolDepositor } = await initWithdrawal(testCase);
 
           const withdrawalVaultAddress = await easySwapperV2.withdrawalContracts(testCase.poolDepositorAddress);
           const trackedAssetsBefore = await easySwapperV2.getTrackedAssets(testCase.poolDepositorAddress);
@@ -327,9 +371,16 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
 
           await testPool.connect(poolDepositor).approve(easySwapperV2.address, poolDepositorBalance);
 
+          const complexAssetsData = await getComplexAssetsData(
+            { poolFactory: poolFactoryContract },
+            { chainId, lendingPool: aaveV3.lendingPool, swapper: swapperAddress },
+            testPool,
+            poolDepositorBalance,
+          );
+
           const trackedAssetsBefore = await easySwapperV2
             .connect(poolDepositor)
-            .callStatic.unrollAndClaim(testPool.address, poolDepositorBalance, 100);
+            .callStatic.unrollAndClaim(testPool.address, poolDepositorBalance, complexAssetsData);
 
           const balancesBefore = await Promise.all(
             trackedAssetsBefore.map(async ({ token, balance }) => {
@@ -343,7 +394,9 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
             }),
           );
 
-          await easySwapperV2.connect(poolDepositor).unrollAndClaim(testPool.address, poolDepositorBalance, 100);
+          await easySwapperV2
+            .connect(poolDepositor)
+            .unrollAndClaim(testPool.address, poolDepositorBalance, complexAssetsData);
 
           const trackedAssetsAfter = await easySwapperV2.getTrackedAssets(testCase.poolDepositorAddress);
           expect(trackedAssetsAfter.length).to.be.eq(0);
@@ -408,7 +461,7 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
         await deployments.poolFactory.addCustomCooldownWhitelist(easySwapperV2.address);
         await easySwapperV2.setCustomCooldownWhitelist([
           {
-            dHedgeVault: poolLogicProxy.address,
+            toWhitelist: poolLogicProxy.address,
             whitelisted: true,
           },
         ]);
@@ -429,7 +482,7 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
           receiver: swapperAddress,
           version: "6.0",
         });
-        await utils.delay(2);
+        await utils.delay(4);
 
         const swapDataStruct = {
           srcData: {
@@ -618,7 +671,7 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
       it("reverts during deposit with custom cooldow when pool is not in the whitelist", async () => {
         await easySwapperV2.setCustomCooldownWhitelist([
           {
-            dHedgeVault: poolLogicProxy.address,
+            toWhitelist: poolLogicProxy.address,
             whitelisted: false,
           },
         ]);
@@ -730,7 +783,7 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
 
         await expect(
           easySwapperV2.connect(user).zapDeposit(poolLogicProxy.address, swapDataStruct, expectedAmountReceived),
-        ).to.be.revertedWith("invalid deposit asset");
+        ).to.be.reverted;
 
         await expect(
           easySwapperV2

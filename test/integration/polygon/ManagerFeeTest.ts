@@ -99,7 +99,7 @@ describe("ManagerFee Test", function () {
     );
     const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
-    const totalFundValue = await poolManagerLogicProxy.callStatic.totalFundValueMutable();
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
     const performanceFeeNumerator = await poolManagerLogicProxy.performanceFeeNumerator();
     const feeDollarAmount = tokenPricePreMint
       .sub(tokenPriceAtLastFeeMint)
@@ -239,7 +239,7 @@ describe("ManagerFee Test", function () {
       .mul(managerFeeNumerator)
       .div(10000)
       .div(86400 * 365);
-    const totalFundValue = await poolManagerLogicProxy.callStatic.totalFundValueMutable();
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
     const feeDollarAmount = tokenPricePreMint
       .sub(tokenPriceAtLastFeeMint)
       .mul(totalSupplyPreMint)
@@ -312,7 +312,7 @@ describe("ManagerFee Test", function () {
     );
     const tokenPricePreMint = await poolLogicProxy.tokenPriceWithoutManagerFee();
     const totalSupplyPreMint = await poolLogicProxy.totalSupply();
-    const totalFundValue = await poolManagerLogicProxy.callStatic.totalFundValueMutable();
+    const totalFundValue = await poolManagerLogicProxy.totalFundValue();
     const performanceFeeNumerator = await poolManagerLogicProxy.performanceFeeNumerator();
     const managerFeeNumerator = await poolManagerLogicProxy.managerFeeNumerator();
     const streamingFee = totalSupplyPreMint

@@ -1,39 +1,16 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { SafeService } from "@safe-global/safe-ethers-adapters";
-import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
-import { MetaTransactionData } from "@safe-global/safe-core-sdk-types";
-
 import { IERC20 } from "../../../../types";
 import { IJob } from "../../../types";
 import DHedgeV1VaultABI from "./DHedge.json";
 import { V1_VAULTS_FROM_BACKEND_SORTED_BY_TVL_DESC_WITH_SETH_OR_SBTC } from "./v1VaultsFromBackend";
+import { proposeTransactions } from "../../../deploymentHelpers";
+import type { MetaTransactionData } from "../../../deploymentHelpers";
 
 const IERC20_PATH = "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20";
-
-const SAFE_API_URL_MAINNET = "https://safe-transaction-mainnet.safe.global";
-const SAFE_ADDRESS_MAINNET = "0x5a76f841bFe5182f04bf511fC0Ecf88C27189FCB";
 
 const sETH_ADDRESS = "0x5e74c9036fb86bd7ecdcb084a0673efc32ea31cb";
 const sBTC_ADDRESS = "0xfe18be6b3bd88a2d2a7f928d00292e7a9963cfc6";
 
-const proposeTx = async (hre: HardhatRuntimeEnvironment, safeTransactionData: MetaTransactionData[]) => {
-  const ethers = hre.ethers;
-  const provider = ethers.provider;
-  const signer = provider.getSigner(0);
-  const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer });
-  const safeSdk = await Safe.create({
-    ethAdapter,
-    safeAddress: SAFE_ADDRESS_MAINNET,
-  });
-  const safeTransaction = await safeSdk.createTransaction({ safeTransactionData });
-  console.log("safeTransaction", safeTransaction);
-  const txHash = await safeSdk.getTransactionHash(safeTransaction);
-  const service = new SafeService(SAFE_API_URL_MAINNET);
-  const signature = await safeSdk.signTransactionHash(txHash);
-  await service.proposeTx(SAFE_ADDRESS_MAINNET, txHash, safeTransaction, signature);
-};
-
-export const v1SynthRedeemJob: IJob<void> = async (_, hre: HardhatRuntimeEnvironment) => {
+export const v1SynthRedeemJob: IJob<void> = async (config, hre, _, __, addresses) => {
   const ethers = hre.ethers;
   const IDHedgeV1Vault = new ethers.utils.Interface(DHedgeV1VaultABI);
 
@@ -91,5 +68,5 @@ export const v1SynthRedeemJob: IJob<void> = async (_, hre: HardhatRuntimeEnviron
 
   console.log("safeTransactionData", safeTransactionData);
 
-  await proposeTx(hre, safeTransactionData);
+  await proposeTransactions(safeTransactionData, "V1 Synths Redeem", config, addresses);
 };

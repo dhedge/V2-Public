@@ -16,7 +16,6 @@ runVelodromeV2LPAssetGuardTest(ovmTestParams);
 runVelodromeV2GaugeContractGuardTest(ovmTestParams);
 runVelodromeLPAggregatorTest(ovmTestParams);
 runVelodromeV2RouterGuardTest(ovmTestParams);
-
 runVelodromeV2TWAPAggregatorTest([
   {
     assetToTest: ovmChainData.assets.weth,

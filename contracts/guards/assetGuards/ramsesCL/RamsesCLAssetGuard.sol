@@ -128,10 +128,15 @@ contract RamsesCLAssetGuard is ERC20Guard {
     );
 
     address[] memory rewardTokens = gauge.getRewardTokens();
+    address[] memory processedRewardTokens = new address[](rewardTokens.length);
 
     for (uint256 i = 0; i < rewardTokens.length; ++i) {
+      if (processedRewardTokens.contains(rewardTokens[i])) {
+        continue;
+      }
       uint256 rewardAmount = gauge.earned(rewardTokens[i], tokenId);
       tokenBalance = tokenBalance.add(_assetValue(factory, poolManagerLogic, rewardTokens[i], rewardAmount));
+      processedRewardTokens[i] = rewardTokens[i];
     }
 
     return tokenBalance;

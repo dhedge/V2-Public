@@ -26,12 +26,11 @@ contract SonneFinanceComptrollerGuard is TxDataUtils, IGuard, ITransactionTypes 
     bytes calldata _data
   ) external virtual override returns (uint16 _txType, bool _isPublic) {
     bytes4 method = getMethod(_data);
-    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
     if (method == ComptrollerInterface.enterMarkets.selector) {
       address[] memory cTokens = abi.decode(getParams(_data), (address[]));
 
-      _enterMarkets(poolLogic, _poolManagerLogic, cTokens);
+      _enterMarkets(_poolManagerLogic, cTokens);
 
       _txType = uint16(ITransactionTypes.TransactionType.SonneComptrollerEnterMarkets);
     } else if (method == ComptrollerInterface.exitMarket.selector) {
@@ -44,8 +43,6 @@ contract SonneFinanceComptrollerGuard is TxDataUtils, IGuard, ITransactionTypes 
       //  or be providing necessary collateral for an outstanding borrow."
       // Thus this is not a threat.
       _txType = uint16(ITransactionTypes.TransactionType.SonneComptrollerExitMarket);
-
-      emit SonneExitMarket(poolLogic, abi.decode(getParams(_data), (address)), block.timestamp);
     }
 
     return (_txType, false);
@@ -54,7 +51,7 @@ contract SonneFinanceComptrollerGuard is TxDataUtils, IGuard, ITransactionTypes 
   /// @dev This function isn't strictly required given that to enter a market, the pool must have
   ///      supplied or borrowed in a market (cToken) and the same checks that are done here are also done
   ///      in the SonneFinanceCTokenGuard.
-  function _enterMarkets(address _poolLogic, address _poolManagerLogic, address[] memory _cTokens) internal {
+  function _enterMarkets(address _poolManagerLogic, address[] memory _cTokens) internal view {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
     for (uint16 i = 0; i < _cTokens.length; ++i) {
@@ -64,7 +61,5 @@ contract SonneFinanceComptrollerGuard is TxDataUtils, IGuard, ITransactionTypes 
       require(poolManagerLogicAssets.isSupportedAsset(cToken), "Given cToken not supported");
       require(poolManagerLogicAssets.isSupportedAsset(underlyingAsset), "unsupported underlying asset");
     }
-
-    emit SonneEnterMarkets(_poolLogic, _cTokens, block.timestamp);
   }
 }

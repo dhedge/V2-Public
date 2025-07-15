@@ -4,6 +4,14 @@ import { compoundV3CommonTest } from "../../common/compound/CompoundV3CommonTest
 
 const { assets, assetsBalanceOfSlot } = chainData;
 
+const commonParams = {
+  rewards: chainData.compoundV3.rewards,
+  easySwapperV2: {
+    swapper: chainData.flatMoney.swapper,
+    wrappedNativeToken: chainData.assets.weth,
+  },
+};
+
 const testParams = [
   {
     ...chainData,
@@ -13,7 +21,7 @@ const testParams = [
     baseAssetSlot: assetsBalanceOfSlot.usdcNative,
     baseAssetAmount: units(100, 6),
     cAssetPriceFeed: chainData.usdPriceFeeds.usdc,
-    rewards: chainData.compoundV3.rewards,
+    ...commonParams,
   },
   {
     ...chainData,
@@ -23,10 +31,8 @@ const testParams = [
     baseAssetSlot: assetsBalanceOfSlot.weth,
     baseAssetAmount: units(10),
     cAssetPriceFeed: chainData.usdPriceFeeds.eth,
-    rewards: chainData.compoundV3.rewards,
+    ...commonParams,
   },
 ];
 
-testParams.forEach((params) => {
-  compoundV3CommonTest(params);
-});
+testParams.forEach(compoundV3CommonTest);

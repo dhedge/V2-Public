@@ -6,7 +6,7 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
 
-import {IFlatMoneyDelayedOrderContractGuard} from "../../../interfaces/flatMoney/IFlatMoneyDelayedOrderContractGuard.sol";
+import {FlatMoneyDelayedOrderContractGuard} from "../../../guards/contractGuards/flatMoney/FlatMoneyDelayedOrderContractGuard.sol";
 import {ILeverageModule} from "../../../interfaces/flatMoney/ILeverageModule.sol";
 import {IOracleModule} from "../../../interfaces/flatMoney/IOracleModule.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
@@ -85,9 +85,9 @@ contract FlatMoneyPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, FlatM
   function _useContractGuard(
     address _pool,
     address _moduleAddress
-  ) internal view returns (IFlatMoneyDelayedOrderContractGuard delayedOrderGuard) {
+  ) internal view returns (FlatMoneyDelayedOrderContractGuard delayedOrderGuard) {
     address delayedOrder = ILeverageModule(_moduleAddress).vault().moduleAddress(FlatcoinModuleKeys._DELAYED_ORDER_KEY);
-    delayedOrderGuard = IFlatMoneyDelayedOrderContractGuard(
+    delayedOrderGuard = FlatMoneyDelayedOrderContractGuard(
       IHasGuardInfo(IPoolLogic(_pool).factory()).getContractGuard(delayedOrder)
     );
   }

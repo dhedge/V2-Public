@@ -14,7 +14,9 @@ const testParams = {
     borrowAsset: arbitrumChainData.assetsBalanceOfSlot.dai,
   },
   borrowAsset: arbitrumChainData.assets.dai,
-};
+  swapper: arbitrumChainData.flatMoney.swapper,
+  chainId: 42161,
+} as const;
 
 testAaveV3(testParams);
 testAaveV3Multiple(testParams);

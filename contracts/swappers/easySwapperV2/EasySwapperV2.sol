@@ -3,8 +3,9 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+
+import {SafeERC20} from "../../utils/SafeERC20.sol";
+import {IERC20} from "../../interfaces/IERC20.sol";
 
 import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IEasySwapperV2} from "./interfaces/IEasySwapperV2.sol";
@@ -20,14 +21,19 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   using SafeERC20 for IERC20;
   using SafeMathUpgradeable for uint256;
 
-  struct CustomCooldownSetting {
-    address dHedgeVault;
+  struct WhitelistSetting {
+    address toWhitelist;
     bool whitelisted;
   }
 
   struct SingleInSingleOutData {
     ISwapper.SrcTokenSwapDetails srcData;
     ISwapper.DestData destData;
+  }
+
+  enum WithdrawalVaultType {
+    SINGLE_ASSET_WITHDRAWAL,
+    LIMIT_ORDER
   }
 
   uint256 public constant DEFAULT_COOLDOWN = 1 days;
@@ -52,6 +58,12 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
   address public dHedgePoolFactory;
 
+  /// @notice Stores addresses which are allowed to call the `completeLimitOrderWithdrawalFor` function
+  mapping(address => bool) public isAuthorizedWithdrawer;
+
+  /// Stores Depositor => WithdrawalVault 1 to 1 relationship
+  mapping(address => address) public override limitOrderContracts;
+
   event ZapDepositCompleted(
     address indexed depositor,
     address indexed dHedgeVault,
@@ -68,12 +80,8 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   );
   event WithdrawalCompleted(address withdrawalVault, address indexed depositor);
   event WithdrawalVaultCreated(address withdrawalVault, address indexed depositor);
-
-  /// @notice Reverts if there is no vault to complete withdrawal from
-  modifier checkVaultExistence(address _depositor) {
-    require(withdrawalContracts[_depositor] != address(0), "not exists");
-    _;
-  }
+  event LimitOrderVaultCreated(address limitOrderVault, address indexed depositor);
+  event AuthorizedWithdrawersSet(WhitelistSetting[] whitelistSettings);
 
   /// @notice Reverts if vault can not be deposited into with custom lockup time
   /// @dev Entry fee bigger than 0.1% is a must during custom (lower) lockup time during deposit
@@ -82,6 +90,12 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
     (, , uint256 entryFeeNumerator, , ) = IPoolManagerLogic(IPoolLogic(_dHedgeVault).poolManagerLogic()).getFee();
     require(entryFeeNumerator >= 10, "entry fee not set");
+
+    _;
+  }
+
+  modifier onlyAuthorizedWithdrawers(address _caller) {
+    require(isAuthorizedWithdrawer[_caller], "not authorized");
 
     _;
   }
@@ -149,7 +163,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
   /// @notice Deposit with token which is accepted by vault - receive vault tokens with normal lockup
   ///         Usecase: simplify deposit logic on the UI. Use this wrapper instead of depositing through core contract
-  /// @dev Doesn't perform any swaps, simply wraps PoolLogic's deposit function
+  /// @dev Doesn't perform any swaps, simply wraps PoolLogic::deposit function
   /// @param _dHedgeVault dHEDGE vault address
   /// @param _vaultDepositToken dHEDGE vault's deposit token
   /// @param _depositAmount Amount of dHEDGE vault deposit token to deposit
@@ -166,7 +180,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   /// @notice Deposit with token which is accepted by vault - receive vault tokens with lowered lockup
   ///         Usecase: Lowered lockup required (e.g. leverage vaults)
   ///                  Deposit into vault from within vault
-  /// @dev Doesn't perform any swaps, simply wraps PoolLogic's deposit function
+  /// @dev Doesn't perform any swaps, simply wraps PoolLogic::deposit function
   /// @param _dHedgeVault dHEDGE vault address
   /// @param _vaultDepositToken dHEDGE vault's deposit token
   /// @param _depositAmount Amount of dHEDGE vault deposit token to deposit
@@ -247,35 +261,39 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   /// @dev Need to allow EasySwapperV2 to spend dHEDGE Vault tokens
   /// @param _dHedgeVault dHEDGE Vault address
   /// @param _amountIn Amount of dHEDGE Vault tokens to withdraw
-  /// @param _slippageTolerance Slippage tolerance for withdrawal, see PoolLogic's withdrawToSafe function
+  /// @param _complexAssetsData See PoolLogic::withdrawToSafe
   /// @return trackedAssets full array of basic assets and their balances
   /// @return vault Address of the WithdrawalVault for the msg.sender
   function initWithdrawal(
     address _dHedgeVault,
     uint256 _amountIn,
-    uint256 _slippageTolerance
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
   ) public returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) {
-    require(isdHedgeVault(_dHedgeVault), "not a vault");
+    return
+      _initWithdrawalFor(
+        msg.sender,
+        _dHedgeVault,
+        _amountIn,
+        _complexAssetsData,
+        WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL
+      );
+  }
 
-    IERC20(_dHedgeVault).safeTransferFrom(msg.sender, address(this), _amountIn);
-
-    vault = withdrawalContracts[msg.sender];
-    if (vault == address(0)) {
-      vault = _createWithdrawalVault(msg.sender);
-    }
-
-    IPoolLogic(_dHedgeVault).withdrawToSafe(vault, _amountIn, _slippageTolerance);
-
-    IWithdrawalVault(vault).unrollAssets(_dHedgeVault, _slippageTolerance);
-
-    trackedAssets = IWithdrawalVault(vault).getTrackedAssets();
-
-    emit WithdrawalInitiated({
-      withdrawalVault: vault,
-      depositor: msg.sender,
-      dHedgeVault: _dHedgeVault,
-      amountWithdrawn: _amountIn
-    });
+  /// @notice Function to be called by contract managing limit orders
+  /// @dev Need to allow EasySwapperV2 to spend dHEDGE Vault tokens
+  /// @param _user Address of the depositor
+  /// @param _dHedgeVault dHEDGE Vault address
+  /// @param _amountIn Amount of dHEDGE Vault tokens to withdraw
+  /// @param _complexAssetsData See PoolLogic::withdrawToSafe
+  /// @return trackedAssets full array of basic assets and their balances
+  /// @return vault Address of the WithdrawalVault for the _user
+  function initLimitOrderWithdrawalFor(
+    address _user,
+    address _dHedgeVault,
+    uint256 _amountIn,
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
+  ) external override returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) {
+    return _initWithdrawalFor(_user, _dHedgeVault, _amountIn, _complexAssetsData, WithdrawalVaultType.LIMIT_ORDER);
   }
 
   /// @notice Second of two-step withdrawal process
@@ -285,27 +303,58 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   function completeWithdrawal(
     IWithdrawalVault.MultiInSingleOutData calldata _swapData,
     uint256 _expectedDestTokenAmount
-  ) external checkVaultExistence(msg.sender) {
-    address withdrawalVault = withdrawalContracts[msg.sender];
-    IWithdrawalVault(withdrawalVault).swapToSingleAsset(_swapData, _expectedDestTokenAmount);
-
-    emit WithdrawalCompleted(withdrawalVault, msg.sender);
+  ) external returns (uint256 destTokenAmount) {
+    return
+      _completeWithdrawal(msg.sender, _swapData, _expectedDestTokenAmount, WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL);
   }
 
   /// @notice Second of two-step withdrawal process
   /// @dev Allows receiving multiple assets for withdrawal initiated during first step, doesn't swap anything
-  function completeWithdrawal() external checkVaultExistence(msg.sender) {
-    address withdrawalVault = withdrawalContracts[msg.sender];
-    IWithdrawalVault(withdrawalVault).recoverAssets();
+  function completeWithdrawal() external {
+    _claimTokensFromVault(msg.sender, WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL);
+  }
 
-    emit WithdrawalCompleted(withdrawalVault, msg.sender);
+  /// @notice Completes a limit order withdrawal with specified swap data
+  /// @param _swapData The swap data containing input and output token details
+  /// @param _expectedDestTokenAmount The minimum amount of destination tokens expected from the swap
+  /// @return destTokenAmount The actual amount of destination tokens received
+  function completeLimitOrderWithdrawal(
+    IWithdrawalVault.MultiInSingleOutData calldata _swapData,
+    uint256 _expectedDestTokenAmount
+  ) external returns (uint256 destTokenAmount) {
+    return _completeWithdrawal(msg.sender, _swapData, _expectedDestTokenAmount, WithdrawalVaultType.LIMIT_ORDER);
+  }
+
+  /// @notice Completes a limit order withdrawal by claiming tokens directly from the vault
+  /// @dev Simpler version that just claims tokens without any swapping
+  function completeLimitOrderWithdrawal() external {
+    completeLimitOrderWithdrawalFor(msg.sender);
+  }
+
+  /// @notice Only callable by authorized withdrawers (trusted keepers).
+  /// @dev Allows receiving single asset for withdrawal initiated during first step and requires swap data.
+  /// @param _user Address of the depositor
+  /// @param _swapData Encapsulates offchain swaps logic
+  /// @param _expectedDestTokenAmount Expected amount of destination token to receive
+  function completeLimitOrderWithdrawalFor(
+    address _user,
+    IWithdrawalVault.MultiInSingleOutData calldata _swapData,
+    uint256 _expectedDestTokenAmount
+  ) external override onlyAuthorizedWithdrawers(msg.sender) returns (uint256 destTokenAmount) {
+    return _completeWithdrawal(_user, _swapData, _expectedDestTokenAmount, WithdrawalVaultType.LIMIT_ORDER);
+  }
+
+  /// @notice Anyone can call and send tokens to user from their vault
+  /// @param _user Address of the depositor
+  function completeLimitOrderWithdrawalFor(address _user) public {
+    _claimTokensFromVault(_user, WithdrawalVaultType.LIMIT_ORDER);
   }
 
   /// @dev To be used by PoolLogic during withdrawProcessing
-  function partialWithdraw(uint256 _portion, address _to) external override checkVaultExistence(msg.sender) {
+  function partialWithdraw(uint256 _portion, address _to) external override {
     require(_portion > 0 && _portion <= 1e18, "invalid portion");
 
-    address withdrawalVault = withdrawalContracts[msg.sender];
+    address withdrawalVault = _getVault(msg.sender, WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL);
     IWithdrawalVault(withdrawalVault).recoverAssets(_portion, _to);
 
     emit WithdrawalCompleted(withdrawalVault, msg.sender);
@@ -314,17 +363,17 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   /// @notice Can be used instead initWithdrawal + completeWithdrawal() without swap to withdraw in a single step
   /// @param _dHedgeVault dHEDGE Vault address
   /// @param _amountIn Amount of dHEDGE Vault tokens to withdraw
-  /// @param _slippageTolerance Slippage tolerance for withdrawal, see PoolLogic's withdrawToSafe function
+  /// @param _complexAssetsData See PoolLogic::withdrawToSafe
   /// @return trackedAssets full array of basic assets and their balances
   function unrollAndClaim(
     address _dHedgeVault,
     uint256 _amountIn,
-    uint256 _slippageTolerance
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
   ) external returns (IWithdrawalVault.TrackedAsset[] memory) {
     (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) = initWithdrawal(
       _dHedgeVault,
       _amountIn,
-      _slippageTolerance
+      _complexAssetsData
     );
 
     IWithdrawalVault(vault).recoverAssets();
@@ -373,13 +422,16 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   function getTrackedAssets(
     address _depositor
   ) external view override returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets) {
-    address withdrawalVault = withdrawalContracts[_depositor];
+    return _getTrackedAssets(_depositor, WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL);
+  }
 
-    if (withdrawalVault == address(0)) {
-      return trackedAssets;
-    }
-
-    trackedAssets = IWithdrawalVault(withdrawalVault).getTrackedAssets();
+  /// @notice For client code to know which assets are available for swapping
+  /// @param _depositor Address of the depositor
+  /// @return trackedAssets full array of basic assets and their balances
+  function getTrackedAssetsFromLimitOrders(
+    address _depositor
+  ) external view override returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets) {
+    return _getTrackedAssets(_depositor, WithdrawalVaultType.LIMIT_ORDER);
   }
 
   /// @notice Check if provided address is a dHEDGE vault
@@ -396,11 +448,11 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
   /// @notice Setter to add/remove dHEDGE vaults to/from custom cooldown whitelist
   /// @param _whitelistSettings Array of dHEDGE vaults with whitelist status
-  function setCustomCooldownWhitelist(CustomCooldownSetting[] calldata _whitelistSettings) external onlyOwner {
+  function setCustomCooldownWhitelist(WhitelistSetting[] calldata _whitelistSettings) external onlyOwner {
     for (uint256 i; i < _whitelistSettings.length; ++i) {
-      require(isdHedgeVault(_whitelistSettings[i].dHedgeVault), "not a vault");
+      require(isdHedgeVault(_whitelistSettings[i].toWhitelist), "not a vault");
 
-      customCooldownDepositsWhitelist[_whitelistSettings[i].dHedgeVault] = _whitelistSettings[i].whitelisted;
+      customCooldownDepositsWhitelist[_whitelistSettings[i].toWhitelist] = _whitelistSettings[i].whitelisted;
     }
   }
 
@@ -424,6 +476,14 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     dHedgePoolFactory = _dHedgePoolFactory;
   }
 
+  function setAuthorizedWithdrawers(WhitelistSetting[] calldata _whitelistSettings) external onlyOwner {
+    for (uint256 i; i < _whitelistSettings.length; ++i) {
+      isAuthorizedWithdrawer[_whitelistSettings[i].toWhitelist] = _whitelistSettings[i].whitelisted;
+    }
+
+    emit AuthorizedWithdrawersSet(_whitelistSettings);
+  }
+
   /**
    ***************************************
    *        Internal and Private         *
@@ -444,16 +504,20 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     customCooldown = _customCooldown;
   }
 
-  /// @param _depositor Address of the depositor
-  /// @return vault Address of the new WithdrawalVault
-  function _createWithdrawalVault(address _depositor) internal returns (address vault) {
+  function _deployVault(address _depositor, WithdrawalVaultType _type) internal returns (address vault) {
     bytes memory initVaultData = abi.encodeWithSignature("initialize(address,address)", _depositor, address(this));
 
     vault = _deploy(initVaultData);
 
-    withdrawalContracts[_depositor] = vault;
+    if (_type == WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL) {
+      withdrawalContracts[_depositor] = vault;
 
-    emit WithdrawalVaultCreated(vault, _depositor);
+      emit WithdrawalVaultCreated(vault, _depositor);
+    } else {
+      limitOrderContracts[_depositor] = vault;
+
+      emit LimitOrderVaultCreated(vault, _depositor);
+    }
   }
 
   /// @notice Wraps native token before zapping into dHEDGE vault
@@ -573,5 +637,91 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     );
 
     require(amountReceived >= _expectedAmountReceived, "high deposit slippage");
+  }
+
+  function _initWithdrawalFor(
+    address _user,
+    address _dHedgeVault,
+    uint256 _amountIn,
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData,
+    WithdrawalVaultType _type
+  ) internal returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) {
+    require(isdHedgeVault(_dHedgeVault), "not a vault");
+
+    IERC20(_dHedgeVault).safeTransferFrom(msg.sender, address(this), _amountIn);
+
+    vault = _selectWithdrawalVault(_user, _type);
+
+    IPoolLogic(_dHedgeVault).withdrawToSafe(vault, _amountIn, _complexAssetsData);
+
+    IWithdrawalVault(vault).unrollAssets(_dHedgeVault);
+
+    trackedAssets = IWithdrawalVault(vault).getTrackedAssets();
+
+    emit WithdrawalInitiated({
+      withdrawalVault: vault,
+      depositor: _user,
+      dHedgeVault: _dHedgeVault,
+      amountWithdrawn: _amountIn
+    });
+  }
+
+  function _completeWithdrawal(
+    address _user,
+    IWithdrawalVault.MultiInSingleOutData calldata _swapData,
+    uint256 _expectedDestTokenAmount,
+    WithdrawalVaultType _vaultType
+  ) internal returns (uint256 destTokenAmount) {
+    address vault = _getVault(_user, _vaultType);
+    destTokenAmount = IWithdrawalVault(vault).swapToSingleAsset(_swapData, _expectedDestTokenAmount);
+
+    emit WithdrawalCompleted(vault, _user);
+  }
+
+  function _claimTokensFromVault(address _user, WithdrawalVaultType _vaultType) internal {
+    address vault = _getVault(_user, _vaultType);
+    IWithdrawalVault(vault).recoverAssets();
+
+    emit WithdrawalCompleted(vault, _user);
+  }
+
+  /// @dev Creates a new vault if it doesn't exist
+  function _selectWithdrawalVault(address _user, WithdrawalVaultType _type) internal returns (address vault) {
+    if (_type == WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL) {
+      vault = withdrawalContracts[_user];
+    } else {
+      vault = limitOrderContracts[_user];
+    }
+
+    if (vault == address(0)) vault = _deployVault(_user, _type);
+  }
+
+  /// @dev Returns address(0) if no vault exists for the user
+  function _getVaultSafe(address _depositor, WithdrawalVaultType _type) internal view returns (address vault) {
+    if (_type == WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL) {
+      vault = withdrawalContracts[_depositor];
+    } else {
+      vault = limitOrderContracts[_depositor];
+    }
+  }
+
+  /// @dev Reverts if no vault exists for the user
+  function _getVault(address _depositor, WithdrawalVaultType _type) internal view returns (address vault) {
+    vault = _getVaultSafe(_depositor, _type);
+
+    require(vault != address(0), "not exists");
+  }
+
+  function _getTrackedAssets(
+    address _depositor,
+    WithdrawalVaultType _type
+  ) internal view returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets) {
+    address vault = _getVaultSafe(_depositor, _type);
+
+    if (vault == address(0)) {
+      return trackedAssets;
+    }
+
+    return IWithdrawalVault(vault).getTrackedAssets();
   }
 }

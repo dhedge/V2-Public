@@ -18,20 +18,16 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 
-import "../interfaces/curve/ICurveCryptoSwap.sol";
-import "../interfaces/uniswapV3/IV3SwapRouter.sol";
-import "../interfaces/uniswapV2/IUniswapV2Router.sol";
-import "../interfaces/uniswapV2/IUniswapV2RouterSwapOnly.sol";
-import "../utils/uniswap/UniswapV3QuoterLibrary.sol";
+import {IV3SwapRouter} from "../interfaces/uniswapV3/IV3SwapRouter.sol";
+import {IUniswapV2RouterSwapOnly} from "../interfaces/uniswapV2/IUniswapV2RouterSwapOnly.sol";
+import {UniswapV3QuoterLibrary} from "../utils/uniswap/UniswapV3QuoterLibrary.sol";
 
 contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
   using SafeERC20 for IERC20;
-  using SafeMath for uint256;
   using UniswapV3QuoterLibrary for IUniswapV3Factory;
 
   IUniswapV3Factory public uniV3Factory;
@@ -61,10 +57,10 @@ contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
   ) external override returns (uint256[] memory amountsOut) {
     bytes memory swapPath;
     (amountsOut, swapPath) = _getAmountsOut(amountIn, path);
-    // solhint-disable-next-line reason-string
-    require(amountsOut[path.length - 1] >= amountOutMin);
 
-    IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
+    require(amountsOut[path.length - 1] >= amountOutMin, "too much slippage");
+
+    IERC20(path[0]).safeTransferFrom(msg.sender, address(this), amountIn);
 
     IV3SwapRouter.ExactInputParams memory params;
     params.recipient = to;
@@ -72,7 +68,7 @@ contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
     params.amountOutMinimum = amountOutMin;
     params.path = swapPath;
 
-    IERC20(path[0]).approve(address(uniV3Router), amountIn);
+    IERC20(path[0]).safeIncreaseAllowance(address(uniV3Router), amountIn);
     uint256 amountOut = uniV3Router.exactInput(params);
 
     // The UniswapV3QuoterLibrary only provides an estimate. In some cases the amount the quote returns and the amount you get post swap differ marginally
@@ -89,10 +85,10 @@ contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
   ) external override returns (uint256[] memory amountsIn) {
     bytes memory swapPath;
     (amountsIn, swapPath) = _getAmountsIn(expectedAmountOut, path);
-    // solhint-disable-next-line reason-string
-    require(amountsIn[0] <= amountInMax);
 
-    IERC20(path[0]).transferFrom(msg.sender, address(this), amountsIn[0]);
+    require(amountsIn[0] <= amountInMax, "too much slippage");
+
+    IERC20(path[0]).safeTransferFrom(msg.sender, address(this), amountsIn[0]);
 
     IV3SwapRouter.ExactOutputParams memory params;
     params.recipient = to;
@@ -100,7 +96,7 @@ contract DhedgeUniV3V2Router is IUniswapV2RouterSwapOnly {
     params.amountInMaximum = amountsIn[0];
     params.path = swapPath;
 
-    IERC20(path[0]).approve(address(uniV3Router), amountsIn[0]);
+    IERC20(path[0]).safeIncreaseAllowance(address(uniV3Router), amountsIn[0]);
     uint256 amountIn = uniV3Router.exactOutput(params);
 
     require(amountIn <= amountInMax, "too much slippage");

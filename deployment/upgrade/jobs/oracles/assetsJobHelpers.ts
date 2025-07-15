@@ -22,6 +22,12 @@ import { deployRamsesTWAPAggregator } from "./deployRamsesTWAPAggregator";
 import { deployRamsesVariableLPAggregator } from "./deployRamsesVariableLPAggregator";
 import { deploySonneFinancePriceAggregator } from "./deploySonneFinancePriceAggregator";
 import { deployFlatMoneyUNITPriceAggregator } from "./deployFlatMoneyUNITPriceAggregator";
+import { deployChainlinkPythPriceAggregator } from "./deployChainlinkPythPriceAggregator";
+import { deployCustomCrossAggregator } from "./deployCustomCrossAggregator";
+import { deployFluidTokenPriceAggregator } from "./deployFluidTokenPriceAggregator";
+import { deployPythPriceAggregator } from "./deployPythPriceAggregator";
+import { deployPendlePTPriceAggregator } from "./deployPendlePTPriceAggregator";
+import { deployERC4626PriceAggregator } from "./deployERC4626PriceAggregator";
 
 export const getOracle = async (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig): Promise<TDeployedAsset> => {
   const oracleAddress = await typeToDeployer[assetConfig.oracleType](hre, assetConfig);
@@ -60,4 +66,10 @@ const typeToDeployer: TOracleTypeToDeployer = {
   RamsesVariableLPAggregator: deployRamsesVariableLPAggregator,
   SonneFinancePriceAggregator: deploySonneFinancePriceAggregator,
   FlatMoneyUNITPriceAggregator: deployFlatMoneyUNITPriceAggregator,
+  ChainlinkPythPriceAggregator: deployChainlinkPythPriceAggregator,
+  CustomCrossAggregator: deployCustomCrossAggregator,
+  FluidTokenPriceAggregator: deployFluidTokenPriceAggregator,
+  PythPriceAggregator: deployPythPriceAggregator,
+  PendlePTPriceAggregator: deployPendlePTPriceAggregator,
+  ERC4626PriceAggregator: deployERC4626PriceAggregator,
 };

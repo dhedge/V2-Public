@@ -3,6 +3,50 @@
     "anonymous": false,
     "inputs": [
       {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "toWhitelist",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "whitelisted",
+            "type": "bool"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct EasySwapperV2.WhitelistSetting[]",
+        "name": "whitelistSettings",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "AuthorizedWithdrawersSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "limitOrderVault",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "depositor",
+        "type": "address"
+      }
+    ],
+    "name": "LimitOrderVaultCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "previousOwner",
@@ -222,8 +266,193 @@
         "type": "uint256"
       }
     ],
-    "name": "completeWithdrawal",
+    "name": "completeLimitOrderWithdrawal",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "destTokenAmount",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "completeLimitOrderWithdrawal",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ISwapper.SrcTokenSwapDetails[]",
+            "name": "srcData",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "destToken",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minDestAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapper.DestData",
+            "name": "destData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct IWithdrawalVault.MultiInSingleOutData",
+        "name": "_swapData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedDestTokenAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "completeLimitOrderWithdrawalFor",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "destTokenAmount",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "completeLimitOrderWithdrawalFor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ISwapper.SrcTokenSwapDetails[]",
+            "name": "srcData",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "destToken",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minDestAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapper.DestData",
+            "name": "destData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct IWithdrawalVault.MultiInSingleOutData",
+        "name": "_swapData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedDestTokenAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "completeWithdrawal",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "destTokenAmount",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -418,6 +647,42 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_depositor",
+        "type": "address"
+      }
+    ],
+    "name": "getTrackedAssetsFromLimitOrders",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "balance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IWithdrawalVault.TrackedAsset[]",
+        "name": "trackedAssets",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_dHedgeVault",
         "type": "address"
       },
@@ -427,9 +692,89 @@
         "type": "uint256"
       },
       {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "supportedAsset",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "withdrawData",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "slippageTolerance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IPoolLogic.ComplexAsset[]",
+        "name": "_complexAssetsData",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "initLimitOrderWithdrawalFor",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "balance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IWithdrawalVault.TrackedAsset[]",
+        "name": "trackedAssets",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
-        "name": "_slippageTolerance",
+        "name": "_amountIn",
         "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "supportedAsset",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "withdrawData",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "slippageTolerance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IPoolLogic.ComplexAsset[]",
+        "name": "_complexAssetsData",
+        "type": "tuple[]"
       }
     ],
     "name": "initWithdrawal",
@@ -497,6 +842,25 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isAuthorizedWithdrawer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_dHedgeVault",
         "type": "address"
       }
@@ -507,6 +871,25 @@
         "internalType": "bool",
         "name": "isVault",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "limitOrderContracts",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -589,6 +972,31 @@
   {
     "inputs": [
       {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "toWhitelist",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "whitelisted",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct EasySwapperV2.WhitelistSetting[]",
+        "name": "_whitelistSettings",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "setAuthorizedWithdrawers",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "_customCooldown",
         "type": "uint256"
@@ -605,7 +1013,7 @@
         "components": [
           {
             "internalType": "address",
-            "name": "dHedgeVault",
+            "name": "toWhitelist",
             "type": "address"
           },
           {
@@ -614,7 +1022,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct EasySwapperV2.CustomCooldownSetting[]",
+        "internalType": "struct EasySwapperV2.WhitelistSetting[]",
         "name": "_whitelistSettings",
         "type": "tuple[]"
       }
@@ -702,9 +1110,26 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "_slippageTolerance",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "supportedAsset",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "withdrawData",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "slippageTolerance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IPoolLogic.ComplexAsset[]",
+        "name": "_complexAssetsData",
+        "type": "tuple[]"
       }
     ],
     "name": "unrollAndClaim",

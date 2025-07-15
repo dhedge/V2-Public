@@ -1,6 +1,7 @@
 import fs from "fs";
+import util from "util";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { executeInSeries, proposeTx } from "../../deploymentHelpers";
+import { proposeTransactions } from "../../deploymentHelpers";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions, TDeployedAsset } from "../../types";
 import { TAssetConfig } from "./oracles/oracleTypes";
 
@@ -41,49 +42,60 @@ export const removeAssetsJob: IJob<void> = async (
 
   if (assetAddressesToRemove.length) {
     const deployedFunds = await poolFactory.getDeployedFunds();
+    const fundsWithAssetsToRemove: string[] = [];
 
-    // This will be slow
-    // Here we check that no pools have a balance of the asset we're removing
-    // Comment this out if you want to by pass it
+    // Here we check that no pools have enabled the asset we're removing
+    // Comment this loop out if you want to by pass it
     for (const asset of assetAddressesToRemove) {
-      console.log("Checking if any pool has a balance of", asset);
-      const results = await executeInSeries(
-        deployedFunds.map((fund) => async () => {
-          console.log("Checking: ", fund);
+      const fundsWithPositiveBalance: string[] = [];
+      const assetContract = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", asset);
+      console.log("Checking if any pool has enabled: ", asset);
+      const results = await Promise.all(
+        deployedFunds.map(async (fund) => {
           const pool = await ethers.getContractAt("PoolLogic", fund);
           const managerLogic = await ethers.getContractAt("PoolManagerLogic", await pool.poolManagerLogic());
           const isSupported = await managerLogic["isSupportedAsset(address)"](asset);
           if (isSupported) {
-            console.log("Found fund with asset", fund);
+            const balance = await assetContract.balanceOf(fund);
+            if (balance.gt(0)) fundsWithPositiveBalance.push(fund);
             return fund;
           }
         }),
       );
-      const filteredResults = results.filter(Boolean);
+      const filteredResults = results.filter((poolAddress): poolAddress is string => poolAddress !== undefined);
       if (filteredResults.length) {
-        console.log("Pools that contain: ", asset, filteredResults);
-        throw new Error("Cannot remove asset because pools contain it");
+        console.log("Pools that contain: ", asset, util.inspect(filteredResults, { maxArrayLength: null }));
+        fundsWithAssetsToRemove.push(...filteredResults);
       }
+
+      console.log(
+        "Pools with positive balance of: ",
+        asset,
+        util.inspect(fundsWithPositiveBalance, { maxArrayLength: null }),
+      );
 
       console.log("Checking finished of", asset);
     }
 
+    console.log("Funds with assets to remove", util.inspect(fundsWithAssetsToRemove, { maxArrayLength: null }));
+
     console.log("AssetsJob: Removing Assets", assetAddressesToRemove);
 
-    if (config.execute) {
+    if (config.execute && fundsWithAssetsToRemove.length === 0) {
       const AssetHandlerLogic = await hre.artifacts.readArtifact("AssetHandler");
-      const assetHandlerLogic = new ethers.utils.Interface(AssetHandlerLogic.abi);
-      for (const asset of assetAddressesToRemove) {
-        console.log("Proposing tx to remove", asset);
-        const removeAssetABI = assetHandlerLogic.encodeFunctionData("removeAsset", [asset]);
-        await proposeTx(
-          versions[config.oldTag].contracts.AssetHandlerProxy,
-          removeAssetABI,
-          "Remove asset from Asset Handler",
-          config,
-          addresses,
-        );
-      }
+      const assetHandlerInterface = new ethers.utils.Interface(AssetHandlerLogic.abi);
+
+      console.log("Proposing tx to remove", assetAddressesToRemove);
+      await proposeTransactions(
+        assetAddressesToRemove.map((asset) => ({
+          to: versions[config.oldTag].contracts.AssetHandlerProxy,
+          value: "0",
+          data: assetHandlerInterface.encodeFunctionData("removeAsset", [asset]),
+        })),
+        "Remove assets from Asset Handler",
+        config,
+        addresses,
+      );
 
       const removedAssets = new Set<string>(assetAddressesToRemove);
       // Filter out any assets that have been removed

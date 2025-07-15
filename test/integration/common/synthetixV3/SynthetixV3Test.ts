@@ -58,7 +58,7 @@ export type ISynthetixV3TestsParams = IBackboneDeploymentsParams & {
     collateral: {
       address: string;
       usdPriceFeed: string;
-      balanceOfSlot: number;
+      balanceOfSlot: number | string;
       proxyTargetTokenState: string;
       ownerBalanceTotal: BigNumber;
       balanceToThePool: BigNumber;

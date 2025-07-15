@@ -110,9 +110,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
           uint256(getInput(data, 1)),
           to
         ),
-        poolManagerLogicAssets,
-        poolManagerLogic,
-        2
+        poolManagerLogic
       );
 
       txType = 2; // 'Exchange' type
@@ -126,9 +124,7 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
           uint256(getInput(data, 1)),
           to
         ),
-        poolManagerLogicAssets,
-        poolManagerLogic,
-        1
+        poolManagerLogic
       );
 
       txType = 2; // 'Exchange' type
@@ -203,24 +199,14 @@ contract UniswapV2RouterGuard is TxDataUtils, IGuard {
   }
 
   /// @param swapData The data used in a swap.
-  /// @param poolManagerLogicAssets Contains supported assets mapping.
   /// @param poolManagerLogic The poolManager address.
-  /// @param exchangeType Type of exchange (from/to); useful for emitting the correct event.
-  function _verifyExchange(
-    SwapData memory swapData,
-    IHasSupportedAsset poolManagerLogicAssets,
-    IPoolManagerLogic poolManagerLogic,
-    uint8 exchangeType
-  ) internal {
+  function _verifyExchange(SwapData memory swapData, IPoolManagerLogic poolManagerLogic) internal view {
     address poolLogic = poolManagerLogic.poolLogic();
-    require(poolManagerLogicAssets.isSupportedAsset(swapData.dstAsset), "unsupported destination asset");
+    require(
+      IHasSupportedAsset(address(poolManagerLogic)).isSupportedAsset(swapData.dstAsset),
+      "unsupported destination asset"
+    );
 
     require(poolLogic == swapData.recipient, "recipient is not pool");
-
-    if (exchangeType == 1) {
-      emit ExchangeTo(poolLogic, swapData.srcAsset, swapData.dstAsset, swapData.dstAmount, block.timestamp);
-    } else if (exchangeType == 2) {
-      emit ExchangeFrom(poolLogic, swapData.srcAsset, swapData.srcAmount, swapData.dstAsset, block.timestamp);
-    }
   }
 }

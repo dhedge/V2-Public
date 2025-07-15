@@ -1,3 +1,4 @@
+//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -10,146 +11,188 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2021 dHEDGE DAO
+// Copyright (c) 2025 dHEDGE DAO
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-
-import "../../interfaces/IPoolManagerLogic.sol";
-import "./AaveLendingPoolGuardV2.sol";
+import {IAaveV3Pool} from "../../interfaces/aave/v3/IAaveV3Pool.sol";
+import {ITxTrackingGuard} from "../../interfaces/guards/ITxTrackingGuard.sol";
+import {IERC20} from "../../interfaces/IERC20.sol";
+import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
+import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
+import {ITransactionTypes} from "../../interfaces/ITransactionTypes.sol";
+import {TxDataUtils} from "../../utils/TxDataUtils.sol";
 
 /// @title Transaction guard for Aave V3 lending pool contract
-contract AaveLendingPoolGuardV3 is AaveLendingPoolGuardV2 {
-  using SafeMathUpgradeable for uint256;
+contract AaveLendingPoolGuardV3 is TxDataUtils, ITransactionTypes, ITxTrackingGuard {
+  /// @dev Aave UI doesn't let withdrawal go through which leads to HF below 1.01
+  uint256 public constant HEALTH_FACTOR_LOWER_BOUNDARY = 1.01e18;
 
-  /// @notice Transaction guard for Aave V3 Lending Pool
-  /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode, rebalanceStableBorrowRate functionality
-  /// @param _poolManagerLogic the pool manager logic
+  bool public override isTxTrackingGuard = true;
+
+  /// @param poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data.
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address _poolManagerLogic,
+    address poolManagerLogic,
     address to,
     bytes calldata data
-  )
-    public
-    virtual
-    override
-    returns (
-      uint16 txType, // transaction type
-      bool isPublic
-    )
-  {
+  ) public view virtual override returns (uint16 txType, bool isPublic) {
     bytes4 method = getMethod(data);
-    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
-    address factory = IPoolManagerLogic(_poolManagerLogic).factory();
+    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
-    if (method == bytes4(keccak256("supply(address,uint256,address,uint16)"))) {
-      (address depositAsset, uint256 amount, address onBehalfOf, ) = abi.decode(
+    // `deposit` is deprecated in favor of `supply`
+    if (method == IAaveV3Pool.deposit.selector || method == IAaveV3Pool.supply.selector) {
+      (address depositAsset, , address onBehalfOf, ) = abi.decode(getParams(data), (address, uint256, address, uint16));
+
+      txType = _supply(poolLogic, poolManagerLogic, to, depositAsset, onBehalfOf);
+    } else if (method == IAaveV3Pool.withdraw.selector) {
+      (address withdrawAsset, , address onBehalfOf) = abi.decode(getParams(data), (address, uint256, address));
+
+      txType = _withdraw(poolLogic, poolManagerLogic, to, withdrawAsset, onBehalfOf);
+    } else if (method == IAaveV3Pool.setUserUseReserveAsCollateral.selector) {
+      (address asset, ) = abi.decode(getParams(data), (address, bool));
+
+      txType = _setUserUseReserveAsCollateral(poolManagerLogic, to, asset);
+    } else if (method == IAaveV3Pool.borrow.selector) {
+      (address borrowAsset, , , , address onBehalfOf) = abi.decode(
         getParams(data),
-        (address, uint256, address, uint16)
+        (address, uint256, uint256, uint16, address)
       );
 
-      txType = _deposit(factory, poolLogic, _poolManagerLogic, to, depositAsset, amount, onBehalfOf);
-    } else if (method == bytes4(keccak256("repayWithATokens(address,uint256,uint256)"))) {
-      (address asset, uint256 amount, ) = abi.decode(getParams(data), (address, uint256, uint256));
+      txType = _borrow(poolLogic, poolManagerLogic, to, borrowAsset, onBehalfOf);
+    } else if (method == IAaveV3Pool.repay.selector) {
+      (address repayAsset, , , address onBehalfOf) = abi.decode(getParams(data), (address, uint256, uint256, address));
 
-      txType = _repayWithATokens(factory, poolLogic, _poolManagerLogic, to, asset, amount);
-    } else {
-      (txType, isPublic) = super.txGuard(_poolManagerLogic, to, data);
+      txType = _repay(poolLogic, poolManagerLogic, to, repayAsset, onBehalfOf);
+    } else if (method == IAaveV3Pool.repayWithATokens.selector) {
+      (address repayAsset, , ) = abi.decode(getParams(data), (address, uint256, uint256));
+
+      txType = _repay(poolLogic, poolManagerLogic, to, repayAsset, poolLogic);
+    } else if (method == IAaveV3Pool.setUserEMode.selector) {
+      txType = uint16(TransactionType.AaveSetEfficiencyMode);
     }
+
+    return (txType, false);
   }
 
-  // override borrow for aave v3
+  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) external view virtual override {
+    bytes4 method = getMethod(data);
+
+    if (_canAffectHealthFactor(method)) _afterTxGuard(poolManagerLogic, to);
+  }
+
+  /// @dev These are the actions which potentially can affect HF
+  function _canAffectHealthFactor(bytes4 method) internal pure returns (bool canAffect) {
+    if (
+      method == IAaveV3Pool.borrow.selector ||
+      method == IAaveV3Pool.setUserUseReserveAsCollateral.selector ||
+      method == IAaveV3Pool.withdraw.selector
+    ) canAffect = true;
+  }
+
+  function _afterTxGuard(address poolManagerLogic, address to) internal view {
+    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
+
+    (, , , , , uint256 healthFactor) = IAaveV3Pool(to).getUserAccountData(poolLogic);
+
+    require(healthFactor > HEALTH_FACTOR_LOWER_BOUNDARY, "health factor too low");
+  }
+
+  function _checkAssetsSupported(address _poolManagerLogic, address _lendingPool, address _assetToCheck) internal view {
+    require(
+      IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(_lendingPool) &&
+        IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(_assetToCheck),
+      "unsupported assets"
+    );
+  }
+
+  function _supply(
+    address poolLogic,
+    address poolManagerLogic,
+    address to,
+    address depositAsset,
+    address onBehalfOf
+  ) internal view returns (uint16 txType) {
+    _checkAssetsSupported(poolManagerLogic, to, depositAsset);
+
+    require(onBehalfOf == poolLogic, "recipient is not pool");
+
+    txType = uint16(TransactionType.AaveDeposit);
+  }
+
+  function _withdraw(
+    address poolLogic,
+    address poolManagerLogic,
+    address to,
+    address withdrawAsset,
+    address onBehalfOf
+  ) internal view returns (uint16 txType) {
+    _checkAssetsSupported(poolManagerLogic, to, withdrawAsset);
+
+    require(onBehalfOf == poolLogic, "recipient is not pool");
+
+    txType = uint16(TransactionType.AaveWithdraw);
+  }
+
+  function _setUserUseReserveAsCollateral(
+    address poolManagerLogic,
+    address to,
+    address asset
+  ) internal view returns (uint16 txType) {
+    _checkAssetsSupported(poolManagerLogic, to, asset);
+
+    txType = uint16(TransactionType.AaveSetUserUseReserveAsCollateral);
+  }
+
+  /// @dev Only variable intereset rate is allowed: https://github.com/aave-dao/aave-v3-origin/blob/main/src/contracts/protocol/libraries/logic/ValidationLogic.sol#L168
   function _borrow(
-    address factory,
     address poolLogic,
     address poolManagerLogic,
     address to,
     address borrowAsset,
-    uint256 amount,
-    uint256 interestRateMode,
     address onBehalfOf
-  ) internal override returns (uint16 txType) {
-    require(interestRateMode == 2, "only variable rate");
-
-    require(
-      IHasAssetInfo(factory).getAssetType(borrowAsset) == 4 || IHasAssetInfo(factory).getAssetType(borrowAsset) == 14,
-      "not borrow enabled"
-    );
-    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "aave not enabled");
-    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(borrowAsset), "unsupported borrow asset");
+  ) internal view returns (uint16 txType) {
+    _checkAssetsSupported(poolManagerLogic, to, borrowAsset);
 
     require(onBehalfOf == poolLogic, "recipient is not pool");
 
-    // limit only one borrow asset
+    // limits to only one borrow asset: forbidden to remove this check as withdrawProcessing is dependent on it
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
-    address governance = IPoolFactory(factory).governanceAddress();
-    address aaveProtocolDataProviderV3 = IGovernance(governance).nameToDestination("aaveProtocolDataProviderV3");
 
-    for (uint256 i = 0; i < supportedAssets.length; i++) {
+    for (uint256 i; i < supportedAssets.length; ++i) {
       if (supportedAssets[i].asset == borrowAsset) {
         continue;
       }
 
       // returns address(0) if it's not supported in aave
-      (, address stableDebtToken, address variableDebtToken) = IAaveProtocolDataProvider(aaveProtocolDataProviderV3)
-        .getReserveTokensAddresses(supportedAssets[i].asset);
+      address variableDebtToken = IAaveV3Pool(to).getReserveVariableDebtToken(supportedAssets[i].asset);
 
-      // check if asset is not supported or debt amount is zero
+      // checks if asset is not supported or debt amount is zero
       require(
-        (stableDebtToken == address(0) || IERC20(stableDebtToken).balanceOf(onBehalfOf) == 0) &&
-          (variableDebtToken == address(0) || IERC20(variableDebtToken).balanceOf(onBehalfOf) == 0),
+        (variableDebtToken == address(0) || IERC20(variableDebtToken).balanceOf(poolLogic) == 0),
         "borrowing asset exists"
       );
     }
 
-    emit Borrow(poolLogic, borrowAsset, to, amount, block.timestamp);
-
-    txType = 12; // Aave `Borrow` type
+    txType = uint16(TransactionType.AaveBorrow);
   }
 
-  function _repayWithATokens(
-    address factory,
+  function _repay(
     address poolLogic,
     address poolManagerLogic,
     address to,
     address repayAsset,
-    uint256 amount
-  ) internal returns (uint16 txType) {
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogic);
+    address onBehalfOf
+  ) internal view returns (uint16 txType) {
+    _checkAssetsSupported(poolManagerLogic, to, repayAsset);
 
-    require(poolManagerLogicAssets.isSupportedAsset(to), "aave not enabled");
-    require(poolManagerLogicAssets.isSupportedAsset(repayAsset), "unsupported repay asset");
-    require(
-      IHasAssetInfo(factory).getAssetType(repayAsset) == 4 || IHasAssetInfo(factory).getAssetType(repayAsset) == 14,
-      "not borrow enabled"
-    );
+    require(onBehalfOf == poolLogic, "recipient is not pool");
 
-    emit Repay(poolLogic, repayAsset, to, amount, block.timestamp);
-
-    txType = 13; // Aave `Repay` type
+    txType = uint16(TransactionType.AaveRepay);
   }
 }

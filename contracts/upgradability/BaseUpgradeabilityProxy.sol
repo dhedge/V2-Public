@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 
-import "./Proxy.sol";
-import "./Address.sol";
-import "./HasLogic.sol";
+import {Proxy} from "./Proxy.sol";
+import {OpenZeppelinUpgradesAddress} from "./Address.sol";
+import {HasLogic} from "./HasLogic.sol";
 
 /**
  * @title BaseUpgradeabilityProxy

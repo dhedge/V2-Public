@@ -40,87 +40,50 @@ contract SonneFinanceCTokenGuard is TxDataUtils, IGuard, ITransactionTypes {
     require(dHedgeVaultsWhitelist[poolLogic], "only whitelisted vaults");
 
     if (method == CErc20Interface.mint.selector) {
-      uint256 amount = abi.decode(getParams(_data), (uint256));
-
-      _txType = _mint(poolLogic, _poolManagerLogic, _to, amount);
+      _txType = _mint(_poolManagerLogic, _to);
     } else if (method == CErc20Interface.redeem.selector || method == CErc20Interface.redeemUnderlying.selector) {
       // `redeem` and `redeemUnderlying` differ in the sense that `redeem` takes the amount of CToken to redeem (converts the specified amount of CToken)
       // while `redeemUnderlying` takes the amount of underlying asset to redeem (gets you the specified amount of underlying asset).
-      uint256 amount = abi.decode(getParams(_data), (uint256));
-
-      _txType = _redeem(method, poolLogic, _poolManagerLogic, _to, amount);
+      _txType = _redeem(method, _poolManagerLogic, _to);
     } else if (method == CErc20Interface.borrow.selector) {
-      uint256 amount = abi.decode(getParams(_data), (uint256));
-
-      _txType = _borrow(poolLogic, _poolManagerLogic, _to, amount);
+      _txType = _borrow(_poolManagerLogic, _to);
     } else if (method == CErc20Interface.repayBorrow.selector) {
-      uint256 amount = abi.decode(getParams(_data), (uint256));
-
-      _txType = _repay(poolLogic, _poolManagerLogic, _to, amount);
+      _txType = _repay(_poolManagerLogic, _to);
     }
 
     return (_txType, false);
   }
 
-  function _mint(
-    address _poolLogic,
-    address _poolManagerLogic,
-    address _to,
-    uint256 _amount
-  ) internal returns (uint16 _txType) {
+  function _mint(address _poolManagerLogic, address _to) internal view returns (uint16 _txType) {
     address underlyingAsset = CErc20Interface(_to).underlying();
 
     _unsupportedAssetChecks(_poolManagerLogic, _to, underlyingAsset);
 
-    emit SonneMintEvent(_poolLogic, underlyingAsset, _to, _amount, block.timestamp);
-
     return uint16(ITransactionTypes.TransactionType.SonneMint);
   }
 
-  function _redeem(
-    bytes4 _method,
-    address _poolLogic,
-    address _poolManagerLogic,
-    address _to,
-    uint256 _amount
-  ) internal returns (uint16 _txType) {
+  function _redeem(bytes4 _method, address _poolManagerLogic, address _to) internal view returns (uint16 _txType) {
     address underlyingAsset = CErc20Interface(_to).underlying();
     _unsupportedAssetChecks(_poolManagerLogic, _to, underlyingAsset);
 
     if (_method == CErc20Interface.redeem.selector) {
       _txType = uint16(ITransactionTypes.TransactionType.SonneRedeem);
-      emit SonneRedeemEvent(_poolLogic, underlyingAsset, _to, _amount, block.timestamp);
     } else {
       _txType = uint16(ITransactionTypes.TransactionType.SonneRedeemUnderlying);
-      emit SonneRedeemUnderlyingEvent(_poolLogic, underlyingAsset, _to, _amount, block.timestamp);
     }
   }
 
-  function _borrow(
-    address _poolLogic,
-    address _poolManagerLogic,
-    address _to,
-    uint256 _amount
-  ) internal returns (uint16 _txType) {
+  function _borrow(address _poolManagerLogic, address _to) internal view returns (uint16 _txType) {
     address underlyingAsset = CErc20Interface(_to).underlying();
 
     _unsupportedAssetChecks(_poolManagerLogic, _to, underlyingAsset);
-
-    emit SonneBorrowEvent(_poolLogic, underlyingAsset, _to, _amount, block.timestamp);
 
     return uint16(ITransactionTypes.TransactionType.SonneBorrow);
   }
 
-  function _repay(
-    address _poolLogic,
-    address _poolManagerLogic,
-    address _to,
-    uint256 _amount
-  ) internal returns (uint16 _txType) {
+  function _repay(address _poolManagerLogic, address _to) internal view returns (uint16 _txType) {
     address underlyingAsset = CErc20Interface(_to).underlying();
     _unsupportedAssetChecks(_poolManagerLogic, _to, underlyingAsset);
-
-    emit SonneRepayEvent(_poolLogic, underlyingAsset, _to, _amount, block.timestamp);
 
     return uint16(ITransactionTypes.TransactionType.SonneRepay);
   }

@@ -40,7 +40,6 @@ import "./interfaces/IPoolManagerLogic.sol";
 import "./interfaces/IHasAssetInfo.sol";
 import "./interfaces/IHasFeeInfo.sol";
 import "./interfaces/IHasDaoInfo.sol";
-import "./interfaces/IHasProtocolDaoInfo.sol";
 import "./interfaces/IHasGuardInfo.sol";
 import "./interfaces/IHasSupportedAsset.sol";
 import "./interfaces/IHasOwnable.sol";

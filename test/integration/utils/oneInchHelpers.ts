@@ -41,6 +41,9 @@ export const getOneInchSwapTransaction = async ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error?.response?.data);
+    console.log("src: ", src);
+    console.log("amount: ", amount);
+    console.log("dst: ", dst);
     throw new Error("Failed to get oneInch swap transaction data");
   }
 };

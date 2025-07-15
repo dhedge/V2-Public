@@ -119,8 +119,6 @@ contract SynthetixV3SpotMarketContractGuard is TxDataUtils, ITransactionTypes, S
       );
 
       txType = uint16(TransactionType.SynthetixV3Wrap);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == IWrapperModule.unwrap.selector) {
       (uint128 marketId, uint256 unwrapAmount, uint256 minAmountReceived) = abi.decode(
         params,
@@ -143,8 +141,6 @@ contract SynthetixV3SpotMarketContractGuard is TxDataUtils, ITransactionTypes, S
       );
 
       txType = uint16(TransactionType.SynthetixV3Unwrap);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == IAtomicOrderModule.buy.selector || method == IAtomicOrderModule.buyExactIn.selector) {
       (uint128 marketId, uint256 usdAmount, uint256 minSynthAmount) = abi.decode(params, (uint128, uint256, uint256));
 
@@ -163,8 +159,6 @@ contract SynthetixV3SpotMarketContractGuard is TxDataUtils, ITransactionTypes, S
       );
 
       txType = uint16(TransactionType.SynthetixV3BuySynth);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == IAtomicOrderModule.sell.selector || method == IAtomicOrderModule.sellExactIn.selector) {
       (uint128 marketId, uint256 synthAmount, uint256 minUsdAmount) = abi.decode(params, (uint128, uint256, uint256));
 
@@ -183,8 +177,6 @@ contract SynthetixV3SpotMarketContractGuard is TxDataUtils, ITransactionTypes, S
       );
 
       txType = uint16(TransactionType.SynthetixV3SellSynth);
-
-      emit SynthetixV3Event(poolLogic, txType);
     }
 
     return (txType, false);
@@ -199,7 +191,12 @@ contract SynthetixV3SpotMarketContractGuard is TxDataUtils, ITransactionTypes, S
       method == IAtomicOrderModule.sell.selector ||
       method == IAtomicOrderModule.sellExactIn.selector
     ) {
-      SlippageAccumulatorUser.afterTxGuard(_poolManagerLogic, _to, _data);
+      bytes memory params = getParams(_data);
+      uint128 marketId = abi.decode(params, (uint128));
+      SynthetixV3Structs.AllowedMarket storage allowedMarket = _validateMarketId(marketId);
+      if (!allowedMarket.atomicSwapSettings.isOneToOneSwap) {
+        SlippageAccumulatorUser.afterTxGuard(_poolManagerLogic, _to, _data);
+      }
     }
   }
 

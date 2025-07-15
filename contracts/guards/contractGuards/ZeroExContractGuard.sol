@@ -44,10 +44,7 @@ contract ZeroExContractGuard is TxDataUtils, ITransactionTypes, SlippageAccumula
     require(poolLogic == msg.sender, "not pool logic");
 
     if (getMethod(_data) == ITransformERC20Feature.transformERC20.selector) {
-      (IERC20 inputToken, IERC20 outputToken, uint256 inputTokenAmount) = abi.decode(
-        getParams(_data),
-        (IERC20, IERC20, uint256)
-      );
+      (IERC20 inputToken, IERC20 outputToken) = abi.decode(getParams(_data), (IERC20, IERC20));
 
       require(
         IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(address(outputToken)),
@@ -60,8 +57,6 @@ contract ZeroExContractGuard is TxDataUtils, ITransactionTypes, SlippageAccumula
         srcAmount: _getBalance(address(inputToken), poolLogic),
         dstAmount: _getBalance(address(outputToken), poolLogic)
       });
-
-      emit ExchangeFrom(poolLogic, address(inputToken), inputTokenAmount, address(outputToken), block.timestamp);
 
       txType = uint16(TransactionType.Exchange);
     }

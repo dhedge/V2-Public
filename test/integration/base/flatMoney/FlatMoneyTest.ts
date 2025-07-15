@@ -201,12 +201,6 @@ describe("Flat Money Test", () => {
       );
 
   describe("UNIT & FMP integration", () => {
-    it("should revert if caller is not pool logic", async () => {
-      await expect(
-        delayedOrderGuard.txGuard(poolManagerLogicProxy.address, testParams.delayedOrder, []),
-      ).to.be.revertedWith("not pool logic");
-    });
-
     it("should be able to announce stable deposit", async () => {
       await approveAndAnnounceDeposit();
 

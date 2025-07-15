@@ -1,13 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
-import { IAddresses, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { IAddresses, IJob, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
+import { AssetType } from "../assetsJob";
 
 export const arrakisLiquidityGaugeV4AssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   versions: IVersions,
-  filenames: { assetGuardsFileName: string },
+  filenames: IFileNames,
   addresses: IAddresses,
 ) => {
   const arrakisV1RouterStakingAddress = addresses.arrakisV1?.arrakisV1RouterStakingAddress;
@@ -36,7 +37,8 @@ export const arrakisLiquidityGaugeV4AssetGuardJob: IJob<void> = async (
       [arrakisV1RouterStakingAddress],
     );
 
-    const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [9, assetGuard.address]);
+    const assetType = AssetType["Arrakis Liquidity Gauge V4 Asset"];
+    const setAssetGuardABI = governanceABI.encodeFunctionData("setAssetGuard", [assetType, assetGuard.address]);
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
       setAssetGuardABI,
@@ -46,7 +48,7 @@ export const arrakisLiquidityGaugeV4AssetGuardJob: IJob<void> = async (
     );
 
     const deployedGuard = {
-      assetType: 9,
+      assetType,
       guardName: "ArrakisLiquidityGaugeV4AssetGuard",
       guardAddress: assetGuard.address,
       description: "Arrakis Liquidity Gauge V4",

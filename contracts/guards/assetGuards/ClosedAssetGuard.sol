@@ -56,4 +56,13 @@ abstract contract ClosedAssetGuard is TxDataUtils, IGuard, IAssetGuard {
     uint256 balance = getBalance(pool, asset);
     require(balance == 0, "cannot remove non-empty asset");
   }
+
+  function withdrawProcessing(
+    address,
+    address,
+    uint256,
+    address
+  ) external virtual override returns (address, uint256, MultiTransaction[] memory) {
+    revert("not implemented");
+  }
 }

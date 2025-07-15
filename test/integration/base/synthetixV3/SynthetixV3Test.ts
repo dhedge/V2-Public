@@ -49,6 +49,6 @@ launchSynthetixV3Tests({
   collateralSource: "transferFrom",
   transferCollateralFrom: "0x25ca6760fc0936127a6e34c3cbd63064b8a0de1f", // should be an account which holds sUSDC
   mintingPositiveDebtForbidden: true,
-  deployedNodeModule: "0xB2505D6EA571639C9902ecCa70A1f93a0D321e39",
+  deployedNodeModule: "0x4903E09E84259e5105190AaA33e714E1Eaf0bAcD",
   rewardDistributors: ["0x45063DCd92f56138686810eacB1B510C941d6593", "0xe92bcD40849BE5a5eb90065402e508aF4b28263b"], // Spartan Council Pool SNX Rewards, Spartan Council Pool USDC Rewards
 });

@@ -22,7 +22,7 @@ contract VelodromeV2RouterGuard is TxDataUtils, IGuard, ITransactionTypes {
     address _poolManagerLogic,
     address _to,
     bytes calldata _data
-  ) external override returns (uint16 txType, bool) {
+  ) external view override returns (uint16 txType, bool) {
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
@@ -44,8 +44,6 @@ contract VelodromeV2RouterGuard is TxDataUtils, IGuard, ITransactionTypes {
       require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
       require(poolManagerLogic.poolLogic() == recipient, "recipient is not pool");
 
-      emit AddLiquidity(poolManagerLogic.poolLogic(), pair, params, block.timestamp);
-
       txType = uint16(TransactionType.AddLiquidity);
     } else if (method == IVelodromeV2Router.removeLiquidity.selector) {
       (address tokenA, address tokenB, bool stable, , , , address recipient, ) = abi.decode(
@@ -60,8 +58,6 @@ contract VelodromeV2RouterGuard is TxDataUtils, IGuard, ITransactionTypes {
 
       require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
       require(poolManagerLogic.poolLogic() == recipient, "recipient is not pool");
-
-      emit RemoveLiquidity(poolManagerLogic.poolLogic(), pair, params, block.timestamp);
 
       txType = uint16(TransactionType.RemoveLiquidity);
     }

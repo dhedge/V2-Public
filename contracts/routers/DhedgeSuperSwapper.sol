@@ -18,25 +18,19 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../interfaces/uniswapV2/IUniswapV2Router.sol";
-import "../interfaces/uniswapV2/IUniswapV2RouterSwapOnly.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import {IUniswapV2Router} from "../interfaces/uniswapV2/IUniswapV2Router.sol";
+import {IUniswapV2RouterSwapOnly} from "../interfaces/uniswapV2/IUniswapV2RouterSwapOnly.sol";
 
 contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
   using SafeERC20 for IERC20;
-  using SafeMath for uint256;
 
   struct RouteHint {
     address asset;
     address intermediary;
   }
-
-  event Swap(address indexed swapRouter);
-  event Interpolate(address token);
 
   IUniswapV2Router[] public uniV2Routers;
   mapping(address => address) public routeHints;
@@ -51,11 +45,9 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
 
   /// @dev If there is an intermediary swap asset configured, and it's not the asset to swap to, we use it by default. otherwise we use the direct swap
   /// @param path The path to swap
-  /// @return intermediary The intermediary asset to swap through
   /// @return enhancedPath The path to swap with
-  function getRouteHint(
-    address[] memory path
-  ) internal view returns (address intermediary, address[] memory enhancedPath) {
+  function _getRouteHint(address[] memory path) internal view returns (address[] memory enhancedPath) {
+    address intermediary;
     enhancedPath = path;
     if (path.length == 2) {
       intermediary = routeHints[path[0]];
@@ -86,11 +78,7 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     // When we call swapExactTokensForTokens from the aaveLendingAssetGuard we only know how much of the collateralAsset we have
     // We don't know the expected amount out.
     // So we pass in amountOutMin = 0, the amountOutMin == 0 is hack so that we can leave that code unchanged
-    (address intermediary, address[] memory enhancedPath) = getRouteHint(path);
-
-    if (intermediary != address(0)) {
-      emit Interpolate(intermediary);
-    }
+    address[] memory enhancedPath = _getRouteHint(path);
 
     (IUniswapV2Router router, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, enhancedPath);
 
@@ -107,10 +95,9 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
       ); // invalid routing with Uni v2 swapExactTokensForTokens (no intermediate)
     }
 
-    IERC20(enhancedPath[0]).transferFrom(msg.sender, address(this), amountIn);
-    IERC20(enhancedPath[0]).approve(address(router), amountIn);
+    IERC20(enhancedPath[0]).safeTransferFrom(msg.sender, address(this), amountIn);
+    IERC20(enhancedPath[0]).safeIncreaseAllowance(address(router), amountIn);
     amounts = router.swapExactTokensForTokens(amountIn, amountOutMin, enhancedPath, to, deadline);
-    emit Swap(address(router));
   }
 
   function swapTokensForExactTokens(
@@ -122,11 +109,7 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
   ) external override returns (uint256[] memory amounts) {
     // When we call swapTokensForExactTokens from the aaveLendingAssetGuard we don't know the amount of weth we have
     // So we pass in amountInMax = uint256(-1), the amountInMax == uint256(-1) is hack so that we can leave that code unchanged
-    (address intermediary, address[] memory enhancedPath) = getRouteHint(path);
-
-    if (intermediary != address(0)) {
-      emit Interpolate(intermediary);
-    }
+    address[] memory enhancedPath = _getRouteHint(path);
 
     (IUniswapV2Router router, uint256 uniBestAmountIn) = getBestAmountInUniV2Router(expectedAmountOut, enhancedPath);
 
@@ -142,10 +125,9 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
       ); // invalid routing with Uni v2 swapTokensForExactTokens (no intermediate)
     }
 
-    IERC20(enhancedPath[0]).transferFrom(msg.sender, address(this), uniBestAmountIn);
-    IERC20(enhancedPath[0]).approve(address(router), uniBestAmountIn);
+    IERC20(enhancedPath[0]).safeTransferFrom(msg.sender, address(this), uniBestAmountIn);
+    IERC20(enhancedPath[0]).safeIncreaseAllowance(address(router), uniBestAmountIn);
     amounts = router.swapTokensForExactTokens(expectedAmountOut, amountInMax, enhancedPath, to, deadline);
-    emit Swap(address(router));
   }
 
   // ========== VIEWS ========== //
@@ -154,7 +136,7 @@ contract DhedgeSuperSwapper is IUniswapV2RouterSwapOnly {
     uint256 amountIn,
     address[] memory path
   ) external view override returns (uint256[] memory amounts) {
-    (, address[] memory enhancedPath) = getRouteHint(path);
+    address[] memory enhancedPath = _getRouteHint(path);
     (, uint256 uniV2BestAmountOut) = getBestAmountOutUniV2Router(amountIn, enhancedPath);
     amounts = new uint256[](path.length);
     amounts[path.length - 1] = uniV2BestAmountOut;

@@ -60,21 +60,23 @@ contract FlatMoneyUNITAssetGuard is FlatMoneyOrderHelperGuard, ERC20Guard {
     uint256 totalAssetBalance = getBalance(_pool, _asset);
     withdrawBalance = totalAssetBalance.mul(_portion).div(DECIMAL_FACTOR);
 
-    transactions = new MultiTransaction[](2);
-
     IFlatcoinVault vault = IStableModule(_asset).vault();
     address pointsModule = vault.moduleAddress(FlatcoinModuleKeys._POINTS_MODULE_KEY);
     uint256 totalPointsBalance = getBalance(_pool, pointsModule);
     uint256 pointsToUnlock = totalPointsBalance.mul(_portion).div(DECIMAL_FACTOR);
 
-    transactions[0].to = pointsModule;
-    transactions[0].txData = abi.encodeWithSelector(IPointsModule.unlock.selector, pointsToUnlock);
+    if (pointsToUnlock != 0) {
+      transactions = new MultiTransaction[](2);
 
-    uint256 unlockTax = IPointsModule(pointsModule).getUnlockTax(_pool);
-    uint256 pointsLeftToTransfer = pointsToUnlock.sub(pointsToUnlock.mul(unlockTax).div(DECIMAL_FACTOR));
+      transactions[0].to = pointsModule;
+      transactions[0].txData = abi.encodeWithSelector(IPointsModule.unlock.selector, pointsToUnlock);
 
-    transactions[1].to = pointsModule;
-    transactions[1].txData = abi.encodeWithSelector(IERC20.transfer.selector, _to, pointsLeftToTransfer);
+      uint256 unlockTax = IPointsModule(pointsModule).getUnlockTax(_pool);
+      uint256 pointsLeftToTransfer = pointsToUnlock.sub(pointsToUnlock.mul(unlockTax).div(DECIMAL_FACTOR));
+
+      transactions[1].to = pointsModule;
+      transactions[1].txData = abi.encodeWithSelector(IERC20.transfer.selector, _to, pointsLeftToTransfer);
+    }
 
     return (withdrawAsset, withdrawBalance, transactions);
   }

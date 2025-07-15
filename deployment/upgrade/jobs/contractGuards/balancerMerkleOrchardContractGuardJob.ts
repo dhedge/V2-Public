@@ -11,7 +11,7 @@ export const balancerMerkleOrchardContractGuardJob: IJob<void> = async (
   addresses: { balancerMerkleOrchardAddress?: string } & IProposeTxProperties,
 ) => {
   if (!addresses.balancerMerkleOrchardAddress) {
-    console.warn("balancerMerkleOrchardAddress not configured for balancerv2ContractGuard: skipping.");
+    console.warn("balancerMerkleOrchardAddress not configured for balancerMerkleOrchardContractGuardJob: skipping.");
     return;
   }
 

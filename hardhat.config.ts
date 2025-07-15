@@ -33,10 +33,10 @@ export default {
       url: "http://127.0.0.1:8545",
       timeout: 0,
     },
-    mainnet: {
+    ethereum: {
       chainId: 1,
-      url: process.env.MAINNET_URL || "https://eth-mainnet.g.alchemy.com/v2/",
-      accounts: process.env.MAINNET_PRIVATE_KEY ? [process.env.MAINNET_PRIVATE_KEY] : [],
+      url: process.env.ETHEREUM_URL || "https://eth-mainnet.g.alchemy.com/v2/",
+      accounts: process.env.ETHEREUM_PRIVATE_KEY ? [process.env.ETHEREUM_PRIVATE_KEY] : [],
     },
     ovm: {
       chainId: 10,
@@ -91,22 +91,24 @@ export default {
           },
         },
       },
+      {
+        version: "0.8.28",
+        settings: {
+          outputSelection: {
+            "*": {
+              "*": ["storageLayout"],
+            },
+          },
+          optimizer: {
+            enabled: true,
+            runs: 20,
+          },
+        },
+      },
     ],
     overrides: {
-      "@uniswap/lib/contracts/libraries/BitMath.sol": {
-        version: "0.7.6",
-      },
-      "@uniswap/lib/contracts/libraries/FullMath.sol": {
-        version: "0.7.6",
-      },
-      "@uniswap/lib/contracts/libraries/FixedPoint.sol": {
-        version: "0.7.6",
-      },
       "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol": {
         version: "0.7.6",
-      },
-      "contracts/test/WETH9.sol": {
-        version: "0.5.17",
       },
     },
   },
@@ -130,28 +132,14 @@ export default {
       "Governance",
       "contracts/swappers/poolTokenSwapper/PoolTokenSwapper",
       "contracts/swappers/easySwapperV2/EasySwapperV2",
+      "PoolLimitOrderManager",
     ],
     except: ["contracts/interfaces", "contracts/test", "contracts/v2.4.1", "contracts/stakingv2/interfaces"],
     spacing: 2,
   },
   etherscan: {
     // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
-    apiKey: {
-      optimisticEthereum: process.env.OPTIMISTICSCAN_API_KEY,
-      polygon: process.env.POLYGONSCAN_API_KEY,
-      arbitrumOne: process.env.ARBISCAN_API_KEY,
-      base: process.env.BASESCAN_API_KEY,
-    },
-    customChains: [
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.basescan.org/api",
-          browserURL: "https://basescan.org/",
-        },
-      },
-    ],
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   typechain: {
     outDir: "./types",

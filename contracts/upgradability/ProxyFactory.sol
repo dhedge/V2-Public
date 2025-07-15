@@ -11,32 +11,16 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2021 dHEDGE DAO
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// Copyright (c) 2025 dHEDGE DAO
 //
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 
-import "./InitializableUpgradeabilityProxy.sol";
-import "./HasLogic.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+import {InitializableUpgradeabilityProxy} from "./InitializableUpgradeabilityProxy.sol";
+import {HasLogic} from "./HasLogic.sol";
 
 /// @notice This contract is used to deploy the proxy contract.
 contract ProxyFactory is OwnableUpgradeable, HasLogic {
@@ -63,7 +47,7 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
   /// @notice Setting logic address for both poolLogic and poolManagerLogic
   /// @param _poolLogic address of the pool logic
   /// @param _poolManagerLogic address of the pool manager logic
-  function setLogic(address _poolLogic, address _poolManagerLogic) public onlyOwner {
+  function setLogic(address _poolLogic, address _poolManagerLogic) external onlyOwner {
     require(_poolLogic != address(0), "Invalid poolLogic");
     require(_poolManagerLogic != address(0), "Invalid poolManagerLogic");
 
@@ -72,7 +56,9 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
   }
 
   /// @notice Return logic address of the pool or the pool manager logic
-  function getLogic(uint8 _proxyType) public view override returns (address) {
+  /// @param _proxyType type of the proxy, 1 for pool manager, 2 for pool
+  /// @return address of the logic contract
+  function getLogic(uint8 _proxyType) external view override returns (address) {
     if (_proxyType == 1) {
       return poolManagerLogic;
     } else {
@@ -81,11 +67,13 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
   }
 
   /// @notice Deploy proxy contract external call
+  /// @param _data initialization data for the proxy contract
+  /// @param _proxyType type of the proxy, 1 for pool manager, 2 for pool
+  /// @return address of the deployed proxy contract
   function deploy(bytes memory _data, uint8 _proxyType) public returns (address) {
     return _deployProxy(_data, _proxyType);
   }
 
-  /// @notice Deploy and initialize proxy contract internal call
   function _deployProxy(bytes memory _data, uint8 _proxyType) internal returns (address) {
     InitializableUpgradeabilityProxy proxy = _createProxy();
     emit ProxyCreated(address(proxy));
@@ -93,7 +81,6 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
     return address(proxy);
   }
 
-  /// @notice Deploy proxy contract
   function _createProxy() internal returns (InitializableUpgradeabilityProxy) {
     address payable addr;
     bytes memory code = type(InitializableUpgradeabilityProxy).creationCode;

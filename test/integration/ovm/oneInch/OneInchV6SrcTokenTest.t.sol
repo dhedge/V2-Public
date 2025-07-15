@@ -3,6 +3,7 @@
 pragma solidity >=0.7.6 <0.9.0;
 pragma abicoder v2;
 
+import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {Test} from "forge-std/Test.sol";
 
@@ -57,29 +58,21 @@ interface IPoolManagerLogic {
   function setTrader(address _trader) external;
 }
 
-// Run with forge test --evm-version cancun --mc OneInchV6SrcTokenTest
 contract OneInchV6SrcTokenTest is Test {
   IAggregationRouterV6 public router = IAggregationRouterV6(0x111111125421cA6dc452d289314280a0f8842A65);
-  IERC20 public weth = IERC20(0x4200000000000000000000000000000000000006);
+  IERC20 public weth = IERC20(OptimismConfig.WETH);
 
   IPoolLogic public pool = IPoolLogic(0x749E1d46C83f09534253323A43541A9d2bBD03AF);
   IPoolManagerLogic public manager = IPoolManagerLogic(0x950A19078d33f732d35d3630c817532308490cCD);
   address public managerAddress = 0xeFc4904b786A3836343A3A504A2A3cb303b77D64;
 
-  uint256 public opFork;
-  string public optimismRpcUrl = vm.envString("OPTIMISM_URL");
-
   address public slippageAccumulator = 0x2474680A3475ede148B5270f7736Cae6d63c06D5;
   IUniswapV2Factory public uniswapV2Factory = IUniswapV2Factory(0x0c3c1c532F1e39EdF36BE9Fe0bE1410313E074Bf);
-  IUniswapV3Factory public uniswapV3Factory = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
   Governance public dHEDGEGovernance = Governance(0xa9F912c1dB1b844fd96192Ac3B496E9d8F445bc9);
   address public dHEDGEAdminOptimism = 0x90b1a66957914EbbE7a8df254c0c1E455972379C;
 
   function setUp() public {
-    // Create Optimism fork
-    opFork = vm.createSelectFork(optimismRpcUrl);
-    assertEq(opFork, vm.activeFork());
-    vm.rollFork(121303383); // Jun-12-2024 03:19:03 PM +UTC
+    vm.createSelectFork("optimism", 121303383);
   }
 
   function test_remove_src_token_during_execute_poc() public {
@@ -97,7 +90,12 @@ contract OneInchV6SrcTokenTest is Test {
 
   function test_remove_src_token_during_execute_fix() public {
     address newOneInchV6Guard = address(
-      new OneInchV6Guard(slippageAccumulator, uniswapV2Factory, uniswapV3Factory, address(0))
+      new OneInchV6Guard(
+        slippageAccumulator,
+        uniswapV2Factory,
+        IUniswapV3Factory(OptimismConfig.UNISWAP_V3_FACTORY),
+        address(0)
+      )
     );
     vm.prank(dHEDGEAdminOptimism);
     dHEDGEGovernance.setContractGuard(address(router), newOneInchV6Guard);
@@ -130,7 +128,7 @@ contract TrickContract is Test {
   address public managerAddress = 0xeFc4904b786A3836343A3A504A2A3cb303b77D64;
   IPoolLogic public pool = IPoolLogic(0x749E1d46C83f09534253323A43541A9d2bBD03AF);
   IAggregationRouterV6 public router = IAggregationRouterV6(0x111111125421cA6dc452d289314280a0f8842A65);
-  IERC20 public weth = IERC20(0x4200000000000000000000000000000000000006);
+  IERC20 public weth = IERC20(OptimismConfig.WETH);
 
   function attack() public {
     // First, craft the transaction to approve 100 weth to 1Inch Aggregator

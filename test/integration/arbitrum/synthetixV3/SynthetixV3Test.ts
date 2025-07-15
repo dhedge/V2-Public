@@ -2,7 +2,7 @@ import { arbitrumChainData } from "../../../../config/chainData/arbitrumData";
 import { launchSynthetixV3Tests } from "../../common/synthetixV3/SynthetixV3Test";
 import { units } from "../../../testHelpers";
 
-export const deployedNodeModule = "0x4dc9F78DE4B786e4F07d0DFe6981f014f9c8778E";
+export const deployedNodeModule = "0x753E1089bD112eEBd9Eb47Ab2e9075B89055b65b";
 
 const collateralAssets = [
   {

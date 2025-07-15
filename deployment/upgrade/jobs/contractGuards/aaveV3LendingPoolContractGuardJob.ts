@@ -19,24 +19,32 @@ export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (
   const Governance = await hre.artifacts.readArtifact("Governance");
   const governanceABI = new ethers.utils.Interface(Governance.abi);
 
-  console.log("Will deploy aavev3lendingpoolguard");
+  const chainName = hre.network.name;
+
+  const contractName =
+    chainName === "arbitrum" || chainName === "base" || chainName === "ovm"
+      ? "AaveLendingPoolGuardV3L2Pool"
+      : "AaveLendingPoolGuardV3";
+
+  console.log(`Will deploy ${contractName}`);
+
   if (config.execute) {
-    const AaveLendingPoolGuard = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
-    const aaveLendingPoolGuard = await AaveLendingPoolGuard.deploy();
-    await aaveLendingPoolGuard.deployed();
-    console.log("AaveLendingPoolGuardV3L2Pool deployed at", aaveLendingPoolGuard.address);
-    versions[config.newTag].contracts.AaveLendingPoolGuardV3 = aaveLendingPoolGuard.address;
+    const AaveLendingPoolGuardV3 = await ethers.getContractFactory(contractName);
+    const aaveLendingPoolGuardV3 = await AaveLendingPoolGuardV3.deploy();
+    await aaveLendingPoolGuardV3.deployed();
+    console.log(`${contractName} deployed at`, aaveLendingPoolGuardV3.address);
+    versions[config.newTag].contracts[contractName] = aaveLendingPoolGuardV3.address;
 
     await tryVerify(
       hre,
-      aaveLendingPoolGuard.address,
-      "contracts/guards/contractGuards/AaveLendingPoolGuardV3L2Pool.sol:AaveLendingPoolGuardV3L2Pool",
+      aaveLendingPoolGuardV3.address,
+      `contracts/guards/contractGuards/${contractName}.sol:${contractName}`,
       [],
     );
 
     const setContractGuardABI = governanceABI.encodeFunctionData("setContractGuard", [
       addresses.aaveV3.aaveLendingPoolAddress,
-      aaveLendingPoolGuard.address,
+      aaveLendingPoolGuardV3.address,
     ]);
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
@@ -48,8 +56,8 @@ export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (
 
     const deployedGuard = {
       contractAddress: addresses.aaveV3.aaveLendingPoolAddress,
-      guardName: "AaveLendingPoolGuardV3L2Pool",
-      guardAddress: aaveLendingPoolGuard.address,
+      guardName: contractName,
+      guardAddress: aaveLendingPoolGuardV3.address,
       description: "Aave V3 Lending Pool contract",
     };
     await addOrReplaceGuardInFile(filenames.contractGuardsFileName, deployedGuard, "contractAddress");

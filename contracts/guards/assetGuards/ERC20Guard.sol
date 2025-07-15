@@ -1,3 +1,4 @@
+//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -10,104 +11,73 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2021 dHEDGE DAO
+// Copyright (c) 2025 dHEDGE DAO
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../../utils/TxDataUtils.sol";
-import "../../interfaces/guards/IAssetGuard.sol";
-import "../../interfaces/guards/IGuard.sol";
-import "../../interfaces/IERC20Extended.sol"; // includes decimals()
-import "../../interfaces/IPoolManagerLogic.sol";
-import "../../interfaces/IHasSupportedAsset.sol";
-import "../../interfaces/IHasGuardInfo.sol";
-import "../../interfaces/IManaged.sol";
+import {TxDataUtils} from "../../utils/TxDataUtils.sol";
+import {IAssetGuard} from "../../interfaces/guards/IAssetGuard.sol";
+import {IGuard} from "../../interfaces/guards/IGuard.sol";
+import {IERC20Extended} from "../../interfaces/IERC20Extended.sol";
+import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
+import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
+import {IHasGuardInfo} from "../../interfaces/IHasGuardInfo.sol";
+import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
+import {ITransactionTypes} from "../../interfaces/ITransactionTypes.sol";
+import {IAaveLendingPoolAssetGuard} from "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import {IGovernance} from "../../interfaces/IGovernance.sol";
+import {IPoolFactory} from "../../interfaces/IPoolFactory.sol";
+import {IAaveV3Pool} from "../../interfaces/aave/v3/IAaveV3Pool.sol";
 
 /// @title Generic ERC20 asset guard
 /// @dev Asset type = 0
-/// @dev A generic ERC20 guard asset is Not stakeable ie. no 'getWithdrawStakedTx()' function
-contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
-  using SafeMathUpgradeable for uint256;
-
-  event Approve(address fundAddress, address manager, address spender, uint256 amount, uint256 time);
+contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
+  using SafeMath for uint256;
 
   /// @notice Transaction guard for approving assets
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param _poolManagerLogic Pool address
+  /// @param poolManagerLogic PoolManagerLogic address
   /// @param data Transaction call data attempt by manager
-  /// @return txType transaction type described in PoolLogic
+  /// @return txType transaction type described in ITransactionTypes
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address _poolManagerLogic,
-    address, // to
+    address poolManagerLogic,
+    address /* to */,
     bytes calldata data
-  )
-    external
-    override
-    returns (
-      uint16 txType, // transaction type
-      bool // isPublic
-    )
-  {
+  ) external view override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
 
     if (method == bytes4(keccak256("approve(address,uint256)"))) {
       address spender = convert32toAddress(getInput(data, 0));
-      uint256 amount = uint256(getInput(data, 1));
 
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-
-      address factory = poolManagerLogic.factory();
+      address factory = IPoolManagerLogic(poolManagerLogic).factory();
       address spenderGuard = IHasGuardInfo(factory).getContractGuard(spender);
       require(spenderGuard != address(0) && spenderGuard != address(this), "unsupported spender approval"); // checks that the spender is an approved address
 
-      emit Approve(
-        poolManagerLogic.poolLogic(),
-        IManaged(_poolManagerLogic).manager(),
-        spender,
-        amount,
-        block.timestamp
-      );
-
-      txType = 1; // 'Approve' type
+      txType = uint16(TransactionType.Approve);
     }
 
     return (txType, false);
   }
 
-  /// @notice Creates transaction data for withdrawing tokens
-  /// @dev Withdrawal processing is not applicable for this guard
+  /// @notice Withdraw processing for ERC20 asset
+  /// @param pool Address of the pool
+  /// @param asset Address of the managed asset
+  /// @param portion Portion of the asset balance to withdraw, in 10^18 scale
   /// @return withdrawAsset and
-  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
-  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
+  /// @return withdrawBalance are used to withdraw portion of asset balance to depositor
+  /// @return transactions are used to execute the withdrawal transactions in PoolLogic
   function withdrawProcessing(
     address pool,
     address asset,
     uint256 portion,
-    address // to
+    address /* to */
   )
     external
     virtual
@@ -121,7 +91,8 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
   }
 
   /// @notice Returns the balance of the managed asset
-  /// @dev May include any external balance in staking contracts
+  /// @param pool Address of the pool
+  /// @param asset Address of the managed asset
   /// @return balance The asset balance of given pool
   function getBalance(address pool, address asset) public view virtual override returns (uint256 balance) {
     // The base ERC20 guard has no externally staked tokens
@@ -135,11 +106,41 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard {
     decimals = IERC20Extended(asset).decimals();
   }
 
-  /// @notice Necessary check for remove asset
+  /// @notice Necessary check for remove asset.
+  ///         In AaveLendingPoolAssetGuard, when calculating getBalance, the function loops through all the supported assets.
+  ///         Supported asset balance can be 0, but aave collateral or debt can be > 0. If it was able to remove the asset,
+  ///         the value of Aave lending pool position would become lower. Having this asset guard with removeAssetCheck prevents this.
+  ///         If there is any collateral or debt of a particular asset in Aave, it's not possible to remove that asset.
   /// @param pool Address of the pool
   /// @param asset Address of the remove asset
   function removeAssetCheck(address pool, address asset) public view virtual override {
-    uint256 balance = getBalance(pool, asset);
-    require(balance == 0, "cannot remove non-empty asset");
+    require(getBalance(pool, asset) == 0, "cannot remove non-empty asset");
+
+    address factory = IPoolLogic(pool).factory();
+    address governance = IPoolFactory(factory).governanceAddress();
+    // Magic number 8 is Aave lending pool "asset" asset type
+    address aaveLendingPoolAssetGuard = IGovernance(governance).assetGuards(8);
+
+    if (aaveLendingPoolAssetGuard == address(0)) {
+      // If Aave lending pool asset guard is not set, skip the check
+      return;
+    }
+
+    address aaveLendingPool = IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).aaveLendingPool();
+
+    if (!IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic()).isSupportedAsset(aaveLendingPool)) {
+      // If Aave lending pool asset is not supported, skip the check
+      return;
+    }
+
+    // Returns address(0) if it's not supported in Aave
+    address variableDebtToken = IAaveV3Pool(aaveLendingPool).getReserveVariableDebtToken(asset);
+
+    if (variableDebtToken != address(0))
+      require(IERC20(variableDebtToken).balanceOf(pool) == 0, "repay Aave debt first");
+
+    // Returns address(0) if it's not supported in Aave
+    address aToken = IAaveV3Pool(aaveLendingPool).getReserveAToken(asset);
+    if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
   }
 }

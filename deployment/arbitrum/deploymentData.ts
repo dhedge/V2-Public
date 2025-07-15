@@ -1,16 +1,14 @@
-import { BigNumber } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { arbitrumChainData } from "../../config/chainData/arbitrumData";
-import { IAddresses } from "../types";
+import { IAddresses, IFileNames } from "../types";
+import { FLAT_MONEY_PERP_MARKET_BOT_TEST } from "../base/deploymentData";
+import { baseChainData } from "../../config/chainData/baseData";
+import { ovmChainData } from "../../config/chainData/ovmData";
 
 export const arbitrumProdData: IAddresses = {
   protocolDaoAddress: arbitrumChainData.dHEDGE.daoMultisig,
   protocolTreasuryAddress: arbitrumChainData.dHEDGE.treasury,
   proxyAdminAddress: arbitrumChainData.proxyAdmin,
-
-  // Gnosis safe multicall/send address
-  // https://github.com/gnosis/safe-deployments
-  gnosisMultiSendAddress: "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761",
-  gnosisApi: "https://safe-transaction-arbitrum.safe.global",
 
   easySwapperConfig: {
     customLockupAllowedPools: [
@@ -53,7 +51,6 @@ export const arbitrumProdData: IAddresses = {
   aaveV3: {
     aaveIncentivesControllerAddress: arbitrumChainData.aaveV3.incentivesController,
     aaveLendingPoolAddress: arbitrumChainData.aaveV3.lendingPool,
-    aaveProtocolDataProviderAddress: arbitrumChainData.aaveV3.protocolDataProvider,
   },
 
   oneInchV5RouterAddress: arbitrumChainData.oneInch.v5Router,
@@ -74,7 +71,7 @@ export const arbitrumProdData: IAddresses = {
 
   slippageAccumulator: {
     decayTime: 86400, // 24 hours
-    maxCumulativeSlippage: 125e3, // 12.5%
+    maxCumulativeSlippage: 10e4, // 10%
   },
 
   zeroExExchangeProxy: arbitrumChainData.zeroEx.exchangeProxy,
@@ -192,7 +189,7 @@ export const arbitrumProdData: IAddresses = {
     },
     withdrawalLimit: {
       usdValue: BigNumber.from(50_000).mul(BigNumber.from(10).pow(18)), // $50k
-      percent: BigNumber.from(10).pow(17), // 10%
+      percent: BigNumber.from(90).mul(BigNumber.from(10).pow(16)), // 90%
     },
   },
 
@@ -218,6 +215,13 @@ export const arbitrumProdData: IAddresses = {
       token: arbitrumChainData.assets.usdcNative,
       whitelistedPools: [arbitrumChainData.torosPools.sETHy],
     },
+    {
+      amountPerSecond: BigNumber.from(25_000)
+        .mul(BigNumber.from(10).pow(18))
+        .div(90 * 24 * 60 * 60), // 90 days in seconds,
+      token: arbitrumChainData.assets.arb,
+      whitelistedPools: [arbitrumChainData.torosPools.BTCy],
+    },
   ],
 
   compoundV3: {
@@ -236,21 +240,223 @@ export const arbitrumProdData: IAddresses = {
       arbitrumChainData.torosPools.ETHBEAR1X,
       arbitrumChainData.torosPools.ETHBULL2X,
       arbitrumChainData.torosPools.ETHBULL3X,
+      arbitrumChainData.torosPools.SOLBULL2X,
+      arbitrumChainData.torosPools.SOLBULL3X,
+      arbitrumChainData.torosPools.SOLBEAR1X,
+      arbitrumChainData.torosPools.BTCBULL4X,
+      arbitrumChainData.torosPools.ETHBULL4X,
+      arbitrumChainData.torosPools.SUIBULL2X,
+      arbitrumChainData.torosPools.DOGEBULL2X,
+      arbitrumChainData.torosPools.SOL1X,
+      arbitrumChainData.torosPools.SUI1X,
+      arbitrumChainData.torosPools.DOGE1X,
+      arbitrumChainData.torosPools.XRP1X,
     ],
   },
 
-  rewardAssetSetting: [
-    {
-      rewardToken: arbitrumChainData.assets.arb,
-      linkedAssetTypes: [
-        29, //   "Ramses CL NFT Position Asset" = 29,
-      ],
-      underlyingAssetType: 4, //   "Lending Enable Asset" = 4,
-    },
-  ],
+  gmx: {
+    ...arbitrumChainData.gmx,
+    feeReceiver: arbitrumChainData.dHEDGE.treasury, // ui fee, https://gmx-docs.io/docs/api/contracts-v2/#ui-fee
+    dHedgeVaultsWhitelist: [
+      {
+        poolLogic: arbitrumChainData.torosPools.BTCy, // https://dhedge.org/vault/0x319fd1d1d74607b7a224eb4e31a4aa75837d7d01
+        withdrawalAsset: arbitrumChainData.assets.wbtc,
+      },
+      {
+        poolLogic: "0xe24f85a5a5c8a9417537d82dfaa3e14efa8fb322", // GMX Test, https://dhedge.org/vault/0xe24f85a5a5c8a9417537d82dfaa3e14efa8fb322
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.gmxTestVaults.gmxTest2,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: "0xBF30FfE47111ae5D0a5A9F9a187EAD0170BA4D8f", // GMX Test 3, https://dhedge.org/vault/0xBF30FfE47111ae5D0a5A9F9a187EAD0170BA4D8f
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: "0x2b1d9fbbeadad547a8053119e0b8cb290c487e9d", // GMX Test 4, https://dhedge.org/vault/0x2b1d9fbbeadad547a8053119e0b8cb290c487e9d
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: "0x8A948d8D843593bF8c50eeDa5f1140846b40a95E", // GMX Test 5, https://dhedge.org/vault/0x8A948d8D843593bF8c50eeDa5f1140846b40a95E
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.gmxTestVaults.gmxTest6,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.ETHy,
+        withdrawalAsset: arbitrumChainData.assets.weth,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.USDmny,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SOLBULL3X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SOLBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SOLBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.ETHBULL4X,
+        withdrawalAsset: arbitrumChainData.assets.weth,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.BTCBULL4X,
+        withdrawalAsset: arbitrumChainData.assets.wbtc,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SUIBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SOL1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SUI1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.DOGEBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.DOGE1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.XRP1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+    ],
+    virtualTokenResolver: [
+      {
+        virtualToken: "0x47904963fc8b2340414262125aF798B9655E58Cd", // virtual BTC
+        virtualTokenMultiplier: BigNumber.from(10).pow(44), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 8 (token decimals)
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
+        onchainOracle: {
+          oracleContract: arbitrumChainData.usdPriceFeeds.wbtc,
+          maxAge: 90_000, // 90_000 seconds => 25 hours,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: "0xc9d8b075a5c69303365ae23633d4e085199bf5c520a3b90fed1322a0342ffc33", // WBTC pyth price id
+          maxAge: 86_400, // 86400 seconds => 24 hours,
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+      {
+        virtualToken: "0x197aa2DE1313c7AD50184234490E12409B2a1f95", // virtual SUI
+        virtualTokenMultiplier: BigNumber.from(10).pow(43), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 9 (token decimals)
+        oracleLookupType: 2, // 2 = PythLib
+        onchainOracle: {
+          oracleContract: ethers.constants.AddressZero, // no onchain oracle for SUI
+          maxAge: 0,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: "0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744", // SUI pyth price id
+          maxAge: 1500, // 1500 seconds => 25 mins
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+      {
+        virtualToken: "0xC4da4c24fd591125c3F47b340b6f4f76111883d8", // virtual Doge
+        virtualTokenMultiplier: BigNumber.from(10).pow(44), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 8 (token decimals)
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
+        onchainOracle: {
+          oracleContract: arbitrumChainData.usdPriceFeeds.dogecoin,
+          maxAge: 90_000, // 90_000 seconds => 25 hours,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: "0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c", // Doge pyth price id
+          maxAge: 86_400, // 86400 seconds => 24 hours,
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+      {
+        virtualToken: "0xc14e065b0067dE91534e032868f5Ac6ecf2c6868", // virtual XRP
+        virtualTokenMultiplier: BigNumber.from(10).pow(46), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 6 (token decimals)
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
+        onchainOracle: {
+          oracleContract: arbitrumChainData.usdPriceFeeds.xrp,
+          maxAge: 90_000, // 90_000 seconds => 25 hours,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8", // XRP pyth price id
+          maxAge: 86_400, // 86400 seconds => 24 hours,
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+    ],
+  },
+
+  across: {
+    spokePool: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
+    approvedDestinations: [
+      {
+        sourcePool: arbitrumChainData.gmxTestVaults.gmxTest2,
+        sourceToken: arbitrumChainData.assets.usdcNative,
+        destinationChainId: 8453,
+        destinationPool: FLAT_MONEY_PERP_MARKET_BOT_TEST,
+        destinationToken: baseChainData.assets.usdc,
+      },
+      {
+        sourcePool: arbitrumChainData.gmxTestVaults.gmxTest6,
+        sourceToken: arbitrumChainData.assets.usdcNative,
+        destinationChainId: 8453,
+        destinationPool: FLAT_MONEY_PERP_MARKET_BOT_TEST,
+        destinationToken: baseChainData.assets.usdc,
+      },
+      {
+        sourcePool: arbitrumChainData.gmxTestVaults.gmxTest2,
+        sourceToken: arbitrumChainData.assets.usdcNative,
+        destinationChainId: 10,
+        destinationPool: ovmChainData.flatMoneyV2Vaults.flatMoneyV2MarketMaker,
+        destinationToken: ovmChainData.assets.usdcNative,
+      },
+    ],
+  },
+
+  pancakeswap: {
+    nonfungiblePositionManager: "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
+    masterChefV3: "0x5e09ACf80C0296740eC5d6F643005a4ef8DaA694",
+  },
+
+  flatMoneyOptions: {
+    orderAnnouncementModule: "0x2326BB21B769D81E134C9b305ca156f989249fE7",
+    orderExecutionModule: "0x7e50AD6E467D9FAFC3B4BFd003247cEaA2F17e5b",
+    flatcoinVault: "0x29fAD9d44C550e5D8081AB35763797B39d75b858",
+  },
+
+  odosV2RouterAddress: arbitrumChainData.odosEx.v2Router,
+
+  poolLimitOrderManager: {
+    defaultSlippageTolerance: 200, // 2%
+    settlementToken: arbitrumChainData.assets.usdcNative,
+    authorizedKeeperAddresses: [
+      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
+      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
+      "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
+      "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
+      "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
+    ],
+  },
 };
 
-export const arbitrumProdFileNames = {
+export const arbitrumProdFileNames: IFileNames = {
   versionsFileName: "./publish/arbitrum/prod/versions.json",
   assetsFileName: "./config/arbitrum/dHEDGE Assets list.json",
   assetGuardsFileName: "./config/arbitrum/dHEDGE Governance Asset Guards.csv",

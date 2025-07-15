@@ -11,47 +11,28 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2021 dHEDGE DAO
+// Copyright (c) 2025 dHEDGE DAO
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "./PoolLogic.sol";
-import "./upgradability/ProxyFactory.sol";
-import "./interfaces/IAssetHandler.sol";
-import "./interfaces/IHasDaoInfo.sol";
-import "./interfaces/IHasFeeInfo.sol";
-import "./interfaces/IHasAssetInfo.sol";
-import "./interfaces/IPoolLogic.sol";
-import "./interfaces/IHasGuardInfo.sol";
-import "./interfaces/IHasPausable.sol";
-import "./interfaces/IHasSupportedAsset.sol";
-import "./interfaces/IGovernance.sol";
-import "./interfaces/IManaged.sol";
-import "./utils/AddressHelper.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {ProxyFactory} from "./upgradability/ProxyFactory.sol";
+import {IAssetHandler} from "./interfaces/IAssetHandler.sol";
+import {IHasDaoInfo} from "./interfaces/IHasDaoInfo.sol";
+import {IHasFeeInfo} from "./interfaces/IHasFeeInfo.sol";
+import {IHasAssetInfo} from "./interfaces/IHasAssetInfo.sol";
+import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
+import {IPoolManagerLogic} from "./interfaces/IPoolManagerLogic.sol";
+import {IHasGuardInfo} from "./interfaces/IHasGuardInfo.sol";
+import {IHasPausable} from "./interfaces/IHasPausable.sol";
+import {IHasSupportedAsset} from "./interfaces/IHasSupportedAsset.sol";
+import {IGovernance} from "./interfaces/IGovernance.sol";
+import {IManaged} from "./interfaces/IManaged.sol";
 
 /// @title Pool Factory
 /// @dev A Factory to spawn pools
@@ -65,11 +46,11 @@ contract PoolFactory is
   IHasPausable
 {
   using SafeMathUpgradeable for uint256;
-  using AddressHelper for address;
 
-  struct PoolPausedInfo {
+  struct PoolPausedInput {
     address pool;
-    bool paused;
+    bool pauseShares; // Disable any pool tokens movement
+    bool pauseTrading; // Solely for disabling _execTransaction
   }
 
   event FundCreated(
@@ -98,10 +79,6 @@ contract PoolFactory is
 
   event MaximumSupportedAssetCountSet(uint256 count);
 
-  event LogUpgrade(address indexed manager, address indexed pool);
-
-  event SetPoolManagerFee(uint256 numerator, uint256 denominator);
-
   event SetMaximumFee(
     uint256 performanceFeeNumerator,
     uint256 managerFeeNumerator,
@@ -114,9 +91,9 @@ contract PoolFactory is
 
   event SetAssetHandler(address assetHandler);
 
-  event SetPoolStorageVersion(uint256 poolStorageVersion);
-
   event SetPerformanceFeeNumeratorChangeDelay(uint256 delay);
+
+  event PoolPauseStatusChanged(address pool, bool pausedShares, bool pausedTrading);
 
   address[] public deployedFunds;
 
@@ -137,20 +114,21 @@ contract PoolFactory is
 
   uint256 internal _maximumSupportedAssetCount;
 
-  mapping(address => uint256) public poolVersion;
-  uint256 public poolStorageVersion;
+  mapping(address => uint256) public poolVersion; // Deprecated
+  uint256 public poolStorageVersion; // Deprecated
 
   uint256 public override maximumPerformanceFeeNumeratorChange;
   uint256 public override performanceFeeNumeratorChangeDelay;
 
   // Added after initial deployment
-  address public poolPerformanceAddress; // not used now
+  address public poolPerformanceAddress; // Deprecated
   uint256 private _exitFeeNumerator; // Deprecated here but similar thing is used in PoolManagerLogic
   uint256 private _exitFeeDenominator; // Deprecated here but similar thing is used in PoolManagerLogic
 
-  // allows to perform pool deposit with lockup cooldown passed as param
+  // Allows to perform pool deposit with lockup cooldown passed as param
   mapping(address => bool) public customCooldownWhitelist;
 
+  // Management (or streaming) fee is referred to as manager fee (backward compatibility)
   uint256 private maximumManagerFeeNumerator;
 
   // A list of addresses that can receive tokens that are still under a lockup
@@ -158,42 +136,38 @@ contract PoolFactory is
 
   uint256 private maximumEntryFeeNumerator;
 
+  // If true, pool deposits, withdrawals, fee mints and pool token transfers are disabled
   mapping(address => bool) public override pausedPools;
 
   uint256 private maximumExitFeeNumerator;
 
+  mapping(address => bool) public override tradingPausedPools;
+
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
   /// @param _managerLogic The manager logic address
-  /// @param assetHandler The address of the asset handler
+  /// @param _assetHandlerAddress The address of the asset handler
   /// @param _daoAddress The address of the DAO
   /// @param _governanceAddress The address of the governance contract
   function initialize(
     address _poolLogic,
     address _managerLogic,
-    address assetHandler,
+    address _assetHandlerAddress,
     address _daoAddress,
     address _governanceAddress
   ) external initializer {
     __ProxyFactory_init(_poolLogic, _managerLogic);
     __Pausable_init();
 
-    _setAssetHandler(assetHandler);
-
+    _setAssetHandler(_assetHandlerAddress);
     _setDAOAddress(_daoAddress);
-
     _setGovernanceAddress(_governanceAddress);
-
-    _setMaximumFee(5000, 300, 100, 100, 10000); // 50% manager fee, 3% streaming fee, 1% entry fee, 1% exit fee
-
+    _setMaximumFee(5000, 300, 100, 100, 10000); // 50% performance fee, 3% management fee, 1% entry fee, 1% exit fee
     _setDaoFee(10, 100); // 10%
     _setExitCooldown(1 days);
     setPerformanceFeeNumeratorChangeDelay(2 weeks);
     setMaximumPerformanceFeeNumeratorChange(1000);
-
     _setMaximumSupportedAssetCount(12);
-
-    _setPoolStorageVersion(230); // V2.3.0;
   }
 
   modifier onlyPool() {
@@ -207,20 +181,14 @@ contract PoolFactory is
     _;
   }
 
-  /// @notice PoolFactory implementation contracts should not be left unintialized
-  /// @dev There is a risk for PoolFactory that the implementation could be destroyed
-  /// @dev This is because PoolFactory has function upgradePoolBatch that accepts arbitrary data input that's executed on the pool
-  /// @dev So the owner of the implementation of PoolFactory can call upgradePoolBatch and pass selfDestruct data which then destroys the implementation contract
-  // solhint-disable-next-line no-empty-blocks
-  function implInitializer() external initializer {}
-
   /// @notice Function to create a new fund
   /// @param _privatePool A boolean indicating whether the fund is private or not
   /// @param _manager A manager address
   /// @param _managerName The name of the manager
   /// @param _fundName The name of the fund
   /// @param _fundSymbol The symbol of the fund
-  /// @param _performanceFeeNumerator The numerator of the manager fee
+  /// @param _performanceFeeNumerator The numerator of the performance fee
+  /// @param _managerFeeNumerator The numerator of the management fee
   /// @param _supportedAssets An array of supported assets
   /// @return fund Address of the fund
   function createFund(
@@ -257,13 +225,10 @@ contract PoolFactory is
     );
 
     address managerLogic = deploy(managerLogicData, 1);
-    // Ignore return value as want it to continue regardless
     IPoolLogic(fund).setPoolManagerLogic(managerLogic);
 
     deployedFunds.push(fund);
     isPool[fund] = true;
-
-    poolVersion[fund] = poolStorageVersion;
 
     emit FundCreated(
       fund,
@@ -306,7 +271,7 @@ contract PoolFactory is
     receiverWhitelist[_extAddress] = false;
   }
 
-  // DAO info (Uber Pool)
+  // DAO info
 
   /// @notice Set the DAO address
   /// @param _daoAddress The address of the DAO
@@ -332,8 +297,6 @@ contract PoolFactory is
     _setGovernanceAddress(_governanceAddress);
   }
 
-  /// @notice Set the governance address internal call
-  /// @param _governanceAddress The address of the governance contract
   function _setGovernanceAddress(address _governanceAddress) internal {
     require(_governanceAddress != address(0), "Invalid governanceAddress");
 
@@ -343,22 +306,19 @@ contract PoolFactory is
   }
 
   /// @notice Set the DAO fee
-  /// @param numerator The numerator of the DAO fee
-  /// @param denominator The denominator of the DAO fee
-  function setDaoFee(uint256 numerator, uint256 denominator) external onlyOwner {
-    _setDaoFee(numerator, denominator);
+  /// @param _numerator The numerator of the DAO fee
+  /// @param _denominator The denominator of the DAO fee
+  function setDaoFee(uint256 _numerator, uint256 _denominator) external onlyOwner {
+    _setDaoFee(_numerator, _denominator);
   }
 
-  /// @notice Set the DAO fee internal call
-  /// @param numerator The numerator of the DAO fee
-  /// @param denominator The denominator of the DAO fee
-  function _setDaoFee(uint256 numerator, uint256 denominator) internal {
-    require(numerator <= denominator, "invalid fraction");
+  function _setDaoFee(uint256 _numerator, uint256 _denominator) internal {
+    require(_numerator <= _denominator, "invalid fraction");
 
-    _daoFeeNumerator = numerator;
-    _daoFeeDenominator = denominator;
+    _daoFeeNumerator = _numerator;
+    _daoFeeDenominator = _denominator;
 
-    emit DaoFeeSet(numerator, denominator);
+    emit DaoFeeSet(_numerator, _denominator);
   }
 
   /// @notice Get the DAO fee
@@ -372,7 +332,7 @@ contract PoolFactory is
 
   /// @notice Get the maximum manager fee
   /// @return The maximum performance fee numerator
-  /// @return The maximum management/streaming fee numerator
+  /// @return The maximum management fee numerator
   /// @return The maximum entry fee numerator
   /// @return The maximum exit fee numerator
   /// @return The maximum fee denominator
@@ -386,84 +346,82 @@ contract PoolFactory is
     );
   }
 
-  /// @notice Set the maximum manager fee
-  /// @param performanceFeeNumerator The numerator of the maximum manager fee
-  /// @param managerFeeNumerator The numerator of the maximum management/streaming fee
-  /// @param entryFeeNumerator The numerator of the maximum entry fee
-  /// @param exitFeeNumerator The numerator of the maximum exit fee
+  /// @notice Set maximum manager fees
+  /// @param _maxPerformanceFeeNumerator The numerator of the maximum performance fee
+  /// @param _maxManagerFeeNumerator The numerator of the maximum management fee
+  /// @param _maxEntryFeeNumerator The numerator of the maximum entry fee
+  /// @param _maxExitFeeNumerator The numerator of the maximum exit fee
   function setMaximumFee(
-    uint256 performanceFeeNumerator,
-    uint256 managerFeeNumerator,
-    uint256 entryFeeNumerator,
-    uint256 exitFeeNumerator
+    uint256 _maxPerformanceFeeNumerator,
+    uint256 _maxManagerFeeNumerator,
+    uint256 _maxEntryFeeNumerator,
+    uint256 _maxExitFeeNumerator
   ) external onlyOwner {
     _setMaximumFee(
-      performanceFeeNumerator,
-      managerFeeNumerator,
-      entryFeeNumerator,
-      exitFeeNumerator,
+      _maxPerformanceFeeNumerator,
+      _maxManagerFeeNumerator,
+      _maxEntryFeeNumerator,
+      _maxExitFeeNumerator,
       _MANAGER_FEE_DENOMINATOR
     );
   }
 
-  /// @notice Set the maximum manager fee internal call
-  /// @param performanceFeeNumerator The numerator of the maximum manager fee
-  /// @param managerFeeNumerator The numerator of the maximum streaming fee
-  /// @param entryFeeNumerator The numerator of the maximum entry fee
-  /// @param exitFeeNumerator The numerator of the maximum exit fee
-  /// @param denominator The denominator of the maximum fee
   function _setMaximumFee(
-    uint256 performanceFeeNumerator,
-    uint256 managerFeeNumerator,
-    uint256 entryFeeNumerator,
-    uint256 exitFeeNumerator,
-    uint256 denominator
+    uint256 _maxPerformanceFeeNumerator,
+    uint256 _maxManagerFeeNumerator,
+    uint256 _maxEntryFeeNumerator,
+    uint256 _maxExitFeeNumerator,
+    uint256 _denominator
   ) internal {
     require(
-      performanceFeeNumerator <= denominator &&
-        managerFeeNumerator <= denominator &&
-        entryFeeNumerator <= denominator &&
-        exitFeeNumerator <= denominator,
+      _maxPerformanceFeeNumerator <= _denominator &&
+        _maxManagerFeeNumerator <= _denominator &&
+        _maxEntryFeeNumerator <= _denominator &&
+        _maxExitFeeNumerator <= _denominator,
       "invalid fraction"
     );
 
-    maximumPerformanceFeeNumerator = performanceFeeNumerator;
-    maximumManagerFeeNumerator = managerFeeNumerator;
-    _MANAGER_FEE_DENOMINATOR = denominator;
-    maximumEntryFeeNumerator = entryFeeNumerator;
-    maximumExitFeeNumerator = exitFeeNumerator;
+    maximumPerformanceFeeNumerator = _maxPerformanceFeeNumerator;
+    maximumManagerFeeNumerator = _maxManagerFeeNumerator;
+    maximumEntryFeeNumerator = _maxEntryFeeNumerator;
+    maximumExitFeeNumerator = _maxExitFeeNumerator;
+    _MANAGER_FEE_DENOMINATOR = _denominator;
 
-    emit SetMaximumFee(performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, exitFeeNumerator, denominator);
+    emit SetMaximumFee(
+      _maxPerformanceFeeNumerator,
+      _maxManagerFeeNumerator,
+      _maxEntryFeeNumerator,
+      _maxExitFeeNumerator,
+      _denominator
+    );
   }
 
-  /// @notice Set maximum manager fee numerator change
-  /// @param amount The amount for the maximum manager fee numerator change
-  function setMaximumPerformanceFeeNumeratorChange(uint256 amount) public onlyOwner {
-    maximumPerformanceFeeNumeratorChange = amount;
+  /// @notice Set maximum performance fee change
+  /// @param _amount The amount for the maximum performance fee numerator change
+  function setMaximumPerformanceFeeNumeratorChange(uint256 _amount) public onlyOwner {
+    maximumPerformanceFeeNumeratorChange = _amount;
 
-    emit SetMaximumPerformanceFeeNumeratorChange(amount);
+    emit SetMaximumPerformanceFeeNumeratorChange(_amount);
   }
 
-  /// @notice Set manager fee numerator change delay
-  /// @param delay The delay in seconds for the manager fee numerator change
-  function setPerformanceFeeNumeratorChangeDelay(uint256 delay) public onlyOwner {
-    performanceFeeNumeratorChangeDelay = delay;
+  /// @notice Set manager fees increase delay
+  /// @param _delay The delay in seconds for the manager fees numerator increase
+  function setPerformanceFeeNumeratorChangeDelay(uint256 _delay) public onlyOwner {
+    performanceFeeNumeratorChangeDelay = _delay;
 
-    emit SetPerformanceFeeNumeratorChangeDelay(delay);
+    emit SetPerformanceFeeNumeratorChangeDelay(_delay);
   }
 
   /// @notice Set exit cool down time (in seconds)
-  /// @param cooldown The cool down time in seconds
-  function setExitCooldown(uint256 cooldown) external onlyOwner {
-    _setExitCooldown(cooldown);
+  /// @param _cooldown The lockup time in seconds
+  function setExitCooldown(uint256 _cooldown) external onlyOwner {
+    _setExitCooldown(_cooldown);
   }
 
-  /// @notice Set exit cool down time (in seconds) internal call
-  /// @param cooldown The cool down time in seconds
-  function _setExitCooldown(uint256 cooldown) internal {
-    _exitCooldown = cooldown;
+  function _setExitCooldown(uint256 _cooldown) internal {
+    _exitCooldown = _cooldown;
 
-    emit ExitCooldownSet(cooldown);
+    emit ExitCooldownSet(_cooldown);
   }
 
   /// @notice Get the exit cool down time (in seconds)
@@ -475,17 +433,15 @@ contract PoolFactory is
   // Asset Info
 
   /// @notice Set maximum supported asset count
-  /// @param count The maximum supported asset count
-  function setMaximumSupportedAssetCount(uint256 count) external onlyOwner {
-    _setMaximumSupportedAssetCount(count);
+  /// @param _count The maximum supported asset count
+  function setMaximumSupportedAssetCount(uint256 _count) external onlyOwner {
+    _setMaximumSupportedAssetCount(_count);
   }
 
-  /// @notice Set maximum supported asset count internal call
-  /// @param count The maximum supported asset count
-  function _setMaximumSupportedAssetCount(uint256 count) internal {
-    _maximumSupportedAssetCount = count;
+  function _setMaximumSupportedAssetCount(uint256 _count) internal {
+    _maximumSupportedAssetCount = _count;
 
-    emit MaximumSupportedAssetCountSet(count);
+    emit MaximumSupportedAssetCountSet(_count);
   }
 
   /// @notice Get maximum supported asset count
@@ -495,23 +451,24 @@ contract PoolFactory is
   }
 
   /// @notice Return boolean if the asset is supported
+  /// @param _asset The address of the asset
   /// @return True if it's valid asset, false otherwise
-  function isValidAsset(address asset) public view override returns (bool) {
-    return IAssetHandler(_assetHandler).priceAggregators(asset) != address(0);
+  function isValidAsset(address _asset) public view override returns (bool) {
+    return IAssetHandler(_assetHandler).priceAggregators(_asset) != address(0);
   }
 
   /// @notice Return the latest price of a given asset
-  /// @param asset The address of the asset
+  /// @param _asset The address of the asset
   /// @return price The latest price of a given asset
-  function getAssetPrice(address asset) external view override returns (uint256 price) {
-    price = IAssetHandler(_assetHandler).getUSDPrice(asset);
+  function getAssetPrice(address _asset) external view override returns (uint256 price) {
+    price = IAssetHandler(_assetHandler).getUSDPrice(_asset);
   }
 
   /// @notice Return type of the asset
-  /// @param asset The address of the asset
+  /// @param _asset The address of the asset
   /// @return assetType The type of the asset
-  function getAssetType(address asset) external view override returns (uint16 assetType) {
-    assetType = IAssetHandler(_assetHandler).assetTypes(asset);
+  function getAssetType(address _asset) external view override returns (uint16 assetType) {
+    assetType = IAssetHandler(_assetHandler).assetTypes(_asset);
   }
 
   /// @notice Return the address of the asset handler
@@ -521,102 +478,17 @@ contract PoolFactory is
   }
 
   /// @notice Set the asset handler address
-  /// @param assetHandler The address of the asset handler
-  function setAssetHandler(address assetHandler) external onlyOwner {
-    _setAssetHandler(assetHandler);
+  /// @param _handler The address of the asset handler
+  function setAssetHandler(address _handler) external onlyOwner {
+    _setAssetHandler(_handler);
   }
 
-  /// @notice Set the asset handler address internal call
-  /// @param assetHandler The address of the asset handler
-  function _setAssetHandler(address assetHandler) internal {
-    require(assetHandler != address(0), "Invalid assetHandler");
+  function _setAssetHandler(address _handler) internal {
+    require(_handler != address(0), "Invalid assetHandler");
 
-    _assetHandler = assetHandler;
+    _assetHandler = _handler;
 
-    emit SetAssetHandler(assetHandler);
-  }
-
-  // Upgrade
-
-  /// @notice Set the pool storage version
-  /// @param _poolStorageVersion The pool storage version
-  function setPoolStorageVersion(uint256 _poolStorageVersion) external onlyOwner {
-    _setPoolStorageVersion(_poolStorageVersion);
-  }
-
-  /// @notice Set the pool storage version internal call
-  /// @param _poolStorageVersion The pool storage version
-  function _setPoolStorageVersion(uint256 _poolStorageVersion) internal {
-    require(_poolStorageVersion > poolStorageVersion, "version needs to be higher");
-
-    poolStorageVersion = _poolStorageVersion;
-
-    emit SetPoolStorageVersion(_poolStorageVersion);
-  }
-
-  /**
-   * @notice Backdoor function
-   * @param pool Address of the target.
-   * @param data Calldata for the target address.
-   * @param targetVersion set target version after call
-   */
-  function _upgradePool(address pool, bytes calldata data, uint256 targetVersion) internal {
-    require(pool != address(0), "target-invalid");
-    require(data.length > 0, "data-invalid");
-    require(poolVersion[pool] < targetVersion, "already upgraded");
-
-    pool.tryAssemblyDelegateCall(data);
-
-    emit LogUpgrade(msg.sender, pool);
-
-    poolVersion[pool] = targetVersion;
-  }
-
-  /// @notice Upgrade pools in batch
-  /// @param startIndex The start index of the pool upgrade
-  /// @param endIndex The end index of the pool upgrade
-  /// @param targetVersion The target version of the pool upgrade
-  /// @param data The calldata for the target address
-  function upgradePoolBatch(
-    uint256 startIndex,
-    uint256 endIndex,
-    uint256 targetVersion,
-    bytes calldata data
-  ) external onlyOwner {
-    require(startIndex <= endIndex && endIndex < deployedFunds.length, "invalid bounds");
-
-    for (uint256 i = startIndex; i <= endIndex; i++) {
-      address pool = deployedFunds[i];
-
-      if (pool == address(0)) continue;
-      if (poolVersion[pool] >= targetVersion) continue;
-
-      _upgradePool(pool, data, targetVersion);
-    }
-  }
-
-  /// @notice Upgrade pools in batch with array of data
-  /// @param startIndex The start index of the pool upgrade
-  /// @param endIndex The end index of the pool upgrade
-  /// @param targetVersion The target version of the pool upgrade
-  /// @param data Array of calldata for the target address
-  function upgradePoolBatch(
-    uint256 startIndex,
-    uint256 endIndex,
-    uint256 targetVersion,
-    bytes[] calldata data
-  ) external onlyOwner {
-    require(startIndex <= endIndex && endIndex < deployedFunds.length, "invalid bounds");
-    require(data.length == endIndex.sub(startIndex).add(1), "data not metch index");
-
-    for (uint256 i = startIndex; i <= endIndex; i++) {
-      address pool = deployedFunds[i];
-
-      if (pool == address(0)) continue;
-      if (poolVersion[pool] >= targetVersion) continue;
-
-      _upgradePool(pool, data[i.sub(startIndex)], targetVersion);
-    }
+    emit SetAssetHandler(_handler);
   }
 
   /// @notice call the pause the contract
@@ -636,43 +508,38 @@ contract PoolFactory is
   }
 
   /// @notice Set the pause status of the pool
-  /// @param pools The array of pool paused info
+  /// @param _pools The array of pool paused info
   /// @dev This function is used to pause/unpause the pool
   /// @dev The pool can be paused/unpaused by the owner only
-  function setPoolsPaused(PoolPausedInfo[] calldata pools) external onlyOwner {
-    uint256 poolsLength = pools.length;
-    for (uint256 i = 0; i < poolsLength; i++) {
-      PoolPausedInfo memory poolInfo = pools[i];
+  function setPoolsPaused(PoolPausedInput[] calldata _pools) external onlyOwner {
+    uint256 poolsLength = _pools.length;
+    for (uint256 i; i < poolsLength; ++i) {
+      PoolPausedInput memory poolInfo = _pools[i];
       require(isPool[poolInfo.pool], "invalid pool");
-      pausedPools[poolInfo.pool] = poolInfo.paused;
+      pausedPools[poolInfo.pool] = poolInfo.pauseShares;
+      tradingPausedPools[poolInfo.pool] = poolInfo.pauseTrading;
+
+      emit PoolPauseStatusChanged(poolInfo.pool, poolInfo.pauseShares, poolInfo.pauseTrading);
     }
   }
 
   // Transaction Guards
 
   /// @notice Get address of the contract guard
-  /// @param extContract The address of the external contract
+  /// @param _extContract The address of the external contract
   /// @return guard Return the address of the transaction guard
-  function getContractGuard(address extContract) external view override returns (address guard) {
-    guard = IGovernance(governanceAddress).contractGuards(extContract);
+  function getContractGuard(address _extContract) external view override returns (address guard) {
+    guard = IGovernance(governanceAddress).contractGuards(_extContract);
   }
 
   /// @notice Get address of the asset guard
-  /// @param extAsset The address of the external asset
+  /// @param _extAsset The address of the external asset
   /// @return guard Address of the asset guard
-  function getAssetGuard(address extAsset) public view override returns (address guard) {
-    if (isValidAsset(extAsset)) {
-      uint16 assetType = IAssetHandler(_assetHandler).assetTypes(extAsset);
+  function getAssetGuard(address _extAsset) external view override returns (address guard) {
+    if (isValidAsset(_extAsset)) {
+      uint16 assetType = IAssetHandler(_assetHandler).assetTypes(_extAsset);
       guard = IGovernance(governanceAddress).assetGuards(assetType);
     }
-  }
-
-  /// @notice Get address from the Governance contract
-  /// @param name The name of the address
-  /// @return destination The destination address
-  function getAddress(bytes32 name) public view override returns (address destination) {
-    destination = IGovernance(governanceAddress).nameToDestination(name);
-    require(destination != address(0), "governance: invalid name");
   }
 
   /// @notice Return full array of deployed funds
@@ -681,17 +548,15 @@ contract PoolFactory is
     return deployedFunds;
   }
 
-  /**
-   * @notice Returns all invested pools by a given user
-   * @param user the user address
-   * @return investedPools All invested pools by a given user
-   */
-  function getInvestedPools(address user) external view returns (address[] memory investedPools) {
+  /// @notice Returns all invested pools by a given user
+  /// @param _user the user address
+  /// @return investedPools All invested pools by a given user
+  function getInvestedPools(address _user) external view returns (address[] memory investedPools) {
     uint256 length = deployedFunds.length;
     investedPools = new address[](length);
     uint256 index = 0;
     for (uint256 i = 0; i < length; i++) {
-      if (IERC20Upgradeable(deployedFunds[i]).balanceOf(user) > 0) {
+      if (IPoolLogic(deployedFunds[i]).balanceOf(_user) > 0) {
         investedPools[index] = deployedFunds[i];
         index++;
       }
@@ -703,18 +568,16 @@ contract PoolFactory is
     }
   }
 
-  /**
-   * @notice Returns all managed pools by a given manager
-   * @param manager The manager address
-   * @return managedPools All managed pools by a given manager
-   */
-  function getManagedPools(address manager) external view returns (address[] memory managedPools) {
+  /// @notice Returns all managed pools by a given manager
+  /// @param _manager The manager address
+  /// @return managedPools All managed pools by a given manager
+  function getManagedPools(address _manager) external view returns (address[] memory managedPools) {
     uint256 length = deployedFunds.length;
     managedPools = new address[](length);
     uint256 index = 0;
     for (uint256 i = 0; i < length; i++) {
       address poolManagerLogic = IPoolLogic(deployedFunds[i]).poolManagerLogic();
-      if (IManaged(poolManagerLogic).manager() == manager) {
+      if (IManaged(poolManagerLogic).manager() == _manager) {
         managedPools[index] = deployedFunds[i];
         index++;
       }

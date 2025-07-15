@@ -40,6 +40,7 @@ export const ovmChainData = Object.freeze({
     sethKey: "0x7345544800000000000000000000000000000000000000000000000000000000",
     slinkKey: "0x734c494e4b000000000000000000000000000000000000000000000000000000",
     sinrKey: "0x73494e5200000000000000000000000000000000000000000000000000000000",
+    sethPerpKey: "0x7345544850455250000000000000000000000000000000000000000000000000",
     // This is where the balances are stored for SUSD
     // We need to use this for getTokenAccount
     sUSDProxy_target_tokenState: "0x92bac115d89ca17fd02ed9357ceca32842acb4c2",
@@ -107,12 +108,12 @@ export const ovmChainData = Object.freeze({
   usdPriceFeeds: {
     eth: "0x13e3Ee699D1909E989722E753853AE30b17e08c5",
     link: "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450",
-    btc: "0xD702DD976Fb76Fffc2D3963D037dfDae5b04E593",
+    btc: "0x718A5788b89454aAE3A028AE9c111A29Be6c2a6F",
     dai: "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6",
     usdc: "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3",
     usdt: "0xECef79E109e997bCA29c1c0897ec9d7b03647F5E",
     snx: "0x2FCF37343e916eAEd1f1DdaaF84458a359b53877",
-    susd: "0x7f99817d87baD03ea21E05112Ca799d715730efe",
+    susd: "0xcD139d422824A79109890e95F7e9a389B5704Bfe", // VelodromeV2TWAPAggregator we use for sUSD on Optimism
     op: "0x0D276FC14719f9292D5C1eA2198673d1f4269246",
     maiStableCoin: "0xECAF977A599cD94c71e7292BA0c9cEA9eA227d2a",
   },
@@ -180,6 +181,8 @@ export const ovmChainData = Object.freeze({
     SOLBULL2X: "0x7d3c9c6566375d7ad6e89169ca5c01b5edc15364",
     SOLBULL3X: "0xcc7d6ed524760539311ed0cdb41d0852b4eb77eb",
     BTCBULL4X: "0x11b55966527ff030ca9c7b1c548b4be5e7eaee6d",
+    SUIBULL2X: "0x1bAe4efC60269fe66ECEC7252825d6a0250A02EE",
+    DOGEBULL2X: "0x49BDB78f48db6e0CeD4D4475b6D2047539dF1412",
   },
 
   velodrome: {
@@ -254,10 +257,26 @@ export const ovmChainData = Object.freeze({
   compoundV3: {
     cUSDCv3: "0x2e44e174f7d53f0212823acc11c01a11d58c5bcb",
     cWETHv3: "0xE36A30D249f7761327fd973001A32010b521b6Fd",
+    cUSDTv3: "0x995e394b8b2437ac8ce61ee0bc610d617962b214",
     rewards: "0x443EA0340cb75a160F31A440722dec7b5bc3C2E9",
   },
 
   flatMoney: {
     swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+  },
+
+  pyth: {
+    priceFeedContract: "0xff1a0f4744e8582df1ae09d5611b887b6a12925c",
+    priceIds: {
+      ethUsd: "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+    },
+  },
+
+  odosEx: {
+    v2Router: "0xCa423977156BB05b13A2BA3b76Bc5419E2fE9680",
+  },
+
+  flatMoneyV2Vaults: {
+    flatMoneyV2MarketMaker: "0x1c57f6769fb3e51e65ad24c8c12dbd956ea716b6", // Flat Money V2 Market Maker https://dhedge.org/vault/0x1c57f6769fb3e51e65ad24c8c12dbd956ea716b6
   },
 });

@@ -3,29 +3,25 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+
 import {IVelodromeNonfungiblePositionManager} from "../../../interfaces/velodrome/IVelodromeNonfungiblePositionManager.sol";
 import {IVelodromeCLPool} from "../../../interfaces/velodrome/IVelodromeCLPool.sol";
 import {IVelodromeCLGauge} from "../../../interfaces/velodrome/IVelodromeCLGauge.sol";
 import {IVelodromeCLFactory} from "../../../interfaces/velodrome/IVelodromeCLFactory.sol";
 import {IHasAssetInfo} from "../../../interfaces/IHasAssetInfo.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
-
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
-
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
-
 import {IVelodromeVoter} from "../../../interfaces/velodrome/IVelodromeVoter.sol";
-
 import {ERC20Guard} from "../ERC20Guard.sol";
 import {VelodromeNonfungiblePositionGuard} from "../../contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol";
 import {VelodromeCLPriceLibrary} from "../../../utils/velodrome/VelodromeCLPriceLibrary.sol";
 import {VelodromeCLPositionValue} from "../../../utils/velodrome/VelodromeCLPositionValue.sol";
-import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {VelodromeHelpers} from "./VelodromeHelpers.sol";
 
 /// @title Velodrome CL asset guard
 /// @dev Asset type = 26
@@ -33,6 +29,7 @@ contract VelodromeCLAssetGuard is ERC20Guard {
   using SafeCast for uint256;
   using SafeMath for uint256;
   using VelodromeCLPositionValue for IVelodromeNonfungiblePositionManager;
+  using VelodromeHelpers for address;
 
   struct VelodromeCLPoolParams {
     address token0;
@@ -308,7 +305,7 @@ contract VelodromeCLAssetGuard is ERC20Guard {
     uint256 txCount,
     DecreaseLiquidityData memory decreaseLiquidityData,
     WithdrawParams memory withdrawParams
-  ) internal pure returns (MultiTransaction[] memory, uint256) {
+  ) internal view returns (MultiTransaction[] memory, uint256) {
     if (!decreaseLiquidityData.isStaked || decreaseLiquidityData.rewardAmount == 0) {
       return (transactions, txCount);
     }
@@ -322,16 +319,16 @@ contract VelodromeCLAssetGuard is ERC20Guard {
       });
     }
 
-    // RewardAssetGuard has a higher # of AssetType (withdrawProcessing will be processed first),
-    // so always transfer the withdrawParams.portion of the claimed reward
-    transactions[txCount++] = MultiTransaction({
-      to: decreaseLiquidityData.rewardToken,
-      txData: abi.encodeWithSelector(
-        bytes4(keccak256("transfer(address,uint256)")),
-        withdrawParams.to,
-        decreaseLiquidityData.rewardAmount.mul(withdrawParams.portion).div(10 ** 18)
-      )
-    });
+    if (withdrawParams.pool.shouldTransferToken(withdrawParams.asset, decreaseLiquidityData.rewardToken)) {
+      transactions[txCount++] = MultiTransaction({
+        to: decreaseLiquidityData.rewardToken,
+        txData: abi.encodeWithSelector(
+          bytes4(keccak256("transfer(address,uint256)")),
+          withdrawParams.to,
+          decreaseLiquidityData.rewardAmount.mul(withdrawParams.portion).div(10 ** 18)
+        )
+      });
+    }
 
     return (transactions, txCount);
   }

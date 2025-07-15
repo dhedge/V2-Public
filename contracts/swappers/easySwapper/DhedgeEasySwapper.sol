@@ -113,6 +113,10 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
     managerFeeBypass[manager] = bypass;
   }
 
+  function salvage(address payable to) external onlyOwner {
+    to.transfer(address(this).balance);
+  }
+
   /// @notice deposit into underlying pool and receive tokens with normal lockup
   /// @param pool the pool to deposit into
   /// @param depositAsset the asset the user wants to deposit

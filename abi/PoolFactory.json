@@ -122,25 +122,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "manager",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "pool",
-        "type": "address"
-      }
-    ],
-    "name": "LogUpgrade",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": false,
         "internalType": "uint256",
         "name": "count",
@@ -206,6 +187,31 @@
       }
     ],
     "name": "PoolManagerEvent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "pausedShares",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "pausedTrading",
+        "type": "bool"
+      }
+    ],
+    "name": "PoolPauseStatusChanged",
     "type": "event"
   },
   {
@@ -295,38 +301,6 @@
       }
     ],
     "name": "SetPerformanceFeeNumeratorChangeDelay",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "numerator",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "denominator",
-        "type": "uint256"
-      }
-    ],
-    "name": "SetPoolManagerFee",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "poolStorageVersion",
-        "type": "uint256"
-      }
-    ],
-    "name": "SetPoolStorageVersion",
     "type": "event"
   },
   {
@@ -526,27 +500,8 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "name",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getAddress",
-    "outputs": [
-      {
         "internalType": "address",
-        "name": "destination",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "extAsset",
+        "name": "_extAsset",
         "type": "address"
       }
     ],
@@ -578,7 +533,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -597,7 +552,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -616,7 +571,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "extContract",
+        "name": "_extContract",
         "type": "address"
       }
     ],
@@ -679,7 +634,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "user",
+        "name": "_user",
         "type": "address"
       }
     ],
@@ -717,7 +672,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "manager",
+        "name": "_manager",
         "type": "address"
       }
     ],
@@ -792,13 +747,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "implInitializer",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -812,7 +760,7 @@
       },
       {
         "internalType": "address",
-        "name": "assetHandler",
+        "name": "_assetHandlerAddress",
         "type": "address"
       },
       {
@@ -867,7 +815,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -1061,7 +1009,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "assetHandler",
+        "name": "_handler",
         "type": "address"
       }
     ],
@@ -1087,12 +1035,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "numerator",
+        "name": "_numerator",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "denominator",
+        "name": "_denominator",
         "type": "uint256"
       }
     ],
@@ -1105,7 +1053,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "cooldown",
+        "name": "_cooldown",
         "type": "uint256"
       }
     ],
@@ -1149,22 +1097,22 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "performanceFeeNumerator",
+        "name": "_maxPerformanceFeeNumerator",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "managerFeeNumerator",
+        "name": "_maxManagerFeeNumerator",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "entryFeeNumerator",
+        "name": "_maxEntryFeeNumerator",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "exitFeeNumerator",
+        "name": "_maxExitFeeNumerator",
         "type": "uint256"
       }
     ],
@@ -1177,7 +1125,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -1190,7 +1138,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "count",
+        "name": "_count",
         "type": "uint256"
       }
     ],
@@ -1203,24 +1151,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "delay",
+        "name": "_delay",
         "type": "uint256"
       }
     ],
     "name": "setPerformanceFeeNumeratorChangeDelay",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_poolStorageVersion",
-        "type": "uint256"
-      }
-    ],
-    "name": "setPoolStorageVersion",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1236,18 +1171,42 @@
           },
           {
             "internalType": "bool",
-            "name": "paused",
+            "name": "pauseShares",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "pauseTrading",
             "type": "bool"
           }
         ],
-        "internalType": "struct PoolFactory.PoolPausedInfo[]",
-        "name": "pools",
+        "internalType": "struct PoolFactory.PoolPausedInput[]",
+        "name": "_pools",
         "type": "tuple[]"
       }
     ],
     "name": "setPoolsPaused",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tradingPausedPools",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1266,62 +1225,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "startIndex",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endIndex",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "targetVersion",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "data",
-        "type": "bytes[]"
-      }
-    ],
-    "name": "upgradePoolBatch",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "startIndex",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endIndex",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "targetVersion",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "upgradePoolBatch",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

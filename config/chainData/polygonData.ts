@@ -233,4 +233,8 @@ export const polygonChainData = Object.freeze({
   flatMoney: {
     swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
   },
+
+  odosEx: {
+    v2Router: "0x4E3288c9ca110bCC82bf38F09A7b425c095d92Bf",
+  },
 });

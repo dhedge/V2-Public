@@ -1,9 +1,12 @@
 import csv from "csvtojson";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTx } from "../../deploymentHelpers";
+import { proposeTransactions } from "../../deploymentHelpers";
 import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames, IDeployedContractGuard } from "../../types";
 import { removeContractGuardFromFile } from "./helpers";
+import type { MetaTransactionData } from "../../deploymentHelpers";
+
+type MetaTransactionDataWithGuardedAddress = MetaTransactionData & { guardedAddress: string };
 
 export const deprecateContractGuardsJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -33,35 +36,52 @@ export const deprecateContractGuardsJob: IJob<void> = async (
 
   console.log("Will remove deprecated guards from Governance");
 
-  for (const deprecatedContractGuard of deprecatedContractGuards) {
-    const guardedAddress = deprecatedContractGuard.contractAddress;
-    const contractGuardSet = await governance.contractGuards(guardedAddress);
-    const guardAddress = deprecatedContractGuard.guardAddress;
+  const transactionsList = await Promise.all(
+    deprecatedContractGuards.map<Promise<MetaTransactionDataWithGuardedAddress | undefined>>(
+      async (deprecatedContractGuard) => {
+        const guardedAddress = deprecatedContractGuard.contractAddress;
+        const contractGuardSet = await governance.contractGuards(guardedAddress);
+        const guardAddress = deprecatedContractGuard.guardAddress;
 
-    if (contractGuardSet.toLowerCase() !== guardAddress.toLowerCase()) {
-      console.warn(`Guard ${guardAddress} is not set for ${guardedAddress}: skipping`);
-      continue;
+        if (contractGuardSet.toLowerCase() !== guardAddress.toLowerCase()) {
+          console.warn(`Guard ${guardAddress} is not set for ${guardedAddress}: skipping`);
+          return;
+        }
+
+        console.log(
+          `Removing guard ${deprecatedContractGuard.guardName} for ${guardedAddress} / ${deprecatedContractGuard.description}`,
+        );
+
+        const setContractGuardTxData = governanceABI.encodeFunctionData("setContractGuard", [
+          guardedAddress,
+          emptyContractGuardAddress,
+        ]);
+
+        return {
+          to: versions[config.oldTag].contracts.Governance,
+          value: "0",
+          data: setContractGuardTxData,
+          guardedAddress,
+        };
+      },
+    ),
+  );
+
+  const safeTransactionData = transactionsList.filter(
+    (txData): txData is MetaTransactionDataWithGuardedAddress => txData !== undefined,
+  );
+
+  if (config.execute && safeTransactionData.length !== 0) {
+    for (const { guardedAddress } of safeTransactionData) {
+      await removeContractGuardFromFile(filenames.contractGuardsFileName, guardedAddress);
     }
-
-    console.log(
-      `Removing guard ${deprecatedContractGuard.guardName} for ${guardedAddress} / ${deprecatedContractGuard.description}`,
+    await proposeTransactions(
+      safeTransactionData.map(({ guardedAddress, ...txData }) => txData),
+      "Deprecate contract guards",
+      config,
+      addresses,
     );
-
-    if (config.execute) {
-      const setContractGuardTxData = governanceABI.encodeFunctionData("setContractGuard", [
-        guardedAddress,
-        emptyContractGuardAddress,
-      ]);
-
-      await proposeTx(
-        versions[config.oldTag].contracts.Governance,
-        setContractGuardTxData,
-        `setContractGuard for ${guardedAddress} to ClosedContractGuard`,
-        config,
-        addresses,
-      );
-    }
-
-    await removeContractGuardFromFile(filenames.contractGuardsFileName, guardedAddress);
+  } else {
+    console.log("Safe transaction data: ", safeTransactionData);
   }
 };

@@ -10,7 +10,6 @@ import {
   ISynthetix__factory,
   IV3SwapRouter__factory,
   PoolFactory,
-  SynthetixGuard,
 } from "../../../types";
 import { ovmChainData } from "../../../config/chainData/ovmData";
 import { checkAlmostSame, units } from "../../testHelpers";
@@ -24,10 +23,7 @@ const { assets, synthetix: SynthetixData, uniswapV3 } = ovmChainData;
 
 describe("Synthetix Test", function () {
   let deployments: IDeployments;
-  let susdProxy: ISynthAddressProxy,
-    sethProxy: ISynthAddressProxy,
-    synthetix: ISynthetix,
-    synthetixGuard: SynthetixGuard;
+  let susdProxy: ISynthAddressProxy, sethProxy: ISynthAddressProxy, synthetix: ISynthetix;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolFactory: PoolFactory, poolLogicProxy: Contract, poolManagerLogicProxy: Contract;
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
@@ -46,8 +42,6 @@ describe("Synthetix Test", function () {
     deployments = await deployContracts("ovm");
 
     poolFactory = deployments.poolFactory;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    synthetixGuard = deployments.synthetixGuard!;
 
     synthetix = <ISynthetix>(
       await ethers.getContractAt("contracts/interfaces/synthetix/ISynthetix.sol:ISynthetix", assets.snxProxy)
@@ -89,27 +83,6 @@ describe("Synthetix Test", function () {
     const approveABI = iERC20.encodeFunctionData("approve", [synthetix.address, units(100)]);
     await poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI);
 
-    const exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.on(
-        "ExchangeFrom",
-        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-          event.removeListener();
-
-          resolve({
-            managerLogicAddress: managerLogicAddress,
-            sourceAsset: sourceAsset,
-            sourceAmount: sourceAmount,
-            destinationAsset: destinationAsset,
-            time: time,
-          });
-        },
-      );
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 600000);
-    });
-
     const sourceKey = SynthetixData.susdKey;
     const sourceAmount = units(100);
     const destinationKey = SynthetixData.sethKey;
@@ -150,12 +123,6 @@ describe("Synthetix Test", function () {
 
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const event: any = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(assets.susd);
-    expect(event.sourceAmount).to.equal(units(100));
-    expect(event.destinationAsset).to.equal(assets.seth);
   });
 
   // TODO: Explore why 2% slippage is not enough for this test.

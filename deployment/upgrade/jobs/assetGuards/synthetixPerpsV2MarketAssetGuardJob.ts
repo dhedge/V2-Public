@@ -16,8 +16,8 @@ export const synthetixPerpsV2MarketAssetGuardJob: IJob<void> = async (
     console.warn("sUSD address not configured for perpsv2MarketAssetGuardJob: skipping.");
     return;
   }
-  if (!addresses.perpsV2?.addressResolver) {
-    console.warn("addressResolver address not configured for perpsv2MarketAssetGuardJob: skipping.");
+  if (!addresses.perpsV2) {
+    console.warn("config not configured for perpsv2MarketAssetGuardJob: skipping.");
     return;
   }
 
@@ -28,10 +28,14 @@ export const synthetixPerpsV2MarketAssetGuardJob: IJob<void> = async (
     const governanceABI = new ethers.utils.Interface(Governance.abi);
 
     const SynthetixPerpsV2MarketAssetGuard = await ethers.getContractFactory("SynthetixPerpsV2MarketAssetGuard");
-    const args: [string, string] = [addresses.perpsV2?.addressResolver, addresses.assets.susd];
+    const args: Parameters<typeof SynthetixPerpsV2MarketAssetGuard.deploy> = [
+      addresses.perpsV2.addressResolver,
+      addresses.assets.susd,
+      addresses.perpsV2.withdrawSlippageSettings,
+    ];
     const perpsv2MarketAssetGuard = await SynthetixPerpsV2MarketAssetGuard.deploy(...args);
     await perpsv2MarketAssetGuard.deployed();
-    await perpsv2MarketAssetGuard.deployTransaction.wait(5);
+
     console.log("SynthetixPerpsV2MarketAssetGuard deployed at", perpsv2MarketAssetGuard.address);
 
     versions[config.newTag].contracts.SynthetixPerpsV2MarketAssetGuard = perpsv2MarketAssetGuard.address;

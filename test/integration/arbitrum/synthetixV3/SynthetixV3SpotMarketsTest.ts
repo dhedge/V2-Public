@@ -1,7 +1,6 @@
 import { arbitrumChainData } from "../../../../config/chainData/arbitrumData";
 import { units } from "../../../testHelpers";
 import { launchSynthetixSpotMarketsV3Tests } from "../../common/synthetixV3/SynthetixV3SpotMarketsTest";
-import { deployedNodeModule } from "./SynthetixV3Test";
 
 const LIQUIDATION_REWARDS_DISTRIBUTOR = [
   {
@@ -154,7 +153,7 @@ collateralAssets.forEach(
       },
       collateralSource: "setBalance",
       mintingPositiveDebtForbidden: false,
-      deployedNodeModule,
+      deployedNodeModule: "0x753E1089bD112eEBd9Eb47Ab2e9075B89055b65b",
       rewardDistributors,
       rewardsDistributorLiquidation,
       poolToTestLiquidationRewardClaim,

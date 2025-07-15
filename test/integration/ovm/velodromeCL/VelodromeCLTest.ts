@@ -1,9 +1,9 @@
 import { ovmChainData } from "../../../../config/chainData/ovmData";
 import { units } from "../../../testHelpers";
-import { velodromeCLAssetGuardTest } from "../../common/velodromeCL/VelodromeCLAssetGuardTest";
-import { clGaugeContractGuardCommonTest } from "../../common/velodromeCL/CLGaugeContractGuardCommonTest";
-import { velodromeCLMultiplePositionTest } from "../../common/velodromeCL/VelodromeCLMultiplePositionTest";
 import { velodromeCLNonfungiblePositionGuardTest } from "../../common/velodromeCL/VelodromeNonfungiblePositionGuardTest";
+import { clGaugeContractGuardCommonTest } from "../../common/velodromeCL/CLGaugeContractGuardCommonTest";
+import { velodromeCLAssetGuardTest } from "../../common/velodromeCL/VelodromeCLAssetGuardTest";
+import { velodromeCLMultiplePositionTest } from "../../common/velodromeCL/VelodromeCLMultiplePositionTest";
 
 const { assets, assetsBalanceOfSlot } = ovmChainData;
 

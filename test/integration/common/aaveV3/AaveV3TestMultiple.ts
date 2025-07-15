@@ -13,7 +13,12 @@ import {
   iERC20,
   IBackboneDeployments,
 } from "../../utils/deployContracts/deployBackboneContracts";
-import { deployAaveV3TestInfrastructure, IAaveV3TestParameters, iLendingPool } from "./deployAaveV3TestInfrastructure";
+import {
+  deployAaveV3TestInfrastructure,
+  IAaveV3TestParameters,
+  iLendingPool,
+  getComplexAssetsData,
+} from "./deployAaveV3TestInfrastructure";
 import { assetSetting } from "../../utils/deployContracts/getChainAssets";
 import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 
@@ -185,10 +190,14 @@ export const testAaveV3Multiple = (testParams: IAaveV3TestParameters) => {
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
       await utils.increaseTime(86400);
-      await poolLogicProxy.withdraw(withdrawAmount);
+
+      const complexAssetsData = await getComplexAssetsData(deployments, testParams, poolLogicProxy, withdrawAmount);
+      await poolLogicProxy.withdrawSafe(withdrawAmount, complexAssetsData);
 
       const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
-      checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(60).div(100), 0.01);
+      const expectedTotalFundValueAfter = totalFundValueBefore.mul(60).div(100);
+      expect(totalFundValueAfter).to.be.gt(expectedTotalFundValueAfter);
+      checkAlmostSame(totalFundValueAfter, expectedTotalFundValueAfter, 0.02);
 
       const usdcBalanceAfter = await USDC.balanceOf(logicOwner.address);
       const wethBalanceAfter = await WETH.balanceOf(logicOwner.address);

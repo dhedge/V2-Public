@@ -11,7 +11,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2024 dHEDGE DAO
+// Copyright (c) 2025 dHEDGE DAO
 //
 // SPDX-License-Identifier: MIT
 

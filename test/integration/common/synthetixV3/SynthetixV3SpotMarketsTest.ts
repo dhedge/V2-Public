@@ -934,6 +934,7 @@ export const launchSynthetixSpotMarketsV3Tests = (chainData: ISynthetixV3SpotTes
                 distributor,
               ]),
             );
+          const unwrappedTokenDecimals = await (await ethers.getContractAt("ERC20Asset", unwrapToAsset)).decimals();
           const balanceOfRewardTokenAfter = await getBalance(poolLogic.address, rewardToken);
           expect(balanceOfRewardTokenAfter).to.be.gt(balanceOfRewardTokenBefore);
           const balanceOfUnwrappedTokenBefore = await getBalance(poolLogic.address, unwrapToAsset);
@@ -954,7 +955,7 @@ export const launchSynthetixSpotMarketsV3Tests = (chainData: ISynthetixV3SpotTes
               IWrapperModule.encodeFunctionData("unwrap", [
                 requiredMarketId,
                 balanceOfRewardTokenAfter,
-                balanceOfRewardTokenAfter.sub(1),
+                balanceOfRewardTokenAfter.div(getPrecisionForConversion(unwrappedTokenDecimals)).sub(1),
               ]),
             );
           const balanceOfUnwrappedTokenAfter = await getBalance(poolLogic.address, unwrapToAsset);

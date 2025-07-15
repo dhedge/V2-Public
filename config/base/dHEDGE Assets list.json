@@ -45,42 +45,6 @@
     "oracleType": "ChainlinkAggregator"
   },
   {
-    "assetName": "Synthetix V3 Position",
-    "assetAddress": "0x32C222A9A159782aFD7529c87FA34b96CA72C696",
-    "assetType": "103",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0xe84e43dd22a608efbc7f453f16c2bf398876417a"
-    }
-  },
-  {
-    "assetName": "Synthetix V3 Perps Position Asset",
-    "assetAddress": "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce",
-    "assetType": "104",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0xe84e43dd22a608efbc7f453f16c2bf398876417a"
-    }
-  },
-  {
-    "assetName": "snxUSD",
-    "assetAddress": "0x09d51516F38980035153a554c26Df3C6f51a23C3",
-    "assetType": "0",
-    "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
-    },
-    "oracleType": "ChainlinkAggregator"
-  },
-  {
-    "assetName": "sUSDC - Synthetic USD Coin",
-    "assetAddress": "0xC74eA762cF06c9151cE074E6a569a5945b6302E7",
-    "assetType": "0",
-    "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
-    },
-    "oracleType": "ChainlinkAggregator"
-  },
-  {
     "assetName": "Aerodrome VARIABLE WETH/USDC",
     "assetAddress": "0xcDAC0d6c6C59727a65F871236188350531885C43",
     "assetType": "25",
@@ -89,7 +53,8 @@
       "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
     },
     "specificContractGuardConfig": {
-      "contractGuard": "VelodromeV2GaugeContractGuard"
+      "contractGuard": "VelodromeV2GaugeContractGuard",
+      "extraContractGuard": "VelodromePairContractGuard"
     }
   },
   {
@@ -381,7 +346,7 @@
   {
     "assetName": "cbBTC",
     "assetAddress": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-    "assetType": "0",
+    "assetType": "4",
     "specificOracleConfig": {
       "chainlinkOracleAddress": "0x07DA0E54543a844a80ABE69c8A12F22B3aA59f9D"
     },
@@ -407,6 +372,167 @@
     "oracleType": "USDPriceAggregator",
     "specificOracleConfig": {
       "USDPriceOracleAddress": "0xe84e43dd22a608efbc7f453f16c2bf398876417a"
+    }
+  },
+  {
+    "assetName": "weETH",
+    "assetAddress": "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A",
+    "assetType": "0",
+    "oracleType": "ETHCrossAggregator",
+    "specificOracleConfig": {
+      "assetToEthChainlinkOracleAddress": "0xFC1415403EbB0c693f9a7844b92aD2Ff24775C65",
+      "ethToUsdChainlinkOracleAddress": "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70"
+    }
+  },
+  {
+    "assetName": "Aerodrome VARIABLE weETH/WETH",
+    "assetAddress": "0x91F0f34916Ca4E2cCe120116774b0e4fA0cdcaA8",
+    "assetType": "25",
+    "oracleType": "VelodromeVariableLPAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "VelodromeV2GaugeContractGuard",
+      "extraContractGuard": "VelodromePairContractGuard"
+    }
+  },
+  {
+    "assetName": "Aerodrome VARIABLE WETH/cbBTC",
+    "assetAddress": "0x2578365B3dfA7FfE60108e181EFb79FeDdec2319",
+    "assetType": "25",
+    "oracleType": "VelodromeVariableLPAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "VelodromeV2GaugeContractGuard",
+      "extraContractGuard": "VelodromePairContractGuard"
+    }
+  },
+  {
+    "assetName": "Aerodrome VARIABLE USDC/cbBTC",
+    "assetAddress": "0x9c38b55f9A9Aba91BbCEDEb12bf4428f47A6a0B8",
+    "assetType": "25",
+    "oracleType": "VelodromeVariableLPAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "VelodromeV2GaugeContractGuard",
+      "extraContractGuard": "VelodromePairContractGuard"
+    }
+  },
+  {
+    "assetName": "Pancakeswap NonfungiblePositionManager",
+    "assetAddress": "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
+    "assetType": "31",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0xe84e43dd22a608efbc7f453f16c2bf398876417a"
+    }
+  },
+  {
+    "assetName": "USDS",
+    "assetAddress": "0x820C137fa70C8691f0e44Dc420a5e53c168921Dc",
+    "assetType": "0",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x2330aaE3bca5F05169d5f4597964D44522F62930"
+    }
+  },
+  {
+    "assetName": "sUSDS",
+    "assetAddress": "0x5875eEE11Cf8398102FdAd704C9E96607675467a",
+    "assetType": "0",
+    "oracleType": "CustomCrossAggregator",
+    "specificOracleConfig": {
+      "tokenToTokenAggregator": "0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E",
+      "tokenToUsdAggregator": "0x2330aaE3bca5F05169d5f4597964D44522F62930"
+    }
+  },
+  {
+    "assetName": "Fluid USDC",
+    "assetAddress": "0xf42f5795D9ac7e9D757dB633D693cD548Cfd9169",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "Fluid WETH",
+    "assetAddress": "0x9272D6153133175175Bc276512B2336BE3931CE9",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "Fluid EURC",
+    "assetAddress": "0x1943FA26360f038230442525Cf1B9125b5DCB401",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "Fluid sUSDS",
+    "assetAddress": "0xf62e339f21d8018940f188F6987Bcdf02A849619",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "cUSDCv3",
+    "assetAddress": "0xb125E6687d4313864e53df431d5425969c15Eb2F",
+    "assetType": "28",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "CompoundV3CometContractGuard"
+    }
+  },
+  {
+    "assetName": "cUSDSv3",
+    "assetAddress": "0x2c776041CCFe903071AF44aa147368a9c8EEA518",
+    "assetType": "28",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x2330aaE3bca5F05169d5f4597964D44522F62930"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "CompoundV3CometContractGuard"
+    }
+  },
+  {
+    "assetName": "cWETHv3",
+    "assetAddress": "0x46e6b214b524310239732D51387075E0e70970bf",
+    "assetType": "28",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "CompoundV3CometContractGuard"
     }
   }
 ]

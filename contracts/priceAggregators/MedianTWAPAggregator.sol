@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
+import "../utils/uniswap/libraries/legacy/FixedPoint.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/uniswapV2/IUniswapV2Pair.sol";

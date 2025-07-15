@@ -1,10 +1,12 @@
 import { BigNumber } from "ethers";
 import { ovmChainData } from "../../config/chainData/ovmData";
 import { IAddresses, IFileNames } from "../types";
+import { AssetType } from "../upgrade/jobs/assetsJob";
+import { arbitrumChainData } from "../../config/chainData/arbitrumData";
 
 const { torosPools } = ovmChainData;
 
-export const ovmProdAddresses: IAddresses = {
+export const optimismProdData: IAddresses = {
   // old - https://ogg.scopelift.co/wallet/0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08
   // https://gnosis-safe.io/app/oeth:0x90b1a66957914EbbE7a8df254c0c1E455972379C/balances - 3/3
   protocolDaoAddress: ovmChainData.protocolDao,
@@ -13,10 +15,6 @@ export const ovmProdAddresses: IAddresses = {
   protocolTreasuryAddress: "0xD857e322351Dc56592e3D9181FBF65034EF4aef2",
   // Should be fetched from the oz file
   proxyAdminAddress: ovmChainData.proxyAdmin,
-  // Gnosis safe multicall/send address
-  // https://github.com/gnosis/safe-deployments
-  gnosisMultiSendAddress: "0x998739BFdAAdde7C933B942a68053933098f9EDa",
-  gnosisApi: "https://safe-transaction-optimism.safe.global",
 
   synthetixProxyAddress: ovmChainData.assets.snxProxy,
 
@@ -64,7 +62,6 @@ export const ovmProdAddresses: IAddresses = {
 
   aaveV3: {
     aaveLendingPoolAddress: ovmChainData.aaveV3.lendingPool,
-    aaveProtocolDataProviderAddress: ovmChainData.aaveV3.protocolDataProvider,
     aaveIncentivesControllerAddress: ovmChainData.aaveV3.incentivesController,
   },
 
@@ -158,10 +155,13 @@ export const ovmProdAddresses: IAddresses = {
     factory: ovmChainData.velodromeCL.factory,
     voter: ovmChainData.velodromeV2.voter, // same as the v2 voter
     enabledGauges: [
-      "0x15D715C142169bf93BC6C8C670C208dC3ACCe17e", //  CL1-USDC/sUSD
-      "0xa75127121d28a9BF848F3B70e7Eea26570aa7700", //  CL100-USDC/WETH
+      "0x15D715C142169bf93BC6C8C670C208dC3ACCe17e", // CL1-USDC/sUSD
+      "0xa75127121d28a9BF848F3B70e7Eea26570aa7700", // CL100-USDC/WETH
       "0x09f9E0E05c0a66248F3c098C2c14AB92e22F8a1E", // CL1-USDy/USDpy
       "0x434e3122f5d8d4e6C5B6b7b1Dc71cFf25f3b5A97", // CL1-WETH/cbETH
+      "0xdda458696f5EF402C9EA16F17Abb2295c7090D5b", // CL1-WBTC/tBTC
+      "0xC762d18800B3f78ae56E9e61aD7BE98a413D59dE", // CL1-USDC/USDT
+      "0xb2218A2cFeF38Ca30AE8C88B41f2E2BdD9347E3e", // CL1-wstETH/WETH
     ],
   },
 
@@ -194,6 +194,20 @@ export const ovmProdAddresses: IAddresses = {
         "0x189a36c62c1ce9d9fd7a543df0a6dbe3a73a2c14", // Pure Boomer Alpha 0/10 fees
       ],
     },
+    {
+      token: ovmChainData.assets.op,
+      amountPerSecond: BigNumber.from(10000) // 10K
+        .mul(BigNumber.from(10).pow(18))
+        .div(30 * 24 * 60 * 60), // 30 days in seconds
+      whitelistedPools: [torosPools.ETHY],
+    },
+    {
+      token: ovmChainData.assets.op,
+      amountPerSecond: BigNumber.from(5000) // 5K
+        .mul(BigNumber.from(10).pow(18))
+        .div(30 * 24 * 60 * 60), // 30 days in seconds
+      whitelistedPools: [torosPools.USDY],
+    },
   ],
   superSwapper: {
     routeHints: ovmChainData.routeHints,
@@ -212,7 +226,31 @@ export const ovmProdAddresses: IAddresses = {
       torosPools.BTCBULL2X,
       torosPools.BTCBULL3X,
       torosPools.BTCBULL4X,
+      torosPools.SUIBULL2X,
+      torosPools.DOGEBULL2X,
       // "0x9fc311fc8faa6d6b0d3199f25d9976e1e16de998", // Was added for LINK-PERP Contract guard
+    ],
+    withdrawSlippageSettings: [
+      {
+        pool: torosPools.SOLBULL2X,
+        slippage: 0.0025e18, // 0.25%
+      },
+      {
+        pool: torosPools.SOLBULL3X,
+        slippage: 0.003e18, // 0.3%
+      },
+      {
+        pool: torosPools.DOGEBULL2X,
+        slippage: 0.002e18, // 0.2%
+      },
+      {
+        pool: torosPools.SUIBULL2X,
+        slippage: 0.005e18, // 0.5%
+      },
+      {
+        pool: torosPools.BTCBULL4X,
+        slippage: 0.0015e18, // 0.15%
+      },
     ],
   },
   synthRedeemer: ovmChainData.synthetix.synthRedeemer,
@@ -325,9 +363,9 @@ export const ovmProdAddresses: IAddresses = {
     {
       rewardToken: ovmChainData.velodromeV2.velo,
       linkedAssetTypes: [
-        26, // "Velodrome CL NFT Position Asset" = 26
+        AssetType["Velodrome CL NFT Position Asset"], // 26
+        AssetType["Velodrome V2 LP/Gauge Asset"], // 25
       ],
-      underlyingAssetType: 0, //  AssetType["Chainlink direct USD price feed with 8 decimals"],
     },
   ],
 
@@ -350,7 +388,92 @@ export const ovmProdAddresses: IAddresses = {
       torosPools.USDMNY,
       torosPools.USDpy,
       torosPools.USDY,
+      torosPools.SUIBULL2X,
+      torosPools.DOGEBULL2X,
     ],
+  },
+
+  compoundV3: {
+    rewards: ovmChainData.compoundV3.rewards,
+  },
+
+  odosV2RouterAddress: ovmChainData.odosEx.v2Router,
+
+  flatMoneyV2: {
+    orderAnnouncementModule: "0xd917A0C9B21Bb71DF1209d2c211Ad83004F01554",
+    orderExecutionModule: "0x7805CB7fb2C2e70FDdF92949065D9Ee1Fc2F72a8",
+    whitelistedVaults: [
+      {
+        poolLogic: "0x83106dDCaC5D119A3d0f551E06239E579299b7C4", // DNY2
+        withdrawalAsset: ovmChainData.assets.wbtc,
+      },
+      {
+        poolLogic: ovmChainData.torosPools.BTCBULL4X,
+        withdrawalAsset: ovmChainData.assets.wbtc,
+      },
+      {
+        poolLogic: ovmChainData.torosPools.BTCBULL3X,
+        withdrawalAsset: ovmChainData.assets.wbtc,
+      },
+      {
+        poolLogic: ovmChainData.torosPools.BTCBULL2X,
+        withdrawalAsset: ovmChainData.assets.wbtc,
+      },
+      {
+        poolLogic: ovmChainData.torosPools.USDpy,
+        withdrawalAsset: ovmChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: "0x0f6eae52ae1f94bc759ed72b201a2fdb14891485", // MTy
+        withdrawalAsset: ovmChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: ovmChainData.flatMoneyV2Vaults.flatMoneyV2MarketMaker,
+        withdrawalAsset: ovmChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: ovmChainData.torosPools.USDMNY,
+        withdrawalAsset: ovmChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: "0x35BD1cA1E11E792B6F1f57D3408B5C5cCDdB6B53", // BSX
+        withdrawalAsset: ovmChainData.assets.wbtc,
+      },
+      {
+        poolLogic: "0x29f3DfeD90380DB4BAFAFf84862d7fC13eb51252", // mStable mUSD Assets
+        withdrawalAsset: ovmChainData.assets.usdcNative,
+      },
+    ],
+  },
+
+  across: {
+    spokePool: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
+    approvedDestinations: [
+      {
+        sourcePool: ovmChainData.flatMoneyV2Vaults.flatMoneyV2MarketMaker,
+        sourceToken: ovmChainData.assets.usdcNative,
+        destinationChainId: 42161,
+        destinationPool: arbitrumChainData.gmxTestVaults.gmxTest2,
+        destinationToken: arbitrumChainData.assets.usdcNative,
+      },
+    ],
+  },
+
+  poolLimitOrderManager: {
+    defaultSlippageTolerance: 200, // 2%
+    settlementToken: ovmChainData.assets.usdcNative,
+    authorizedKeeperAddresses: [
+      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
+      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
+      "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
+      "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
+      "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
+    ],
+  },
+
+  allowApproveGuard: {
+    allowedSpender: "0xE2F9b946C4Dcc6EbD1e00A8791E1570E4e6D74D9", // PoolTokenSwapper
+    tokensToSetGuardTo: [ovmChainData.torosPools.USDpy],
   },
 };
 

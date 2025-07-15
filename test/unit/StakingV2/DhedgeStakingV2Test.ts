@@ -529,11 +529,6 @@ describe("Dhedge DHT Staking V2", () => {
         });
       });
 
-      // At the moment this is NOT possible, the stake is `finalised` when pool tokens are unstaked
-      it.skip("Can partially unstake");
-      // At the moment this is NOT possible, for reasons discussed we would need to record the token price at each new stake interval
-      it.skip("Can add additional DHPT to stake");
-
       it("DHT Stake is teleported to new stake", async () => {
         await dhtStaking.connect(staker).stakePoolTokens(tokenId, mockPool.address, AMOUNT_TO_STAKE);
         const stake1BeforeUnstaking = await dhtStaking.stakes(tokenId);
@@ -641,10 +636,6 @@ describe("Dhedge DHT Staking V2", () => {
         await dhtStaking.connect(staker).claim(tokenId);
       });
     });
-
-    it.skip(
-      "Stake 1 dht, and DHPT, wait for dhpt staking duration, short term massive DHT buy to boost vDHT, claim, sell DHT",
-    );
 
     // In this test we have one staker that stakes and then claims.
     // He receives half the dhtCap of rewards. This means that the next staker

@@ -112,6 +112,30 @@ const networkToChainIdMap: Record<NETWORK, ChainIds> = {
 
 const delay = async (seconds = 4) => new Promise((_) => setTimeout(_, seconds * 1000));
 
+const hashData = (dataTypes, dataValues) => {
+  const bytes = ethers.utils.defaultAbiCoder.encode(dataTypes, dataValues);
+  const hash = ethers.utils.keccak256(ethers.utils.arrayify(bytes));
+
+  return hash;
+};
+
+const hashString = (string: string) => {
+  return hashData(["string"], [string]);
+};
+
+const waitForRealTime = async () => {
+  const currentBlock = await ethers.provider.getBlock("latest");
+  const blockTimestamp = currentBlock.timestamp;
+
+  console.log("Waiting for real-time to surpass blockchain time...");
+
+  // Poll until the real time is greater than the blockchain timestamp
+  while (Math.floor(Date.now() / 1000) <= blockTimestamp + 5) {
+    await delay(1); // 1 second
+  }
+  console.log("Real-time has surpassed blockchain time.");
+};
+
 export const utils = {
   evmTakeSnap,
   evmRestoreSnap,
@@ -125,4 +149,7 @@ export const utils = {
   beforeAfterReset,
   networkToChainIdMap,
   delay,
+  hashData,
+  hashString,
+  waitForRealTime,
 };

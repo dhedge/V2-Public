@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.6 <=0.8.10;
 
-// With aditional optional views
+pragma solidity >=0.7.6;
 
 interface IERC20Extended {
   // ERC20 Optional Views

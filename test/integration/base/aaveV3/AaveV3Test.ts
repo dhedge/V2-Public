@@ -13,6 +13,8 @@ const testParams = {
     borrowAsset: 0, // stubbed
   },
   borrowAsset: "", // stubbed
-};
+  swapper: baseChainData.flatMoney.swapper,
+  chainId: 8453,
+} as const;
 
 testAaveV3(testParams);

@@ -43,12 +43,38 @@ export type IFlatMoneyUNITPriceAggregatorConfig = IAssetConfig<
   IFlatMoneyUNITPriceAggregatorConfigSpecificConfig
 >;
 
+export type IChainlinkPythPriceAggregatorConfig = IAssetConfig<
+  "ChainlinkPythPriceAggregator",
+  IChainlinkPythPriceAggregatorSpecificConfig
+>;
+
+export type ICustomCrossAggregatorConfig = IAssetConfig<"CustomCrossAggregator", ICustomCrossAggregatorSpecificConfig>;
+
+export type IFluidTokenPriceAggregatorConfig = IAssetConfig<
+  "FluidTokenPriceAggregator",
+  IFluidTokenPriceAggregatorSpecificConfig
+>;
+
+export type IPythPriceAggregatorConfig = IAssetConfig<"PythPriceAggregator", IPythPriceAggregatorSpecificConfig>;
+
+export type IUniV3TWAPAggregatorConfig = IAssetConfig<"UniV3TWAPAggregator", IUniV3TWAPAggregatorSpecificConfig>;
+
+export type IPendlePTPriceAggregatorConfig = IAssetConfig<
+  "PendlePTPriceAggregator",
+  IPendlePTPriceAggregatorSpecificConfig
+>;
+
+export type IERC4626PriceAggregatorConfig = IAssetConfig<
+  "ERC4626PriceAggregator",
+  IERC4626PriceAggregatorSpecificConfig
+>;
+
 export type TAssetConfig =
   | IAssetConfig<"DhedgeDeployedAggregator", IDhedgeDeployedAggregatorSpecificConfig>
   | IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorSpecificConfig>
   | IAssetConfig<"DHedgePoolAggregator", ITriggerChange>
   | IAssetConfig<"MedianTWAPAggregator", IMedianTWAPAggregatorSpecificConfig>
-  | IAssetConfig<"UniV3TWAPAggregator", IUniV3TWAPAggregatorSpecificConfig>
+  | IUniV3TWAPAggregatorConfig
   | IAssetConfig<"SynthPriceAggregator", ISynthPriceAggregatorSpecificConfig>
   | IAssetConfig<"UniV2LPAggregator", IUniV2LPAggregatorSpecificConfig>
   | IAssetConfig<"USDPriceAggregator", IUSDPriceAggregatorSpecificConfig>
@@ -65,7 +91,13 @@ export type TAssetConfig =
   | IRamsesTWAPAggregatorConfig
   | IRamsesLPVariableAggregatorConfig
   | ISonneFinancePriceAggregatorConfig
-  | IFlatMoneyUNITPriceAggregatorConfig;
+  | IFlatMoneyUNITPriceAggregatorConfig
+  | IChainlinkPythPriceAggregatorConfig
+  | ICustomCrossAggregatorConfig
+  | IFluidTokenPriceAggregatorConfig
+  | IPythPriceAggregatorConfig
+  | IPendlePTPriceAggregatorConfig
+  | IERC4626PriceAggregatorConfig;
 
 export interface IChainlinkAggregatorSpecificConfig extends ITriggerChange {
   chainlinkOracleAddress: Address;
@@ -149,4 +181,36 @@ interface IETHCrossAggregatorSpecificConfig extends ITriggerChange {
 
 interface IFlatMoneyUNITPriceAggregatorConfigSpecificConfig extends ITriggerChange {
   flatMoneyViewerAddress: Address;
+}
+
+interface IChainlinkPythPriceAggregatorSpecificConfig extends ITriggerChange {
+  chainlinkOracleMaxAge: number;
+  chainlinkOracleAddress: Address;
+  pythOracleContract: Address;
+  pythPriceId: string;
+}
+
+interface ICustomCrossAggregatorSpecificConfig extends ITriggerChange {
+  tokenToTokenAggregator: Address;
+  tokenToUsdAggregator: Address;
+}
+
+interface IFluidTokenPriceAggregatorSpecificConfig extends ITriggerChange {
+  dhedgeFactoryProxy: Address;
+}
+
+interface IPythPriceAggregatorSpecificConfig extends ITriggerChange {
+  maxAge: number;
+  pythOracleContract: Address;
+  priceId: string;
+}
+
+interface IPendlePTPriceAggregatorSpecificConfig extends ITriggerChange {
+  syEquivalentYieldToken: Address;
+  pendleChainlinkOracle: Address;
+  dhedgeFactoryProxy: Address;
+}
+
+interface IERC4626PriceAggregatorSpecificConfig extends ITriggerChange {
+  dhedgeFactoryProxy: Address;
 }

@@ -322,7 +322,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       mintSettings.tickUpper = tick + tickSpacing * 4;
       await expect(
         mintLpAsPool(uniswapV3.nonfungiblePositionManager, poolLogicProxy, manager, mintSettings),
-      ).to.revertedWith("too many uniswap v3 positions");
+      ).to.revertedWith("max position reached");
     });
 
     it("Should mint a position", async () => {

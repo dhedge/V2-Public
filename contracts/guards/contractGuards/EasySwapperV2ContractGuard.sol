@@ -20,6 +20,8 @@ pragma abicoder v2;
 
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
+import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
+import {ISwapDataConsumingGuard} from "../../interfaces/guards/ISwapDataConsumingGuard.sol";
 import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
 import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
@@ -110,10 +112,39 @@ contract EasySwapperV2ContractGuard is TxDataUtils, ITransactionTypes, SlippageA
     else if (method == EasySwapperV2.initWithdrawal.selector) {
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(_to), "unsupported destination asset");
 
-      (, , uint256 slippageTolerance) = abi.decode(getParams(_data), (address, uint256, uint256));
+      (, , IPoolLogic.ComplexAsset[] memory complexAssetsData) = abi.decode(
+        getParams(_data),
+        (address, uint256, IPoolLogic.ComplexAsset[])
+      );
 
-      // Simple hard stop to prevent managers from setting slippage tolerance for withdrawing from aave positions too high
-      require(slippageTolerance < 1_000, "allowed slippage too high"); // 10%, see PoolLogic.sol::_withdrawTo
+      for (uint256 i; i < complexAssetsData.length; ++i) {
+        // Simple hard stop to prevent managers from setting slippage tolerance for withdrawing from aave positions too high
+        require(complexAssetsData[i].slippageTolerance <= _swapSlippageTolerance, "beyond allowed slippage");
+
+        // If length is 0, it won't be picked up at PoolLogic. If non empty data provided for different than aave position asset, tx will revert
+        if (complexAssetsData[i].withdrawData.length > 0) {
+          ISwapDataConsumingGuard.ComplexAssetSwapData memory swapData = abi.decode(
+            complexAssetsData[i].withdrawData,
+            (ISwapDataConsumingGuard.ComplexAssetSwapData)
+          );
+
+          // Must equal to slippage tolerance set in ComplexAsset
+          require(swapData.slippageTolerance == complexAssetsData[i].slippageTolerance, "slippage tolerance mismatch");
+
+          IHasAssetInfo poolFactory = IHasAssetInfo(IPoolLogic(poolLogic).factory());
+
+          require(poolFactory.isValidAsset(address(swapData.destData.destToken)), "invalid dst asset");
+
+          ISwapper.SrcTokenSwapDetails[] memory srcData = abi.decode(
+            swapData.srcData,
+            (ISwapper.SrcTokenSwapDetails[])
+          );
+
+          for (uint256 j; j < srcData.length; ++j) {
+            require(poolFactory.isValidAsset(address(srcData[j].token)), "invalid src asset");
+          }
+        }
+      }
 
       txType = uint16(TransactionType.EasySwapperV2InitWithdraw);
     } else if (
@@ -194,6 +225,8 @@ contract EasySwapperV2ContractGuard is TxDataUtils, ITransactionTypes, SlippageA
         IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(address(swapData.destData.destToken)),
         "unsupported destination asset"
       );
+    } else if (method == EasySwapperV2.initWithdrawal.selector) {
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(_to), "unsupported destination asset");
     }
 
     if (

@@ -1,36 +1,17 @@
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
-import {
-  PoolLogic,
-  PoolManagerLogic,
-  ICompoundV3Comet__factory,
-  ICompoundV3CometRewards__factory,
-} from "../../../../types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ICompoundV3Comet__factory, ICompoundV3CometRewards__factory } from "../../../../types";
 import { ICompoundV3TestParams, deployCompoundV3Infrastructure, iERC20 } from "./compoundV3TestDeploymentHelpers";
 import { deployBackboneContracts } from "../../utils/deployContracts/deployBackboneContracts";
 import { createFund } from "../../utils/createFund";
 import { getAccountToken } from "../../utils/getAccountTokens";
 
-type initializedTestReturnObjects = {
-  logicOwner: SignerWithAddress;
-  manager: SignerWithAddress;
-  poolLogicProxy: PoolLogic;
-  poolManagerLogicProxy: PoolManagerLogic;
-  cAsset: string;
-  baseAsset: string;
-  baseAssetAmount: BigNumber;
-  rewards: string;
-};
-
 export const iCompoundV3Comet = new ethers.utils.Interface(ICompoundV3Comet__factory.abi);
 
 export const iCompoundV3CometRewards = new ethers.utils.Interface(ICompoundV3CometRewards__factory.abi);
 
-export const setupCompoundV3ContractGuardTestBefore = async (
-  testParams: ICompoundV3TestParams,
-): Promise<initializedTestReturnObjects> => {
+export const setupCompoundV3ContractGuardTestBefore = async (testParams: ICompoundV3TestParams) => {
   const { cAsset, baseAsset, baseAssetSlot, baseAssetAmount, rewards } = testParams;
 
   const deployments = await deployBackboneContracts(testParams);
@@ -76,5 +57,6 @@ export const setupCompoundV3ContractGuardTestBefore = async (
     baseAsset,
     baseAssetAmount,
     rewards,
+    poolFactory,
   };
 };

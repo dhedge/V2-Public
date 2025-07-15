@@ -11,8 +11,9 @@ export const poolTokenSwapperGuardJob: IJob<void> = async (
   addresses: IAddresses,
 ) => {
   const poolTokenSwapperProxyAddress = versions[config.oldTag].contracts.PoolTokenSwapperProxy;
+  const slippageAccunulatorAddress = versions[config.oldTag].contracts.SlippageAccumulator;
 
-  if (!poolTokenSwapperProxyAddress) {
+  if (!poolTokenSwapperProxyAddress || !slippageAccunulatorAddress) {
     return console.warn("PoolTokenSwapper is not deployed: skipping.");
   }
 
@@ -24,7 +25,8 @@ export const poolTokenSwapperGuardJob: IJob<void> = async (
 
   if (config.execute) {
     const PoolTokenSwapperGuard = await ethers.getContractFactory("PoolTokenSwapperGuard");
-    const poolTokenSwapperGuard = await PoolTokenSwapperGuard.deploy();
+    const args: [string] = [slippageAccunulatorAddress];
+    const poolTokenSwapperGuard = await PoolTokenSwapperGuard.deploy(...args);
     await poolTokenSwapperGuard.deployed();
 
     const poolTokenSwapperGuardAddress = poolTokenSwapperGuard.address;
@@ -35,7 +37,7 @@ export const poolTokenSwapperGuardJob: IJob<void> = async (
       hre,
       poolTokenSwapperGuardAddress,
       "contracts/guards/contractGuards/PoolTokenSwapperGuard.sol:PoolTokenSwapperGuard",
-      [],
+      args,
     );
 
     await proposeTx(

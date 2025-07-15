@@ -14,7 +14,9 @@ const testParams = {
     borrowAsset: ovmChainData.assetsBalanceOfSlot.dai,
   },
   borrowAsset: ovmChainData.assets.dai,
-};
+  swapper: ovmChainData.flatMoney.swapper,
+  chainId: 10,
+} as const;
 
 testAaveV3(testParams);
 testAaveV3Multiple(testParams);

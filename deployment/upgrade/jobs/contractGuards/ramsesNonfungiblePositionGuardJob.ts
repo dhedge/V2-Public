@@ -3,7 +3,7 @@ import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { IAddresses, IJob, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
 
-const MAX_NUMBER_LP_POSITIONS = 3;
+const MAX_NUMBER_LP_POSITIONS = 1;
 
 export const ramsesNonfungiblePositionGuardJob: IJob<void> = async (
   config: IUpgradeConfig,

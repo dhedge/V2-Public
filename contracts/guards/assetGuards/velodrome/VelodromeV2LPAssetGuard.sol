@@ -1,21 +1,25 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../ERC20Guard.sol";
-import "../../../interfaces/velodrome/IVelodromeV2Pair.sol";
-import "../../../interfaces/velodrome/IVelodromeV2Gauge.sol";
-import "../../../interfaces/velodrome/IVelodromeVoter.sol";
-import "../../../interfaces/IHasAssetInfo.sol";
-import "../../../interfaces/IPoolLogic.sol";
+import {ERC20Guard} from "../ERC20Guard.sol";
+import {IVelodromeV2Pair} from "../../../interfaces/velodrome/IVelodromeV2Pair.sol";
+import {IVelodromeV2Gauge} from "../../../interfaces/velodrome/IVelodromeV2Gauge.sol";
+import {IVelodromeVoter} from "../../../interfaces/velodrome/IVelodromeVoter.sol";
+import {IHasAssetInfo} from "../../../interfaces/IHasAssetInfo.sol";
+import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
+import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
+import {VelodromeHelpers} from "./VelodromeHelpers.sol";
 
 /// @title Velodrome V2 LP token asset guard
 /// @dev Asset type = 25
 contract VelodromeV2LPAssetGuard is ERC20Guard {
-  using SafeMathUpgradeable for uint256;
+  using SafeMath for uint256;
+  using VelodromeHelpers for address;
 
   IVelodromeVoter public voter;
 
@@ -61,24 +65,31 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
         transactions[txCount].txData = abi.encodeWithSelector(bytes4(keccak256("claimFees()")));
         txCount = txCount.add(1);
 
-        // withdraw claimable fees directly to the user
+        // transfer claimable fees directly to the user only if corresponding token is not supported in the vault.
+        // otherwise only claim is enough, and token transfers will be processed downstream
         if (feeAmount0 > 0) {
-          transactions[txCount].to = IVelodromeV2Pair(asset).token0();
-          transactions[txCount].txData = abi.encodeWithSelector(
-            bytes4(keccak256("transfer(address,uint256)")),
-            to,
-            feeAmount0.mul(portion).div(10 ** 18)
-          );
-          txCount = txCount.add(1);
+          address token0 = IVelodromeV2Pair(asset).token0();
+          if (pool.shouldTransferToken(asset, token0)) {
+            transactions[txCount].to = token0;
+            transactions[txCount].txData = abi.encodeWithSelector(
+              bytes4(keccak256("transfer(address,uint256)")),
+              to,
+              feeAmount0.mul(portion).div(10 ** 18)
+            );
+            txCount = txCount.add(1);
+          }
         }
         if (feeAmount1 > 0) {
-          transactions[txCount].to = IVelodromeV2Pair(asset).token1();
-          transactions[txCount].txData = abi.encodeWithSelector(
-            bytes4(keccak256("transfer(address,uint256)")),
-            to,
-            feeAmount1.mul(portion).div(10 ** 18)
-          );
-          txCount = txCount.add(1);
+          address token1 = IVelodromeV2Pair(asset).token1();
+          if (pool.shouldTransferToken(asset, token1)) {
+            transactions[txCount].to = token1;
+            transactions[txCount].txData = abi.encodeWithSelector(
+              bytes4(keccak256("transfer(address,uint256)")),
+              to,
+              feeAmount1.mul(portion).div(10 ** 18)
+            );
+            txCount = txCount.add(1);
+          }
         }
       }
     }
@@ -106,13 +117,16 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
         // withdraw gauge rewards directly to the user
         uint256 rewardAmount = gauge.earned(pool);
         if (rewardAmount > 0) {
-          transactions[txCount].to = gauge.rewardToken();
-          transactions[txCount].txData = abi.encodeWithSelector(
-            bytes4(keccak256("transfer(address,uint256)")),
-            to,
-            rewardAmount.mul(portion).div(10 ** 18)
-          );
-          txCount = txCount.add(1);
+          address rewardToken = gauge.rewardToken();
+          if (pool.shouldTransferToken(asset, rewardToken)) {
+            transactions[txCount].to = rewardToken;
+            transactions[txCount].txData = abi.encodeWithSelector(
+              bytes4(keccak256("transfer(address,uint256)")),
+              to,
+              rewardAmount.mul(portion).div(10 ** 18)
+            );
+            txCount = txCount.add(1);
+          }
         }
       }
     }
@@ -170,7 +184,6 @@ contract VelodromeV2LPAssetGuard is ERC20Guard {
     if (address(gauge) != address(0)) {
       address rewardToken = gauge.rewardToken();
       uint256 rewardAmount = gauge.earned(pool);
-      // will add 0 if reward token is not supported
       rewardsValue = rewardsValue.add(_assetValue(factory, poolManagerLogic, rewardToken, rewardAmount)); // 18 decimals
     }
 

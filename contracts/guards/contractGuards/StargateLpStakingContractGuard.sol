@@ -42,6 +42,7 @@ contract StargateLpStakingContractGuard is TxDataUtils, IGuard, ITransactionType
     bytes calldata data
   )
     external
+    view
     override
     returns (
       uint16 txType, // transaction type
@@ -53,25 +54,21 @@ contract StargateLpStakingContractGuard is TxDataUtils, IGuard, ITransactionType
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
     if (method == IStargateLpStaking.deposit.selector) {
-      (uint256 poolId, uint256 amount) = abi.decode(getParams(data), (uint256, uint256));
+      uint256 poolId = abi.decode(getParams(data), (uint256));
 
       address stargatePool = IStargateLpStaking(to).poolInfo(poolId).lpToken;
 
       require(poolManagerLogicAssets.isSupportedAsset(stargatePool), "unsupported staking asset");
       _assertRewardToken(to, poolLogic, poolManagerLogicAssets);
 
-      emit Stake(poolLogic, stargatePool, to, amount, block.timestamp);
-
       txType = uint16(TransactionType.Stake);
     } else if (method == IStargateLpStaking.withdraw.selector) {
-      (uint256 stargatePoolId, uint256 amount) = abi.decode(getParams(data), (uint256, uint256));
+      uint256 stargatePoolId = abi.decode(getParams(data), (uint256));
 
       address stargatePool = IStargateLpStaking(to).poolInfo(stargatePoolId).lpToken;
 
       require(poolManagerLogicAssets.isSupportedAsset(stargatePool), "unsupported staking asset");
       _assertRewardToken(to, poolLogic, poolManagerLogicAssets);
-
-      emit Unstake(poolLogic, stargatePool, to, amount, block.timestamp);
 
       txType = uint16(TransactionType.Unstake);
     } else if (method == IStargateLpStaking.emergencyWithdraw.selector) {
@@ -79,12 +76,9 @@ contract StargateLpStakingContractGuard is TxDataUtils, IGuard, ITransactionType
       uint256 stargatePoolId = abi.decode(getParams(data), (uint256));
 
       address stargatePool = IStargateLpStaking(to).poolInfo(stargatePoolId).lpToken;
-      uint256 amount = IStargateLpStaking(to).userInfo(stargatePoolId, poolLogic).amount; // Amount LP token amount that will be unstaked.
 
       require(poolManagerLogicAssets.isSupportedAsset(stargatePool), "unsupported staking asset");
       _assertRewardToken(to, poolLogic, poolManagerLogicAssets);
-
-      emit Unstake(poolLogic, stargatePool, to, amount, block.timestamp);
 
       txType = uint16(TransactionType.Unstake);
     }

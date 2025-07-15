@@ -1,90 +1,11 @@
-//        __  __    __  ________  _______    ______   ________
-//       /  |/  |  /  |/        |/       \  /      \ /        |
-//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
-//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
-// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
-// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
-// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
-// $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
-//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
-//
-// dHEDGE DAO - https://dhedge.org
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-/// @title Transaction type events used in pool execTransaction() contract guards
-/// @dev Gradually migrate to these events as we update / add new contract guards
+/// @title Transaction types used in pool execTransaction() contract guards
+/// @dev Gradually migrate to this enum as we update / add new contract guards
 interface ITransactionTypes {
-  // Transaction Types in execTransaction()
-  // 1. Approve: Approving a token for spending by different address/contract
-  // 2. Exchange: Exchange/trade of tokens eg. Uniswap, Synthetix
-  // 3. AddLiquidity: Add liquidity
-  event AddLiquidity(address poolLogic, address pair, bytes params, uint256 time);
-  // 4. RemoveLiquidity: Remove liquidity
-  event RemoveLiquidity(address poolLogic, address pair, bytes params, uint256 time);
-  // 5. Stake: Stake tokens into a third party contract (eg. Sushi yield farming)
-  event Stake(address poolLogic, address stakingToken, address to, uint256 amount, uint256 time);
-  // 6. Unstake: Unstake tokens from a third party contract (eg. Sushi yield farming)
-  event Unstake(address poolLogic, address stakingToken, address to, uint256 amount, uint256 time);
-  // 7. Claim: Claim rewards tokens from a third party contract (eg. SUSHI & MATIC rewards)
-  event Claim(address poolLogic, address stakingContract, uint256 time);
-  // 8. UnstakeAndClaim: Unstake tokens and claim rewards from a third party contract
-  // 9. Deposit: Aave deposit tokens -> get Aave Interest Bearing Token
-  // 10. Withdraw: Withdraw tokens from Aave Interest Bearing Token
-  // 11. SetUserUseReserveAsCollateral: Aave set reserve asset to be used as collateral
-  // 12. Borrow: Aave borrow tokens
-  // 13. Repay: Aave repay tokens
-  // 14. SwapBorrowRateMode: Aave change borrow rate mode (stable/variable)
-  // 15. RebalanceStableBorrowRate: Aave rebalance stable borrow rate
-  // 16. JoinPool: Balancer join pool
-  // 17. ExitPool: Balancer exit pool
-  // 18. Deposit: EasySwapper Deposit
-  // 19. Withdraw: EasySwapper Withdraw
-  // 20. Mint: Uniswap V3 Mint position
-  // 21. IncreaseLiquidity: Uniswap V3 increase liquidity position
-  // 22. DecreaseLiquidity: Uniswap V3 decrease liquidity position
-  // 23. Burn: Uniswap V3 Burn position
-  // 24. Collect: Uniswap V3 collect fees
-  // 25. Multicall: Uniswap V3 Multicall
-  // 26. Lyra: open position
-  // 27. Lyra: close position
-  // 28. Lyra: force close position
-  // 29. Futures: Market
-  // 30. AddLiquidity: Single asset add liquidity (eg. Stargate)
-  event AddLiquiditySingle(address fundAddress, address asset, address liquidityPool, uint256 amount, uint256 time);
-  // 31. RemoveLiquidity: Single asset remove liquidity (eg. Stargate)
-  event RemoveLiquiditySingle(address fundAddress, address asset, address liquidityPool, uint256 amount, uint256 time);
-  // 32. Redeem Deprecated Synths into sUSD
-  event SynthRedeem(address poolAddress, IERC20[] synthProxies);
-  // 33. Synthetix V3 transactions
-  event SynthetixV3Event(address poolLogic, uint256 txType);
-  // 34. Sonne: Mint
-  event SonneMintEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
-  // 35. Sonne: Redeem
-  event SonneRedeemEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
-  // 36. Sonne: Redeem Underlying
-  event SonneRedeemUnderlyingEvent(
-    address indexed fundAddress,
-    address asset,
-    address cToken,
-    uint256 amount,
-    uint256 time
-  );
-  // 37. Sonne: Borrow
-  event SonneBorrowEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
-  // 38. Sonne: Repay
-  event SonneRepayEvent(address indexed fundAddress, address asset, address cToken, uint256 amount, uint256 time);
-  // 39. Sonne: Comptroller Enter Markets
-  event SonneEnterMarkets(address indexed poolLogic, address[] cTokens, uint256 time);
-  // 40. Sonne: Comptroller Exit Market
-  event SonneExitMarket(address indexed poolLogic, address cToken, uint256 time);
-
-  // Enum representing Transaction Types
   enum TransactionType {
     NotUsed, // 0
     Approve, // 1
@@ -161,8 +82,8 @@ interface ITransactionTypes {
     FlatMoneyLeverageAdjust, // 72
     FlatMoneyLeverageClose, // 73
     SynthetixV3PerpsCreateAccount, // 74
-    SynthetixV3PerpsModifyCollateral, //75
-    SynthetixV3PerpsCommitOrder, //76
+    SynthetixV3PerpsModifyCollateral, // 75
+    SynthetixV3PerpsCommitOrder, // 76
     CompoundDeposit, // 77
     CompoundWithdraw, // 78
     CompoundClaimRewards, // 79
@@ -176,6 +97,28 @@ interface ITransactionTypes {
     EasySwapperV2Deposit, // 87
     EasySwapperV2InitWithdraw, // 88
     EasySwapperV2CompleteWithdrawSingle, // 89
-    EasySwapperV2CompleteWithdrawMultiple // 90
+    EasySwapperV2CompleteWithdrawMultiple, // 90
+    SafeTransferERC721, // 91
+    PancakeCLMint, // 92
+    PancakeCLIncreaseLiquidity, // 93
+    PancakeCLDecreaseLiquidity, // 94
+    PancakeCLBurn, // 95
+    PancakeCLCollect, // 96
+    PancakeCLMulticall, // 97
+    PancakeCLStake, // 98
+    PancakeCLUnstake, // 99
+    PancakeCLHarvest, // 100
+    GmxMulticall, // 101
+    GmxClaimFundingFees, // 102
+    GmxClaimCollateral, // 103
+    GmxCancelOrder, // 104
+    GmxCancelDeposit, // 105
+    GmxCancelWithdrawal, // 106
+    AcrossDepositV3, // 107
+    FluidLendingDeposit, // 108
+    FluidLendingWithdraw, // 109
+    BuyPendlePT, // 110
+    SellPendlePT, // 111
+    AaveSetEfficiencyMode // 112
   }
 }

@@ -36,17 +36,12 @@ export const switchPolygonOzFile = (isProduction: boolean) => {
   process.on("exit", rename);
 };
 
-const polygonAddresses: IAddresses = {
+const polygonData: IAddresses = {
   // Dhedge Internal
   protocolDaoAddress: polygonChainData.protocolDao,
   protocolTreasuryAddress: polygonChainData.protocolTreasury,
   // Should be fetched from the oz file
   proxyAdminAddress: polygonChainData.proxyAdmin,
-
-  // Gnosis safe multicall/send address
-  // https://github.com/gnosis/safe-deployments
-  gnosisMultiSendAddress: "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761",
-  gnosisApi: "https://safe-transaction-polygon.safe.global",
 
   balancerV2VaultAddress: polygonChainData.balancer.v2Vault,
   balancerMerkleOrchardAddress: polygonChainData.balancer.merkleOrchard,
@@ -60,7 +55,6 @@ const polygonAddresses: IAddresses = {
   },
 
   aaveV3: {
-    aaveProtocolDataProviderAddress: aaveV3.protocolDataProvider,
     aaveLendingPoolAddress: aaveV3.lendingPool,
     aaveIncentivesControllerAddress: aaveV3.incentivesController,
   },
@@ -156,10 +150,24 @@ const polygonAddresses: IAddresses = {
       torosPools.MATICBULL2X,
     ],
   },
+
+  odosV2RouterAddress: polygonChainData.odosEx.v2Router,
+
+  poolLimitOrderManager: {
+    defaultSlippageTolerance: 200, // 2%
+    settlementToken: polygonChainData.assets.usdcNative,
+    authorizedKeeperAddresses: [
+      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
+      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
+      "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
+      "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
+      "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
+    ],
+  },
 };
 
-export const polygonProdAddresses: IAddresses = {
-  ...polygonAddresses,
+export const polygonProdData: IAddresses = {
+  ...polygonData,
   stakingV2: {
     emissionsRate: 1000,
     dhtCap: BigNumber.from(2_000_000).mul(BigNumber.from(10).pow(18)),
@@ -170,8 +178,8 @@ export const polygonProdAddresses: IAddresses = {
   },
 };
 
-export const polygonStagingAddresses: IAddresses = {
-  ...polygonAddresses,
+export const polygonStagingData: IAddresses = {
+  ...polygonData,
   stakingV2: {
     emissionsRate: 1000,
     dhtCap: BigNumber.from(1_000).mul(BigNumber.from(10).pow(18)),

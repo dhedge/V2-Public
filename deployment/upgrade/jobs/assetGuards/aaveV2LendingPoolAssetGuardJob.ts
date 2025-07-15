@@ -11,8 +11,10 @@ export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
   filenames: IFileNames,
   addresses: IAddresses,
 ) => {
-  if (!addresses.aaveV2) {
-    console.warn("aaveV2 config missing.. skipping.");
+  const onchainSwapRouter = versions[config.oldTag].contracts.DhedgeSuperSwapper;
+
+  if (!addresses.aaveV2 || !addresses.flatMoney || !onchainSwapRouter) {
+    console.warn("Config missing.. skipping.");
     return;
   }
 
@@ -23,9 +25,14 @@ export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
   console.log("Will deploy aavelendingpoolassetguard");
   if (config.execute) {
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-    const args: [string, string] = [
+    const args: Parameters<typeof AaveLendingPoolAssetGuard.deploy> = [
       addresses.aaveV2.aaveProtocolDataProviderAddress,
       addresses.aaveV2.aaveLendingPoolAddress,
+      addresses.flatMoney.swapper,
+      onchainSwapRouter,
+      5, // 0.05% allowed mismatch
+      10_000,
+      10_000,
     ];
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(...args);
 

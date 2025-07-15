@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.6;
 
-pragma experimental ABIEncoderV2;
+pragma solidity >=0.7.6;
+pragma abicoder v2;
 
 interface IAssetHandler {
   event AddedAsset(address asset, uint16 assetType, address aggregator);

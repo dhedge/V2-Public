@@ -52,7 +52,9 @@ export const runTests = (testParams: IVelodromeV2TestParams) => {
         { asset: assets.usdc, isDeposit: true },
         { asset: assets.dai, isDeposit: true },
         { asset: STABLE_USDC_DAI.poolAddress, isDeposit: false },
+        { asset: PROTOCOL_TOKEN.address, isDeposit: false },
       ]);
+
       poolLogicProxy = funds.poolLogicProxy;
       poolManagerLogicProxy = funds.poolManagerLogicProxy;
 
@@ -109,14 +111,13 @@ export const runTests = (testParams: IVelodromeV2TestParams) => {
         // withdraw half
         await poolLogicProxy.withdraw((await poolLogicProxy.balanceOf(logicOwner.address)).div(2));
 
-        // includes additional rewards, hence 0.05% threshold
-        checkAlmostSame(await USDC.balanceOf(poolLogicProxy.address), usdcBalanceBefore.div(2), 0.05); // includes additional rewards, hence 0.05% threshold
-        checkAlmostSame(await DAI.balanceOf(poolLogicProxy.address), daiBalanceBefore.div(2), 0.05); // includes additional rewards, hence 0.05% threshold
-        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.05); // includes additional rewards, hence 0.05% threshold
+        checkAlmostSame(await USDC.balanceOf(poolLogicProxy.address), usdcBalanceBefore.div(2), 0.04);
+        checkAlmostSame(await DAI.balanceOf(poolLogicProxy.address), daiBalanceBefore.div(2), 0.04);
+        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.div(2), 0.04);
         checkAlmostSame(
           await VELODROME_USDC_DAI_GAUGE.balanceOf(poolLogicProxy.address),
           gaugeBalanceBefore.div(2),
-          0.05,
+          0.04,
         );
       });
 
@@ -127,7 +128,7 @@ export const runTests = (testParams: IVelodromeV2TestParams) => {
         // withdraw half
         await poolLogicProxy.withdraw((await poolLogicProxy.balanceOf(logicOwner.address)).div(2));
 
-        checkAlmostSame(await VELO.balanceOf(poolLogicProxy.address), claimAmount.div(2), 0.05);
+        checkAlmostSame(await VELO.balanceOf(poolLogicProxy.address), claimAmount.div(2), 0.04);
       });
 
       it("Withdrawer receives their portion of LP Tokens and Rewards", async () => {
@@ -136,8 +137,8 @@ export const runTests = (testParams: IVelodromeV2TestParams) => {
 
         // withdraw half
         await poolLogicProxy.withdraw((await poolLogicProxy.balanceOf(logicOwner.address)).div(2));
-        checkAlmostSame(await VELODROME_USDC_DAI.balanceOf(logicOwner.address), lpAmount.div(2), 0.05);
-        checkAlmostSame(await VELO.balanceOf(logicOwner.address), claimAmount.div(2), 0.05);
+        checkAlmostSame(await VELODROME_USDC_DAI.balanceOf(logicOwner.address), lpAmount.div(2), 0.04);
+        checkAlmostSame(await VELO.balanceOf(logicOwner.address), claimAmount.div(2), 0.04);
       });
     });
 
@@ -159,7 +160,7 @@ export const runTests = (testParams: IVelodromeV2TestParams) => {
         await poolLogicProxy.connect(manager).execTransaction(router, addLiquidityTx);
 
         // price change between chainlink & amm, threshold
-        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.05);
+        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore, 0.01);
 
         lpAmount = await VELODROME_USDC_DAI.balanceOf(poolLogicProxy.address);
 

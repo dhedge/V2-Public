@@ -1,0 +1,119 @@
+[
+  {
+    "assetName": "USDC",
+    "assetAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "WETH",
+    "assetAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "USDT",
+    "assetAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "USDS",
+    "assetAddress": "0xdC035D45d973E3EC169d2276DDab16f1e407384F",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xfF30586cD0F29eD462364C7e81375FC0C71219b1"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "USDe",
+    "assetAddress": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+    "assetType": "200",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "sUSDe",
+    "assetAddress": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497",
+    "assetType": "200",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+    },
+    "oracleType": "ERC4626PriceAggregator"
+  },
+  {
+    "assetName": "PT-USDe-25SEP2025",
+    "assetAddress": "0xbc6736d346a5ebc0debc997397912cd9b8fae10a",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+      "pendleChainlinkOracle": "0xA6aC04cE586198693018Ad81859d22E440A6B6fc",
+      "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "PT-sUSDE-25SEP2025",
+    "assetAddress": "0x9F56094C450763769BA0EA9Fe2876070c0fD5F77",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497",
+      "pendleChainlinkOracle": "0x1F3a9a671c0d326499099078568f2eba03AC2187",
+      "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "Aave Lending Pool V3",
+    "assetAddress": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+    "assetType": "8",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x4D4010338beD13483CC85de051d28d2B4f3b6484"
+    }
+  },
+  {
+    "assetName": "PT-USDe-31JUL2025",
+    "assetAddress": "0x917459337CaAC939D41d7493B3999f571D20D667",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+      "pendleChainlinkOracle": "0xf64981Af20589e74c5e8025E4cfD257875A7fC81",
+      "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "PT-sUSDe-31JUL2025",
+    "assetAddress": "0x3b3fB9C57858EF816833dC91565EFcd85D96f634",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497",
+      "pendleChainlinkOracle": "0xF456b1f85fb74FE816F5D0a49076e19164aF3f8D",
+      "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "WBTC",
+    "assetAddress": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    "assetType": "0",
+    "oracleType": "CustomCrossAggregator",
+    "specificOracleConfig": {
+      "tokenToTokenAggregator": "0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23",
+      "tokenToUsdAggregator": "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
+    }
+  }
+]

@@ -64,8 +64,6 @@ contract UniswapV3RouterGuard is TxDataUtils, ITransactionTypes, SlippageAccumul
         dstAmount: _getBalance(dstAsset, poolLogic)
       });
 
-      emit ExchangeFrom(poolLogic, srcAsset, params.amountIn, dstAsset, block.timestamp);
-
       txType = uint16(TransactionType.Exchange);
     } else if (method == IV3SwapRouter.exactInputSingle.selector) {
       IV3SwapRouter.ExactInputSingleParams memory params = abi.decode(
@@ -84,8 +82,6 @@ contract UniswapV3RouterGuard is TxDataUtils, ITransactionTypes, SlippageAccumul
         dstAmount: _getBalance(params.tokenOut, poolLogic)
       });
 
-      emit ExchangeFrom(poolLogic, params.tokenIn, params.amountIn, params.tokenOut, block.timestamp);
-
       txType = uint16(TransactionType.Exchange);
     } else if (method == IV3SwapRouter.exactOutput.selector) {
       IV3SwapRouter.ExactOutputParams memory params = abi.decode(getParams(data), (IV3SwapRouter.ExactOutputParams));
@@ -101,8 +97,6 @@ contract UniswapV3RouterGuard is TxDataUtils, ITransactionTypes, SlippageAccumul
         srcAmount: _getBalance(srcAsset, poolLogic),
         dstAmount: _getBalance(dstAsset, poolLogic)
       });
-
-      emit ExchangeTo(poolLogic, srcAsset, dstAsset, params.amountOut, block.timestamp);
 
       txType = uint16(TransactionType.Exchange);
     } else if (method == IV3SwapRouter.exactOutputSingle.selector) {
@@ -121,8 +115,6 @@ contract UniswapV3RouterGuard is TxDataUtils, ITransactionTypes, SlippageAccumul
         srcAmount: _getBalance(params.tokenIn, poolLogic),
         dstAmount: _getBalance(params.tokenOut, poolLogic)
       });
-
-      emit ExchangeTo(poolLogic, params.tokenIn, params.tokenOut, params.amountOut, block.timestamp);
 
       txType = uint16(TransactionType.Exchange);
     } else if (method == bytes4(keccak256("multicall(uint256,bytes[])"))) {

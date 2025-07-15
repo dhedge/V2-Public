@@ -1,23 +1,35 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-import { IERC20, PoolLogic, PoolManagerLogic } from "../../../../types";
+import { IERC20, PoolFactory, PoolLogic, PoolManagerLogic } from "../../../../types";
 import { IERC20Path } from "../../utils/deployContracts/deployBackboneContracts";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ICompoundV3TestParams, iCompoundV3Comet, iCompoundV3CometRewards } from "./compoundV3TestDeploymentHelpers";
 import { utils } from "../../utils/utils";
 import { checkAlmostSame } from "../../../testHelpers";
 import { setupCompoundV3ContractGuardTestBefore } from "./compoundV3ContractGuardTestHelpers";
+import { deployEasySwapperV2 } from "../easySwapperV2/EasySwapperV2Test";
+import { getEmptyComplexAssetsData } from "../aaveV3/deployAaveV3TestInfrastructure";
 
 export const compoundV3CommonTest = (testParams: ICompoundV3TestParams) => {
   let { cAsset, baseAsset, baseAssetAmount, rewards } = testParams;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let poolLogicProxy: PoolLogic, poolManagerLogicProxy: PoolManagerLogic;
+  let poolFactory: PoolFactory;
 
   describe(`Compound v3 Comet Contract Guard Common Test ${testParams.assetName}`, function () {
     before(async function () {
-      ({ logicOwner, manager, poolLogicProxy, poolManagerLogicProxy, cAsset, baseAsset, baseAssetAmount, rewards } =
-        await setupCompoundV3ContractGuardTestBefore(testParams));
+      ({
+        logicOwner,
+        manager,
+        poolLogicProxy,
+        poolManagerLogicProxy,
+        cAsset,
+        baseAsset,
+        baseAssetAmount,
+        rewards,
+        poolFactory,
+      } = await setupCompoundV3ContractGuardTestBefore(testParams));
     });
 
     utils.beforeAfterReset(beforeEach, afterEach);
@@ -183,6 +195,45 @@ export const compoundV3CommonTest = (testParams: ICompoundV3TestParams) => {
         expect(poolBalanceAfter).to.be.equal(0);
         expect(baseAssetBalanceBefore).to.be.equal(0);
         expect(baseAssetBalanceAfter).to.be.gt(baseAssetAmount); // interest earned
+        expect(cAssetBalanceBefore).to.be.equal(0);
+        expect(cAssetBalanceAfter).to.be.equal(0);
+      });
+
+      it("Can withdraw 100% from vault immediately through EasySwapperV2", async () => {
+        const easySwapperV2 = await deployEasySwapperV2(
+          testParams.assets.weth,
+          testParams.easySwapperV2.wrappedNativeToken,
+          testParams.easySwapperV2.swapper,
+        );
+        await easySwapperV2.setdHedgePoolFactory(poolFactory.address);
+
+        await ethers.provider.send("evm_increaseTime", [3600 * 24 * 1]); // 1 day to bypass token lockup
+
+        const cAssetContract = <IERC20>await ethers.getContractAt(IERC20Path, cAsset);
+        const baseAssetContract = <IERC20>await ethers.getContractAt(IERC20Path, baseAsset);
+
+        const supplyTxData = iCompoundV3Comet.encodeFunctionData("supply", [baseAsset, baseAssetAmount]);
+        await poolLogicProxy.connect(manager).execTransaction(cAsset, supplyTxData);
+
+        const poolBalanceBefore = await poolLogicProxy.balanceOf(logicOwner.address);
+        const baseAssetBalanceBefore = await baseAssetContract.balanceOf(logicOwner.address);
+        const cAssetBalanceBefore = await cAssetContract.balanceOf(logicOwner.address);
+
+        await poolLogicProxy.approve(easySwapperV2.address, poolBalanceBefore);
+        await easySwapperV2.unrollAndClaim(
+          poolLogicProxy.address,
+          poolBalanceBefore,
+          await getEmptyComplexAssetsData(poolLogicProxy),
+        );
+
+        const poolBalanceAfter = await poolLogicProxy.balanceOf(logicOwner.address);
+        const baseAssetBalanceAfter = await baseAssetContract.balanceOf(logicOwner.address);
+        const cAssetBalanceAfter = await cAssetContract.balanceOf(logicOwner.address);
+
+        expect(poolBalanceBefore).to.be.gt(0);
+        expect(poolBalanceAfter).to.be.equal(0);
+        expect(baseAssetBalanceBefore).to.be.equal(0);
+        expect(baseAssetBalanceAfter).to.be.closeTo(baseAssetAmount, baseAssetAmount.div(100_000));
         expect(cAssetBalanceBefore).to.be.equal(0);
         expect(cAssetBalanceAfter).to.be.equal(0);
       });

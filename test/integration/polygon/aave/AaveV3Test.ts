@@ -14,7 +14,9 @@ const testParams = {
     borrowAsset: polygonChainData.assetsBalanceOfSlot.dai,
   },
   borrowAsset: polygonChainData.assets.dai,
-};
+  swapper: polygonChainData.flatMoney.swapper,
+  chainId: 137,
+} as const;
 
 testAaveV3(testParams);
 testAaveV3Multiple(testParams);

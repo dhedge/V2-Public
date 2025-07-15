@@ -14,7 +14,6 @@ import {
 import { checkAlmostSame, units } from "../../testHelpers";
 import { getAccountToken } from "../utils/getAccountTokens";
 
-import { toBytes32 } from "../../testHelpers";
 import { utils } from "../utils/utils";
 import { createFund } from "../utils/createFund";
 import { Address } from "../../../deployment/types";
@@ -63,6 +62,7 @@ interface EasySwapperTestsChainData {
     protocolDataProvider: string;
     lendingPool: string;
   };
+  flatMoney: { swapper: string };
 }
 
 export const DhedgeEasySwapperTests = (
@@ -183,14 +183,15 @@ export const DhedgeEasySwapperTests = (
           await governance.assetGuards(0),
         );
       await governance.connect(govSigner).setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
-      await governance
-        .connect(govSigner)
-        .setAddresses([{ name: toBytes32("swapRouter"), destination: swapRouter.address }]);
-      await governance.connect(govSigner).setAddresses([{ name: toBytes32("weth"), destination: assets.weth }]);
       const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
       const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
         aaveV3.protocolDataProvider,
         aaveV3.lendingPool,
+        chainData.flatMoney.swapper,
+        swapRouter.address,
+        5,
+        10_000,
+        10_000,
       );
       await aaveLendingPoolAssetGuard.deployed();
       await governance

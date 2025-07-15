@@ -6,7 +6,7 @@ import versionsUntyped from "../../../publish/ovm/prod/versions.json";
 import { IVersions } from "../../../deployment/types";
 import { utils } from "../utils/utils";
 import { IERC20 } from "../../../types";
-import { toBytes32, units } from "../../testHelpers";
+import { units } from "../../testHelpers";
 import { IERC20Path } from "../utils/deployContracts/deployBackboneContracts";
 
 const versions = versionsUntyped as unknown as IVersions;
@@ -40,13 +40,6 @@ describe("USDmny withdraw simulation", () => {
     // Deploy new SwapRouter
     const dhedgeSwapRouter = await DhedgeSuperSwapper.deploy(...[v2Routers, ovmChainData.routeHints]);
     await dhedgeSwapRouter.deployed();
-
-    // Set new SwapRouter to be used during aave withdraw
-    const governance = await ethers.getContractAt("Governance", versions[latestVersion].contracts.Governance);
-    const governanceOwner = await utils.impersonateAccount(await governance.owner());
-    await governance
-      .connect(governanceOwner)
-      .setAddresses([{ name: toBytes32("swapRouter"), destination: dhedgeSwapRouter.address }]);
 
     // Set new SwapRouter in EasySwapper
     const easySwapper = await ethers.getContractAt(

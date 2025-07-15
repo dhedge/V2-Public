@@ -14,6 +14,7 @@ import { velodromePairContractGuardJob } from "./contractGuards/velodromePairCon
 import { ramsesGaugeGuardJob } from "./contractGuards/ramsesGaugeGuardJob";
 import { sonneFinanceCTokenContractGuardJob } from "./contractGuards/sonneFinanceCTokenContractGuardJob";
 import { compoundV3CometContractGuardJob } from "./contractGuards/compoundV3CometContractGuardJob";
+import { fluidTokenContractGuardJob } from "./contractGuards/fluidTokenContractGuardJob";
 
 type TContractGuardConfigurer = (
   config: IUpgradeConfig,
@@ -147,6 +148,7 @@ const typeToContractGuardConfigurer: TContractGuardTypeToContractGuardConfigurer
     "CompoundV3CometContractGuard",
     compoundV3CometContractGuardJob,
   ),
+  FluidTokenContractGuard: getExistingOrDeployGuard("FluidTokenContractGuard", fluidTokenContractGuardJob),
 };
 
 export const configureContractGuard = async (

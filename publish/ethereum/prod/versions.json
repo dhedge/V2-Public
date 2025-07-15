@@ -1,0 +1,170 @@
+{
+  "v2.12.0": {
+    "contracts": {
+      "Assets": [
+        {
+          "assetName": "USDC",
+          "assetAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6"
+        },
+        {
+          "assetName": "WETH",
+          "assetAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+        },
+        {
+          "assetName": "USDT",
+          "assetAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D"
+        },
+        {
+          "assetName": "USDS",
+          "assetAddress": "0xdC035D45d973E3EC169d2276DDab16f1e407384F",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xfF30586cD0F29eD462364C7e81375FC0C71219b1"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xfF30586cD0F29eD462364C7e81375FC0C71219b1"
+        },
+        {
+          "assetName": "Aave Lending Pool V3",
+          "assetAddress": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+          "assetType": "8",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x4D4010338beD13483CC85de051d28d2B4f3b6484"
+          },
+          "oracleAddress": "0x4D4010338beD13483CC85de051d28d2B4f3b6484"
+        },
+        {
+          "assetName": "PT-USDe-31JUL2025",
+          "assetAddress": "0x917459337CaAC939D41d7493B3999f571D20D667",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+            "pendleChainlinkOracle": "0xf64981Af20589e74c5e8025E4cfD257875A7fC81",
+            "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0xa920Ee93b1aC4E093Eb33C35990EE37283B1c303"
+        },
+        {
+          "assetName": "PT-sUSDe-31JUL2025",
+          "assetAddress": "0x3b3fB9C57858EF816833dC91565EFcd85D96f634",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497",
+            "pendleChainlinkOracle": "0xF456b1f85fb74FE816F5D0a49076e19164aF3f8D",
+            "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x06C1969D2A38EE97B24E8853ee598C1BA347D307"
+        },
+        {
+          "assetName": "PT-USDe-25SEP2025",
+          "assetAddress": "0xbc6736d346a5ebc0debc997397912cd9b8fae10a",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+            "pendleChainlinkOracle": "0xA6aC04cE586198693018Ad81859d22E440A6B6fc",
+            "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x9f9B273445F67B2d1678EeD36C2D3c8d0D350158"
+        },
+        {
+          "assetName": "PT-sUSDE-25SEP2025",
+          "assetAddress": "0x9F56094C450763769BA0EA9Fe2876070c0fD5F77",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497",
+            "pendleChainlinkOracle": "0x1F3a9a671c0d326499099078568f2eba03AC2187",
+            "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x1205aa400d5ab7819e269076698A2B6Cc793F661"
+        },
+        {
+          "assetName": "WBTC",
+          "assetAddress": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+          "assetType": "0",
+          "oracleType": "CustomCrossAggregator",
+          "specificOracleConfig": {
+            "tokenToTokenAggregator": "0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23",
+            "tokenToUsdAggregator": "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
+          },
+          "oracleAddress": "0x9706e50511bCe642DA1F568Fe74312D34fFE2f33"
+        },
+        {
+          "assetName": "USDe",
+          "assetAddress": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+          "assetType": "200",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961"
+        },
+        {
+          "assetName": "sUSDe",
+          "assetAddress": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497",
+          "assetType": "200",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+          },
+          "oracleType": "ERC4626PriceAggregator",
+          "oracleAddress": "0x13192c31825dc609856c1Da51041A956B45068d9"
+        }
+      ],
+      "USDPriceAggregator": "0x4D4010338beD13483CC85de051d28d2B4f3b6484",
+      "AssetHandlerProxy": "0xBb015300b8D483cc477F027d504Ae580E2F83c72",
+      "AssetHandler": "0x8F028683392a6Eb91d47EE0442D1B52f64893769",
+      "PoolLogicProxy": "0x9dE55d77e409dc3b65c59176BFFbD4D7968aFb6f",
+      "PoolLogic": "0xC1Dc6Ca31585A3F256331489124feAF0b91cEb96",
+      "PoolManagerLogicProxy": "0xac2909FFB363D1E021e3Ac8EB1F830F1D5083B28",
+      "PoolManagerLogic": "0x4917c53Dea80D50cd467C57cE69Cf6E203A8B0D9",
+      "Governance": "0xFa2837ecaC0136f7dE9221DB2b13fe9192De4BD2",
+      "PoolFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d",
+      "PoolFactory": "0x8292b98669CAf8C1ff0a99854195cDca470A9E16",
+      "ERC20Guard": "0x412b514310ef5c0f52dc43f07f804400c8bf8578",
+      "SlippageAccumulator": "0x165D338aa7327549F51D8c372F997B08ed260835",
+      "OneInchV6Guard": "0xBB9b6133beA9359116D186759cEAB60B262387Dc",
+      "LendingEnabledAssetGuard": "0x546347E7Fa6B9bA5c799435cFb736bbc7e37e457",
+      "PendleRouterV4ContractGuard": "0x47c174a58cb674a1e8a22039961ca741154cfef2",
+      "PendlePTAssetGuard": "0xc3d9533705949108bd4bc72066bfe63b8a5ee934",
+      "WithdrawalVaultProxy": "0xe4701267F26B053960843F44f6fE09D2B4eC8dE2",
+      "WithdrawalVault": "0xd16a609611fcebd3cd5ca0b7111aaec4570cf543",
+      "EasySwapperV2Proxy": "0xbDd84294bC8299861A2121F749A25EFEb7168a32",
+      "EasySwapperV2": "0xc8fd7e4e901393A5699b3d27947EB7787336a611",
+      "AaveLendingPoolGuardV3": "0xBE9Fa04B41336130ef613b1cbb458d0708B10AC3",
+      "DhedgeUniV3V2Router": "0xc49b0e838C2a83adaE7D82d82792082DD5cfAf8A",
+      "DhedgeSuperSwapper": "0x0e2b20d47228729e8649aF41138d479b172F30b6",
+      "AaveLendingPoolAssetGuardV3": "0xb93D6AC89aa35286B3F98B1D0e70B582FDc3Fb5E",
+      "OdosV2ContractGuard": "0xFcdB2c85c799f51737AEFb5DdFF0B35f77DDB33a",
+      "RewardAssetGuard": "0x3c92fb7604e3759b0847347dcd9384f2569a93ec"
+    },
+    "network": {
+      "name": "homestead",
+      "chainId": 1,
+      "ensAddress": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
+    },
+    "lastUpdated": "Tue, 15 Jul 2025 16:03:50 GMT",
+    "config": {}
+  }
+}

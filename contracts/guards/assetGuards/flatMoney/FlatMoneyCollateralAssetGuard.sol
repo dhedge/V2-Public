@@ -7,16 +7,17 @@ import {ERC20Guard} from "../ERC20Guard.sol";
 
 /// @notice AssetType = 22
 contract FlatMoneyCollateralAssetGuard is ERC20Guard {
-  IDelayedOrder public immutable delayedOrder;
+  IDelayedOrder public immutable orderModule;
 
-  constructor(address _delayedOrder) {
-    require(_delayedOrder != address(0), "invalid address");
-    delayedOrder = IDelayedOrder(_delayedOrder);
+  constructor(address _orderModule) {
+    require(_orderModule != address(0), "invalid address");
+
+    orderModule = IDelayedOrder(_orderModule);
   }
 
-  function removeAssetCheck(address _pool, address _asset) public view override {
+  function removeAssetCheck(address _pool, address _asset) public view virtual override {
     super.removeAssetCheck(_pool, _asset);
 
-    require(delayedOrder.getAnnouncedOrder(_pool).orderType == IDelayedOrder.OrderType.None, "order in progress");
+    require(orderModule.getAnnouncedOrder(_pool).orderType == IDelayedOrder.OrderType.None, "order in progress");
   }
 }

@@ -18,6 +18,8 @@ export const baseChainData = Object.freeze({
     reth: "0xb6fe221fe9eef5aba221c348ba20a1bf5e73624c",
     snx: "0x22e6966b799c4d5b13be962e1d117b56327fda66",
     unit: "0xb95fB324b8A2fAF8ec4f76e3dF46C718402736e2",
+    cbbtc: "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+    wsteth: "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
   },
 
   // https://data.chain.link/
@@ -56,6 +58,10 @@ export const baseChainData = Object.freeze({
 
   zeroEx: {
     exchangeProxy: "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+  },
+
+  odosEx: {
+    v2Router: "0x19cEeAd7105607Cd444F5ad10dd51356436095a1",
   },
 
   synthetixV3: {
@@ -99,7 +105,7 @@ export const baseChainData = Object.freeze({
     incentivesController: "0xf9cc4F0D883F1a1eb2c253bdb46c254Ca51E1F44",
   },
 
-  v2Routers: ["0x6bded42c6da8fbf0d2ba55b2fa120c5e0c8d7891"], // SushiSwap V2 Router https://basescan.org/address/0x6bded42c6da8fbf0d2ba55b2fa120c5e0c8d7891
+  v2Routers: ["0x6bded42c6da8fbf0d2ba55b2fa120c5e0c8d7891"], // SushiSwap V2 Router
 
   routeHints: [],
 
@@ -120,5 +126,15 @@ export const baseChainData = Object.freeze({
     STETHBULL4X: "0xba5f6a0d2ac21a3fec7a6c40facd23407aa84663",
     ETHy: "0x53a4716a8f7dbc9543ebf9cd711952033cc64d43",
     FAy: "0xd258da1a96c53676301b60000918a1406e367d3e",
+    USDy: "0x1c980456751AE40315Ff73CaaC0843Be643321Be",
+    BTCBEAR1X: "0xd2f23773bf5e2d59f6bb925c2232f6e83f3f79e0",
+    BTCBULL2X: "0x9e0501537723c71250307F5B1A8eE60e167D21C9",
+    BTCBULL3X: "0xCAF08BF08D0c87e2c74dd9EBEC9C776037bD7e8E",
+  },
+
+  compoundV3: {
+    cUSDCv3: "0xb125E6687d4313864e53df431d5425969c15Eb2F",
+    cWETHv3: "0x46e6b214b524310239732D51387075E0e70970bf",
+    rewards: "0x123964802e6ABabBE1Bc9547D72Ef1B69B00A6b1",
   },
 });

@@ -202,7 +202,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "member",
+        "name": "_member",
         "type": "address"
       }
     ],
@@ -215,7 +215,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "members",
+        "name": "_members",
         "type": "address[]"
       }
     ],
@@ -321,7 +321,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -340,7 +340,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -378,12 +378,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -402,7 +402,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -451,12 +451,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "newManager",
+        "name": "_newManager",
         "type": "address"
       },
       {
         "internalType": "string",
-        "name": "newManagerName",
+        "name": "_newManagerName",
         "type": "string"
       }
     ],
@@ -768,7 +768,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -787,7 +787,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "member",
+        "name": "_member",
         "type": "address"
       }
     ],
@@ -806,7 +806,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "member",
+        "name": "_member",
         "type": "address"
       }
     ],
@@ -825,7 +825,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],
@@ -911,7 +911,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "_numberOfMembers",
+        "name": "numOfMembers",
         "type": "uint256"
       }
     ],
@@ -948,7 +948,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "member",
+        "name": "_member",
         "type": "address"
       }
     ],
@@ -961,7 +961,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "members",
+        "name": "_members",
         "type": "address[]"
       }
     ],
@@ -1029,7 +1029,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "newNftMembershipCollectionAddress",
+        "name": "_newNftMembershipCollectionAddress",
         "type": "address"
       }
     ],
@@ -1061,7 +1061,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "newTrader",
+        "name": "_newTrader",
         "type": "address"
       }
     ],
@@ -1113,24 +1113,11 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalFundValueMutable",
-    "outputs": [
-      {
-        "internalType": "uint256",
         "name": "total",
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1163,7 +1150,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "_asset",
         "type": "address"
       }
     ],

@@ -8,7 +8,7 @@ dHEDGE is all-in-one destination for managing vaults on Polygon, Optimism, Arbit
 
 Please keep in mind that this repository is under development.
 
-For the most up-to-date system documentation, visit [dHEDGE Docs](https://docs.dhedge.org).
+For the documentation, visit [dHEDGE Docs](https://docs.dhedge.org).
 
 ## Explore dHEDGE 🚀
 
@@ -18,9 +18,9 @@ For the most up-to-date system documentation, visit [dHEDGE Docs](https://docs.d
 
 📣 **Discord**: [Join our Discord](https://discord.gg/BAWTbRA/)
 
-🐦 **Twitter**: [Follow us on Twitter](https://twitter.com/dhedgeorg)
+🐦 **X**: [Follow us on X](https://x.com/dhedgeorg)
 
-🔐 **Immunefi**: [dHEDGE Bug Bounty](https://immunefi.com/bounty/dhedge)
+🔐 **Immunefi**: [dHEDGE Bug Bounty](https://immunefi.com/bug-bounty/dhedge/information/)
 
 ## Repository Guide 📖
 

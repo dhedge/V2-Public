@@ -41,6 +41,7 @@ contract StargateRouterContractGuard is TxDataUtils, IGuard, ITransactionTypes {
     bytes calldata data
   )
     external
+    view
     override
     returns (
       uint16 txType, // transaction type
@@ -53,27 +54,22 @@ contract StargateRouterContractGuard is TxDataUtils, IGuard, ITransactionTypes {
     IStargateFactory stargateFactory = IStargateFactory(IStargateRouter(to).factory());
 
     if (method == IStargateRouter.addLiquidity.selector) {
-      (uint256 poolId, uint256 amountLD, address mintTo) = abi.decode(getParams(data), (uint256, uint256, address));
+      (uint256 poolId, , address mintTo) = abi.decode(getParams(data), (uint256, uint256, address));
 
       IStargatePool stargatePool = IStargatePool(stargateFactory.getPool(poolId));
-      address underlyingAsset = stargatePool.token();
 
       require(poolManagerLogicAssets.isSupportedAsset(address(stargatePool)), "stargate pool not enabled");
       require(mintTo == poolLogic, "recipient is not pool");
 
-      emit AddLiquiditySingle(poolLogic, underlyingAsset, address(stargatePool), amountLD, block.timestamp);
-
       txType = uint16(TransactionType.AddLiquiditySingle);
     } else if (method == IStargateRouter.instantRedeemLocal.selector) {
-      (uint256 poolId, uint256 amountLP, address withdrawTo) = abi.decode(getParams(data), (uint256, uint256, address));
+      (uint256 poolId, , address withdrawTo) = abi.decode(getParams(data), (uint256, uint256, address));
 
       IStargatePool stargatePool = IStargatePool(stargateFactory.getPool(poolId));
       address underlyingAsset = stargatePool.token();
 
       require(poolManagerLogicAssets.isSupportedAsset(underlyingAsset), "underlying asset not enabled");
       require(withdrawTo == poolLogic, "recipient is not pool");
-
-      emit RemoveLiquiditySingle(poolLogic, underlyingAsset, address(stargatePool), amountLP, block.timestamp);
 
       txType = uint16(TransactionType.RemoveLiquiditySingle);
     }

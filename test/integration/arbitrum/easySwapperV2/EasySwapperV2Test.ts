@@ -13,28 +13,49 @@ const withdrawTestCases: EasySwapperV2TestCase[] = [
     name: "Arbitrum Test",
   },
   {
-    poolDepositorAddress: "0x253956aedc059947e700071bc6d74bd8e34fe2ab",
-    testPoolAddress: "0x40d30b13666c55b1f41ee11645b5ea3ea2ca31f8",
-    destToken: arbitrumChainData.assets.weth,
-    slippageTolerance: 10,
-    name: "Ethereum Bear 1X",
-  },
-  {
-    poolDepositorAddress: "0x16743fbb3153f224195435bdfb84ef265b7ed6d9",
-    testPoolAddress: "0xad38255febd566809ae387d5be66ecd287947cb9",
+    poolDepositorAddress: "0x885b36cd0d377e4449685a3db168a3d5a1906cc3",
+    testPoolAddress: arbitrumChainData.torosPools.BTCBULL3X,
     destToken: arbitrumChainData.assets.usdc,
     slippageTolerance: 10,
     name: "Bitcoin Bull 3X",
   },
   {
+    poolDepositorAddress: "0x03d900df5b08346e2a374635beeda15c60121033",
+    testPoolAddress: arbitrumChainData.torosPools.BTCBULL2X,
+    destToken: arbitrumChainData.assets.usdc,
+    slippageTolerance: 10,
+    name: "Bitcoin Bull 2X",
+  },
+  {
+    poolDepositorAddress: "0x25ca6760fc0936127a6e34c3cbd63064b8a0de1f",
+    testPoolAddress: arbitrumChainData.torosPools.BTCBEAR1X,
+    destToken: arbitrumChainData.assets.usdc,
+    slippageTolerance: 10,
+    name: "Bitcoin Bear 1X",
+  },
+  {
     poolDepositorAddress: "0x167e0ce5d2fa07203e6e37b466f8cff86760c403",
-    testPoolAddress: "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
+    testPoolAddress: arbitrumChainData.torosPools.ETHBULL3X,
     destToken: arbitrumChainData.assets.weth,
     slippageTolerance: 10,
     name: "Ethereum Bull 3X",
   },
   {
-    poolDepositorAddress: "0xb2735ee35725e8d0e4ef684f816ca38684620c0d",
+    poolDepositorAddress: "0xac7d8a2a1a3621dcb5005315d98802150fa65e5a",
+    testPoolAddress: arbitrumChainData.torosPools.ETHBULL2X,
+    destToken: arbitrumChainData.assets.usdc,
+    slippageTolerance: 10,
+    name: "Ethereum Bull 2X",
+  },
+  {
+    poolDepositorAddress: "0x253956aedc059947e700071bc6d74bd8e34fe2ab",
+    testPoolAddress: arbitrumChainData.torosPools.ETHBEAR1X,
+    destToken: arbitrumChainData.assets.weth,
+    slippageTolerance: 10,
+    name: "Ethereum Bear 1X",
+  },
+  {
+    poolDepositorAddress: "0x26f7cbd49a4dc3321780ae8e7e0cb460f55a7511",
     testPoolAddress: "0x2fca566933baaf3f454d816b7947cb45c7d79102",
     destToken: arbitrumChainData.assets.weth,
     slippageTolerance: 15,
@@ -67,6 +88,7 @@ runEasySwapperV2Tests({
     },
   },
   poolFactory: "0xffFb5fB14606EB3a548C113026355020dDF27535",
+  onchainSwapRouter: "0x4AF5FC6930599A1117600817CB7fAE428B15CAf6",
 });
 
 runEasySwapperV2GuardsTest({

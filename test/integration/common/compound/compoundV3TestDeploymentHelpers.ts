@@ -15,6 +15,10 @@ export type ICompoundV3TestParams = IBackboneDeploymentsParams & {
   baseAssetAmount: BigNumber;
   cAssetPriceFeed: string;
   rewards: string;
+  easySwapperV2: {
+    swapper: string;
+    wrappedNativeToken: string;
+  };
 };
 
 export const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);

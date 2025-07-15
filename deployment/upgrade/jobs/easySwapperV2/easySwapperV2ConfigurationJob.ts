@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTx } from "../../../deploymentHelpers";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
-import { CustomCooldownSettingStruct } from "../../../../types/EasySwapperV2";
+import { WhitelistSettingStruct } from "../../../../types/EasySwapperV2";
 
 export const easySwapperV2ConfigurationJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -19,18 +19,20 @@ export const easySwapperV2ConfigurationJob: IJob<void> = async (
   const existingVaults = versions[config.newTag].config.easySwapperV2?.customCooldownDepositsWhitelist ?? [];
 
   // Any that are added to the config are added to the whitelist
-  const addedVaults: CustomCooldownSettingStruct[] = newConfigVaults
+  const addedVaults: WhitelistSettingStruct[] = newConfigVaults
     .filter((newVault) => !existingVaults.some((existingVault) => existingVault === newVault))
-    .map((dHedgeVault) => ({ dHedgeVault, whitelisted: true }));
+    .map((dHedgeVault) => ({ toWhitelist: dHedgeVault, whitelisted: true }));
 
   // Any that are removed from the config are removed from the whitelist
-  const removedVaults: CustomCooldownSettingStruct[] = existingVaults
+  const removedVaults: WhitelistSettingStruct[] = existingVaults
     .filter((existingVault) => !newConfigVaults.some((newVault) => newVault === existingVault))
-    .map((dHedgeVault) => ({ dHedgeVault, whitelisted: false }));
+    .map((dHedgeVault) => ({ toWhitelist: dHedgeVault, whitelisted: false }));
 
   const newCustomCooldownWhitelist = [...addedVaults, ...removedVaults];
 
   console.log("New custom cooldown whitelist: ", newCustomCooldownWhitelist);
+
+  if (newCustomCooldownWhitelist.length === 0) return;
 
   const setCustomCooldownWhitelistTxData = EasySwapperV2Abi.encodeFunctionData("setCustomCooldownWhitelist", [
     newCustomCooldownWhitelist,

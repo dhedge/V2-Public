@@ -34,22 +34,24 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "./ERC20Guard.sol";
-import "../../interfaces/IERC20Extended.sol";
-import "../../interfaces/IPoolLogic.sol";
-import "../../interfaces/quick/IStakingRewardsFactory.sol";
-import "../../interfaces/quick/IStakingRewards.sol";
-import "../../interfaces/arrakis/IArrakisV1RouterStaking.sol";
-import "../../interfaces/arrakis/ILiquidityGaugeV4.sol";
-import "../../interfaces/arrakis/IArrakisVaultV1.sol";
-import "../../interfaces/IHasAssetInfo.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {IERC20Extended} from "../../interfaces/IERC20Extended.sol";
+import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
+import {IArrakisV1RouterStaking} from "../../interfaces/arrakis/IArrakisV1RouterStaking.sol";
+import {ILiquidityGaugeV4} from "../../interfaces/arrakis/ILiquidityGaugeV4.sol";
+import {IArrakisVaultV1} from "../../interfaces/arrakis/IArrakisVaultV1.sol";
+import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
+import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
+import {IAddAssetCheckGuard} from "../../interfaces/guards/IAddAssetCheckGuard.sol";
+import {ERC20Guard} from "./ERC20Guard.sol";
 
 /// @title Arrakis Liquidity Gauge V4 asset guard
 /// @dev Asset type = 9
-contract ArrakisLiquidityGaugeV4AssetGuard is ERC20Guard {
-  using SafeMathUpgradeable for uint256;
+contract ArrakisLiquidityGaugeV4AssetGuard is ERC20Guard, IAddAssetCheckGuard {
+  using SafeMath for uint256;
+
+  bool public override isAddAssetCheckGuard = true;
 
   address public arrakisV1RouterStaking;
 
@@ -134,6 +136,10 @@ contract ArrakisLiquidityGaugeV4AssetGuard is ERC20Guard {
       uint256 rewardBalance = gauge.claimable_reward(pool, rewardToken);
       balance = balance.add(_assetValue(factory, rewardToken, rewardBalance));
     }
+  }
+
+  function addAssetCheck(address, IHasSupportedAsset.Asset calldata _asset) external pure override {
+    require(!_asset.isDeposit, "deposit not supported");
   }
 
   function _assetValue(address factory, address token, uint256 amount) internal view returns (uint256) {

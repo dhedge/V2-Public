@@ -7,7 +7,6 @@ import "../interfaces/IERC20Extended.sol";
 import "../interfaces/sonne/CTokenInterfaces.sol";
 import "../interfaces/sonne/ComptrollerLensInterface.sol";
 import "../interfaces/sonne/PriceOracle.sol";
-import "../interfaces/sonne/IChainlinkPriceOracle.sol";
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/IHasAssetInfo.sol";
 

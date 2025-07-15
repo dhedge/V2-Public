@@ -23,7 +23,7 @@ import {
   UniV2LPAggregator,
   SlippageAccumulator,
 } from "../../../types";
-import { currentBlockTimestamp, toBytes32, units, updateChainlinkAggregators } from "../../testHelpers";
+import { currentBlockTimestamp, units, updateChainlinkAggregators } from "../../testHelpers";
 
 // Place holder addresses
 const TESTNET_DAO = "0xab0c25f17e993F90CaAaec06514A2cc28DEC340b";
@@ -43,8 +43,6 @@ const FIVE_TOKENS = "5000000000000000000";
 const TEN_TOKENS = "10000000000000000000";
 const TWENTY_TOKENS = "20000000000000000000";
 const ONE_HUNDRED_TOKENS = "100000000000000000000";
-
-const POOL_STORAGE_VERSION = "99999";
 
 describe("PoolFactory", function () {
   let logicOwner: SignerWithAddress,
@@ -228,7 +226,7 @@ describe("PoolFactory", function () {
     // Aggregators
     await updateChainlinkAggregators(usd_price_feed, eth_price_feed, link_price_feed);
 
-    const Governance = await ethers.getContractFactory("Governance");
+    const Governance = await ethers.getContractFactory("GovernanceV24");
     const governance = await Governance.deploy();
     console.log("governance deployed to:", governance.address);
 
@@ -355,10 +353,6 @@ describe("PoolFactory", function () {
     erc20Guard = <ERC20Guard>await ERC20Guard.deploy();
     erc20Guard.deployed();
 
-    const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
-    const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
-    await lendingEnabledAssetGuard.deployed();
-
     const SushiLPAssetGuard = await ethers.getContractFactory(
       "contracts/guards/assetGuards/SushiLPAssetGuard.sol:SushiLPAssetGuard",
     );
@@ -375,26 +369,13 @@ describe("PoolFactory", function () {
     await governance.setAssetGuard(1, erc20Guard.address);
     await governance.setAssetGuard(2, sushiLPAssetGuard.address);
     await governance.setAssetGuard(3, aaveLendingPoolAssetGuard.address);
-    await governance.setAssetGuard(4, lendingEnabledAssetGuard.address);
+    await governance.setAssetGuard(4, erc20Guard.address);
     await governance.setAssetGuard(5, quickLPAssetGuard.address);
     await governance.setContractGuard(synthetix.address, synthetixGuard.address);
     await governance.setContractGuard(uniswapV2Router.address, uniswapV2RouterGuard.address);
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3RouterGuard.address);
     await governance.setContractGuard(oneInchRouter.address, oneInchV4Guard.address);
     await governance.setContractGuard(sushiMiniChefV2.address, sushiMiniChefV2Guard.address);
-    await governance.setAddresses([
-      {
-        name: toBytes32("openAssetGuard"),
-        destination: openAssetGuard.address,
-      },
-      {
-        name: toBytes32("aaveProtocolDataProviderV2"),
-        destination: aaveProtocolDataProvider.address,
-      },
-    ]);
-
-    const openAssetGuardSetting = await poolFactory.getAddress(toBytes32("openAssetGuard"));
-    console.log("openAssetGuardSetting:", openAssetGuardSetting);
   });
 
   it("should be able to upgrade/set implementation logic", async function () {
@@ -408,17 +389,6 @@ describe("PoolFactory", function () {
 
     const poolLogicAddress = await poolFactory.getLogic(2);
     expect(poolLogicAddress).to.equal(poolLogic.address);
-  });
-
-  it("Should be able to set pool storage version", async function () {
-    await expect(poolFactory.connect(user1).setPoolStorageVersion(POOL_STORAGE_VERSION)).to.be.revertedWith(
-      "Ownable: caller is not the owner",
-    );
-
-    await poolFactory.setPoolStorageVersion(POOL_STORAGE_VERSION);
-
-    const poolStorageVersion = await poolFactory.poolStorageVersion();
-    expect(poolStorageVersion).to.equal(POOL_STORAGE_VERSION);
   });
 
   it("Should be able to createFund", async function () {
@@ -581,10 +551,6 @@ describe("PoolFactory", function () {
 
     //Other assets are not supported
     expect(await poolManagerLogicProxy.isSupportedAsset(slink)).to.be.false;
-
-    // check pool storage version
-    const poolVersion = await poolFactory.poolVersion(poolLogicProxy.address);
-    expect(poolVersion).to.equal(POOL_STORAGE_VERSION);
 
     // mock IMiniChefV2
     iMiniChefV2 = new ethers.utils.Interface(IMiniChefV2__factory.abi);
@@ -1422,27 +1388,6 @@ describe("PoolFactory", function () {
   it("Should exec transaction", async () => {
     const poolLogicManagerProxy = poolLogicProxy.connect(manager);
 
-    const exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.once(
-        "ExchangeFrom",
-        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-          event.removeListener();
-
-          resolve({
-            managerLogicAddress: managerLogicAddress,
-            sourceAsset: sourceAsset,
-            sourceAmount: sourceAmount,
-            destinationAsset: destinationAsset,
-            time: time,
-          });
-        },
-      );
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
-    });
-
     const sourceKey = susdKey;
     const sourceAmount = (100e18).toString();
     const destinationKey = sethKey;
@@ -1465,12 +1410,6 @@ describe("PoolFactory", function () {
 
     await synthetix.givenCalldataReturnUint(exchangeWithTrackingABI, (1e18).toString());
     await poolLogicManagerProxy.execTransaction(synthetix.address, exchangeWithTrackingABI);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const event: any = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(susd);
-    expect(event.sourceAmount).to.equal((100e18).toString());
-    expect(event.destinationAsset).to.equal(seth);
   });
 
   it("Should be able to approve", async () => {
@@ -1551,25 +1490,7 @@ describe("PoolFactory", function () {
     );
   });
 
-  it.skip("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
-    const exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3RouterGuard.once("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
-
-        resolve({
-          pool: pool,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
-    });
-
+  it("should be able to swap tokens on Uniswap v3 - direct swap", async () => {
     const sourceAmount = (100e18).toString();
     const IUniswapV3Router = await hre.artifacts.readArtifact(
       "contracts/interfaces/uniswapV3/IV3SwapRouter.sol:IV3SwapRouter",
@@ -1609,33 +1530,9 @@ describe("PoolFactory", function () {
     await uniswapV3Router.givenCalldataReturn(swapABI, []);
     swapABI = iUniswapV3Router.encodeFunctionData("exactInputSingle", [exactInputSingleParams]);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const event: any = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(susd);
-    expect(event.sourceAmount).to.equal(sourceAmount);
-    expect(event.destinationAsset).to.equal(seth);
   });
 
-  it.skip("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
-    const exchangeEvent = new Promise((resolve, reject) => {
-      uniswapV3RouterGuard.once("ExchangeFrom", (pool, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-        event.removeListener();
-
-        resolve({
-          pool: pool,
-          sourceAsset: sourceAsset,
-          sourceAmount: sourceAmount,
-          destinationAsset: destinationAsset,
-          time: time,
-        });
-      });
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 60000);
-    });
-
+  it("should be able to swap tokens on Uniswap v3 - multi swap", async () => {
     const sourceAmount = (100e18).toString();
     const IUniswapV3Router = await hre.artifacts.readArtifact(
       "contracts/interfaces/uniswapV3/IV3SwapRouter.sol:IV3SwapRouter",
@@ -1696,12 +1593,6 @@ describe("PoolFactory", function () {
     await uniswapV3Router.givenCalldataReturn(swapABI, []);
     swapABI = iUniswapV3Router.encodeFunctionData("exactInput", [exactInputParams]);
     await poolLogicProxy.connect(manager).execTransaction(uniswapV3Router.address, swapABI);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const event: any = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(susd);
-    expect(event.sourceAmount).to.equal(sourceAmount);
-    expect(event.destinationAsset).to.equal(seth);
   });
 
   it("Fails to execute 1inch swap exchange because bad destination asset", async () => {

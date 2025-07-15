@@ -4,6 +4,5 @@ coverage
 artifacts
 cache
 types
-*.json
 pnpm-lock.yaml
 lib

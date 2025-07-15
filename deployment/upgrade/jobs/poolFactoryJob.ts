@@ -24,18 +24,6 @@ export const poolFactoryJob: IJob<void> = async (
       const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
       const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
       console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
-      const poolFactoryImpl = await ethers.getContractAt("PoolFactory", newPoolFactoryLogic);
-      console.log("Initialising Impl");
-      try {
-        // If this script runs and then fails, on retry,
-        // The deploy contract will already be initialised.
-        await poolFactoryImpl.implInitializer();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (!e.error.message.includes("contract is already initialized")) {
-          throw e;
-        }
-      }
 
       await tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
 
@@ -90,19 +78,7 @@ export const poolFactoryJob: IJob<void> = async (
       await poolFactory.transferOwnership(addresses.protocolDaoAddress);
 
       const poolFactoryImplementation = await getImplementationAddress(ethers.provider, poolFactory.address);
-      const poolFactoryImpl = PoolFactory.attach(poolFactoryImplementation);
 
-      // There is a security issue where if we don't initialize the impl someone else can take take ownership
-      // Using this they can escalate to destroy the contract.
-      try {
-        await poolFactoryImpl.implInitializer();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (!e.error.message.includes("already initialized")) {
-          console.warn("PoolFactory implementation should be initialised");
-          throw e;
-        }
-      }
       await tryVerify(hre, poolFactoryImplementation, "contracts/PoolFactory.sol:PoolFactory", []);
 
       versions[config.newTag].contracts.PoolFactoryProxy = poolFactory.address;

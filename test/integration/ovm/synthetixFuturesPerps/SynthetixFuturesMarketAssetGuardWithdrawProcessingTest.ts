@@ -10,6 +10,7 @@ import { deployContracts, IDeployments } from "../../utils/deployContracts/deplo
 import { getAccountToken } from "../../utils/getAccountTokens";
 import { utils } from "../../utils/utils";
 import { PerpsV2TestHelpers } from "../synthetixPerpsV2/SynthetixPerpsV2TestHelpers";
+
 const { assets } = ovmChainData;
 
 export const CreateSynthetixFuturesMarketAssetGuardWithdrawProcessingTests = (
@@ -59,9 +60,12 @@ export const CreateSynthetixFuturesMarketAssetGuardWithdrawProcessingTests = (
       await poolLogicProxy.deposit(assets.susd, ONE_THOUSAND);
 
       keeperFee = await testHelpers.getMinKeeperFee(ovmChainData.perpsV2.addressResolver);
+      keeperFee = await poolManagerLogicProxy["assetValue(address,uint256)"](assets.susd, keeperFee); // Convert to USD
     });
 
     describe("WithdrawProcessing", () => {
+      utils.beforeAfterReset(beforeEach, afterEach);
+
       // Delayed closure of positions on withdrawal means that it's not possible to atomically close positions
       // Therefore closing position when margin is below minimum is no longer supported (reverts)
       it.skip("75% withdraw - short future - closes whole position when under minMargin", async () => {
@@ -292,7 +296,11 @@ export const CreateSynthetixFuturesMarketAssetGuardWithdrawProcessingTests = (
 
         // Assert all value is inside future
         expect(await susdProxy.balanceOf(poolLogicProxy.address)).to.equal(0);
-        const investorSusdBalanceBefore = await susdProxy.balanceOf(logicOwner.address);
+        const investorSusdBalanceBeforeWithdrawal = await susdProxy.balanceOf(logicOwner.address);
+        const usdBalanceOfInvestorBeforeWithdrawal = await poolManagerLogicProxy["assetValue(address,uint256)"](
+          assets.susd,
+          investorSusdBalanceBeforeWithdrawal,
+        );
 
         // Prepare withdrawal
         const totalFundValueBeforeWithdrawal = await poolManagerLogicProxy.totalFundValue();
@@ -309,23 +317,29 @@ export const CreateSynthetixFuturesMarketAssetGuardWithdrawProcessingTests = (
         const totalFundValueAfterWithdrawal = await poolManagerLogicProxy.totalFundValue();
         const positionAfter = await testHelpers.getPosition({ poolLogicProxy, marketAddress: ETH_FUTURES_MARKET });
 
-        const sUSDBalanceOfInvestorAfterWithdraw = await susdProxy.balanceOf(logicOwner.address);
+        const investorSusdBalanceAfterWithdrawal = await susdProxy.balanceOf(logicOwner.address);
         // Need to convert to USD value before comparing to totalFundValue (which is denominated in USD not sUSD)
-        const usdBalanceOfInvestorAfterWithdraw = await poolManagerLogicProxy["assetValue(address,uint256)"](
+        const usdBalanceOfInvestorAfterWithdrawal = await poolManagerLogicProxy["assetValue(address,uint256)"](
           assets.susd,
-          sUSDBalanceOfInvestorAfterWithdraw,
+          investorSusdBalanceAfterWithdrawal,
         );
 
         // Assert Funds Balance: should be lower by the portion of withdrawal
         expect(totalFundValueAfterWithdrawal).to.be.closeTo(
           totalFundValueBeforeWithdrawal.mul(3).div(4), // 3/4
-          totalFundValueBeforeWithdrawal.div(1000),
+          totalFundValueBeforeWithdrawal.div(1333), // not more than 0.075% deviation (SLIPPAGE_DURING_WITHDRAWAL)
         );
+
         // Assert Investors Balance: should receive the withdrawn funds minus the fees
-        expect(usdBalanceOfInvestorAfterWithdraw).to.be.closeTo(
-          investorSusdBalanceBefore.add(totalFundValueBeforeWithdrawal.div(4).sub(keeperFee)),
-          totalFundValueBeforeWithdrawal.div(1000),
+        const expectedUsdBalanceOfInvestorAfterWithdrawal = usdBalanceOfInvestorBeforeWithdrawal.add(
+          totalFundValueBeforeWithdrawal.div(4).sub(keeperFee),
         );
+        expect(usdBalanceOfInvestorAfterWithdrawal).to.be.lt(expectedUsdBalanceOfInvestorAfterWithdrawal);
+        expect(usdBalanceOfInvestorAfterWithdrawal).to.be.closeTo(
+          expectedUsdBalanceOfInvestorAfterWithdrawal,
+          usdBalanceOfInvestorAfterWithdrawal.div(800), // not more than 0.125% deviation (SLIPPAGE_DURING_WITHDRAWAL)
+        );
+
         // Assert Long/Short position should be partially closed and therefore leverage constant
         expect(positionAfter.margin).to.be.closeTo(
           positionBefore.margin.mul(3).div(4),
@@ -427,7 +441,7 @@ export const CreateSynthetixFuturesMarketAssetGuardWithdrawProcessingTests = (
           poolManager: manager,
           marketAddress: ETH_FUTURES_MARKET,
           margin: ONE_THOUSAND,
-          leverage: 1,
+          leverage: 2,
           isShort: false,
           baseAssetPrice: await assetHandler.getUSDPrice(assets.seth),
         });
@@ -478,9 +492,9 @@ export const CreateSynthetixFuturesMarketAssetGuardWithdrawProcessingTests = (
         await poolLogicProxy.connect(logicOwner).withdraw(balanceOfLogicOwner.mul(4).div(5));
         await testHelpers.executeOffchainDelayedOrder(ETH_FUTURES_MARKET, manager, poolLogicProxy);
         // Second withdrawal should fail because the temporary leverage after withdrawal is too high
-        await expect(
-          poolLogicProxy.connect(otherInvestor).withdraw(balanceOfOtherInvestor.mul(4).div(5)),
-        ).to.be.revertedWith("perp v2 withdrawal too large");
+        await expect(poolLogicProxy.connect(otherInvestor).withdraw(balanceOfOtherInvestor)).to.be.revertedWith(
+          "perp v2 withdrawal too large",
+        );
 
         const sUSDBalanceOfLogicOwner = await susdProxy.balanceOf(logicOwner.address);
         // Need to convert to USD value before comparing to totalFundValue (which is denominated in USD not sUSD)

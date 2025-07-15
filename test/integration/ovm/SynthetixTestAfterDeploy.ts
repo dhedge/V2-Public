@@ -16,7 +16,7 @@ const { assets, synthetix: SynthetixData } = ovmChainData;
 const versions: IVersions = JSON.parse(fs.readFileSync("./publish/ovm/prod/versions.json", "utf-8"));
 
 describe("Synthetix Test", function () {
-  let susdProxy: Contract, sethProxy: Contract, synthetix: Contract, synthetixGuard: Contract;
+  let susdProxy: Contract, sethProxy: Contract, synthetix: Contract;
   let logicOwner: SignerWithAddress, manager: SignerWithAddress;
   let PoolFactory: ContractFactory, PoolLogic: ContractFactory, PoolManagerLogic: ContractFactory;
   let poolFactory: Contract, poolLogicProxy: Contract, poolManagerLogicProxy: Contract, fundAddress: string;
@@ -56,8 +56,6 @@ describe("Synthetix Test", function () {
     if (!poolFactoryProxyAddress || !synthetixGuardAddress) {
       throw Error("Missing Address");
     }
-    const ISynthetixGuard = await artifacts.readArtifact("SynthetixGuard");
-    synthetixGuard = await ethers.getContractAt(ISynthetixGuard.abi, synthetixGuardAddress);
 
     poolFactory = PoolFactory.attach(poolFactoryProxyAddress);
   });
@@ -224,27 +222,6 @@ describe("Synthetix Test", function () {
   });
 
   it("should be able to swap tokens on synthetix.", async () => {
-    const exchangeEvent = new Promise((resolve, reject) => {
-      synthetixGuard.on(
-        "ExchangeFrom",
-        (managerLogicAddress, sourceAsset, sourceAmount, destinationAsset, time, event) => {
-          event.removeListener();
-
-          resolve({
-            managerLogicAddress: managerLogicAddress,
-            sourceAsset: sourceAsset,
-            sourceAmount: sourceAmount,
-            destinationAsset: destinationAsset,
-            time: time,
-          });
-        },
-      );
-
-      setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 600000);
-    });
-
     const sourceKey = SynthetixData.susdKey;
     const sourceAmount = (100e18).toString();
     const destinationKey = SynthetixData.sethKey;
@@ -286,12 +263,6 @@ describe("Synthetix Test", function () {
 
     await poolLogicProxy.connect(manager).execTransaction(synthetix.address, swapABI);
     expect(await sethProxy.balanceOf(poolLogicProxy.address)).to.be.gt(0);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const event: any = await exchangeEvent;
-    expect(event.sourceAsset).to.equal(assets.susd);
-    expect(event.sourceAmount).to.equal((100e18).toString());
-    expect(event.destinationAsset).to.equal(assets.seth);
   });
 
   it("should be able to withdraw", async function () {

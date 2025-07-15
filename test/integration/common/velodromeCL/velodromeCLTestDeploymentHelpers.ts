@@ -100,7 +100,6 @@ export const deployVelodromeCLInfrastructure = async (
     {
       rewardToken: testParams.protocolToken,
       linkedAssetTypes: [AssetType["Velodrome CL NFT Position Asset"]],
-      underlyingAssetType: 0,
     },
   ]);
   await rewardAssetGuard.deployed();

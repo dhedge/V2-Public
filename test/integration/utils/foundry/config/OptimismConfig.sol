@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.7.6;
+
+library OptimismConfig {
+  uint256 public constant CHAIN_ID = 10;
+
+  address public constant PROXY_ADMIN = 0x9FEE88a18479bf7f0D41Da03819538AA7A617730;
+
+  // dHEDGE Contracts
+  address public constant POOL_FACTORY_PROD = 0x5e61a079A178f0E5784107a4963baAe0c5a680c6;
+  address public constant NFT_TRACKER_PROD = 0xd0D2eB0F55F626Ac8ed144f9fE824e416F7e743D;
+  address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x82Fd96f88d7a9aA95880f94bD41f437280abf8b2;
+  address public constant USD_PRICE_AGGREGATOR_PROD = 0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7;
+  address public constant LEGACY_ONCHAIN_SWAP_ROUTER = 0x64a9c356bc131eDF1430C24F47e9dC735Ed237Ef;
+
+  // Tokens
+  address public constant USDC = 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85;
+  address public constant WETH = 0x4200000000000000000000000000000000000006;
+  address public constant WBTC = 0x68f180fcCe6836688e9084f035309E29Bf0A2095;
+  address public constant DAI = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1;
+  address public constant USDCe = 0x7F5c764cBc14f9669B88837ca1490cCa17c31607;
+  address public constant sUSD = 0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9;
+
+  // Oracles
+  address public constant WETH_CHAINLINK_ORACLE = 0x13e3Ee699D1909E989722E753853AE30b17e08c5;
+  address public constant USDC_CHAINLINK_ORACLE = 0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3;
+  address public constant DAI_CHAINLINK_ORACLE = 0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6;
+  address public constant WBTC_CHAINLINK_ORACLE = 0x718A5788b89454aAE3A028AE9c111A29Be6c2a6F;
+
+  // Toros Vaults
+  address public constant BTCBULL4X = 0x11b55966527FF030ca9c7B1c548B4bE5e7EaEe6D;
+  address public constant BTCBULL3X = 0xB03818de4992388260b62259361778CF98485dFE;
+  address public constant BTCBULL2X = 0x32Ad28356EF70adC3EC051D8AAcdEEaA10135296;
+  address public constant BTCBEAR1X = 0x83d1Fa384EC44C2769A3562EDe372484f26E141B;
+  address public constant ETHBULL3X = 0x32b1D1bFd4B3b0CB9FF2DcD9DAc757aA64d4cb69;
+  address public constant ETHBULL2X = 0x9573c7b691cDcEbBFa9D655181f291799dfB7Cf5;
+  address public constant ETHBEAR1X = 0xcACb5A722a36cFf6bAeB359e21C098a4ACbffDfa;
+  address public constant SOLBULL3X = 0xcC7d6ED524760539311ed0Cdb41D0852b4eb77eb;
+  address public constant SOLBULL2X = 0x7D3c9C6566375d7ad6e89169cA5C01B5Edc15364;
+  address public constant USDy = 0x1eC50880101022C11530A069690F5446d1464592;
+  address public constant ETHy = 0xb2cFb909e8657C0EC44D3dD898C1053b87804755;
+  address public constant USDmny = 0x49bF093277Bf4dDe49c48c6AA55A3bDA3eeDEF68;
+  address public constant USDpy = 0xB9243C495117343981EC9f8AA2ABfFEe54396Fc0;
+
+  // Auxiliary Contracts
+  address public constant SWAPPER = 0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D;
+  address public constant AAVE_V3_LENDING_POOL = 0x794a61358D6845594F94dc1DB02A252b5b4814aD;
+  address public constant UNISWAP_V3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+  address public constant UNISWAP_V3_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+  address public constant UNISWAP_V2_ROUTER = 0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2;
+  address public constant FLAT_MONEY_V2_ORDER_ANNOUNCEMENT_MODULE = 0xd917A0C9B21Bb71DF1209d2c211Ad83004F01554;
+}

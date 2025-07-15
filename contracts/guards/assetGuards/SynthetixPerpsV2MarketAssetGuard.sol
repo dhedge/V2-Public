@@ -39,20 +39,38 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
   // Any higher leverage than this could risk liquidation of the position during the temporary period.
   uint8 private constant MAX_LEVERAGE_DURING_WITHDRAWAL = 5;
 
+  // Constant for withdrawing slippage during withdrawal. The margin goes back to the vault.
+  uint256 private constant SLIPPAGE_DURING_WITHDRAWAL = 0.001e18; // 0.1%
+
+  mapping(address => uint256) private _customSlippage;
+
   struct Withdrawal {
     uint256 positionValue;
     int256 reduceDelta;
     uint256 margin;
     uint256 marginPortion;
+    uint256 portion;
     // These are the fees for closing this portion of the position
     // We account for it so that withdrawing doesn't negatively impact the performance of the pool
     uint256 tradeFee;
     uint256 keeperFee;
+    address pool;
   }
 
-  constructor(IAddressResolver _addressResolver, address _susdProxy) {
+  struct CustomSlippage {
+    address pool;
+    uint256 slippage;
+  }
+
+  constructor(IAddressResolver _addressResolver, address _susdProxy, CustomSlippage[] memory _customSlippageSettings) {
     addressResolver = IAddressResolver(_addressResolver);
     susdProxy = _susdProxy;
+
+    for (uint256 i; i < _customSlippageSettings.length; ++i) {
+      require(_customSlippageSettings[i].slippage <= 0.005e18, "slippage too high");
+
+      _customSlippage[_customSlippageSettings[i].pool] = _customSlippageSettings[i].slippage;
+    }
   }
 
   // 1     = 100%
@@ -100,6 +118,13 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
     uint256 marginSubFee = withdrawal.marginPortion > withdrawal.tradeFee.add(withdrawal.keeperFee)
       ? withdrawal.marginPortion.sub(withdrawal.tradeFee).sub(withdrawal.keeperFee)
       : 0;
+    {
+      uint256 portionSize = withdrawal.positionValue.mul(withdrawal.portion).div(10 ** 18);
+      marginSubFee = marginSubFee.sub(portionSize.mul(_pickSlippage(withdrawal.pool)).div(10 ** 18));
+    }
+
+    // TODO: should look to slightly decrease the reduceDelta also to maintain constant leverage on withdrawal
+
     // There can still be margin inside the contract even if there is no open position
     if (marginSubFee > 0) {
       // reduceDelta is a signed Int, for a short reduceDelta will be > 0 and for a long < 0
@@ -154,6 +179,13 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
     }
   }
 
+  function _pickSlippage(address pool) internal view returns (uint256 customSlippage) {
+    customSlippage = _customSlippage[pool];
+    if (customSlippage == 0) {
+      customSlippage = SLIPPAGE_DURING_WITHDRAWAL;
+    }
+  }
+
   /// @notice Creates transaction data for reducing a futures position by the portion
   /// @param pool Pool address
   /// @param asset PerpsV2Market
@@ -188,6 +220,8 @@ contract SynthetixPerpsV2MarketAssetGuard is ClosedAssetGuard {
     // Then we withdraw their porition of the margin to the user (transfer)
     // If this withdraw would cause the positions margin to drop below minMargin we (closePosition) and (withdrawAllMargin)
     Withdrawal memory withdrawal; // Note: this struct helps with stack too deep error
+    withdrawal.portion = portion;
+    withdrawal.pool = pool;
 
     IPerpsV2Market.Position memory position = IPerpsV2Market(asset).positions(pool);
     withdrawal.reduceDelta = -position.size.mul(int256(portion)).div(10 ** 18);

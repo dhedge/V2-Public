@@ -5,10 +5,12 @@ import { exec } from "child_process";
 import { Input } from "csv-stringify";
 import stringify from "csv-stringify/lib/sync";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { SafeService } from "@safe-global/safe-ethers-adapters";
-import Safe, { EthersAdapter, ContractNetworksConfig } from "@safe-global/protocol-kit";
+import Safe from "@safe-global/protocol-kit";
+import SafeApiKit from "@safe-global/api-kit";
 import { IProposeTxProperties, IUpgradeConfigProposeTx } from "./types";
 import { retryWithDelay } from "./utils";
+
+export type MetaTransactionData = Parameters<Safe["createTransactionBatch"]>[0][0];
 
 const execProm = util.promisify(exec);
 
@@ -149,88 +151,18 @@ export const proposeTx = async (
     return;
   }
 
-  // Initialize the Safe SDK
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { ethers } = require("hardhat");
-  const provider = ethers.provider;
-  const owner1 = provider.getSigner(0);
-  const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: owner1 });
-  const chainId = await ethAdapter.getChainId();
-
-  if (!addresses.gnosisApi || !addresses.gnosisMultiSendAddress) {
-    await owner1.sendTransaction({
-      from: owner1.getAddress(),
-      to: to,
-      data: data,
-    });
-    return;
-  }
-
-  const service = new SafeService(addresses.gnosisApi);
-
-  // NOTE: The following is only required in case we want to use custom deployed Safe contracts.
-  // This is a workaround for Base instead of updating Safe packages to latest which obviously include Base.
-  // Attempt to upgrade Safe packages led to `__classPrivateFieldGet(...).getBytes is not a function` error during `await safeSdk.signTransactionHash(txHash)` execution.
-  // I suspect this might be because we are using ethers v5 version (or maybe not). Anyway it's worth to give a try and update packages again some time later.
-  const contractNetworks: ContractNetworksConfig | undefined =
-    chainId === 8453
-      ? {
-          [8453]: {
-            multiSendAddress: addresses.gnosisMultiSendAddress,
-            safeMasterCopyAddress: "0xfb1bffC9d739B8D520DaF37dF666da4C687191EA",
-            safeProxyFactoryAddress: "0xC22834581EbC8527d974F8a1c97E1bEA4EF910BC",
-            multiSendCallOnlyAddress: "0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B",
-            fallbackHandlerAddress: "0x017062a1dE2FE6b99BE3d9d37841FeD19F573804",
-            signMessageLibAddress: "0x98FFBBF51bb33A056B08ddf711f289936AafF717",
-            createCallAddress: "0xB19D6FFc2182150F8Eb585b79D4ABcd7C5640A9d",
-          },
-        }
-      : undefined;
-
-  const chainSafeAddress: string = addresses.protocolDaoAddress;
-
-  // If we want to use custom deployment of Safe contracts, we need to add `contractNetworks` argument at the end.
-  const safeSdk = await Safe.create({
-    ethAdapter,
-    safeAddress: chainSafeAddress,
-    contractNetworks,
-  });
-
-  nonce = nonce
-    ? nonce
-    : await retryWithDelay(
-        () => getNonce(safeSdk, chainId, chainSafeAddress, config.restartnonce, config.useNonce),
-        "Gnosis Get Nonce",
-      );
-
-  const safeTransactionData = {
-    to: to,
-    value: "0",
-    data: data,
-    nonce: nonce,
-  };
-
-  const log = {
-    nonce: nonce,
-    message: message,
-  };
-
-  console.log("Proposing transaction: ", safeTransactionData);
-  console.log(`Nonce Log`, log);
-  nonceLog.push(log);
-
-  nonce += 1;
-
-  const safeTransaction = await safeSdk.createTransaction({ safeTransactionData });
-  // off-chain sign
-  const txHash = await safeSdk.getTransactionHash(safeTransaction);
-  const signature = await safeSdk.signTransactionHash(txHash);
-  // on-chain sign
-  // const approveTxResponse = await safeSdk.approveTransactionHash(txHash)
-  // console.log("approveTxResponse", approveTxResponse);
-  console.log("safeTransaction: ", safeTransaction);
-
-  await retryWithDelay(() => service.proposeTx(chainSafeAddress, txHash, safeTransaction, signature), "Gnosis safe");
+  await proposeTransactions(
+    [
+      {
+        to,
+        value: "0",
+        data,
+      },
+    ],
+    message,
+    config,
+    addresses,
+  );
 };
 
 export const executeInSeries = <T>(providers: (() => Promise<T>)[]): Promise<T[]> => {
@@ -246,4 +178,75 @@ export const executeInSeries = <T>(providers: (() => Promise<T>)[]): Promise<T[]
     return x;
   }, ret as Promise<void>);
   return reduced.then(() => results);
+};
+
+export const proposeTransactions = async (
+  safeTransactionData: MetaTransactionData[],
+  message: string,
+  config: IUpgradeConfigProposeTx,
+  addresses: IProposeTxProperties,
+) => {
+  const chainData = {
+    1: [process.env.ETHEREUM_URL, process.env.ETHEREUM_PRIVATE_KEY],
+    137: [process.env.POLYGON_URL, process.env.POLYGON_PRIVATE_KEY],
+    10: [process.env.OPTIMISM_URL, process.env.OVM_PRIVATE_KEY],
+    42161: [process.env.ARBITRUM_URL, process.env.ARBITRUM_PRIVATE_KEY],
+    8453: [process.env.BASE_URL, process.env.BASE_PRIVATE_KEY],
+  };
+
+  const [provider, signer] = chainData[config.chainId] ?? [];
+
+  if (!provider || !signer) throw new Error("Missing provider or signer: check env vars and chainData");
+
+  const safeAddress = addresses.protocolDaoAddress;
+  const safeSdk = await Safe.init({
+    signer,
+    provider,
+    safeAddress,
+  });
+  const apiKit = new SafeApiKit({
+    chainId: BigInt(config.chainId),
+  });
+
+  nonce =
+    nonce ??
+    (await retryWithDelay(
+      () => getNonce(safeSdk, config.chainId, safeAddress, config.restartnonce, config.useNonce),
+      "Safe Get Nonce",
+    ));
+
+  const options = {
+    nonce,
+  };
+  const log = {
+    nonce,
+    message,
+  };
+
+  console.log("Proposing transaction: ", safeTransactionData);
+  console.log("Nonce Log", log);
+  nonceLog.push(log);
+
+  nonce += 1;
+
+  const safeTransaction = await safeSdk.createTransaction({
+    transactions: safeTransactionData,
+    options,
+    onlyCalls: true,
+  });
+  const safeTxHash = await safeSdk.getTransactionHash(safeTransaction);
+  const safeSignature = await safeSdk.signHash(safeTxHash);
+  console.log("safeTransaction: ", safeTransaction);
+
+  await retryWithDelay(
+    () =>
+      apiKit.proposeTransaction({
+        safeAddress,
+        safeTransactionData: safeTransaction.data,
+        safeTxHash,
+        senderAddress: safeSignature.signer,
+        senderSignature: safeSignature.data,
+      }),
+    "SAFE Propose Transaction",
+  );
 };

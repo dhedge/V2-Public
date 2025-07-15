@@ -1,9 +1,9 @@
 import { baseChainData } from "../../../../config/chainData/baseData";
 import { units } from "../../../testHelpers";
+import { velodromeCLNonfungiblePositionGuardTest } from "../../common/velodromeCL/VelodromeNonfungiblePositionGuardTest";
 import { clGaugeContractGuardCommonTest } from "../../common/velodromeCL/CLGaugeContractGuardCommonTest";
 import { velodromeCLAssetGuardTest } from "../../common/velodromeCL/VelodromeCLAssetGuardTest";
 import { velodromeCLMultiplePositionTest } from "../../common/velodromeCL/VelodromeCLMultiplePositionTest";
-import { velodromeCLNonfungiblePositionGuardTest } from "../../common/velodromeCL/VelodromeNonfungiblePositionGuardTest";
 
 const { assets, assetsBalanceOfSlot } = baseChainData;
 

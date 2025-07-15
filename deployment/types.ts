@@ -4,11 +4,15 @@ import { BigNumber, BigNumberish } from "ethers";
 import { AllowedMarketStruct } from "../types/SynthetixV3SpotMarketContractGuard";
 import { VaultSettingStruct, WeeklyWindowsStruct } from "../types/SynthetixV3ContractGuard";
 import { RewardAssetSettingStruct } from "../types/RewardAssetGuard";
+import { PoolSettingStruct, VirtualTokenOracleSettingStruct } from "../types/GmxExchangeRouterContractGuard";
+import { CustomSlippageStruct } from "../types/SynthetixPerpsV2MarketAssetGuard";
+import { CrossChainBridgeStruct } from "../types/AcrossContractGuard";
 
 export interface IUpgradeConfigProposeTx {
   execute: boolean;
   restartnonce: boolean;
   useNonce: number;
+  chainId: number;
 }
 
 export type IUpgradeConfig = IUpgradeConfigProposeTx & {
@@ -29,7 +33,7 @@ export type IJob<T> = (
 export interface IFileNames {
   versionsFileName: string;
   assetsFileName: string;
-  governanceNamesFileName: string;
+  governanceNamesFileName?: string;
   contractGuardsFileName: string;
   assetGuardsFileName: string;
   // This file is an entry point for guards deprecation and is picked by a script. Copy here guards for deprecation.
@@ -106,9 +110,8 @@ interface IDeploymentsConfig {
   };
 
   aaveV3?: {
-    aaveProtocolDataProviderAddress: Address;
     aaveLendingPoolAddress: Address;
-    aaveIncentivesControllerAddress: Address;
+    aaveIncentivesControllerAddress?: Address;
   };
 
   aaveMigrationHelper?: {
@@ -120,6 +123,7 @@ interface IDeploymentsConfig {
   perpsV2?: {
     addressResolver: Address;
     whitelistedPools: Address[];
+    withdrawSlippageSettings: CustomSlippageStruct[];
   };
 
   arrakisV1?: {
@@ -135,7 +139,7 @@ interface IDeploymentsConfig {
     nativeAssetWrapper: Address;
     weth: Address;
     usdc?: Address;
-    dai: Address;
+    dai?: Address;
     susd?: Address;
     dht?: Address;
   };
@@ -152,7 +156,7 @@ interface IDeploymentsConfig {
     whitelistedPools: string[];
   }[];
 
-  easySwapperConfig: IEasySwapperConfig;
+  easySwapperConfig?: IEasySwapperConfig;
 
   superSwapper: {
     routeHints: { asset: Address; intermediary: Address }[];
@@ -231,16 +235,78 @@ interface IDeploymentsConfig {
   };
 
   easySwapperV2: IEasySwapperV2Config;
+
+  gmx?: {
+    feeReceiver: Address;
+    dataStore: Address;
+    reader: Address;
+    referralStorage: Address;
+    exchangeRouter: Address;
+    approvalRouter: Address;
+    dHedgeVaultsWhitelist: PoolSettingStruct[];
+    virtualTokenResolver: VirtualTokenOracleSettingStruct[];
+  };
+
+  angleProtocol?: {
+    distributor: Address;
+    rewardTokenSupported: Address;
+  };
+
+  poolLimitOrderManager: {
+    defaultSlippageTolerance: number;
+    settlementToken: Address;
+    authorizedKeeperAddresses: Address[];
+  };
+
+  pancakeswap?: {
+    nonfungiblePositionManager: Address;
+    masterChefV3: Address;
+  };
+
+  across?: {
+    spokePool: Address;
+    approvedDestinations: CrossChainBridgeStruct[];
+  };
+
+  sky?: {
+    psm3: Address;
+  };
+
+  flatMoneyOptions?: {
+    orderAnnouncementModule: Address;
+    orderExecutionModule: Address;
+    flatcoinVault: Address;
+  };
+
+  odosV2RouterAddress?: Address;
+
+  flatMoneyV2?: {
+    orderAnnouncementModule: Address;
+    orderExecutionModule: Address;
+    whitelistedVaults: {
+      poolLogic: Address;
+      withdrawalAsset: Address;
+    }[];
+  };
+
+  pendle?: {
+    pendleRouterV4: Address;
+    marketFactoryV3: Address;
+    knownMarkets: Address[];
+    yieldContractFactory: Address;
+    staticRouter: Address;
+  };
+
+  allowApproveGuard?: {
+    allowedSpender: Address;
+    tokensToSetGuardTo: Address[];
+  };
 }
 
 export type IProposeTxProperties = {
   protocolDaoAddress: Address;
   protocolTreasuryAddress: Address;
   proxyAdminAddress: Address;
-  // Gnosis safe multicall/send address
-  // https://github.com/gnosis/safe-deployments
-  gnosisMultiSendAddress: string;
-  gnosisApi: string;
 };
 
 export type IAddresses = IProposeTxProperties & IDeploymentsConfig;
@@ -336,7 +402,6 @@ export interface IContracts {
   SynthetixV3PerpsMarketContractGuard?: Address;
   SonneFinanceCTokenGuard?: Address;
   SonneFinanceComptrollerGuard?: Address;
-  WeeklyWindowsHelper?: Address;
   AaveMigrationHelperGuard?: Address;
   AaveDebtTokenContractGuard?: Address;
   FlatMoneyDelayedOrderContractGuard?: Address;
@@ -348,13 +413,27 @@ export interface IContracts {
   CompoundV3CometRewardsContractGuard?: Address;
   EasySwapperV2ContractGuard?: Address;
   RamsesNonfungiblePositionGuard?: Address;
+  GmxExchangeRouterContractGuard?: Address;
+  AngleDistributorContractGuard?: Address;
+  PancakeNonfungiblePositionGuard?: Address;
+  PancakeMasterChefV3Guard?: Address;
+  AcrossContractGuard?: Address;
+  SkyPSM3ContractGuard?: Address;
+  FlatMoneyOptionsOrderAnnouncementGuard?: Address;
+  FlatMoneyOptionsOrderExecutionGuard?: Address;
+  FluidTokenContractGuard?: Address;
+  OdosV2ContractGuard?: Address;
+  FlatMoneyV2OrderAnnouncementGuard?: Address;
+  FlatMoneyV2OrderExecutionGuard?: Address;
+  PendleRouterV4ContractGuard?: Address;
+  AllowApproveContractGuard?: Address;
+  AaveLendingPoolGuardV3L2Pool?: Address;
 
   // Asset Guards
   OpenAssetGuard: Address;
   ERC20Guard?: Address;
   SushiLPAssetGuard?: Address;
   LendingEnabledAssetGuard?: Address;
-  SynthetixLendingEnabledAssetGuard?: Address;
   QuickLPAssetGuard?: Address;
   AaveLendingPoolAssetGuardV2?: Address;
   AaveLendingPoolAssetGuardV3?: Address;
@@ -380,6 +459,21 @@ export interface IContracts {
   CompoundV3CometAssetGuard?: Address;
   RamsesCLAssetGuard?: Address;
   EasySwapperV2UnrolledAssetsGuard: Address;
+  GmxPerpMarketAssetGuard?: Address;
+  PancakeCLAssetGuard?: Address;
+  FlatMoneyOptionsMarketAssetGuard?: Address;
+  FlatMoneyCollateralLendingEnabledGuard?: Address;
+  FluidTokenAssetGuard?: Address;
+  FlatMoneyV2PerpMarketAssetGuard?: Address;
+  FlatMoneyV2UNITAssetGuard?: Address;
+  PendlePTAssetGuard?: Address;
+
+  // Libraries
+  WeeklyWindowsHelper?: Address;
+  GmxClaimableCollateralTrackerLib?: Address;
+  GmxHelperLib?: Address;
+  GmxAfterTxValidatorLib?: Address;
+  GmxAfterExcutionLib?: Address;
 
   DhedgeEasySwapperProxy: Address;
   DhedgeEasySwapper: Address;
@@ -396,6 +490,8 @@ export interface IContracts {
   EasySwapperV2Proxy: Address;
   WithdrawalVault: Address;
   WithdrawalVaultProxy: Address;
+  PoolLimitOrderManager: Address;
+  PoolLimitOrderManagerProxy: Address;
 }
 
 export type TDeployedAsset = TAssetConfig & { oracleAddress: string };
@@ -428,7 +524,13 @@ export type OracleType =
   | "RamsesTWAPAggregator"
   | "RamsesVariableLPAggregator"
   | "SonneFinancePriceAggregator"
-  | "FlatMoneyUNITPriceAggregator";
+  | "FlatMoneyUNITPriceAggregator"
+  | "ChainlinkPythPriceAggregator"
+  | "CustomCrossAggregator"
+  | "FluidTokenPriceAggregator"
+  | "PythPriceAggregator"
+  | "PendlePTPriceAggregator"
+  | "ERC4626PriceAggregator";
 
 export type ContractGuardType =
   | "BalancerV2GaugeContractGuard"
@@ -441,7 +543,8 @@ export type ContractGuardType =
   | "VelodromePairContractGuard"
   | "RamsesGaugeContractGuard"
   | "SonneFinanceCTokenGuard"
-  | "CompoundV3CometContractGuard";
+  | "CompoundV3CometContractGuard"
+  | "FluidTokenContractGuard";
 
 export type IVersion = {
   network: {
@@ -453,6 +556,9 @@ export type IVersion = {
   config: {
     easySwapperConfig?: IEasySwapperConfig;
     easySwapperV2?: IEasySwapperV2Config;
+    poolLimitOrderManager: {
+      authorizedKeeperAddresses: Address[];
+    };
   };
 };
 

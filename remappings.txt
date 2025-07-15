@@ -1,2 +1,6 @@
 forge-std/=lib/forge-std/src/
 @uniswap/=node_modules/@uniswap/
+@openzeppelin/v5/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/v5/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
+@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/

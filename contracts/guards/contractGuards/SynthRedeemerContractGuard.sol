@@ -41,12 +41,9 @@ contract SynthRedeemerContractGuard is TxDataUtils, IGuard, ITransactionTypes {
     address _poolManagerLogic,
     address,
     bytes calldata _data
-  ) external override returns (uint16 txType, bool isPublic) {
+  ) external view override returns (uint16 txType, bool isPublic) {
     if (getMethod(_data) == ISynthRedeemer.redeemAll.selector) {
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(susdProxy), "susd must be enabled asset");
-
-      IERC20[] memory synthProxies = abi.decode(getParams(_data), (IERC20[]));
-      emit SynthRedeem(IPoolManagerLogic(_poolManagerLogic).poolLogic(), synthProxies);
 
       txType = uint16(TransactionType.RedeemSynth);
       isPublic = true;

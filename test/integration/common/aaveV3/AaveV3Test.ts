@@ -21,7 +21,12 @@ import {
 } from "../../utils/deployContracts/deployBackboneContracts";
 import { utils } from "../../utils/utils";
 import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
-import { deployAaveV3TestInfrastructure, iLendingPool, IAaveV3TestParameters } from "./deployAaveV3TestInfrastructure";
+import {
+  deployAaveV3TestInfrastructure,
+  iLendingPool,
+  IAaveV3TestParameters,
+  getComplexAssetsData,
+} from "./deployAaveV3TestInfrastructure";
 
 export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
   describe("Aave V3 Test", () => {
@@ -84,7 +89,7 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
       // Should no be able to borrow non lending assets
       await expect(
         poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, borrowABI),
-      ).to.be.revertedWith("not borrow enabled");
+      ).to.be.revertedWith("unsupported assets");
     });
 
     it("Should be able to deposit usdc and receive overlying aTokens", async () => {
@@ -106,7 +111,7 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
       depositABI = iLendingPool.encodeFunctionData("deposit", [WETH.address, amount, poolLogicProxy.address, 0]);
       await expect(
         poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, depositABI),
-      ).to.be.revertedWith("unsupported deposit asset");
+      ).to.be.revertedWith("unsupported assets");
 
       depositABI = iLendingPool.encodeFunctionData("deposit", [
         testParams.assets.dai,
@@ -116,7 +121,7 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
       ]);
       await expect(
         poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, depositABI),
-      ).to.be.revertedWith("not lending enabled");
+      ).to.be.revertedWith("unsupported assets");
 
       depositABI = iLendingPool.encodeFunctionData("deposit", [USDC.address, amount, USDC.address, 0]);
       await expect(
@@ -238,7 +243,7 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
         withdrawABI = iLendingPool.encodeFunctionData("withdraw", [WETH.address, amount, poolLogicProxy.address]);
         await expect(
           poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, withdrawABI),
-        ).to.be.revertedWith("unsupported withdraw asset");
+        ).to.be.revertedWith("unsupported assets");
 
         withdrawABI = iLendingPool.encodeFunctionData("withdraw", [USDC.address, amount, USDC.address]);
         await expect(
@@ -265,7 +270,7 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
       it("Should be able to set reserve as collateral", async () => {
         let abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [testParams.assets.weth, true]);
         await expect(poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, abi)).to.be.revertedWith(
-          "unsupported asset",
+          "unsupported assets",
         );
 
         abi = iLendingPool.encodeFunctionData("setUserUseReserveAsCollateral", [USDC.address, false]);
@@ -293,11 +298,12 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
 
         await utils.increaseTime(86400);
 
-        await poolLogicProxy.withdraw(withdrawAmount);
+        const complexAssetsData = await getComplexAssetsData(deployments, testParams, poolLogicProxy, withdrawAmount);
+        await poolLogicProxy.withdrawSafe(withdrawAmount, complexAssetsData);
 
         const usdcBalanceAfter = await USDC.balanceOf(poolLogicProxy.address);
         const userUsdcBalanceAfter = await USDC.balanceOf(logicOwner.address);
-        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(80).div(100), 0.1);
+        checkAlmostSame(await poolManagerLogicProxy.totalFundValue(), totalFundValueBefore.mul(80).div(100), 0.02);
         checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.sub(units(2000, 6)), 0.01);
         checkAlmostSame(userUsdcBalanceAfter, userUsdcBalanceBefore.add(units(2000, 6)).add(units(2000, 6)), 0.001);
       });
@@ -373,7 +379,7 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
           ]);
           await expect(
             poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, repayABI),
-          ).to.be.revertedWith("unsupported repay asset");
+          ).to.be.revertedWith("unsupported assets");
 
           repayABI = iLendingPool.encodeFunctionData("repay", [WETH.address, amount, 2, USDC.address]);
           await expect(
@@ -410,7 +416,7 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
           let repayABI = iLendingPool.encodeFunctionData("repayWithATokens", [testParams.assets.dai, amount, 2]);
           await expect(
             poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, repayABI),
-          ).to.be.revertedWith("unsupported repay asset");
+          ).to.be.revertedWith("unsupported assets");
 
           repayABI = iLendingPool.encodeFunctionData("repayWithATokens", [WETH.address, amount, 2]);
           await expect(poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, repayABI)).to.be
@@ -457,73 +463,19 @@ export const testAaveV3 = (testParams: IAaveV3TestParameters) => {
           expect(wethBalanceBefore).to.be.equal(0);
 
           await utils.increaseTime(86400);
-          await poolLogicProxy.withdraw(withdrawAmount);
+
+          const complexAssetsData = await getComplexAssetsData(deployments, testParams, poolLogicProxy, withdrawAmount);
+          await poolLogicProxy.withdrawSafe(withdrawAmount, complexAssetsData);
 
           const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
+          const expectedTotalFundValueAfter = totalFundValueBefore.mul(90).div(100);
 
-          checkAlmostSame(totalFundValueAfter, totalFundValueBefore.mul(90).div(100), 0.1);
+          expect(totalFundValueAfter).to.be.gt(expectedTotalFundValueAfter);
+          checkAlmostSame(totalFundValueAfter, expectedTotalFundValueAfter, 0.02);
           const usdcBalanceAfter = await USDC.balanceOf(logicOwner.address);
           const wethBalanceAfter = await WETH.balanceOf(logicOwner.address);
           checkAlmostSame(usdcBalanceAfter, usdcBalanceBefore.add(1000e6), 0.001);
           expect(wethBalanceAfter).to.be.gt(units(1, 17));
-        });
-
-        it("Should be able to swap borrow rate mode", async () => {
-          let swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [USDC.address, 1]);
-
-          swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [testParams.assets.dai, 1]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, swapRateABI),
-          ).to.be.revertedWith("unsupported asset");
-
-          swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [USDC.address, 1]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, swapRateABI),
-          ).to.be.revertedWith("41");
-
-          swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [WETH.address, 1]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, swapRateABI),
-          ).to.be.revertedWith("41");
-
-          swapRateABI = iLendingPool.encodeFunctionData("swapBorrowRateMode", [WETH.address, 2]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, swapRateABI),
-          ).to.be.revertedWith("only variable rate"); // can't swap from variable to stable
-        });
-
-        it("Should be able to rebalance stable borrow rate", async () => {
-          let rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
-            testParams.assets.dai,
-            poolLogicProxy.address,
-          ]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, rebalanceAPI),
-          ).to.be.revertedWith("unsupported asset");
-
-          rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
-            USDC.address,
-            testParams.assets.weth,
-          ]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, rebalanceAPI),
-          ).to.be.revertedWith("user is not pool");
-
-          rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
-            USDC.address,
-            poolLogicProxy.address,
-          ]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, rebalanceAPI),
-          ).to.be.revertedWith("44");
-
-          rebalanceAPI = iLendingPool.encodeFunctionData("rebalanceStableBorrowRate", [
-            WETH.address,
-            poolLogicProxy.address,
-          ]);
-          await expect(
-            poolLogicProxy.connect(manager).execTransaction(testParams.lendingPool, rebalanceAPI),
-          ).to.be.revertedWith("44");
         });
 
         it("Should be able to claim rewards", async function () {

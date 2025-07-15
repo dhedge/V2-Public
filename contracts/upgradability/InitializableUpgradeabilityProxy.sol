@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 
-import "./BaseUpgradeabilityProxy.sol";
-import "../utils/AddressHelper.sol";
+import {BaseUpgradeabilityProxy} from "./BaseUpgradeabilityProxy.sol";
+import {AddressHelper} from "../utils/AddressHelper.sol";
 
 /**
  * @title InitializableUpgradeabilityProxy

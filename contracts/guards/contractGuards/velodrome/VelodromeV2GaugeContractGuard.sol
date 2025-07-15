@@ -22,39 +22,28 @@ contract VelodromeV2GaugeContractGuard is TxDataUtils, IGuard, ITransactionTypes
     address _poolManagerLogic,
     address _to,
     bytes calldata _data
-  ) external override returns (uint16 txType, bool) {
+  ) external view override returns (uint16 txType, bool) {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
 
     bytes4 method = getMethod(_data);
-    bytes memory params = getParams(_data);
 
     if (method == bytes4(keccak256("deposit(uint256)"))) {
-      uint256 amount = abi.decode(params, (uint256));
-
       address stakeToken = IVelodromeV2Gauge(_to).stakingToken();
       require(poolManagerLogicAssets.isSupportedAsset(stakeToken), "unsupported lp asset");
-
-      emit Stake(poolLogic, stakeToken, _to, amount, block.timestamp);
 
       txType = uint16(TransactionType.Stake);
     } else if (method == IVelodromeV2Gauge.withdraw.selector) {
-      uint256 amount = abi.decode(params, (uint256));
-
       address stakeToken = IVelodromeV2Gauge(_to).stakingToken();
       require(poolManagerLogicAssets.isSupportedAsset(stakeToken), "unsupported lp asset");
 
-      emit Unstake(poolLogic, stakeToken, _to, amount, block.timestamp);
-
       txType = uint16(TransactionType.Unstake);
     } else if (method == IVelodromeV2Gauge.getReward.selector) {
-      address account = abi.decode(params, (address));
+      address account = abi.decode(getParams(_data), (address));
       require(account == poolLogic, "invalid claimer");
 
       address rewardToken = IVelodromeV2Gauge(_to).rewardToken();
       require(poolManagerLogicAssets.isSupportedAsset(rewardToken), "enable reward token");
-
-      emit Claim(poolLogic, _to, block.timestamp);
 
       txType = uint16(TransactionType.Claim);
     }

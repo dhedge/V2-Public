@@ -6,7 +6,6 @@ pragma experimental ABIEncoderV2;
 import {TxDataUtils} from "../../../utils/TxDataUtils.sol";
 import {IGuard} from "../../../interfaces/guards/IGuard.sol";
 import {ICompoundV3Comet} from "../../../interfaces/compound/ICompoundV3Comet.sol";
-import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
 import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 
@@ -24,9 +23,6 @@ contract CompoundV3CometContractGuard is TxDataUtils, IGuard, ITransactionTypes 
     address to,
     bytes calldata data
   ) external view virtual override returns (uint16 txType, bool) {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-
     ICompoundV3Comet compoundV3Asset = ICompoundV3Comet(to);
 
     bytes4 method = getMethod(data);

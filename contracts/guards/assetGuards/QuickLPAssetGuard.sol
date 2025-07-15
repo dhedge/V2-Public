@@ -38,19 +38,18 @@ import "./ERC20Guard.sol";
 import "../../interfaces/quick/IStakingRewardsFactory.sol";
 import "../../interfaces/quick/IStakingRewards.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Quick LP token asset guard
 /// @dev Asset type = 5
-contract QuickLPAssetGuard is ERC20Guard, Ownable {
+contract QuickLPAssetGuard is ERC20Guard {
   using SafeMathUpgradeable for uint256;
 
   IStakingRewardsFactory public stakingRewardsFactory;
 
   /// @notice Initialise for the contract
   /// @param _stakingRewardsFactory Quickswap's staking rewards factory contract
-  constructor(address _stakingRewardsFactory) Ownable() {
+  constructor(address _stakingRewardsFactory) {
     // solhint-disable-next-line reason-string
     require(_stakingRewardsFactory != address(0), "_stakingRewardsFactory address cannot be 0");
     stakingRewardsFactory = IStakingRewardsFactory(_stakingRewardsFactory);

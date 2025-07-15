@@ -218,7 +218,7 @@ describe("dHEDGE Pool Deposit", () => {
       // Manager attempts to withdraw his portion of shares such that only 1 share remains.
       // This should fail as minimum share supply required in the pool is 100_000.
       await expect(poolLogicProxy.connect(manager).withdraw(sharesForManager.sub(1))).to.be.revertedWith(
-        "below supply threshold",
+        "below threshold",
       );
     });
 
@@ -1249,16 +1249,16 @@ describe("dHEDGE Pool Deposit", () => {
       expect(await poolLogicProxy.balanceOf(user1.address)).to.equal(amountToTransfer);
     });
 
-    it("cannot transfer private pool tokens to addresses not an allowed member", async () => {
+    it("can transfer private pool tokens to addresses not an allowed member (only mint whitelisting)", async () => {
       await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
       await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
 
       await poolLogicProxy.connect(manager).setPoolPrivate(true);
 
       const amountToTransfer = (await poolLogicProxy.balanceOf(investorAddress)).div(2);
-      await expect(poolLogicProxy.connect(investor).transfer(user1.address, amountToTransfer)).to.be.revertedWith(
-        "only members",
-      );
+      await poolLogicProxy.connect(investor).transfer(user1.address, amountToTransfer);
+
+      expect(await poolLogicProxy.balanceOf(user1.address)).to.equal(amountToTransfer);
     });
 
     it("can withdraw if member is not allowed but had private pool tokens before pool was set to private", async () => {
@@ -1351,20 +1351,30 @@ describe("dHEDGE Pool Deposit", () => {
   describe("Specific pool pausing works as expected", () => {
     it("can pause and unpause pool", async () => {
       expect(await poolFactory.pausedPools(poolLogicProxy.address)).to.equal(false);
-      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
       expect(await poolFactory.pausedPools(poolLogicProxy.address)).to.equal(true);
-      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: false }]);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: false }]);
       expect(await poolFactory.pausedPools(poolLogicProxy.address)).to.equal(false);
+    });
+
+    it("can pause and unpause pool for trading", async () => {
+      expect(await poolFactory.tradingPausedPools(poolLogicProxy.address)).to.equal(false);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
+      expect(await poolFactory.tradingPausedPools(poolLogicProxy.address)).to.equal(true);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: false }]);
+      expect(await poolFactory.tradingPausedPools(poolLogicProxy.address)).to.equal(false);
     });
 
     it("can't pause and unpause pool if not owner", async () => {
       await expect(
-        poolFactory.connect(investor).setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]),
+        poolFactory
+          .connect(investor)
+          .setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("can't deposit into paused pool", async () => {
-      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
       await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, amount)).to.be.revertedWith("pool paused");
       await expect(
         poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount),
@@ -1372,7 +1382,7 @@ describe("dHEDGE Pool Deposit", () => {
     });
 
     it("can't withdraw from paused pool", async () => {
-      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
       await expect(poolLogicProxy.connect(investor).withdraw(amount)).to.be.revertedWith("pool paused");
       await expect(poolLogicProxy.connect(investor).withdrawTo(investor.address, amount)).to.be.revertedWith(
         "pool paused",
@@ -1380,8 +1390,81 @@ describe("dHEDGE Pool Deposit", () => {
     });
 
     it("can't mint fees in paused pool", async () => {
-      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, paused: true }]);
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
       await expect(poolLogicProxy.mintManagerFee()).to.be.revertedWith("pool paused");
+    });
+
+    it("can't transfer shares of paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
+      await expect(poolLogicProxy.connect(investor).transfer(user1.address, amount)).to.be.revertedWith("pool paused");
+    });
+
+    it("can't transferFrom shares of paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
+      await expect(
+        poolLogicProxy.connect(investor).transferFrom(investorAddress, user1.address, amount),
+      ).to.be.revertedWith("pool paused");
+    });
+
+    it("can trade in paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
+      // Using mock data for execTransaction to make sure it doesn't revert on "trading paused"
+      const someTxData = usdcProxy.interface.encodeFunctionData("transfer", [poolLogicProxy.address, amount]);
+      await expect(poolLogicProxy.connect(manager).execTransaction(usdcAddress, someTxData)).to.be.revertedWith(
+        "invalid transaction",
+      );
+    });
+
+    it("can't trade in trading paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
+      await expect(
+        poolLogicProxy.connect(manager).execTransaction(ethers.constants.AddressZero, "0x"),
+      ).to.be.revertedWith("trading paused");
+      await expect(
+        poolLogicProxy.connect(manager).execTransactions([{ to: ethers.constants.AddressZero, data: "0x" }]),
+      ).to.be.revertedWith("trading paused");
+    });
+
+    it("can deposit into trading paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
+      await poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount);
+    });
+
+    it("can withdraw from trading paused pool", async () => {
+      await assetHandler.setChainlinkTimeout(9000000);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
+      await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
+
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
+      await poolLogicProxy.connect(investor).withdraw(amount);
+      await poolLogicProxy.connect(investor).withdrawTo(investor.address, amount);
+    });
+
+    it("can mint fees in trading paused pool", async () => {
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
+      await poolLogicProxy.mintManagerFee();
+    });
+
+    it("can transfer shares of trading paused pool", async () => {
+      await assetHandler.setChainlinkTimeout(9000000);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
+      await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
+
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
+      await poolLogicProxy.connect(investor).transfer(user1.address, await poolLogicProxy.balanceOf(investorAddress));
+    });
+
+    it("can transferFrom shares of trading paused pool", async () => {
+      await assetHandler.setChainlinkTimeout(9000000);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
+      await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
+
+      await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
+      await poolLogicProxy.connect(investor).approve(investorAddress, await poolLogicProxy.balanceOf(investorAddress));
+      await poolLogicProxy
+        .connect(investor)
+        .transferFrom(investorAddress, user1.address, await poolLogicProxy.balanceOf(investorAddress));
     });
   });
 

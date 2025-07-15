@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /* solhint-disable */
-pragma solidity >=0.4.22 <0.6;
+pragma solidity 0.7.6;
 
 contract WETH9 {
   string public name = "Wrapped Ether";
@@ -14,9 +15,6 @@ contract WETH9 {
   mapping(address => uint) public balanceOf;
   mapping(address => mapping(address => uint)) public allowance;
 
-  function() external payable {
-    deposit();
-  }
   function deposit() public payable {
     balanceOf[msg.sender] += msg.value;
     emit Deposit(msg.sender, msg.value);

@@ -25,15 +25,18 @@ library EasySwapperVelodromeCLHelpers {
       IHasGuardInfo(IPoolLogic(pool).factory()).getContractGuard(nonfungiblePositionManagerAddress)
     );
     uint256[] memory tokenIds = guard.getOwnedTokenIds(pool);
+    uint256 tokenIdsLength = tokenIds.length;
+
+    if (tokenIdsLength == 0) return assets;
 
     // Each position has two assets;
     // note: assume rewardToken is the same for each position as for Velodrome/Aerodrome CL
-    assets = new address[](tokenIds.length * 2 + 1);
+    assets = new address[](tokenIdsLength * 2 + 1);
     bool isRewardTokenSet;
     IVelodromeNonfungiblePositionManager nonfungiblePositionManager = IVelodromeNonfungiblePositionManager(
       nonfungiblePositionManagerAddress
     );
-    for (uint256 i = 0; i < tokenIds.length; ++i) {
+    for (uint256 i; i < tokenIdsLength; ++i) {
       (, , address token0, address token1, int24 tickSpacing, , , , , , , ) = nonfungiblePositionManager.positions(
         tokenIds[i]
       );

@@ -2416,7 +2416,7 @@
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
       "PoolFactory": "0x14A690b67062994b3b2e829AeD7d096C53Cc6A58",
-      "PoolLogic": "0x2E590e6DD1C425aAFa7611EDE935bC192494E4aE",
+      "PoolLogic": "0xC8fF6DD7a567aF8F6a64eAFD4033cf34f5749797",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
       "PoolManagerLogic": "0xE7A587b82c55DD6229df00Fe73880F6b23593054",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
@@ -2425,8 +2425,8 @@
       "UniswapV2RouterGuard": "0xef18E8271aA2B9657F17D3Fdefa9734aae9897ee",
       "SushiMiniChefV2Guard": "0x340c299d9Bc1196933278886280de26907d231f1",
       "SushiLPAssetGuard": "0xE4CF53e51f2F7d82a224aede3C36a8676cD28049",
-      "AaveLendingPoolAssetGuardV2": "0xd7E2b0eBF2b04237612163B95Cf8CceE1a906DCe",
-      "AaveLendingPoolAssetGuardV3": "0x63f1BE815a25601D9999A4Fd88B2539308c38E38",
+      "AaveLendingPoolAssetGuardV2": "0xaD2FFc3F8862690921C22cB7F5d4e9873a94503F",
+      "AaveLendingPoolAssetGuardV3": "0xA56033CC8B2a4339A7bE01d26f6A74fBD7Bd6DAb",
       "AaveLendingPoolGuardV2": "0xf5984f3d9E48FcA8fCbC74Ba8e5B784156963800",
       "AaveLendingPoolGuardV3": "0x8D5AC919A2E703Bd1848bdA16D5854cD58cdFb49",
       "LendingEnabledAssetGuard": "0x81d438E9baB6f7AAA9518B80E85D172062A4F57C",
@@ -2446,7 +2446,7 @@
       "UniswapV3NonfungiblePositionGuard": "0x29D45AdF45d7a68544C3BB3C84306d90ff8E3B74",
       "UniswapV3RouterGuard": "0x6FdBd1E5BD9f245491A70795305539877F26060E",
       "UniswapV3AssetGuard": "0xe0354b48EAe09405eCe07300A865FDB45c1341D1",
-      "DhedgeSuperSwapper": "0xBCd6F142c1E522bb6c421a2fAc93375e7da1a8c8",
+      "DhedgeSuperSwapper": "0xc22DA9433c732f7EFa1AF269D949Fd38CEf8c6a3",
       "ArrakisLiquidityGaugeV4AssetGuard": "0x358F165232d5C7b68F6Eae1Ac3848bC042B77a59",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6e0949ED2c3Fb19b445ED946C8A317639AEFCF04",
       "ArrakisV1RouterStakingGuard": "0xA7757Ab47adCC9E2cB08ACc967f6AB779B270a2F",
@@ -2464,15 +2464,31 @@
       "StargateLpStakingContractGuard": "0x62046FFEd342090540C8692f0A5b77ECE608DBaF",
       "StargateRouterContractGuard": "0x26595Ed91617D045Ed2D77D698C0a25b99Df6c2a",
       "StargateLPAssetGuard": "0xD000BdceE496bad6e06701DecF297324e687a47c",
-      "SlippageAccumulator": "0xd058DF1787B0c6134142Af16A639AC8993c8BD42",
-      "ZeroExContractGuard": "0x173ABbba2AdFBafE85430C37A248BB2AF686C05e"
+      "SlippageAccumulator": "0xDC0e6bcD72238517C69E2a83A83b7Db7B354C9fC",
+      "ZeroExContractGuard": "0x173ABbba2AdFBafE85430C37A248BB2AF686C05e",
+      "WithdrawalVaultProxy": "0xBB36B156C9012427065e84725965588D1062fD07",
+      "WithdrawalVault": "0x0E3eB84c5B7CA6D7BF55Ef74a48683Ff4991d211",
+      "EasySwapperV2Proxy": "0xfc02889E9459Ebc56840a79cB364924Fe3F054EB",
+      "EasySwapperV2": "0xC506EDe129E4984D6366c358707EbcD95909d0F8",
+      "EasySwapperV2ContractGuard": "0xc4048B59EA4B69FCfBC596734046C6aDC2280c47"
     },
     "network": {
       "name": "matic",
       "chainId": 137,
       "ensAddress": null
     },
-    "lastUpdated": "Sun, 25 Aug 2024 15:12:05 GMT",
-    "config": {}
+    "lastUpdated": "Sun, 08 Dec 2024 15:02:22 GMT",
+    "config": {
+      "easySwapperV2": {
+        "customCooldownDepositsWhitelist": [
+          "0x86c3dd18baf4370495d9228b58fd959771285c55",
+          "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+          "0x79d2aefe6a21b26b024d9341a51f6b7897852499",
+          "0x460b60565cb73845d56564384ab84bf84c13e47d",
+          "0x8987ca55e635d0d3ba9469ee31e9b8a7d447e9cc",
+          "0x7dab035a8a65f7d33f1628a450c6780323d3c5e1"
+        ]
+      }
+    }
   }
 }

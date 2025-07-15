@@ -97,6 +97,44 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "manager",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "entryFeeAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "EntryFeeMinted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "manager",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "exitFeeAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExitFeeMinted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "pool",
         "type": "address"
       },
@@ -371,7 +409,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "fundValue",
+        "name": "_fundValue",
         "type": "uint256"
       }
     ],
@@ -641,7 +679,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "sender",
+        "name": "_depositor",
         "type": "address"
       }
     ],
@@ -1103,9 +1141,26 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "_slippageTolerance",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "supportedAsset",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "withdrawData",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "slippageTolerance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IPoolLogic.ComplexAsset[]",
+        "name": "_complexAssetsData",
+        "type": "tuple[]"
       }
     ],
     "name": "withdrawSafe",
@@ -1144,9 +1199,26 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "_slippageTolerance",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "supportedAsset",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "withdrawData",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "slippageTolerance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IPoolLogic.ComplexAsset[]",
+        "name": "_complexAssetsData",
+        "type": "tuple[]"
       }
     ],
     "name": "withdrawToSafe",

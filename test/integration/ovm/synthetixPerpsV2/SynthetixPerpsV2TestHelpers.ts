@@ -98,10 +98,21 @@ export const perpsV2TestHelpers: FuturesTestHelpers & PerpsV2Helper = {
     const perpsV2MarketAssetGuard = await SynthetixPerpsV2MarketAssetGuard.deploy(
       ovmChainData.perpsV2.addressResolver,
       ovmChainData.assets.susd,
+      [],
     );
     await perpsV2MarketAssetGuard.deployed();
 
     await governance.setAssetGuard(AssetType["Synthetix PerpsV2 Market Asset"], perpsV2MarketAssetGuard.address);
+
+    // Increase the offchain order max age to 1 day so that execution doesn't revert with "order too old"
+    const addressResolver = await ethers.getContractAt("IAddressResolver", ovmChainData.perpsV2.addressResolver);
+    const perpsV2MarketSettingsAddress = await addressResolver.getAddress(toBytes32("PerpsV2MarketSettings"));
+    const perpsV2MarketSettings = await ethers.getContractAt("IPerpsV2MarketSettings", perpsV2MarketSettingsAddress);
+    const perpV2MarketSettingsOwner = await utils.impersonateAccount(await perpsV2MarketSettings.owner());
+    await perpsV2MarketSettings
+      .connect(perpV2MarketSettingsOwner)
+      .setOffchainDelayedOrderMaxAge(ovmChainData.synthetix.sethPerpKey, 86400);
+
     return perpsV2MarketAssetGuard;
   },
 
@@ -355,10 +366,6 @@ export const perpsV2TestHelpers: FuturesTestHelpers & PerpsV2Helper = {
       perpsV2Market = await ethers.getContractAt("IPerpsV2Market", perpsV2Market);
     }
 
-    await new Promise((f) => setTimeout(f, 20000)); // 20 sec
-    const timestamp = Number((Date.now() / 1000).toFixed(0));
-    await ethers.provider.send("evm_mine", [timestamp]);
-
     const connection = new EvmPriceServiceConnection("https://hermes.pyth.network"); // See Price Service endpoints section below for other endpoints
 
     const priceIds = [
@@ -400,9 +407,7 @@ export const perpsV2TestHelpers: FuturesTestHelpers & PerpsV2Helper = {
   increaseRealTime: async (seconds: number) => {
     // Increases real time which can be used to make sure new block timestamps are higher
     // and that the Pyth oracle API calls are not stale
-    await new Promise((f) => setTimeout(f, seconds * 1000));
-    const timestamp = Number((Date.now() / 1000).toFixed(0));
-    await ethers.provider.send("evm_mine", [timestamp]);
+    await utils.delay(seconds);
   },
   getFillPrice: async (perpsV2Market: IPerpsV2Market, size: BigNumber) => {
     let fillPrice = (await perpsV2Market.fillPrice(size)).price;

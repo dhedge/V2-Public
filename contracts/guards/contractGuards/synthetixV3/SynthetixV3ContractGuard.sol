@@ -162,7 +162,7 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
     address _poolManagerLogic,
     address _to,
     bytes memory _data
-  ) external override returns (uint16 txType, bool isPublic) {
+  ) external view override returns (uint16 txType, bool isPublic) {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
     require(msg.sender == poolLogic, "not pool logic");
@@ -185,8 +185,6 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       require(nftTracker.getDataCount(_getNftType(snxAccountNft), poolLogic) == 0, "only one account allowed");
 
       txType = uint16(TransactionType.SynthetixV3CreateAccount);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == ICollateralModule.deposit.selector) {
       (uint128 accountId, address collateralType) = abi.decode(params, (uint128, address));
 
@@ -200,8 +198,6 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       require(getAccountNftTokenId(poolLogic, _to) == accountId, "account not owned by pool");
 
       txType = uint16(TransactionType.SynthetixV3DepositCollateral);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == ICollateralModule.withdraw.selector) {
       (, address collateralType) = abi.decode(params, (uint128, address));
 
@@ -214,8 +210,6 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       require(poolManagerLogicAssets.isSupportedAsset(collateralType), "collateral asset must be enabled");
 
       txType = uint16(TransactionType.SynthetixV3WithdrawCollateral);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == IVaultModule.delegateCollateral.selector) {
       (txType, isPublic) = _verifyDelegateCollateral(params, poolLogic, _to, _poolManagerLogic, vaultSetting);
     } else if (method == IIssueUSDModule.mintUsd.selector) {
@@ -231,8 +225,6 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       require(windows.delegationWindow.isWithinAllowedWindow(block.timestamp), "outside delegation window");
 
       txType = uint16(TransactionType.SynthetixV3MintUSD);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == IIssueUSDModule.burnUsd.selector) {
       (uint128 accountId, uint128 poolId, address collateralType) = abi.decode(params, (uint128, uint128, address));
 
@@ -250,9 +242,9 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       );
 
       txType = uint16(TransactionType.SynthetixV3BurnUSD);
-
-      emit SynthetixV3Event(poolLogic, txType);
-    } else if (method == IRewardsManagerModule.claimRewards.selector) {
+    } else if (
+      method == IRewardsManagerModule.claimRewards.selector || method == IRewardsManagerModule.claimPoolRewards.selector
+    ) {
       (uint128 accountId, uint128 poolId, address collateralType, address distributor) = abi.decode(
         params,
         (uint128, uint128, address, address)
@@ -272,8 +264,6 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
       }
 
       txType = uint16(TransactionType.SynthetixV3ClaimReward);
-
-      emit SynthetixV3Event(poolLogic, txType);
     }
 
     return (txType, isPublic);
@@ -357,7 +347,7 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
     address _to,
     address _poolManagerLogic,
     SynthetixV3Structs.VaultSetting storage _vaultSetting
-  ) internal returns (uint16 txType, bool isPublic) {
+  ) internal view returns (uint16 txType, bool isPublic) {
     (uint128 accountId, uint128 poolId, address collateralType, uint256 newCollateralAmountD18, uint256 leverage) = abi
       .decode(_params, (uint128, uint128, address, uint256, uint256));
     // Delegate should happen only from the account owned by the pool
@@ -372,8 +362,6 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
     // During delegation window manager is free to do anything
     if (windows.delegationWindow.isWithinAllowedWindow(block.timestamp)) {
       txType = uint16(TransactionType.SynthetixV3DelegateCollateral);
-
-      emit SynthetixV3Event(_poolLogic, txType);
       // During undelegation window anyone is allowed to undelegate only
     } else if (windows.undelegationWindow.isWithinAllowedWindow(block.timestamp)) {
       // Total deposited = total available + total assigned
@@ -395,8 +383,6 @@ contract SynthetixV3ContractGuard is TxDataUtils, ITxTrackingGuard, ITransaction
 
       txType = uint16(TransactionType.SynthetixV3UndelegateCollateral);
       isPublic = true;
-
-      emit SynthetixV3Event(_poolLogic, txType);
       // Outside of delegation and undelegation windows nothing is allowed
     } else {
       revert("outside allowed windows");

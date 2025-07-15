@@ -1,10 +1,13 @@
 import { ethers } from "hardhat";
+import { BigNumber } from "ethers";
 
 import { IBackboneDeployments, IBackboneDeploymentsParams } from "../../utils/deployContracts/deployBackboneContracts";
-import { toBytes32 } from "../../../testHelpers";
 import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 import { assetSetting } from "../../utils/deployContracts/getChainAssets";
 import { IAaveV3Pool__factory } from "../../../../types";
+import { getOneInchSwapTransaction } from "../../utils/oneInchHelpers";
+import { ChainIds, utils } from "../../utils/utils";
+import { ComplexAssetStruct, PoolLogic } from "../../../../types/PoolLogic";
 
 export type IAaveV3TestParameters = IBackboneDeploymentsParams & {
   borrowAsset: string; // 18 decimals
@@ -29,6 +32,8 @@ export type IAaveV3TestParameters = IBackboneDeploymentsParams & {
   v2Routers: string[];
   incentivesController?: string;
   rewardToken?: string;
+  swapper: string;
+  chainId: ChainIds;
 };
 
 export const iLendingPool = new ethers.utils.Interface(IAaveV3Pool__factory.abi);
@@ -37,17 +42,6 @@ export const deployAaveV3TestInfrastructure = async (
   deployments: IBackboneDeployments,
   testParams: IAaveV3TestParameters,
 ) => {
-  const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
-  const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
-    testParams.protocolDataProvider,
-    testParams.lendingPool,
-  );
-  await aaveLendingPoolAssetGuard.deployed();
-  await deployments.governance.setAssetGuard(
-    AssetType["Aave V3 Lending Pool Asset"],
-    aaveLendingPoolAssetGuard.address,
-  );
-
   const AaveLendingPoolGuardV3L2Pool = await ethers.getContractFactory("AaveLendingPoolGuardV3L2Pool");
   const aaveLendingPoolGuardV3L2Pool = await AaveLendingPoolGuardV3L2Pool.deploy();
   await aaveLendingPoolGuardV3L2Pool.deployed();
@@ -88,16 +82,22 @@ export const deployAaveV3TestInfrastructure = async (
   const dhedgeSuperSwapper = await DhedgeSuperSwapper.deploy(uniV2LikeSwapRouters, routeHints);
   await dhedgeSuperSwapper.deployed();
 
-  await deployments.governance.setAssetGuard(
-    AssetType["Synthetix + LendingEnabled"],
-    deployments.lendingEnabledAssetGuard.address,
-  );
+  await deployments.governance.setAssetGuard(AssetType["Synthetix + LendingEnabled"], deployments.erc20Guard.address);
 
-  await deployments.governance.setAddresses([
-    { name: toBytes32("swapRouter"), destination: dhedgeSuperSwapper.address },
-    { name: toBytes32("aaveProtocolDataProviderV3"), destination: testParams.protocolDataProvider },
-    { name: toBytes32("weth"), destination: testParams.assets.weth },
-  ]);
+  const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
+  const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
+    testParams.lendingPool,
+    testParams.swapper,
+    dhedgeSuperSwapper.address,
+    5,
+    10_000,
+    10_000,
+  );
+  await aaveLendingPoolAssetGuard.deployed();
+  await deployments.governance.setAssetGuard(
+    AssetType["Aave V3 Lending Pool Asset"],
+    aaveLendingPoolAssetGuard.address,
+  );
 
   await deployments.assetHandler.addAssets([
     assetSetting(
@@ -114,4 +114,68 @@ export const deployAaveV3TestInfrastructure = async (
   ]);
 
   await deployments.assetHandler.setChainlinkTimeout(3600 * 24 * 7); // 1 week expiry
+};
+
+const getSupportedAssets = async (poolLogicProxy: PoolLogic) => {
+  const poolManagerLogicAddress = await poolLogicProxy.poolManagerLogic();
+  const poolManagerLogic = await ethers.getContractAt("PoolManagerLogic", poolManagerLogicAddress);
+  return poolManagerLogic.getSupportedAssets();
+};
+
+export const getComplexAssetsData = async (
+  deployments: Pick<IBackboneDeployments, "poolFactory">,
+  testParams: Pick<IAaveV3TestParameters, "lendingPool" | "swapper" | "chainId">,
+  poolLogicProxy: PoolLogic,
+  withdrawAmount: BigNumber,
+): Promise<ComplexAssetStruct[]> => {
+  const aaveAssetGuardAddress = await deployments.poolFactory.getAssetGuard(testParams.lendingPool);
+  const assetGuard = await ethers.getContractAt("AaveLendingPoolAssetGuard", aaveAssetGuardAddress);
+  const slippageTolerance = 60; // 0.6%
+  const { srcData, dstData } = await assetGuard.callStatic.calculateSwapDataParams(
+    poolLogicProxy.address,
+    withdrawAmount,
+    slippageTolerance,
+  );
+
+  const srcDataToEncode: unknown[] = [];
+  const routerKey = ethers.utils.formatBytes32String("ONE_INCH");
+
+  for (const { asset, amount } of srcData) {
+    const swapData = await getOneInchSwapTransaction({
+      src: asset,
+      amount,
+      dst: dstData.asset,
+      chainId: testParams.chainId,
+      from: testParams.swapper,
+      receiver: testParams.swapper,
+      version: "6.0",
+    });
+    srcDataToEncode.push([asset, amount, [routerKey, swapData]]);
+    await utils.delay(2);
+  }
+
+  const encodedSrcData = ethers.utils.defaultAbiCoder.encode(
+    ["tuple(address, uint256, tuple(bytes32, bytes))[]"],
+    [srcDataToEncode],
+  );
+  const withdrawData = ethers.utils.defaultAbiCoder.encode(
+    ["tuple(bytes, tuple(address, uint256), uint256)"],
+    [[encodedSrcData, [dstData.asset, dstData.amount], slippageTolerance]],
+  );
+
+  const supportedAssets = await getSupportedAssets(poolLogicProxy);
+  return supportedAssets.map(({ asset }) => ({
+    supportedAsset: asset,
+    withdrawData: asset === testParams.lendingPool ? withdrawData : [],
+    slippageTolerance: asset === testParams.lendingPool ? slippageTolerance : 0,
+  }));
+};
+
+export const getEmptyComplexAssetsData = async (poolLogicProxy: PoolLogic): Promise<ComplexAssetStruct[]> => {
+  const supportedAssets = await getSupportedAssets(poolLogicProxy);
+  return supportedAssets.map(({ asset }) => ({
+    supportedAsset: asset,
+    withdrawData: [],
+    slippageTolerance: 0,
+  }));
 };

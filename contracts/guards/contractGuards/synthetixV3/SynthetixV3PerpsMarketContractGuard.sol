@@ -83,7 +83,7 @@ contract SynthetixV3PerpsMarketContractGuard is
     address _poolManagerLogic,
     address _to,
     bytes memory _data
-  ) external override returns (uint16 txType, bool) {
+  ) external view override returns (uint16 txType, bool) {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
     require(msg.sender == poolLogic, "not pool logic");
@@ -106,8 +106,6 @@ contract SynthetixV3PerpsMarketContractGuard is
       require(nftTracker.getDataCount(_getNftType(snxPerpAccountNft), poolLogic) == 0, "only one account allowed");
 
       txType = uint16(TransactionType.SynthetixV3PerpsCreateAccount);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == IPerpsAccountModule.modifyCollateral.selector) {
       (uint128 accountId, uint128 synthMarketId, int256 amountDelta) = abi.decode(params, (uint128, uint128, int256));
       require(getAccountNftTokenId(poolLogic, _to) == accountId, "account not owned by pool");
@@ -134,8 +132,6 @@ contract SynthetixV3PerpsMarketContractGuard is
       }
 
       txType = uint16(TransactionType.SynthetixV3PerpsModifyCollateral);
-
-      emit SynthetixV3Event(poolLogic, txType);
     } else if (method == IAsyncOrderModule.commitOrder.selector) {
       (uint128 marketId, uint128 accountId, int128 sizeDelta, , , , ) = abi.decode(
         params,
@@ -151,8 +147,6 @@ contract SynthetixV3PerpsMarketContractGuard is
       _maxLeverageCheck(_to, marketId, accountId, sizeDelta);
 
       txType = uint16(TransactionType.SynthetixV3PerpsCommitOrder);
-
-      emit SynthetixV3Event(poolLogic, txType);
     }
     return (txType, false);
   }

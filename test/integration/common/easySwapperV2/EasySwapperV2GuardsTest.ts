@@ -14,6 +14,8 @@ import { getOneInchSwapTransaction } from "../../utils/oneInchHelpers";
 import { deployEasySwapperV2 } from "./EasySwapperV2Test";
 import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 import { SrcTokenSwapDetailsStruct } from "../../../../types/ISwapper";
+import { ComplexAssetStruct } from "../../../../types/IPoolLogic";
+import { getEmptyComplexAssetsData } from "../aaveV3/deployAaveV3TestInfrastructure";
 
 interface IEasySwapperV2GuardsTestData {
   assetsBalanceOfSlot: {
@@ -56,8 +58,8 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
       const EasySwapperV2ContractGuard = await ethers.getContractFactory("EasySwapperV2ContractGuard");
       const easySwapperV2ContractGuard = await EasySwapperV2ContractGuard.deploy(
         deployments.slippageAccumulator.address,
-        1,
-        100,
+        200, // 2% slippage max
+        10_000,
       );
       await easySwapperV2ContractGuard.deployed();
       await deployments.governance.setContractGuard(easySwapperV2.address, easySwapperV2ContractGuard.address);
@@ -86,7 +88,7 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
       await torosVaultManagerLogic.connect(manager).announceFeeIncrease(0, 0, 10, 0); // increase entry fee to 0.1%
       await torosVaultManagerLogic.connect(manager).commitFeeIncrease();
       await deployments.poolFactory.addCustomCooldownWhitelist(easySwapperV2.address);
-      await easySwapperV2.setCustomCooldownWhitelist([{ dHedgeVault: torosAssetAddress, whitelisted: true }]);
+      await easySwapperV2.setCustomCooldownWhitelist([{ toWhitelist: torosAssetAddress, whitelisted: true }]);
 
       const EasySwapperV2UnrolledAssetsGuard = await ethers.getContractFactory("EasySwapperV2UnrolledAssetsGuard");
       const easySwapperV2UnrolledAssetsGuard = await EasySwapperV2UnrolledAssetsGuard.deploy();
@@ -297,7 +299,7 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
         const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
           torosAssetAddress,
           torosAssetAmountToWithdraw,
-          0,
+          await getEmptyComplexAssetsData(torosAsset),
         ]);
 
         await poolLogicProxy.connect(manager).execTransaction(torosAssetAddress, approveTxData);
@@ -310,17 +312,143 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
         const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
           torosAssetAddress,
           0,
-          0,
+          await getEmptyComplexAssetsData(torosAsset),
         ]);
         await expect(
           poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData),
         ).to.be.revertedWith("unsupported destination asset");
       });
 
+      it("should revert during init withdrawal if slippage is too high", async () => {
+        const complexAssetsData: ComplexAssetStruct[] = [
+          { slippageTolerance: 2000, supportedAsset: USDC.address, withdrawData: [] },
+        ];
+        const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
+          torosAssetAddress,
+          0,
+          complexAssetsData,
+        ]);
+        await expect(
+          poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData),
+        ).to.be.revertedWith("beyond allowed slippage");
+      });
+
+      it("should revert during init withdrawal if slippage mismatch", async () => {
+        const withdrawData = ethers.utils.defaultAbiCoder.encode(
+          ["tuple(bytes, tuple(address, uint256), uint256)"],
+          [[[], [USDC.address, 0], 100]],
+        );
+        const complexAssetsData: ComplexAssetStruct[] = [
+          { slippageTolerance: 200, supportedAsset: USDC.address, withdrawData },
+        ];
+        const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
+          torosAssetAddress,
+          0,
+          complexAssetsData,
+        ]);
+        await expect(
+          poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData),
+        ).to.be.revertedWith("slippage tolerance mismatch");
+      });
+
+      it("should revert during init withdrawal if invalid dst address", async () => {
+        const withdrawData = ethers.utils.defaultAbiCoder.encode(
+          ["tuple(bytes, tuple(address, uint256), uint256)"],
+          [[[], [poolLogicProxy.address, 0], 200]],
+        );
+        const complexAssetsData: ComplexAssetStruct[] = [
+          { slippageTolerance: 200, supportedAsset: USDC.address, withdrawData },
+        ];
+        const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
+          torosAssetAddress,
+          0,
+          complexAssetsData,
+        ]);
+        await expect(
+          poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData),
+        ).to.be.revertedWith("invalid dst asset");
+      });
+
+      it("should revert during init withdrawal if invalid src address", async () => {
+        const srcDataToEncode = [[manager.address, 0, [ethers.constants.HashZero, []]]];
+        const encodedSrcData = ethers.utils.defaultAbiCoder.encode(
+          ["tuple(address, uint256, tuple(bytes32, bytes))[]"],
+          [srcDataToEncode],
+        );
+        const withdrawData = ethers.utils.defaultAbiCoder.encode(
+          ["tuple(bytes, tuple(address, uint256), uint256)"],
+          [[encodedSrcData, [USDC.address, 0], 200]],
+        );
+        const complexAssetsData: ComplexAssetStruct[] = [
+          { slippageTolerance: 200, supportedAsset: USDC.address, withdrawData },
+        ];
+        const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
+          torosAssetAddress,
+          0,
+          complexAssetsData,
+        ]);
+        await expect(
+          poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData),
+        ).to.be.revertedWith("invalid src asset");
+      });
+
+      it("should revert during init withdrawal if withdrawData is supplied to incorrect asset", async () => {
+        const torosAssetAmountToWithdraw = (await poolManagerLogicProxy.assetBalance(torosAssetAddress)).div(2);
+        const approveTxData = poolLogicProxy.interface.encodeFunctionData("approve", [
+          easySwapperV2.address,
+          torosAssetAmountToWithdraw,
+        ]);
+
+        const complexAssetsData = await getEmptyComplexAssetsData(poolLogicProxy);
+        const srcDataToEncode = [[USDC.address, 0, [ethers.constants.HashZero, []]]];
+        const encodedSrcData = ethers.utils.defaultAbiCoder.encode(
+          ["tuple(address, uint256, tuple(bytes32, bytes))[]"],
+          [srcDataToEncode],
+        );
+        const withdrawData = ethers.utils.defaultAbiCoder.encode(
+          ["tuple(bytes, tuple(address, uint256), uint256)"],
+          [[encodedSrcData, [USDC.address, 0], 0]],
+        );
+        complexAssetsData[0].withdrawData = withdrawData;
+        const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
+          torosAssetAddress,
+          0,
+          complexAssetsData,
+        ]);
+
+        await poolLogicProxy.connect(manager).execTransaction(torosAssetAddress, approveTxData);
+        await expect(
+          poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData),
+        ).to.be.revertedWith("invalid asset data");
+      });
+
       it("should allow manager to init withdrawal", async () => {
         const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
 
         await initWithdrawal();
+
+        const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
+
+        expect(totalFundValueBefore).to.be.equal(totalFundValueAfter);
+      });
+
+      it("should allow manager to init withdrawal with swap data", async () => {
+        const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
+
+        const torosAssetAmountToWithdraw = (await poolManagerLogicProxy.assetBalance(torosAssetAddress)).div(2);
+        const approveTxData = poolLogicProxy.interface.encodeFunctionData("approve", [
+          easySwapperV2.address,
+          torosAssetAmountToWithdraw,
+        ]);
+
+        const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
+          torosAssetAddress,
+          0,
+          await getEmptyComplexAssetsData(torosAsset),
+        ]);
+
+        await poolLogicProxy.connect(manager).execTransaction(torosAssetAddress, approveTxData);
+        await poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData);
 
         const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
 
@@ -572,7 +700,11 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
         // - easyswapperv2 asset: ~250 USDC
 
         await poolLogicProxy.approve(easySwapperV2.address, balanceToWithdraw);
-        await easySwapperV2.initWithdrawal(poolLogicProxy.address, balanceToWithdraw, 100);
+        await easySwapperV2.initWithdrawal(
+          poolLogicProxy.address,
+          balanceToWithdraw,
+          await getEmptyComplexAssetsData(poolLogicProxy),
+        );
         await easySwapperV2["completeWithdrawal()"]();
 
         const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
@@ -600,7 +732,11 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
         const balanceToWithdraw = (await poolLogicProxy.balanceOf(owner.address)).div(2);
 
         await poolLogicProxy.approve(easySwapperV2.address, balanceToWithdraw);
-        await easySwapperV2.initWithdrawal(poolLogicProxy.address, balanceToWithdraw, 100);
+        await easySwapperV2.initWithdrawal(
+          poolLogicProxy.address,
+          balanceToWithdraw,
+          await getEmptyComplexAssetsData(poolLogicProxy),
+        );
         await easySwapperV2["completeWithdrawal()"]();
 
         const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();

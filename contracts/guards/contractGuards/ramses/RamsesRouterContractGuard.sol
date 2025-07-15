@@ -22,7 +22,7 @@ contract RamsesRouterContractGuard is TxDataUtils, IGuard, ITransactionTypes {
     address _poolManagerLogic,
     address _to,
     bytes calldata _data
-  ) external override returns (uint16 txType, bool) {
+  ) external view override returns (uint16 txType, bool) {
     IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
 
@@ -43,8 +43,6 @@ contract RamsesRouterContractGuard is TxDataUtils, IGuard, ITransactionTypes {
 
       require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
 
-      emit AddLiquidity(poolLogic, pair, params, block.timestamp);
-
       txType = uint16(TransactionType.AddLiquidity);
     } else if (method == IVelodromeRouter.removeLiquidity.selector) {
       (address tokenA, address tokenB, bool stable, , , , address to) = abi.decode(
@@ -59,8 +57,6 @@ contract RamsesRouterContractGuard is TxDataUtils, IGuard, ITransactionTypes {
       address pair = IRamsesRouter(_to).pairFor(tokenA, tokenB, stable);
 
       require(poolManagerLogicAssets.isSupportedAsset(pair), "unsupported lp asset");
-
-      emit RemoveLiquidity(poolLogic, pair, params, block.timestamp);
 
       txType = uint16(TransactionType.RemoveLiquidity);
     }

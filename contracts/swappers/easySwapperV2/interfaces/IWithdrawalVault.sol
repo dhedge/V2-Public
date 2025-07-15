@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.6;
+pragma solidity >=0.7.6;
 pragma abicoder v2;
 
 import {ISwapper} from "../../../interfaces/flatMoney/swapper/ISwapper.sol";
@@ -19,9 +19,12 @@ interface IWithdrawalVault {
 
   function recoverAssets(uint256 _portion, address _to) external;
 
-  function swapToSingleAsset(MultiInSingleOutData calldata _swapData, uint256 _expectedDestTokenAmount) external;
+  function swapToSingleAsset(
+    MultiInSingleOutData calldata _swapData,
+    uint256 _expectedDestTokenAmount
+  ) external returns (uint256 destTokenAmount);
 
-  function unrollAssets(address _dHedgeVault, uint256 _slippageTolerance) external;
+  function unrollAssets(address _dHedgeVault) external;
 
   function getTrackedAssets() external view returns (TrackedAsset[] memory trackedAssets);
 }

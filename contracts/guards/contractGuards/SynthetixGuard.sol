@@ -71,6 +71,7 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     bytes calldata data
   )
     external
+    view
     override
     returns (
       uint16 txType, // transaction type
@@ -80,18 +81,12 @@ contract SynthetixGuard is TxDataUtils, IGuard {
     bytes4 method = getMethod(data);
 
     if (method == bytes4(keccak256("exchangeWithTracking(bytes32,uint256,bytes32,address,bytes32)"))) {
-      bytes32 srcKey = getInput(data, 0);
-      bytes32 srcAmount = getInput(data, 1);
       bytes32 dstKey = getInput(data, 2);
 
-      address srcAsset = getAssetProxy(srcKey);
       address dstAsset = getAssetProxy(dstKey);
 
-      IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
       IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
       require(poolManagerLogicAssets.isSupportedAsset(dstAsset), "unsupported destination asset");
-
-      emit ExchangeFrom(poolManagerLogic.poolLogic(), srcAsset, uint256(srcAmount), dstAsset, block.timestamp);
 
       txType = 2; // 'Exchange' type
     }

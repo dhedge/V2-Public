@@ -6,37 +6,23 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {CompoundV3CometAssetGuard} from "contracts/guards/assetGuards/CompoundV3CometAssetGuard.sol";
 import {CompoundV3CometContractGuard} from "contracts/guards/contractGuards/compound/CompoundV3CometContractGuard.sol";
-import {PoolFactory} from "contracts/PoolFactory.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
-import {Governance} from "contracts/Governance.sol";
-import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {ICompoundV3Comet} from "contracts/interfaces/compound/ICompoundV3Comet.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
 
-contract CompoundV3Test is Test {
+contract CompoundV3Test is ArbitrumSetup {
   uint256 internal FORK_BLOCK_NUMBER = 251583884;
 
-  // dHEDGE contracts and addresses
-  address internal owner = 0x13471A221D6A346556723842A1526C603Dc4d36B;
-  PoolFactory internal constant factory = PoolFactory(0xffFb5fB14606EB3a548C113026355020dDF27535);
-  PoolLogic internal constant poolLogicImplementation = PoolLogic(0x126ECA2B9C092DfA1f7CB15fA6D9c42D60649222);
-  PoolManagerLogic internal constant poolManagerLogicImplementation =
-    PoolManagerLogic(0x96142e2D9CD98F8B9dF8f1d2569956F0bd4f418a);
-  Governance internal constant governance = Governance(0x0b844847558A5814CD0d5Ca539AdF62A5486c826);
-  AssetHandler internal constant assetHandler = AssetHandler(0x1BaF125D53F65a708bCb5559c9a9fdD9D088eDe3);
-
   // Compound V3 and related contracts
-  address internal constant USDCAddy = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
+  address internal immutable USDCAddy;
   ICompoundV3Comet internal constant cUSDC = ICompoundV3Comet(0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf);
-  IERC20 internal constant USDC = IERC20(USDCAddy);
+  IERC20 internal immutable USDC;
   IERC20 internal constant cUSDCToken = IERC20(0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf);
 
   // Test contracts and addresses
-  address internal manager = makeAddr("manager");
-  address internal investor = makeAddr("investor");
   address[] internal accounts = [manager, investor];
 
   PoolLogic internal fund;
@@ -44,13 +30,13 @@ contract CompoundV3Test is Test {
   CompoundV3CometContractGuard internal compContractGuard;
   CompoundV3CometAssetGuard internal compAssetGuard;
 
-  function setUp() public {
-    vm.createSelectFork("arbitrum", FORK_BLOCK_NUMBER);
+  constructor() ArbitrumSetup(FORK_BLOCK_NUMBER) {
+    USDCAddy = usdcData.asset;
+    USDC = IERC20(usdcData.asset);
+  }
 
-    // Change the runtime code of the integration contracts.
-    // This allows us to add console logs in the contracts.
-    vm.etch(address(poolLogicImplementation), vm.getDeployedCode("PoolLogic.sol:PoolLogic"));
-    vm.etch(address(poolManagerLogicImplementation), vm.getDeployedCode("PoolManagerLogic.sol:PoolManagerLogic"));
+  function setUp() public override {
+    super.setUp();
 
     vm.startPrank(owner);
 
@@ -60,7 +46,7 @@ contract CompoundV3Test is Test {
 
     // Set the Compound V3 asset guard in the governance contract.
     governance.setAssetGuard({
-      assetType: 28, // Compound V3 Comet Asset
+      assetType: uint16(AssetTypeIncomplete.COMPOUND_V3_COMET),
       guardAddress: address(compAssetGuard)
     });
 
@@ -73,19 +59,16 @@ contract CompoundV3Test is Test {
     supportedAssets[1] = IHasSupportedAsset.Asset({asset: address(cUSDC), isDeposit: false});
 
     // Add cUSDC asset to the asset handler.
-    assetHandler.addAsset({
+    assetHandlerProxy.addAsset({
       asset: address(cUSDC),
-      assetType: 28,
-      aggregator: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3
+      assetType: uint16(AssetTypeIncomplete.COMPOUND_V3_COMET),
+      aggregator: usdcData.aggregator // USDC Chainlink oracle
     });
-
-    // Disable chainlink expiry timeout.
-    assetHandler.setChainlinkTimeout(86400 * 365); // 1 year
 
     vm.startPrank(manager);
 
     fund = PoolLogic(
-      factory.createFund({
+      poolFactoryProxy.createFund({
         _privatePool: false,
         _manager: manager,
         _managerName: "manager",
@@ -251,7 +234,7 @@ contract CompoundV3Test is Test {
 
     skip(1 days);
 
-    fund.withdrawSafe(fundTokenBalanceOfInvestorBefore, 10_000);
+    fund.withdraw(fundTokenBalanceOfInvestorBefore);
 
     assertEq(cUSDCToken.balanceOf(investor), 0, "Investor shouldn't receive cUSDC");
     assertGe(USDC.balanceOf(investor), USDCInvestorBalanceBefore, "Investor's USDC balance incorrect after withdrawal");

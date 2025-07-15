@@ -1,17 +1,13 @@
 import { InitType } from "./initialize";
 import { assert } from "chai";
 import csv from "csvtojson";
-
-import { toBytes32 } from "../deploymentHelpers";
 import { IContracts } from "../types";
 
 export const checkGovernance = async (initializeData: InitType) => {
-  const { namesFileName, assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;
+  const { assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;
 
   // Check Governance settings
   console.log("Checking Governance settings..");
-
-  const csvNames = (namesFileName && (await csv().fromFile(namesFileName))) || [];
 
   // Check governance guard mappings match the CSV
   const csvAssetGuards = await csv().fromFile(assetGuardsFileName);
@@ -71,20 +67,6 @@ export const checkGovernance = async (initializeData: InitType) => {
 
       assert(guardFound, `Contract guard ${name} couldn't be found in the Contract Guard CSV config file.`);
     }
-  }
-
-  // Check Governance nameToDestination mappings match the CSV
-  for (const csvName of csvNames) {
-    const destinationAddress = await governance.nameToDestination(toBytes32(csvName.name));
-
-    assert(
-      csvName.destination.toLowerCase() == destinationAddress.toLowerCase(),
-      `${
-        csvName.name
-      } Governance namesToDestination mapping doesn't match Names CSV. Governance contract: ${destinationAddress.toLowerCase()}, CSV: ${csvName.destination.toLowerCase()}`,
-    );
-
-    console.log(`nameToDestination ${csvName.name} mapping ok`);
   }
 
   console.log("Governance checks complete!");

@@ -3,6 +3,7 @@ pragma solidity >=0.7.6 <=0.8.10;
 
 abstract contract PriceOracle {
   /// @notice Indicator that this is a PriceOracle contract (for inspection)
+  // solhint-disable-next-line const-name-snakecase
   bool public constant isPriceOracle = true;
 
   /**

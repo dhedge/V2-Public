@@ -80,6 +80,17 @@ export const deployVelodromeV2Infrastructure = async (
   );
   await velodromeV2TwapAggregator.deployed();
 
+  const RewardAssetGuard = await ethers.getContractFactory("RewardAssetGuard");
+  const rewardAssetGuard = await RewardAssetGuard.deploy([
+    {
+      rewardToken: testParams.protocolToken,
+      linkedAssetTypes: [AssetType["Velodrome V2 LP/Gauge Asset"]],
+    },
+  ]);
+  await rewardAssetGuard.deployed();
+
+  await deployments.governance.setAssetGuard(AssetType["Reward Asset"], rewardAssetGuard.address);
+
   await deployments.assetHandler.addAssets([
     assetSetting(
       testParams.VARIABLE_WETH_USDC.poolAddress,
@@ -91,11 +102,7 @@ export const deployVelodromeV2Infrastructure = async (
       AssetType["Velodrome V2 LP/Gauge Asset"],
       velodromeUsdcDaiV2Aggregator.address,
     ),
-    assetSetting(
-      testParams.protocolToken,
-      AssetType["Chainlink direct USD price feed with 8 decimals"],
-      velodromeV2TwapAggregator.address,
-    ),
+    assetSetting(testParams.protocolToken, AssetType["Reward Asset"], velodromeV2TwapAggregator.address),
   ]);
 
   const PROTOCOL_TOKEN = <IERC20>await ethers.getContractAt(IERC20Path, testParams.protocolToken);

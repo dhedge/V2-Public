@@ -13,9 +13,12 @@
     "assetAddress": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     "assetType": "4",
     "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+      "chainlinkOracleMaxAge": 90000,
+      "chainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
+      "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+      "pythPriceId": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
     },
-    "oracleType": "ChainlinkAggregator"
+    "oracleType": "ChainlinkPythPriceAggregator"
   },
   {
     "assetName": "USDT",
@@ -56,11 +59,14 @@
   {
     "assetName": "WBTC",
     "assetAddress": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
-    "assetType": "4",
+    "assetType": "22",
     "specificOracleConfig": {
-      "chainlinkOracleAddress": "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
+      "chainlinkOracleMaxAge": 90000,
+      "chainlinkOracleAddress": "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57",
+      "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+      "pythPriceId": "0xc9d8b075a5c69303365ae23633d4e085199bf5c520a3b90fed1322a0342ffc33"
     },
-    "oracleType": "ChainlinkAggregator"
+    "oracleType": "ChainlinkPythPriceAggregator"
   },
   {
     "assetName": "LINK",
@@ -132,7 +138,7 @@
     "specificOracleConfig": {
       "chainlinkOracleAddress": "0x383b3624478124697BEF675F07cA37570b73992f"
     },
-    "oracleType": "ChainlinkAggregator"    
+    "oracleType": "ChainlinkAggregator"
   },
   {
     "assetName": "Aave Lending Pool V3",
@@ -167,9 +173,12 @@
     "assetAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
     "assetType": "4",
     "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+      "chainlinkOracleMaxAge": 90000,
+      "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
+      "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+      "pythPriceId": "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a"
     },
-    "oracleType": "ChainlinkAggregator"
+    "oracleType": "ChainlinkPythPriceAggregator"
   },
   {
     "assetName": "ARB",
@@ -191,42 +200,6 @@
     "assetAddress": "0xad38255febd566809ae387d5be66ecd287947cb9",
     "assetType": "0",
     "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Synthetix V3 Position",
-    "assetAddress": "0xffffffaEff0B96Ea8e4f94b2253f31abdD875847",
-    "assetType": "103",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-    }
-  },
-  {
-    "assetName": "sUSDC - Synthetic USD Coin",
-    "assetAddress": "0xE81Be4495f138FAE5846d21AC2cA822BEf452365",
-    "assetType": "0",
-    "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
-    },
-    "oracleType": "ChainlinkAggregator"
-  },
-  {
-    "assetName": "USDx",
-    "assetAddress": "0xb2F30A7C980f052f02563fb518dcc39e6bf38175",
-    "assetType": "0",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-    },
-    "oracleType": "USDPriceAggregator"
-  },
-  {
-    "assetName": "sgETH",
-    "assetAddress": "0xB2393C436a29edc40BA90b9944edB84466565E0c",
-    "assetType": "0",
-    "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
-    },
-    "oracleType": "ChainlinkAggregator"
   },
   {
     "assetName": "Wrapped OETH",
@@ -276,9 +249,12 @@
     "assetAddress": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
     "assetType": "0",
     "specificOracleConfig": {
-      "chainlinkOracleAddress": "0xE808488e8627F6531bA79a13A9E0271B39abEb1C"
+      "chainlinkOracleMaxAge": 90000,
+      "chainlinkOracleAddress": "0xE808488e8627F6531bA79a13A9E0271B39abEb1C",
+      "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+      "pythPriceId": "0x56a3121958b01f99fdc4e1fd01e81050602c7ace3a571918bb55c6a96657cca9"
     },
-    "oracleType": "ChainlinkAggregator"
+    "oracleType": "ChainlinkPythPriceAggregator"
   },
   {
     "assetName": "EasySwapperV2 Unrolled Assets",
@@ -288,5 +264,232 @@
     "specificOracleConfig": {
       "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
     }
+  },
+  {
+    "assetName": "Toros Bitcoin Bear 1X",
+    "assetAddress": "0x27D8FDb0251B48D8EdD1Ad7bEDf553cF99AbE7B0",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "GMX Market BTC/USD [tBTC]",
+    "assetAddress": "0xd62068697bCc92AF253225676D618B0C9f17C663",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "GMX Market SOL/USD [WSOL-USDC]",
+    "assetAddress": "0x09400D9DB990D5ed3f35D7be61DfAEB900Af03C9",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "Wrapped SOL",
+    "assetAddress": "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleMaxAge": 90000,
+      "chainlinkOracleAddress": "0x24ceA4b8ce57cdA5058b924B9B9987992450590c",
+      "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+      "pythPriceId": "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d"
+    },
+    "oracleType": "ChainlinkPythPriceAggregator"
+  },
+  {
+    "assetName": "GMX Market BTC/USD [WBTC-USDC]",
+    "assetAddress": "0x47c031236e19d024b42f8AE6780E44A573170703",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "GMX Market ETH/USD [WETH-USDC]",
+    "assetAddress": "0x70d95587d40A2caf56bd97485aB3Eec10Bee6336",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "GMX Market ETH/USD [WETH]",
+    "assetAddress": "0x450bb6774Dd8a756274E0ab4107953259d2ac541",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "weETH",
+    "assetAddress": "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
+    "assetType": "0",
+    "oracleType": "ETHCrossAggregator",
+    "specificOracleConfig": {
+      "assetToEthChainlinkOracleAddress": "0xE141425bc1594b8039De6390db1cDaf4397EA22b",
+      "ethToUsdChainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+    }
+  },
+  {
+    "assetName": "Pancakeswap NonfungiblePositionManager",
+    "assetAddress": "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
+    "assetType": "31",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "USDS",
+    "assetAddress": "0x6491c05A82219b8D1479057361ff1654749b876b",
+    "assetType": "0",
+    "oracleType": "ChainlinkAggregator",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x37833E5b3fbbEd4D613a3e0C354eF91A42B81eeB"
+    }
+  },
+  {
+    "assetName": "sUSDS",
+    "assetAddress": "0xdDb46999F8891663a8F2828d25298f70416d7610",
+    "assetType": "0",
+    "oracleType": "CustomCrossAggregator",
+    "specificOracleConfig": {
+      "tokenToTokenAggregator": "0x84AB0c8C158A1cD0d215BE2746cCa668B79cc287",
+      "tokenToUsdAggregator": "0x37833E5b3fbbEd4D613a3e0C354eF91A42B81eeB"
+    }
+  },
+  {
+    "assetName": "Flat Money Options Market",
+    "assetAddress": "0xb1353d51991e79fefD4bFdBa2A03e9f0232814A6",
+    "assetType": "32",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "Fluid USDC",
+    "assetAddress": "0x1A996cb54bb95462040408C06122D45D6Cdb6096",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "Fluid WETH",
+    "assetAddress": "0x45Df0656F8aDf017590009d2f1898eeca4F0a205",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "Fluid USDT",
+    "assetAddress": "0x4A03F37e7d3fC243e3f99341d36f4b829BEe5E03",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "Fluid sUSDS",
+    "assetAddress": "0x3459fcc94390C3372c0F7B4cD3F8795F0E5aFE96",
+    "assetType": "34",
+    "oracleType": "FluidTokenPriceAggregator",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+    },
+    "specificContractGuardConfig": {
+      "contractGuard": "FluidTokenContractGuard"
+    }
+  },
+  {
+    "assetName": "GMX Market SUI/USD [WETH-USDC]",
+    "assetAddress": "0x6Ecf2133E2C9751cAAdCb6958b9654baE198a797",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "Toros Bitcoin Bull 2X",
+    "assetAddress": "0xe3254397f5D9C0B69917EBb49B49e103367B406f",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros Ethereum Bull 2X",
+    "assetAddress": "0x696f6d66C2da2AA4A400a4317EEC8da88f7A378c",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros Ethereum Bear 1X",
+    "assetAddress": "0x40d30B13666c55B1F41eE11645B5ea3Ea2CA31f8",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "GMX Market DOGE/USD [WETH-USDC]",
+    "assetAddress": "0x6853EA96FF216fAb11D2d930CE3C508556A4bdc4",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "Toros Solana 1X",
+    "assetAddress": "0xA6686c9C6bC90F84E3fb77C3d5417fd66bc05697",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros Sui 1X",
+    "assetAddress": "0xC8f346c8045fa911eAC2FFef628e0c5FcDb445bD",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "GMX Market XRP/USD [WETH-USDC]",
+    "assetAddress": "0x0CCB4fAa6f1F1B30911619f1184082aB4E25813c",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "Toros Doge 1X",
+    "assetAddress": "0x06ABBA36D0991A83e75f54dBB2a8Dc91F30f8C78",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros XRP 1X",
+    "assetAddress": "0x1369E0F1520671cd0748984c40955F6A6aF40487",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
   }
 ]

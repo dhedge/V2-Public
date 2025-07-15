@@ -32,7 +32,7 @@ export const UniswapV3PureTest = (
     token1Decimals: number;
   },
 ) => {
-  describe("UniswapV3AssetGuardTest", function () {
+  describe("UniswapV3PureTest", function () {
     let logicOwner: SignerWithAddress;
 
     let nonfungiblePositionManager: INonfungiblePositionManager;

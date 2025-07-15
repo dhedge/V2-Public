@@ -18,7 +18,6 @@ const testParams: IRamsesCLTestParams[] = [
       {
         rewardToken: assets.arb,
         linkedAssetTypes: [AssetType["Ramses CL NFT Position Asset"]],
-        underlyingAssetType: AssetType["Lending Enable Asset"],
       },
     ],
     rewardTokensPriceFeeds: [arbitrumChainData.usdPriceFeeds.arb],
@@ -47,7 +46,6 @@ const testParams: IRamsesCLTestParams[] = [
       {
         rewardToken: assets.arb,
         linkedAssetTypes: [AssetType["Ramses CL NFT Position Asset"]],
-        underlyingAssetType: AssetType["Lending Enable Asset"],
       },
     ],
     rewardTokensPriceFeeds: [arbitrumChainData.usdPriceFeeds.arb],

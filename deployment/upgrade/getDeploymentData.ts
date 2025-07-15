@@ -1,15 +1,16 @@
 import { IAddresses, IFileNames } from "../types";
 
 import {
-  polygonProdAddresses,
+  polygonProdData,
   polygonProdFileNames,
-  polygonStagingAddresses,
+  polygonStagingData,
   polygonStagingFileNames,
   switchPolygonOzFile,
 } from "../polygon/deploymentData";
-import { ovmProdAddresses, ovmProdFileNames } from "../ovm/deploymentData";
+import { optimismProdData, ovmProdFileNames } from "../ovm/deploymentData";
 import { arbitrumProdData, arbitrumProdFileNames } from "../arbitrum/deploymentData";
 import { baseProdData, baseProdFileNames } from "../base/deploymentData";
+import { ethereumProdData, ethereumProdFileNames } from "../ethereum/deploymentData";
 
 export interface IDeploymentData {
   addresses: IAddresses;
@@ -22,18 +23,18 @@ export const getDeploymentData = (chainId: number, deployment: "staging" | "prod
     case "137-staging":
       switchPolygonOzFile(false);
       return {
-        addresses: polygonStagingAddresses,
+        addresses: polygonStagingData,
         filenames: polygonStagingFileNames,
       };
     case "137-production":
       switchPolygonOzFile(true);
       return {
-        addresses: polygonProdAddresses,
+        addresses: polygonProdData,
         filenames: polygonProdFileNames,
       };
     case "10-production":
       return {
-        addresses: ovmProdAddresses,
+        addresses: optimismProdData,
         filenames: ovmProdFileNames,
       };
     case "42161-production":
@@ -46,13 +47,18 @@ export const getDeploymentData = (chainId: number, deployment: "staging" | "prod
         addresses: baseProdData,
         filenames: baseProdFileNames,
       };
+    case "1-production":
+      return {
+        addresses: ethereumProdData,
+        filenames: ethereumProdFileNames,
+      };
     // Useful for testing with hardhat local fork node.
     // Note that if any upgrade script runs successfully, the version
     // file corresponding to the addresses and filenames used will be updated.
     // Revert the changes in the versions file in that case.
     case "31337-production":
       return {
-        addresses: ovmProdAddresses,
+        addresses: optimismProdData,
         filenames: ovmProdFileNames,
       };
   }

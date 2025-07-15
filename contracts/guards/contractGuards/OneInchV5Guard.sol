@@ -15,9 +15,6 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
 import "../../utils/TxDataUtils.sol";
 import "../../interfaces/guards/IGuard.sol";
 import "../../interfaces/uniswapV2/IUniswapV2Pair.sol";
@@ -49,6 +46,7 @@ contract OneInchV5Guard is TxDataUtils, IGuard {
     bytes calldata data
   )
     external
+    view
     override
     returns (
       uint16 txType, // transaction type
@@ -68,11 +66,7 @@ contract OneInchV5Guard is TxDataUtils, IGuard {
 
       require(permit.length == 0, "swap without permit");
 
-      _verifyExchange(
-        SwapData(desc.srcToken, desc.dstToken, desc.amount, to),
-        poolManagerLogicAssets,
-        poolManagerLogic
-      );
+      _verifyExchange(SwapData(desc.srcToken, desc.dstToken, desc.amount, to), poolManagerLogicAssets);
 
       require(poolManagerLogic.poolLogic() == desc.dstReceiver, "recipient is not pool");
 
@@ -97,7 +91,7 @@ contract OneInchV5Guard is TxDataUtils, IGuard {
         }
       }
 
-      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets, poolManagerLogic);
+      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets);
 
       txType = 2; // 'Exchange' type
     } else if (method == IAggregationRouterV5.uniswapV3Swap.selector) {
@@ -119,7 +113,7 @@ contract OneInchV5Guard is TxDataUtils, IGuard {
         }
       }
 
-      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets, poolManagerLogic);
+      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets);
 
       txType = 2; // 'Exchange' type
     } else if (method == IAggregationRouterV5.uniswapV3SwapTo.selector) {
@@ -152,7 +146,7 @@ contract OneInchV5Guard is TxDataUtils, IGuard {
         require(poolManagerLogic.poolLogic() == toAddress, "recipient is not pool");
       }
 
-      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets, poolManagerLogic);
+      _verifyExchange(SwapData(srcAsset, dstAsset, srcAmount, to), poolManagerLogicAssets);
 
       txType = 2; // 'Exchange' type
     }
@@ -164,16 +158,7 @@ contract OneInchV5Guard is TxDataUtils, IGuard {
 
   /// @param swapData The data used in a swap.
   /// @param poolManagerLogicAssets Contains supported assets mapping.
-  /// @param poolManagerLogic The poolManager address.
-  function _verifyExchange(
-    SwapData memory swapData,
-    IHasSupportedAsset poolManagerLogicAssets,
-    IPoolManagerLogic poolManagerLogic
-  ) internal {
+  function _verifyExchange(SwapData memory swapData, IHasSupportedAsset poolManagerLogicAssets) internal view {
     require(poolManagerLogicAssets.isSupportedAsset(swapData.dstAsset), "unsupported destination asset");
-
-    address poolLogic = address(poolManagerLogic.poolLogic());
-
-    emit ExchangeFrom(poolLogic, swapData.srcAsset, swapData.srcAmount, swapData.dstAsset, block.timestamp);
   }
 }

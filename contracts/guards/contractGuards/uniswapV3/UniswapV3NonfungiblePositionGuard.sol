@@ -34,91 +34,26 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "../../../utils/TxDataUtils.sol";
-import "../../../utils/uniswap/UniswapV3PriceLibrary.sol";
-import "../../../utils/tracker/DhedgeNftTrackerStorage.sol";
-import "../../../interfaces/guards/ITxTrackingGuard.sol";
-import "../../../interfaces/guards/IGuard.sol";
-import "../../../interfaces/IPoolManagerLogic.sol";
-import "../../../interfaces/IPoolLogic.sol";
-import "../../../interfaces/IHasSupportedAsset.sol";
+import {UniswapV3PriceLibrary} from "../../../utils/uniswap/UniswapV3PriceLibrary.sol";
+import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
+import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
+import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
+import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
+import {NftTrackerConsumerGuard} from "../shared/NftTrackerConsumerGuard.sol";
 
-contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
-  using SafeMathUpgradeable for uint256;
-
-  event Mint(
-    address fundAddress,
-    address token0,
-    address token1,
-    uint24 fee,
-    int24 tickLower,
-    int24 tickUpper,
-    uint256 amount0Desired,
-    uint256 amount1Desired,
-    uint256 amount0Min,
-    uint256 amount1Min,
-    uint256 time
-  );
-  event IncreaseLiquidity(
-    address fundAddress,
-    uint256 tokenId,
-    uint256 amount0Desired,
-    uint256 amount1Desired,
-    uint256 amount0Min,
-    uint256 amount1Min,
-    uint256 time
-  );
-  event DecreaseLiquidity(
-    address fundAddress,
-    uint256 tokenId,
-    uint128 liquidity,
-    uint256 amount0Min,
-    uint256 amount1Min,
-    uint256 time
-  );
-  event Burn(address fundAddress, uint256 tokenId, uint256 time);
-  event Collect(address fundAddress, uint256 tokenId, uint128 amount0Max, uint128 amount1Max, uint256 time);
-
-  bytes32 public constant NFT_TYPE = keccak256("UNISWAP_NFT_TYPE");
-  address public immutable nftTracker;
-
-  // uniswap v3 liquidity position count limit
-  uint256 public uniV3PositionsLimit;
+contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingGuard {
+  using SafeMath for uint256;
 
   bool public override isTxTrackingGuard = true;
 
-  constructor(uint256 _uniV3PositionsLimit, address _nftTracker) {
-    uniV3PositionsLimit = _uniV3PositionsLimit;
-    nftTracker = _nftTracker;
-  }
-
-  function getOwnedTokenIds(address poolLogic) public view returns (uint256[] memory tokenIds) {
-    bytes[] memory data = DhedgeNftTrackerStorage(nftTracker).getAllData(NFT_TYPE, poolLogic);
-    tokenIds = new uint256[](data.length);
-    for (uint256 i = 0; i < data.length; i++) {
-      tokenIds[i] = abi.decode(data[i], (uint256));
-    }
-  }
-
-  function _isValidOwnedTokenId(
-    address poolLogic,
-    uint256 tokenId
-  ) internal view returns (bool isValid, uint256 index) {
-    // find token ids from nft tracker
-    uint256[] memory tokenIds = getOwnedTokenIds(poolLogic);
-    uint256 i;
-    for (i = 0; i < tokenIds.length; i++) {
-      if (tokenId == tokenIds[i]) {
-        return (true, i);
-      }
-    }
-    return (false, i);
-  }
+  constructor(
+    uint256 _uniV3PositionsLimit,
+    address _nftTracker
+  ) NftTrackerConsumerGuard(_nftTracker, keccak256("UNISWAP_NFT_TYPE"), _uniV3PositionsLimit) {}
 
   /// @notice Transaction guard for Uniswap V3 non-fungible Position Manager
   /// @dev Parses the manager transaction data to ensure transaction is valid
@@ -134,7 +69,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
     public
     override
     returns (
-      uint16 txType, // transaction type
+      uint16 txType,
       bool // isPublic
     )
   {
@@ -165,21 +100,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
         param.fee
       );
 
-      emit Mint(
-        poolManagerLogic.poolLogic(),
-        param.token0,
-        param.token1,
-        param.fee,
-        param.tickLower,
-        param.tickUpper,
-        param.amount0Desired,
-        param.amount1Desired,
-        param.amount0Min,
-        param.amount1Min,
-        block.timestamp
-      );
-
-      txType = 20; // 'Mint' type
+      txType = uint16(TransactionType.UniswapV3Mint);
     } else if (method == INonfungiblePositionManager.increaseLiquidity.selector) {
       INonfungiblePositionManager.IncreaseLiquidityParams memory param = abi.decode(
         getParams(data),
@@ -187,7 +108,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
       );
 
       // validate token id from nft tracker
-      (bool isValidTokenId, ) = _isValidOwnedTokenId(pool, param.tokenId);
+      bool isValidTokenId = isValidOwnedTokenId(pool, param.tokenId);
       require(isValidTokenId, "position is not in track");
 
       (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(
@@ -202,39 +123,11 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
         fee
       );
 
-      emit IncreaseLiquidity(
-        poolManagerLogic.poolLogic(),
-        param.tokenId,
-        param.amount0Desired,
-        param.amount1Desired,
-        param.amount0Min,
-        param.amount1Min,
-        block.timestamp
-      );
-
-      txType = 21; // 'IncreaseLiquidity' type
+      txType = uint16(TransactionType.UniswapV3IncreaseLiquidity);
     } else if (method == INonfungiblePositionManager.decreaseLiquidity.selector) {
-      INonfungiblePositionManager.DecreaseLiquidityParams memory param = abi.decode(
-        getParams(data),
-        (INonfungiblePositionManager.DecreaseLiquidityParams)
-      );
-
-      emit DecreaseLiquidity(
-        poolManagerLogic.poolLogic(),
-        param.tokenId,
-        param.liquidity,
-        param.amount0Min,
-        param.amount1Min,
-        block.timestamp
-      );
-
-      txType = 22; // 'DecreaseLiquidity' type
+      txType = uint16(TransactionType.UniswapV3DecreaseLiquidity);
     } else if (method == INonfungiblePositionManager.burn.selector) {
-      uint256 tokenId = abi.decode(getParams(data), (uint256));
-
-      emit Burn(poolManagerLogic.poolLogic(), tokenId, block.timestamp);
-
-      txType = 23; // 'Burn' type
+      txType = uint16(TransactionType.UniswapV3Burn);
     } else if (method == INonfungiblePositionManager.collect.selector) {
       INonfungiblePositionManager.CollectParams memory param = abi.decode(
         getParams(data),
@@ -246,9 +139,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
       require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
       require(pool == param.recipient, "recipient is not pool");
 
-      emit Collect(poolManagerLogic.poolLogic(), param.tokenId, param.amount0Max, param.amount1Max, block.timestamp);
-
-      txType = 24; // 'Collect' type
+      txType = uint16(TransactionType.UniswapV3Collect);
     } else if (method == IMulticall.multicall.selector) {
       bytes[] memory params = abi.decode(getParams(data), (bytes[]));
 
@@ -257,7 +148,7 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
         require(txType > 0, "invalid transaction");
       }
 
-      txType = 25; // 'Multicall' type
+      txType = uint16(TransactionType.UniswapV3Multicall);
     }
 
     return (txType, false);
@@ -284,16 +175,12 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
 
     if (method == INonfungiblePositionManager.mint.selector) {
       uint256 index = nonfungiblePositionManager.totalSupply();
-      DhedgeNftTrackerStorage(nftTracker).addData(
+      nftTracker.addUintId(
         to,
-        NFT_TYPE,
+        nftType,
         poolLogic,
-        abi.encode(nonfungiblePositionManager.tokenByIndex(index - 1)) // revert if index is zero
-      );
-
-      require(
-        DhedgeNftTrackerStorage(nftTracker).getDataCount(NFT_TYPE, poolLogic) <= uniV3PositionsLimit,
-        "too many uniswap v3 positions"
+        nonfungiblePositionManager.tokenByIndex(index - 1), // revert if index is zero
+        positionsLimit
       );
 
       return true;
@@ -301,10 +188,10 @@ contract UniswapV3NonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard {
       uint256 tokenId = abi.decode(getParams(data), (uint256));
 
       // validate token id from nft tracker
-      (bool isValidTokenId, uint256 i) = _isValidOwnedTokenId(poolLogic, tokenId);
+      bool isValidTokenId = isValidOwnedTokenId(poolLogic, tokenId);
       require(isValidTokenId, "position is not in track");
 
-      DhedgeNftTrackerStorage(nftTracker).removeData(to, NFT_TYPE, poolLogic, i);
+      nftTracker.removeUintId(to, nftType, poolLogic, tokenId);
 
       return true;
     } else if (method == IMulticall.multicall.selector) {

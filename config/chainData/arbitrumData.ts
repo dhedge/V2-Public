@@ -22,6 +22,7 @@ const assets = Object.freeze({
   usde: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
   swsol: "0x7301a8DBd293b85A06726aE12E433a829ba3B871", // Synthetix wSOL
   wsol: "0xb74Da9FE2F96B9E0a5f4A3cf0b92dd2bEC617124", // Wormhole SOL
+  wrappedsol: "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07", // Wrapped SOL
 });
 
 export const arbitrumChainData = Object.freeze({
@@ -44,6 +45,10 @@ export const arbitrumChainData = Object.freeze({
     frax: "0x0809e3d38d1b4214958faf06d8b1b1a2b73f2ab8",
     arb: "0xb2a824043730fe05f3da2efafa1cbbe83fa548d6",
     wbtc: "0x6ce185860a4963106506C203335A2910413708e9",
+    tbtc: "0xE808488e8627F6531bA79a13A9E0271B39abEb1C",
+    dogecoin: "0x9A7FB1b3950837a8D9b40517626E11D4127C098C",
+    sol: "0x24ceA4b8ce57cdA5058b924B9B9987992450590c",
+    xrp: "0xB4AD57B52aB9141de9926a3e0C8dc6264c2ef205",
   },
   ethPriceFeeds: {
     wsteth: "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
@@ -63,6 +68,7 @@ export const arbitrumChainData = Object.freeze({
     arb: 51,
     tbtc: 51,
     usde: 5,
+    wrappedsol: 5,
   },
 
   v2Routers: ["0x1b02da8cb0d097eb8d57a175b88c7d8b47997506"], // SushiSwap V2 Router
@@ -90,6 +96,10 @@ export const arbitrumChainData = Object.freeze({
   oneInch: {
     v5Router: "0x1111111254EEB25477B68fb85Ed929f73A960582",
     v6Router: "0x111111125421ca6dc452d289314280a0f8842a65",
+  },
+
+  odosEx: {
+    v2Router: "0xa669e7A0d4b3e4Fa48af2dE86BD4CD7126Be4e13",
   },
 
   balancer: {
@@ -145,6 +155,19 @@ export const arbitrumChainData = Object.freeze({
     ETHBEAR1X: "0x40d30b13666c55b1f41ee11645b5ea3ea2ca31f8",
     BTCBEAR1X: "0x27d8fdb0251b48d8edd1ad7bedf553cf99abe7b0",
     ETHy: "0x43DA9b0aB53242c55A9Ff9c722FfC2a373D639c7",
+    BTCy: "0x319fd1d1d74607b7a224eb4e31a4aa75837d7d01",
+    USDmny: "0x9A916e55F5b67226734CD7B465d51BCE1d11a89a",
+    SOLBULL3X: "0xcFEc7a15726D4b5d183783C9033b921bA3a5090a",
+    SOLBULL2X: "0xE9A71F5230a41Aa09f4099a41d24450E85462Fe1",
+    SOLBEAR1X: "0xda6d2144FaEc116b53715F76Ca4A79925A3bB1fB",
+    ETHBULL4X: "0xBf4aB4224B2AC26667Cd4b8A0E5134D55cB0B293",
+    BTCBULL4X: "0xd49d22f2a2f05B2088fD42503409E430a8a7D827",
+    SUIBULL2X: "0x1a9B3A496Fe222Ba84c53E215A904c555C3157c9",
+    SOL1X: "0xa6686c9c6bc90f84e3fb77c3d5417fd66bc05697",
+    SUI1X: "0xc8f346c8045fa911eac2ffef628e0c5fcdb445bd",
+    DOGEBULL2X: "0x7d37089ed7434c50f659D40b1E1fE09Be026fc77",
+    DOGE1X: "0x06ABBA36D0991A83e75f54dBB2a8Dc91F30f8C78",
+    XRP1X: "0x1369E0F1520671cd0748984c40955F6A6aF40487",
   },
 
   zeroEx: {
@@ -166,5 +189,22 @@ export const arbitrumChainData = Object.freeze({
 
   flatMoney: {
     swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+  },
+
+  gmx: {
+    dataStore: "0xFD70de6b91282D8017aA4E741e9Ae325CAb992d8",
+    reader: "0x0537C767cDAC0726c76Bb89e92904fe28fd02fE1",
+    referralStorage: "0xe6fab3f0c7199b0d34d7fbe83394fc0e0d06e99d",
+    exchangeRouter: "0x900173a66dbd345006c51fa35fa3ab760fcd843b",
+    approvalRouter: "0x7452c558d45f8afC8c83dAe62C3f8A5BE19c71f6",
+  },
+
+  gmxTestVaults: {
+    gmxTest2: "0x7862F74Aa0a1Db091bE314709248Ec24F5F7a967", // https://dhedge.org/vault/0x7862F74Aa0a1Db091bE314709248Ec24F5F7a967
+    gmxTest6: "0xa457b8A4c1a8478F0d38AF3aDC1DD803131Bef03", // https://dhedge.org/vault/0xa457b8a4c1a8478f0d38af3adc1dd803131bef03
+  },
+
+  pyth: {
+    priceFeedContract: "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
   },
 });

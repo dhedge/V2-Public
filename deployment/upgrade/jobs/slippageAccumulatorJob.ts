@@ -39,7 +39,7 @@ export const slippageAccumulatorJob: IJob<void> = async (
 
     // NOTE: Whenever a new slippage accumulator is deployed, the following contract guards need to be redeployed (depends on the chain which ones):
     console.log(
-      "Please re-deploy the following contract guards (if applicable): \n - BalancerV2Guard\n - OneInchV4Guard\n - OneInchV5Guard\n - OneInchV6Guard\n - UniswapV2RouterGuard\n - UniswapV3RouterGuard\n - ZeroExContractGuard\n",
+      "Please re-deploy the following contract guards (if applicable):\n - EasySwapperV2ContractGuard\n - OneInchV6Guard\n - SkyPSM3ContractGuard\n - OdosV2ContractGuard\n - UniswapV3RouterGuard\n - PendleRouterV4ContractGuard\n",
     );
   }
 };

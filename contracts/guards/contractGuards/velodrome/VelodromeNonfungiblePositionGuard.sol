@@ -6,58 +6,27 @@ import {IVelodromeNonfungiblePositionManager} from "../../../interfaces/velodrom
 import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
-import {TxDataUtils} from "../../../utils/TxDataUtils.sol";
 import {VelodromeCLPriceLibrary} from "../../../utils/velodrome/VelodromeCLPriceLibrary.sol";
-import {DhedgeNftTrackerStorage} from "../../../utils/tracker/DhedgeNftTrackerStorage.sol";
 import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
-import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";
+import {NftTrackerConsumerGuard} from "../shared/NftTrackerConsumerGuard.sol";
 
 /// @title Transaction guard for Velodrome CL NonfungiblePositionManager contract
-contract VelodromeNonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard, ITransactionTypes {
+contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingGuard {
   using SafeMath for uint256;
-
-  bytes32 public constant NFT_TYPE = keccak256("VELODROME_NFT_TYPE");
-  DhedgeNftTrackerStorage public immutable nftTracker;
-
-  // velodrome cl liquidity position count limit
-  uint256 public immutable positionsLimit;
 
   bool public override isTxTrackingGuard = true;
 
   /// @notice Initialiser for the contract
   /// @dev Set up the position count limit and the nft tracker
-  /// @param maxPositions Velodrome Cl liquidity position count limit
-  /// @param nftTrackerAddress Address of the DhedgeNftTrackerStorage
-  constructor(uint256 maxPositions, address nftTrackerAddress) {
-    positionsLimit = maxPositions;
-    nftTracker = DhedgeNftTrackerStorage(nftTrackerAddress);
-  }
-
-  /// @notice Retrieves the tokenIds owned by the specified poolLogic address
-  /// @param poolLogic The address of the pool logic contract
-  /// @return tokenIds An array of uint256 representing the tokenIds owned by the poolLogic address
-  function getOwnedTokenIds(address poolLogic) public view returns (uint256[] memory tokenIds) {
-    return nftTracker.getAllUintIds(NFT_TYPE, poolLogic);
-  }
-
-  /// @notice Checks if the specified tokenId is owned by the given pool
-  /// @param poolLogic The address of the pool logic contract
-  /// @param tokenId The specified tokenId
-  /// @return isValid A boolean indicating whether the specified tokenId is owned by the pool
-  function isValidOwnedTokenId(address poolLogic, uint256 tokenId) public view returns (bool isValid) {
-    // find token ids from nft tracker
-    uint256[] memory tokenIds = getOwnedTokenIds(poolLogic);
-    uint256 i;
-    for (i = 0; i < tokenIds.length; i++) {
-      if (tokenId == tokenIds[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
+  /// @param _maxPositions Velodrome Cl liquidity position count limit
+  /// @param _nftTracker Address of the DhedgeNftTrackerStorage
+  constructor(
+    uint256 _maxPositions,
+    address _nftTracker
+  ) NftTrackerConsumerGuard(_nftTracker, keccak256("VELODROME_NFT_TYPE"), _maxPositions) {}
 
   /// @notice Transaction guard for Velodrome CL non-fungible Position Manager
   /// @dev Parses the manager transaction data to ensure transaction is valid
@@ -186,7 +155,7 @@ contract VelodromeNonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard, ITr
       uint256 index = nonfungiblePositionManager.totalSupply();
       nftTracker.addUintId(
         to,
-        NFT_TYPE,
+        nftType,
         poolLogic,
         nonfungiblePositionManager.tokenByIndex(index - 1), // revert if index is zero
         positionsLimit
@@ -200,7 +169,7 @@ contract VelodromeNonfungiblePositionGuard is TxDataUtils, ITxTrackingGuard, ITr
       bool isValidTokenId = isValidOwnedTokenId(poolLogic, tokenId);
       require(isValidTokenId, "position is not in track");
 
-      nftTracker.removeUintId(to, NFT_TYPE, poolLogic, tokenId);
+      nftTracker.removeUintId(to, nftType, poolLogic, tokenId);
 
       return true;
     } else if (method == IMulticall.multicall.selector) {

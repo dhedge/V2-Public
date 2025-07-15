@@ -72,12 +72,8 @@ export const deployBackboneContracts = async ({ assets, usdPriceFeeds }: IBackbo
   const erc20Guard = await ERC20Guard.deploy();
   await erc20Guard.deployed();
 
-  const LendingEnabledAssetGuard = await ethers.getContractFactory("LendingEnabledAssetGuard");
-  const lendingEnabledAssetGuard = await LendingEnabledAssetGuard.deploy();
-  await lendingEnabledAssetGuard.deployed();
-
   await governance.setAssetGuard(AssetType["Chainlink direct USD price feed with 8 decimals"], erc20Guard.address);
-  await governance.setAssetGuard(AssetType["Lending Enable Asset"], lendingEnabledAssetGuard.address);
+  await governance.setAssetGuard(AssetType["Lending Enable Asset"], erc20Guard.address);
   await governance.setAssetGuard(AssetType["Balancer LP"], erc20Guard.address);
 
   const WETH = <IERC20>await ethers.getContractAt(IERC20Path, assets.weth);
@@ -96,7 +92,7 @@ export const deployBackboneContracts = async ({ assets, usdPriceFeeds }: IBackbo
     poolManagerLogic,
     slippageAccumulator,
     usdPriceAggregator,
-    lendingEnabledAssetGuard,
+    erc20Guard,
     assets: {
       WETH,
       USDC,

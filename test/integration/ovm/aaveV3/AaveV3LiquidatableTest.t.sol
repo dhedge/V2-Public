@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import {Test} from "forge-std/Test.sol";
 
+import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 import {IERC20Extended} from "../../../../contracts/interfaces/IERC20Extended.sol";
 import {IAaveV3Pool} from "../../../../contracts/interfaces/aave/v3/IAaveV3Pool.sol";
 
@@ -15,15 +16,13 @@ contract AaveV3LiquidatableTest is Test {
   IPoolLogic public pool = IPoolLogic(0x749E1d46C83f09534253323A43541A9d2bBD03AF);
   address public managerAddress = 0xeFc4904b786A3836343A3A504A2A3cb303b77D64;
 
-  IAaveV3Pool public aaveLendingPool = IAaveV3Pool(0x794a61358D6845594F94dc1DB02A252b5b4814aD);
+  IAaveV3Pool public aaveLendingPool = IAaveV3Pool(OptimismConfig.AAVE_V3_LENDING_POOL);
 
-  IERC20Extended public weth = IERC20Extended(0x4200000000000000000000000000000000000006);
-  IERC20Extended public usdc = IERC20Extended(0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85);
-
-  string public optimismRpcURL = vm.envString("OPTIMISM_URL");
+  IERC20Extended public weth = IERC20Extended(OptimismConfig.WETH);
+  IERC20Extended public usdc = IERC20Extended(OptimismConfig.USDC);
 
   function setUp() public {
-    vm.createSelectFork(optimismRpcURL, 121348913); // Jun-13-2024 04:36:43 PM +UTC
+    vm.createSelectFork("optimism", 121348913); // Jun-13-2024 04:36:43 PM +UTC
   }
 
   function testLiquidationAave() public {

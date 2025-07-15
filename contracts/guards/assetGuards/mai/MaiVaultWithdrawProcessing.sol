@@ -112,7 +112,6 @@ abstract contract MaiVaultWithdrawProcessing is ClosedAssetGuard {
   /// @param portion the withdrawers portion
   /// @param withdrawer the withdrawers address
   function processWithdrawAndReturn(address vault, uint256 vaultId, uint256 portion, address withdrawer) external {
-    address factory = IPoolLogic(msg.sender).factory();
     IStableQiVault maiVault = IStableQiVault(vault);
 
     // This updates the vaults debt - used by qi when streaming fees are enabled
@@ -120,7 +119,7 @@ abstract contract MaiVaultWithdrawProcessing is ClosedAssetGuard {
     uint256 collateralAmount = maiVault.vaultCollateral(vaultId);
     uint256 debtPortionInMai = debtAmountInMai.mul(portion).div(10 ** 18);
     uint256 collateralPortion = maiVault.vaultCollateral(vaultId).mul(portion).div(10 ** 18);
-    address swapRouter = IHasGuardInfo(factory).getAddress("swapRouter");
+    address swapRouter;
 
     if (collateralAmount != 0) {
       if (debtPortionInMai != 0) {

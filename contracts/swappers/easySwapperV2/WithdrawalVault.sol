@@ -3,8 +3,8 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {SafeERC20} from "../../utils/SafeERC20.sol";
+import {IERC20} from "../../interfaces/IERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import {EnumerableSetUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
@@ -18,7 +18,6 @@ import {EasySwapperVelodromeLPHelpers} from "../easySwapper/EasySwapperVelodrome
 import {IEasySwapperV2} from "./interfaces/IEasySwapperV2.sol";
 import {IWithdrawalVault} from "./interfaces/IWithdrawalVault.sol";
 import {SwapperV2Helpers} from "./libraries/SwapperV2Helpers.sol";
-import {SwapperV2SynthetixHelpers} from "./libraries/SwapperV2SynthetixHelpers.sol";
 
 /// @author dHEDGE team
 contract WithdrawalVault is IWithdrawalVault, Initializable {
@@ -54,9 +53,8 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
 
   /// @notice Unroll assets from dHEDGE vault to basic ERC20 tokens that can be swapped via DEXes
   /// @param _dHedgeVault dHEDGE Vault address
-  /// @param _slippageTolerance Slippage tolerance for withdrawal, see PoolLogic's withdrawToSafe function
-  function unrollAssets(address _dHedgeVault, uint256 _slippageTolerance) external override onlyCreator {
-    _unrollAssets(_dHedgeVault, _slippageTolerance);
+  function unrollAssets(address _dHedgeVault) external override onlyCreator {
+    _unrollAssets(_dHedgeVault);
   }
 
   /// @notice Swaps basic assets to a single asset
@@ -66,7 +64,7 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
   function swapToSingleAsset(
     MultiInSingleOutData calldata _swapData,
     uint256 _expectedDestTokenAmount
-  ) external override onlyCreator {
+  ) external override onlyCreator returns (uint256 balanceAfterSwaps) {
     ISwapper swapper = IEasySwapperV2(creator).swapper();
 
     for (uint256 i; i < _swapData.srcData.length; ++i) {
@@ -87,7 +85,7 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
 
     swapper.swap(swapProps);
 
-    uint256 balanceAfterSwaps = _swapData.destData.destToken.balanceOf(address(this));
+    balanceAfterSwaps = _swapData.destData.destToken.balanceOf(address(this));
 
     require(balanceAfterSwaps >= _expectedDestTokenAmount, "high swap slippage");
 
@@ -135,10 +133,7 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
     }
   }
 
-  /// @notice Unroll assets from dHEDGE vault to basic ERC20 tokens that can be swapped via DEXes
-  /// @param _dHedgeVault dHEDGE Vault address
-  /// @param _slippageTolerance Slippage tolerance for withdrawal, see PoolLogic's withdrawToSafe function
-  function _unrollAssets(address _dHedgeVault, uint256 _slippageTolerance) internal {
+  function _unrollAssets(address _dHedgeVault) internal {
     address poolManagerLogic = IPoolLogic(_dHedgeVault).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     address poolFactory = IPoolLogic(_dHedgeVault).factory();
@@ -152,16 +147,18 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
 
       // Regular ERC20 tokens and dHEDGE vaults
       if (assetType == 0) {
-        unrolledAssets = _detectDhedgeVault(asset, _slippageTolerance);
+        unrolledAssets = _detectDhedgeVault(asset);
       }
       // Regular ERC20 tokens
       else if (assetType == 1 || assetType == 4 || assetType == 14 || assetType == 22 || assetType == 200) {
         unrolledAssets = _arraify(asset);
       }
       // Aave positions (3 and 8) are withdrawn as regular ERC20s, which are guaranteed to be in `supportedAssets`.
-      // Same for Flat Money's Leverage Asset, underlying ERC20 guaranteed to be in `supportedAssets`.
-      // solhint-disable-next-line no-empty-blocks
-      else if (assetType == 3 || assetType == 8 || assetType == 27) {}
+      // Same for "Assets" which use outside liquidity for withdrawals, like Flat Money's Leverage and GMX. Underlying ERC20 is guaranteed to be in `supportedAssets`.
+      else if (
+        assetType == 3 || assetType == 8 || assetType == 27 || assetType == 32 || assetType == 36 || assetType == 105
+        // solhint-disable-next-line no-empty-blocks
+      ) {}
       // Uniswap V3 - already unrolled, just need the assets
       else if (assetType == 7) {
         unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(_dHedgeVault, asset);
@@ -178,13 +175,29 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       else if (assetType == 26) {
         unrolledAssets = EasySwapperVelodromeCLHelpers.getUnsupportedCLAssetsAndRewards(_dHedgeVault, asset);
       }
+      // Compound V3 Comet
+      else if (assetType == 28) {
+        unrolledAssets = _arraify(SwapperV2Helpers.getCompoundV3BaseAsset(asset));
+      }
       // EasySwapperV2UnrolledAssets
       else if (assetType == 30) {
         unrolledAssets = SwapperV2Helpers.getUnrolledAssets(asset, _dHedgeVault);
       }
+      // Pancake CL NFT
+      else if (assetType == 31) {
+        unrolledAssets = SwapperV2Helpers.getPancakeCLPositionAssets(_dHedgeVault, asset);
+      }
+      // Fluid Token
+      else if (assetType == 34) {
+        unrolledAssets = _arraify(SwapperV2Helpers.getFluidTokenUnderlying(asset));
+      }
+      // Pendle Principal Token
+      else if (assetType == 37) {
+        unrolledAssets = _arraify(SwapperV2Helpers.unrollPendlePT(_dHedgeVault, asset));
+      }
       // Synthetix Perpetuals V2 - settled in sUSD
       else if (assetType == 102) {
-        unrolledAssets = _arraify(SwapperV2SynthetixHelpers.synthetixPerpsV2Helper(asset, poolFactory));
+        unrolledAssets = _arraify(SwapperV2Helpers.synthetixPerpsV2Helper(asset, poolFactory));
       } else {
         revert("assetType not handled");
       }
@@ -202,7 +215,7 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
 
     for (uint256 i; i < basicAssets.length; ++i) {
       address basicAsset = basicAssets[i];
-      if (IERC20(basicAsset).balanceOf(address(this)) > 0) {
+      if (basicAsset != address(0) && IERC20(basicAsset).balanceOf(address(this)) > 0) {
         srcAssets.add(basicAsset);
       }
     }
@@ -211,17 +224,15 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
   /// @notice Unrolls dHEDGE vaults inside dHEDGE vaults or returns the asset
   /// @dev Because dHEDGE vaults as assets are type 0 we need to check all type 0 to see if it is a vault
   /// @param _asset The address of the asset
-  /// @param _slippageTolerance Slippage tolerance for withdrawal, see PoolLogic's withdrawToSafe function
   /// @return unrolledAssets Returns nothing when a dHEDGE vault, returns basic asset address otherwise
-  function _detectDhedgeVault(
-    address _asset,
-    uint256 _slippageTolerance
-  ) internal returns (address[] memory unrolledAssets) {
+  function _detectDhedgeVault(address _asset) internal returns (address[] memory unrolledAssets) {
     if (IEasySwapperV2(creator).isdHedgeVault(_asset)) {
       uint256 balance = IPoolLogic(_asset).balanceOf(address(this));
       if (balance > 0) {
-        IPoolLogic(_asset).withdrawSafe(balance, _slippageTolerance);
-        _unrollAssets(_asset, _slippageTolerance);
+        // Here we sacrifice slippage protection mechanism.
+        // This is equal to calling .withdrawSafe(balance, new IPoolLogic.ComplexAsset[](IHasSupportedAsset(IPoolLogic(_asset).poolManagerLogic()).getSupportedAssets().length))
+        IPoolLogic(_asset).withdraw(balance);
+        _unrollAssets(_asset);
       }
     } else {
       unrolledAssets = _arraify(_asset);

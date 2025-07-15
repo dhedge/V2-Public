@@ -24,29 +24,35 @@
 // 28 = Compound V3 Comet Asset
 // 29 = Ramses CL Position Asset
 // 30 = EasySwapperV2 Unrolled Assets
+// 31 = Pancake CL NFT Position Asset
+// 32 = Flat Money V2 Options Market Asset
+// 33 = Flat Money Collateral Lending Enabled
+// 34 = Fluid Token
+// 35 = Flat Money V2 UNIT
+// 36 = Flat Money V2 Perp Market Asset
+// 37 = Pendle Principal Token
 // 100 = Lyra OptionMarketWrapper Asset
 // 101 = Synthetix Futures Perps v1
 // 102 = Synthetix Futures Perps v2
 // 103 = Synthetix V3 Position Asset
 // 104 = Synthetix V3 Perps Position Asset
-// 200 - Reward Asset (which is linked to other asset types)
+// 105 = GMX Perps Market Asset
+// 200 = Reward Asset (which is linked to other asset types)
 // 999 = Deprecated Asset
 
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import "../interfaces/IAggregatorV3Interface.sol";
-import "../interfaces/IAssetHandler.sol";
+import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
+import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
 
-/**
- * @title dHEDGE Asset Price Feeds
- * @dev Returns Chainlink USD price feed with 18 decimals
- */
+/// @title dHEDGE Asset Price Feeds
+/// @dev Returns USD price with 18 decimals
 contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   using SafeMathUpgradeable for uint256;
 
@@ -69,12 +75,9 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
 
   /* ========== VIEWS ========== */
 
-  /**
-   * @notice Currenly only use chainlink price feed.
-   * @dev Calculate the USD price of a given asset.
-   * @param asset the asset address
-   * @return price Returns the latest price of a given asset (decimal: 18)
-   */
+  /// @dev Calculate the USD price of a given asset.
+  /// @param asset the asset address
+  /// @return price Returns the latest price of a given asset (decimal: 18)
   function getUSDPrice(address asset) external view override returns (uint256 price) {
     address aggregator = priceAggregators[asset];
 

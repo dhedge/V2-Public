@@ -1,21 +1,30 @@
+//
+//        __  __    __  ________  _______    ______   ________
+//       /  |/  |  /  |/        |/       \  /      \ /        |
+//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
+//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__
+// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |
+// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/
+// $$ \__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \__$$ |$$ |_____
+// $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |
+//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/
+//
+// dHEDGE DAO - https://dhedge.org
+//
+// Copyright (c) 2025 dHEDGE DAO
+//
 // SPDX-License-Identifier: MIT
+
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {ITxTrackingGuard} from "../../interfaces/guards/ITxTrackingGuard.sol";
-import {IGuard} from "../../interfaces/guards/IGuard.sol";
 import {IAaveV3Pool} from "../../interfaces/aave/v3/IAaveV3Pool.sol";
+import {IL2Pool} from "../../interfaces/aave/v3/IL2Pool.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {AaveLendingPoolGuardV3} from "./AaveLendingPoolGuardV3.sol";
 
 /// @title Transaction guard for Aave V3 L2 lending pool contract
-contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3, ITxTrackingGuard {
-  uint256 public constant HEALTH_FACTOR_LOWER_BOUNDARY = 1.01e18; // Aave UI doesn't let withdrawal go through which leads to HF below 1.01
-
-  bool public override isTxTrackingGuard = true;
-
-  /// @notice Transaction guard for Aave V3 L2 Lending Pool
-  /// @dev It supports Deposit, Withdraw, SetUserUseReserveAsCollateral, Borrow, Repay, swapBorrowRateMode, rebalanceStableBorrowRate functionality
+contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
   /// @param poolManagerLogic the pool manager logic
   /// @param data the transaction data
   /// @return txType the transaction type of a given transaction data.
@@ -24,68 +33,50 @@ contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3, ITxTrackingGuar
     address poolManagerLogic,
     address to,
     bytes calldata data
-  ) public override(AaveLendingPoolGuardV3, IGuard) returns (uint16 txType, bool isPublic) {
+  ) public view override returns (uint16 txType, bool isPublic) {
     bytes4 method = getMethod(data);
     address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    address factory = IPoolManagerLogic(poolManagerLogic).factory();
 
-    if (method == bytes4(keccak256("supply(bytes32)"))) {
+    if (method == IL2Pool.supply.selector) {
       bytes32 args = abi.decode(getParams(data), (bytes32));
-      (address depositAsset, uint256 amount, ) = decodeSupplyParams(args, IAaveV3Pool(to));
+      (address depositAsset, , ) = decodeSupplyParams(args, IAaveV3Pool(to));
 
-      txType = _deposit(factory, poolLogic, poolManagerLogic, to, depositAsset, amount, poolLogic);
-    } else if (method == bytes4(keccak256("withdraw(bytes32)"))) {
+      txType = _supply(poolLogic, poolManagerLogic, to, depositAsset, poolLogic);
+    } else if (method == IL2Pool.withdraw.selector) {
       bytes32 args = abi.decode(getParams(data), (bytes32));
-      (address withdrawAsset, uint256 amount) = decodeWithdrawParams(args, IAaveV3Pool(to));
+      (address withdrawAsset, ) = decodeWithdrawParams(args, IAaveV3Pool(to));
 
-      txType = _withdraw(factory, poolLogic, poolManagerLogic, to, withdrawAsset, amount, poolLogic);
-    } else if (method == bytes4(keccak256("setUserUseReserveAsCollateral(bytes32)"))) {
+      txType = _withdraw(poolLogic, poolManagerLogic, to, withdrawAsset, poolLogic);
+    } else if (method == IL2Pool.setUserUseReserveAsCollateral.selector) {
       bytes32 args = abi.decode(getParams(data), (bytes32));
-      (address asset, bool useAsCollateral) = decodeSetUserUseReserveAsCollateralParams(args, IAaveV3Pool(to));
+      (address asset, ) = decodeSetUserUseReserveAsCollateralParams(args, IAaveV3Pool(to));
 
-      txType = _setUserUseReserveAsCollateral(factory, poolLogic, poolManagerLogic, to, asset, useAsCollateral);
-    } else if (method == bytes4(keccak256("borrow(bytes32)"))) {
+      txType = _setUserUseReserveAsCollateral(poolManagerLogic, to, asset);
+    } else if (method == IL2Pool.borrow.selector) {
       bytes32 args = abi.decode(getParams(data), (bytes32));
-      (address borrowAsset, uint256 amount, uint256 rateMode, ) = decodeBorrowParams(args, IAaveV3Pool(to));
+      (address borrowAsset, , , ) = decodeBorrowParams(args, IAaveV3Pool(to));
 
-      txType = _borrow(factory, poolLogic, poolManagerLogic, to, borrowAsset, amount, rateMode, poolLogic);
-    } else if (method == bytes4(keccak256("repay(bytes32)"))) {
+      txType = _borrow(poolLogic, poolManagerLogic, to, borrowAsset, poolLogic);
+    } else if (method == IL2Pool.repay.selector || method == IL2Pool.repayWithATokens.selector) {
       bytes32 args = abi.decode(getParams(data), (bytes32));
-      (address repayAsset, uint256 amount, ) = decodeRepayParams(args, IAaveV3Pool(to));
+      (address repayAsset, , ) = decodeRepayParams(args, IAaveV3Pool(to));
 
-      txType = _repay(factory, poolLogic, poolManagerLogic, to, repayAsset, amount, poolLogic);
-    } else if (method == bytes4(keccak256("swapBorrowRateMode(bytes32)"))) {
-      bytes32 args = abi.decode(getParams(data), (bytes32));
-      (address asset, uint256 rateMode) = decodeSwapBorrowRateModeParams(args, IAaveV3Pool(to));
-
-      txType = _swapBorrowRateMode(factory, poolLogic, poolManagerLogic, to, asset, rateMode);
-    } else if (method == bytes4(keccak256("rebalanceStableBorrowRate(bytes32)"))) {
-      bytes32 args = abi.decode(getParams(data), (bytes32));
-      (address asset, address user) = decodeRebalanceStableBorrowRateParams(args, IAaveV3Pool(to));
-
-      txType = _rebalanceStableBorrowRate(factory, poolLogic, poolManagerLogic, to, asset, user);
+      txType = _repay(poolLogic, poolManagerLogic, to, repayAsset, poolLogic);
     } else {
       (txType, isPublic) = super.txGuard(poolManagerLogic, to, data);
     }
   }
 
   function afterTxGuard(address poolManagerLogic, address to, bytes memory data) external view override {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-
     bytes4 method = getMethod(data);
 
-    // These are the actions which potentially can affect HF
     if (
-      method == bytes4(keccak256("borrow(bytes32)")) ||
-      method == bytes4(keccak256("setUserUseReserveAsCollateral(bytes32)")) ||
-      method == bytes4(keccak256("withdraw(bytes32)")) ||
-      method == bytes4(keccak256("borrow(address,uint256,uint256,uint16,address)")) ||
-      method == bytes4(keccak256("setUserUseReserveAsCollateral(address,bool)")) ||
-      method == bytes4(keccak256("withdraw(address,uint256,address)"))
+      method == IL2Pool.borrow.selector ||
+      method == IL2Pool.setUserUseReserveAsCollateral.selector ||
+      method == IL2Pool.withdraw.selector ||
+      _canAffectHealthFactor(method)
     ) {
-      (, , , , , uint256 healthFactor) = IAaveV3Pool(to).getUserAccountData(poolLogic);
-
-      require(healthFactor > HEALTH_FACTOR_LOWER_BOUNDARY, "health factor too low");
+      _afterTxGuard(poolManagerLogic, to);
     }
   }
 
@@ -180,46 +171,6 @@ contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3, ITxTrackingGuar
     }
 
     return (lendingPool.getReserveAddressById(assetId), amount, interestRateMode);
-  }
-
-  /**
-   * @notice Decodes compressed swap borrow rate mode params to standard params
-   * @param args The packed swap borrow rate mode params
-   * @return The address of the underlying reserve
-   * @return The interest rate mode, 1 for stable 2 for variable debt
-   */
-  function decodeSwapBorrowRateModeParams(
-    bytes32 args,
-    IAaveV3Pool lendingPool
-  ) internal view returns (address, uint256) {
-    uint16 assetId;
-    uint256 interestRateMode;
-
-    assembly {
-      assetId := and(args, 0xFFFF)
-      interestRateMode := and(shr(16, args), 0xFF)
-    }
-
-    return (lendingPool.getReserveAddressById(assetId), interestRateMode);
-  }
-
-  /**
-   * @notice Decodes compressed rebalance stable borrow rate params to standard params
-   * @param args The packed rabalance stable borrow rate params
-   * @return The address of the underlying reserve
-   * @return The address of the user to rebalance
-   */
-  function decodeRebalanceStableBorrowRateParams(
-    bytes32 args,
-    IAaveV3Pool lendingPool
-  ) internal view returns (address, address) {
-    uint16 assetId;
-    address user;
-    assembly {
-      assetId := and(args, 0xFFFF)
-      user := and(shr(16, args), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
-    }
-    return (lendingPool.getReserveAddressById(assetId), user);
   }
 
   /**

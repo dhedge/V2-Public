@@ -1,16 +1,15 @@
 import { BigNumber } from "ethers";
 import { baseChainData } from "../../config/chainData/baseData";
-import { IAddresses } from "../types";
+import { IAddresses, IFileNames } from "../types";
+import { AssetType } from "../upgrade/jobs/assetsJob";
+import { arbitrumChainData } from "../../config/chainData/arbitrumData";
+
+export const FLAT_MONEY_PERP_MARKET_BOT_TEST = "0xCF51f81652779C07D08F1C7d0AcAf66E5C3b7377"; // https://dhedge.org/vault/0xcf51f81652779c07d08f1c7d0acaf66e5c3b7377
 
 export const baseProdData: IAddresses = {
   protocolDaoAddress: baseChainData.dHEDGE.daoMultisig,
   protocolTreasuryAddress: baseChainData.dHEDGE.treasury,
   proxyAdminAddress: baseChainData.proxyAdmin,
-
-  // Gnosis safe multicall/send address
-  // https://github.com/gnosis/safe-deployments
-  gnosisMultiSendAddress: "0x998739BFdAAdde7C933B942a68053933098f9EDa",
-  gnosisApi: "https://safe-transaction-base.safe.global",
 
   easySwapperConfig: {
     customLockupAllowedPools: [
@@ -65,6 +64,7 @@ export const baseProdData: IAddresses = {
       "0x41b2126661C673C2beDd208cC72E85DC51a5320a", // CL100-WETH/cbBTC
       "0x6399ed6725cC163D019aA64FF55b22149D7179A8", // CL100-USDC/cbBTC
       "0xB57eC27f68Bd356e300D57079B6cdbe57d50830d", // CL1-tBTC/cbBTC
+      "0xe2a2B1D8AA4bD8A05e517Ccf61E96A727831B63e", // CL1-USDS/USDC
     ],
   },
 
@@ -98,7 +98,7 @@ export const baseProdData: IAddresses = {
         snxLiquidityPoolId: 1,
       },
       {
-        poolLogic: "0xcf51f81652779c07d08f1c7d0acaf66e5c3b7377", // Flat Money Perp Market Bot Test https://dhedge.org/vault/0xcf51f81652779c07d08f1c7d0acaf66e5c3b7377
+        poolLogic: FLAT_MONEY_PERP_MARKET_BOT_TEST,
         collateralAsset: baseChainData.assets.susdc,
         debtAsset: baseChainData.assets.snxUSD,
         snxLiquidityPoolId: 1,
@@ -123,6 +123,33 @@ export const baseProdData: IAddresses = {
           isOneToOneSwap: true,
         },
       },
+      {
+        marketId: 4,
+        collateralSynth: "0xEDE1d04C864EeEC40393ED4cb454B85A5ABD071C", // Synthetic Coinbase Wrapped BTC https://basescan.org/address/0xEDE1d04C864EeEC40393ED4cb454B85A5ABD071C
+        collateralAsset: baseChainData.assets.cbbtc,
+        atomicSwapSettings: {
+          isAtomicSwapAllowed: false,
+          isOneToOneSwap: false,
+        },
+      },
+      {
+        marketId: 6,
+        collateralSynth: "0xFA24Be208408F20395914Ba82Def333d987E0080", // Synthetic Wrapped ETH https://basescan.org/address/0xFA24Be208408F20395914Ba82Def333d987E0080
+        collateralAsset: baseChainData.assets.weth,
+        atomicSwapSettings: {
+          isAtomicSwapAllowed: false,
+          isOneToOneSwap: false,
+        },
+      },
+      {
+        marketId: 7,
+        collateralSynth: "0x3526D453D1Edb105E4e2b8448760fC501050d976", // Synthetic Lido Wrapped Staked ETH https://basescan.org/address/0x3526D453D1Edb105E4e2b8448760fC501050d976
+        collateralAsset: baseChainData.assets.wsteth,
+        atomicSwapSettings: {
+          isAtomicSwapAllowed: false,
+          isOneToOneSwap: false,
+        },
+      },
     ],
     windows: {
       delegationWindow: {
@@ -141,20 +168,19 @@ export const baseProdData: IAddresses = {
           hour: 12,
         },
         end: {
-          dayOfWeek: 5,
-          hour: 0,
+          dayOfWeek: 7,
+          hour: 23,
         },
       },
     },
     withdrawalLimit: {
       usdValue: BigNumber.from(50_000).mul(BigNumber.from(10).pow(18)), // $50k
-      percent: BigNumber.from(25).mul(BigNumber.from(10).pow(16)), // 25%
+      percent: BigNumber.from(100).mul(BigNumber.from(10).pow(16)), // 100%
     },
   },
 
   aaveV3: {
     aaveLendingPoolAddress: baseChainData.aaveV3.lendingPool,
-    aaveProtocolDataProviderAddress: baseChainData.aaveV3.protocolDataProvider,
     aaveIncentivesControllerAddress: baseChainData.aaveV3.incentivesController,
   },
 
@@ -170,7 +196,7 @@ export const baseProdData: IAddresses = {
         withdrawalAsset: baseChainData.assets.reth,
       },
       {
-        poolLogic: "0xcf51f81652779c07d08f1c7d0acaf66e5c3b7377", // Flat Money Perp Market Bot Test https://dhedge.org/vault/0xcf51f81652779c07d08f1c7d0acaf66e5c3b7377
+        poolLogic: FLAT_MONEY_PERP_MARKET_BOT_TEST,
         withdrawalAsset: baseChainData.assets.usdc,
       },
       {
@@ -189,6 +215,10 @@ export const baseProdData: IAddresses = {
         poolLogic: baseChainData.torosPools.STETHBULL4X,
         withdrawalAsset: baseChainData.assets.reth,
       },
+      {
+        poolLogic: "0x631d238c4Fd232c14BF318174711538f737C0c7c", // Ethereum Surge https://dhedge.org/vault/0x631d238c4Fd232c14BF318174711538f737C0c7c
+        withdrawalAsset: baseChainData.assets.reth,
+      },
     ],
     swapper: baseChainData.flatMoney.swapper,
   },
@@ -202,9 +232,9 @@ export const baseProdData: IAddresses = {
     {
       rewardToken: baseChainData.aerodrome.aero,
       linkedAssetTypes: [
-        26, // "Velodrome CL NFT Position Asset" = 26
+        AssetType["Velodrome V2 LP/Gauge Asset"], // 25
+        AssetType["Velodrome CL NFT Position Asset"], // 26
       ],
-      underlyingAssetType: 0, //   "Chainlink direct USD price feed with 8 decimals" = 0
     },
   ],
 
@@ -215,11 +245,68 @@ export const baseProdData: IAddresses = {
       baseChainData.torosPools.STETHBULL3X,
       baseChainData.torosPools.STETHBULL4X,
       "0xCC4D4e673046e843C0E41ED150aD7a4be95b62ea", // SwapperTest https://dhedge.org/vault/0xcc4d4e673046e843c0e41ed150ad7a4be95b62ea
+      baseChainData.torosPools.USDy,
+      baseChainData.torosPools.USDMNY,
+      baseChainData.torosPools.BTCBEAR1X,
+      baseChainData.torosPools.BTCBULL2X,
+      baseChainData.torosPools.BTCBULL3X,
     ],
+  },
+
+  angleProtocol: {
+    distributor: "0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae",
+    rewardTokenSupported: "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB",
+  },
+
+  poolLimitOrderManager: {
+    defaultSlippageTolerance: 200, // 2%
+    settlementToken: baseChainData.assets.usdc,
+    authorizedKeeperAddresses: [
+      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
+      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
+      "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
+      "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
+      "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
+    ],
+  },
+
+  pancakeswap: {
+    nonfungiblePositionManager: "0x46A15B0b27311cedF172AB29E4f4766fbE7F4364",
+    masterChefV3: "0xC6A2Db661D5a5690172d8eB0a7DEA2d3008665A3",
+  },
+
+  sky: {
+    psm3: "0x1601843c5E9bC251A3272907010AFa41Fa18347E",
+  },
+
+  across: {
+    spokePool: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+    approvedDestinations: [
+      {
+        sourcePool: FLAT_MONEY_PERP_MARKET_BOT_TEST,
+        sourceToken: baseChainData.assets.usdc,
+        destinationChainId: 42161,
+        destinationPool: arbitrumChainData.gmxTestVaults.gmxTest2,
+        destinationToken: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        sourcePool: FLAT_MONEY_PERP_MARKET_BOT_TEST,
+        sourceToken: baseChainData.assets.usdc,
+        destinationChainId: 42161,
+        destinationPool: arbitrumChainData.gmxTestVaults.gmxTest6,
+        destinationToken: arbitrumChainData.assets.usdcNative,
+      },
+    ],
+  },
+
+  odosV2RouterAddress: baseChainData.odosEx.v2Router,
+
+  compoundV3: {
+    rewards: baseChainData.compoundV3.rewards,
   },
 };
 
-export const baseProdFileNames = {
+export const baseProdFileNames: IFileNames = {
   versionsFileName: "./publish/base/prod/versions.json",
   assetsFileName: "./config/base/dHEDGE Assets list.json",
   assetGuardsFileName: "./config/base/dHEDGE Governance Asset Guards.csv",

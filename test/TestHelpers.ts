@@ -3,6 +3,8 @@ import { BigNumber, BigNumberish } from "ethers";
 import { MockContract } from "../types";
 import { expect } from "chai";
 
+import { utils } from "./integration/utils/utils";
+
 export const currentBlockTimestamp = async () => {
   const currentBlockNumber = await ethers.provider.getBlockNumber();
   return (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
@@ -29,6 +31,36 @@ export const updateChainlinkAggregators = async (
     latestRoundDataABI,
     ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 3500000000, 0, current, 0]),
   ); // $35
+};
+
+export const manipulateChainLinkOracle = async (oracleAddress: string, manipulateByPercent: number) => {
+  // Chainlink Oracles are like a proxy so the address never changes, they have an underlying aggregator
+  // We switch this out to our HackerPriceAggregator to manipulate the price.
+  // Synthetix check the roundId etc so we can't use the FixedPriceAggregator
+  // You cannot call the child aggregator directly onchain because it has access control so no direct proxying.
+  // We just take all the lastRoundData and pass it to our HackerPriceAggregator and change the price
+  const chainlinkAggregator = await ethers.getContractAt("IAggregatorV3InterfaceWithOwner", oracleAddress);
+  const owner = await utils.impersonateAccount(await chainlinkAggregator.owner());
+  const [roundId, answer, startedAt, updatedAt, answeredInRound] = await chainlinkAggregator.latestRoundData();
+  // if the manipulateByPercent is 10 we increase the current price by 10%
+  // if the manipulateByPercent is -10 we decrease the current price by 10%
+  const answerManipulated = answer.add(answer.mul(manipulateByPercent).div(100));
+  const HackerPriceAggregator = await ethers.getContractFactory("HackerPriceAggregator");
+  const fixedPriceAggregator = await HackerPriceAggregator.deploy(
+    roundId,
+    answerManipulated,
+    startedAt,
+    updatedAt,
+    answeredInRound,
+  );
+  await fixedPriceAggregator.deployed();
+  await chainlinkAggregator.connect(owner).proposeAggregator(fixedPriceAggregator.address);
+  await chainlinkAggregator.connect(owner).confirmAggregator(fixedPriceAggregator.address);
+  const [, answerChain] = await chainlinkAggregator.latestRoundData();
+  // Assert our price hack has worked
+  if (!answerChain.eq(answerManipulated)) {
+    throw new Error("manipulateChainLinkOracle failed");
+  }
 };
 
 // Within 1%

@@ -3,7 +3,7 @@ import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { addOrReplaceGuardInFile } from "../helpers";
 import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 
-export const balancerv2ContractGuard: IJob<void> = async (
+export const balancerv2ContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
   versions: IVersions,

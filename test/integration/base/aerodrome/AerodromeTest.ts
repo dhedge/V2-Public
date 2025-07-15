@@ -8,7 +8,6 @@ import { baseChainData } from "../../../../config/chainData/baseData";
 const baseTestParams = {
   ...baseChainData,
   ...baseChainData.aerodrome,
-  assets: baseChainData.assets,
   protocolToken: baseChainData.aerodrome.aero,
   VARIABLE_PROTOCOLTOKEN_USDC: baseChainData.aerodrome.VARIABLE_AERO_USDC,
 };
@@ -17,7 +16,6 @@ runAerodromeLPAssetGuardTest(baseTestParams);
 runAerodromeGaugeContractGuardTest(baseTestParams);
 runAerodromeLPAggregatorTest(baseTestParams);
 runAerodromeRouterGuardTest(baseTestParams);
-
 runAerodromeTWAPAggregatorTest([
   {
     assetToTest: baseChainData.assets.weth,
