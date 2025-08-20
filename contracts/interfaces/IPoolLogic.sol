@@ -26,8 +26,6 @@ interface IPoolLogic {
 
   function deposit(address _asset, uint256 _amount) external returns (uint256 liquidityMinted);
 
-  function depositFor(address _recipient, address _asset, uint256 _amount) external returns (uint256 liquidityMinted);
-
   function depositForWithCustomCooldown(
     address _recipient,
     address _asset,

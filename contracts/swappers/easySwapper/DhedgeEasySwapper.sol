@@ -233,11 +233,7 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
         60 minutes
       );
     } else {
-      liquidityMinted = IPoolLogic(pool).depositFor(
-        msg.sender,
-        address(poolDepositAsset),
-        poolDepositAsset.balanceOf(address(this))
-      );
+      revert("deprecated");
     }
     require(liquidityMinted >= expectedLiquidityMinted, "slippage");
 
