@@ -88,7 +88,11 @@ contract AaveLendingPoolGuardV3 is TxDataUtils, ITransactionTypes, ITxTrackingGu
   function _canAffectHealthFactor(bytes memory data) internal pure returns (bool canAffect) {
     bytes4 method = getMethod(data);
 
-    if (method == IAaveV3Pool.borrow.selector || method == IAaveV3Pool.withdraw.selector) return true;
+    if (
+      method == IAaveV3Pool.borrow.selector ||
+      method == IAaveV3Pool.withdraw.selector ||
+      method == IAaveV3Pool.setUserEMode.selector
+    ) return true;
 
     if (method == IAaveV3Pool.setUserUseReserveAsCollateral.selector) {
       (, bool useAsCollateral) = abi.decode(getParams(data), (address, bool));
