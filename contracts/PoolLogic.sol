@@ -227,16 +227,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     return _depositFor(msg.sender, _asset, _amount, _exitCooldown());
   }
 
-  /// @notice Deposit funds into the pool for a specific recipient
-  /// @dev This function allows the recipient to be different from the sender
-  /// @param _recipient Address of the recipient
-  /// @param _asset Address of the token
-  /// @param _amount Amount of tokens to deposit
-  /// @return liquidityMinted Amount of liquidity minted
-  function depositFor(address _recipient, address _asset, uint256 _amount) external returns (uint256 liquidityMinted) {
-    return _depositFor(_recipient, _asset, _amount, _exitCooldown());
-  }
-
   /// @notice Deposit funds into the pool for a specific recipient with a custom lockup time
   /// @dev This function allows the recipient to be different from the sender and sets a custom lockup time.
   ///      Sender must be authorized by the owner
