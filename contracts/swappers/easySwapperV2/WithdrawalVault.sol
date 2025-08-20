@@ -12,7 +12,7 @@ import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
 import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
-import {EasySwapperV3Helpers} from "../easySwapper/EasySwapperV3Helpers.sol";
+import {EasySwapperUniV3Helpers} from "../easySwapper/EasySwapperUniV3Helpers.sol";
 import {EasySwapperVelodromeCLHelpers} from "../easySwapper/EasySwapperVelodromeCLHelpers.sol";
 import {EasySwapperVelodromeLPHelpers} from "../easySwapper/EasySwapperVelodromeLPHelpers.sol";
 import {IEasySwapperV2} from "./interfaces/IEasySwapperV2.sol";
@@ -161,7 +161,7 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       ) {}
       // Uniswap V3 - already unrolled, just need the assets
       else if (assetType == 7) {
-        unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(_dHedgeVault, asset);
+        unrolledAssets = EasySwapperUniV3Helpers.getUnsupportedUniV3Assets(_dHedgeVault, asset);
       }
       // Velodrome V2
       else if (assetType == 25) {
