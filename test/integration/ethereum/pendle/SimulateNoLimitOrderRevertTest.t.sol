@@ -13,7 +13,6 @@ contract SimulateNoLimitOrderRevertTest is Test {
   Governance public governance = Governance(0xFa2837ecaC0136f7dE9221DB2b13fe9192De4BD2);
   address public USDy = 0xAD0FCdB111705C9FDceAa4F92a5c0B43243FF0bd;
   address public USDyManager = 0x25ca6760fC0936127a6E34c3CBD63064b8A0DE1f;
-  address public PT = 0x9F56094C450763769BA0EA9Fe2876070c0fD5F77;
   uint256 public minPTAmountOut = 599164693965679848389319;
   address public slippageAccumulator = 0x165D338aa7327549F51D8c372F997B08ed260835;
 
@@ -33,12 +32,12 @@ contract SimulateNoLimitOrderRevertTest is Test {
     vm.prank(owner);
     governance.setContractGuard(EthereumConfig.PENDLE_ROUTER_V4, address(newGuard));
 
-    uint256 ptBalanceBefore = PoolLogic(PT).balanceOf(USDy);
+    uint256 ptBalanceBefore = PoolLogic(EthereumConfig.PT_sUSDe_SEP_2025).balanceOf(USDy);
     assertEq(ptBalanceBefore, 0);
 
     _execSwapExactTokenForPt();
 
-    uint256 ptBalanceAfter = PoolLogic(PT).balanceOf(USDy);
+    uint256 ptBalanceAfter = PoolLogic(EthereumConfig.PT_sUSDe_SEP_2025).balanceOf(USDy);
     assertGe(ptBalanceAfter, minPTAmountOut);
   }
 

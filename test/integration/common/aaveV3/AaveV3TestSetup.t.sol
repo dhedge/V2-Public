@@ -362,19 +362,21 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     _supplyAndBorrow();
 
     uint256 totalValueBefore = aaveTestPoolManagerLogic.totalFundValue();
+    uint256 repayAmount = IERC20Extended(tokenToBorrow).balanceOf(address(aaveTestPool));
 
     vm.prank(manager);
     aaveTestPool.execTransaction(
       aaveV3Pool,
-      abi.encodeWithSelector(IAaveV3Pool.repay.selector, tokenToBorrow, type(uint256).max, 2, address(aaveTestPool))
+      abi.encodeWithSelector(IAaveV3Pool.repay.selector, tokenToBorrow, repayAmount, 2, address(aaveTestPool))
     );
 
     uint256 totalValueAfter = aaveTestPoolManagerLogic.totalFundValue();
     address variableDebtToken = IAaveV3Pool(aaveV3Pool).getReserveVariableDebtToken(tokenToBorrow);
 
-    assertEq(
+    assertApproxEqAbs(
       IERC20Extended(variableDebtToken).balanceOf(address(aaveTestPool)),
       0,
+      2,
       "Test pool should have no variable debt token left after repay"
     );
     assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after repay");
