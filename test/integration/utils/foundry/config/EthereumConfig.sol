@@ -17,6 +17,7 @@ library EthereumConfig {
   address public constant PT_sUSDe_JUL_2025 = 0x3b3fB9C57858EF816833dC91565EFcd85D96f634;
   address public constant USDe = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3;
   address public constant sUSDe = 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497;
+  address public constant PT_sUSDe_SEP_2025 = 0x9F56094C450763769BA0EA9Fe2876070c0fD5F77;
 
   // Oracles
   address public constant USDC_CHAINLINK_ORACLE = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
@@ -29,6 +30,7 @@ library EthereumConfig {
   address public constant PENDLE_ORACLE_PT_TO_SY_sUSDe_JUL2025_1800_TWAP = 0xF456b1f85fb74FE816F5D0a49076e19164aF3f8D;
   address public constant PT_USDe_JUL_2025_PRICE_AGGREGATOR = 0xa920Ee93b1aC4E093Eb33C35990EE37283B1c303;
   address public constant PT_sUSDe_JUL_2025_PRICE_AGGREGATOR = 0x06C1969D2A38EE97B24E8853ee598C1BA347D307;
+  address public constant PT_sUSDe_SEP_2025_PRICE_AGGREGATOR = 0x1205aa400d5ab7819e269076698A2B6Cc793F661;
 
   // Toros Vaults
 

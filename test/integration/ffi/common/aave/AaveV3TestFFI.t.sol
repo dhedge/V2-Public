@@ -11,6 +11,7 @@ import {IERC20Extended} from "contracts/interfaces/IERC20Extended.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {AaveV3TestSetup} from "test/integration/common/aaveV3/AaveV3TestSetup.t.sol";
 import {IPMarket} from "contracts/interfaces/pendle/IPMarket.sol";
+import {IAaveV3Pool} from "contracts/interfaces/aave/v3/IAaveV3Pool.sol";
 
 abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
   uint256 private immutable chainId;
@@ -24,22 +25,33 @@ abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
     __OdosAPIHelper_init(true);
   }
 
-  function test_can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata_not_expired() public {
-    can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata(block.timestamp + 1 days);
+  function test_can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata_PT_not_expired()
+    public
+  {
+    can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata(block.timestamp + 1 days, false);
   }
 
-  function test_can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata_expired() public {
+  function test_can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata_PT_expired() public {
     bool shouldSkip = token0ToLendPendleMarket == address(0);
     vm.skip(shouldSkip);
 
     uint256 expiry = IPMarket(token0ToLendPendleMarket).expiry();
-    can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata(expiry + 1 days);
+    can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata(expiry + 1 days, false);
   }
 
   function can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata(
-    uint256 _newTimestamp
+    uint256 _newTimestamp,
+    bool _lendTwoTokens
   ) internal {
     vm.warp(_newTimestamp);
+
+    if (_lendTwoTokens) {
+      deal(
+        token1ToLend,
+        address(aaveTestPool),
+        token1AmountNormalized * (10 ** IERC20Extended(token1ToLend).decimals())
+      );
+    }
 
     // 50% of the pool
     uint256 amountToWithdraw = IERC20Extended(address(aaveTestPool)).balanceOf(investor) / 2;
@@ -51,6 +63,15 @@ abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
     assertEq(tokenToBorrowBalanceBefore, 0, "Investor should have no token to borrow before withdraw");
 
     _supplyAndBorrow();
+
+    if (_lendTwoTokens) {
+      uint256 amountToSupply = IERC20Extended(token1ToLend).balanceOf(address(aaveTestPool));
+      vm.prank(manager);
+      aaveTestPool.execTransaction(
+        aaveV3Pool,
+        abi.encodeWithSelector(IAaveV3Pool.supply.selector, token1ToLend, amountToSupply, address(aaveTestPool), 0)
+      );
+    }
 
     if (token0ToLendUnderlying != address(0)) {
       uint256 token0ToLendUnderlyingPoolBalanceBeforeWithdraw = IERC20Extended(token0ToLendUnderlying).balanceOf(

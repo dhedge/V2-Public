@@ -615,8 +615,9 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
 
     // Going to have 3 types of transactions:
     // 1. Withdraw collateral asset from aave (If all collateral assets are pendle PTs, there might be triple more transactions per collateral asset)
-    // 2. Approve collateral asset to swap from for swapper contract
+    // 2. Approve collateral asset to swap from for swapper contract (deduplicated by token address)
     // 3. Swap collateral assets to repay asset
+    // Note: We use srcTokensLength as upper bound for approvals, actual count may be lower due to token deduplication
     executionData.possibleTransactionsLength = collateralAssetsLength.mul(3).add(executionData.srcTokensLength).add(1);
     transactions = new MultiTransaction[](executionData.possibleTransactionsLength);
 
@@ -650,12 +651,40 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       }
     }
 
+    // Aggregate amounts for duplicate tokens to avoid overwriting approvals
+    address[] memory uniqueTokens = new address[](executionData.srcTokensLength);
+    uint256[] memory aggregatedAmounts = new uint256[](executionData.srcTokensLength);
+    uint256 uniqueTokensCount = 0;
+
     for (uint256 i; i < executionData.srcTokensLength; ++i) {
-      transactions[executionData.txCount].to = address(swapProps.srcData[0].srcTokenSwapDetails[i].token);
+      address currentToken = address(swapProps.srcData[0].srcTokenSwapDetails[i].token);
+      uint256 currentAmount = swapProps.srcData[0].srcTokenSwapDetails[i].amount;
+
+      // Check if token already exists in uniqueTokens array
+      bool tokenFound = false;
+      for (uint256 j; j < uniqueTokensCount; ++j) {
+        if (uniqueTokens[j] == currentToken) {
+          aggregatedAmounts[j] = aggregatedAmounts[j].add(currentAmount);
+          tokenFound = true;
+          break;
+        }
+      }
+
+      // If token not found, add it as a new unique token
+      if (!tokenFound) {
+        uniqueTokens[uniqueTokensCount] = currentToken;
+        aggregatedAmounts[uniqueTokensCount] = currentAmount;
+        uniqueTokensCount++;
+      }
+    }
+
+    // Create approval transactions for unique tokens with aggregated amounts
+    for (uint256 i; i < uniqueTokensCount; ++i) {
+      transactions[executionData.txCount].to = uniqueTokens[i];
       transactions[executionData.txCount].txData = abi.encodeWithSelector(
         IERC20Extended.approve.selector,
         swapper,
-        swapProps.srcData[0].srcTokenSwapDetails[i].amount
+        aggregatedAmounts[i]
       );
       executionData.txCount++;
     }
