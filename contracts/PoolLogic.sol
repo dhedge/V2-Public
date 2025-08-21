@@ -811,7 +811,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
     // If the `streamingFee` is 0 then updating `lastFeeMintTime` can result in reduced streaming fee revenue.
     // This is due to rounding down when calculating `streamingFee` in `_availableManagerFee`.
-    if (streamingFee > 0) lastFeeMintTime = block.timestamp;
+    if (streamingFee > 0 || managementFeeNumerator == 0 || tokenSupply == 0) lastFeeMintTime = block.timestamp;
 
     if (daoFee > 0) _mint(IHasDaoInfo(factory).daoAddress(), daoFee);
 
