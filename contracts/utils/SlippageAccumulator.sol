@@ -102,6 +102,8 @@ contract SlippageAccumulator is Ownable {
     address router,
     SwapData calldata swapData
   ) external onlyContractGuard(router) {
+    require(swapData.srcAmount != 0, "0 src amount");
+
     if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(swapData.srcAsset)) {
       uint256 srcValue = assetValue(swapData.srcAsset, swapData.srcAmount);
       uint256 dstValue = assetValue(swapData.dstAsset, swapData.dstAmount);

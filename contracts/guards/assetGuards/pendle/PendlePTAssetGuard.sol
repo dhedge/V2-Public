@@ -15,6 +15,7 @@ contract PendlePTAssetGuard is ERC20Guard, IAddAssetCheckGuard {
   struct PTAssociatedData {
     address market;
     address yieldToken;
+    address yt;
   }
 
   bool public override isAddAssetCheckGuard = true;
@@ -31,11 +32,12 @@ contract PendlePTAssetGuard is ERC20Guard, IAddAssetCheckGuard {
     for (uint256 i; i < _knownPendleMarkets.length; ++i) {
       require(IPMarketFactoryV3(_pendleMarketFactoryV3).isValidMarket(_knownPendleMarkets[i]), "invalid market");
 
-      (address sy, address pt, ) = IPMarket(_knownPendleMarkets[i]).readTokens();
+      (address sy, address pt, address yt) = IPMarket(_knownPendleMarkets[i]).readTokens();
 
       ptAssociatedData[pt] = PTAssociatedData({
         market: _knownPendleMarkets[i],
-        yieldToken: IStandardizedYield(sy).yieldToken()
+        yieldToken: IStandardizedYield(sy).yieldToken(),
+        yt: yt
       });
     }
   }
@@ -43,6 +45,6 @@ contract PendlePTAssetGuard is ERC20Guard, IAddAssetCheckGuard {
   function addAssetCheck(address, IHasSupportedAsset.Asset calldata _asset) external view override {
     PTAssociatedData memory ptData = ptAssociatedData[_asset.asset];
 
-    require(ptData.market != address(0) && ptData.yieldToken != address(0), "unknown PT");
+    require(ptData.market != address(0), "unknown PT");
   }
 }
