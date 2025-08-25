@@ -6,6 +6,8 @@ library EthereumConfig {
   uint256 public constant CHAIN_ID = 1;
 
   // dHEDGE Contracts
+  address public constant POOL_FACTORY_PROD = 0x96D33bCF84DdE326014248E2896F79bbb9c13D6d;
+  address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x165D338aa7327549F51D8c372F997B08ed260835;
 
   // Tokens
   address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;

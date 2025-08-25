@@ -28,6 +28,8 @@ import {IntegrationDeployer} from "test/integration/utils/foundry/dryRun/Integra
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 import "contracts/interfaces/pendle/IPAllActionTypeV3.sol" as IPAllActionTypeV3;
+import {MaliciousYT} from "./MaliciousYT.sol";
+import {MaliciousMarket} from "./MaliciousMarket.sol";
 
 abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDeployer {
   address internal immutable pendleMarketFactoryV3;
@@ -41,6 +43,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
   address private YT;
   PoolLogic private testPool;
   PoolManagerLogic private testPoolManagerLogic;
+  PendleRouterV4ContractGuard private pendleRouterV4ContractGuard;
 
   constructor(
     address _pendleMarketFactoryV3,
@@ -120,7 +123,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     vm.startPrank(_poolFactory.owner());
 
-    PendleRouterV4ContractGuard pendleRouterV4ContractGuard = new PendleRouterV4ContractGuard(_slippageAcc);
+    pendleRouterV4ContractGuard = new PendleRouterV4ContractGuard(_slippageAcc, address(_poolFactory));
     governance.setContractGuard(pendleRouterV4, address(pendleRouterV4ContractGuard));
 
     address[] memory knownPendleMarkets = new address[](1);
@@ -675,58 +678,36 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
       IPAllActionTypeV3.createEmptyLimitOrderData()
     );
 
-    vm.expectRevert("unsupported destination asset");
+    vm.expectRevert("pt not enabled");
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
   }
 
   function test_revert_sell_PT_when_destination_not_supported() public {
-    vm.startPrank(manager);
-
-    address[] memory assetsToRemove = new address[](1);
-    assetsToRemove[0] = PT;
-    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), assetsToRemove);
-
-    deal(underlyingYieldToken, address(testPool), 0);
-
-    assetsToRemove = new address[](1);
-    assetsToRemove[0] = underlyingYieldToken;
-    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), assetsToRemove);
-
     bytes memory sellPTCalldata = abi.encodeWithSelector(
       IPActionSwapPTV3.swapExactPtForToken.selector,
       address(testPool),
       pendleMarket,
       0,
-      IPAllActionTypeV3.createTokenOutputSimple(underlyingYieldToken, 0),
+      IPAllActionTypeV3.createTokenOutputSimple(daiData.asset, 0),
       IPAllActionTypeV3.createEmptyLimitOrderData()
     );
 
+    vm.prank(manager);
     vm.expectRevert("unsupported destination asset");
     testPool.execTransaction(pendleRouterV4, sellPTCalldata);
   }
 
   function test_revert_redeem_PT_when_destination_not_supported() public {
-    vm.startPrank(manager);
-
-    address[] memory assetsToRemove = new address[](1);
-    assetsToRemove[0] = PT;
-    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), assetsToRemove);
-
-    deal(underlyingYieldToken, address(testPool), 0);
-
-    assetsToRemove = new address[](1);
-    assetsToRemove[0] = underlyingYieldToken;
-    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), assetsToRemove);
-
     bytes memory redeemPTCalldata = abi.encodeWithSelector(
       IPActionMiscV3.exitPostExpToToken.selector,
       address(testPool),
       pendleMarket,
       0,
       0, // netLpIn
-      IPAllActionTypeV3.createTokenOutputSimple(underlyingYieldToken, 0)
+      IPAllActionTypeV3.createTokenOutputSimple(daiData.asset, 0)
     );
 
+    vm.prank(manager);
     vm.expectRevert("unsupported destination asset");
     testPool.execTransaction(pendleRouterV4, redeemPTCalldata);
   }
@@ -766,7 +747,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
       IPAllActionTypeV3.createTokenOutputSimple(underlyingYieldToken, 0)
     );
 
-    vm.expectRevert("only PT");
+    vm.expectRevert("only pt");
     testPool.execTransaction(pendleRouterV4, redeemPTCalldata);
   }
 
@@ -987,16 +968,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
   }
 
   function test_revert_single_asset_withdraw_when_pt_market_unknown() public {
-    address[] memory knownPendleMarkets = new address[](0);
-
-    PendlePTAssetGuard pendlePTAssetGuard = new PendlePTAssetGuard(pendleMarketFactoryV3, knownPendleMarkets);
-
-    vm.prank(owner);
-    governance.setAssetGuard(uint16(AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN), address(pendlePTAssetGuard));
-
     // First buy some PT tokens
-    vm.startPrank(manager);
-
     uint256 underlyingAmount = IERC20(underlyingYieldToken).balanceOf(address(testPool));
 
     bytes memory buyPTCalldata = abi.encodeWithSelector(
@@ -1009,12 +981,21 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
       IPAllActionTypeV3.createEmptyLimitOrderData()
     );
 
+    vm.prank(manager);
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     skip(1 days);
 
+    address[] memory knownPendleMarkets = new address[](0);
+    PendlePTAssetGuard pendlePTAssetGuard = new PendlePTAssetGuard(pendleMarketFactoryV3, knownPendleMarkets);
+
+    vm.prank(owner);
+    governance.setAssetGuard(uint16(AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN), address(pendlePTAssetGuard));
+
     uint256 poolManagerBalance = IERC20(address(testPool)).balanceOf(manager);
     uint256 withdrawAmount = poolManagerBalance / 4; // withdraw 25% of pool
+
+    vm.startPrank(manager);
 
     testPool.approve(address(easySwapperV2Proxy), withdrawAmount);
 
@@ -1130,6 +1111,86 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     vm.expectRevert("unknown limit router");
     testPool.execTransaction(pendleRouterV4, sellPTCalldata);
+  }
+
+  function test_revert_redeemPyToToken_when_malicious_yt_provided() public {
+    uint256 underlyingBalanceOfPoolBefore = IERC20(underlyingYieldToken).balanceOf(address(testPool));
+    bytes memory buyPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactTokenForPt.selector,
+      address(testPool),
+      pendleMarket,
+      0,
+      IPAllActionTypeV3.createDefaultApproxParams(),
+      IPAllActionTypeV3.createTokenInputSimple(underlyingYieldToken, underlyingBalanceOfPoolBefore),
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    vm.startPrank(manager);
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+
+    uint256 ptBalanceOfPool = IERC20(PT).balanceOf(address(testPool));
+
+    uint256 expiry = IPMarket(pendleMarket).expiry();
+    vm.warp(expiry + 1);
+
+    address maliciousYT = address(new MaliciousYT(PT, address(pendleRouterV4ContractGuard)));
+    bytes memory redeemCalldata = abi.encodeWithSelector(
+      IPActionMiscV3.redeemPyToToken.selector,
+      address(testPool),
+      maliciousYT,
+      ptBalanceOfPool,
+      IPAllActionTypeV3.createTokenOutputSimple(underlyingYieldToken, 0)
+    );
+
+    bytes memory approvePTCalldata = abi.encodeWithSelector(IERC20.approve.selector, pendleRouterV4, ptBalanceOfPool);
+    testPool.execTransaction(PT, approvePTCalldata);
+
+    vm.expectRevert();
+    testPool.execTransaction(pendleRouterV4, redeemCalldata);
+
+    // assertEq(IERC20(PT).balanceOf(address(testPool)), 0);
+    // assertEq(IERC20(PT).balanceOf(maliciousYT), ptBalanceOfPool);
+  }
+
+  function test_revert_swapExactPtForToken_when_malicious_market_provided() public {
+    uint256 underlyingBalanceOfPoolBefore = IERC20(underlyingYieldToken).balanceOf(address(testPool));
+    bytes memory buyPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactTokenForPt.selector,
+      address(testPool),
+      pendleMarket,
+      0,
+      IPAllActionTypeV3.createDefaultApproxParams(),
+      IPAllActionTypeV3.createTokenInputSimple(underlyingYieldToken, underlyingBalanceOfPoolBefore),
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    vm.startPrank(manager);
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+
+    uint256 ptBalanceOfPool = IERC20(PT).balanceOf(address(testPool));
+
+    address maliciousReceiver = makeAddr("receiver");
+    address maliciousMarket = address(
+      new MaliciousMarket(PT, maliciousReceiver, underlyingYieldToken, address(pendleRouterV4ContractGuard))
+    );
+
+    bytes memory sellPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactPtForToken.selector,
+      address(testPool),
+      maliciousMarket,
+      ptBalanceOfPool,
+      IPAllActionTypeV3.createTokenOutputSimple(underlyingYieldToken, 0),
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    bytes memory approvePTCalldata = abi.encodeWithSelector(IERC20.approve.selector, pendleRouterV4, ptBalanceOfPool);
+    testPool.execTransaction(PT, approvePTCalldata);
+
+    vm.expectRevert("invalid market");
+    testPool.execTransaction(pendleRouterV4, sellPTCalldata);
+
+    // assertEq(IERC20(PT).balanceOf(address(testPool)), 0);
+    // assertEq(IERC20(PT).balanceOf(maliciousReceiver), ptBalanceOfPool);
   }
 
   function _use_different_oracle_for_staked_usde() internal {
