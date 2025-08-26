@@ -169,6 +169,10 @@ contract PendleRouterV4ContractGuard is TxDataUtils, ITransactionTypes, Slippage
   ) internal view {
     require(_receiver == _poolLogic, "recipient is not pool");
 
+    // Not related to SY sUSDe and USDe, but by looking at the code it's possible to set `tokenRedeemSy` different from `tokenOut` if SY supports multiple tokens out
+    // Example: https://etherscan.io/address/0xac0047886a985071476a1186be89222659970d65#readContract#F12
+    require(_output.tokenOut == _output.tokenRedeemSy, "tokenOut mismatch");
+
     require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(_output.tokenOut), "unsupported destination asset");
 
     // Forbid swaps for initial version, this can be changed later
