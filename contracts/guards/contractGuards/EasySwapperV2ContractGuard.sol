@@ -119,7 +119,11 @@ contract EasySwapperV2ContractGuard is TxDataUtils, ITransactionTypes, SlippageA
 
       for (uint256 i; i < complexAssetsData.length; ++i) {
         // Simple hard stop to prevent managers from setting slippage tolerance for withdrawing from aave positions too high
-        require(complexAssetsData[i].slippageTolerance <= _swapSlippageTolerance, "beyond allowed slippage");
+        require(
+          complexAssetsData[i].slippageTolerance <= _swapSlippageTolerance &&
+            complexAssetsData[i].slippageTolerance != 0,
+          "beyond allowed slippage"
+        );
 
         // If length is 0, it won't be picked up at PoolLogic. If non empty data provided for different than aave position asset, tx will revert
         if (complexAssetsData[i].withdrawData.length > 0) {

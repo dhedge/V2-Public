@@ -140,7 +140,7 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
             easySwapperV2.address,
             easySwapperV2.interface.encodeFunctionData("partialWithdraw", [units(1), manager.address]),
           ),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("dh23");
     });
 
     describe("Deposit", () => {
@@ -407,7 +407,7 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
         );
         const withdrawData = ethers.utils.defaultAbiCoder.encode(
           ["tuple(bytes, tuple(address, uint256), uint256)"],
-          [[encodedSrcData, [USDC.address, 0], 0]],
+          [[encodedSrcData, [USDC.address, 0], 100]],
         );
         complexAssetsData[0].withdrawData = withdrawData;
         const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
