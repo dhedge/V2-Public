@@ -52,7 +52,7 @@ contract PendlePTPriceAggregator is IAggregatorV3Interface {
     // Adjust answer to 8 decimals
     answer = answer.mul(1e8).div(int256(10 ** yieldTokenAggregatorDecimals));
 
-    return (0, answer, 0, yieldTokenUpdatedAt > ptPriceUpdateAt ? yieldTokenUpdatedAt : ptPriceUpdateAt, 0);
+    return (0, answer, 0, yieldTokenUpdatedAt > ptPriceUpdateAt ? ptPriceUpdateAt : yieldTokenUpdatedAt, 0);
   }
 
   /// @dev In case the yield token aggregator is changed within our system, anyone can call this function to update the PT aggregator (eliminates the need for redeploying the contract)
