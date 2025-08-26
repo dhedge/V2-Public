@@ -210,9 +210,16 @@ contract EasySwapperV2ContractGuard is TxDataUtils, ITransactionTypes, SlippageA
     bytes4 method = getMethod(_data);
 
     if (method == EasySwapperV2.zapDepositWithCustomCooldown.selector) {
-      address dHedgeVault = abi.decode(getParams(_data), (address));
+      (address dHedgeVault, EasySwapperV2.SingleInSingleOutData memory swapData) = abi.decode(
+        getParams(_data),
+        (address, EasySwapperV2.SingleInSingleOutData)
+      );
 
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(dHedgeVault), "unsupported destination asset");
+      require(
+        IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(address(swapData.srcData.token)),
+        "unsupported source asset"
+      );
     } else if (
       method == bytes4(keccak256("completeWithdrawal(((address,uint256,(bytes32,bytes))[],(address,uint256)),uint256)"))
     ) {
