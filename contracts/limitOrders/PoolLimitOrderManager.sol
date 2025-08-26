@@ -483,7 +483,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
         (ISwapDataConsumingGuard.ComplexAssetSwapData)
       );
       if (
-        withdrawData.slippageTolerance != complexAssetsData_[i].slippageTolerance &&
+        withdrawData.slippageTolerance != complexAssetsData_[i].slippageTolerance ||
         withdrawData.slippageTolerance > defaultSlippageTolerance
       ) revert InvalidValue("slippage");
     }
