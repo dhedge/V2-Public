@@ -1193,6 +1193,66 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     // assertEq(IERC20(PT).balanceOf(maliciousReceiver), ptBalanceOfPool);
   }
 
+  function test_revert_sell_PT_when_tokenRedeemSy_not_equal_tokenOut() public {
+    // First buy some PT tokens
+    uint256 underlyingAmount = IERC20(underlyingYieldToken).balanceOf(address(testPool));
+
+    bytes memory buyPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactTokenForPt.selector,
+      address(testPool),
+      pendleMarket,
+      0,
+      IPAllActionTypeV3.createDefaultApproxParams(),
+      IPAllActionTypeV3.createTokenInputSimple(underlyingYieldToken, underlyingAmount),
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    vm.prank(manager);
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+
+    uint256 ptBalance = IERC20(PT).balanceOf(address(testPool));
+
+    // Change asset type of underlyingYieldToken to 0 just for the sake of this test
+    IAssetHandler.Asset[] memory assets = new IAssetHandler.Asset[](1);
+    assets[0] = IAssetHandler.Asset({
+      asset: underlyingYieldToken,
+      assetType: 0,
+      aggregator: underlyingYieldTokenPriceFeed
+    });
+    IAssetHandler assetHandler = IAssetHandler(poolFactoryProxy.getAssetHandler());
+    vm.prank(poolFactoryProxy.owner());
+    assetHandler.addAssets(assets);
+
+    vm.startPrank(manager);
+
+    // Remove underlyingYieldToken from supported assets
+    address[] memory assetsToRemove = new address[](1);
+    assetsToRemove[0] = underlyingYieldToken;
+    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), assetsToRemove);
+
+    bytes memory approvePTCalldata = abi.encodeWithSelector(IERC20.approve.selector, pendleRouterV4, ptBalance);
+    testPool.execTransaction(PT, approvePTCalldata);
+
+    // Set `tokenOut` to any supported asset in the vault (for example USDC) instead of being same as `tokenRedeemSy`, which is set to `underlyingYieldToken`
+    IPAllActionTypeV3.TokenOutput memory maliciousTokenOutput = IPAllActionTypeV3.createTokenOutputSimple(
+      underlyingYieldToken,
+      0
+    );
+    maliciousTokenOutput.tokenOut = usdcData.asset;
+
+    bytes memory sellPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactPtForToken.selector,
+      address(testPool),
+      pendleMarket,
+      ptBalance,
+      maliciousTokenOutput,
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    vm.expectRevert("tokenOut mismatch");
+    testPool.execTransaction(pendleRouterV4, sellPTCalldata);
+  }
+
   function _use_different_oracle_for_staked_usde() internal {
     vm.startPrank(poolFactoryProxy.owner());
 
