@@ -68,16 +68,26 @@ contract AaveLendingPoolGuardV3L2Pool is AaveLendingPoolGuardV3 {
   }
 
   function afterTxGuard(address poolManagerLogic, address to, bytes memory data) external view override {
+    if (_canAffectHealthFactor(data, to)) _afterTxGuard(poolManagerLogic, to);
+  }
+
+  /// @dev These are the actions which potentially can affect HF
+  function _canAffectHealthFactor(bytes memory data, address to) internal view returns (bool canAffect) {
+    if (super._canAffectHealthFactor(data)) return true;
+
     bytes4 method = getMethod(data);
 
-    if (
-      method == IL2Pool.borrow.selector ||
-      method == IL2Pool.setUserUseReserveAsCollateral.selector ||
-      method == IL2Pool.withdraw.selector ||
-      _canAffectHealthFactor(method)
-    ) {
-      _afterTxGuard(poolManagerLogic, to);
+    if (method == IL2Pool.borrow.selector || method == IL2Pool.withdraw.selector) return true;
+
+    if (method == IL2Pool.setUserUseReserveAsCollateral.selector) {
+      (, bool useAsCollateral) = decodeSetUserUseReserveAsCollateralParams(
+        abi.decode(getParams(data), (bytes32)),
+        IAaveV3Pool(to)
+      );
+      return !useAsCollateral;
     }
+
+    return false;
   }
 
   // Calldata Logic from Aave V3 core - https://github.com/aave/aave-v3-core/blob/master/contracts/protocol/libraries/logic/CalldataLogic.sol

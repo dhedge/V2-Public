@@ -81,18 +81,21 @@ contract AaveLendingPoolGuardV3 is TxDataUtils, ITransactionTypes, ITxTrackingGu
   }
 
   function afterTxGuard(address poolManagerLogic, address to, bytes memory data) external view virtual override {
-    bytes4 method = getMethod(data);
-
-    if (_canAffectHealthFactor(method)) _afterTxGuard(poolManagerLogic, to);
+    if (_canAffectHealthFactor(data)) _afterTxGuard(poolManagerLogic, to);
   }
 
   /// @dev These are the actions which potentially can affect HF
-  function _canAffectHealthFactor(bytes4 method) internal pure returns (bool canAffect) {
-    if (
-      method == IAaveV3Pool.borrow.selector ||
-      method == IAaveV3Pool.setUserUseReserveAsCollateral.selector ||
-      method == IAaveV3Pool.withdraw.selector
-    ) canAffect = true;
+  function _canAffectHealthFactor(bytes memory data) internal pure returns (bool canAffect) {
+    bytes4 method = getMethod(data);
+
+    if (method == IAaveV3Pool.borrow.selector || method == IAaveV3Pool.withdraw.selector) return true;
+
+    if (method == IAaveV3Pool.setUserUseReserveAsCollateral.selector) {
+      (, bool useAsCollateral) = abi.decode(getParams(data), (address, bool));
+      return !useAsCollateral;
+    }
+
+    return false;
   }
 
   function _afterTxGuard(address poolManagerLogic, address to) internal view {
