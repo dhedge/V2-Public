@@ -314,17 +314,6 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     _claimTokensFromVault(msg.sender, WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL);
   }
 
-  /// @notice Completes a limit order withdrawal with specified swap data
-  /// @param _swapData The swap data containing input and output token details
-  /// @param _expectedDestTokenAmount The minimum amount of destination tokens expected from the swap
-  /// @return destTokenAmount The actual amount of destination tokens received
-  function completeLimitOrderWithdrawal(
-    IWithdrawalVault.MultiInSingleOutData calldata _swapData,
-    uint256 _expectedDestTokenAmount
-  ) external returns (uint256 destTokenAmount) {
-    return _completeWithdrawal(msg.sender, _swapData, _expectedDestTokenAmount, WithdrawalVaultType.LIMIT_ORDER);
-  }
-
   /// @notice Completes a limit order withdrawal by claiming tokens directly from the vault
   /// @dev Simpler version that just claims tokens without any swapping
   function completeLimitOrderWithdrawal() external {
