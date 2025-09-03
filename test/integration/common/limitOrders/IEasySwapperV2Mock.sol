@@ -40,10 +40,6 @@ library IWithdrawalVault {
 }
 
 interface IEasySwapperV2Mock {
-  function completeLimitOrderWithdrawal(
-    IWithdrawalVault.MultiInSingleOutData memory _swapData,
-    uint256 _expectedDestTokenAmount
-  ) external returns (uint256 destTokenAmount);
   function completeLimitOrderWithdrawal() external;
   function completeLimitOrderWithdrawalFor(address _user) external;
   function getTrackedAssetsFromLimitOrders(
