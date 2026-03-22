@@ -890,7 +890,7 @@ export const uniswapV3NonfungiblePositionGuardTest = (params: IUniswapV3Nonfungi
       // Deposit the NFT to the pool.
       await expect(
         poolLogicProxy.connect(manager).deposit(uniswapV3.nonfungiblePositionManager, tokenId),
-      ).to.be.revertedWith("NFTs not supported");
+      ).to.be.revertedWith("dh9");
     });
   });
 };

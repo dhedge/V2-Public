@@ -44,4 +44,6 @@ jobs:
           ARBITRUM_URL: ${{ secrets.ARBITRUM_URL }}
           POLYGON_URL: ${{ secrets.POLYGON_URL }}
           ETHEREUM_URL: ${{ secrets.ETHEREUM_URL }}
+          ETHEREUM_URL_ALTERNATIVE: ${{ secrets.ETHEREUM_URL_ALTERNATIVE }}
+          PLASMA_URL: ${{ secrets.PLASMA_URL }}
         run: pnpm test:forge

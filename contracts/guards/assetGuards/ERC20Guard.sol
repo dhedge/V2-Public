@@ -34,6 +34,8 @@ import {IAaveLendingPoolAssetGuard} from "../../interfaces/guards/IAaveLendingPo
 import {IGovernance} from "../../interfaces/IGovernance.sol";
 import {IPoolFactory} from "../../interfaces/IPoolFactory.sol";
 import {IAaveV3Pool} from "../../interfaces/aave/v3/IAaveV3Pool.sol";
+import {IPoolLimitOrderManager} from "../../interfaces/IPoolLimitOrderManager.sol";
+import {EasySwapperV2UnrolledAssetsGuard} from "./EasySwapperV2UnrolledAssetsGuard.sol";
 
 /// @title Generic ERC20 asset guard
 /// @dev Asset type = 0
@@ -118,6 +120,12 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
 
     address factory = IPoolLogic(pool).factory();
     address governance = IPoolFactory(factory).governanceAddress();
+
+    _checkAaveAssetPositions(pool, asset, governance);
+    _checkLimitOrderPositions(pool, asset, governance);
+  }
+
+  function _checkAaveAssetPositions(address pool, address asset, address governance) internal view {
     // Magic number 8 is Aave lending pool "asset" asset type
     address aaveLendingPoolAssetGuard = IGovernance(governance).assetGuards(8);
 
@@ -142,5 +150,29 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
     // Returns address(0) if it's not supported in Aave
     address aToken = IAaveV3Pool(aaveLendingPool).getReserveAToken(asset);
     if (aToken != address(0)) require(IERC20(aToken).balanceOf(pool) == 0, "withdraw Aave collateral first");
+  }
+
+  function _checkLimitOrderPositions(address pool, address asset, address governance) internal view {
+    // Magic number 30 is EasySwapperV2 "asset" asset type
+    address unrolledAssetsGuard = IGovernance(governance).assetGuards(30);
+
+    if (unrolledAssetsGuard == address(0)) {
+      // If guard is not set, skip the check
+      return;
+    }
+
+    IPoolLimitOrderManager poolLimitOrderManagerProxy = EasySwapperV2UnrolledAssetsGuard(unrolledAssetsGuard)
+      .poolLimitOrderManagerProxy();
+
+    address settlementToken = poolLimitOrderManagerProxy.limitOrderSettlementToken();
+
+    // If the asset is the settlement token, check pool has no open limit orders or settlement order
+    if (asset == settlementToken) {
+      require(
+        poolLimitOrderManagerProxy.hasOpenLimitOrder(pool) == false &&
+          poolLimitOrderManagerProxy.hasSettlementOrder(pool) == false,
+        "has open order"
+      );
+    }
   }
 }

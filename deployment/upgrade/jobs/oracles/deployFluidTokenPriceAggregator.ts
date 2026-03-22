@@ -19,11 +19,14 @@ const deployFluidTokenPriceAggregatorJob = async (
   hre: HardhatRuntimeEnvironment,
   assetConfig: IFluidTokenPriceAggregatorConfig,
 ) => {
+  const factory = await hre.ethers.getContractAt("IPoolFactory", assetConfig.specificOracleConfig.dhedgeFactoryProxy);
+  const assetHandler = await factory.getAssetHandler();
+
   const FluidTokenPriceAggregator = await hre.ethers.getContractFactory("FluidTokenPriceAggregator");
 
   console.log("Deploying FluidTokenPriceAggregator oracle...");
 
-  const args: [Address, Address] = [assetConfig.assetAddress, assetConfig.specificOracleConfig.dhedgeFactoryProxy];
+  const args: [Address, Address] = [assetConfig.assetAddress, assetHandler];
   const fluidTokenPriceAggregator = await FluidTokenPriceAggregator.deploy(...args);
   await fluidTokenPriceAggregator.deployed();
 

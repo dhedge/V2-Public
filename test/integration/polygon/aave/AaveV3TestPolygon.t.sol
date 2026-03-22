@@ -8,7 +8,7 @@ import {PolygonSetup} from "test/integration/utils/foundry/chains/PolygonSetup.t
 import {PolygonConfig} from "test/integration/utils/foundry/config/PolygonConfig.sol";
 
 library AaveV3TestPolygonSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 72950511;
+  uint256 public constant FORK_BLOCK_NUMBER = 74568336;
 }
 
 contract AaveV3TestPolygon is AaveV3TestSetup, PolygonSetup {

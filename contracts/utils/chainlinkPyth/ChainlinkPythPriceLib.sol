@@ -13,6 +13,10 @@ library ChainlinkPythPriceLib {
   using SafeMath for uint256;
   using SignedSafeMath for int256;
   using SignedSafeMath for int64;
+
+  uint256 public constant MIN_MAX_PRICE_DECIMALS = 8;
+  uint256 public constant MIN_MAX_PRICE_DECIMALS_ADJUSTMENT_FACTOR = 10 ** (18 - MIN_MAX_PRICE_DECIMALS);
+
   /// Chainlink oracle
   struct OnchainOracle {
     IChainlinkAggregatorV3 oracleContract; // Chainlink oracle contract
@@ -116,8 +120,8 @@ library ChainlinkPythPriceLib {
   }
 
   /// @notice Get the min and max USD price of the asset.
-  /// @dev Prices are in the same decimals as provided by the on-chain oracle (Chainlink), typically 8 decimals.
-  /// @dev shouldn't assume always in 8 decimals
+  /// @dev Prices are in 8 decimals.
+  /// @dev Always in 8 decimals
   /// @dev Used for GMX market integration
   function getTokenMinMaxPrice(
     bool useMinMax,
@@ -135,13 +139,13 @@ library ChainlinkPythPriceLib {
 
     if (useMinMax) {
       priceMinMax = IGmxPrice.Price({
-        min: price.sub(confidence).div(onChainOracleDecimalsAdjustmentFactor),
-        max: price.add(confidence).div(onChainOracleDecimalsAdjustmentFactor)
+        min: price.sub(confidence).div(MIN_MAX_PRICE_DECIMALS_ADJUSTMENT_FACTOR),
+        max: price.add(confidence).div(MIN_MAX_PRICE_DECIMALS_ADJUSTMENT_FACTOR)
       });
     } else {
       priceMinMax = IGmxPrice.Price({
-        min: price.div(onChainOracleDecimalsAdjustmentFactor),
-        max: price.div(onChainOracleDecimalsAdjustmentFactor)
+        min: price.div(MIN_MAX_PRICE_DECIMALS_ADJUSTMENT_FACTOR),
+        max: price.div(MIN_MAX_PRICE_DECIMALS_ADJUSTMENT_FACTOR)
       });
     }
   }

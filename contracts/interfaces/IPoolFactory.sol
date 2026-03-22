@@ -20,4 +20,10 @@ interface IPoolFactory {
   function getAssetPrice(address asset) external view returns (uint256);
 
   function getAssetHandler() external view returns (address);
+
+  function dataValidator() external view returns (address);
+
+  function valueManipulationCheck() external view returns (address);
+
+  function referralManager() external view returns (address);
 }

@@ -38,6 +38,7 @@ export enum AssetType {
   "Flat Money V2 UNIT" = 35,
   "Flat Money V2 Perp NFT Position Asset" = 36,
   "Pendle Principal Token" = 37,
+  "Virtual Token Asset" = 38,
   "Lyra OptionMarketWrapper Asset" = 100,
   "Synthetix Futures Market Asset" = 101,
   "Synthetix PerpsV2 Market Asset" = 102,

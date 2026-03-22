@@ -49,7 +49,7 @@ export const launchGmxLpTests = (testParams: IGmxTestsParams) => {
   let gmxExchangeRouterContractGuard: GmxExchangeRouterContractGuard;
 
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
-  const iGmxExchangeRouter = new ethers.utils.Interface(IGmxExchangeRouter__factory.abi);
+  const iGmxExchangeRouter = IGmxExchangeRouter__factory.createInterface();
 
   const DUMMY_ADDRESS = ethers.Wallet.createRandom().address;
 
@@ -142,19 +142,24 @@ export const launchGmxLpTests = (testParams: IGmxTestsParams) => {
       slippage: !!params.slippage ? params.slippage : SLIPPAGE_SET,
     });
 
-    const createDepositParams = {
+    const addresses = {
       receiver: params.receiver ?? whitelistedPoolLogic.address,
       callbackContract: gmxExchangeRouterContractGuard.address,
       uiFeeReceiver: params.uiFeeReceiver ?? testParams.uiFeeReceiver,
       market: testParams.market,
-      executionFee: testParams.gasToken.amount,
-      callbackGasLimit: units(3, 6),
-      minMarketTokens: adjustMintAmountOut,
-      longTokenSwapPath: [],
-      shortTokenSwapPath: [],
-      shouldUnwrapNativeToken: false,
       initialLongToken: testParams.longCollateral.address,
       initialShortToken: testParams.shortCollateral.address,
+      longTokenSwapPath: [],
+      shortTokenSwapPath: [],
+    };
+
+    const createDepositParams = {
+      addresses,
+      minMarketTokens: adjustMintAmountOut,
+      shouldUnwrapNativeToken: false,
+      executionFee: testParams.gasToken.amount,
+      callbackGasLimit: units(3, 6),
+      dataList: [],
     };
 
     // Encode the function data
@@ -187,18 +192,23 @@ export const launchGmxLpTests = (testParams: IGmxTestsParams) => {
       slippage: !!params.slippage ? params.slippage : SLIPPAGE_SET,
     });
 
-    const createWithdrawalParams = {
+    const addresses = {
       receiver: params.receiver ?? whitelistedPoolLogic.address,
       callbackContract: gmxExchangeRouterContractGuard.address,
       uiFeeReceiver: testParams.uiFeeReceiver,
       market: testParams.market,
-      executionFee: testParams.gasToken.amount,
-      callbackGasLimit: units(3, 6),
-      minLongTokenAmount: adjustLongTokenAmountOut,
-      minShortTokenAmount: adjustShortTokenAmountOut,
       longTokenSwapPath: [],
       shortTokenSwapPath: [],
+    };
+
+    const createWithdrawalParams = {
+      addresses,
+      minLongTokenAmount: adjustLongTokenAmountOut,
+      minShortTokenAmount: adjustShortTokenAmountOut,
       shouldUnwrapNativeToken: false,
+      executionFee: testParams.gasToken.amount,
+      callbackGasLimit: units(3, 6),
+      dataList: [],
     };
 
     // Encode the function data

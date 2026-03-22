@@ -35,14 +35,13 @@
 pragma solidity 0.7.6;
 
 interface IHasFeeInfoV24 {
-  // Manager fee
   function getMaximumManagerFee() external view returns (uint256, uint256);
 
   function maximumPerformanceFeeNumeratorChange() external view returns (uint256);
 
   function performanceFeeNumeratorChangeDelay() external view returns (uint256);
 
-  // Exit fee
-  // function getExitFee() external view returns (uint256, uint256);
   function getExitCooldown() external view returns (uint256);
+
+  function feeDenominator() external view returns (uint256);
 }

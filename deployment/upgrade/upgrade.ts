@@ -46,6 +46,7 @@ import { nftTrackerJob } from "./jobs/nftTrackerJob";
 import { pauseJob } from "./jobs/pauseJob";
 import { poolFactoryJob } from "./jobs/poolFactoryJob";
 import { poolLogicJob } from "./jobs/poolLogicJob";
+import { poolLogicAndManagerLogicJob } from "./jobs/poolLogicAndManagerLogicJob";
 import { poolManagerLogicJob } from "./jobs/poolManagerLogicJob";
 import { removeAssetsJob } from "./jobs/removeAssetsJob";
 import { rewardDistributionJob } from "./jobs/rewardDistributionJob";
@@ -124,11 +125,23 @@ import { fluidTokenAssetGuardJob } from "./jobs/assetGuards/fluidTokenAssetGuard
 import { odosV2ContractGuardJob } from "./jobs/contractGuards/odosV2ContractGuardJob";
 import { flatMoneyV2PerpMarketAssetGuardJob } from "./jobs/assetGuards/flatMoneyV2PerpMarketAssetGuardJob";
 import { flatMoneyV2UNITAssetGuardJob } from "./jobs/assetGuards/flatMoneyV2UNITAssetGuardJob";
+import { flatMoneyV2UNITOutsideWithdrawalAssetGuardJob } from "./jobs/assetGuards/flatMoneyV2UNITOutsideWithdrawalAssetGuardJob";
 import { flatMoneyV2OrderAnnouncementGuardJob } from "./jobs/contractGuards/flatMoneyV2OrderAnnouncementGuardJob";
 import { flatMoneyV2OrderExecutionGuardJob } from "./jobs/contractGuards/flatMoneyV2OrderExecutionGuardJob";
 import { pendleRouterV4ContractGuardJob } from "./jobs/contractGuards/pendleRouterV4ContractGuardJob";
 import { pendlePTAssetGuardJob } from "./jobs/assetGuards/pendlePTAssetGuardJob";
 import { allowApproveContractGuardJob } from "./jobs/contractGuards/allowApproveContractGuardJob";
+import { virtualTokenAssetGuardJob } from "./jobs/assetGuards/virtualTokenAssetGuardJob";
+import { fluidMerkleDistributorContractGuardJob } from "./jobs/contractGuards/fluidMerkleDistributorContractGuardJob";
+import { kyberSwapRouterV2ContractGuardJob } from "./jobs/contractGuards/kyberSwapRouterV2ContractGuardJob";
+import { odosV3ContractGuardJob } from "./jobs/contractGuards/odosV3ContractGuardJob";
+import { liquifiRewardsContractGuardJob } from "./jobs/contractGuards/liquifiRewardsContractGuardJob";
+import { poolLimitOrderManagerGuardJob } from "./jobs/contractGuards/poolLimitOrderManagerGuardJob";
+import { gpv2SettlementContractGuardJob } from "./jobs/contractGuards/gpv2SettlementContractGuardJob";
+import { typedStructuredDataValidatorJob } from "./jobs/typedStructuredDataValidator/typedStructuredDataValidatorJob";
+import { typedStructuredDataValidatorConfigurationJob } from "./jobs/typedStructuredDataValidator/typedStructuredDataValidatorConfigurationJob";
+import { valueManipulationCheckJob } from "./jobs/valueManipulationCheckJob";
+import { referralManagerJob } from "./jobs/referralManagerJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   // Swappers related
@@ -152,6 +165,7 @@ const jobs: { [key: string]: IJob<void> } = {
   poolfactory: poolFactoryJob,
   poollogic: poolLogicJob,
   poolmanagerlogic: poolManagerLogicJob,
+  poollogicandmanagerlogic: poolLogicAndManagerLogicJob,
   nfttracker: nftTrackerJob,
   pooltokenswapper: poolTokenSwapperJob,
   poollimitordermanager: poolLimitOrderManagerJob,
@@ -199,7 +213,9 @@ const jobs: { [key: string]: IJob<void> } = {
   fluidtokenassetguard: fluidTokenAssetGuardJob,
   flatmoneyv2perpmarketassetguard: flatMoneyV2PerpMarketAssetGuardJob,
   flatmoneyv2unitassetguard: flatMoneyV2UNITAssetGuardJob,
+  flatmoneyv2unitoutsidewithdrawalassetguard: flatMoneyV2UNITOutsideWithdrawalAssetGuardJob,
   pendleptassetguard: pendlePTAssetGuardJob,
+  virtualtokenassetguard: virtualTokenAssetGuardJob,
 
   // Contract Guards
   closedcontractguard: closedContractGuardJob,
@@ -255,11 +271,17 @@ const jobs: { [key: string]: IJob<void> } = {
   skypsm3contractguard: skyPSM3ContractGuardJob,
   flatmoneyoptionsorderannouncementguard: flatMoneyOptionsOrderAnnouncementGuardJob,
   flatmoneyoptionsorderexecutionguard: flatMoneyOptionsOrderExecutionGuardJob,
-  odosv2contractguardjob: odosV2ContractGuardJob,
+  odosv2contractguard: odosV2ContractGuardJob,
   flatmoneyv2orderannouncementguard: flatMoneyV2OrderAnnouncementGuardJob,
   flatmoneyv2orderexecutionguard: flatMoneyV2OrderExecutionGuardJob,
   pendlerouterv4contractguard: pendleRouterV4ContractGuardJob,
   allowapproveguard: allowApproveContractGuardJob,
+  fluidmerkledistributorcontractguard: fluidMerkleDistributorContractGuardJob,
+  kyberswaprouterv2contractguard: kyberSwapRouterV2ContractGuardJob,
+  odosv3contractguard: odosV3ContractGuardJob,
+  liquifirewardscontractguard: liquifiRewardsContractGuardJob,
+  poollimitordermanagerguard: poolLimitOrderManagerGuardJob,
+  gpv2settlementcontractguard: gpv2SettlementContractGuardJob,
 
   // Governance
   assets: assetsJob,
@@ -272,6 +294,16 @@ const jobs: { [key: string]: IJob<void> } = {
   easyswapperv2: easySwapperV2Job,
   withdrawalvault: withdrawalVaultJob,
   easyswapperv2configuration: easySwapperV2ConfigurationJob,
+
+  // TypedStructuredDataValidator
+  typedstructureddatavalidator: typedStructuredDataValidatorJob,
+  typedstructureddatavalidatorconfiguration: typedStructuredDataValidatorConfigurationJob,
+
+  // Value Manipulation Check
+  valuemanipulationcheck: valueManipulationCheckJob,
+
+  // ReferralManager
+  referralmanager: referralManagerJob,
 
   lyraGroup: async (...args) => {
     await nftTrackerJob(...args);

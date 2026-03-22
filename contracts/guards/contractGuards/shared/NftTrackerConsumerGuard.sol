@@ -2,6 +2,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
+import {IPoolFactory} from "../../../interfaces/IPoolFactory.sol";
+import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
 import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";
 import {DhedgeNftTrackerStorage} from "../../../utils/tracker/DhedgeNftTrackerStorage.sol";
 import {TxDataUtils} from "../../../utils/TxDataUtils.sol";
@@ -33,5 +35,11 @@ abstract contract NftTrackerConsumerGuard is TxDataUtils, ITransactionTypes {
       }
     }
     return false;
+  }
+
+  function _accessControl(address _poolManagerLogic) internal view returns (address poolLogic) {
+    poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
+
+    require(msg.sender == poolLogic && IPoolFactory(nftTracker.poolFactory()).isPool(poolLogic), "not pool logic");
   }
 }

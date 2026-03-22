@@ -43,7 +43,9 @@ import {IManaged} from "./interfaces/IManaged.sol";
 import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
 import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "./interfaces/IPoolManagerLogic.sol";
+import {IValueManipulationCheck} from "./interfaces/IValueManipulationCheck.sol";
 import {AddressHelper} from "./utils/AddressHelper.sol";
+import {PoolLogicLib} from "./utils/PoolLogicLib.sol";
 
 /// @notice Logic implementation for pool
 contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721ReceiverUpgradeable, IFlashLoanReceiver {
@@ -81,15 +83,20 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   struct WithdrawProcessing {
     uint256 portionBalance;
     uint256 expectedWithdrawValue;
-    bool regularProcessingUsed;
     address guard;
   }
 
   /// @dev For stack too deep error
   struct WithdrawExecution {
-    uint256 supplyAfterBurn;
     uint256 fundValue;
-    uint256 feesMinted;
+    uint256 supplyAfterMint;
+    uint256 supplyAfterMintAndBurn;
+    uint256 valueWithdrawn;
+  }
+
+  struct DepositExecution {
+    uint256 fundValue;
+    uint256 usdAmount;
   }
 
   event Deposit(
@@ -132,9 +139,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
   event PoolManagerLogicSet(address poolManagerLogic, address from);
 
-  event EntryFeeMinted(address manager, uint256 entryFeeAmount);
+  event EntryFeeMinted(address recipient, uint256 entryFeeAmount);
 
-  event ExitFeeMinted(address manager, uint256 exitFeeAmount);
+  /// @dev Correct name should be ExitFeeTransferred
+  event ExitFeeMinted(address recipient, uint256 exitFeeAmount);
+
+  event ReferralFeeMinted(address indexed referrer, uint256 amount);
 
   bool public privatePool;
 
@@ -157,12 +167,12 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   mapping(address => uint256) public lastExitCooldown;
 
   modifier whenNotFactoryPaused() {
-    require(!IHasPausable(factory).isPaused(), "contracts paused");
+    _checkFactoryPaused();
     _;
   }
 
   modifier whenNotPaused() {
-    require(!IHasPausable(factory).pausedPools(address(this)), "pool paused");
+    _checkPoolPaused();
     _;
   }
 
@@ -195,23 +205,26 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address _from,
     address _to,
     uint256
-  ) internal virtual override whenNotFactoryPaused whenNotPaused {
-    // Minting
+  ) internal view override whenNotFactoryPaused whenNotPaused {
+    // Handle minting case. Note that max supply check is done at ::computeLiquidityMintTo
     if (_from == address(0)) {
       return;
     }
 
-    if (IPoolFactory(factory).receiverWhitelist(_to) == true) {
+    // Handle whitelisted receivers - no cooldown check needed
+    if (IPoolFactory(factory).receiverWhitelist(_to)) {
       return;
     }
 
-    require(getExitRemainingCooldown(_from) == 0, "cooldown active");
+    // For the rest - check exit cooldown
+    require(getExitRemainingCooldown(_from) == 0, "dh3");
   }
 
   /// @notice Set the pool privacy
+  /// @dev Can only be called by the pool manager logic contract, end users should use PoolManagerLogic to change privacy
   /// @param _privatePool true if the pool is private, false otherwise
   function setPoolPrivate(bool _privatePool) external {
-    require(msg.sender == _manager(), "only manager");
+    require(msg.sender == poolManagerLogic, "dh31");
 
     privatePool = _privatePool;
 
@@ -224,17 +237,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param _amount Amount of tokens to deposit
   /// @return liquidityMinted Amount of liquidity minted
   function deposit(address _asset, uint256 _amount) external returns (uint256 liquidityMinted) {
-    return _depositFor(msg.sender, _asset, _amount, _exitCooldown());
-  }
-
-  /// @notice Deposit funds into the pool for a specific recipient
-  /// @dev This function allows the recipient to be different from the sender
-  /// @param _recipient Address of the recipient
-  /// @param _asset Address of the token
-  /// @param _amount Amount of tokens to deposit
-  /// @return liquidityMinted Amount of liquidity minted
-  function depositFor(address _recipient, address _asset, uint256 _amount) external returns (uint256 liquidityMinted) {
-    return _depositFor(_recipient, _asset, _amount, _exitCooldown());
+    return _depositFor(msg.sender, _asset, _amount, _exitCooldown(), address(0));
   }
 
   /// @notice Deposit funds into the pool for a specific recipient with a custom lockup time
@@ -244,29 +247,32 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param _asset Address of the token
   /// @param _amount Amount of tokens to deposit
   /// @param _cooldown Custom lockup time after the deposit
+  /// @param _referrer Address to receive referral fee (address(0) for no referral)
   /// @return liquidityMinted Amount of liquidity minted
   function depositForWithCustomCooldown(
     address _recipient,
     address _asset,
     uint256 _amount,
-    uint256 _cooldown
+    uint256 _cooldown,
+    address _referrer
   ) external returns (uint256 liquidityMinted) {
-    require(IPoolFactory(factory).customCooldownWhitelist(msg.sender), "only allowed");
-    require(_cooldown >= 5 minutes && _cooldown <= _exitCooldown(), "invalid cooldown");
+    require(IPoolFactory(factory).customCooldownWhitelist(msg.sender), "dh5");
+    require(_cooldown >= 5 minutes && _cooldown <= _exitCooldown(), "dh6");
 
-    return _depositFor(_recipient, _asset, _amount, _cooldown);
+    return _depositFor(_recipient, _asset, _amount, _cooldown, _referrer);
   }
 
   function _depositFor(
     address _recipient,
     address _asset,
     uint256 _amount,
-    uint256 _cooldown
+    uint256 _cooldown,
+    address _referrer
   ) private nonReentrant whenNotFactoryPaused whenNotPaused returns (uint256 liquidityMinted) {
     address manager = _manager();
-    require(_recipient == manager || !privatePool || _isMemberAllowed(_recipient), "only members");
+    require(_recipient == manager || !privatePool || _isMemberAllowed(_recipient), "dh7");
 
-    require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "invalid deposit asset");
+    require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), "dh8");
 
     // Checks that the `_asset` is not a ERC721 token.
     // As per ERC721 spec, a compliant contract must implement the ERC165 interface.
@@ -279,86 +285,91 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       );
 
       // Either the call to `supportsInterface` should revert or the IERC721 interface should not be supported.
-      require(!success || !abi.decode(data, (bool)), "NFTs not supported");
+      require(!success || !abi.decode(data, (bool)), "dh9");
     }
 
-    (uint256 fundValue, ) = _mintManagerFee();
-
-    uint256 totalSupplyBefore = totalSupply();
+    DepositExecution memory execution;
+    execution.fundValue = _mintManagerFee();
 
     _asset.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
     );
 
-    uint256 usdAmount = _assetValue(_asset, _amount);
+    execution.usdAmount = _assetValue(_asset, _amount);
 
-    // Scoping to avoid stack too deep errors.
-    {
-      if (totalSupplyBefore > 0) {
-        liquidityMinted = usdAmount.mul(totalSupplyBefore).div(fundValue);
-      } else {
-        liquidityMinted = usdAmount;
-      }
+    PoolLogicLib.LiquidityMintTo memory liquidityMintTo = PoolLogicLib.computeLiquidityMintTo({
+      _totalSupply: totalSupply(),
+      _depositValue: execution.usdAmount,
+      _totalValue: execution.fundValue,
+      _poolManagerLogic: poolManagerLogic,
+      _poolFactory: factory,
+      _referrer: _referrer
+    });
 
-      (, , uint256 entryFeeNumerator, , uint256 denominator) = _managerFees();
+    _checkValueManipulation(execution.fundValue, execution.fundValue.add(execution.usdAmount));
+    _checkOperationType(IValueManipulationCheck.OperationType.Deposit);
 
-      if (entryFeeNumerator > 0) {
-        uint256 entryFee = liquidityMinted.mul(entryFeeNumerator).div(denominator);
-
-        // Note: From here on, `liquidityMinted` will refer to the fund tokens minted with entry fee accounted for.
-        liquidityMinted = liquidityMinted.sub(entryFee);
-
-        _mint(manager, entryFee);
-
-        emit EntryFeeMinted(manager, entryFee);
-      }
-
-      // Note: We are making it impossible for someone to mint liquidity < 100_000.
-      // This is so that we can mitigate the inflation attack.
-      require(liquidityMinted >= 100_000, "invalid liquidityMinted");
-
-      // As the `_mint` function doesn't hand over the execution control to the caller, we can safely
-      // call it before calculating cooldown and other effects.
-      _mint(_recipient, liquidityMinted);
-    }
-
-    lastExitCooldown[_recipient] = _calculateCooldown(
-      balanceOf(_recipient),
-      liquidityMinted,
-      _cooldown,
-      lastExitCooldown[_recipient],
-      lastDeposit[_recipient],
-      block.timestamp
-    );
+    lastExitCooldown[_recipient] = _calculateCooldown({
+      _currentBalance: balanceOf(_recipient),
+      _liquidityMinted: liquidityMintTo.recipient,
+      _newCooldown: _cooldown,
+      _lastCooldown: lastExitCooldown[_recipient],
+      _lastDepositTime: lastDeposit[_recipient],
+      _blockTimestamp: block.timestamp
+    });
     lastDeposit[_recipient] = block.timestamp;
 
-    uint256 balance = balanceOf(_recipient);
-    uint256 fundValueAfter = fundValue.add(usdAmount);
+    // Note: We are making it impossible for someone to mint liquidity < 100_000.
+    // This is so that we can mitigate the inflation attack.
+    require(liquidityMintTo.recipient >= 100_000, "dh10");
 
-    {
-      uint256 totalSupplyAfter = totalSupply();
+    _mint(_recipient, liquidityMintTo.recipient);
 
-      require(
-        balance.mul(_tokenPrice(fundValueAfter, totalSupplyAfter)).div(10 ** 18) >=
-          IPoolManagerLogic(poolManagerLogic).minDepositUSD(),
-        "need min deposit"
-      );
+    if (liquidityMintTo.manager > 0) {
+      _mint(manager, liquidityMintTo.manager);
 
-      emit Deposit(
-        address(this),
-        _recipient,
-        _asset,
-        _amount,
-        usdAmount,
-        liquidityMinted,
-        balance,
-        fundValueAfter,
-        totalSupplyAfter,
-        block.timestamp
-      );
+      emit EntryFeeMinted(manager, liquidityMintTo.manager);
     }
 
+    if (liquidityMintTo.dao > 0) {
+      address dao = IHasDaoInfo(factory).daoAddress();
+      _mint(dao, liquidityMintTo.dao);
+
+      emit EntryFeeMinted(dao, liquidityMintTo.dao);
+    }
+
+    if (liquidityMintTo.referrer > 0) {
+      _mint(_referrer, liquidityMintTo.referrer);
+
+      emit ReferralFeeMinted(_referrer, liquidityMintTo.referrer);
+    }
+
+    uint256 balance = balanceOf(_recipient);
+    uint256 fundValueAfter = execution.fundValue.add(execution.usdAmount);
+    uint256 totalSupplyAfter = totalSupply();
+
+    require(
+      balance.mul(_tokenPrice(fundValueAfter, totalSupplyAfter)).div(10 ** 18) >=
+        IPoolManagerLogic(poolManagerLogic).minDepositUSD(),
+      "dh25"
+    );
+
+    emit Deposit(
+      address(this),
+      _recipient,
+      _asset,
+      _amount,
+      execution.usdAmount,
+      liquidityMintTo.recipient,
+      balance,
+      fundValueAfter,
+      totalSupplyAfter,
+      block.timestamp
+    );
+
     _emitFactoryEvent();
+
+    return liquidityMintTo.recipient;
   }
 
   /// @notice DEPRECATED: Use `withdrawSafe` instead.
@@ -414,47 +425,55 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     uint256 _fundTokenAmount,
     IPoolLogic.ComplexAsset[] memory _complexAssetsData
   ) internal nonReentrant whenNotFactoryPaused whenNotPaused {
-    require(lastDeposit[msg.sender] < block.timestamp, "can withdraw soon");
-    require(balanceOf(msg.sender) >= _fundTokenAmount, "not enough balance");
+    require(lastDeposit[msg.sender] < block.timestamp, "dh11");
+    require(balanceOf(msg.sender) >= _fundTokenAmount, "dh12");
 
     WithdrawExecution memory execution;
-    execution.supplyAfterBurn = totalSupply().sub(_fundTokenAmount);
-    // Scoping to avoid stack too deep errors.
-    {
-      // Calculating how much pool token supply will be left after withdrawal and
-      // whether or not this satisfies the min supply (100_000) check.
-      // If the user is redeeming all the shares then this check passes.
-      // Otherwise, they might have to reduce the amount to be withdrawn.
-      require(execution.supplyAfterBurn >= 100_000 || execution.supplyAfterBurn == 0, "below threshold");
-    }
+    execution.fundValue = _mintManagerFee();
 
-    // calculate the manager fee
-    (execution.fundValue, execution.feesMinted) = _mintManagerFee();
+    PoolLogicLib.PoolTokensAllocation memory tokens = PoolLogicLib.computePoolTokensAllocation({
+      _redeemAmount: _fundTokenAmount,
+      _poolManagerLogic: poolManagerLogic,
+      _poolFactory: factory
+    });
 
-    {
-      // Scoping to avoid stack too deep errors.
-      (, , , uint256 exitFeeNumerator, uint256 denominator) = _managerFees();
+    execution.supplyAfterMint = totalSupply();
+    execution.supplyAfterMintAndBurn = execution.supplyAfterMint.sub(tokens.toBurn);
 
-      if (exitFeeNumerator > 0) {
-        uint256 exitFee = _fundTokenAmount.mul(exitFeeNumerator).div(denominator);
+    // Check value manipulation: expected value after = fundValue - withdrawnValue
+    // withdrawnValue = fundValue * tokens.toGetPortionFrom / totalSupply
+    _checkValueManipulation(
+      execution.fundValue,
+      execution.fundValue.sub(execution.fundValue.mul(tokens.toGetPortionFrom).div(execution.supplyAfterMint))
+    );
+    _checkOperationType(IValueManipulationCheck.OperationType.Withdraw);
 
-        _fundTokenAmount = _fundTokenAmount.sub(exitFee);
-        execution.supplyAfterBurn = execution.supplyAfterBurn.add(exitFee);
-
-        address manager = _manager();
-        require(transfer(manager, exitFee), "exitFee failed");
-
-        emit ExitFeeMinted(manager, exitFee);
-      }
-    }
+    // Calculating how much pool token supply will be left after withdrawal and
+    // whether or not this satisfies the min supply (100_000) check.
+    // If the user is redeeming all the shares then this check passes.
+    // Otherwise, they might have to reduce the amount to be withdrawn.
+    require(execution.supplyAfterMintAndBurn >= 100_000 || execution.supplyAfterMintAndBurn == 0, "dh10");
 
     // calculate the proportion
-    uint256 portion = _fundTokenAmount.mul(10 ** 18).div(totalSupply());
+    uint256 portion = tokens.toGetPortionFrom.mul(10 ** 18).div(execution.supplyAfterMint);
 
-    // first return funded tokens
-    _burn(msg.sender, _fundTokenAmount);
+    _burn(msg.sender, tokens.toBurn);
 
-    if (totalSupply() == 0) {
+    if (tokens.toTransferManager > 0) {
+      address manager = _manager();
+      require(transfer(manager, tokens.toTransferManager), "dh14");
+
+      emit ExitFeeMinted(manager, tokens.toTransferManager);
+    }
+
+    if (tokens.toTransferDao > 0) {
+      address dao = IHasDaoInfo(factory).daoAddress();
+      require(transfer(dao, tokens.toTransferDao), "dh14");
+
+      emit ExitFeeMinted(dao, tokens.toTransferDao);
+    }
+
+    if (execution.supplyAfterMintAndBurn == 0) {
       tokenPriceAtLastFeeMint = 1e18;
     }
 
@@ -471,7 +490,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       );
 
       if (portionOfAssetBalance > 0) {
-        require(asset != address(0), "need withdraw asset");
+        require(asset != address(0), "dh15");
         // Ignoring return value for transfer as want to transfer no matter what happened
         asset.tryAssemblyCall(
           abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, _recipient, portionOfAssetBalance)
@@ -494,22 +513,22 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))
     }
 
-    uint256 valueWithdrawn = portion.mul(execution.fundValue).div(10 ** 18);
+    execution.valueWithdrawn = portion.mul(execution.fundValue).div(10 ** 18);
 
     // Invariant state check: actual difference between total vault value before and after withdrawal can not be more than value of portion withdrawn,
     // i.e. value of assets which actually left the vault can not be more than value of portion withdrawn.
-    require(execution.fundValue.sub(_totalValue()) <= valueWithdrawn.add(1e15), "value mismatch");
+    require(execution.fundValue.sub(_totalValue()) <= execution.valueWithdrawn.add(1e15), "dh16");
 
     // Extra invariant for total supply after withdrawal. Could be an overkill, may consider removing if running into contract size issues.
-    require(execution.supplyAfterBurn.add(execution.feesMinted) == totalSupply(), "supply mismatch");
+    require(execution.supplyAfterMintAndBurn == totalSupply(), "dh17");
 
     emit Withdrawal(
       address(this),
       _recipient,
-      valueWithdrawn,
+      execution.valueWithdrawn,
       _fundTokenAmount,
       balanceOf(_recipient),
-      execution.fundValue.sub(valueWithdrawn),
+      execution.fundValue.sub(execution.valueWithdrawn),
       totalSupply(),
       withdrawnAssets,
       block.timestamp
@@ -535,7 +554,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     WithdrawProcessing memory params;
 
     params.guard = IHasGuardInfo(factory).getAssetGuard(_asset);
-    require(params.guard != address(0), "invalid guard");
+    require(params.guard != address(0), "dh18");
 
     params.portionBalance = IAssetGuard(params.guard).getBalance(address(this), _asset).mul(_portion).div(10 ** 18);
     params.expectedWithdrawValue = _assetValue(_asset, params.portionBalance);
@@ -543,7 +562,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     IAssetGuard.MultiTransaction[] memory transactions;
 
     if (_complexAssetData.withdrawData.length > 0) {
-      require(_asset == _complexAssetData.supportedAsset, "invalid asset data");
+      require(_asset == _complexAssetData.supportedAsset, "dh19");
 
       (withdrawAsset, withdrawBalance, transactions) = IComplexAssetGuard(params.guard).withdrawProcessing(
         address(this),
@@ -559,7 +578,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
         _portion,
         _to
       );
-      params.regularProcessingUsed = true;
     }
 
     uint256 txCount = transactions.length;
@@ -581,12 +599,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     }
 
     // Leftover: kept for aave withdrawals with swap routed onchain, runs when slippage tolerance is provided
-    if (params.regularProcessingUsed && _complexAssetData.slippageTolerance != 0 && withdrawAsset != address(0)) {
+    if (
+      _complexAssetData.withdrawData.length == 0 &&
+      _complexAssetData.slippageTolerance != 0 &&
+      withdrawAsset != address(0)
+    ) {
       // Ensure that actual value of tokens transferred is not less than the expected value, corrected by allowed tolerance
       require(
         _assetValue(withdrawAsset, withdrawBalance) >=
           params.expectedWithdrawValue.mul(10_000 - _complexAssetData.slippageTolerance).div(10_000),
-        "high withdraw slippage"
+        "dh26"
       );
     }
 
@@ -602,9 +624,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address _to,
     bytes memory _data
   ) private nonReentrant whenNotFactoryPaused returns (bool success) {
-    require(!IHasPausable(factory).tradingPausedPools(address(this)), "trading paused");
+    require(!IHasPausable(factory).tradingPausedPools(address(this)), "dh20");
 
-    require(_to != address(0), "invalid address");
+    _checkOperationType(IValueManipulationCheck.OperationType.ExecTransaction);
+
+    require(_to != address(0), "dh18");
 
     address contractGuard = IHasGuardInfo(factory).getContractGuard(_to);
     address assetGuard;
@@ -629,15 +653,15 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
         assetGuard = IGovernance(governanceAddress).assetGuards(0); // get ERC20Guard (assetType 0)
       } else {
         // if asset is configured, ensure that it's enabled in the pool
-        require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(_to), "asset disabled");
+        require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(_to), "dh22");
       }
       guard = assetGuard;
       (txType, isPublic) = IGuard(assetGuard).txGuard(poolManagerLogic, _to, _data);
     }
 
-    require(txType > 0, "invalid transaction");
+    require(txType > 0, "dh23");
 
-    require(isPublic || msg.sender == _manager() || msg.sender == _trader(), "only manager, trader, public");
+    require(isPublic || msg.sender == _manager() || msg.sender == _trader(), "dh24");
 
     success = _to.tryAssemblyCall(_data);
 
@@ -668,7 +692,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param txs Array of structs, each consisting of address and data
   function execTransactions(TxToExecute[] calldata txs) external {
     for (uint256 i; i < txs.length; i++) {
-      require(_execTransaction(txs[i].to, txs[i].data), "tx failed");
+      _execTransaction(txs[i].to, txs[i].data);
     }
   }
 
@@ -783,8 +807,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
   /// @notice Get mint manager fee of the pool internal call
   /// @return fundValue The total fund value of the pool
-  /// @return amountMinted The amount of manager fee minted
-  function _mintManagerFee() internal returns (uint256 fundValue, uint256 amountMinted) {
+  function _mintManagerFee() internal returns (uint256 fundValue) {
     fundValue = _totalValue();
     uint256 tokenSupply = totalSupply();
 
@@ -797,7 +820,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       managementFeeNumerator,
       denominator
     );
-    amountMinted = performanceFee.add(streamingFee);
+    uint256 amountMinted = performanceFee.add(streamingFee);
 
     (uint256 daoFeeNumerator, uint256 daoFeeDenominator) = IHasDaoInfo(factory).getDaoFee();
 
@@ -811,7 +834,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
     // If the `streamingFee` is 0 then updating `lastFeeMintTime` can result in reduced streaming fee revenue.
     // This is due to rounding down when calculating `streamingFee` in `_availableManagerFee`.
-    if (streamingFee > 0) lastFeeMintTime = block.timestamp;
+    if (streamingFee > 0 || managementFeeNumerator == 0 || tokenSupply == 0) lastFeeMintTime = block.timestamp;
 
     if (daoFee > 0) _mint(IHasDaoInfo(factory).daoAddress(), daoFee);
 
@@ -879,8 +902,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @notice Set address for pool manager logic
   /// @param _poolManagerLogic Address of the pool manager logic
   function setPoolManagerLogic(address _poolManagerLogic) external {
-    require(_poolManagerLogic != address(0), "invalid address");
-    require(msg.sender == factory || msg.sender == IHasOwnable(factory).owner(), "only owner, factory");
+    require(_poolManagerLogic != address(0), "dh18");
+    require(msg.sender == factory || msg.sender == IHasOwnable(factory).owner(), "dh28");
 
     poolManagerLogic = _poolManagerLogic;
     emit PoolManagerLogicSet(_poolManagerLogic, msg.sender);
@@ -932,13 +955,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address initiator,
     bytes calldata params
   ) external override returns (bool success) {
-    require(initiator == address(this), "only pool flash loan origin");
+    require(initiator == address(this), "dh29");
 
     address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(msg.sender);
     require(
       aaveLendingPoolAssetGuard != address(0) &&
         msg.sender == IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).aaveLendingPool(),
-      "invalid lending pool"
+      "dh30"
     );
 
     uint256 withdrawAssetBalanceBefore = IERC20Upgradeable(assets[0]).balanceOf(address(this));
@@ -953,7 +976,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     // Liquidation of collateral not enough to pay off debt, flashloan repayment stealing pool's asset
     require(
       withdrawAssetBalanceBefore.add(premiums[0]) <= IERC20Upgradeable(assets[0]).balanceOf(address(this)),
-      "high slippage"
+      "dh27"
     );
   }
 
@@ -977,11 +1000,41 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address contractGuard = IHasGuardInfo(factory).getContractGuard(operator);
 
     // Only guarded contract can initiate ERC721 transfers
-    require(contractGuard != address(0), "only guarded address");
+    require(contractGuard != address(0), "dh18");
 
-    require(IERC721VerifyingGuard(contractGuard).verifyERC721(operator, from, tokenId, data), "not verified");
+    require(IERC721VerifyingGuard(contractGuard).verifyERC721(operator, from, tokenId, data), "dh21");
 
     magicSelector = IERC721ReceiverUpgradeable.onERC721Received.selector;
+  }
+
+  function _checkFactoryPaused() internal view {
+    require(!IHasPausable(factory).isPaused(), "dh1");
+  }
+
+  function _checkPoolPaused() internal view {
+    require(!IHasPausable(factory).pausedPools(address(this)), "dh2");
+  }
+
+  /// @notice Check for value manipulation using the check contract
+  /// @dev Uses the fundValue already calculated to avoid redundant _totalValue() call
+  /// @param fundValue The total fund value already calculated from _mintManagerFee()
+  /// @param expectedFundValueAfter The expected fund value after this operation completes
+  function _checkValueManipulation(uint256 fundValue, uint256 expectedFundValueAfter) internal {
+    address checker = IPoolFactory(factory).valueManipulationCheck();
+    if (checker != address(0) && fundValue > 1e18) {
+      // ignore small vaults which may have rounding issues
+      IValueManipulationCheck(checker).checkValueManipulation(address(this), fundValue, expectedFundValueAfter);
+    }
+  }
+
+  /// @notice Check for operation type mismatch using the check contract
+  /// @dev Prevents mixing different operation types (deposit, withdraw, execTransaction) in a single transaction
+  /// @param operationType The type of operation being performed
+  function _checkOperationType(IValueManipulationCheck.OperationType operationType) internal {
+    address checker = IPoolFactory(factory).valueManipulationCheck();
+    if (checker != address(0)) {
+      IValueManipulationCheck(checker).checkOperationType(address(this), operationType);
+    }
   }
 
   uint256[47] private __gap;

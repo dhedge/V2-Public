@@ -55,13 +55,13 @@ contract VelodromeV2TWAPAggregator is IAggregatorV3Interface {
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
   function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
-    (, int256 pairUsdPrice, , , ) = pairTokenUsdAggregator.latestRoundData(); // decimals 8
+    (, int256 pairUsdPrice, , uint256 updatedAt, ) = pairTokenUsdAggregator.latestRoundData(); // decimals 8
     // The 30 minute twap (granularity 1) takes the average of observation(last) - observation(last -1).
     // So it's always a 30 minute TWAP and it should never be vulnerable to manipulation.
     uint256 quoteAmount = IVelodromeV2Pair(pair).quote(mainToken, mainTokenUnit, 1);
     uint256 answer = uint256(pairUsdPrice).mul(quoteAmount).div(pairTokenUnit);
 
     // we don't need roundId, startedAt and answeredInRound
-    return (0, int256(answer), 0, block.timestamp, 0);
+    return (0, int256(answer), 0, updatedAt, 0);
   }
 }

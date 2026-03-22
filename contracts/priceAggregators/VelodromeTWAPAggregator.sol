@@ -57,11 +57,11 @@ contract VelodromeTWAPAggregator is IAggregatorV3Interface {
    * @return answeredInRound The round ID of the round in which the answer was computed.
    */
   function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
-    (, int256 pairUsdPrice, , , ) = pairTokenUsdAggregator.latestRoundData(); // decimals 8
+    (, int256 pairUsdPrice, , uint256 updatedAt, ) = pairTokenUsdAggregator.latestRoundData(); // decimals 8
     uint256 quoteAmount = IVelodromePair(pair).current(mainToken, mainTokenUnit);
     uint256 answer = uint256(pairUsdPrice).mul(quoteAmount).div(pairTokenUnit);
 
     // we don't need roundId, startedAt and answeredInRound
-    return (0, int256(answer), 0, block.timestamp, 0);
+    return (0, int256(answer), 0, updatedAt, 0);
   }
 }

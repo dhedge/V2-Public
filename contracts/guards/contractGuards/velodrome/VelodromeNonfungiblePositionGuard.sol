@@ -30,30 +30,18 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
 
   /// @notice Transaction guard for Velodrome CL non-fungible Position Manager
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param poolManagerLogicAddress Pool address
+  /// @param poolManagerLogic Pool address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address poolManagerLogicAddress,
+    address poolManagerLogic,
     address to,
     bytes memory data
-  )
-    public
-    override
-    returns (
-      uint16 txType, // transaction type
-      bool // isPublic
-    )
-  {
+  ) public view override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
     bytes memory params = getParams(data);
-    IVelodromeNonfungiblePositionManager nonfungiblePositionManager = IVelodromeNonfungiblePositionManager(to);
-
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(poolManagerLogicAddress);
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogicAddress);
-    address pool = poolManagerLogic.poolLogic();
-    require(msg.sender == pool, "not pool logic");
+    address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
     if (method == IVelodromeNonfungiblePositionManager.mint.selector) {
       IVelodromeNonfungiblePositionManager.MintParams memory mintParams = abi.decode(
@@ -61,15 +49,15 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
         (IVelodromeNonfungiblePositionManager.MintParams)
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
-      require(poolManagerLogicAssets.isSupportedAsset(to), "velodrome cl asset not enabled");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "velodrome cl asset not enabled");
       require(mintParams.sqrtPriceX96 == 0, "sqrtPriceX96 must be 0");
       require(pool == mintParams.recipient, "recipient is not pool");
 
       VelodromeCLPriceLibrary.assertFairPrice(
         IPoolLogic(pool).factory(),
-        nonfungiblePositionManager.factory(),
+        IVelodromeNonfungiblePositionManager(to).factory(),
         mintParams.token0,
         mintParams.token1,
         mintParams.tickSpacing
@@ -85,13 +73,12 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
       // validate token id from nft tracker
       require(isValidOwnedTokenId(pool, increaseLiquidityParams.tokenId), "position is not in track");
 
-      (, , address token0, address token1, int24 tickSpacing, , , , , , , ) = nonfungiblePositionManager.positions(
-        increaseLiquidityParams.tokenId
-      );
+      (, , address token0, address token1, int24 tickSpacing, , , , , , , ) = IVelodromeNonfungiblePositionManager(to)
+        .positions(increaseLiquidityParams.tokenId);
 
       VelodromeCLPriceLibrary.assertFairPrice(
         IPoolLogic(pool).factory(),
-        nonfungiblePositionManager.factory(),
+        IVelodromeNonfungiblePositionManager(to).factory(),
         token0,
         token1,
         tickSpacing
@@ -107,12 +94,12 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
         params,
         (IVelodromeNonfungiblePositionManager.CollectParams)
       );
-      (, , address token0, address token1, , , , , , , , ) = nonfungiblePositionManager.positions(
+      (, , address token0, address token1, , , , , , , , ) = IVelodromeNonfungiblePositionManager(to).positions(
         collectParams.tokenId
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token1), "unsupported asset: tokenB");
       require(pool == collectParams.recipient, "recipient is not pool");
 
       txType = uint16(TransactionType.VelodromeCLCollect);
@@ -120,7 +107,7 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
       bytes[] memory multicallParams = abi.decode(params, (bytes[]));
 
       for (uint256 i = 0; i < multicallParams.length; i++) {
-        (txType, ) = txGuard(poolManagerLogicAddress, to, multicallParams[i]);
+        (txType, ) = txGuard(poolManagerLogic, to, multicallParams[i]);
         require(txType > 0, "invalid transaction");
       }
 
@@ -136,7 +123,7 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
   /// @param poolManagerLogic Pool manager logic address
   /// @param to Velodrome CL NonfungiblePositionManager address
   /// @param data Transaction data
-  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public virtual override {
+  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public override {
     _afterTxGuardHandle(poolManagerLogic, to, data);
   }
 
@@ -145,19 +132,16 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
     address to,
     bytes memory data
   ) internal returns (bool isMintOrBurn) {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-
+    address poolLogic = _accessControl(poolManagerLogic);
     bytes4 method = getMethod(data);
-    IVelodromeNonfungiblePositionManager nonfungiblePositionManager = IVelodromeNonfungiblePositionManager(to);
 
     if (method == IVelodromeNonfungiblePositionManager.mint.selector) {
-      uint256 index = nonfungiblePositionManager.totalSupply();
+      uint256 index = IVelodromeNonfungiblePositionManager(to).totalSupply();
       nftTracker.addUintId(
         to,
         nftType,
         poolLogic,
-        nonfungiblePositionManager.tokenByIndex(index - 1), // revert if index is zero
+        IVelodromeNonfungiblePositionManager(to).tokenByIndex(index - 1), // revert if index is zero
         positionsLimit
       );
 

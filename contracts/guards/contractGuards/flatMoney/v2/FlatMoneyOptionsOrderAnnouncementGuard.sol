@@ -33,14 +33,29 @@ contract FlatMoneyOptionsOrderAnnouncementGuard is FlatMoneyBasisContractGuard {
     address _to,
     bytes memory _data
   ) external view virtual override returns (uint16 txType, bool) {
-    return
-      _txGuardProcessing({
+    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
+    bytes4 method = getMethod(_data);
+    IFlatcoinVaultV2 vault = IOrderAnnouncementModule(_to).vault();
+
+    // Stable deposit/withdraw require whitelist
+    if (method == IOrderAnnouncementModule.announceStableDeposit.selector) {
+      require(_isPoolWhitelisted(poolLogic), "not whitelisted");
+      txType = _verifyStableDeposit(_poolManagerLogic, address(vault));
+    } else if (method == IOrderAnnouncementModule.announceStableWithdraw.selector) {
+      require(_isPoolWhitelisted(poolLogic), "not whitelisted");
+      txType = _verifyStableWithdraw(_poolManagerLogic, vault.collateral());
+    } else {
+      // Leverage operations - no whitelist (handled at Flat Money level)
+      (txType, ) = _txGuardProcessing({
         _poolManagerLogic: _poolManagerLogic,
-        _poolLogic: IPoolManagerLogic(_poolManagerLogic).poolLogic(),
-        _vault: IOrderAnnouncementModule(_to).vault(),
-        _method: getMethod(_data),
+        _poolLogic: poolLogic,
+        _vault: vault,
+        _method: method,
         _params: getParams(_data)
       });
+    }
+
+    return (txType, false);
   }
 
   function _txGuardProcessing(

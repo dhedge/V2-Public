@@ -5,7 +5,6 @@ pragma experimental ABIEncoderV2;
 
 import {IPSM3} from "../../interfaces/sky/IPSM3.sol";
 import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
-import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {ITransactionTypes} from "../../interfaces/ITransactionTypes.sol";
 import {SlippageAccumulator, SlippageAccumulatorUser} from "../../utils/SlippageAccumulatorUser.sol";
 import {TxDataUtils} from "../../utils/TxDataUtils.sol";
@@ -24,10 +23,7 @@ contract SkyPSM3ContractGuard is TxDataUtils, ITransactionTypes, SlippageAccumul
     address /* _to */,
     bytes memory _data
   ) external override returns (uint16 txType, bool) {
-    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
-
-    require(msg.sender == poolLogic, "not pool logic");
-
+    address poolLogic = _accessControl(_poolManagerLogic);
     bytes4 method = getMethod(_data);
 
     if (method == IPSM3.swapExactIn.selector || method == IPSM3.swapExactOut.selector) {
@@ -50,12 +46,6 @@ contract SkyPSM3ContractGuard is TxDataUtils, ITransactionTypes, SlippageAccumul
     }
 
     return (txType, false);
-  }
-
-  /// @notice This function is called after the transaction is executed
-  /// @dev Handles the slippage accumulator update
-  function afterTxGuard(address _poolManagerLogic, address _to, bytes memory _data) public override {
-    SlippageAccumulatorUser.afterTxGuard(_poolManagerLogic, _to, _data);
   }
 
   function _verifySwap(

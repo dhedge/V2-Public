@@ -14,6 +14,11 @@ import {IGmxMarketPoolValueInfo} from "./IGmxMarketPoolValueInfo.sol";
 import {IGmxSwapPricingUtils} from "./IGmxSwapPricingUtils.sol";
 
 interface IGmxReader {
+  struct OrderInfo {
+    bytes32 orderKey;
+    Order.Props order;
+  }
+
   function getOrder(IGmxDataStore _dataStore, bytes32 _orderKey) external view returns (Order.Props memory order_);
 
   function getAccountPositions(
@@ -30,7 +35,7 @@ interface IGmxReader {
     address _account,
     uint256 _start,
     uint256 _end
-  ) external view returns (Order.Props[] memory orders_);
+  ) external view returns (OrderInfo[] memory orders_);
 
   function getAccountPositionInfoList(
     IGmxDataStore _dataStore,

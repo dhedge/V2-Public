@@ -41,7 +41,9 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
   }
 
   const gmxClaimableCollateralTrackerLib = versions[config.newTag].contracts.GmxClaimableCollateralTrackerLib;
+  const gmxHelperLib = versions[config.newTag].contracts.GmxHelperLib;
 
+  if (!gmxHelperLib) return console.warn("GmxHelperLib not found: skipping.");
   if (!gmxClaimableCollateralTrackerLib) return console.warn("GmxClaimableCollateralTrackerLib not found: skipping.");
 
   console.log("Will deploy GmxExchangeRouterContractGuard");
@@ -49,17 +51,9 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
   if (config.execute) {
     console.log("Deploying GMX libraries...");
 
-    const GmxHelperLib = await ethers.getContractFactory("GmxHelperLib");
-    const gmxHelperLib = await GmxHelperLib.deploy();
-    await gmxHelperLib.deployed();
-    console.log("GmxHelperLib deployed at:", gmxHelperLib.address);
-    versions[config.newTag].contracts.GmxHelperLib = gmxHelperLib.address;
-
-    await tryVerify(hre, gmxHelperLib.address, "contracts/utils/gmx/GmxHelperLib.sol:GmxHelperLib", []);
-
     const GmxAfterTxValidatorLib = await ethers.getContractFactory("GmxAfterTxValidatorLib", {
       libraries: {
-        GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLib,
+        GmxHelperLib: gmxHelperLib,
       },
     });
     const gmxAfterTxValidatorLib = await GmxAfterTxValidatorLib.deploy();
@@ -74,29 +68,39 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
       [],
     );
 
-    const GmxAfterExcutionLib = await ethers.getContractFactory("GmxAfterExcutionLib", {
+    const GmxEventUtils = await ethers.getContractFactory("GmxEventUtils");
+    const gmxEventUtils = await GmxEventUtils.deploy();
+    await gmxEventUtils.deployed();
+    console.log("GmxEventUtils deployed at:", gmxEventUtils.address);
+    versions[config.newTag].contracts.GmxEventUtils = gmxEventUtils.address;
+
+    await tryVerify(hre, gmxEventUtils.address, "contracts/utils/gmx/GmxEventUtils.sol:GmxEventUtils", []);
+
+    const GmxAfterExecutionLib = await ethers.getContractFactory("GmxAfterExecutionLib", {
       libraries: {
         GmxAfterTxValidatorLib: gmxAfterTxValidatorLib.address,
         GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLib,
+        GmxEventUtils: gmxEventUtils.address,
+        GmxHelperLib: gmxHelperLib,
       },
     });
-    const gmxAfterExcutionLib = await GmxAfterExcutionLib.deploy();
-    await gmxAfterExcutionLib.deployed();
-    console.log("GmxAfterExcutionLib deployed at:", gmxAfterExcutionLib.address);
-    versions[config.newTag].contracts.GmxAfterExcutionLib = gmxAfterExcutionLib.address;
+    const gmxAfterExecutionLib = await GmxAfterExecutionLib.deploy();
+    await gmxAfterExecutionLib.deployed();
+    console.log("GmxAfterExecutionLib deployed at:", gmxAfterExecutionLib.address);
+    versions[config.newTag].contracts.GmxAfterExecutionLib = gmxAfterExecutionLib.address;
 
     await tryVerify(
       hre,
-      gmxAfterExcutionLib.address,
-      "contracts/utils/gmx/GmxAfterExcutionLib.sol:GmxAfterExcutionLib",
+      gmxAfterExecutionLib.address,
+      "contracts/utils/gmx/GmxAfterExecutionLib.sol:GmxAfterExecutionLib",
       [],
     );
 
     const GmxExchangeRouterContractGuard = await ethers.getContractFactory("GmxExchangeRouterContractGuard", {
       libraries: {
-        GmxHelperLib: gmxHelperLib.address,
-        GmxAfterTxValidatorLib: gmxAfterTxValidatorLib.address,
-        GmxAfterExcutionLib: gmxAfterExcutionLib.address,
+        GmxHelperLib: versions[config.newTag].contracts.GmxHelperLib as string,
+        GmxAfterTxValidatorLib: versions[config.newTag].contracts.GmxAfterTxValidatorLib as string,
+        GmxAfterExecutionLib: versions[config.newTag].contracts.GmxAfterExecutionLib as string,
       },
     });
 

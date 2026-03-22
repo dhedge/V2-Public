@@ -34,32 +34,19 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
 
   /// @notice Transaction guard for Ramses CL non-fungible Position Manager
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param poolManagerLogicAddress Pool address
+  /// @param poolManagerLogic address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address poolManagerLogicAddress,
+    address poolManagerLogic,
     address to,
     bytes memory data
-  )
-    public
-    override
-    returns (
-      uint16 txType, // transaction type
-      bool // isPublic
-    )
-  {
+  ) public view override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
     bytes memory params = getParams(data);
-    IRamsesNonfungiblePositionManager nonfungiblePositionManager = IRamsesNonfungiblePositionManager(to);
-
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(poolManagerLogicAddress);
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogicAddress);
-    address pool = poolManagerLogic.poolLogic();
+    address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
     address factory = IPoolLogic(pool).factory();
-    IRamsesVoter voter = IRamsesVoter(nonfungiblePositionManager.voter());
-    require(msg.sender == pool, "not pool logic");
 
     if (method == IRamsesNonfungiblePositionManager.mint.selector) {
       IRamsesNonfungiblePositionManager.MintParams memory mintParams = abi.decode(
@@ -67,13 +54,13 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
         (IRamsesNonfungiblePositionManager.MintParams)
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
-      require(poolManagerLogicAssets.isSupportedAsset(to), "ramses cl asset not enabled");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "ramses cl asset not enabled");
       require(mintParams.veRamTokenId == 0, "veRamTokenId must be 0"); // CL Boosting deprecated
       require(pool == mintParams.recipient, "recipient is not pool");
 
-      address ramsesFactory = nonfungiblePositionManager.factory();
+      address ramsesFactory = IRamsesNonfungiblePositionManager(to).factory();
       // can use UniswapV3PriceLibrary
       UniswapV3PriceLibrary.assertFairPrice(
         factory,
@@ -83,6 +70,7 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
         mintParams.fee
       );
 
+      IRamsesVoter voter = IRamsesVoter(IRamsesNonfungiblePositionManager(to).voter());
       IRamsesGaugeV2 gauge = IRamsesGaugeV2(
         voter.gauges(IUniswapV3Factory((ramsesFactory)).getPool(mintParams.token0, mintParams.token1, mintParams.fee))
       );
@@ -90,7 +78,7 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
       for (uint256 i = 0; i < rewardTokens.length; ++i) {
         // staking-equivalent checks
         if (IHasAssetInfo(factory).isValidAsset(rewardTokens[i])) {
-          require(poolManagerLogicAssets.isSupportedAsset(rewardTokens[i]), "reward asset not enabled");
+          require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(rewardTokens[i]), "reward asset not enabled");
         }
       }
 
@@ -105,12 +93,18 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
       bool isValidTokenId = isValidOwnedTokenId(pool, increaseLiquidityParams.tokenId);
       require(isValidTokenId, "position is not in track");
 
-      (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(
+      (, , address token0, address token1, uint24 fee, , , , , , , ) = IRamsesNonfungiblePositionManager(to).positions(
         increaseLiquidityParams.tokenId
       );
 
       // can use UniswapV3PriceLibrary
-      UniswapV3PriceLibrary.assertFairPrice(factory, nonfungiblePositionManager.factory(), token0, token1, fee);
+      UniswapV3PriceLibrary.assertFairPrice(
+        factory,
+        IRamsesNonfungiblePositionManager(to).factory(),
+        token0,
+        token1,
+        fee
+      );
 
       txType = uint16(TransactionType.RamsesCLIncreaseLiquidity);
     } else if (method == IRamsesNonfungiblePositionManager.decreaseLiquidity.selector) {
@@ -122,12 +116,12 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
         params,
         (IRamsesNonfungiblePositionManager.CollectParams)
       );
-      (, , address token0, address token1, , , , , , , , ) = nonfungiblePositionManager.positions(
+      (, , address token0, address token1, , , , , , , , ) = IRamsesNonfungiblePositionManager(to).positions(
         collectParams.tokenId
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token1), "unsupported asset: tokenB");
       require(pool == collectParams.recipient, "recipient is not pool");
 
       txType = uint16(TransactionType.RamsesCLCollect);
@@ -142,7 +136,7 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
       bytes[] memory multicallParams = abi.decode(params, (bytes[]));
 
       for (uint256 i = 0; i < multicallParams.length; i++) {
-        (txType, ) = txGuard(poolManagerLogicAddress, to, multicallParams[i]);
+        (txType, ) = txGuard(poolManagerLogic, to, multicallParams[i]);
         require(txType > 0, "invalid transaction");
       }
 
@@ -157,7 +151,7 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
   /// @param poolManagerLogic Pool manager logic address
   /// @param to Ramses CL NonfungiblePositionManager address
   /// @param data Transaction data
-  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public virtual override {
+  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public override {
     _afterTxGuardHandle(poolManagerLogic, to, data);
   }
 
@@ -166,19 +160,16 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
     address to,
     bytes memory data
   ) internal returns (bool isMintOrBurn) {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-
+    address poolLogic = _accessControl(poolManagerLogic);
     bytes4 method = getMethod(data);
-    IRamsesNonfungiblePositionManager nonfungiblePositionManager = IRamsesNonfungiblePositionManager(to);
 
     if (method == IRamsesNonfungiblePositionManager.mint.selector) {
-      uint256 index = nonfungiblePositionManager.totalSupply();
+      uint256 index = IRamsesNonfungiblePositionManager(to).totalSupply();
       nftTracker.addUintId(
         to,
         nftType,
         poolLogic,
-        nonfungiblePositionManager.tokenByIndex(index - 1), // revert if index is zero
+        IRamsesNonfungiblePositionManager(to).tokenByIndex(index - 1), // revert if index is zero
         positionsLimit
       );
 

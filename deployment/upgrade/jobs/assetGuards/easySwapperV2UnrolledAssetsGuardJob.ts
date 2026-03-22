@@ -13,11 +13,15 @@ export const easySwapperV2UnrolledAssetsGuardJob: IJob<void> = async (
 ) => {
   console.log("Will deploy EasySwapperV2UnrolledAssetsGuard");
 
+  const poolLimitOrderManagerProxy = versions[config.newTag].contracts.PoolLimitOrderManagerProxy;
+  if (!poolLimitOrderManagerProxy) return console.warn("PoolLimitOrderManagerProxy could not be found: skipping.");
+
   if (config.execute) {
     const ethers = hre.ethers;
 
     const EasySwapperV2UnrolledAssetsGuard = await ethers.getContractFactory("EasySwapperV2UnrolledAssetsGuard");
-    const easySwapperV2UnrolledAssetsGuard = await EasySwapperV2UnrolledAssetsGuard.deploy();
+    const args: Parameters<typeof EasySwapperV2UnrolledAssetsGuard.deploy> = [poolLimitOrderManagerProxy];
+    const easySwapperV2UnrolledAssetsGuard = await EasySwapperV2UnrolledAssetsGuard.deploy(...args);
     await easySwapperV2UnrolledAssetsGuard.deployed();
     const easySwapperV2UnrolledAssetsGuardAddress = easySwapperV2UnrolledAssetsGuard.address;
     console.log("EasySwapperV2UnrolledAssetsGuard deployed at", easySwapperV2UnrolledAssetsGuardAddress);
@@ -28,7 +32,7 @@ export const easySwapperV2UnrolledAssetsGuardJob: IJob<void> = async (
       hre,
       easySwapperV2UnrolledAssetsGuardAddress,
       "contracts/guards/assetGuards/EasySwapperV2UnrolledAssetsGuard.sol:EasySwapperV2UnrolledAssetsGuard",
-      [],
+      args,
     );
 
     const Governance = await hre.artifacts.readArtifact("Governance");

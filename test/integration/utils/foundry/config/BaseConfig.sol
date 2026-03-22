@@ -10,7 +10,7 @@ library BaseConfig {
   // dHEDGE Contracts
   address public constant POOL_FACTORY_PROD = 0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F;
   address public constant NFT_TRACKER_PROD = 0x08A664cA241DD50B1Dd5c9EBB97eCA33aC6f744E;
-  address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x75aD8f922a8C4386E4bf58C1648E22316ACb608f;
+  address public constant SLIPPAGE_ACCUMULATOR_PROD = 0xcF427956142901D5b125073F80fDd06370fba237;
   address public constant USD_PRICE_AGGREGATOR_PROD = 0xE84e43DD22A608eFbc7f453f16c2bf398876417a;
 
   // Tokens
@@ -20,6 +20,7 @@ library BaseConfig {
   address public constant DAI = 0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb;
   address public constant cbBTC = 0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf;
   address public constant AERO = 0x940181a94A35A4569E4529A3CDfB74e38FD98631;
+  address public constant rETH = 0xB6fe221Fe9EeF5aBa221c348bA20A1Bf5e73624c;
 
   // Oracles
   address public constant WETH_CHAINLINK_ORACLE = 0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70;
@@ -46,4 +47,5 @@ library BaseConfig {
   address public constant SUSHISWAP_ROUTER = 0x6BDED42c6DA8FBf0d2bA55B2fa120C5e0c8D7891;
   address public constant UNISWAP_V2_ROUTER = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
   address public constant FLAT_MONEY_V1_DELAYED_ORDER = 0x6D857e9D24a7566bB72a3FB0847A3E0e4E1c2879;
+  address public constant GPV2_SETTLEMENT = 0x9008D19f58AAbD9eD0D60971565AA8510560ab41; // CowSwap Settlement
 }

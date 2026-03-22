@@ -7,6 +7,11 @@ import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
 import {IWithdrawalVault} from "./IWithdrawalVault.sol";
 
 interface IEasySwapperV2 {
+  enum WithdrawalVaultType {
+    SINGLE_ASSET_WITHDRAWAL,
+    LIMIT_ORDER
+  }
+
   function swapper() external view returns (ISwapper swapper_);
 
   function withdrawalContracts(address _depositor) external view returns (address withdrawalVault_);
@@ -21,7 +26,7 @@ interface IEasySwapperV2 {
     address _depositor
   ) external view returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets_);
 
-  function partialWithdraw(uint256 _portion, address _to) external;
+  function partialWithdraw(uint256 _portion, address _to, WithdrawalVaultType _vaultType) external;
 
   function isdHedgeVault(address _dHedgeVault) external view returns (bool isVault);
 

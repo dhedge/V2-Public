@@ -4,6 +4,11 @@ pragma experimental ABIEncoderV2;
 
 import {PythPriceLib} from "../pyth/PythPriceLib.sol";
 import {ChainlinkPythPriceLib} from "../chainlinkPyth/ChainlinkPythPriceLib.sol";
+
+import {IGmxDataStore} from "../../interfaces/gmx/IGmxDataStore.sol";
+import {IGmxReader} from "../../interfaces/gmx/IGmxReader.sol";
+import {DhedgeNftTrackerStorage} from "../../utils/tracker/DhedgeNftTrackerStorage.sol";
+import {IGmxReferralStorage} from "../../interfaces/gmx/IGmxReferralStorage.sol";
 library GmxStructs {
   struct PoolSetting {
     address poolLogic;
@@ -34,11 +39,46 @@ library GmxStructs {
     address uiFeeReceiver;
   }
 
+  struct GmxGuardData {
+    IGmxDataStore dataStore;
+    IGmxReader reader;
+    address assetHandler;
+    address uiFeeReceiver;
+    DhedgeNftTrackerStorage nftTracker;
+    IGmxReferralStorage referralStorage;
+  }
+
   struct GmxContractGuardConfig {
     address gmxExchangeRouter;
     address feeReceiver;
     address dataStore;
     address reader;
     address referralStorage;
+  }
+
+  struct GmxAfterSwapOrderData {
+    address account;
+    address[] swapPath;
+    address initialCollateralToken;
+    uint256 initialCollateralDeltaAmount;
+    uint256 minOutputAmount;
+  }
+
+  struct GmxAfterDepositData {
+    address account;
+    address market;
+    address initialLongToken;
+    address initialShortToken;
+    uint256 initialLongTokenAmount;
+    uint256 initialShortTokenAmount;
+    uint256 minMarketTokens;
+  }
+
+  struct GmxAfterWithdrawalData {
+    address account;
+    address market;
+    uint256 marketTokenAmount;
+    uint256 minLongTokenAmount;
+    uint256 minShortTokenAmount;
   }
 }

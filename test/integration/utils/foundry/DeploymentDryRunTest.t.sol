@@ -28,8 +28,8 @@ abstract contract DeploymentDryRunTest is Test {
 
   ProxyAdmin public immutable proxyAdmin;
 
-  address[] private torosVaultsToCheck;
-  uint256[] private tokenPricesBeforeTheUpgrade;
+  address[] public torosVaultsToCheck;
+  uint256[] public tokenPricesBeforeTheUpgrade;
 
   constructor(
     string memory _network,
@@ -80,7 +80,7 @@ abstract contract DeploymentDryRunTest is Test {
     }
   }
 
-  function test_token_prices_should_stay_same_after_new_deployment() public view {
+  function test_token_prices_should_stay_same_after_new_deployment() public view virtual {
     for (uint256 i; i < torosVaultsToCheck.length; ++i) {
       assertEq(
         PoolLogic(torosVaultsToCheck[i]).tokenPrice(),

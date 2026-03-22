@@ -26,6 +26,7 @@ import {
 } from "./gmxTestHelpers";
 import { getMinAmountOut } from "../../utils/getMinAmountOut";
 import { units } from "../../../testHelpers";
+import { CreateOrderParamsStruct } from "../../../../types/IGmxExchangeRouter";
 
 export type GmxSwapOrderParams = {
   from: string;
@@ -42,7 +43,7 @@ export const launchGmxSwapTests = (testParams: IGmxTestsParams) => {
   let gmxExchangeRouterContractGuard: GmxExchangeRouterContractGuard;
 
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
-  const iGmxExchangeRouter = new ethers.utils.Interface(IGmxExchangeRouter__factory.abi);
+  const iGmxExchangeRouter = IGmxExchangeRouter__factory.createInterface();
 
   let manager: SignerWithAddress;
 
@@ -132,7 +133,7 @@ export const launchGmxSwapTests = (testParams: IGmxTestsParams) => {
       validFromTime: ethers.constants.Zero,
     };
 
-    const createOrderParams = {
+    const createOrderParams: CreateOrderParamsStruct = {
       addresses: addresses,
       numbers: numbers,
       orderType: 0,
@@ -141,6 +142,7 @@ export const launchGmxSwapTests = (testParams: IGmxTestsParams) => {
       shouldUnwrapNativeToken: false,
       autoCancel: false, // Set true to enable auto-cancellation
       referralCode: ethers.utils.formatBytes32String(""), // Set a referral code if any
+      dataList: [],
     };
 
     // Encode the function data

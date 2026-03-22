@@ -62,7 +62,7 @@ contract SlippageAccumulator is Ownable {
   uint128 private constant SCALING_FACTOR = 1e6;
 
   /// @dev dHEDGE poolFactory address.
-  address private immutable poolFactory;
+  address public immutable poolFactory;
 
   /// @notice Maximum acceptable cumulative trade slippage impact within a period of time (upto 4 decimal precision).
   /// @dev Eg. 5% = 5e4
@@ -102,6 +102,8 @@ contract SlippageAccumulator is Ownable {
     address router,
     SwapData calldata swapData
   ) external onlyContractGuard(router) {
+    require(swapData.srcAmount != 0, "0 src amount");
+
     if (IHasSupportedAsset(poolManagerLogic).isSupportedAsset(swapData.srcAsset)) {
       uint256 srcValue = assetValue(swapData.srcAsset, swapData.srcAmount);
       uint256 dstValue = assetValue(swapData.dstAsset, swapData.dstAmount);

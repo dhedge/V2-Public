@@ -31,6 +31,7 @@
 // 35 = Flat Money V2 UNIT
 // 36 = Flat Money V2 Perp Market Asset
 // 37 = Pendle Principal Token
+// 38 = Virtual Token
 // 100 = Lyra OptionMarketWrapper Asset
 // 101 = Synthetix Futures Perps v1
 // 102 = Synthetix Futures Perps v2

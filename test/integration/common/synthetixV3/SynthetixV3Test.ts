@@ -1537,7 +1537,7 @@ export const launchSynthetixV3Tests = (chainData: ISynthetixV3TestsParams) => {
                   ONE_UNIT,
                 ]),
               ),
-          ).to.be.revertedWith("only manager, trader, public");
+          ).to.be.revertedWith("dh24");
         });
 
         it("should be able to delegate more collateral on behalf of manager during delegation window", async () => {

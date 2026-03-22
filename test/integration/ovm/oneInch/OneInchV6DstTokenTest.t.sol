@@ -3,89 +3,34 @@
 pragma solidity >=0.7.6 <0.9.0;
 pragma abicoder v2;
 
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Test} from "forge-std/Test.sol";
 
-import {Governance} from "../../../../contracts/Governance.sol";
-import {OneInchV6Guard} from "../../../../contracts/guards/contractGuards/OneInchV6Guard.sol";
-import {IUniswapV2Factory} from "../../../../contracts/interfaces/uniswapV2/IUniswapV2Factory.sol";
-
-interface IAggregationRouterV6 {
-  struct SwapDescription {
-    address srcToken; // IERC20
-    address dstToken; // IERC20
-    address payable srcReceiver;
-    address payable dstReceiver;
-    uint256 amount;
-    uint256 minReturnAmount;
-    uint256 flags;
-  }
-
-  function swap(
-    address sender,
-    SwapDescription calldata desc,
-    bytes calldata data
-  ) external payable returns (uint256 returnAmount);
-
-  function unoswap2(
-    uint256 srcToken,
-    uint256 srcAmount,
-    uint256 dstAmount,
-    uint256 pool1,
-    uint256 pool2
-  ) external returns (uint256);
-}
-
-interface IPoolLogic {
-  function execTransaction(address to, bytes calldata data) external returns (bool success);
-}
-
-interface IERC20 {
-  function approve(address spender, uint256 amount) external returns (bool);
-  function balanceOf(address account) external view returns (uint256);
-  function allowance(address owner, address spender) external view returns (uint256);
-}
-
-interface IUniswapV2Router02 {
-  function addLiquidity(
-    address tokenA,
-    address tokenB,
-    uint256 amountADesired,
-    uint256 amountBDesired,
-    uint256 amountAMin,
-    uint256 amountBMin,
-    address to,
-    uint256 deadline
-  ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
-}
-
-interface IPoolManagerLogic {
-  struct Asset {
-    address asset;
-    bool isDeposit;
-  }
-  function totalFundValue() external view returns (uint256);
-  function changeManager(address newManager, string memory newManagerName) external;
-  function manager() external view returns (address);
-  function changeAssets(Asset[] calldata _addAssets, address[] calldata _removeAssets) external;
-  function setTrader(address _trader) external;
-}
+import {Governance} from "contracts/Governance.sol";
+import {PoolLogic} from "contracts/PoolLogic.sol";
+import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
+import {IERC20} from "contracts/interfaces/IERC20.sol";
+import {OneInchV6Guard} from "contracts/guards/contractGuards/OneInchV6Guard.sol";
+import {IUniswapV2Factory} from "contracts/interfaces/uniswapV2/IUniswapV2Factory.sol";
+import {IAggregationRouterV6} from "contracts/interfaces/oneInch/IAggregationRouterV6.sol";
+import {SlippageAccumulator} from "contracts/utils/SlippageAccumulator.sol";
+import {IUniswapV2Router} from "contracts/interfaces/uniswapV2/IUniswapV2Router.sol";
 
 contract OneInchV6DstTokenTest is Test {
-  IAggregationRouterV6 public router = IAggregationRouterV6(0x111111125421cA6dc452d289314280a0f8842A65);
+  IAggregationRouterV6 public router = IAggregationRouterV6(EthereumConfig.ONE_INCH_V6_ROUTER);
   IERC20 public weth = IERC20(OptimismConfig.WETH);
   IERC20 public dai = IERC20(OptimismConfig.DAI);
 
-  IPoolLogic public pool = IPoolLogic(0x749E1d46C83f09534253323A43541A9d2bBD03AF);
-  IPoolManagerLogic public manager = IPoolManagerLogic(0x950A19078d33f732d35d3630c817532308490cCD);
+  PoolLogic public pool = PoolLogic(0x749E1d46C83f09534253323A43541A9d2bBD03AF);
+  PoolManagerLogic public manager = PoolManagerLogic(0x950A19078d33f732d35d3630c817532308490cCD);
   address public managerAddress = 0xeFc4904b786A3836343A3A504A2A3cb303b77D64;
 
-  IUniswapV2Router02 public uniRouter = IUniswapV2Router02(OptimismConfig.UNISWAP_V2_ROUTER);
+  IUniswapV2Router public uniRouter = IUniswapV2Router(OptimismConfig.UNISWAP_V2_ROUTER);
   IUniswapV2Factory public uniFactory = IUniswapV2Factory(0x0c3c1c532F1e39EdF36BE9Fe0bE1410313E074Bf);
 
-  address public slippageAccumulator = 0x2474680A3475ede148B5270f7736Cae6d63c06D5;
   Governance public dHEDGEGovernance = Governance(0xa9F912c1dB1b844fd96192Ac3B496E9d8F445bc9);
   address public dHEDGEAdminOptimism = 0x90b1a66957914EbbE7a8df254c0c1E455972379C;
 
@@ -104,6 +49,7 @@ contract OneInchV6DstTokenTest is Test {
   }
 
   function test_remove_dst_token_during_execute_fix() public {
+    address slippageAccumulator = address(new SlippageAccumulator(OptimismConfig.POOL_FACTORY_PROD, 86400, 10e4));
     address newOneInchV6Guard = address(
       new OneInchV6Guard(
         slippageAccumulator,
@@ -122,7 +68,7 @@ contract OneInchV6DstTokenTest is Test {
   }
 
   function _executeScenario() internal returns (bytes memory data) {
-    IPoolManagerLogic.Asset[] memory assets = new IPoolManagerLogic.Asset[](1);
+    PoolManagerLogic.Asset[] memory assets = new PoolManagerLogic.Asset[](1);
     assets[0].asset = address(dai);
 
     vm.startPrank(managerAddress);
@@ -163,8 +109,8 @@ contract OneInchV6DstTokenTest is Test {
 }
 
 contract MaliciousERC20 is ERC20, Test {
-  IPoolManagerLogic public manager = IPoolManagerLogic(0x950A19078d33f732d35d3630c817532308490cCD);
-  IPoolLogic public pool = IPoolLogic(0x749E1d46C83f09534253323A43541A9d2bBD03AF);
+  PoolManagerLogic public manager = PoolManagerLogic(0x950A19078d33f732d35d3630c817532308490cCD);
+  PoolLogic public pool = PoolLogic(0x749E1d46C83f09534253323A43541A9d2bBD03AF);
   IERC20 public dai = IERC20(OptimismConfig.DAI);
 
   address public attackSender = address(1001);
@@ -181,7 +127,7 @@ contract MaliciousERC20 is ERC20, Test {
       address[] memory addrs = new address[](1);
       addrs[0] = address(dai);
 
-      manager.changeAssets(new IPoolManagerLogic.Asset[](0), addrs);
+      manager.changeAssets(new PoolManagerLogic.Asset[](0), addrs);
 
       attk = false;
     }

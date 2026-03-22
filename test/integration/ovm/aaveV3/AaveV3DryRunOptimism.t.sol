@@ -57,7 +57,7 @@ contract AaveV3DryRunOptimism is DeploymentDryRunOptimism {
   }
 
   function getTorosVaults() internal pure returns (address[] memory torosVaults) {
-    torosVaults = new address[](11);
+    torosVaults = new address[](10);
     torosVaults[0] = OptimismConfig.BTCBULL4X;
     torosVaults[1] = OptimismConfig.BTCBULL3X;
     torosVaults[2] = OptimismConfig.BTCBULL2X;
@@ -67,8 +67,7 @@ contract AaveV3DryRunOptimism is DeploymentDryRunOptimism {
     torosVaults[6] = OptimismConfig.ETHBEAR1X;
     torosVaults[7] = OptimismConfig.USDy;
     torosVaults[8] = OptimismConfig.ETHy;
-    torosVaults[9] = OptimismConfig.USDmny;
-    torosVaults[10] = OptimismConfig.USDpy;
+    torosVaults[9] = OptimismConfig.USDpy;
 
     return torosVaults;
   }

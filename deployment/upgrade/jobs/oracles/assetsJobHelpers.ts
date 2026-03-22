@@ -23,6 +23,8 @@ import { deployRamsesVariableLPAggregator } from "./deployRamsesVariableLPAggreg
 import { deploySonneFinancePriceAggregator } from "./deploySonneFinancePriceAggregator";
 import { deployFlatMoneyUNITPriceAggregator } from "./deployFlatMoneyUNITPriceAggregator";
 import { deployChainlinkPythPriceAggregator } from "./deployChainlinkPythPriceAggregator";
+import { deployChainlinkAggregatorWrapper } from "./deployChainlinkAggregatorWrapper";
+import { deployChainlinkTWAPAggregator } from "./deployChainlinkTWAPAggregator";
 import { deployCustomCrossAggregator } from "./deployCustomCrossAggregator";
 import { deployFluidTokenPriceAggregator } from "./deployFluidTokenPriceAggregator";
 import { deployPythPriceAggregator } from "./deployPythPriceAggregator";
@@ -67,6 +69,8 @@ const typeToDeployer: TOracleTypeToDeployer = {
   SonneFinancePriceAggregator: deploySonneFinancePriceAggregator,
   FlatMoneyUNITPriceAggregator: deployFlatMoneyUNITPriceAggregator,
   ChainlinkPythPriceAggregator: deployChainlinkPythPriceAggregator,
+  ChainlinkAggregatorWrapper: deployChainlinkAggregatorWrapper,
+  ChainlinkTWAPAggregator: deployChainlinkTWAPAggregator,
   CustomCrossAggregator: deployCustomCrossAggregator,
   FluidTokenPriceAggregator: deployFluidTokenPriceAggregator,
   PythPriceAggregator: deployPythPriceAggregator,

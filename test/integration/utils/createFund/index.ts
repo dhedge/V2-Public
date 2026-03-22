@@ -24,6 +24,8 @@ export const createFund = async (
     "DHTF",
     fees.performance,
     fees.management,
+    0, // entry fee
+    0, // exit fee
     supportedAssets,
   );
 

@@ -24,35 +24,23 @@ contract PancakeMasterChefV3Guard is IERC721VerifyingGuard, PancakeCLBaseContrac
 
   /// @notice Transaction guard for Pancake CL Staking contract
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param poolManagerLogicAddress Pool address
+  /// @param poolManagerLogic address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address poolManagerLogicAddress,
+    address poolManagerLogic,
     address to,
     bytes memory data
-  )
-    public
-    view
-    override
-    returns (
-      uint16 txType, // transaction type
-      bool // isPublic
-    )
-  {
+  ) public view override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
     bytes memory params = getParams(data);
-    IPancakeMasterChefV3 masterChef = IPancakeMasterChefV3(to);
-
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(poolManagerLogicAddress);
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogicAddress);
-    address pool = poolManagerLogic.poolLogic();
-    require(msg.sender == pool, "not pool logic");
-    IPancakeNonfungiblePositionManager nonfungiblePositionManager = masterChef.nonfungiblePositionManager();
+    address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
+    IPancakeNonfungiblePositionManager nonfungiblePositionManager = IPancakeMasterChefV3(to)
+      .nonfungiblePositionManager();
 
     require(
-      poolManagerLogicAssets.isSupportedAsset(address(nonfungiblePositionManager)),
+      IHasSupportedAsset(poolManagerLogic).isSupportedAsset(address(nonfungiblePositionManager)),
       "pancake CL asset not enabled"
     );
 
@@ -68,8 +56,8 @@ contract PancakeMasterChefV3Guard is IERC721VerifyingGuard, PancakeCLBaseContrac
       require(collectParams.amount0Max == type(uint128).max, "amount0Max is not max");
       require(collectParams.amount1Max == type(uint128).max, "amount1Max is not max");
       require(isValidOwnedTokenId(pool, collectParams.tokenId), "position is not in track");
-      require(poolManagerLogicAssets.isSupportedAsset(token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token1), "unsupported asset: tokenB");
       require(collectParams.recipient == pool, "invalid recipient");
       txType = uint16(TransactionType.PancakeCLCollect);
     } else if (method == IPancakeMasterChefV3.harvest.selector) {
@@ -116,7 +104,7 @@ contract PancakeMasterChefV3Guard is IERC721VerifyingGuard, PancakeCLBaseContrac
           _validateDecreaseLiquidityTx(pool, getParams(multicallParams[i]));
           txType = uint16(TransactionType.PancakeCLDecreaseLiquidity);
         } else {
-          (txType, ) = txGuard(poolManagerLogicAddress, to, multicallParams[i]);
+          (txType, ) = txGuard(poolManagerLogic, to, multicallParams[i]);
         }
         require(txType > 0, "invalid transaction");
       }
@@ -155,14 +143,12 @@ contract PancakeMasterChefV3Guard is IERC721VerifyingGuard, PancakeCLBaseContrac
   /// @param poolManagerLogic Pool manager logic address
   /// @param to PancakeMasterChefV3 address
   /// @param data Transaction data
-  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public virtual override {
+  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public override {
     _afterTxGuardHandle(poolManagerLogic, to, data);
   }
 
   function _afterTxGuardHandle(address poolManagerLogic, address to, bytes memory data) internal returns (bool isBurn) {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-
+    address poolLogic = _accessControl(poolManagerLogic);
     bytes4 method = getMethod(data);
 
     if (method == IPancakeNonfungiblePositionManager.burn.selector) {

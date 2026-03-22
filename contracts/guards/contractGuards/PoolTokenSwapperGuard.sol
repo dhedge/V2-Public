@@ -7,7 +7,6 @@ import {IGuard} from "../../interfaces/guards/IGuard.sol";
 import {ITransactionTypes} from "../../interfaces/ITransactionTypes.sol";
 import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {TxDataUtils} from "../../utils/TxDataUtils.sol";
-import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {PoolTokenSwapper} from "../../swappers/poolTokenSwapper/PoolTokenSwapper.sol";
 import {SlippageAccumulator, SlippageAccumulatorUser} from "../../utils/SlippageAccumulatorUser.sol";
 
@@ -26,9 +25,7 @@ contract PoolTokenSwapperGuard is TxDataUtils, IGuard, ITransactionTypes, Slippa
     address,
     bytes calldata _data
   ) external override returns (uint16 txType, bool isPublic) {
-    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
-
-    require(msg.sender == poolLogic, "not pool logic");
+    address poolLogic = _accessControl(_poolManagerLogic);
 
     bytes4 method = getMethod(_data);
 

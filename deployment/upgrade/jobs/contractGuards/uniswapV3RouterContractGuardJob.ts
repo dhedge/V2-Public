@@ -19,7 +19,7 @@ export const uniswapV3RouterContractGuardJob: IJob<void> = async (
   const Governance = await hre.artifacts.readArtifact("Governance");
   const governanceABI = new ethers.utils.Interface(Governance.abi);
 
-  console.log("Will deploy uniswapv3routerguard");
+  console.log("Will deploy UniswapV3RouterGuard");
   if (config.execute) {
     const UniswapV3RouterGuard = await ethers.getContractFactory("UniswapV3RouterGuard");
     const slippageaccumulatorAddress = versions[config.oldTag].contracts.SlippageAccumulator;
@@ -47,7 +47,7 @@ export const uniswapV3RouterContractGuardJob: IJob<void> = async (
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
       setContractGuardABI,
-      "setContractGuard for uniswapV3Router",
+      "setContractGuard for UniswapV3Router",
       config,
       addresses,
     );

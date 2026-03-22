@@ -113,8 +113,8 @@ contract PoolFactoryV24 is
   mapping(address => bool) public isPool;
 
   uint256 private maximumPerformanceFeeNumerator;
-  // solhint-disable-next-line var-name-mixedcase
-  uint256 private _MANAGER_FEE_DENOMINATOR;
+
+  uint256 public override feeDenominator;
 
   uint256 internal _exitCooldown;
 
@@ -219,7 +219,7 @@ contract PoolFactoryV24 is
       _manager,
       block.timestamp,
       _performanceFeeNumerator,
-      _MANAGER_FEE_DENOMINATOR
+      feeDenominator
     );
   }
 
@@ -291,13 +291,13 @@ contract PoolFactoryV24 is
   /// @return The maximum manager fee numerator
   /// @return The maximum manager fee denominator
   function getMaximumManagerFee() external view override returns (uint256, uint256) {
-    return (maximumPerformanceFeeNumerator, _MANAGER_FEE_DENOMINATOR);
+    return (maximumPerformanceFeeNumerator, feeDenominator);
   }
 
   /// @notice Set the maximum manager fee
   /// @param numerator The numerator of the maximum manager fee
   function setMaximumManagerFee(uint256 numerator) external onlyOwner {
-    _setMaximumManagerFee(numerator, _MANAGER_FEE_DENOMINATOR);
+    _setMaximumManagerFee(numerator, feeDenominator);
   }
 
   /// @notice Set the maximum manager fee internal call
@@ -307,7 +307,7 @@ contract PoolFactoryV24 is
     require(numerator <= denominator, "invalid fraction");
 
     maximumPerformanceFeeNumerator = numerator;
-    _MANAGER_FEE_DENOMINATOR = denominator;
+    feeDenominator = denominator;
 
     emit SetMaximumManagerFee(numerator, denominator);
   }

@@ -354,7 +354,7 @@ export const DhedgeEasySwapperTests = (
             assets.usdc,
             depositAmount,
           ),
-        ).to.be.revertedWith("can withdraw soon");
+        ).to.be.revertedWith("dh11");
       });
     });
 

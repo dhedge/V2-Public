@@ -23,7 +23,19 @@ export const gmxPerpMarketAssetGuardJob: IJob<void> = async (
     const Governance = await hre.artifacts.readArtifact("Governance");
     const governanceABI = new ethers.utils.Interface(Governance.abi);
 
-    const GmxClaimableCollateralTrackerLib = await ethers.getContractFactory("GmxClaimableCollateralTrackerLib");
+    const GmxHelperLib = await ethers.getContractFactory("GmxHelperLib");
+    const gmxHelperLib = await GmxHelperLib.deploy();
+    await gmxHelperLib.deployed();
+    console.log("GmxHelperLib deployed at:", gmxHelperLib.address);
+    versions[config.newTag].contracts.GmxHelperLib = gmxHelperLib.address;
+
+    await tryVerify(hre, gmxHelperLib.address, "contracts/utils/gmx/GmxHelperLib.sol:GmxHelperLib", []);
+
+    const GmxClaimableCollateralTrackerLib = await ethers.getContractFactory("GmxClaimableCollateralTrackerLib", {
+      libraries: {
+        GmxHelperLib: gmxHelperLib.address,
+      },
+    });
     const gmxClaimableCollateralTrackerLib = await GmxClaimableCollateralTrackerLib.deploy();
     await gmxClaimableCollateralTrackerLib.deployed();
     const gmxClaimableCollateralTrackerLibAddress = gmxClaimableCollateralTrackerLib.address;
@@ -39,6 +51,7 @@ export const gmxPerpMarketAssetGuardJob: IJob<void> = async (
     const GmxPerpMarketAssetGuard = await ethers.getContractFactory("GmxPerpMarketAssetGuard", {
       libraries: {
         GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLibAddress,
+        GmxHelperLib: gmxHelperLib.address,
       },
     });
 

@@ -15,10 +15,11 @@ import {AddressLib} from "../../utils/oneInch/libraries/AddressLib.sol";
 import {ProtocolLib} from "../../utils/oneInch/libraries/ProtocolLib.sol";
 import {SlippageAccumulator, SlippageAccumulatorUser} from "../../utils/SlippageAccumulatorUser.sol";
 import {TxDataUtils} from "../../utils/TxDataUtils.sol";
+import {SourceAssetCheckGuard} from "./SourceAssetCheckGuard.sol";
 
 /// @notice Contract guard contract for 1inch AggregationRouterV6
 /// @dev As this contract inherits `SlippageAccumulatorUser`, it also inherits the `ITxTrackingGuard` interface.
-contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUser {
+contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUser, SourceAssetCheckGuard {
   using AddressLib for uint256;
   using ProtocolLib for uint256;
 
@@ -27,8 +28,6 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
   IUniswapV3Factory public immutable uniswapV3Factory;
 
   address public immutable quickswapV2Factory;
-
-  mapping(address => mapping(address => bool)) internal _beforeSwapSrcAssetCheck; // poolLogic -> srcAsset -> bool
 
   constructor(
     address _slippageAccumulator,
@@ -54,10 +53,7 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
     address /* _to */,
     bytes memory _data
   ) external override returns (uint16 txType, bool) {
-    address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
-
-    require(msg.sender == poolLogic, "not pool logic");
-
+    address poolLogic = _accessControl(_poolManagerLogic);
     bytes4 method = getMethod(_data);
     bytes memory params = getParams(_data);
 
@@ -79,9 +75,7 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
         _poolManagerLogic
       );
 
-      if (IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(description.srcToken)) {
-        _beforeSwapSrcAssetCheck[poolLogic][description.srcToken] = true;
-      }
+      _setSourceAsset(poolLogic, _poolManagerLogic, description.srcToken);
     } else if (method == IAggregationRouterV6.unoswap.selector) {
       (address srcAsset, uint256[] memory pools) = _decodeUnoswap(params);
 
@@ -104,39 +98,38 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
     bytes4 method = getMethod(_data);
     bytes memory params = getParams(_data);
 
+    address srcToken;
     address dstToken;
+    uint256[] memory pools;
 
     if (method == IAggregationRouterV6.swap.selector) {
       (, IAggregationRouterV6.SwapDescription memory description) = abi.decode(
         params,
         (address, IAggregationRouterV6.SwapDescription)
       );
+      srcToken = description.srcToken;
       dstToken = description.dstToken;
-
-      if (_beforeSwapSrcAssetCheck[poolLogic][description.srcToken]) {
-        require(
-          IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(description.srcToken),
-          "unsupported source asset"
-        );
-
-        _beforeSwapSrcAssetCheck[poolLogic][description.srcToken] = false;
-      }
     } else if (method == IAggregationRouterV6.unoswap.selector) {
-      (address srcAsset, uint256[] memory pools) = _decodeUnoswap(params);
+      (srcToken, pools) = _decodeUnoswap(params);
 
-      dstToken = _retreiveDstToken(srcAsset, pools);
+      dstToken = _retreiveDstToken(srcToken, pools);
     } else if (method == IAggregationRouterV6.unoswap2.selector) {
-      (address srcAsset, uint256[] memory pools) = _decodeUnoswap2(params);
+      (srcToken, pools) = _decodeUnoswap2(params);
 
-      dstToken = _retreiveDstToken(srcAsset, pools);
+      dstToken = _retreiveDstToken(srcToken, pools);
     } else if (method == IAggregationRouterV6.unoswap3.selector) {
-      (address srcAsset, uint256[] memory pools) = _decodeUnoswap3(params);
+      (srcToken, pools) = _decodeUnoswap3(params);
 
-      dstToken = _retreiveDstToken(srcAsset, pools);
+      dstToken = _retreiveDstToken(srcToken, pools);
     }
 
-    if (dstToken != address(0))
+    if (srcToken != address(0)) {
+      _checkSourceAsset(poolLogic, _poolManagerLogic, srcToken);
+    }
+
+    if (dstToken != address(0)) {
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(dstToken), "unsupported destination asset");
+    }
 
     SlippageAccumulatorUser.afterTxGuard(_poolManagerLogic, _to, _data);
   }
@@ -155,15 +148,26 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
     txType = uint16(TransactionType.Exchange);
   }
 
+  /// @notice Retrieves the destination token by traversing the pool path, validating direction at each hop.
+  /// @dev The direction bit (bit 247) determines swap direction:
+  ///      - If set (zeroForOne=true): swaps token0 → token1, so current token must be token0
+  ///      - If not set (zeroForOne=false): swaps token1 → token0, so current token must be token1
+  ///      This prevents attacks where srcToken parameter lies about what's being swapped.
   function _retreiveDstToken(address _srcToken, uint256[] memory _pools) internal view returns (address dstToken) {
     dstToken = _srcToken;
     for (uint256 i; i < _pools.length; ++i) {
       IUniswapV3Pool pool = IUniswapV3Pool(_pools[i].get());
       address token0 = pool.token0();
       address token1 = pool.token1();
+      // Bit 247 indicates zeroForOne direction
+      bool zeroForOne = (_pools[i] >> 247) & 1 == 1;
       if (dstToken == token0) {
+        // Swapping token0 → token1, zeroForOne should be true
+        require(zeroForOne, "direction mismatch");
         dstToken = token1;
       } else if (dstToken == token1) {
+        // Swapping token1 → token0, zeroForOne should be false
+        require(!zeroForOne, "direction mismatch");
         dstToken = token0;
       } else {
         revert("invalid path");
@@ -174,6 +178,7 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
   function _checkProtocolsSupported(uint256[] memory _pools) internal view {
     for (uint256 i; i < _pools.length; ++i) {
       require(!_pools[i].shouldUnwrapWeth(), "WETH unwrap not supported");
+      require(!_pools[i].usePermit2(), "permit2 not supported");
 
       ProtocolLib.Protocol protocol = _pools[i].protocol();
 
@@ -243,6 +248,8 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
     _checkProtocolsSupported(_pools);
 
     address dstAsset = _retreiveDstToken(_srcAsset, _pools);
+
+    _setSourceAsset(_poolLogic, _poolManagerLogic, _srcAsset);
 
     txType = _verifySwap(
       SlippageAccumulator.SwapData({

@@ -233,11 +233,37 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "referralManager",
+        "type": "address"
+      }
+    ],
+    "name": "ReferralManagerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "assetHandler",
         "type": "address"
       }
     ],
     "name": "SetAssetHandler",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "dataValidator",
+        "type": "address"
+      }
+    ],
+    "name": "SetDataValidator",
     "type": "event"
   },
   {
@@ -317,6 +343,19 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "valueManipulationCheck",
+        "type": "address"
+      }
+    ],
+    "name": "ValueManipulationCheckSet",
+    "type": "event"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -380,6 +419,16 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "_entryFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_exitFeeNum",
+        "type": "uint256"
+      },
+      {
         "components": [
           {
             "internalType": "address",
@@ -401,7 +450,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "fund",
+        "name": "poolLogic",
         "type": "address"
       }
     ],
@@ -430,6 +479,19 @@
   {
     "inputs": [],
     "name": "daoAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "dataValidator",
     "outputs": [
       {
         "internalType": "address",
@@ -498,6 +560,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "feeDenominator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -541,7 +616,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "price",
+        "name": "",
         "type": "uint256"
       }
     ],
@@ -560,7 +635,7 @@
     "outputs": [
       {
         "internalType": "uint16",
-        "name": "assetType",
+        "name": "",
         "type": "uint16"
       }
     ],
@@ -973,6 +1048,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "referralManager",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -1045,6 +1133,19 @@
       }
     ],
     "name": "setDaoFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dataValidator",
+        "type": "address"
+      }
+    ],
+    "name": "setDataValidator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1194,6 +1295,32 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_referralManager",
+        "type": "address"
+      }
+    ],
+    "name": "setReferralManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_valueManipulationCheck",
+        "type": "address"
+      }
+    ],
+    "name": "setValueManipulationCheck",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -1227,6 +1354,19 @@
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "valueManipulationCheck",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

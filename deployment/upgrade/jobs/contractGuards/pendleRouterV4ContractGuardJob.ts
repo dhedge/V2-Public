@@ -22,13 +22,14 @@ export const pendleRouterV4ContractGuardJob: IJob<void> = async (
 
   if (config.execute) {
     const slippageAccumulatorAddress = versions[config.oldTag].contracts.SlippageAccumulator;
+    const poolFactoryAddress = versions[config.oldTag].contracts.PoolFactoryProxy;
 
-    if (!slippageAccumulatorAddress) {
+    if (!slippageAccumulatorAddress || !poolFactoryAddress) {
       return console.warn("SlippageAccumulator could not be found: skipping.");
     }
 
     const PendleRouterV4ContractGuard = await ethers.getContractFactory("PendleRouterV4ContractGuard");
-    const args: [Address] = [slippageAccumulatorAddress];
+    const args: [Address, Address] = [slippageAccumulatorAddress, poolFactoryAddress];
     const pendleRouterV4ContractGuard = await PendleRouterV4ContractGuard.deploy(...args);
     await pendleRouterV4ContractGuard.deployed();
     const pendleRouterV4ContractGuardAddress = pendleRouterV4ContractGuard.address;

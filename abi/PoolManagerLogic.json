@@ -172,11 +172,49 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "maxSupplyCap",
+        "type": "uint256"
+      }
+    ],
+    "name": "MaxSupplyCapSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "minDepositUSD",
         "type": "uint256"
       }
     ],
     "name": "MinDepositUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "fundAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "manager",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "poolFeeShareNumerator",
+        "type": "uint256"
+      }
+    ],
+    "name": "PoolFeeShareNumeratorUpdated",
     "type": "event"
   },
   {
@@ -196,6 +234,56 @@
       }
     ],
     "name": "PoolLogicSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "fundAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "manager",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "disabled",
+        "type": "bool"
+      }
+    ],
+    "name": "TraderAssetChangeDisabledUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "fundAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "manager",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "granted",
+        "type": "bool"
+      }
+    ],
+    "name": "TraderPrivacyChangePermissionUpdated",
     "type": "event"
   },
   {
@@ -526,6 +614,52 @@
   },
   {
     "inputs": [],
+    "name": "getEntryFeeInfo",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getExitFeeInfo",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getFee",
     "outputs": [
       {
@@ -686,6 +820,19 @@
   },
   {
     "inputs": [],
+    "name": "getReferralShare",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "shareNumerator",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getSupportedAssets",
     "outputs": [
       {
@@ -739,6 +886,16 @@
       {
         "internalType": "uint256",
         "name": "_managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_entryFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_exitFeeNumerator",
         "type": "uint256"
       },
       {
@@ -881,6 +1038,19 @@
   },
   {
     "inputs": [],
+    "name": "maxSupplyCap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "minDepositUSD",
     "outputs": [
       {
@@ -919,8 +1089,49 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_performanceFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_managerFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_entryFeeNumerator",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_exitFeeNumerator",
+        "type": "uint256"
+      }
+    ],
+    "name": "ownerSetFeeNumerator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "performanceFeeNumerator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "poolFeeShareNumerator",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1016,6 +1227,19 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "_maxSupplyCapD18",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMaxSupplyCap",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "_minDepositUSD",
         "type": "uint256"
       }
@@ -1034,6 +1258,19 @@
       }
     ],
     "name": "setNftMembershipCollectionAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_poolFeeShareNumerator",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPoolFeeShareNumerator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1060,6 +1297,19 @@
   {
     "inputs": [
       {
+        "internalType": "bool",
+        "name": "_privatePool",
+        "type": "bool"
+      }
+    ],
+    "name": "setPoolPrivate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_newTrader",
         "type": "address"
@@ -1079,6 +1329,19 @@
       }
     ],
     "name": "setTraderAssetChangeDisabled",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_privacyChangeEnabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setTraderPrivacyChangeEnabled",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1136,6 +1399,19 @@
   {
     "inputs": [],
     "name": "traderAssetChangeDisabled",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "traderPrivacyChangeEnabled",
     "outputs": [
       {
         "internalType": "bool",

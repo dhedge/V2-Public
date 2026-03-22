@@ -3,17 +3,11 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {Surl} from "../../utils/foundry/scripts/Surl.sol";
-import {SwapdataCacheManager} from "./SwapdataCacheManager.sol";
 import {console} from "forge-std/Test.sol";
 
+import {SwapdataCacheManager} from "test/integration/ffi/common/helpers/SwapdataCacheManager.sol";
+
 abstract contract OdosAPIHelper is SwapdataCacheManager {
-  using Surl for string;
-
-  // APIs related constants
-  uint8 public constant RETRIES = 10;
-  uint16 public constant DEFAULT_HALT_MILLISECONDS = 2000;
-
   struct OdosFunctionStruct {
     address user;
     address srcToken;
@@ -24,35 +18,6 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
 
   function __OdosAPIHelper_init(bool useCachedSwapData_) public {
     __SwapdataCacheManager_init(useCachedSwapData_);
-  }
-
-  function _fetchAndRetry(
-    string memory url,
-    string[] memory headers
-  ) internal returns (uint256 status, bytes memory data) {
-    for (uint8 i; i < RETRIES; i++) {
-      (status, data) = url.get(headers);
-      if (status != 200) {
-        vm.sleep(DEFAULT_HALT_MILLISECONDS * i); // Halts execution for 2 seconds the first time and increases by 2 seconds each time for `i` retries.
-      } else {
-        break;
-      }
-    }
-  }
-
-  function _fetchAndRetry(
-    string memory url,
-    string[] memory headers,
-    string memory body
-  ) internal returns (uint256 status, bytes memory data) {
-    for (uint8 i; i < RETRIES; i++) {
-      (status, data) = url.post(headers, body);
-      if (status != 200) {
-        vm.sleep(DEFAULT_HALT_MILLISECONDS * i); // Halts execution for 2 seconds the first time and increases by 2 seconds each time for `i` retries.
-      } else {
-        break;
-      }
-    }
   }
 
   function buildQuoteBody(
@@ -120,20 +85,19 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
 
   function getDataFromOdos(
     OdosFunctionStruct memory odosFunctionStruct,
-    address user,
-    uint8 slippage,
     uint256 chainId,
-    bool compact
+    bool compact,
+    string memory version
   ) public returns (uint256 destAmount_, bytes memory calldata_) {
     {
       if (useCachedSwapData) {
         bool exists;
-        (exists, destAmount_, calldata_) = checkAndGetSwapDatas(
+        (exists, destAmount_, calldata_) = _checkAndGetSwapDatas(
           odosFunctionStruct.srcToken,
           odosFunctionStruct.destToken,
           odosFunctionStruct.srcAmount,
-          user,
-          slippage,
+          odosFunctionStruct.user,
+          odosFunctionStruct.slippage,
           compact
         );
 
@@ -149,8 +113,7 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
       headers[0] = "accept: application/json";
       headers[1] = "content-type: application/json";
 
-      string memory url = "https://api.odos.xyz/sor/quote/v2";
-      (uint256 status, bytes memory data) = _fetchAndRetry(url, headers, quoteBody);
+      (uint256 status, bytes memory data) = _postAndRetry(_getQuoteEndpoint(version), headers, quoteBody);
 
       if (status != 200) {
         console.log("Status: ", uint256(status));
@@ -164,8 +127,7 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
 
       string memory transactionBody = buildTransactionBody(string(data), odosFunctionStruct);
 
-      url = "https://api.odos.xyz/sor/assemble";
-      (status, data) = _fetchAndRetry(url, headers, transactionBody);
+      (status, data) = _postAndRetry("https://api.odos.xyz/sor/assemble", headers, transactionBody);
 
       if (status != 200) {
         console.log("Status: ", uint256(status));
@@ -177,15 +139,25 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
       calldata_ = vm.parseJsonBytes(string(data), ".transaction.data");
     }
 
-    appendNewObj(
+    _appendNewObj(
       odosFunctionStruct.srcToken,
       odosFunctionStruct.destToken,
       odosFunctionStruct.srcAmount,
-      slippage,
+      odosFunctionStruct.slippage,
       destAmount_,
-      user,
+      odosFunctionStruct.user,
       compact,
       calldata_
     );
+  }
+
+  function _getQuoteEndpoint(string memory version) internal pure returns (string memory quoteEndpoint) {
+    if (keccak256(abi.encodePacked((version))) == keccak256(abi.encodePacked(("v2")))) {
+      quoteEndpoint = "https://api.odos.xyz/sor/quote/v2";
+    } else if (keccak256(abi.encodePacked((version))) == keccak256(abi.encodePacked(("v3")))) {
+      quoteEndpoint = "https://api.odos.xyz/sor/quote/v3";
+    } else {
+      revert("Unknown Odos API version");
+    }
   }
 }

@@ -15,10 +15,25 @@ export const poolLogicJob: IJob<void> = async (
 
   if (config.execute) {
     if (versions[config.oldTag].contracts.PoolLogicProxy) {
-      console.log("Will upgrade poollogic");
+      console.log("Will upgrade PoolLogic");
+
+      const PoolLogicLib = await ethers.getContractFactory("PoolLogicLib");
+      const poolLogicLib = await PoolLogicLib.deploy();
+      await poolLogicLib.deployed();
+      console.log("PoolLogicLib deployed at:", poolLogicLib.address);
+      versions[config.newTag].contracts.PoolLogicLib = poolLogicLib.address;
+
+      await tryVerify(hre, poolLogicLib.address, "contracts/utils/PoolLogicLib.sol:PoolLogicLib", []);
+
       const oldPooLogicProxy = versions[config.oldTag].contracts.PoolLogicProxy;
-      const PoolLogic = await ethers.getContractFactory("PoolLogic");
-      const poolLogic = await upgrades.prepareUpgrade(oldPooLogicProxy, PoolLogic);
+      const PoolLogic = await ethers.getContractFactory("PoolLogic", {
+        libraries: {
+          PoolLogicLib: poolLogicLib.address,
+        },
+      });
+      const poolLogic = await upgrades.prepareUpgrade(oldPooLogicProxy, PoolLogic, {
+        unsafeAllow: ["external-library-linking"],
+      });
       console.log("poolLogic deployed to: ", poolLogic);
       versions[config.newTag].contracts.PoolLogic = poolLogic;
 
@@ -37,10 +52,25 @@ export const poolLogicJob: IJob<void> = async (
         addresses,
       );
     } else {
-      console.log("Will deploy poollogic");
+      console.log("Will deploy PoolLogic");
 
-      const PoolLogic = await ethers.getContractFactory("PoolLogic");
-      const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [], { initializer: false });
+      const PoolLogicLib = await ethers.getContractFactory("PoolLogicLib");
+      const poolLogicLib = await PoolLogicLib.deploy();
+      await poolLogicLib.deployed();
+      console.log("PoolLogicLib deployed at:", poolLogicLib.address);
+      versions[config.newTag].contracts.PoolLogicLib = poolLogicLib.address;
+
+      await tryVerify(hre, poolLogicLib.address, "contracts/utils/PoolLogicLib.sol:PoolLogicLib", []);
+
+      const PoolLogic = await ethers.getContractFactory("PoolLogic", {
+        libraries: {
+          PoolLogicLib: poolLogicLib.address,
+        },
+      });
+      const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [], {
+        initializer: false,
+        unsafeAllow: ["external-library-linking"],
+      });
       await poolLogicProxy.deployed();
       console.log("PoolLogicProxy deployed at ", poolLogicProxy.address);
 

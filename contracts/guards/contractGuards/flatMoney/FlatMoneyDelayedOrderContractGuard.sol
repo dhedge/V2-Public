@@ -16,7 +16,7 @@ contract FlatMoneyDelayedOrderContractGuard is FlatMoneyBasisContractGuard, IERC
   constructor(
     address _nftTracker,
     PoolSetting[] memory _whitelisteddHedgePools
-  ) FlatMoneyBasisContractGuard(_nftTracker, keccak256("FLAT_MONEY_LEVERAGE_NFT"), 3, _whitelisteddHedgePools, 7e18) {}
+  ) FlatMoneyBasisContractGuard(_nftTracker, keccak256("FLAT_MONEY_LEVERAGE_NFT"), 1, _whitelisteddHedgePools, 7e18) {}
 
   /// @notice Transaction guard for FlatMoney's DelayedOrder contract.
   /// @param _poolManagerLogic Address of the PoolManagerLogic contract

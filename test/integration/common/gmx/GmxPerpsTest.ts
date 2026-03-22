@@ -48,7 +48,7 @@ export const launchGmxPerpsTests = (testParams: IGmxTestsParams) => {
   // let whitelistedManagerLogic: PoolManagerLogic;
 
   const iERC20 = new ethers.utils.Interface(IERC20__factory.abi);
-  const iGmxExchangeRouter = new ethers.utils.Interface(IGmxExchangeRouter__factory.abi);
+  const iGmxExchangeRouter = IGmxExchangeRouter__factory.createInterface();
 
   const DUMMY_ADDRESS = ethers.Wallet.createRandom().address;
 
@@ -174,6 +174,7 @@ export const launchGmxPerpsTests = (testParams: IGmxTestsParams) => {
       shouldUnwrapNativeToken: false,
       autoCancel: false, // Set true to enable auto-cancellation
       referralCode: ethers.utils.formatBytes32String(""), // Set a referral code if any
+      dataList: [],
     };
 
     // Encode the function data
@@ -273,7 +274,7 @@ export const launchGmxPerpsTests = (testParams: IGmxTestsParams) => {
       await expect(openOrder({ orderVault: DUMMY_ADDRESS })).to.revertedWith("invalid receiver");
     });
     it("Can't only send tokens without order", async () => {
-      await expect(openOrder({ onlySendTokens: true })).to.revertedWith("invalid transaction");
+      await expect(openOrder({ onlySendTokens: true })).to.revertedWith("dh23");
     });
     it("Can open order", async () => {
       const totalFundValueBefore = await whitelistedManagerLogic.totalFundValue();

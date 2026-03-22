@@ -31,7 +31,9 @@ import {IHasSupportedAsset} from "./interfaces/IHasSupportedAsset.sol";
 import {IHasOwnable} from "./interfaces/IHasOwnable.sol";
 import {IAssetGuard} from "./interfaces/guards/IAssetGuard.sol";
 import {IAddAssetCheckGuard} from "./interfaces/guards/IAddAssetCheckGuard.sol";
+import {IDataValidator} from "./interfaces/IDataValidator.sol";
 import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
+import {IReferralManager} from "./interfaces/IReferralManager.sol";
 import {Managed} from "./Managed.sol";
 
 /// @notice Logic implmentation for pool management
@@ -66,6 +68,14 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
   event MinDepositUpdated(uint256 minDepositUSD);
 
+  event TraderAssetChangeDisabledUpdated(address fundAddress, address manager, bool disabled);
+
+  event PoolFeeShareNumeratorUpdated(address fundAddress, address manager, uint256 poolFeeShareNumerator);
+
+  event TraderPrivacyChangePermissionUpdated(address fundAddress, address manager, bool granted);
+
+  event MaxSupplyCapSet(uint256 maxSupplyCap);
+
   address public override factory;
   address public override poolLogic;
 
@@ -94,6 +104,18 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   // By default, traders can change supported assets.
   bool public traderAssetChangeDisabled;
 
+  uint256 public poolFeeShareNumerator;
+
+  // By default, traders don't have permission to change privacy settings.
+  bool public traderPrivacyChangeEnabled;
+
+  uint256 public override maxSupplyCap;
+
+  modifier onlyOwner() {
+    _isCallerOwner();
+    _;
+  }
+
   /// @notice initialize the pool manager
   /// @param _factory address of the factory
   /// @param _manager address of the manager
@@ -109,6 +131,8 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     address _poolLogic,
     uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
+    uint256 _entryFeeNumerator,
+    uint256 _exitFeeNumerator,
     Asset[] calldata _supportedAssets
   ) external initializer {
     require(_factory != address(0), "Invalid factory");
@@ -118,7 +142,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     factory = _factory;
     poolLogic = _poolLogic;
-    _setFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator, 0, 0); // By default entry and exit fees will be set to 0%.
+    _setFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator, _entryFeeNumerator, _exitFeeNumerator);
     _changeAssets(_supportedAssets, new address[](0));
   }
 
@@ -160,6 +184,17 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     _changeAssets(_addAssets, _removeAssets);
     _emitFactoryEvent();
+  }
+
+  /// @notice Set the pool privacy
+  /// @param _privatePool true if the pool is private, false otherwise
+  function setPoolPrivate(bool _privatePool) external {
+    require(
+      (msg.sender == trader && traderPrivacyChangeEnabled) || msg.sender == manager,
+      "only manager or trader enabled"
+    );
+
+    IPoolLogic(poolLogic).setPoolPrivate(_privatePool);
   }
 
   /// @notice Change assets of the pool internal call
@@ -229,6 +264,13 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
       // should be able to remove any deprecated assets
       require(assetBalance(_asset) == 0, "cannot remove non-empty asset");
       IAssetGuard(guard).removeAssetCheck(poolLogic, _asset);
+    }
+
+    // Check if this asset is involved in any active orders (e.g., limit orders)
+    // This prevents removal of tokens that are part of pending orders
+    address dataValidator = IPoolFactory(factory).dataValidator();
+    if (dataValidator != address(0)) {
+      require(!IDataValidator(dataValidator).hasActiveOrderWithToken(poolLogic, _asset), "asset in active order");
     }
 
     uint256 index = assetPosition[_asset].sub(1); // adjusting the index because the map stores 1-based
@@ -350,8 +392,21 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @return exitFeeNumerator numerator of the exit fee
   /// @return managerFeeDenominator denominator of the fees
   function getFee() external view override returns (uint256, uint256, uint256, uint256, uint256) {
-    (, , , , uint256 managerFeeDenominator) = IHasFeeInfo(factory).getMaximumFee();
-    return (performanceFeeNumerator, managerFeeNumerator, entryFeeNumerator, exitFeeNumerator, managerFeeDenominator);
+    return (
+      performanceFeeNumerator,
+      managerFeeNumerator,
+      entryFeeNumerator,
+      exitFeeNumerator,
+      IHasFeeInfo(factory).feeDenominator()
+    );
+  }
+
+  function getEntryFeeInfo() external view override returns (uint256, uint256, uint256) {
+    return (entryFeeNumerator, poolFeeShareNumerator, IHasFeeInfo(factory).feeDenominator());
+  }
+
+  function getExitFeeInfo() external view override returns (uint256, uint256, uint256) {
+    return (exitFeeNumerator, poolFeeShareNumerator, IHasFeeInfo(factory).feeDenominator());
   }
 
   /// @notice Get maximum manager fee
@@ -511,6 +566,28 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     announcedEntryFeeNumerator = 0;
     announcedExitFeeNumerator = 0;
     announcedFeeIncreaseTimestamp = 0;
+
+    _emitFactoryEvent();
+  }
+
+  /// @notice Owner can set fees directly without delay or restrictions
+  /// @dev Bypasses the normal fee increase announcement and delay mechanism
+  ///      Mints accrued manager fees before applying the new fee structure
+  ///      Can only be called by the factory owner
+  /// @param _performanceFeeNumerator The numerator of the performance fee
+  /// @param _managerFeeNumerator The numerator of the management fee
+  /// @param _entryFeeNumerator The numerator of the entry fee
+  /// @param _exitFeeNumerator The numerator of the exit fee
+  function ownerSetFeeNumerator(
+    uint256 _performanceFeeNumerator,
+    uint256 _managerFeeNumerator,
+    uint256 _entryFeeNumerator,
+    uint256 _exitFeeNumerator
+  ) external onlyOwner {
+    IPoolLogic(poolLogic).mintManagerFee();
+
+    _setFeeNumerator(_performanceFeeNumerator, _managerFeeNumerator, _entryFeeNumerator, _exitFeeNumerator);
+    _emitFactoryEvent();
   }
 
   /// @notice Set `traderAssetChangeDisabled` to `true` to disable trader asset change
@@ -518,6 +595,31 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param _disabled boolean value to set trader asset change disabled status
   function setTraderAssetChangeDisabled(bool _disabled) external onlyManager {
     traderAssetChangeDisabled = _disabled;
+
+    emit TraderAssetChangeDisabledUpdated(poolLogic, manager, _disabled);
+    _emitFactoryEvent();
+  }
+
+  /// @notice Set the numerator of the pool fee share
+  /// @dev Can only be called by the manager
+  /// @param _poolFeeShareNumerator numerator of the pool fee share
+  function setPoolFeeShareNumerator(uint256 _poolFeeShareNumerator) external onlyManager {
+    require(_poolFeeShareNumerator <= IHasFeeInfo(factory).feeDenominator(), "invalid numerator");
+
+    poolFeeShareNumerator = _poolFeeShareNumerator;
+
+    emit PoolFeeShareNumeratorUpdated(poolLogic, manager, _poolFeeShareNumerator);
+    _emitFactoryEvent();
+  }
+
+  /// @notice Set whether the trader can change pool privacy settings
+  /// @dev Can only be called by the manager
+  /// @param _privacyChangeEnabled boolean value to set trader privacy change permission
+  function setTraderPrivacyChangeEnabled(bool _privacyChangeEnabled) external onlyManager {
+    traderPrivacyChangeEnabled = _privacyChangeEnabled;
+
+    emit TraderPrivacyChangePermissionUpdated(poolLogic, manager, _privacyChangeEnabled);
+    _emitFactoryEvent();
   }
 
   /// @notice Get manager fees increase information
@@ -540,10 +642,7 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @dev Not required to be used under normal circumstances
   /// @param _poolLogic address of the new pool logic contract
   /// @return true if the pool logic was set successfully
-  function setPoolLogic(address _poolLogic) external override returns (bool) {
-    address owner = IHasOwnable(factory).owner();
-    require(msg.sender == owner, "only owner address allowed");
-
+  function setPoolLogic(address _poolLogic) external override onlyOwner returns (bool) {
     require(IPoolLogic(_poolLogic).poolManagerLogic() == address(this), "invalid pool logic");
 
     poolLogic = _poolLogic;
@@ -569,13 +668,24 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @notice Set minimum deposit amount in USD
   /// @param _minDepositUSD minimum deposit amount in USD
   function setMinDepositUSD(uint256 _minDepositUSD) external onlyManager {
-    _setMinDepositUSD(_minDepositUSD);
+    minDepositUSD = _minDepositUSD;
+
+    emit MinDepositUpdated(_minDepositUSD);
     _emitFactoryEvent();
   }
 
-  function _setMinDepositUSD(uint256 _minDepositUSD) internal {
-    minDepositUSD = _minDepositUSD;
-    emit MinDepositUpdated(_minDepositUSD);
+  /// @notice Set maximum supply cap
+  /// @dev Prevents lowering the cap below current supply for clarity to avoid scenarios when total supply exceeds the cap
+  /// @param _maxSupplyCapD18 maximum supply cap
+  function setMaxSupplyCap(uint256 _maxSupplyCapD18) external {
+    require(msg.sender == trader || msg.sender == manager, "only manager or trader");
+
+    require(_maxSupplyCapD18 == 0 || _maxSupplyCapD18 >= IPoolLogic(poolLogic).totalSupply(), "invalid supply cap");
+
+    maxSupplyCap = _maxSupplyCapD18;
+
+    emit MaxSupplyCapSet(_maxSupplyCapD18);
+    _emitFactoryEvent();
   }
 
   /// @notice Return boolean if the there is a nftMembership address set and the member owns one
@@ -593,10 +703,29 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
     return _isMemberAllowed(_member) || isNftMemberAllowed(_member);
   }
 
+  // ========== REFERRAL MANAGEMENT ==========
+
+  /// @notice Get the referral share for this pool
+  /// @dev Delegates to the ReferralManager singleton stored in PoolFactory.
+  ///      Returns 0 if no ReferralManager is configured or no share is set.
+  /// @return shareNumerator The portion of manager's entry fee to give to referrer
+  function getReferralShare() external view override returns (uint256 shareNumerator) {
+    address referralManager = IPoolFactory(factory).referralManager();
+    if (referralManager == address(0)) {
+      return 0;
+    }
+
+    shareNumerator = IReferralManager(referralManager).getReferralShare(poolLogic, manager);
+  }
+
   /// @notice Emits an event through the factory, so we can just listen to the factory offchain
   function _emitFactoryEvent() internal {
     IPoolFactory(factory).emitPoolManagerEvent();
   }
 
-  uint256[42] private __gap;
+  function _isCallerOwner() internal view {
+    require(msg.sender == IHasOwnable(factory).owner(), "only owner");
+  }
+
+  uint256[39] private __gap;
 }

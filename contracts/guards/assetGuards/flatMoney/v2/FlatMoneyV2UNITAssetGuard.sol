@@ -27,13 +27,16 @@ contract FlatMoneyV2UNITAssetGuard is FlatMoneyV2OrderHelperGuard, ERC20Guard, I
   /// @param _pool Vault address
   /// @param _asset UNIT asset address
   /// @return balance Balance of the UNIT asset in the vault
-  function getBalance(address _pool, address _asset) public view override returns (uint256 balance) {
+  function getBalance(address _pool, address _asset) public view virtual override returns (uint256 balance) {
     require(_hasNoBlockingOrder(_pool, _asset), "order in progress");
 
     return super.getBalance(_pool, _asset);
   }
 
-  function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _supportedAsset) external view override {
+  function addAssetCheck(
+    address _poolLogic,
+    IHasSupportedAsset.Asset calldata _supportedAsset
+  ) public view virtual override {
     address orderAnnouncementModule = IStableModule(_supportedAsset.asset).vault().moduleAddress(
       FlatcoinModuleKeys._ORDER_ANNOUNCEMENT_MODULE_KEY
     );

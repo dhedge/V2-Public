@@ -23,7 +23,7 @@ export const easySwapperV2ContractGuardJob: IJob<void> = async (
 
   if (config.execute) {
     const EasySwapperV2ContractGuard = await ethers.getContractFactory("EasySwapperV2ContractGuard");
-    const args: Parameters<typeof EasySwapperV2ContractGuard.deploy> = [slippageaccumulatorAddress, 200, 10_000]; // max 2% slippage allowed at a time
+    const args: Parameters<typeof EasySwapperV2ContractGuard.deploy> = [slippageaccumulatorAddress, 200]; // max 2% slippage allowed at a time
     const easySwapperV2ContractGuard = await EasySwapperV2ContractGuard.deploy(...args);
     await easySwapperV2ContractGuard.deployed();
     const easySwapperV2ContractGuardAddress = easySwapperV2ContractGuard.address;

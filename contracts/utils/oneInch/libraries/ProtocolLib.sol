@@ -17,6 +17,7 @@ library ProtocolLib {
 
   uint256 private constant _PROTOCOL_OFFSET = 253;
   uint256 private constant _WETH_UNWRAP_FLAG = 1 << 252;
+  uint256 private constant _USE_PERMIT2_FLAG = 1 << 250;
 
   function protocol(uint256 self) internal pure returns (Protocol) {
     // there is no need to mask because protocol is stored in the highest 3 bits
@@ -25,5 +26,9 @@ library ProtocolLib {
 
   function shouldUnwrapWeth(uint256 self) internal pure returns (bool) {
     return self.getFlag(_WETH_UNWRAP_FLAG);
+  }
+
+  function usePermit2(uint256 self) internal pure returns (bool) {
+    return self.getFlag(_USE_PERMIT2_FLAG);
   }
 }

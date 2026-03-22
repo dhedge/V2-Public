@@ -13,7 +13,7 @@ export const aaveV3LendingPoolAssetGuardJob: IJob<void> = async (
 ) => {
   const onchainSwapRouter = versions[config.oldTag].contracts.DhedgeSuperSwapper;
 
-  if (!addresses.aaveV3 || !addresses.flatMoney || !onchainSwapRouter || !addresses.pendle) {
+  if (!addresses.aaveV3 || !addresses.flatMoney || !onchainSwapRouter) {
     console.warn("Config missing.. skipping.");
     return;
   }
@@ -29,8 +29,8 @@ export const aaveV3LendingPoolAssetGuardJob: IJob<void> = async (
       addresses.aaveV3.aaveLendingPoolAddress,
       addresses.flatMoney.swapper,
       onchainSwapRouter,
-      addresses.pendle?.yieldContractFactory,
-      addresses.pendle?.staticRouter,
+      addresses.pendle?.yieldContractFactory ?? hre.ethers.constants.AddressZero,
+      addresses.pendle?.staticRouter ?? hre.ethers.constants.AddressZero,
       5, // 0.05% allowed mismatch
       10_000,
       10_000,

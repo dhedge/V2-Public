@@ -6,11 +6,13 @@ import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IPyth} from "../../interfaces/pyth/IPyth.sol";
 import {IGmxPrice} from "../../interfaces/gmx/IGmxPrice.sol";
+import {DhedgeMath} from "../DhedgeMath.sol";
 
 library PythPriceLib {
   using SafeMath for uint256;
   using SignedSafeMath for int256;
   using SignedSafeMath for int64;
+  using DhedgeMath for int256;
 
   uint256 internal constant DECIMALS = 8; // Pyth oracle price decimals
 
@@ -47,7 +49,7 @@ library PythPriceLib {
     IPyth.Price memory priceData = pythOracleContract.getPriceNoOlderThan(oracleData.priceId, oracleData.maxAge);
     // Check that Pyth price and confidence is a positive value
     require(
-      priceData.price > 0 && priceData.conf > 0 && abs(int256(priceData.expo)) == DECIMALS,
+      priceData.price > 0 && priceData.conf > 0 && int256(priceData.expo).abs() == DECIMALS,
       "Invalid Pyth oracle data"
     );
     // Check that Pyth price confidence meets minimum
@@ -59,11 +61,5 @@ library PythPriceLib {
     price = (uint256(priceData.price));
 
     confidence = uint256(priceData.conf);
-  }
-
-  /// @dev Returns the absolute unsigned value of a signed value.
-  function abs(int256 n) internal pure returns (uint256) {
-    // must be unchecked in order to support `n = type(int256).min`
-    return uint256(n >= 0 ? n : -n);
   }
 }

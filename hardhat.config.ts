@@ -35,7 +35,7 @@ export default {
     },
     ethereum: {
       chainId: 1,
-      url: process.env.ETHEREUM_URL || "https://eth-mainnet.g.alchemy.com/v2/",
+      url: process.env.ETHEREUM_URL_ALTERNATIVE || "https://eth-mainnet.g.alchemy.com/v2/",
       accounts: process.env.ETHEREUM_PRIVATE_KEY ? [process.env.ETHEREUM_PRIVATE_KEY] : [],
     },
     ovm: {
@@ -47,8 +47,6 @@ export default {
       chainId: 137,
       url: process.env.POLYGON_URL || "https://polygon-mainnet.g.alchemy.com/v2/",
       accounts: process.env.POLYGON_PRIVATE_KEY ? [process.env.POLYGON_PRIVATE_KEY] : [],
-      gasPrice: 400e9,
-      timeout: 600000,
     },
     arbitrum: {
       chainId: 42161,
@@ -59,6 +57,11 @@ export default {
       chainId: 8453,
       url: process.env.BASE_URL || "https://base-mainnet.g.alchemy.com/v2/",
       accounts: process.env.BASE_PRIVATE_KEY ? [process.env.BASE_PRIVATE_KEY] : [],
+    },
+    plasma: {
+      chainId: 9745,
+      url: process.env.PLASMA_URL || "https://plasma-mainnet.g.alchemy.com/v2/",
+      accounts: process.env.PLASMA_PRIVATE_KEY ? [process.env.PLASMA_PRIVATE_KEY] : [],
     },
   },
   solidity: {
@@ -99,6 +102,7 @@ export default {
               "*": ["storageLayout"],
             },
           },
+          evmVersion: "cancun",
           optimizer: {
             enabled: true,
             runs: 20,
@@ -122,7 +126,7 @@ export default {
     flat: true,
     only: [
       "PoolFactory",
-      "PoolLogic",
+      "contracts/PoolLogic",
       "PoolManagerLogic",
       "AssetHandler",
       "DynamicBonds",
@@ -132,14 +136,24 @@ export default {
       "Governance",
       "contracts/swappers/poolTokenSwapper/PoolTokenSwapper",
       "contracts/swappers/easySwapperV2/EasySwapperV2",
-      "PoolLimitOrderManager",
+      "contracts/limitOrders/PoolLimitOrderManager",
+      "TypedStructuredDataValidator",
     ],
     except: ["contracts/interfaces", "contracts/test", "contracts/v2.4.1", "contracts/stakingv2/interfaces"],
     spacing: 2,
   },
   etherscan: {
-    // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
     apiKey: process.env.ETHERSCAN_API_KEY,
+    customChains: [
+      {
+        network: "plasma",
+        chainId: 9745,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan/api",
+          browserURL: "https://plasmascan.to/",
+        },
+      },
+    ],
   },
   typechain: {
     outDir: "./types",

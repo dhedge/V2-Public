@@ -15,15 +15,19 @@ const validateAssetConfig = (assetConfig: TAssetConfig): assetConfig is IERC4626
   return true;
 };
 
-const deployERC4626PriceAggregatorJob = async (
+export const deployERC4626PriceAggregatorJob = async (
   hre: HardhatRuntimeEnvironment,
-  assetConfig: IERC4626PriceAggregatorConfig,
-) => {
+  assetAddress: Address,
+  dhedgeFactoryProxy: Address,
+): Promise<Address> => {
+  const factory = await hre.ethers.getContractAt("IPoolFactory", dhedgeFactoryProxy);
+  const assetHandler = await factory.getAssetHandler();
+
   const ERC4626PriceAggregator = await hre.ethers.getContractFactory("ERC4626PriceAggregator");
 
   console.log("Deploying ERC4626PriceAggregator oracle...");
 
-  const args: [Address, Address] = [assetConfig.assetAddress, assetConfig.specificOracleConfig.dhedgeFactoryProxy];
+  const args: [Address, Address] = [assetAddress, assetHandler];
 
   const erc4626PriceAggregator = await ERC4626PriceAggregator.deploy(...args);
   await erc4626PriceAggregator.deployed();
@@ -45,6 +49,10 @@ export const deployERC4626PriceAggregator = async (
     throw new Error(`${assetConfig.assetName} has not a valid config`);
   }
 
-  const address = await deployERC4626PriceAggregatorJob(hre, assetConfig);
+  const address = await deployERC4626PriceAggregatorJob(
+    hre,
+    assetConfig.assetAddress,
+    assetConfig.specificOracleConfig.dhedgeFactoryProxy,
+  );
   return address;
 };

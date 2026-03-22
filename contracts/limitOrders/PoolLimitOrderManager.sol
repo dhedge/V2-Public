@@ -128,6 +128,9 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
   /// @dev Mostly useful for fetching all the users to settle.
   EnumerableSet.AddressSet private usersToSettle;
 
+  /// @dev Mapping of user address to their limit order IDs for O(1) lookup.
+  mapping(address user => EnumerableSet.Bytes32Set orderIds) private userLimitOrderIds;
+
   ////////////////////////////////
   //          Modifiers         //
   ////////////////////////////////
@@ -178,6 +181,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
 
     limitOrders[newLimitOrderId] = limitOrderInfo_;
     limitOrderIds.add(newLimitOrderId);
+    userLimitOrderIds[msg.sender].add(newLimitOrderId);
 
     emit LimitOrderCreated(msg.sender, limitOrderInfo_.pool, newLimitOrderId);
   }
@@ -276,6 +280,27 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
     return usersToSettle.values();
   }
 
+  /// @notice Returns all limit order IDs for a specific user.
+  /// @param user_ The address of the user to get limit order IDs for.
+  /// @return orderIds_ The array of limit order IDs belonging to the user.
+  function getUserLimitOrderIds(address user_) external view returns (bytes32[] memory orderIds_) {
+    return userLimitOrderIds[user_].values();
+  }
+
+  /// @notice Check if a user has any open limit orders.
+  /// @param user_ The address of the user to check.
+  /// @return hasOpenLimitOrder_ True if the user has at least one open limit order, false otherwise.
+  function hasOpenLimitOrder(address user_) external view returns (bool hasOpenLimitOrder_) {
+    return userLimitOrderIds[user_].length() > 0;
+  }
+
+  /// @notice Check if a user has a settlement order.
+  /// @param user_ The address of the user to check.
+  /// @return hasSettlementOrder_ True if the user has a settlement order, false otherwise.
+  function hasSettlementOrder(address user_) external view returns (bool hasSettlementOrder_) {
+    return usersToSettle.contains(user_);
+  }
+
   ////////////////////////////////
   // Internal/Private Functions //
   ////////////////////////////////
@@ -303,6 +328,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
     } else {
       delete limitOrders[orderExecutionData_.orderId];
       limitOrderIds.remove(orderExecutionData_.orderId);
+      userLimitOrderIds[limitOrder.user].remove(orderExecutionData_.orderId);
 
       emit LimitOrderDeleted(limitOrder.user, limitOrder.pool, orderExecutionData_.orderId);
 
@@ -317,10 +343,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
     IPoolLogic.ComplexAsset[] calldata complexAssetsData_,
     uint256 amountToRedeem_
   ) internal {
-    uint256 currentPriceD18 = poolFactory.getAssetPrice(limitOrder_.pricingAsset);
-
-    if (currentPriceD18 > limitOrder_.stopLossPriceD18 && currentPriceD18 < limitOrder_.takeProfitPriceD18)
-      revert LimitOrderNotFillable(currentPriceD18, limitOrder_.stopLossPriceD18, limitOrder_.takeProfitPriceD18);
+    _validateLimitOrderPrice(limitOrder_);
 
     _validateComplexAssetsData(complexAssetsData_);
 
@@ -387,6 +410,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
 
     delete limitOrders[orderId_];
     limitOrderIds.remove(orderId_);
+    userLimitOrderIds[deletedOrder_.user].remove(orderId_);
 
     emit LimitOrderDeleted(deletedOrder_.user, deletedOrder_.pool, orderId_);
   }
@@ -465,6 +489,17 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
       revert InvalidPrices(limitOrderInfo_.stopLossPriceD18, limitOrderInfo_.takeProfitPriceD18, currentPriceD18);
   }
 
+  /// @dev Skip price check if both stop loss and take profit prices are not set (have borderline values 0 and max).
+  ///      This means that such order can be executed at any price.
+  function _validateLimitOrderPrice(LimitOrderInfo memory limitOrder_) internal view {
+    if (limitOrder_.stopLossPriceD18 == 0 && limitOrder_.takeProfitPriceD18 == type(uint256).max) return;
+
+    uint256 currentPriceD18 = poolFactory.getAssetPrice(limitOrder_.pricingAsset);
+
+    if (currentPriceD18 > limitOrder_.stopLossPriceD18 && currentPriceD18 < limitOrder_.takeProfitPriceD18)
+      revert LimitOrderNotFillable(currentPriceD18, limitOrder_.stopLossPriceD18, limitOrder_.takeProfitPriceD18);
+  }
+
   /// @dev Make sure that specified slippage tolerance is not greater than the allowed.
   ///      On the other hand, if we keep order execution to authorized keepers only, this validation can be removed.
   ///      This is important as revert can prevent from executing the order.
@@ -483,7 +518,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
         (ISwapDataConsumingGuard.ComplexAssetSwapData)
       );
       if (
-        withdrawData.slippageTolerance != complexAssetsData_[i].slippageTolerance &&
+        withdrawData.slippageTolerance != complexAssetsData_[i].slippageTolerance ||
         withdrawData.slippageTolerance > defaultSlippageTolerance
       ) revert InvalidValue("slippage");
     }
@@ -539,5 +574,17 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
   /// @param limitOrderSettlementToken_ The token to receive when a settlement order is executed.
   function setLimitOrderSettlementToken(address limitOrderSettlementToken_) external onlyOwner {
     _setLimitOrderSettlementToken(limitOrderSettlementToken_, poolFactory);
+  }
+
+  /// @notice Migrates all existing limit orders to the userLimitOrderIds mapping.
+  /// @dev This is a one-time migration function to backfill orders created before the upgrade.
+  ///      Safe to call multiple times as EnumerableSet.add() is idempotent for existing elements.
+  function migrateUserLimitOrderIds() external onlyOwner {
+    uint256 ordersLength = limitOrderIds.length();
+    for (uint256 i; i < ordersLength; ++i) {
+      bytes32 orderId = limitOrderIds.at(i);
+      address user = limitOrders[orderId].user;
+      userLimitOrderIds[user].add(orderId);
+    }
   }
 }

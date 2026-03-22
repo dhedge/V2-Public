@@ -25,11 +25,8 @@ contract CompoundV3CometRewardsContractGuard is TxDataUtils, IGuard, ITransactio
     address poolManagerLogic,
     address to,
     bytes calldata data
-  ) external virtual override returns (uint16 txType, bool) {
+  ) external view override returns (uint16 txType, bool) {
     address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-
-    ICompoundV3CometRewards compoundV3Rewards = ICompoundV3CometRewards(to);
 
     bytes4 method = getMethod(data);
     bytes memory params = getParams(data);
@@ -37,7 +34,7 @@ contract CompoundV3CometRewardsContractGuard is TxDataUtils, IGuard, ITransactio
     if (method == ICompoundV3CometRewards.claim.selector) {
       (address comet, address receiver, ) = abi.decode(params, (address, address, bool));
 
-      address rewardAsset = compoundV3Rewards.rewardConfig(comet).token;
+      address rewardAsset = ICompoundV3CometRewards(to).rewardConfig(comet).token;
       bool isValidAsset = IHasAssetInfo(IPoolLogic(poolLogic).factory()).isValidAsset(rewardAsset);
 
       if (isValidAsset) {

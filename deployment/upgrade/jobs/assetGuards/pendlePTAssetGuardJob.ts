@@ -20,10 +20,7 @@ export const pendlePTAssetGuardJob: IJob<void> = async (
     const Governance = await hre.artifacts.readArtifact("Governance");
 
     const PendlePTAssetGuard = await ethers.getContractFactory("PendlePTAssetGuard");
-    const args: Parameters<typeof PendlePTAssetGuard.deploy> = [
-      addresses.pendle.marketFactoryV3,
-      addresses.pendle.knownMarkets,
-    ];
+    const args: Parameters<typeof PendlePTAssetGuard.deploy> = [addresses.pendle.knownMarkets];
     const pendlePTAssetGuard = await PendlePTAssetGuard.deploy(...args);
     await pendlePTAssetGuard.deployed();
     const guardAddress = pendlePTAssetGuard.address;

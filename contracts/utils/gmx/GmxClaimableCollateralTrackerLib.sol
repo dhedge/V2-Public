@@ -5,6 +5,11 @@ pragma experimental ABIEncoderV2;
 import {DhedgeNftTrackerStorage} from "../tracker/DhedgeNftTrackerStorage.sol";
 import {IGmxDataStore} from "../../interfaces/gmx/IGmxDataStore.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
+import {IGmxMarket} from "../../interfaces/gmx/IGmxMarket.sol";
+import {GmxStructs} from "./GmxStructs.sol";
+import {GmxHelperLib} from "./GmxHelperLib.sol";
 /**
  * @dev Library for adding, removing and getting claimable collateral time keys
  * use nftTracker to manage storage of claimable collateral time keys
@@ -14,6 +19,8 @@ library GmxClaimableCollateralTrackerLib {
   bytes32 public constant CLAIMABLE_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMABLE_COLLATERAL_AMOUNT"));
   bytes32 public constant CLAIMED_COLLATERAL_AMOUNT = keccak256(abi.encode("CLAIMED_COLLATERAL_AMOUNT"));
   bytes32 public constant CLAIMABLE_COLLATERAL_FACTOR = keccak256(abi.encode("CLAIMABLE_COLLATERAL_FACTOR"));
+  bytes32 public constant CLAIMABLE_COLLATERAL_REDUCTION_FACTOR =
+    keccak256(abi.encode("CLAIMABLE_COLLATERAL_REDUCTION_FACTOR"));
   uint256 public constant FLOAT_PRECISION = 10 ** 30;
   /// @dev Hardcoded limit of claimable collateral time keys
   uint256 public constant MAX_KEY_LIMIT = 1000;
@@ -44,6 +51,59 @@ library GmxClaimableCollateralTrackerLib {
     address account
   ) public pure returns (bytes32) {
     return keccak256(abi.encode(CLAIMABLE_COLLATERAL_FACTOR, market, token, timeKey, account));
+  }
+
+  /// @dev Helper to get claimable collateral reduction factor key
+  function claimableCollateralReductionFactorKey(
+    address market,
+    address token,
+    uint256 timeKey,
+    address account
+  ) public pure returns (bytes32) {
+    return keccak256(abi.encode(CLAIMABLE_COLLATERAL_REDUCTION_FACTOR, market, token, timeKey, account));
+  }
+
+  /// @dev Helper to apply factor to value
+  /// Duplicates the GMX logic https://github.com/gmx-io/gmx-synthetics/blob/f8838175869f7adb8533b0c529005adcb23889f6/contracts/utils/Precision.sol#L38
+  function applyFactor(uint256 value, uint256 factor) internal pure returns (uint256 result_) {
+    return FullMath.mulDiv(value, factor, FLOAT_PRECISION);
+  }
+
+  /// @dev Helper to get claimable factor
+  /// Duplicates the GMX logic, but without taking into account claimable collateral delay, and assuming that collateral will be eventually claimable
+  /// https://github.com/gmx-io/gmx-synthetics/blob/f8838175869f7adb8533b0c529005adcb23889f6/contracts/market/MarketUtils.sol#L773
+  function getClaimableFactor(
+    address dataStore,
+    address market,
+    address token,
+    uint256 timeKey,
+    address account
+  ) private view returns (uint256) {
+    uint256 claimableFactorForTime = IGmxDataStore(dataStore).getUint(
+      claimableCollateralFactorKey({market: market, token: token, timeKey: timeKey})
+    );
+    uint256 claimableFactorForAccount = IGmxDataStore(dataStore).getUint(
+      claimableCollateralFactorKey({market: market, token: token, timeKey: timeKey, account: account})
+    );
+    uint256 claimableFactor = claimableFactorForTime > claimableFactorForAccount
+      ? claimableFactorForTime
+      : claimableFactorForAccount;
+
+    uint256 claimableReductionFactor = IGmxDataStore(dataStore).getUint(
+      claimableCollateralReductionFactorKey({market: market, token: token, timeKey: timeKey, account: account})
+    );
+
+    if (claimableFactor == 0 && claimableReductionFactor == 0) {
+      claimableFactor = FLOAT_PRECISION;
+    }
+
+    if (claimableFactor > claimableReductionFactor) {
+      claimableFactor = claimableFactor.sub(claimableReductionFactor);
+    } else {
+      claimableFactor = 0;
+    }
+
+    return claimableFactor;
   }
 
   // use [CLAIMABLE_COLLATERAL_AMOUNT, market, token] as key in the tracker to store the timeKey
@@ -89,7 +149,7 @@ library GmxClaimableCollateralTrackerLib {
     address market,
     address token,
     uint256 timeKey
-  ) external {
+  ) internal {
     bytes32 nftType = claimableCollateralAmountKey(market, token);
     bool isKeyAdded = isExistingClaimableCollateralTimeKey(nftTracker, pool, market, token, timeKey);
     if (!isKeyAdded) {
@@ -132,8 +192,21 @@ library GmxClaimableCollateralTrackerLib {
     uint256 claimableAmount = IGmxDataStore(dataStore).getUint(claimableCollateralAmountKey(params));
     uint256 claimedAmount = IGmxDataStore(dataStore).getUint(claimedCollateralAmountKey(params));
 
-    if (claimableAmount >= claimedAmount) {
-      return claimableAmount.sub(claimedAmount);
+    uint256 claimableFactor = getClaimableFactor({
+      dataStore: dataStore,
+      market: params.market,
+      token: params.token,
+      timeKey: params.timeKey,
+      account: params.account
+    });
+
+    // Duplicates the GMX check for claimable factor https://github.com/gmx-io/gmx-synthetics/blob/f8838175869f7adb8533b0c529005adcb23889f6/contracts/market/MarketUtils.sol#L728
+    require(claimableFactor <= FLOAT_PRECISION, "invalid claimableFactor");
+
+    uint256 adjustedClaimableAmount = applyFactor(claimableAmount, claimableFactor);
+
+    if (adjustedClaimableAmount >= claimedAmount) {
+      return adjustedClaimableAmount.sub(claimedAmount);
     }
     return 0;
   }
@@ -150,7 +223,7 @@ library GmxClaimableCollateralTrackerLib {
     address nftTracker,
     address dataStore,
     ClaimableCollateralInfo memory params
-  ) external view returns (uint256 totalClaimableAmount) {
+  ) public view returns (uint256 totalClaimableAmount) {
     uint256[] memory timeKeys = getAllClaimableCollateralTimeKeys(nftTracker, params);
     for (uint256 i = 0; i < timeKeys.length; i++) {
       totalClaimableAmount = totalClaimableAmount.add(
@@ -172,10 +245,48 @@ library GmxClaimableCollateralTrackerLib {
     address dataStore,
     address guardedContract,
     ClaimableCollateralParams memory params
-  ) external {
+  ) internal {
     uint256 claimAmount = getCalculatedClaimableAmountByTimeKey(dataStore, params);
     if (claimAmount == 0) {
       removeClaimableCollateralTimeKey(nftTracker, guardedContract, params);
+    }
+  }
+
+  function balanceClaimableCollateral(
+    address pool,
+    IPoolManagerLogic poolManagerLogic,
+    IGmxMarket.Props memory market,
+    GmxStructs.GmxGuardData memory guardData
+  ) public view returns (uint256 balance) {
+    balance = GmxHelperLib.assetValue(
+      poolManagerLogic,
+      market.longToken,
+      getTotalClaimableAmount(
+        address(guardData.nftTracker),
+        address(guardData.dataStore),
+        GmxClaimableCollateralTrackerLib.ClaimableCollateralInfo({
+          market: market.marketToken,
+          token: market.longToken,
+          account: pool
+        })
+      )
+    );
+    if (market.longToken != market.shortToken) {
+      balance = balance.add(
+        GmxHelperLib.assetValue(
+          poolManagerLogic,
+          market.shortToken,
+          getTotalClaimableAmount(
+            address(guardData.nftTracker),
+            address(guardData.dataStore),
+            GmxClaimableCollateralTrackerLib.ClaimableCollateralInfo({
+              market: market.marketToken,
+              token: market.shortToken,
+              account: pool
+            })
+          )
+        )
+      );
     }
   }
 }

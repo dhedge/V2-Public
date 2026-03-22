@@ -16,7 +16,17 @@ interface IGmxDepositUtils {
   // sending funds back to the user in case the deposit gets cancelled
   // @param executionFee the execution fee for keepers
   // @param callbackGasLimit the gas limit for the callbackContract
+  // @param dataList a list of bytes32 values that can be used for additional data
   struct CreateDepositParams {
+    CreateDepositParamsAddresses addresses;
+    uint256 minMarketTokens;
+    bool shouldUnwrapNativeToken;
+    uint256 executionFee;
+    uint256 callbackGasLimit;
+    bytes32[] dataList;
+  }
+
+  struct CreateDepositParamsAddresses {
     address receiver;
     address callbackContract;
     address uiFeeReceiver;
@@ -25,9 +35,5 @@ interface IGmxDepositUtils {
     address initialShortToken;
     address[] longTokenSwapPath;
     address[] shortTokenSwapPath;
-    uint256 minMarketTokens;
-    bool shouldUnwrapNativeToken;
-    uint256 executionFee;
-    uint256 callbackGasLimit;
   }
 }

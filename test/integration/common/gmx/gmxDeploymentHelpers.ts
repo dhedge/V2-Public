@@ -34,12 +34,20 @@ export const deployGmxInfrastructure = async (deployments: IBackboneDeployments,
   const usdPriceAggregator = await USDPriceAggregator.deploy();
   await usdPriceAggregator.deployed();
 
-  const GmxClaimableCollateralTrackerLib = await ethers.getContractFactory("GmxClaimableCollateralTrackerLib");
+  const GmxHelperLib = await ethers.getContractFactory("GmxHelperLib");
+  const gmxHelperLib = await GmxHelperLib.deploy();
+
+  const GmxClaimableCollateralTrackerLib = await ethers.getContractFactory("GmxClaimableCollateralTrackerLib", {
+    libraries: {
+      GmxHelperLib: gmxHelperLib.address,
+    },
+  });
   const gmxClaimableCollateralTrackerLib = await GmxClaimableCollateralTrackerLib.deploy();
 
   const GmxPerpMarketAssetGuard = await ethers.getContractFactory("GmxPerpMarketAssetGuard", {
     libraries: {
       GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLib.address,
+      GmxHelperLib: gmxHelperLib.address,
     },
   });
   const gmxPerpMarketAssetGuard = await GmxPerpMarketAssetGuard.deploy(deploymentParams.exchangeRouter);
@@ -104,23 +112,25 @@ export const deployGmxInfrastructure = async (deployments: IBackboneDeployments,
 
   const GmxAfterTxValidatorLib = await ethers.getContractFactory("GmxAfterTxValidatorLib", {
     libraries: {
-      GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLib.address,
+      GmxHelperLib: gmxHelperLib.address,
     },
   });
+  const GmxEventUtils = await ethers.getContractFactory("GmxEventUtils");
+  const gmxEventUtils = await GmxEventUtils.deploy();
   const gmxAfterTxValidatorLib = await GmxAfterTxValidatorLib.deploy();
-  const GmxAfterExcutionLib = await ethers.getContractFactory("GmxAfterExcutionLib", {
+  const GmxAfterExecutionLib = await ethers.getContractFactory("GmxAfterExecutionLib", {
     libraries: {
       GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLib.address,
       GmxAfterTxValidatorLib: gmxAfterTxValidatorLib.address,
+      GmxEventUtils: gmxEventUtils.address,
+      GmxHelperLib: gmxHelperLib.address,
     },
   });
-  const gmxAfterExcutionLib = await GmxAfterExcutionLib.deploy();
-  const GmxHelperLib = await ethers.getContractFactory("GmxHelperLib");
-  const gmxHelperLib = await GmxHelperLib.deploy();
+  const gmxAfterExecutionLib = await GmxAfterExecutionLib.deploy();
   const GmxExchangeRouterContractGuard = await ethers.getContractFactory("GmxExchangeRouterContractGuard", {
     libraries: {
       GmxAfterTxValidatorLib: gmxAfterTxValidatorLib.address,
-      GmxAfterExcutionLib: gmxAfterExcutionLib.address,
+      GmxAfterExecutionLib: gmxAfterExecutionLib.address,
       GmxHelperLib: gmxHelperLib.address,
     },
   });
@@ -143,7 +153,7 @@ export const deployGmxInfrastructure = async (deployments: IBackboneDeployments,
     ...deploymentParams.underlyingTokensToAdd.map((testAsset, index) =>
       assetSetting(
         testAsset.address,
-        AssetType["Chainlink direct USD price feed with 8 decimals"],
+        testAsset.assetType || AssetType["Chainlink direct USD price feed with 8 decimals"],
         extraPriceAggregators[index],
       ),
     ),

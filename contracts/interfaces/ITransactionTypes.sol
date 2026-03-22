@@ -119,6 +119,11 @@ interface ITransactionTypes {
     FluidLendingWithdraw, // 109
     BuyPendlePT, // 110
     SellPendlePT, // 111
-    AaveSetEfficiencyMode // 112
+    AaveSetEfficiencyMode, // 112
+    LimitOrderCreate, // 113
+    LimitOrderModify, // 114
+    LimitOrderDelete, // 115
+    CowSwapPreSign, // 116
+    CowSwapInvalidateOrder // 117
   }
 }

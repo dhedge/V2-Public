@@ -110,6 +110,6 @@ describe("changeAssets", () => {
 
     await expect(
       poolManagerLogicProxy.connect(deployments.owner).setTraderAssetChangeDisabled(true),
-    ).to.be.revertedWith("only manager");
+    ).to.be.revertedWith("dh4");
   });
 });

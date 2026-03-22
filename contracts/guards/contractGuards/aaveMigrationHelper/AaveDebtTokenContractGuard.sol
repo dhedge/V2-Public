@@ -29,9 +29,6 @@ contract AaveDebtTokenContractGuard is IGuard, ITransactionTypes, TxDataUtils {
     bytes memory _data
   ) external view override returns (uint16 txType, bool) {
     address poolLogic = IPoolManagerLogic(_poolManagerLogic).poolLogic();
-
-    require(msg.sender == poolLogic, "not pool logic");
-
     IAaveMigrationHelperGuard coreContractGuard = IAaveMigrationHelperGuard(
       IHasGuardInfo(IPoolLogic(poolLogic).factory()).getContractGuard(migrationHelper)
     );

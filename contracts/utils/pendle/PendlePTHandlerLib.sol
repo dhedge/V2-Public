@@ -86,9 +86,9 @@ library PendlePTHandlerLib {
 
     // Calldata for pendle router requires market address, which is read from the asset guard, as no onchain interface exists to cross reference market address.
     // Asset guard requires to store associated market data for PTs.
-    (market, underlying) = pendlePTGuard.ptAssociatedData(_pt);
+    (market, underlying, ) = pendlePTGuard.ptAssociatedData(_pt);
 
-    require(market != address(0) && underlying != address(0), "pt not handled");
+    require(market != address(0), "pt not handled");
   }
 
   /// @dev Mutates passed _transactions in place

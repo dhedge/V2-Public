@@ -1022,6 +1022,63 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "user_",
+        "type": "address"
+      }
+    ],
+    "name": "getUserLimitOrderIds",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "orderIds_",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user_",
+        "type": "address"
+      }
+    ],
+    "name": "hasOpenLimitOrder",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "hasOpenLimitOrder_",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user_",
+        "type": "address"
+      }
+    ],
+    "name": "hasSettlementOrder",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "hasSettlementOrder_",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "admin_",
         "type": "address"
       },
@@ -1125,6 +1182,13 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "migrateUserLimitOrderIds",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

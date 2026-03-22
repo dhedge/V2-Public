@@ -7,7 +7,7 @@ import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 contract AaveV3TestEthereum is AaveV3TestSetup, EthereumSetup {
-  uint256 private testForkBlockNumber = 22669363;
+  uint256 private testForkBlockNumber = 23283702;
 
   constructor() AaveV3TestSetup(_createAaveV3TestConfig()) EthereumSetup(testForkBlockNumber) {}
 

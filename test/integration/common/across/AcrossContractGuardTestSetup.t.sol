@@ -47,6 +47,8 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
         _fundSymbol: "AV",
         _performanceFeeNumerator: 0,
         _managerFeeNumerator: 0,
+        _entryFeeNumerator: 0,
+        _exitFeeNum: 0,
         _supportedAssets: supportedAssets
       })
     );
@@ -164,7 +166,7 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
       new bytes(0)
     );
 
-    vm.expectRevert("invalid transaction");
+    vm.expectRevert(bytes("dh23"));
     testPool.execTransaction(spokePool, supplyCallData);
   }
 
@@ -343,6 +345,8 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
         _fundSymbol: "AV",
         _performanceFeeNumerator: 0,
         _managerFeeNumerator: 0,
+        _entryFeeNumerator: 0,
+        _exitFeeNum: 0,
         _supportedAssets: supportedAssets
       })
     );

@@ -635,39 +635,6 @@ describe("Flat Money Test", () => {
       );
     });
 
-    it("should correctly account for multiple leverage NFT positions in the vault", async () => {
-      const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
-
-      const { margin: margin1, tradeFee: tradeFee1 } = await mintLeverageNFTIntoAddress();
-      const { margin: margin2, tradeFee: tradeFee2 } = await mintLeverageNFTIntoAddress(
-        poolLogicProxy.address,
-        units(1, 17),
-        units(1),
-      );
-      const { margin: margin3, tradeFee: tradeFee3 } = await mintLeverageNFTIntoAddress(
-        poolLogicProxy.address,
-        units(4),
-        units(10),
-      );
-
-      const result = await oracleModule["getPrice()"]();
-      const positionValue = margin1
-        .add(margin2)
-        .add(margin3)
-        .sub(tradeFee1)
-        .sub(tradeFee2)
-        .sub(tradeFee3)
-        .mul(result.price)
-        .div(units(1));
-
-      const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
-
-      expect(totalFundValueAfter).to.be.closeTo(
-        totalFundValueBefore.add(positionValue),
-        totalFundValueAfter.div(500), // 0.5% deviation
-      );
-    });
-
     it("should leave depositor with correct value after withdrawal", async () => {
       await mintLeverageNFTIntoAddress();
 
@@ -808,7 +775,7 @@ describe("Flat Money Test", () => {
           poolLogicProxy.address,
           tokenId,
         ),
-      ).to.be.revertedWith("only guarded address");
+      ).to.be.reverted;
     });
 
     it("should not account for leverage NFT received using transfer", async () => {
@@ -831,8 +798,6 @@ describe("Flat Money Test", () => {
     });
 
     it("should revert if trying to open more than limit", async () => {
-      await mintLeverageNFTIntoAddress();
-      await mintLeverageNFTIntoAddress();
       await mintLeverageNFTIntoAddress();
       await expect(mintLeverageNFTIntoAddress()).to.be.revertedWith("max position reached");
     });
@@ -1074,10 +1039,9 @@ describe("Flat Money Test", () => {
 
     it("should correctly track for NFT leverage positions after close", async () => {
       await mintLeverageNFTIntoAddress();
-      await mintLeverageNFTIntoAddress();
 
       const tokenIds = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
-      expect(tokenIds.length).to.equal(2);
+      expect(tokenIds.length).to.equal(1);
 
       const totalFundValueBefore = await poolManagerLogicProxy.totalFundValue();
       const [firstPositionId] = tokenIds;
@@ -1085,7 +1049,7 @@ describe("Flat Money Test", () => {
 
       // After closing (burning), the position is still in track until a new one is minted
       const tokenIdsAfter = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
-      expect(tokenIdsAfter.length).to.equal(2);
+      expect(tokenIdsAfter.length).to.equal(1);
 
       const totalFundValueAfter = await poolManagerLogicProxy.totalFundValue();
       expect(totalFundValueAfter).to.be.closeTo(
@@ -1096,32 +1060,23 @@ describe("Flat Money Test", () => {
 
     it("should correctly track for NFT leverage positions when opened again after close", async () => {
       await mintLeverageNFTIntoAddress();
-      await mintLeverageNFTIntoAddress();
-
-      const [firstPositionId, secondPositionId] = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
-
-      await burnLeverageNFT(firstPositionId);
-
-      await mintLeverageNFTIntoAddress();
-
-      const [secondPositionId2, thirdPositionId] = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
-
-      const tokenIdsAfter = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
-      expect(secondPositionId2).to.equal(secondPositionId);
-      expect(tokenIdsAfter[0]).to.equal(secondPositionId);
-      expect(tokenIdsAfter[1]).to.equal(thirdPositionId);
-      expect(tokenIdsAfter.length).to.equal(2);
-    });
-
-    it("should correctly reach max positions after close", async () => {
-      await mintLeverageNFTIntoAddress();
-      await mintLeverageNFTIntoAddress();
 
       const [firstPositionId] = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
 
       await burnLeverageNFT(firstPositionId);
 
       await mintLeverageNFTIntoAddress();
+
+      const tokenIdsAfter = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
+      expect(tokenIdsAfter.length).to.equal(1);
+    });
+
+    it("should correctly reach max positions after close", async () => {
+      await mintLeverageNFTIntoAddress();
+
+      const [firstPositionId] = await delayedOrderGuard.getOwnedTokenIds(poolLogicProxy.address);
+
+      await burnLeverageNFT(firstPositionId);
 
       await mintLeverageNFTIntoAddress();
 

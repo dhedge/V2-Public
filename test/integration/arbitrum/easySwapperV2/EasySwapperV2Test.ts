@@ -96,4 +96,5 @@ runEasySwapperV2GuardsTest({
   swapperAddress: arbitrumChainData.flatMoney.swapper,
   wrappedNativeToken: arbitrumChainData.assets.weth,
   chainId: 42161,
+  poolLimitOrderManagerProxy: "0x26a687e8244f1866E9Aa2D400c8b9957Aa8e6Ad4",
 });

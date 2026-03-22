@@ -25,6 +25,7 @@ interface IEasySwapperV2GuardsTestData {
   wrappedNativeToken: string;
   swapperAddress: string;
   chainId: ChainIds;
+  poolLimitOrderManagerProxy: string;
 }
 
 export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestData & IBackboneDeploymentsParams) => {
@@ -59,7 +60,6 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
       const easySwapperV2ContractGuard = await EasySwapperV2ContractGuard.deploy(
         deployments.slippageAccumulator.address,
         200, // 2% slippage max
-        10_000,
       );
       await easySwapperV2ContractGuard.deployed();
       await deployments.governance.setContractGuard(easySwapperV2.address, easySwapperV2ContractGuard.address);
@@ -91,7 +91,9 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
       await easySwapperV2.setCustomCooldownWhitelist([{ toWhitelist: torosAssetAddress, whitelisted: true }]);
 
       const EasySwapperV2UnrolledAssetsGuard = await ethers.getContractFactory("EasySwapperV2UnrolledAssetsGuard");
-      const easySwapperV2UnrolledAssetsGuard = await EasySwapperV2UnrolledAssetsGuard.deploy();
+      const easySwapperV2UnrolledAssetsGuard = await EasySwapperV2UnrolledAssetsGuard.deploy(
+        chainData.poolLimitOrderManagerProxy,
+      );
       await easySwapperV2UnrolledAssetsGuard.deployed();
 
       await deployments.governance.setAssetGuard(
@@ -138,9 +140,9 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
           .connect(manager)
           .execTransaction(
             easySwapperV2.address,
-            easySwapperV2.interface.encodeFunctionData("partialWithdraw", [units(1), manager.address]),
+            easySwapperV2.interface.encodeFunctionData("partialWithdraw", [units(1), manager.address, 0]),
           ),
-      ).to.be.revertedWith("invalid transaction");
+      ).to.be.revertedWith("dh23");
     });
 
     describe("Deposit", () => {
@@ -407,7 +409,7 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
         );
         const withdrawData = ethers.utils.defaultAbiCoder.encode(
           ["tuple(bytes, tuple(address, uint256), uint256)"],
-          [[encodedSrcData, [USDC.address, 0], 0]],
+          [[encodedSrcData, [USDC.address, 0], 100]],
         );
         complexAssetsData[0].withdrawData = withdrawData;
         const initWithdrawTxData = easySwapperV2.interface.encodeFunctionData("initWithdrawal", [
@@ -419,7 +421,7 @@ export const runEasySwapperV2GuardsTest = (chainData: IEasySwapperV2GuardsTestDa
         await poolLogicProxy.connect(manager).execTransaction(torosAssetAddress, approveTxData);
         await expect(
           poolLogicProxy.connect(manager).execTransaction(easySwapperV2.address, initWithdrawTxData),
-        ).to.be.revertedWith("invalid asset data");
+        ).to.be.revertedWith("dh19");
       });
 
       it("should allow manager to init withdrawal", async () => {

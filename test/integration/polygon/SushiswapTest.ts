@@ -68,9 +68,7 @@ describe("Sushiswap V2 Test", function () {
 
   it("Should be able to approve", async () => {
     let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdt, approveABI)).to.be.revertedWith(
-      "asset disabled",
-    );
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdt, approveABI)).to.be.revertedWith("dh22");
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
       "unsupported spender approval",

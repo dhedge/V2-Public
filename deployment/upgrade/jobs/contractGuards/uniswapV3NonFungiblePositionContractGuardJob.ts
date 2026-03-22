@@ -22,7 +22,7 @@ export const uniswapV3NonFungiblePositionGuardJob: IJob<void> = async (
     return;
   }
 
-  console.log("Will deploy uniswapv3nonfungiblepositionguard");
+  console.log("Will deploy UniswapV3NonfungiblePositionGuard");
   if (config.execute) {
     const ethers = hre.ethers;
     const Governance = await hre.artifacts.readArtifact("Governance");

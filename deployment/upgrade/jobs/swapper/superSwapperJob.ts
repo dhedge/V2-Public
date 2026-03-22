@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { tryVerify } from "../../../deploymentHelpers";
 import { Address, IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { RouteHintStruct } from "../../../../types/DhedgeSuperSwapper";
 
 export const superSwapperJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -13,7 +14,7 @@ export const superSwapperJob: IJob<void> = async (
 
   console.log("Will deploy DhedgeSuperSwapper");
   const DhedgeSuperSwapper = await ethers.getContractFactory("DhedgeSuperSwapper");
-  const v2Routers = [...addresses.v2RouterAddresses];
+  const v2Routers = [...(addresses.v2RouterAddresses ?? [])];
 
   if (versions[config.newTag].contracts.DhedgeUniV3V2Router) {
     v2Routers.push(versions[config.newTag].contracts.DhedgeUniV3V2Router);
@@ -27,7 +28,7 @@ export const superSwapperJob: IJob<void> = async (
 
   console.log("Deploying SwapRouter with", v2Routers);
 
-  const args: [Address[], IAddresses["superSwapper"]["routeHints"]] = [v2Routers, addresses.superSwapper.routeHints];
+  const args: [Address[], RouteHintStruct[]] = [v2Routers, addresses.superSwapper?.routeHints ?? []];
 
   if (config.execute) {
     const dhedgeSwapRouter = await DhedgeSuperSwapper.deploy(...args);

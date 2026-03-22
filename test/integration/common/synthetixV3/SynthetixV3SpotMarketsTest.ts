@@ -480,7 +480,7 @@ export const launchSynthetixSpotMarketsV3Tests = (chainData: ISynthetixV3SpotTes
           } catch (error) {
             // actually valid-but-not-supported asset throw this error
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((error as any).reason).to.include("asset disabled");
+            expect((error as any).reason).to.include("dh22");
           }
         });
       });

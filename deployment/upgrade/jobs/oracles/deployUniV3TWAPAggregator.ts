@@ -12,13 +12,11 @@ export const deployUniV3TWAPAggregator: TOracleDeployer = async (
   const specificConfig: IUniV3TWAPAggregatorSpecificConfig = validateConfig(oracleConfig);
 
   const UniV3TWAPAggregator = await ethers.getContractFactory("UniV3TWAPAggregator");
-  console.log("Deploying Median TWAP oracle..");
+  console.log("Deploying UniV3TWAPAggregator...");
   const uniV3TWAPAggregator = await UniV3TWAPAggregator.deploy(
     specificConfig.pool,
     specificConfig.mainToken,
     specificConfig.pairTokenUsdAggregator,
-    specificConfig.priceLowerLimit,
-    specificConfig.priceUpperLimit,
     specificConfig.updateInterval,
   );
   await uniV3TWAPAggregator.deployed();
@@ -34,8 +32,6 @@ export const deployUniV3TWAPAggregator: TOracleDeployer = async (
       specificConfig.pool,
       specificConfig.mainToken,
       specificConfig.pairTokenUsdAggregator,
-      specificConfig.priceLowerLimit,
-      specificConfig.priceUpperLimit,
       specificConfig.updateInterval,
     ],
   );
@@ -45,14 +41,7 @@ export const deployUniV3TWAPAggregator: TOracleDeployer = async (
 const isUniV3TWAPAggregator = (
   oracleConfig: TAssetConfig,
 ): oracleConfig is IAssetConfig<"UniV3TWAPAggregator", IUniV3TWAPAggregatorSpecificConfig> => {
-  const requiredFields = [
-    "pool",
-    "mainToken",
-    "pairTokenUsdAggregator",
-    "priceLowerLimit",
-    "priceUpperLimit",
-    "updateInterval",
-  ];
+  const requiredFields = ["pool", "mainToken", "pairTokenUsdAggregator", "updateInterval"];
   const { specificOracleConfig } = oracleConfig;
   if (
     oracleConfig.oracleType != "UniV3TWAPAggregator" ||

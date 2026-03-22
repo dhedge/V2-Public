@@ -153,6 +153,8 @@ const polygonData: IAddresses = {
 
   odosV2RouterAddress: polygonChainData.odosEx.v2Router,
 
+  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
+
   poolLimitOrderManager: {
     defaultSlippageTolerance: 200, // 2%
     settlementToken: polygonChainData.assets.usdcNative,
@@ -163,6 +165,22 @@ const polygonData: IAddresses = {
       "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
       "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
     ],
+  },
+
+  kyberSwap: {
+    routerV2: "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5",
+  },
+
+  typedStructuredDataValidator: {
+    odosLimitOrder: {
+      permit2: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+      odosLimitOrderRouter: "0x93052961c75c92Fd5d6362655936C239EF2D5336",
+      maxUnfavorableDeviationBps: 100, // 1%
+    },
+    cowSwapOrder: {
+      gpv2Settlement: "0x9008D19f58AAbD9eD0D60971565AA8510560ab41",
+      maxUnfavorableDeviationBps: 100, // 1%
+    },
   },
 };
 

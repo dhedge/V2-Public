@@ -23,7 +23,7 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
   using SafeERC20 for IERC20;
   using SignedSafeMath for int256;
   using SafeMath for uint256;
-  using DhedgeMath for uint256;
+  using DhedgeMath for *;
   using FixedPoint for *;
 
   IUniswapV2Pair public immutable pair;
@@ -115,17 +115,11 @@ contract MedianTWAPAggregator is Ownable, Pausable, IAggregatorV3Interface {
 
   /// @notice Checks for high price volatility in the recent TWAPs
   function highVolatility(int256 twapA, int256 twapB) public view returns (bool volatilityHigh) {
-    uint256 deviationPercent = abs(twapA - twapB).mul(100).div(uint256(twapA));
+    uint256 deviationPercent = (twapA - twapB).abs().mul(100).div(uint256(twapA));
 
     if (deviationPercent >= volatilityTripLimit) {
       volatilityHigh = true;
     }
-  }
-
-  /// @dev Returns the absolute unsigned value of a signed value.
-  function abs(int256 n) internal pure returns (uint256) {
-    // must be unchecked in order to support `n = type(int256).min`
-    return uint256(n >= 0 ? n : -n);
   }
 
   /// @notice Get the latest round data. Should be the same format as chainlink aggregator.

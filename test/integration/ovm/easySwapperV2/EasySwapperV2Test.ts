@@ -152,4 +152,5 @@ runEasySwapperV2GuardsTest({
   swapperAddress: ovmChainData.flatMoney.swapper,
   wrappedNativeToken: ovmChainData.assets.weth,
   chainId: 10,
+  poolLimitOrderManagerProxy: "0x3bFE2a472d2964Ea4070725b7Fb0A868b3f08b63",
 });

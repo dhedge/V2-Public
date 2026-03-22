@@ -9,6 +9,11 @@ import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 
+/// @title OutsidePositionWithdrawalHelper
+/// @notice Helper for withdrawing from complex positions using a pre-configured withdrawal asset sitting in the pool
+/// @dev IMPORTANT: Contracts inheriting from this helper MUST implement `getBalance` to return a VALUE in USD
+///      with 18 decimals, NOT a token balance. The `_withdrawProcessing` function uses this value to calculate
+///      the proportional amount of withdrawal asset to transfer.
 abstract contract OutsidePositionWithdrawalHelper {
   using SafeMath for uint256;
 

@@ -8,10 +8,8 @@ const { torosPools } = ovmChainData;
 
 export const optimismProdData: IAddresses = {
   // old - https://ogg.scopelift.co/wallet/0xeB03C960EC60b2159B3EcCfb341cE8d7e1268B08
-  // https://gnosis-safe.io/app/oeth:0x90b1a66957914EbbE7a8df254c0c1E455972379C/balances - 3/3
   protocolDaoAddress: ovmChainData.protocolDao,
   // old - https://ogg.scopelift.co/wallet/0x2b0763A33b4D3DC8D6c1A4916D0f9467d6E11FFc
-  // https://gnosis-safe.io/app/oeth:0xD857e322351Dc56592e3D9181FBF65034EF4aef2 2/5
   protocolTreasuryAddress: "0xD857e322351Dc56592e3D9181FBF65034EF4aef2",
   // Should be fetched from the oz file
   proxyAdminAddress: ovmChainData.proxyAdmin,
@@ -366,6 +364,7 @@ export const optimismProdData: IAddresses = {
         AssetType["Velodrome CL NFT Position Asset"], // 26
         AssetType["Velodrome V2 LP/Gauge Asset"], // 25
       ],
+      linkedAssets: [],
     },
   ],
 
@@ -398,6 +397,8 @@ export const optimismProdData: IAddresses = {
   },
 
   odosV2RouterAddress: ovmChainData.odosEx.v2Router,
+
+  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
 
   flatMoneyV2: {
     orderAnnouncementModule: "0xd917A0C9B21Bb71DF1209d2c211Ad83004F01554",
@@ -474,6 +475,10 @@ export const optimismProdData: IAddresses = {
   allowApproveGuard: {
     allowedSpender: "0xE2F9b946C4Dcc6EbD1e00A8791E1570E4e6D74D9", // PoolTokenSwapper
     tokensToSetGuardTo: [ovmChainData.torosPools.USDpy],
+  },
+
+  kyberSwap: {
+    routerV2: "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5",
   },
 };
 

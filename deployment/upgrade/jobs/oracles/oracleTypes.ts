@@ -48,7 +48,17 @@ export type IChainlinkPythPriceAggregatorConfig = IAssetConfig<
   IChainlinkPythPriceAggregatorSpecificConfig
 >;
 
+export type IChainlinkAggregatorWrapperConfig = IAssetConfig<
+  "ChainlinkAggregatorWrapper",
+  IChainlinkAggregatorSpecificConfig
+>;
+
 export type ICustomCrossAggregatorConfig = IAssetConfig<"CustomCrossAggregator", ICustomCrossAggregatorSpecificConfig>;
+
+export type IChainlinkTWAPAggregatorConfig = IAssetConfig<
+  "ChainlinkTWAPAggregator",
+  IChainlinkTWAPAggregatorSpecificConfig
+>;
 
 export type IFluidTokenPriceAggregatorConfig = IAssetConfig<
   "FluidTokenPriceAggregator",
@@ -93,6 +103,8 @@ export type TAssetConfig =
   | ISonneFinancePriceAggregatorConfig
   | IFlatMoneyUNITPriceAggregatorConfig
   | IChainlinkPythPriceAggregatorConfig
+  | IChainlinkAggregatorWrapperConfig
+  | IChainlinkTWAPAggregatorConfig
   | ICustomCrossAggregatorConfig
   | IFluidTokenPriceAggregatorConfig
   | IPythPriceAggregatorConfig
@@ -148,10 +160,9 @@ export interface IUniV3TWAPAggregatorSpecificConfig extends ITriggerChange {
   pool: Address;
   mainToken: Address;
   pairTokenUsdAggregator: Address;
-  priceLowerLimit: number;
-  priceUpperLimit: number;
   updateInterval: number;
 }
+
 export interface IVelodromeTWAPAggregatorSpecificConfig extends ITriggerChange {
   pair: Address;
   mainToken: Address;
@@ -195,6 +206,19 @@ interface ICustomCrossAggregatorSpecificConfig extends ITriggerChange {
   tokenToUsdAggregator: Address;
 }
 
+interface IChainlinkTWAPAggregatorSpecificConfig extends ITriggerChange {
+  maxPriceDifferencePercent: number;
+  resultingPriceType: number;
+  // Chainlink aggregator - either direct address or deploy a specific type
+  chainlinkType?: "ERC4626PriceAggregator";
+  chainlinkAggregatorAddress?: Address;
+  erc4626Config?: IERC4626PriceAggregatorSpecificConfig;
+  // TWAP aggregator - either direct address or deploy a specific type
+  twapType: "UniV3TWAPAggregator" | "FluidDexObservationAggregator";
+  twapAggregatorAddress?: Address;
+  uniV3TWAPConfig?: IUniV3TWAPAggregatorSpecificConfig;
+}
+
 interface IFluidTokenPriceAggregatorSpecificConfig extends ITriggerChange {
   dhedgeFactoryProxy: Address;
 }
@@ -211,6 +235,6 @@ interface IPendlePTPriceAggregatorSpecificConfig extends ITriggerChange {
   dhedgeFactoryProxy: Address;
 }
 
-interface IERC4626PriceAggregatorSpecificConfig extends ITriggerChange {
+export interface IERC4626PriceAggregatorSpecificConfig extends ITriggerChange {
   dhedgeFactoryProxy: Address;
 }

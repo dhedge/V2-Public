@@ -8,7 +8,7 @@ import {OptimismSetup} from "test/integration/utils/foundry/chains/OptimismSetup
 import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 
 library AaveV3TestOptimismSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 138219722;
+  uint256 public constant FORK_BLOCK_NUMBER = 139400000;
 }
 
 contract AaveV3TestOptimism is AaveV3TestSetup, OptimismSetup {

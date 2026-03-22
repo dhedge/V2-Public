@@ -12,24 +12,7 @@
 //
 // Copyright (c) 2021 dHEDGE DAO
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
@@ -57,28 +40,17 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
 
   /// @notice Transaction guard for Uniswap V3 non-fungible Position Manager
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param _poolManagerLogic Pool address
+  /// @param poolManagerLogic address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address _poolManagerLogic,
+    address poolManagerLogic,
     address to,
     bytes memory data
-  )
-    public
-    override
-    returns (
-      uint16 txType,
-      bool // isPublic
-    )
-  {
+  ) public view override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
-    INonfungiblePositionManager nonfungiblePositionManager = INonfungiblePositionManager(to);
-
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(_poolManagerLogic);
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(_poolManagerLogic);
-    address pool = poolManagerLogic.poolLogic();
+    address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
     if (method == INonfungiblePositionManager.mint.selector) {
       INonfungiblePositionManager.MintParams memory param = abi.decode(
@@ -86,15 +58,15 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
         (INonfungiblePositionManager.MintParams)
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(param.token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(param.token1), "unsupported asset: tokenB");
-      require(poolManagerLogicAssets.isSupportedAsset(to), "uniswap asset not enabled");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(param.token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(param.token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "uniswap asset not enabled");
 
       require(pool == param.recipient, "recipient is not pool");
 
       UniswapV3PriceLibrary.assertFairPrice(
         IPoolLogic(pool).factory(),
-        nonfungiblePositionManager.factory(),
+        INonfungiblePositionManager(to).factory(),
         param.token0,
         param.token1,
         param.fee
@@ -111,13 +83,13 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
       bool isValidTokenId = isValidOwnedTokenId(pool, param.tokenId);
       require(isValidTokenId, "position is not in track");
 
-      (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(
+      (, , address token0, address token1, uint24 fee, , , , , , , ) = INonfungiblePositionManager(to).positions(
         param.tokenId
       );
 
       UniswapV3PriceLibrary.assertFairPrice(
         IPoolLogic(pool).factory(),
-        nonfungiblePositionManager.factory(),
+        INonfungiblePositionManager(to).factory(),
         token0,
         token1,
         fee
@@ -133,10 +105,10 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
         getParams(data),
         (INonfungiblePositionManager.CollectParams)
       );
-      (, , address token0, address token1, , , , , , , , ) = nonfungiblePositionManager.positions(param.tokenId);
+      (, , address token0, address token1, , , , , , , , ) = INonfungiblePositionManager(to).positions(param.tokenId);
 
-      require(poolManagerLogicAssets.isSupportedAsset(token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token1), "unsupported asset: tokenB");
       require(pool == param.recipient, "recipient is not pool");
 
       txType = uint16(TransactionType.UniswapV3Collect);
@@ -144,7 +116,7 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
       bytes[] memory params = abi.decode(getParams(data), (bytes[]));
 
       for (uint256 i = 0; i < params.length; i++) {
-        (txType, ) = txGuard(_poolManagerLogic, to, params[i]);
+        (txType, ) = txGuard(poolManagerLogic, to, params[i]);
         require(txType > 0, "invalid transaction");
       }
 
@@ -158,28 +130,25 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
   /// @dev It supports close/open/forceClose position
   /// @param poolManagerLogic the pool manager logic
   /// @param data the transaction data
-  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public virtual override {
-    afterTxGuardHandle(poolManagerLogic, to, data);
+  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public override {
+    _afterTxGuardHandle(poolManagerLogic, to, data);
   }
 
-  function afterTxGuardHandle(
+  function _afterTxGuardHandle(
     address poolManagerLogic,
     address to,
     bytes memory data
   ) internal returns (bool isMintOrBurn) {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-
+    address poolLogic = _accessControl(poolManagerLogic);
     bytes4 method = getMethod(data);
-    INonfungiblePositionManager nonfungiblePositionManager = INonfungiblePositionManager(to);
 
     if (method == INonfungiblePositionManager.mint.selector) {
-      uint256 index = nonfungiblePositionManager.totalSupply();
+      uint256 index = INonfungiblePositionManager(to).totalSupply();
       nftTracker.addUintId(
         to,
         nftType,
         poolLogic,
-        nonfungiblePositionManager.tokenByIndex(index - 1), // revert if index is zero
+        INonfungiblePositionManager(to).tokenByIndex(index - 1), // revert if index is zero
         positionsLimit
       );
 
@@ -199,7 +168,7 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
 
       bool includeMintOrBurn;
       for (uint256 i = 0; i < params.length; i++) {
-        if (afterTxGuardHandle(poolManagerLogic, to, params[i])) {
+        if (_afterTxGuardHandle(poolManagerLogic, to, params[i])) {
           // we support only one deposit or one withdraw transaction for the safety.
           require(!includeMintOrBurn, "invalid multicall");
           includeMintOrBurn = true;

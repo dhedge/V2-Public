@@ -13,8 +13,12 @@ export const updatePythPriceFeed = async (contract: string, priceFeedId: string,
     });
 
     const iPyth = <IPyth>await ethers.getContractAt(IPyth__factory.abi, contract);
+
+    // Get the update fee from the Pyth contract
+    const updateFee = await iPyth.getUpdateFee([`0x${data.binary.data}`]);
+
     await iPyth.connect(signer).updatePriceFeeds([`0x${data.binary.data}`], {
-      value: 1,
+      value: updateFee,
     });
   } catch (err: unknown) {
     console.log("Error updating pyth price feed", err);

@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.7.6;
+pragma abicoder v2;
+
+import {AaveV3LendsPTsUSDeAndSUSDeTest} from "test/integration/ethereum/aaveV3/AaveV3LendsPTsUSDeAndSUSDeTest.t.sol";
+import {AaveV3TestFFI} from "test/integration/ffi/common/aave/AaveV3TestFFI.t.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
+
+contract AaveV3LendsPTsUSDeAndSUSDeTestFFI is AaveV3TestFFI, AaveV3LendsPTsUSDeAndSUSDeTest {
+  constructor() AaveV3TestFFI(EthereumConfig.CHAIN_ID) AaveV3LendsPTsUSDeAndSUSDeTest() {}
+
+  function setUp() public override(AaveV3TestFFI, AaveV3LendsPTsUSDeAndSUSDeTest) {
+    super.setUp();
+  }
+
+  function test_can_withdraw_from_pool_with_two_assets_supplied_and_one_borrowed_in_aave_v3_with_swapdata() public {
+    can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata(block.timestamp + 1 days, true);
+  }
+}

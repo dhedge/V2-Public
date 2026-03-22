@@ -84,7 +84,14 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
   const Governance = await ethers.getContractFactory("Governance");
   const governance = await Governance.deploy();
 
-  const PoolLogic = await ethers.getContractFactory("PoolLogic");
+  const PoolLogicLib = await ethers.getContractFactory("PoolLogicLib");
+  const poolLogicLib = await PoolLogicLib.deploy();
+
+  const PoolLogic = await ethers.getContractFactory("PoolLogic", {
+    libraries: {
+      PoolLogicLib: poolLogicLib.address,
+    },
+  });
   const poolLogic = await PoolLogic.deploy();
 
   const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -189,6 +196,8 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       ovmChainData.aaveV3.lendingPool,
       ovmChainData.flatMoney.swapper,
       swapRouter.address,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
       5,
       10_000,
       10_000,
@@ -411,6 +420,8 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       polygonChainData.aaveV2.lendingPool,
       polygonChainData.flatMoney.swapper,
       swapRouter.address,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
       1,
       10_000,
       10_000,
@@ -422,6 +433,8 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       polygonChainData.aaveV3.lendingPool,
       polygonChainData.flatMoney.swapper,
       swapRouter.address,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
       1,
       10_000,
       10_000,

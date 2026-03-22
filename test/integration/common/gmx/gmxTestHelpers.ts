@@ -50,7 +50,7 @@ export type IGmxTestsParams = IBackboneDeploymentsParams & {
   keeper: string;
   apiUrl: string;
   sizeAmount: BigNumber;
-  underlyingTokensToAdd: (TokenPriceConfig & { address: string })[];
+  underlyingTokensToAdd: (TokenPriceConfig & { address: string; assetType: number })[];
   vitrualTokenOracleSettings?: VirtualTokenOracleSettingStruct[];
 };
 

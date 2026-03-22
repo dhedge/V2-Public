@@ -65,6 +65,7 @@ export const baseProdData: IAddresses = {
       "0x6399ed6725cC163D019aA64FF55b22149D7179A8", // CL100-USDC/cbBTC
       "0xB57eC27f68Bd356e300D57079B6cdbe57d50830d", // CL1-tBTC/cbBTC
       "0xe2a2B1D8AA4bD8A05e517Ccf61E96A727831B63e", // CL1-USDS/USDC
+      "0xF33a96b5932D9E9B9A0eDA447AbD8C9d48d2e0c8", // CL100-WETH/USDC
     ],
   },
 
@@ -235,6 +236,7 @@ export const baseProdData: IAddresses = {
         AssetType["Velodrome V2 LP/Gauge Asset"], // 25
         AssetType["Velodrome CL NFT Position Asset"], // 26
       ],
+      linkedAssets: [],
     },
   ],
 
@@ -255,7 +257,15 @@ export const baseProdData: IAddresses = {
 
   angleProtocol: {
     distributor: "0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae",
-    rewardTokenSupported: "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB",
+    rewardTokenSupported: [
+      { token: "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB", tokenType: 2 }, // aBasUSDC
+      { token: "0x99CBC45ea5bb7eF3a5BC08FB1B7E56bB2442Ef0D", tokenType: 2 }, // aBaswstETH
+      { token: "0xD4a0e0b9149BCee3C920d2E00b5dE09138fd8bb7", tokenType: 2 }, // aBasWETH
+      { token: "0xBdb9300b7CDE636d9cD4AFF00f6F009fFBBc8EE6", tokenType: 2 }, // aBascbBTC
+      { token: "0x7C307e128efA31F540F2E2d976C995E0B65F51F6", tokenType: 2 }, // aBasweETH
+      { token: "0x067ae75628177FD257c2B1e500993e1a0baBcBd1", tokenType: 2 }, // aBasGHO
+      { token: "0x90DA57E0A6C0d166Bf15764E03b83745Dc90025B", tokenType: 2 }, // aBasEURC
+    ],
   },
 
   poolLimitOrderManager: {
@@ -301,8 +311,18 @@ export const baseProdData: IAddresses = {
 
   odosV2RouterAddress: baseChainData.odosEx.v2Router,
 
+  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
+
   compoundV3: {
     rewards: baseChainData.compoundV3.rewards,
+  },
+
+  fluid: {
+    merkleDistributor: "0x94312a608246Cecfce6811Db84B3Ef4B2619054E",
+  },
+
+  kyberSwap: {
+    routerV2: "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5",
   },
 };
 

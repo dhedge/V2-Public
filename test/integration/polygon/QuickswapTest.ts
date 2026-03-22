@@ -60,9 +60,7 @@ describe("Quickswap V2 Test", function () {
 
   it("Should be able to approve", async () => {
     let approveABI = iERC20.encodeFunctionData("approve", [assets.usdc, (200e6).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI)).to.be.revertedWith(
-      "asset disabled",
-    );
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.weth, approveABI)).to.be.revertedWith("dh22");
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.usdc, approveABI)).to.be.revertedWith(
       "unsupported spender approval",
@@ -349,9 +347,7 @@ describe("Quickswap V2 Test", function () {
 
     let approveABI = iERC20.encodeFunctionData("approve", [assets.dai, depositAmount]);
 
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.dai, approveABI)).to.be.revertedWith(
-      "asset disabled",
-    );
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.dai, approveABI)).to.be.revertedWith("dh22");
 
     approveABI = iERC20.encodeFunctionData("approve", [quickswap.router, depositAmount]);
     await poolLogicProxy.connect(manager).execTransaction(assets.wmatic, approveABI);

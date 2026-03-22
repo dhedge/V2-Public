@@ -127,4 +127,5 @@ runEasySwapperV2GuardsTest({
   swapperAddress: baseChainData.flatMoney.swapper,
   wrappedNativeToken: baseChainData.assets.weth,
   chainId: 8453,
+  poolLimitOrderManagerProxy: "0xFcBEc28c43E356693971a24bf3F2Fd7D965E2ebA",
 });

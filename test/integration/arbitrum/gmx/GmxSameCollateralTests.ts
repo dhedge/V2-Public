@@ -5,6 +5,7 @@ import { launchGmxLpTests } from "../../common/gmx/GmxLpTest";
 import { IGmxTestsParams } from "../../common/gmx/gmxTestHelpers";
 import { launchGmxClaimTests } from "../../common/gmx/GmxClaimTest";
 import { arbitrumProdData } from "../../../../deployment/arbitrum/deploymentData";
+import { AssetType } from "../../../../deployment/upgrade/jobs/assetsJob";
 
 const { assets, assetsBalanceOfSlot } = arbitrumChainData;
 
@@ -56,11 +57,12 @@ const testParams: IGmxTestsParams = {
   underlyingTokensToAdd: [
     {
       address: assets.wbtc,
-      oracleContractAddressOnchain: arbitrumChainData.usdPriceFeeds.wbtc,
+      oracleContractAddressOnchain: arbitrumChainData.usdPriceFeeds.btc,
       maxAgeOnchain: 90_000, // 90_000 seconds => 25 hours,
       priceId: "0xc9d8b075a5c69303365ae23633d4e085199bf5c520a3b90fed1322a0342ffc33",
       maxAgeOffchain: 86_400, // 86400 seconds => 24 hours,
       minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+      assetType: AssetType["Chainlink direct USD price feed with 8 decimals"],
     },
   ],
   vitrualTokenOracleSettings: arbitrumProdData.gmx?.virtualTokenResolver,

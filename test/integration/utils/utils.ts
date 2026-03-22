@@ -31,7 +31,7 @@ const evmRestoreSnap = async (id: string, retries = 0) => {
     console.error("Error when reverting", id, e);
     if (retries < 3) {
       console.log("Retrying to revert to", id);
-      evmRestoreSnap(id, retries++);
+      evmRestoreSnap(id, retries + 1);
     }
   }
 };

@@ -1,6 +1,5 @@
 import fs from "fs";
 import util from "util";
-import axios from "axios";
 import { exec } from "child_process";
 import { Input } from "csv-stringify";
 import stringify from "csv-stringify/lib/sync";
@@ -111,32 +110,23 @@ export const toBytes32 = (key: string) => {
 
 const getNonce = async (
   safeSdk: Safe,
-  chainId: number,
+  safeApiKit: SafeApiKit,
   safeAddress: string,
   restartFromLastConfirmedNonce: boolean,
   useNonce: number | undefined,
-) => {
+): Promise<number> => {
   if (useNonce !== undefined) {
     return useNonce;
   }
-  const lastConfirmedNonce = await safeSdk.getNonce();
+
   if (restartFromLastConfirmedNonce) {
+    const lastConfirmedNonce = await safeSdk.getNonce();
     console.log("GetNonce: Starting from LAST CONFIRMED NONCE: ", lastConfirmedNonce);
     return lastConfirmedNonce;
   }
 
-  const safeTxApi = `https://safe-client.safe.global/v1/chains/${chainId}/safes/${safeAddress}/transactions/queued`;
-  const response = await axios.get(safeTxApi);
-  const results = response.data.results.reverse();
-  const last = results.find((r: { type: string }) => r.type === "TRANSACTION");
-  if (!last) {
-    console.log("GetNonce: No Pending Nonce - Starting from LAST CONFIRMED NONCE: ", lastConfirmedNonce);
-    return lastConfirmedNonce;
-  }
-
-  const nonce = last.transaction.executionInfo.nonce + 1;
-  console.log("GetNonce: Starting from last PENDING nonce: ", nonce);
-  return nonce;
+  const nextNonce = await safeApiKit.getNextNonce(safeAddress);
+  return +nextNonce;
 };
 
 export const proposeTx = async (
@@ -192,9 +182,10 @@ export const proposeTransactions = async (
     10: [process.env.OPTIMISM_URL, process.env.OVM_PRIVATE_KEY],
     42161: [process.env.ARBITRUM_URL, process.env.ARBITRUM_PRIVATE_KEY],
     8453: [process.env.BASE_URL, process.env.BASE_PRIVATE_KEY],
+    9745: [process.env.PLASMA_URL, process.env.PLASMA_PRIVATE_KEY, "https://api.safe.global/tx-service/plasma/api"],
   };
 
-  const [provider, signer] = chainData[config.chainId] ?? [];
+  const [provider, signer, txServiceUrl] = chainData[config.chainId] ?? [];
 
   if (!provider || !signer) throw new Error("Missing provider or signer: check env vars and chainData");
 
@@ -206,13 +197,15 @@ export const proposeTransactions = async (
   });
   const apiKit = new SafeApiKit({
     chainId: BigInt(config.chainId),
+    apiKey: process.env.SAFE_API_KEY,
+    txServiceUrl,
   });
 
   nonce =
     nonce ??
     (await retryWithDelay(
-      () => getNonce(safeSdk, config.chainId, safeAddress, config.restartnonce, config.useNonce),
-      "Safe Get Nonce",
+      () => getNonce(safeSdk, apiKit, safeAddress, config.restartnonce, config.useNonce),
+      "SAFE Get Nonce",
     ));
 
   const options = {

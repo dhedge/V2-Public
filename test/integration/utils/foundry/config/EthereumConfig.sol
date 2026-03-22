@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.6;
+pragma solidity >=0.7.6;
 
 library EthereumConfig {
   uint256 public constant CHAIN_ID = 1;
 
+  address public constant PROXY_ADMIN = 0xad17E5020954eB3c6d77be9DCDF9DBAB44EdD16E;
+  address public constant OWNER = 0x5a76f841bFe5182f04bf511fC0Ecf88C27189FCB;
+
   // dHEDGE Contracts
+  address public constant POOL_FACTORY_PROD = 0x96D33bCF84DdE326014248E2896F79bbb9c13D6d;
+  address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x1C6cC699FD73964F32c55Fe3208D47158Bfad8Cd;
+  address public constant USD_PRICE_AGGREGATOR_PROD = 0x4D4010338beD13483CC85de051d28d2B4f3b6484;
 
   // Tokens
   address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
@@ -14,9 +20,10 @@ library EthereumConfig {
   address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
   address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
   address public constant PT_USDe_JUL_2025 = 0x917459337CaAC939D41d7493B3999f571D20D667;
-  address public constant PT_sUSDe_JUL_2025 = 0x3b3fB9C57858EF816833dC91565EFcd85D96f634;
   address public constant USDe = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3;
   address public constant sUSDe = 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497;
+  address public constant PT_sUSDe_SEP_2025 = 0x9F56094C450763769BA0EA9Fe2876070c0fD5F77;
+  address public constant PT_sUSDe_NOV_2025 = 0xe6A934089BBEe34F832060CE98848359883749B3;
 
   // Oracles
   address public constant USDC_CHAINLINK_ORACLE = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
@@ -25,12 +32,15 @@ library EthereumConfig {
   address public constant USDT_CHAINLINK_ORACLE = 0x3E7d1eAB13ad0104d2750B8863b489D65364e32D;
   address public constant USDe_CHAINLINK_ORACLE = 0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961;
   address public constant sUSDe_CHAINLINK_ORACLE = 0xFF3BC18cCBd5999CE63E788A1c250a88626aD099;
-  address public constant PENDLE_ORACLE_PT_TO_SY_USDe_JUL2025_1800_TWAP = 0xf64981Af20589e74c5e8025E4cfD257875A7fC81;
-  address public constant PENDLE_ORACLE_PT_TO_SY_sUSDe_JUL2025_1800_TWAP = 0xF456b1f85fb74FE816F5D0a49076e19164aF3f8D;
   address public constant PT_USDe_JUL_2025_PRICE_AGGREGATOR = 0xa920Ee93b1aC4E093Eb33C35990EE37283B1c303;
-  address public constant PT_sUSDe_JUL_2025_PRICE_AGGREGATOR = 0x06C1969D2A38EE97B24E8853ee598C1BA347D307;
+  address public constant PT_sUSDe_NOV_2025_PRICE_AGGREGATOR = 0xB4503d626C2Cb73cf9D027499Cefc47b5A0C6a2E;
 
-  // Toros Vaults
+  // Liquidity
+  address public constant FLUID_DEX_USDe_USDT_POOL = 0xf063BD202E45d6b2843102cb4EcE339026645D4a;
+  address public constant FLUID_DEX_sUSDe_USDT_POOL = 0x1DD125C32e4B5086c63CC13B3cA02C4A2a61Fa9b;
+
+  // mStable Vaults
+  address public constant mPT_sUSDe = 0xfeC2ADFA296Fe189F53089FD5CCD8c28Dd559CF2;
 
   // Auxiliary Contracts
   address public constant SWAPPER = 0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D;
@@ -42,8 +52,11 @@ library EthereumConfig {
   address public constant PENDLE_YIELD_CONTRACT_FACTORY = 0x35A338522a435D46f77Be32C70E215B813D0e3aC;
   address public constant PENDLE_STATIC_ROUTER = 0x263833d47eA3fA4a30f269323aba6a107f9eB14C;
   address public constant PENDLE_ROUTER_V4 = 0x888888888889758F76e7103c6CbF23ABbF58F946; // Same for all chains
-  address public constant PENDLE_MARKET_FACTORY = 0x6fcf753f2C67b83f7B09746Bbc4FA0047b35D050;
   address public constant PENDLE_MARKET_USDe_JUL_2025 = 0x9Df192D13D61609D1852461c4850595e1F56E714;
-  address public constant PENDLE_MARKET_sUSDe_JUL_2025 = 0x4339Ffe2B7592Dc783ed13cCE310531aB366dEac;
   address public constant PENDLE_MARKET_sUSDe_SEP_2025 = 0xA36b60A14A1A5247912584768C6e53E1a269a9F7;
+  address public constant PENDLE_MARKET_sUSDe_NOV_2025 = 0xb6aC3d5da138918aC4E84441e924a20daA60dBdd;
+  address public constant KYBER_SWAP_ROUTER_V2 = 0x6131B5fae19EA4f9D964eAc0408E4408b66337b5; // Same for all chains
+  address public constant ODOS_V3_ROUTER = 0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05; // Same for all chains
+  address public constant ONE_INCH_V6_ROUTER = 0x111111125421cA6dc452d289314280a0f8842A65; // Same for all chains
+  address public constant ANGLE_DISTRIBUTOR_CONTRACT = 0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae; // Same for all chains
 }

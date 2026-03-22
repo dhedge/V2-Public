@@ -8,7 +8,6 @@ import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
 import {IGmxDataStore} from "../../../interfaces/gmx/IGmxDataStore.sol";
 import {IGmxExchangeRouterContractGuard} from "../../../interfaces/gmx/IGmxExchangeRouterContractGuard.sol";
 import {IGmxDeposit} from "../../../interfaces/gmx/IGmxDeposit.sol";
-import {IGmxWithdrawal} from "../../../interfaces/gmx/IGmxWithdrawal.sol";
 import {IGmxReader} from "../../../interfaces/gmx/IGmxReader.sol";
 import {IGmxReferralStorage} from "../../../interfaces/gmx/IGmxReferralStorage.sol";
 import {GmxDataStoreLib} from "../../../utils/gmx/GmxDataStoreLib.sol";
@@ -28,8 +27,8 @@ import {IPoolFactory} from "../../../interfaces/IPoolFactory.sol";
 import {GmxPosition} from "../../../utils/gmx/GmxPosition.sol";
 import {GmxClaimableCollateralTrackerLib} from "../../../utils/gmx/GmxClaimableCollateralTrackerLib.sol";
 import {GmxPositionCollateralAmountLib} from "../../../utils/gmx/GmxPositionCollateralAmountLib.sol";
-import {DhedgeNftTrackerStorage} from "../../../utils/tracker/DhedgeNftTrackerStorage.sol";
 import {GmxStructs} from "../../../utils/gmx/GmxStructs.sol";
+import {GmxHelperLib} from "../../../utils/gmx/GmxHelperLib.sol";
 
 /// @notice AssetType = 105
 contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard, IAddAssetCheckGuard {
@@ -40,22 +39,12 @@ contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard,
 
   bytes32 private constant CLAIMABLE_FUNDING_AMOUNT_DATA_STORE_KEY = keccak256(abi.encode("CLAIMABLE_FUNDING_AMOUNT"));
   bytes32 private constant ACCOUNT_DEPOSIT_LIST = keccak256(abi.encode("ACCOUNT_DEPOSIT_LIST"));
-  bytes32 private constant ACCOUNT_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_WITHDRAWAL_LIST"));
 
   address public immutable gmxExchangeRouter;
   bool public override isAddAssetCheckGuard = true;
 
   constructor(address _gmxExchangeRouter) {
     gmxExchangeRouter = _gmxExchangeRouter;
-  }
-
-  struct GmxGuardData {
-    IGmxDataStore dataStore;
-    IGmxReader reader;
-    address assetHandler;
-    address uiFeeReceiver;
-    DhedgeNftTrackerStorage nftTracker;
-    IGmxReferralStorage referralStorage;
   }
 
   function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) external view override {
@@ -76,12 +65,12 @@ contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard,
   ) public view override(OutsidePositionWithdrawalHelper, ERC20Guard) returns (uint256 balance) {
     address poolFactory = IPoolLogic(_pool).factory();
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic());
-    GmxGuardData memory guardData;
+    GmxStructs.GmxGuardData memory guardData;
     GmxPriceLib.GmxPriceDependecies memory priceDependencies;
     {
       IGmxExchangeRouterContractGuard contractguard = _useContractGuard(poolFactory);
       // avoid stack too deep error
-      guardData = GmxGuardData({
+      guardData = GmxStructs.GmxGuardData({
         dataStore: contractguard.dataStore(),
         reader: contractguard.reader(),
         assetHandler: IPoolFactory(poolFactory).getAssetHandler(),
@@ -142,20 +131,30 @@ contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard,
             _assetValue(poolManagerLogic, positionInfo.position.addresses.collateralToken, collateralAmount)
           );
         }
+        // Claimable in the future funding fees
+        if (positionInfo.fees.funding.claimableLongTokenAmount > 0) {
+          balance = balance.add(
+            _assetValue(poolManagerLogic, market.longToken, positionInfo.fees.funding.claimableLongTokenAmount)
+          );
+        }
+        if (positionInfo.fees.funding.claimableShortTokenAmount > 0) {
+          balance = balance.add(
+            _assetValue(poolManagerLogic, market.shortToken, positionInfo.fees.funding.claimableShortTokenAmount)
+          );
+        }
       }
     }
 
     // 2. Pending orders: deposited collateral in market increase orders, plus execution fees of all orders
-    Order.Props[] memory orders = guardData.reader.getAccountOrders({
+    IGmxReader.OrderInfo[] memory orderInfos = guardData.reader.getAccountOrders({
       _account: _pool,
       _dataStore: guardData.dataStore,
       _start: 0,
       _end: type(uint256).max
     });
 
-    for (uint256 i; i < orders.length; i++) {
-      Order.Props memory order = orders[i];
-
+    for (uint256 i; i < orderInfos.length; i++) {
+      Order.Props memory order = orderInfos[i].order;
       if (
         (order.numbers.orderType == Order.OrderType.MarketIncrease && order.addresses.market == _asset) ||
         (order.numbers.orderType == Order.OrderType.MarketSwap && order.addresses.swapPath[0] == _asset) // swapPath length is always 1 for swapOrders
@@ -231,10 +230,12 @@ contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard,
     }
 
     // 6. Market tokens in a withdrawal vault
-    balance = balance.add(_balanceWithdrawalVault(_pool, poolManagerLogic, market, priceDependencies));
+    balance = balance.add(GmxHelperLib.balanceWithdrawalVault(_pool, poolManagerLogic, market, priceDependencies));
 
     // 7. claimable collateral
-    balance = balance.add(_balanceClaimableCollateral(_pool, poolManagerLogic, market, guardData));
+    balance = balance.add(
+      GmxClaimableCollateralTrackerLib.balanceClaimableCollateral(_pool, poolManagerLogic, market, guardData)
+    );
   }
 
   /// @notice Returns the decimals of Flat Money leverage positions
@@ -324,73 +325,6 @@ contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard,
     uint256 reduceLength = positions.length.sub(index);
     assembly {
       mstore(marketPositions, sub(mload(marketPositions), reduceLength))
-    }
-  }
-
-  function _balanceWithdrawalVault(
-    address _pool,
-    IPoolManagerLogic _poolManagerLogic,
-    IGmxMarket.Props memory _market,
-    GmxPriceLib.GmxPriceDependecies memory _priceDependencies
-  ) internal view returns (uint256 balance) {
-    bytes32[] memory withdrawalKeys = _priceDependencies.dataStore.getBytes32ValuesAt(
-      keccak256(abi.encode(ACCOUNT_WITHDRAWAL_LIST, _pool)),
-      0,
-      type(uint256).max
-    );
-
-    for (uint256 i; i < withdrawalKeys.length; i++) {
-      IGmxWithdrawal.Props memory withdrawal = _priceDependencies.reader.getWithdrawal({
-        _dataStore: _priceDependencies.dataStore,
-        key: withdrawalKeys[i]
-      });
-      balance = balance.add(
-        _assetValue(_poolManagerLogic, _priceDependencies.dataStore.wnt(), withdrawal.numbers.executionFee)
-      );
-      balance = balance.add(
-        GmxPriceLib
-          .getMarketLpTokenPrice(_priceDependencies, _market, false)
-          .mul(withdrawal.numbers.marketTokenAmount)
-          .div(1e18)
-      );
-    }
-  }
-
-  function _balanceClaimableCollateral(
-    address _pool,
-    IPoolManagerLogic _poolManagerLogic,
-    IGmxMarket.Props memory _market,
-    GmxGuardData memory _guardData
-  ) internal view returns (uint256 balance) {
-    balance = _assetValue(
-      _poolManagerLogic,
-      _market.longToken,
-      GmxClaimableCollateralTrackerLib.getTotalClaimableAmount(
-        address(_guardData.nftTracker),
-        address(_guardData.dataStore),
-        GmxClaimableCollateralTrackerLib.ClaimableCollateralInfo({
-          market: _market.marketToken,
-          token: _market.longToken,
-          account: _pool
-        })
-      )
-    );
-    if (_market.longToken != _market.shortToken) {
-      balance = balance.add(
-        _assetValue(
-          _poolManagerLogic,
-          _market.shortToken,
-          GmxClaimableCollateralTrackerLib.getTotalClaimableAmount(
-            address(_guardData.nftTracker),
-            address(_guardData.dataStore),
-            GmxClaimableCollateralTrackerLib.ClaimableCollateralInfo({
-              market: _market.marketToken,
-              token: _market.shortToken,
-              account: _pool
-            })
-          )
-        )
-      );
     }
   }
 }

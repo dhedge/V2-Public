@@ -8,6 +8,7 @@ import {
   PoolFactory,
   PoolLogic,
   PoolLogicExposed,
+  PoolManagerLogic,
   PoolManagerLogic__factory,
   TestUSDC,
   TestWETH,
@@ -34,6 +35,7 @@ describe("dHEDGE Pool Deposit", () => {
   let manager: SignerWithAddress, investor: SignerWithAddress, dao: SignerWithAddress, user1: SignerWithAddress;
   let poolFactory: PoolFactory;
   let poolLogicProxy: PoolLogic;
+  let poolManagerLogicProxy: PoolManagerLogic;
   let weth: TestWETH, wethPriceFeed: MockContract;
   let wethAddress: string;
   let usdcProxy: TestUSDC, usdcPriceFeed: MockContract, linkPriceFeed: MockContract;
@@ -57,7 +59,13 @@ describe("dHEDGE Pool Deposit", () => {
     wethAddress = weth.address;
     wethPriceFeed = await MockContract.deploy();
 
-    const PoolLogic = await ethers.getContractFactory("PoolLogic");
+    const PoolLogicLib = await ethers.getContractFactory("PoolLogicLib");
+    const poolLogicLib = await PoolLogicLib.deploy();
+    const PoolLogic = await ethers.getContractFactory("PoolLogic", {
+      libraries: {
+        PoolLogicLib: poolLogicLib.address,
+      },
+    });
     const poolLogic = await PoolLogic.deploy();
 
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -92,12 +100,13 @@ describe("dHEDGE Pool Deposit", () => {
     erc20Guard.deployed();
     await governance.setAssetGuard(0, erc20Guard.address);
 
-    await poolFactory.createFund(false, manager.address, "String0", "String1", "String3", 0, 0, [
+    await poolFactory.createFund(false, manager.address, "String0", "String1", "String3", 0, 0, 0, 0, [
       { asset: usdcAddress, isDeposit: true },
       { asset: wethAddress, isDeposit: true },
     ]);
     const pools = await poolFactory.getDeployedFunds();
     poolLogicProxy = PoolLogic.attach(pools[0]);
+    poolManagerLogicProxy = PoolManagerLogic.attach(await poolLogicProxy.poolManagerLogic());
 
     linkPriceFeed = await MockContract.deploy();
     await updateChainlinkAggregators(usdcPriceFeed, wethPriceFeed, linkPriceFeed);
@@ -133,9 +142,7 @@ describe("dHEDGE Pool Deposit", () => {
       // manager transfers 1_000_001e6 usdc to the poolLogicProxy directly
       await usdcProxy.connect(manager).transfer(poolLogicProxy.address, 1_000_001e6, { from: manager.address });
       // investor tries to deposit 10e6 usdc
-      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, 10e6)).to.be.revertedWith(
-        "invalid liquidityMinted",
-      );
+      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, 10e6)).to.be.revertedWith("dh10");
       const sharesForInvestor = await poolLogicProxy.balanceOf(investor.address);
 
       expect(sharesForInvestor).to.equal(0);
@@ -149,9 +156,7 @@ describe("dHEDGE Pool Deposit", () => {
     it("should revert if depositing tokens such that liquidity minted is below 100_000", async () => {
       // Manager tries to deposit 1 wei. This should mint 2000 shares.
       // Since the expected mint amount is less than < 100_000. This should revert.
-      await expect(poolLogicProxy.connect(manager).deposit(wethAddress, 1)).to.be.revertedWith(
-        "invalid liquidityMinted",
-      );
+      await expect(poolLogicProxy.connect(manager).deposit(wethAddress, 1)).to.be.revertedWith("dh10");
     });
 
     it("loss of tokens due to inflation attack should be within acceptable range of 0.00001% (18 decimal tokens)", async () => {
@@ -217,9 +222,7 @@ describe("dHEDGE Pool Deposit", () => {
 
       // Manager attempts to withdraw his portion of shares such that only 1 share remains.
       // This should fail as minimum share supply required in the pool is 100_000.
-      await expect(poolLogicProxy.connect(manager).withdraw(sharesForManager.sub(1))).to.be.revertedWith(
-        "below threshold",
-      );
+      await expect(poolLogicProxy.connect(manager).withdraw(sharesForManager.sub(1))).to.be.revertedWith("dh10");
     });
 
     it("loss of tokens due to inflation attack should be within acceptable range of 0.00001% (6 decimal tokens)", async () => {
@@ -270,6 +273,10 @@ describe("dHEDGE Pool Deposit", () => {
   });
 
   describe("Fees", () => {
+    beforeEach(async () => {
+      await poolFactory.setDaoFee(0, 100);
+    });
+
     describe("Entry fee", () => {
       it("should account for entry fee when totalSupply is 0", async function () {
         const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -474,30 +481,28 @@ describe("dHEDGE Pool Deposit", () => {
 
   describe("receiverWhitelist", () => {
     it("cannot transfer tokens while under lockup", async () => {
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(86400);
       await expect(
         poolLogicProxy.connect(investor).transfer(dao.address, await poolLogicProxy.balanceOf(investorAddress)),
-      ).to.be.revertedWith("cooldown active");
+      ).to.be.revertedWith("dh3");
     });
 
     it("can transfer tokens under lockup to addresses in receiverWhitelist", async () => {
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(86400);
       await poolFactory.addReceiverWhitelist(dao.address);
       await poolLogicProxy.connect(investor).transfer(dao.address, await poolLogicProxy.balanceOf(investorAddress));
     });
 
     it("removing an address for receiverWhitelist stops it from being able to receive tokens under lockup", async () => {
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(86400);
       await poolFactory.addReceiverWhitelist(dao.address);
       const balance = await poolLogicProxy.balanceOf(investorAddress);
       await poolLogicProxy.connect(investor).transfer(dao.address, balance.div(2));
       await poolFactory.removeReceiverWhitelist(dao.address);
-      await expect(poolLogicProxy.connect(investor).transfer(dao.address, balance.div(2))).to.revertedWith(
-        "cooldown active",
-      );
+      await expect(poolLogicProxy.connect(investor).transfer(dao.address, balance.div(2))).to.revertedWith("dh3");
     });
   });
 
@@ -507,7 +512,7 @@ describe("dHEDGE Pool Deposit", () => {
       await updateChainlinkAggregators(usdcPriceFeed, wethPriceFeed, linkPriceFeed);
       await assetHandler.setChainlinkTimeout(9000000);
 
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       const tokenPriceAfterDeposit = await poolLogicProxy.tokenPrice();
 
       // Increase the fund token price by direct deposit.
@@ -572,7 +577,13 @@ describe("dHEDGE Pool Deposit", () => {
     let poolLogicExposed: PoolLogicExposed;
 
     before(async () => {
-      const PoolLogicExposed = await ethers.getContractFactory("PoolLogicExposed");
+      const PoolLogicLib = await ethers.getContractFactory("PoolLogicLib");
+      const poolLogicLib = await PoolLogicLib.deploy();
+      const PoolLogicExposed = await ethers.getContractFactory("PoolLogicExposed", {
+        libraries: {
+          PoolLogicLib: poolLogicLib.address,
+        },
+      });
       poolLogicExposed = await PoolLogicExposed.deploy();
     });
 
@@ -1157,20 +1168,32 @@ describe("dHEDGE Pool Deposit", () => {
       await expect(
         poolLogicProxy
           .connect(manager)
-          .depositForWithCustomCooldown(investorAddress, usdcAddress, amount, customCooldown),
-      ).to.be.revertedWith("only allowed");
+          .depositForWithCustomCooldown(
+            investorAddress,
+            usdcAddress,
+            amount,
+            customCooldown,
+            ethers.constants.AddressZero,
+          ),
+      ).to.be.revertedWith("dh5");
       await poolFactory.addCustomCooldownWhitelist(managerAddress);
       expect(await poolFactory.customCooldownWhitelist(managerAddress)).to.equal(true);
       await poolLogicProxy
         .connect(manager)
-        .depositForWithCustomCooldown(investorAddress, usdcAddress, amount, customCooldown);
+        .depositForWithCustomCooldown(
+          investorAddress,
+          usdcAddress,
+          amount,
+          customCooldown,
+          ethers.constants.AddressZero,
+        );
       await poolFactory.removeCustomCooldownWhitelist(managerAddress);
       expect(await poolFactory.customCooldownWhitelist(managerAddress)).to.equal(false);
     });
 
-    it("returns default exit cooldown after first deposit through depositFor", async () => {
+    it("returns default exit cooldown after first deposit through deposit", async () => {
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(0);
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(86400);
     });
 
@@ -1179,53 +1202,35 @@ describe("dHEDGE Pool Deposit", () => {
       await poolFactory.addCustomCooldownWhitelist(managerAddress);
       await poolLogicProxy
         .connect(manager)
-        .depositForWithCustomCooldown(investorAddress, usdcAddress, amount, customCooldown);
+        .depositForWithCustomCooldown(
+          investorAddress,
+          usdcAddress,
+          amount,
+          customCooldown,
+          ethers.constants.AddressZero,
+        );
       expect(await poolLogicProxy.getExitRemainingCooldown(investorAddress)).to.equal(customCooldown);
       await poolFactory.removeCustomCooldownWhitelist(managerAddress);
     });
   });
 
   describe("private pool works as expected", () => {
-    it("can't depositFor into private pool if recipient is not a member", async () => {
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
-      await expect(poolLogicProxy.connect(investor).depositFor(dao.address, usdcAddress, amount)).to.be.revertedWith(
-        "only members",
-      );
-      await expect(
-        poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount),
-      ).to.be.revertedWith("only members");
+    it("can't deposit into private pool if recipient is not a member", async () => {
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
+      await expect(poolLogicProxy.connect(dao).deposit(usdcAddress, amount)).to.be.revertedWith("dh7");
+      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, amount)).to.be.revertedWith("dh7");
     });
-    it("can't depositFor into private pool if recipient is not a member but caller is a member", async () => {
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
-      await expect(poolLogicProxy.connect(manager).depositFor(dao.address, usdcAddress, amount)).to.be.revertedWith(
-        "only members",
-      );
-    });
-    it("can depositFor into private pool if recipient is a member", async () => {
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
-      await expect(
-        poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount),
-      ).to.be.revertedWith("only members");
-      const poolManagerLogicProxy = PoolManagerLogic__factory.connect(await poolLogicProxy.poolManagerLogic(), manager);
+
+    it("can deposit into private pool if recipient is a member", async () => {
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
       await poolManagerLogicProxy.connect(manager).addMember(investor.address);
       expect(await poolLogicProxy.balanceOf(investor.address)).to.equal(0);
-      await poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       expect(await poolLogicProxy.balanceOf(investor.address)).not.to.equal(0);
-    });
-    it("can depositFor into private pool if recipient is a member, but caller is not a member", async () => {
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
-      const poolManagerLogicProxy = PoolManagerLogic__factory.connect(await poolLogicProxy.poolManagerLogic(), manager);
-      await expect(poolLogicProxy.connect(investor).depositFor(dao.address, usdcAddress, amount)).to.be.revertedWith(
-        "only members",
-      );
-      await poolManagerLogicProxy.connect(manager).addMember(dao.address);
-      expect(await poolLogicProxy.balanceOf(dao.address)).to.equal(0);
-      await poolLogicProxy.connect(investor).depositFor(dao.address, usdcAddress, amount);
-      expect(await poolLogicProxy.balanceOf(dao.address)).not.to.equal(0);
     });
 
     it("can deposit if the depositor is the manager and pool is private", async () => {
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
       await poolLogicProxy.connect(manager).deposit(usdcAddress, amount);
 
       expect(await poolLogicProxy.balanceOf(managerAddress)).to.be.gt(0);
@@ -1237,10 +1242,10 @@ describe("dHEDGE Pool Deposit", () => {
       const poolManagerLogicProxy = PoolManagerLogic.attach(poolManagerLogicAddr);
 
       // Make an initial deposit without setting the pool private.
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
 
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
       await poolManagerLogicProxy.connect(manager).addMember(user1.address);
 
       const amountToTransfer = (await poolLogicProxy.balanceOf(investorAddress)).div(2);
@@ -1250,10 +1255,10 @@ describe("dHEDGE Pool Deposit", () => {
     });
 
     it("can transfer private pool tokens to addresses not an allowed member (only mint whitelisting)", async () => {
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
 
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
 
       const amountToTransfer = (await poolLogicProxy.balanceOf(investorAddress)).div(2);
       await poolLogicProxy.connect(investor).transfer(user1.address, amountToTransfer);
@@ -1263,10 +1268,10 @@ describe("dHEDGE Pool Deposit", () => {
 
     it("can withdraw if member is not allowed but had private pool tokens before pool was set to private", async () => {
       const usdcBalanceBefore = await usdcProxy.balanceOf(investorAddress);
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
 
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
 
       // refresh timestamp of Chainlink price round data
       await updateChainlinkAggregators(usdcPriceFeed, wethPriceFeed, linkPriceFeed);
@@ -1275,7 +1280,7 @@ describe("dHEDGE Pool Deposit", () => {
       await poolLogicProxy.connect(investor).withdraw(await poolLogicProxy.balanceOf(investorAddress));
 
       expect(await poolLogicProxy.balanceOf(investorAddress)).to.equal(0);
-      expect(await usdcProxy.balanceOf(investorAddress)).to.be.gt(usdcBalanceBefore);
+      expect(await usdcProxy.balanceOf(investorAddress)).to.be.eq(usdcBalanceBefore);
     });
 
     it("can withdraw if member is not allowed but had private pool tokens before pool was set to private (fees set)", async () => {
@@ -1296,7 +1301,7 @@ describe("dHEDGE Pool Deposit", () => {
       await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
 
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
 
       await poolLogicProxy.connect(investor).withdraw(await poolLogicProxy.balanceOf(investorAddress));
 
@@ -1324,7 +1329,7 @@ describe("dHEDGE Pool Deposit", () => {
       await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
       await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
 
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
 
       // Manager should be able to reedem the fees after the pool is set to private.
       await poolLogicProxy.connect(manager).withdraw(await poolLogicProxy.balanceOf(managerAddress));
@@ -1335,9 +1340,9 @@ describe("dHEDGE Pool Deposit", () => {
     });
 
     it("cannot transfer to 0 address after setting pool as private", async () => {
-      await poolLogicProxy.depositFor(investorAddress, usdcAddress, amount);
+      await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
 
-      await poolLogicProxy.connect(manager).setPoolPrivate(true);
+      await poolManagerLogicProxy.connect(manager).setPoolPrivate(true);
       await ethers.provider.send("evm_increaseTime", [3600 * 25]); // add 25 hours
 
       const amountToTransfer = (await poolLogicProxy.balanceOf(investorAddress)).div(2);
@@ -1375,60 +1380,53 @@ describe("dHEDGE Pool Deposit", () => {
 
     it("can't deposit into paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
-      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, amount)).to.be.revertedWith("pool paused");
-      await expect(
-        poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount),
-      ).to.be.revertedWith("pool paused");
+      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, amount)).to.be.revertedWith("dh2");
+      await expect(poolLogicProxy.connect(investor).deposit(usdcAddress, amount)).to.be.revertedWith("dh2");
     });
 
     it("can't withdraw from paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
-      await expect(poolLogicProxy.connect(investor).withdraw(amount)).to.be.revertedWith("pool paused");
-      await expect(poolLogicProxy.connect(investor).withdrawTo(investor.address, amount)).to.be.revertedWith(
-        "pool paused",
-      );
+      await expect(poolLogicProxy.connect(investor).withdraw(amount)).to.be.revertedWith("dh2");
+      await expect(poolLogicProxy.connect(investor).withdrawTo(investor.address, amount)).to.be.revertedWith("dh2");
     });
 
     it("can't mint fees in paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
-      await expect(poolLogicProxy.mintManagerFee()).to.be.revertedWith("pool paused");
+      await expect(poolLogicProxy.mintManagerFee()).to.be.revertedWith("dh2");
     });
 
     it("can't transfer shares of paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
-      await expect(poolLogicProxy.connect(investor).transfer(user1.address, amount)).to.be.revertedWith("pool paused");
+      await expect(poolLogicProxy.connect(investor).transfer(user1.address, amount)).to.be.revertedWith("dh2");
     });
 
     it("can't transferFrom shares of paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
       await expect(
         poolLogicProxy.connect(investor).transferFrom(investorAddress, user1.address, amount),
-      ).to.be.revertedWith("pool paused");
+      ).to.be.revertedWith("dh2");
     });
 
     it("can trade in paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]);
-      // Using mock data for execTransaction to make sure it doesn't revert on "trading paused"
+      // Using mock data for execTransaction to make sure it doesn't revert on "dh20"
       const someTxData = usdcProxy.interface.encodeFunctionData("transfer", [poolLogicProxy.address, amount]);
-      await expect(poolLogicProxy.connect(manager).execTransaction(usdcAddress, someTxData)).to.be.revertedWith(
-        "invalid transaction",
-      );
+      await expect(poolLogicProxy.connect(manager).execTransaction(usdcAddress, someTxData)).to.be.revertedWith("dh23");
     });
 
     it("can't trade in trading paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
       await expect(
         poolLogicProxy.connect(manager).execTransaction(ethers.constants.AddressZero, "0x"),
-      ).to.be.revertedWith("trading paused");
+      ).to.be.revertedWith("dh20");
       await expect(
         poolLogicProxy.connect(manager).execTransactions([{ to: ethers.constants.AddressZero, data: "0x" }]),
-      ).to.be.revertedWith("trading paused");
+      ).to.be.revertedWith("dh20");
     });
 
     it("can deposit into trading paused pool", async () => {
       await poolFactory.setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: false, pauseTrading: true }]);
       await poolLogicProxy.connect(investor).deposit(usdcAddress, amount);
-      await poolLogicProxy.connect(investor).depositFor(investor.address, usdcAddress, amount);
     });
 
     it("can withdraw from trading paused pool", async () => {
@@ -1501,7 +1499,7 @@ describe("dHEDGE Pool Deposit", () => {
 
       await expect(
         poolLogicProxy.connect(investor).deposit(nonfungiblePositionManagerMock.address, id),
-      ).to.be.revertedWith("NFTs not supported");
+      ).to.be.revertedWith("dh9");
     });
 
     it("should allow WETH deposits", async () => {

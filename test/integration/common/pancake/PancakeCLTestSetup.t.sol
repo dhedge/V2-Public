@@ -100,6 +100,8 @@ abstract contract PancakeCLTestSetup is BackboneSetup {
         _fundSymbol: "PCT",
         _performanceFeeNumerator: 0,
         _managerFeeNumerator: 0,
+        _entryFeeNumerator: 0,
+        _exitFeeNum: 0,
         _supportedAssets: supportedAssets
       })
     );
@@ -414,7 +416,7 @@ abstract contract PancakeCLTestSetup is BackboneSetup {
       decreaseParams
     );
 
-    vm.expectRevert(bytes("invalid transaction"));
+    vm.expectRevert(bytes("dh23"));
     fund.execTransaction(MasterChefAddr, decreaseCallData);
 
     bytes[] memory calls = new bytes[](1);

@@ -35,6 +35,11 @@ contract Managed is IManaged {
 
   address public override trader;
 
+  modifier onlyManager() {
+    _isCallerManager();
+    _;
+  }
+
   /// @notice Initialize of the managed contract
   /// @param _newManager The address of the new manager
   /// @param _newManagerName The name of the new manager
@@ -42,16 +47,6 @@ contract Managed is IManaged {
     require(_newManager != address(0), "Invalid manager");
     manager = _newManager;
     managerName = _newManagerName;
-  }
-
-  modifier onlyManager() {
-    require(msg.sender == manager, "only manager");
-    _;
-  }
-
-  modifier onlyManagerOrTrader() {
-    require(msg.sender == manager || msg.sender == trader, "only manager or trader");
-    _;
   }
 
   /// @notice Return boolean if the address is a member of the list
@@ -147,5 +142,9 @@ contract Managed is IManaged {
     _memberPosition[_member] = 0;
 
     _memberList.pop();
+  }
+
+  function _isCallerManager() internal view {
+    require(msg.sender == manager, "dh4");
   }
 }

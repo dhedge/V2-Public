@@ -33,6 +33,11 @@ const validateChainlinkOracleForGmx = async (
       hashData(["bytes32", "address"], [hashString("PRICE_FEED_MULTIPLIER"), assetAddress]),
     );
     console.log(`for ${assetConfig.assetName}:`);
+    if (priceFeeMultiplier.eq(0)) {
+      // priceFeeMultiplier defined in virtualTokenResolver
+      console.log(`priceFeeMultiplier is 0 in GMX data store, assuming it's defined in virtualTokenResolver`);
+      return true;
+    }
     const oracleDecimals = await (
       await ethers.getContractAt("AggregatorV3Interface", chainlinkOracleAddress)
     ).decimals();

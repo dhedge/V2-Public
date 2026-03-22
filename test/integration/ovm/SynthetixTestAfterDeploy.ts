@@ -106,6 +106,8 @@ describe("Synthetix Test", function () {
       "DHTF",
       ethers.BigNumber.from("5000"),
       ethers.constants.Zero,
+      ethers.constants.Zero,
+      ethers.constants.Zero,
       [
         [assets.susd, true],
         [assets.seth, true],
@@ -188,7 +190,7 @@ describe("Synthetix Test", function () {
     const totalFundValue = await poolManagerLogicProxy.totalFundValue();
     expect(totalFundValue.toString()).to.equal("0");
 
-    await expect(poolLogicProxy.deposit(assets.slink, (100e18).toString())).to.be.revertedWith("invalid deposit asset");
+    await expect(poolLogicProxy.deposit(assets.slink, (100e18).toString())).to.be.revertedWith("dh8");
 
     await susdProxy.approve(poolLogicProxy.address, (100e18).toString());
     await poolLogicProxy.deposit(assets.susd, (100e18).toString());
@@ -209,9 +211,7 @@ describe("Synthetix Test", function () {
     const IERC20 = await artifacts.readArtifact("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20");
     const iERC20 = new ethers.utils.Interface(IERC20.abi);
     let approveABI = iERC20.encodeFunctionData("approve", [assets.susd, (100e18).toString()]);
-    await expect(poolLogicProxy.connect(manager).execTransaction(assets.slink, approveABI)).to.be.revertedWith(
-      "asset disabled",
-    );
+    await expect(poolLogicProxy.connect(manager).execTransaction(assets.slink, approveABI)).to.be.revertedWith("dh22");
 
     await expect(poolLogicProxy.connect(manager).execTransaction(assets.susd, approveABI)).to.be.revertedWith(
       "unsupported spender approval",

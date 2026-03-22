@@ -230,14 +230,11 @@ contract DhedgeEasySwapper is OwnableUpgradeable {
         msg.sender,
         address(poolDepositAsset),
         poolDepositAsset.balanceOf(address(this)),
-        60 minutes
+        60 minutes,
+        address(0)
       );
     } else {
-      liquidityMinted = IPoolLogic(pool).depositFor(
-        msg.sender,
-        address(poolDepositAsset),
-        poolDepositAsset.balanceOf(address(this))
-      );
+      revert("deprecated");
     }
     require(liquidityMinted >= expectedLiquidityMinted, "slippage");
 

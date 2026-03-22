@@ -8,7 +8,7 @@ import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 
 library AaveV3TestArbitrumSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 353727847;
+  uint256 public constant FORK_BLOCK_NUMBER = 365115641;
 }
 
 contract AaveV3TestArbitrum is AaveV3TestSetup, ArbitrumSetup {

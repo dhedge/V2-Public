@@ -64,7 +64,13 @@ describe("SlippageAccumulator and SlippageAccumulatorUser Tests", () => {
     wethPriceFeed = await MockContract.deploy();
     linkPriceFeed = await MockContract.deploy();
 
-    PoolLogicFactory = await ethers.getContractFactory("PoolLogic");
+    const PoolLogicLib = await ethers.getContractFactory("PoolLogicLib");
+    const poolLogicLib = await PoolLogicLib.deploy();
+    PoolLogicFactory = await ethers.getContractFactory("PoolLogic", {
+      libraries: {
+        PoolLogicLib: poolLogicLib.address,
+      },
+    });
     const poolLogic = await PoolLogicFactory.deploy();
 
     const PoolManagerLogic = await ethers.getContractFactory("PoolManagerLogic");
@@ -147,7 +153,7 @@ describe("SlippageAccumulator and SlippageAccumulatorUser Tests", () => {
     await governance.setContractGuard(uniswapV3Router.address, uniswapV3RouterGuard.address);
     await governance.setContractGuard(oneInchRouter.address, oneInchV6Guard.address);
 
-    await poolFactory.createFund(false, manager.address, "String0", "String1", "String3", 0, 0, [
+    await poolFactory.createFund(false, manager.address, "String0", "String1", "String3", 0, 0, 0, 0, [
       { asset: usdcAddress, isDeposit: true },
       { asset: wethAddress, isDeposit: true },
     ]);

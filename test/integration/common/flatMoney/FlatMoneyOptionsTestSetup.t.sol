@@ -3,6 +3,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol";
 
@@ -27,6 +29,7 @@ import {FlatcoinModuleKeys} from "contracts/utils/flatMoney/libraries/FlatcoinMo
 
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 import {IntegrationDeployer} from "test/integration/utils/foundry/dryRun/IntegrationDeployer.t.sol";
+import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 
 // TODO: Adjust token amounts used in tests once required to reuse, currently set for WBTC (8 decimals)
 abstract contract FlatMoneyOptionsTestSetup is BackboneSetup, IntegrationDeployer {
@@ -73,8 +76,17 @@ abstract contract FlatMoneyOptionsTestSetup is BackboneSetup, IntegrationDeploye
     // Get contracts to roll deployments on
     Governance governance = Governance(_poolFactory.governanceAddress());
     IAssetHandler assetHandler = IAssetHandler(_poolFactory.getAssetHandler());
+    address latestPoolLogic = address(new PoolLogic());
+    address latestPoolManagerLogic = address(new PoolManagerLogic());
+    address latestPoolFactory = address(new PoolFactory());
 
     vm.startPrank(_poolFactory.owner());
+
+    ProxyAdmin(ArbitrumConfig.PROXY_ADMIN).upgrade(
+      TransparentUpgradeableProxy(payable(address(_poolFactory))),
+      latestPoolFactory
+    );
+    _poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
 
     // Two contract guards
     flatMoneyOptionsOrderAnnouncementGuard = new FlatMoneyOptionsOrderAnnouncementGuard(
@@ -99,6 +111,7 @@ abstract contract FlatMoneyOptionsTestSetup is BackboneSetup, IntegrationDeploye
     );
     governance.setAssetGuard(uint16(AssetTypeIncomplete.FLAT_MONEY_OPTIONS_MARKET), address(optionsMarketAssetGuard));
     governance.setAssetGuard(uint16(AssetTypeIncomplete.FLAT_MONEY_COLLATERAL), address(collateralAssetGuard));
+    vm.mockCall(address(governance), abi.encodeWithSignature("assetGuards(uint16)", 30), abi.encode(address(0)));
 
     // Add collateral asset and "options position" asset to the AssetHandler
     IAssetHandler.Asset[] memory assets = new IAssetHandler.Asset[](2);
@@ -508,7 +521,7 @@ abstract contract FlatMoneyOptionsTestSetup is BackboneSetup, IntegrationDeploye
 
     vm.startPrank(whitelistedPoolManager);
 
-    vm.expectRevert("only guarded address");
+    vm.expectRevert(bytes("dh18"));
     IERC721Enumerable(leverageModule).safeTransferFrom(whitelistedPoolManager, address(whitelistedPool), tokenId);
   }
 
@@ -587,7 +600,7 @@ abstract contract FlatMoneyOptionsTestSetup is BackboneSetup, IntegrationDeploye
 
     return
       PoolLogic(
-        poolFactoryProd.createFund(false, whitelistedPoolManager, "Test Pool", "TP", "manager name", 0, 0, assets)
+        poolFactoryProd.createFund(false, whitelistedPoolManager, "Test Pool", "TP", "manager name", 0, 0, 0, 0, assets)
       );
   }
 

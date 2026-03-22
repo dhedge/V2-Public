@@ -20,6 +20,7 @@ interface IGmxPosition {
     uint256 sizeInUsd;
     uint256 sizeInTokens;
     uint256 collateralAmount;
+    int256 pendingImpactAmount;
     uint256 borrowingFactor;
     uint256 fundingFeeAmountPerSize;
     uint256 longTokenClaimableFundingAmountPerSize;
@@ -101,11 +102,15 @@ interface IGmxPosition {
 
   struct ExecutionPriceResult {
     int256 priceImpactUsd;
-    uint256 priceImpactDiffUsd;
     uint256 executionPrice;
+    bool balanceWasImproved;
+    int256 proportionalPendingImpactUsd;
+    int256 totalImpactUsd;
+    uint256 priceImpactDiffUsd;
   }
 
   struct PositionInfo {
+    bytes32 positionKey;
     Props position;
     PositionFees fees;
     ExecutionPriceResult executionPriceResult;

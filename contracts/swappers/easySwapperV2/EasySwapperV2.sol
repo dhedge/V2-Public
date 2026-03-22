@@ -9,6 +9,7 @@ import {IERC20} from "../../interfaces/IERC20.sol";
 
 import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IEasySwapperV2} from "./interfaces/IEasySwapperV2.sol";
+import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {IWithdrawalVault} from "./interfaces/IWithdrawalVault.sol";
 import {IPoolFactory} from "../../interfaces/IPoolFactory.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
@@ -29,11 +30,6 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   struct SingleInSingleOutData {
     ISwapper.SrcTokenSwapDetails srcData;
     ISwapper.DestData destData;
-  }
-
-  enum WithdrawalVaultType {
-    SINGLE_ASSET_WITHDRAWAL,
-    LIMIT_ORDER
   }
 
   uint256 public constant DEFAULT_COOLDOWN = 1 days;
@@ -84,19 +80,13 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   event AuthorizedWithdrawersSet(WhitelistSetting[] whitelistSettings);
 
   /// @notice Reverts if vault can not be deposited into with custom lockup time
-  /// @dev Entry fee bigger than 0.1% is a must during custom (lower) lockup time during deposit
   modifier isCustomCooldownAllowed(address _dHedgeVault) {
-    require(customCooldownDepositsWhitelist[_dHedgeVault], "not whitelisted");
-
-    (, , uint256 entryFeeNumerator, , ) = IPoolManagerLogic(IPoolLogic(_dHedgeVault).poolManagerLogic()).getFee();
-    require(entryFeeNumerator >= 10, "entry fee not set");
-
+    _checkCustomCooldownAllowed(_dHedgeVault);
     _;
   }
 
   modifier onlyAuthorizedWithdrawers(address _caller) {
     require(isAuthorizedWithdrawer[_caller], "not authorized");
-
     _;
   }
 
@@ -141,7 +131,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   ) external {
     _swapData.srcData.token.safeTransferFrom(msg.sender, address(this), _swapData.srcData.amount);
 
-    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, DEFAULT_COOLDOWN);
+    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, DEFAULT_COOLDOWN, address(0));
   }
 
   /// @notice Deposit with any token - receive vault tokens with lowered lockup
@@ -158,7 +148,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   ) external isCustomCooldownAllowed(_dHedgeVault) {
     _swapData.srcData.token.safeTransferFrom(msg.sender, address(this), _swapData.srcData.amount);
 
-    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, customCooldown);
+    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, customCooldown, address(0));
   }
 
   /// @notice Deposit with token which is accepted by vault - receive vault tokens with normal lockup
@@ -174,7 +164,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     uint256 _depositAmount,
     uint256 _expectedAmountReceived
   ) external {
-    _deposit(_dHedgeVault, _vaultDepositToken, _depositAmount, _expectedAmountReceived, DEFAULT_COOLDOWN);
+    _deposit(_dHedgeVault, _vaultDepositToken, _depositAmount, _expectedAmountReceived, DEFAULT_COOLDOWN, address(0));
   }
 
   /// @notice Deposit with token which is accepted by vault - receive vault tokens with lowered lockup
@@ -191,7 +181,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     uint256 _depositAmount,
     uint256 _expectedAmountReceived
   ) external isCustomCooldownAllowed(_dHedgeVault) {
-    _deposit(_dHedgeVault, _vaultDepositToken, _depositAmount, _expectedAmountReceived, customCooldown);
+    _deposit(_dHedgeVault, _vaultDepositToken, _depositAmount, _expectedAmountReceived, customCooldown, address(0));
   }
 
   /**
@@ -212,7 +202,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     SingleInSingleOutData calldata _swapData,
     uint256 _expectedAmountReceived
   ) external payable {
-    _zapNativeDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, DEFAULT_COOLDOWN);
+    _zapNativeDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, DEFAULT_COOLDOWN, address(0));
   }
 
   /// @notice Deposit with native token - receive vault tokens with lowered lockup
@@ -227,7 +217,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     SingleInSingleOutData calldata _swapData,
     uint256 _expectedAmountReceived
   ) external payable isCustomCooldownAllowed(_dHedgeVault) {
-    _zapNativeDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, customCooldown);
+    _zapNativeDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, customCooldown, address(0));
   }
 
   /// @notice Deposit with native token - receive vault tokens with normal lockup
@@ -236,7 +226,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   /// @param _dHedgeVault dHEDGE vault address
   /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
   function nativeDeposit(address _dHedgeVault, uint256 _expectedAmountReceived) external payable {
-    _nativeDeposit(_dHedgeVault, _expectedAmountReceived, DEFAULT_COOLDOWN);
+    _nativeDeposit(_dHedgeVault, _expectedAmountReceived, DEFAULT_COOLDOWN, address(0));
   }
 
   /// @notice Deposit with native token - receive vault tokens with lowered lockup
@@ -248,7 +238,149 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     address _dHedgeVault,
     uint256 _expectedAmountReceived
   ) external payable isCustomCooldownAllowed(_dHedgeVault) {
-    _nativeDeposit(_dHedgeVault, _expectedAmountReceived, customCooldown);
+    _nativeDeposit(_dHedgeVault, _expectedAmountReceived, customCooldown, address(0));
+  }
+
+  /**
+   ********************************************
+   *    Deposit Functions with Referral Data  *
+   ********************************************
+   */
+
+  /// @notice Deposit with any token and referral data - receive vault tokens with normal lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _swapData The struct containing srcData and destData
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function zapDeposit(
+    address _dHedgeVault,
+    SingleInSingleOutData calldata _swapData,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external {
+    _swapData.srcData.token.safeTransferFrom(msg.sender, address(this), _swapData.srcData.amount);
+
+    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, DEFAULT_COOLDOWN, _decodeReferrer(_referralData));
+  }
+
+  /// @notice Deposit with any token and referral data - receive vault tokens with lowered lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _swapData The struct containing srcData and destData
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function zapDepositWithCustomCooldown(
+    address _dHedgeVault,
+    SingleInSingleOutData calldata _swapData,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external isCustomCooldownAllowed(_dHedgeVault) {
+    _swapData.srcData.token.safeTransferFrom(msg.sender, address(this), _swapData.srcData.amount);
+
+    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, customCooldown, _decodeReferrer(_referralData));
+  }
+
+  /// @notice Deposit with vault deposit token and referral data - receive vault tokens with normal lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _vaultDepositToken dHEDGE vault's deposit token
+  /// @param _depositAmount Amount of dHEDGE vault deposit token to deposit
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function deposit(
+    address _dHedgeVault,
+    IERC20 _vaultDepositToken,
+    uint256 _depositAmount,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external {
+    _deposit(
+      _dHedgeVault,
+      _vaultDepositToken,
+      _depositAmount,
+      _expectedAmountReceived,
+      DEFAULT_COOLDOWN,
+      _decodeReferrer(_referralData)
+    );
+  }
+
+  /// @notice Deposit with vault deposit token and referral data - receive vault tokens with lowered lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _vaultDepositToken dHEDGE vault's deposit token
+  /// @param _depositAmount Amount of dHEDGE vault deposit token to deposit
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function depositWithCustomCooldown(
+    address _dHedgeVault,
+    IERC20 _vaultDepositToken,
+    uint256 _depositAmount,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external isCustomCooldownAllowed(_dHedgeVault) {
+    _deposit(
+      _dHedgeVault,
+      _vaultDepositToken,
+      _depositAmount,
+      _expectedAmountReceived,
+      customCooldown,
+      _decodeReferrer(_referralData)
+    );
+  }
+
+  /// @notice Deposit with native token and referral data - zap variant with normal lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _swapData The struct containing srcData and destData
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function zapNativeDeposit(
+    address _dHedgeVault,
+    SingleInSingleOutData calldata _swapData,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external payable {
+    _zapNativeDeposit(
+      _dHedgeVault,
+      _swapData,
+      _expectedAmountReceived,
+      DEFAULT_COOLDOWN,
+      _decodeReferrer(_referralData)
+    );
+  }
+
+  /// @notice Deposit with native token and referral data - zap variant with lowered lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _swapData The struct containing srcData and destData
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function zapNativeDepositWithCustomCooldown(
+    address _dHedgeVault,
+    SingleInSingleOutData calldata _swapData,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external payable isCustomCooldownAllowed(_dHedgeVault) {
+    _zapNativeDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, customCooldown, _decodeReferrer(_referralData));
+  }
+
+  /// @notice Deposit with native token and referral data - direct variant with normal lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function nativeDeposit(
+    address _dHedgeVault,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external payable {
+    _nativeDeposit(_dHedgeVault, _expectedAmountReceived, DEFAULT_COOLDOWN, _decodeReferrer(_referralData));
+  }
+
+  /// @notice Deposit with native token and referral data - direct variant with lowered lockup
+  /// @param _dHedgeVault dHEDGE vault address
+  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
+  /// @param _referralData ABI-encoded referral data. Currently: abi.encode(address referrer). Pass empty bytes for no referral.
+  function nativeDepositWithCustomCooldown(
+    address _dHedgeVault,
+    uint256 _expectedAmountReceived,
+    bytes calldata _referralData
+  ) external payable isCustomCooldownAllowed(_dHedgeVault) {
+    _nativeDeposit(_dHedgeVault, _expectedAmountReceived, customCooldown, _decodeReferrer(_referralData));
   }
 
   /**
@@ -314,17 +446,6 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     _claimTokensFromVault(msg.sender, WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL);
   }
 
-  /// @notice Completes a limit order withdrawal with specified swap data
-  /// @param _swapData The swap data containing input and output token details
-  /// @param _expectedDestTokenAmount The minimum amount of destination tokens expected from the swap
-  /// @return destTokenAmount The actual amount of destination tokens received
-  function completeLimitOrderWithdrawal(
-    IWithdrawalVault.MultiInSingleOutData calldata _swapData,
-    uint256 _expectedDestTokenAmount
-  ) external returns (uint256 destTokenAmount) {
-    return _completeWithdrawal(msg.sender, _swapData, _expectedDestTokenAmount, WithdrawalVaultType.LIMIT_ORDER);
-  }
-
   /// @notice Completes a limit order withdrawal by claiming tokens directly from the vault
   /// @dev Simpler version that just claims tokens without any swapping
   function completeLimitOrderWithdrawal() external {
@@ -341,20 +462,42 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     IWithdrawalVault.MultiInSingleOutData calldata _swapData,
     uint256 _expectedDestTokenAmount
   ) external override onlyAuthorizedWithdrawers(msg.sender) returns (uint256 destTokenAmount) {
+    // If completing on behalf of a dHEDGE vault, ensure settlement asset is supported so once settlement happens,
+    // vault accounts for the value it receives.
+    if (isdHedgeVault(_user)) {
+      require(
+        IHasSupportedAsset(IPoolLogic(_user).poolManagerLogic()).isSupportedAsset(
+          address(_swapData.destData.destToken)
+        ),
+        "dst token disabled"
+      );
+    }
+
     return _completeWithdrawal(_user, _swapData, _expectedDestTokenAmount, WithdrawalVaultType.LIMIT_ORDER);
   }
 
   /// @notice Anyone can call and send tokens to user from their vault
   /// @param _user Address of the depositor
   function completeLimitOrderWithdrawalFor(address _user) public {
+    // If completing on behalf of a dHEDGE vault, ensure all assets which will be sent to the vault are supported,
+    // so once it's done, vault accounts for the value it receives.
+    if (isdHedgeVault(_user)) {
+      IWithdrawalVault.TrackedAsset[] memory trackedAssets = getTrackedAssetsFromLimitOrders(_user);
+      address poolManagerLogic = IPoolLogic(_user).poolManagerLogic();
+
+      for (uint256 i; i < trackedAssets.length; ++i) {
+        require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(trackedAssets[i].token), "dst token disabled");
+      }
+    }
+
     _claimTokensFromVault(_user, WithdrawalVaultType.LIMIT_ORDER);
   }
 
   /// @dev To be used by PoolLogic during withdrawProcessing
-  function partialWithdraw(uint256 _portion, address _to) external override {
+  function partialWithdraw(uint256 _portion, address _to, WithdrawalVaultType _vaultType) external override {
     require(_portion > 0 && _portion <= 1e18, "invalid portion");
 
-    address withdrawalVault = _getVault(msg.sender, WithdrawalVaultType.SINGLE_ASSET_WITHDRAWAL);
+    address withdrawalVault = _getVault(msg.sender, _vaultType);
     IWithdrawalVault(withdrawalVault).recoverAssets(_portion, _to);
 
     emit WithdrawalCompleted(withdrawalVault, msg.sender);
@@ -409,7 +552,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
       expectedAmountReceived = depositValue.mul(1e18).div(tokenPrice);
     }
 
-    (, , uint256 entryFeeNumerator, , uint256 denominator) = poolManagerLogic.getFee();
+    (uint256 entryFeeNumerator, , uint256 denominator) = poolManagerLogic.getEntryFeeInfo();
     if (entryFeeNumerator > 0) {
       uint256 entryFee = expectedAmountReceived.mul(entryFeeNumerator).div(denominator);
       expectedAmountReceived = expectedAmountReceived.sub(entryFee);
@@ -430,7 +573,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   /// @return trackedAssets full array of basic assets and their balances
   function getTrackedAssetsFromLimitOrders(
     address _depositor
-  ) external view override returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets) {
+  ) public view override returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets) {
     return _getTrackedAssets(_depositor, WithdrawalVaultType.LIMIT_ORDER);
   }
 
@@ -490,6 +633,10 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
    ***************************************
    */
 
+  function _checkCustomCooldownAllowed(address _dHedgeVault) internal view {
+    require(customCooldownDepositsWhitelist[_dHedgeVault], "not whitelisted");
+  }
+
   /// @param _swapper New swapper address
   function _setSwapper(ISwapper _swapper) internal {
     require(address(_swapper) != address(0), "invalid address");
@@ -520,16 +667,12 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     }
   }
 
-  /// @notice Wraps native token before zapping into dHEDGE vault
-  /// @param _dHedgeVault dHEDGE vault address
-  /// @param _swapData The struct containing srcData and destData
-  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
-  /// @param _cooldown Cooldown time in seconds
   function _zapNativeDeposit(
     address _dHedgeVault,
     SingleInSingleOutData calldata _swapData,
     uint256 _expectedAmountReceived,
-    uint256 _cooldown
+    uint256 _cooldown,
+    address _referrer
   ) internal {
     require(address(_swapData.srcData.token) == address(wrappedNativeToken), "invalid src token");
 
@@ -537,19 +680,15 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
     wrappedNativeToken.deposit{value: msg.value}();
 
-    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, _cooldown);
+    _zapDeposit(_dHedgeVault, _swapData, _expectedAmountReceived, _cooldown, _referrer);
   }
 
-  /// @notice Swaps src token into dest token before depositing into dHEDGE vault
-  /// @param _dHedgeVault dHEDGE vault address
-  /// @param _swapData The struct containing srcData and destData
-  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
-  /// @param _cooldown Cooldown time in seconds
   function _zapDeposit(
     address _dHedgeVault,
     SingleInSingleOutData calldata _swapData,
     uint256 _expectedAmountReceived,
-    uint256 _cooldown
+    uint256 _cooldown,
+    address _referrer
   ) internal {
     uint256 vaultDepositTokenBalanceBefore = _swapData.destData.destToken.balanceOf(address(this));
 
@@ -578,7 +717,8 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
       msg.sender,
       address(_swapData.destData.destToken),
       vaultDepositTokenReceived,
-      _cooldown
+      _cooldown,
+      _referrer
     );
 
     require(amountReceived >= _expectedAmountReceived, "high deposit slippage");
@@ -593,11 +733,12 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     });
   }
 
-  /// @notice Wraps native token before depositing into dHEDGE vault
-  /// @param _dHedgeVault dHEDGE vault address
-  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
-  /// @param _cooldown Cooldown time in seconds
-  function _nativeDeposit(address _dHedgeVault, uint256 _expectedAmountReceived, uint256 _cooldown) internal {
+  function _nativeDeposit(
+    address _dHedgeVault,
+    uint256 _expectedAmountReceived,
+    uint256 _cooldown,
+    address _referrer
+  ) internal {
     wrappedNativeToken.deposit{value: msg.value}();
 
     IERC20(address(wrappedNativeToken)).safeIncreaseAllowance(_dHedgeVault, msg.value);
@@ -606,24 +747,20 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
       msg.sender,
       address(wrappedNativeToken),
       msg.value,
-      _cooldown
+      _cooldown,
+      _referrer
     );
 
     require(amountReceived >= _expectedAmountReceived, "high deposit slippage");
   }
 
-  /// @notice Deposits into dHEDGE vault
-  /// @param _dHedgeVault dHEDGE vault address
-  /// @param _vaultDepositToken dHEDGE vault's deposit token
-  /// @param _depositAmount Amount of dHEDGE vault deposit token to deposit
-  /// @param _expectedAmountReceived Expected amount of dHEDGE vault tokens received
-  /// @param _cooldown Cooldown time in seconds
   function _deposit(
     address _dHedgeVault,
     IERC20 _vaultDepositToken,
     uint256 _depositAmount,
     uint256 _expectedAmountReceived,
-    uint256 _cooldown
+    uint256 _cooldown,
+    address _referrer
   ) internal {
     _vaultDepositToken.safeTransferFrom(msg.sender, address(this), _depositAmount);
 
@@ -633,7 +770,8 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
       msg.sender,
       address(_vaultDepositToken),
       _depositAmount,
-      _cooldown
+      _cooldown,
+      _referrer
     );
 
     require(amountReceived >= _expectedAmountReceived, "high deposit slippage");
@@ -723,5 +861,18 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     }
 
     return IWithdrawalVault(vault).getTrackedAssets();
+  }
+
+  /// @notice Decode a referrer address from arbitrary referral data bytes
+  /// @dev Currently expects abi.encode(address referrer).
+  ///      Returns address(0) if the data is empty or too short, enabling forward compatibility
+  ///      (future versions can append more fields without breaking existing callers).
+  /// @param _referralData ABI-encoded referral data
+  /// @return referrer The decoded referrer address
+  function _decodeReferrer(bytes calldata _referralData) internal pure returns (address referrer) {
+    if (_referralData.length < 32) {
+      return address(0);
+    }
+    referrer = abi.decode(_referralData, (address));
   }
 }

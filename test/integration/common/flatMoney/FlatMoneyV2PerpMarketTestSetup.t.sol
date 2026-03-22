@@ -499,7 +499,7 @@ abstract contract FlatMoneyV2PerpMarketTestSetup is BackboneSetup, IntegrationDe
 
     vm.startPrank(whitelistedPoolManager);
 
-    vm.expectRevert("only guarded address");
+    vm.expectRevert(bytes("dh18"));
     IERC721Enumerable(leverageModule).safeTransferFrom(whitelistedPoolManager, address(whitelistedPool), tokenId);
   }
 
@@ -853,7 +853,7 @@ abstract contract FlatMoneyV2PerpMarketTestSetup is BackboneSetup, IntegrationDe
     assets[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: true});
     assets[1] = IHasSupportedAsset.Asset({asset: leverageModule, isDeposit: false});
 
-    return PoolLogic(_poolFactory.createFund(false, manager, "Test Pool", "TP", "manager name", 0, 0, assets));
+    return PoolLogic(_poolFactory.createFund(false, manager, "Test Pool", "TP", "manager name", 0, 0, 0, 0, assets));
   }
 
   function _announceLeverageOpen() internal {

@@ -6,6 +6,7 @@ pragma experimental ABIEncoderV2;
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import {IPoolFactory} from "../interfaces/IPoolFactory.sol";
 import {IPoolManagerLogic} from "../interfaces/IPoolManagerLogic.sol";
 import {ITxTrackingGuard} from "../interfaces/guards/ITxTrackingGuard.sol";
 
@@ -16,7 +17,7 @@ abstract contract SlippageAccumulatorUser is ITxTrackingGuard {
 
   bool public override isTxTrackingGuard = true;
 
-  SlippageAccumulator internal immutable slippageAccumulator;
+  SlippageAccumulator public immutable slippageAccumulator;
 
   /// @dev Note that the intermediateSwapData is used to store the data temporarily
   ///      after a swap is completed, this is used to update the slippage impact.
@@ -30,8 +31,7 @@ abstract contract SlippageAccumulatorUser is ITxTrackingGuard {
   }
 
   function afterTxGuard(address poolManagerLogic, address to, bytes memory /* data */) public virtual override {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
+    address poolLogic = _accessControl(poolManagerLogic);
 
     slippageAccumulator.updateSlippageImpact(
       poolManagerLogic,
@@ -49,5 +49,14 @@ abstract contract SlippageAccumulatorUser is ITxTrackingGuard {
   function _getBalance(address token, address holder) internal view returns (uint256) {
     // This is to avoid reverts during wrap/unwrap attempts via 1inch (which still should revert downstream)
     return (token == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE) ? holder.balance : IERC20(token).balanceOf(holder);
+  }
+
+  function _accessControl(address poolManagerLogic) internal view returns (address poolLogic) {
+    poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
+
+    require(
+      msg.sender == poolLogic && IPoolFactory(slippageAccumulator.poolFactory()).isPool(poolLogic),
+      "not pool logic"
+    );
   }
 }

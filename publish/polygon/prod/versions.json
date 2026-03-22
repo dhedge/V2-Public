@@ -1548,15 +1548,6 @@
           }
         },
         {
-          "assetName": "MAKER DAO",
-          "assetAddress": "0x6f7C932e7684666C9fd1d44527765433e01fF61d",
-          "assetType": "0",
-          "oracleType": "ChainlinkAggregator",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
-          }
-        },
-        {
           "assetName": "The Sandbox",
           "assetAddress": "0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683",
           "assetType": "0",
@@ -1582,26 +1573,6 @@
           "specificOracleConfig": {
             "chainlinkOracleAddress": "0x10e5f3DFc81B3e5Ef4e648C4454D04e79E1E41E2"
           }
-        },
-        {
-          "assetName": "Sushi LP MKR-WETH",
-          "assetAddress": "0xbf61e1d82bd440cb9da11d325c046f029a663890",
-          "assetType": "2",
-          "oracleType": "UniV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "oracleAddress": "0xd3Cf43962499d32a9a157Fe749A0Da3ae471e64e"
-        },
-        {
-          "assetName": "Sushi LP MKR-DAI",
-          "assetAddress": "0x5e8f882dd0d062e2d81bcbe4ec61d7aeabf80c74",
-          "assetType": "2",
-          "oracleType": "UniV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "oracleAddress": "0x39a464c7816dDbbc4AAE6b22955cf7B6aE0bDA7f"
         },
         {
           "assetName": "Sushi LP GRT-WETH",
@@ -1972,16 +1943,6 @@
           "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
         },
         {
-          "assetName": "Balancer LP stMATIC-MATIC",
-          "oracleType": "BalancerComposableStablePoolAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
-          },
-          "assetAddress": "0x8159462d255c1d24915cb51ec361f700174cd994",
-          "assetType": 6,
-          "oracleAddress": "0x297452bf6A67324988eF5cB4bf6aD9294E781C24"
-        },
-        {
           "assetName": "Balancer LP MATIC-MaticX",
           "oracleType": "BalancerComposableStablePoolAggregator",
           "specificOracleConfig": {
@@ -2005,16 +1966,6 @@
           "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
         },
         {
-          "assetName": "agEUR",
-          "assetAddress": "0xe0b52e49357fd4daf2c15e02058dce6bc0057db4",
-          "assetType": "4",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
-        },
-        {
           "assetName": "Pax Gold",
           "assetAddress": "0x553d3D295e0f695B9228246232eDF400ed3560B5",
           "assetType": "0",
@@ -2023,21 +1974,6 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0x0f6914d8e7e1214CDb3A4C6fbf729b75C69DF608"
-        },
-        {
-          "assetName": "Lido DAO Token (LDO)",
-          "assetAddress": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
-          "assetType": "0",
-          "oracleType": "UniV3TWAPAggregator",
-          "specificOracleConfig": {
-            "pool": "0xd866fac7db79994d08c0ca2221fee08935595b4b",
-            "mainToken": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
-            "pairTokenUsdAggregator": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
-            "priceLowerLimit": 0,
-            "priceUpperLimit": 1000000000000,
-            "updateInterval": 600
-          },
-          "oracleAddress": "0xCbB972D39A3528bca8bc70751E46a413E884aaC7"
         },
         {
           "assetName": "MiMatic",
@@ -2095,6 +2031,19 @@
           "assetType": "0",
           "oracleType": "DHedgePoolAggregator",
           "oracleAddress": "0xb40B5621aED08C9C0A510688C3725eEf46c056e1"
+        },
+        {
+          "assetName": "Lido DAO Token (LDO)",
+          "assetAddress": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
+          "assetType": "0",
+          "oracleType": "UniV3TWAPAggregator",
+          "specificOracleConfig": {
+            "pool": "0xda908C0bf14AD0B61Ea5eBe671aC59B2cE091cBf",
+            "mainToken": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
+            "pairTokenUsdAggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945",
+            "updateInterval": 1800
+          },
+          "oracleAddress": "0x514Ac67cC670dC11F7199c6aF17C6B12a373D1b5"
         }
       ],
       "RemovedAssets": [
@@ -2280,6 +2229,55 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
+        },
+        {
+          "assetName": "Sushi LP MKR-DAI",
+          "assetAddress": "0x5e8f882dd0d062e2d81bcbe4ec61d7aeabf80c74",
+          "assetType": "2",
+          "oracleType": "UniV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "oracleAddress": "0x39a464c7816dDbbc4AAE6b22955cf7B6aE0bDA7f"
+        },
+        {
+          "assetName": "MAKER DAO",
+          "assetAddress": "0x6f7C932e7684666C9fd1d44527765433e01fF61d",
+          "assetType": "0",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
+          }
+        },
+        {
+          "assetName": "Sushi LP MKR-WETH",
+          "assetAddress": "0xbf61e1d82bd440cb9da11d325c046f029a663890",
+          "assetType": "2",
+          "oracleType": "UniV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "oracleAddress": "0xd3Cf43962499d32a9a157Fe749A0Da3ae471e64e"
+        },
+        {
+          "assetName": "Balancer LP stMATIC-MATIC",
+          "oracleType": "BalancerComposableStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+          },
+          "assetAddress": "0x8159462d255c1d24915cb51ec361f700174cd994",
+          "assetType": 6,
+          "oracleAddress": "0x297452bf6A67324988eF5cB4bf6aD9294E781C24"
+        },
+        {
+          "assetName": "agEUR",
+          "assetAddress": "0xe0b52e49357fd4daf2c15e02058dce6bc0057db4",
+          "assetType": "4",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
         }
       ],
       "Oracles": [
@@ -2293,9 +2291,9 @@
       "USDPriceAggregator": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51",
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0x7EF064Fd491c05083D5F987E771b3FF9Ce7b5510",
+      "PoolLogic": "0x5B6138b607Cc1721326e433b07CEDcdE9aA3b758",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0x4b928feF16408e76a4f550E6e5cB15eA7C79c14b",
+      "PoolManagerLogic": "0xE4FfE204c83f5514B3CDb656D892c34096C297E4",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
       "ERC20Guard": "0x2033271d6932A82E720F0dDEc7736a0495b4db12",
@@ -2312,7 +2310,7 @@
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
       "BalancerV2Guard": "0xf9Dd3000500E5ea6921E515a87f1C101dF1ee09e",
       "OneInchV4Guard": "0x708Fb18D76Ca9E80792810758aCd81E60C6D987d",
-      "PoolFactory": "0x9e5490176816C6A545aa5514491386A13DBF44a3",
+      "PoolFactory": "0xCEa50c9193eE9EB355cC63839810814554380F4D",
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",
       "PoolPerformance": "0xb7De1766d13f845C91f6552880DCeC75ee670DA9",
@@ -2321,10 +2319,10 @@
       "EasySwapperGuard": "0x813a65aCc4b61530075B040f1689531966d62910",
       "DhedgeSuperSwapper": "0xd4A9Fd5925bD85554D22C6359B83B4501A3ABa76",
       "UniswapV3AssetGuard": "0xEc127Cf6A71ec8C0A66f07DF104fF58B7A47FDd5",
-      "UniswapV3RouterGuard": "0x2fAC14E4337969C39a2Eb17f8683E0CF702945c4",
-      "UniswapV3NonfungiblePositionGuard": "0x6D736562dd51C71a69714FC0a9dE17A74E3917ca",
-      "AaveLendingPoolAssetGuardV3": "0xF27f75275654223d064B745c311E5893b2e2791c",
-      "AaveLendingPoolGuardV3": "0xbd80DC9A9821a519C842Dc8F00F82264aeB68B45",
+      "UniswapV3RouterGuard": "0x2bB3c80434D763A273b478accB47ece86E84B3F1",
+      "UniswapV3NonfungiblePositionGuard": "0xAfD119Ac864C6A263dD15908011abF837A6435D0",
+      "AaveLendingPoolAssetGuardV3": "0x043Fc2386e5f04408D36b5A31D7F486dCce20ED4",
+      "AaveLendingPoolGuardV3": "0x1BEAE148490caB368E731DeB6bD5A92238cAaD99",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6ABB2f1373c06b21655e90864433A3E0d5d8bdC1",
       "ArrakisV1RouterStakingGuard": "0xCA6C89dfF08E4040052088eaF21f59b1D4bc5fA2",
       "ArrakisLiquidityGaugeV4AssetGuard": "0xC6191Ed2db3c043505C2ED2e3FbFDFe1B9b2061F",
@@ -2342,30 +2340,39 @@
       "DhedgeStakingV2NFTJson": "0xAdb97F1dc5932F1A5014acCa6A9E92dFE340b92a",
       "DhedgeStakingV2Proxy": "0xDDb64f8139A9BC44CD5E2493500475898240Ad40",
       "DhedgeStakingV2": "0xc07e348f669bbe839d95743A1e4a57985AAE29ED",
-      "SlippageAccumulator": "0xb23D4ccFaD52bB632a85c9a5d64c334B90B60E61",
+      "SlippageAccumulator": "0x8fab778ce0e6f2d3fa3c73C703310C824840a4B6",
       "ZeroExContractGuard": "0x1D7612FcEe43D4Ed25DDEe5b79d44414dAED6617",
       "ClosedContractGuard": "0x32f9AEE0AB90D01917dCb4ECDE4E8eFA9B827Cdc",
       "AaveDebtTokenContractGuard": "0xd0DD27DC984c1AC18a6fec6FCdB4C18af08887d4",
       "AaveMigrationHelperGuard": "0xD131aff6138155cA384C0A7e5e91e73f0Ab7dd0E",
       "AaveIncentivesControllerV3Guard": "0x91d3602Dfe4B150E6c39119AcB5e50AbfC7204e9",
-      "OneInchV6Guard": "0x6eA74aad445b7fc1622ccc9dfAfe2CD79Fe3f64d",
+      "OneInchV6Guard": "0x539C3a5119aDF04462b49321309CD797b793E96b",
       "WithdrawalVaultProxy": "0x22b865a33381690e75a4289f61890C8CEe751F81",
-      "WithdrawalVault": "0x6Ffb38C93f52Df32Db46629E4c8417658d9D2D53",
+      "WithdrawalVault": "0xb93954D861928aE577608D41EAB5a8bc61985f83",
       "EasySwapperV2Proxy": "0x45b90480D6F643dE2f128db091A357C3c90399f2",
-      "EasySwapperV2": "0xB3a81Fe03e2A0259E5EbC3567463f8b08d912eB7",
-      "EasySwapperV2ContractGuard": "0xfC2621aD46EE9a80A286Adbe371426556996C06d",
+      "EasySwapperV2": "0xA166d9b4512eEACC747c7515CEcC0CF5ce47ebD0",
+      "EasySwapperV2ContractGuard": "0xefA645c80551eE39294889E465dAa9BeA3be5791",
       "EasySwapperV2UnrolledAssetsGuard": "0xDcA7Ee1Cf0B1aD24900F06A805322ca7e2e4A071",
       "ByPassAssetGuard": "0x2B6737daFb942E2b70EA14C6C9B01D46eA7E1310",
-      "OdosV2ContractGuard": "0xf16F4Bac052d7856a3765Bdc218f64E3d50131d2",
+      "OdosV2ContractGuard": "0xD8F07645Cc987c7A40761e2E9D73C8Ed356D375b",
       "PoolLimitOrderManagerProxy": "0xB71410736d2C8F2DAf30dA9D332dA10534d2624d",
-      "PoolLimitOrderManager": "0xe3EDf68788aD941977758b2cdEECf8ea3D3cb560"
+      "PoolLimitOrderManager": "0x475E52fb1bF2203E33BDC1922a32722Fb35a8C0A",
+      "PoolLogicLib": "0x1e75620BaE9f87D4586B3E406EDa47BEd659a213",
+      "KyberSwapRouterV2ContractGuard": "0xC80700f6555112C790b6bFC52a42061d84A609eE",
+      "OdosV3ContractGuard": "0x96d3FBe3eE60cC5b490034FFAF9d9992D605996E",
+      "ValueManipulationCheck": "0xbb30F5FF9124245EBe8E07cB679deB139c93Db2C",
+      "GPv2SettlementContractGuard": "0x417c0384551E324d485cd6d7052d29d69e24eaa7",
+      "TypedStructuredDataValidatorProxy": "0x893223Be4e941fAA8A8DB93D0C097fCac37801ce",
+      "TypedStructuredDataValidator": "0x1284E9a4FbBdb8FA9979619fe826e84dF1d8632E",
+      "ReferralManagerProxy": "0xD3e0bA097fFd14b30a59694A78EBe4f3Eb04c82f",
+      "ReferralManager": "0x2a9376466b1D22956A295005b958be17C47a704e"
     },
     "network": {
       "name": "matic",
       "chainId": 137,
       "ensAddress": null
     },
-    "lastUpdated": "Sun, 06 Jul 2025 13:29:56 GMT",
+    "lastUpdated": "Tue, 10 Mar 2026 12:16:55 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -2381,7 +2388,9 @@
           "0x86c3dd18baf4370495d9228b58fd959771285c55",
           "0x79d2aefe6a21b26b024d9341a51f6b7897852499"
         ],
-        "feeByPassManagers": ["0x090e7fbd87a673ee3d0b6ccacf0e1d94fb90da59"],
+        "feeByPassManagers": [
+          "0x090e7fbd87a673ee3d0b6ccacf0e1d94fb90da59"
+        ],
         "feeNumerator": 10,
         "feeDenominator": 10000
       },

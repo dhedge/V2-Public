@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
+
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {ISwapDataConsumingGuard} from "../interfaces/guards/ISwapDataConsumingGuard.sol";
 import {ISwapper} from "../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IPoolLogic} from "../interfaces/IPoolLogic.sol";
@@ -32,7 +34,7 @@ contract AaveWithdrawTrickContract {
   uint256 public destAmount;
   uint256 public count;
   IPoolLogic public pool;
-  address public router = 0x111111125421cA6dc452d289314280a0f8842A65;
+
   enum AttackType {
     InflateSend,
     InflateDeposit
@@ -65,7 +67,7 @@ contract AaveWithdrawTrickContract {
       IAggregationRouterV6.SwapDescription memory desc = IAggregationRouterV6.SwapDescription({
         srcToken: token,
         dstToken: destToken,
-        srcReceiver: payable(router),
+        srcReceiver: payable(EthereumConfig.ONE_INCH_V6_ROUTER),
         dstReceiver: payable(address(swapper)),
         amount: amount,
         minReturnAmount: destAmount, // only one collateral asset, so all destAmount is from this swap
@@ -95,7 +97,7 @@ contract AaveWithdrawTrickContract {
   function execute(address) public returns (uint256) {
     // send destToken to get swapper satisfied with the swapData.destData.minDestAmount
     count += 1;
-    IERC20(destToken).transfer(router, destAmount);
+    IERC20(destToken).transfer(EthereumConfig.ONE_INCH_V6_ROUTER, destAmount);
 
     if (count == tokensDetails.length) {
       if (AttackType.InflateSend == attackType) {

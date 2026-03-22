@@ -26,7 +26,6 @@ import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {IPYieldContractFactory} from "contracts/interfaces/pendle/IPYieldContractFactory.sol";
 import {PendlePTAssetGuard} from "contracts/guards/assetGuards/pendle/PendlePTAssetGuard.sol";
-import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {RewardAssetGuard} from "contracts/guards/assetGuards/RewardAssetGuard.sol";
 
 abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
@@ -50,6 +49,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
   address public immutable token0ToLendPendleMarket;
   address public immutable token0ToLendUnderlying;
   address public immutable token0ToLendUnderlyingOracle;
+  address public immutable token1ToLendPendleMarket;
   uint8 public immutable useEMode;
 
   PoolLogic public aaveTestPool;
@@ -77,6 +77,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     address token0ToLendPendleMarket;
     address token0ToLendUnderlying;
     address token0ToLendUnderlyingOracle;
+    address token1ToLendPendleMarket;
     uint8 useEMode;
   }
 
@@ -101,6 +102,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     token0ToLendPendleMarket = config.token0ToLendPendleMarket;
     token0ToLendUnderlying = config.token0ToLendUnderlying;
     token0ToLendUnderlyingOracle = config.token0ToLendUnderlyingOracle;
+    token1ToLendPendleMarket = config.token1ToLendPendleMarket;
     useEMode = config.useEMode;
   }
 
@@ -149,17 +151,23 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     assetHandler.addAsset(token1ToLend, assetType1, token1Oracle);
     assetHandler.addAsset(tokenToBorrow, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), tokenToBorrowOracle);
 
-    if (
-      assetType0 == uint16(BackboneSetup.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN) ||
-      assetType1 == uint16(BackboneSetup.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN)
-    ) {
-      address[] memory knownPendleMarkets = new address[](1);
-      knownPendleMarkets[0] = token0ToLendPendleMarket;
+    if (token0ToLendPendleMarket != address(0) || token1ToLendPendleMarket != address(0)) {
+      // Count non-zero markets
+      uint256 marketCount = 0;
+      if (token0ToLendPendleMarket != address(0)) marketCount++;
+      if (token1ToLendPendleMarket != address(0)) marketCount++;
 
-      PendlePTAssetGuard pendlePTAssetGuard = new PendlePTAssetGuard(
-        EthereumConfig.PENDLE_MARKET_FACTORY,
-        knownPendleMarkets
-      );
+      // Fill array with non-zero markets
+      address[] memory knownPendleMarkets = new address[](marketCount);
+      uint256 index = 0;
+      if (token0ToLendPendleMarket != address(0)) {
+        knownPendleMarkets[index++] = token0ToLendPendleMarket;
+      }
+      if (token1ToLendPendleMarket != address(0)) {
+        knownPendleMarkets[index++] = token1ToLendPendleMarket;
+      }
+
+      PendlePTAssetGuard pendlePTAssetGuard = new PendlePTAssetGuard(knownPendleMarkets);
 
       RewardAssetGuard.RewardAssetSetting[] memory rewardAssetSettings = new RewardAssetGuard.RewardAssetSetting[](1);
       address[] memory linkedAssets = new address[](1);
@@ -198,6 +206,8 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
         _fundSymbol: "ATP",
         _performanceFeeNumerator: 0,
         _managerFeeNumerator: 0,
+        _entryFeeNumerator: 0,
+        _exitFeeNum: 0,
         _supportedAssets: supportedAssets
       })
     );
@@ -259,7 +269,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
       0,
       "Test pool should have no token 0 left after supply"
     );
-    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after supply");
+    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after supply"); // 0.01%
   }
 
   function test_can_deposit_deprecated_into_aave() public {
@@ -280,7 +290,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
       0,
       "Test pool should have no token 0 left after deposit"
     );
-    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after deposit");
+    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after deposit"); // 0.01%
   }
 
   function test_can_supply_multiple_assets_into_aave() public {
@@ -299,7 +309,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
 
     uint256 totalValueAfter = aaveTestPoolManagerLogic.totalFundValue();
 
-    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after next supply");
+    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after next supply"); // 0.01%
   }
 
   function test_can_withdraw_from_aave() public {
@@ -321,7 +331,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
       0,
       "Test pool should have no aToken left after withdraw"
     );
-    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after withdraw");
+    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after withdraw"); // 0.01%
   }
 
   function test_can_setUserUseReserveAsCollateral_to_true() public {
@@ -355,29 +365,31 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     uint256 tokenToBorrowBalanceAfter = IERC20Extended(tokenToBorrow).balanceOf(address(aaveTestPool));
 
     assertEq(tokenToBorrowBalanceAfter, borrowed, "Test pool should have borrowed token after borrow");
-    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after borrow");
+    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after borrow"); // 0.01%
   }
 
   function test_can_repay_to_aave() public {
     _supplyAndBorrow();
 
     uint256 totalValueBefore = aaveTestPoolManagerLogic.totalFundValue();
+    uint256 repayAmount = IERC20Extended(tokenToBorrow).balanceOf(address(aaveTestPool));
 
     vm.prank(manager);
     aaveTestPool.execTransaction(
       aaveV3Pool,
-      abi.encodeWithSelector(IAaveV3Pool.repay.selector, tokenToBorrow, type(uint256).max, 2, address(aaveTestPool))
+      abi.encodeWithSelector(IAaveV3Pool.repay.selector, tokenToBorrow, repayAmount, 2, address(aaveTestPool))
     );
 
     uint256 totalValueAfter = aaveTestPoolManagerLogic.totalFundValue();
     address variableDebtToken = IAaveV3Pool(aaveV3Pool).getReserveVariableDebtToken(tokenToBorrow);
 
-    assertEq(
+    assertApproxEqAbs(
       IERC20Extended(variableDebtToken).balanceOf(address(aaveTestPool)),
       0,
+      2,
       "Test pool should have no variable debt token left after repay"
     );
-    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after repay");
+    assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after repay"); // 0.01%
   }
 
   function test_can_repayWithATokens_to_aave() public {
@@ -402,7 +414,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     assertApproxEqRel(
       totalValueAfter,
       totalValueBefore,
-      0.0001e18,
+      0.0001e18, // 0.01%
       "Total value should not change after repay with aTokens"
     );
   }
@@ -716,7 +728,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     assertApproxEqRel(
       totalValueAfter,
       totalValueBefore / 2,
-      0.0001e18,
+      0.0001e18, // 0.01%
       "Total value should become twice less after withdraw"
     );
     assertEq(
@@ -755,20 +767,23 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     assertApproxEqRel(
       totalValueAfter,
       totalValueBefore / 2,
-      0.0001e18,
+      0.0001e18, // 0.01%
       "Total value should become twice less after withdraw"
     );
-    assertEq(
+    assertApproxEqAbs(
       token0ToLendBalanceAfter,
       token0ToLendPoolBalanceBefore / 2,
+      1, // 1 for rounding errors
       "Investor should have half of token 0 after withdraw"
     );
   }
 
   function test_can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_no_swapdata() public {
     // Skip the test if token to lend is PT token: onchain legacy way of withdrawing doesn't support PT tokens
+    // Skip the test if uniV3Factory is not set: only offchain swap data withdrawal is supported in that case
     bool shouldSkip = _selectAssetType(token0ToLend) ==
-      uint16(BackboneSetup.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN);
+      uint16(BackboneSetup.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN) ||
+      uniV3Factory == address(0);
 
     vm.skip(shouldSkip);
 
@@ -803,7 +818,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     assertApproxEqRel(
       totalValueAfter,
       totalValueBefore / 2,
-      0.0001e18,
+      0.0001e18, // 0.01%
       "Total value should become twice less after withdraw"
     );
     assertEq(

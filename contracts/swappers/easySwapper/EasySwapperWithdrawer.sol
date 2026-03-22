@@ -8,7 +8,7 @@ import "../../interfaces/IERC20Extended.sol";
 import "../../interfaces/IHasAssetInfo.sol";
 import "../../interfaces/IPoolLogic.sol";
 import "../../interfaces/IPoolFactory.sol";
-import "./EasySwapperV3Helpers.sol";
+import "./EasySwapperUniV3Helpers.sol";
 import "./EasySwapperV2LpHelpers.sol";
 import "./EasySwapperSwap.sol";
 import "./EasySwapperBalancerV2Helpers.sol";
@@ -142,7 +142,7 @@ library EasySwapperWithdrawer {
       }
       // Uni V3 Lp - already unrolled, just need the assets
       else if (assetType == 7) {
-        unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(pool, asset);
+        unrolledAssets = EasySwapperUniV3Helpers.getUnsupportedUniV3Assets(pool, asset);
       } else if (assetType == 9) {
         unrolledAssets = EasySwapperArrakisHelpers.getArrakisAssets(asset);
       } else if (assetType == 10) {

@@ -251,6 +251,42 @@ export const arbitrumProdData: IAddresses = {
       arbitrumChainData.torosPools.SUI1X,
       arbitrumChainData.torosPools.DOGE1X,
       arbitrumChainData.torosPools.XRP1X,
+      arbitrumChainData.torosPools.HYPE1X,
+      arbitrumChainData.torosPools.XRPBULL2X,
+      arbitrumChainData.torosPools.BNB1X,
+      arbitrumChainData.torosPools.CRV1X,
+      arbitrumChainData.torosPools.BTCy,
+      arbitrumChainData.torosPools.LINK1X,
+      arbitrumChainData.torosPools.LINKBULL2X,
+      arbitrumChainData.torosPools.HYPEBULL2X,
+      arbitrumChainData.torosPools.CRVBULL2X,
+      arbitrumChainData.torosPools.PUMP1X,
+      arbitrumChainData.torosPools.PUMPBULL2X,
+      arbitrumChainData.torosPools.BNBBULL2X,
+      arbitrumChainData.torosPools.ETHBEAR2X,
+      arbitrumChainData.torosPools.BTCBEAR2X,
+      arbitrumChainData.torosPools.SOLBEAR2X,
+      arbitrumChainData.torosPools.XRPBEAR1X,
+      arbitrumChainData.torosPools.BNBBEAR1X,
+      arbitrumChainData.torosPools.DOGEBEAR1X,
+      arbitrumChainData.torosPools.LINKBEAR1X,
+      arbitrumChainData.torosPools.HYPEBEAR1X,
+      arbitrumChainData.torosPools.SUIBEAR1X,
+      arbitrumChainData.torosPools.PUMPBEAR1X,
+      arbitrumChainData.torosPools.CRVBEAR1X,
+      arbitrumChainData.torosPools.SUIBULL3X,
+      arbitrumChainData.torosPools.XRPBULL3X,
+      arbitrumChainData.torosPools.GOLD1X,
+      arbitrumChainData.torosPools.GOLDBULL2X,
+      arbitrumChainData.torosPools.GOLDBULL3X,
+      arbitrumChainData.torosPools.GOLDBEAR1X,
+      arbitrumChainData.torosPools.BTC1X,
+      arbitrumChainData.torosPools.ETH1X,
+      arbitrumChainData.torosPools.AAVEBEAR1X,
+      arbitrumChainData.torosPools.AAVEBULL2X,
+      arbitrumChainData.torosPools.BTCHOSRTVOL,
+      arbitrumChainData.torosPools.BTCCOVCALL,
+      arbitrumChainData.torosPools.HYPEBULL3X,
     ],
   },
 
@@ -338,6 +374,122 @@ export const arbitrumProdData: IAddresses = {
         poolLogic: arbitrumChainData.torosPools.XRP1X,
         withdrawalAsset: arbitrumChainData.assets.usdcNative,
       },
+      {
+        poolLogic: arbitrumChainData.torosPools.HYPE1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.XRPBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.BNB1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.CRV1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.LINK1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.LINKBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.HYPEBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.CRVBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.PUMP1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.PUMPBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.BNBBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SOLBEAR2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.XRPBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.BNBBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.DOGEBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.LINKBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.HYPEBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SUIBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.PUMPBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.CRVBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.SUIBULL3X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.XRPBULL3X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.GOLD1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.GOLDBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.GOLDBULL3X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.GOLDBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.AAVEBEAR1X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.AAVEBULL2X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.HYPEBULL3X,
+        withdrawalAsset: arbitrumChainData.assets.usdcNative,
+      },
     ],
     virtualTokenResolver: [
       {
@@ -345,12 +497,12 @@ export const arbitrumProdData: IAddresses = {
         virtualTokenMultiplier: BigNumber.from(10).pow(44), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 8 (token decimals)
         oracleLookupType: 1, // 1 = ChainlinkPythLib
         onchainOracle: {
-          oracleContract: arbitrumChainData.usdPriceFeeds.wbtc,
+          oracleContract: arbitrumChainData.usdPriceFeeds.btc,
           maxAge: 90_000, // 90_000 seconds => 25 hours,
         },
         pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
         pythOracleData: {
-          priceId: "0xc9d8b075a5c69303365ae23633d4e085199bf5c520a3b90fed1322a0342ffc33", // WBTC pyth price id
+          priceId: "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43", // BTC pyth price id
           maxAge: 86_400, // 86400 seconds => 24 hours,
           minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
         },
@@ -358,10 +510,10 @@ export const arbitrumProdData: IAddresses = {
       {
         virtualToken: "0x197aa2DE1313c7AD50184234490E12409B2a1f95", // virtual SUI
         virtualTokenMultiplier: BigNumber.from(10).pow(43), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 9 (token decimals)
-        oracleLookupType: 2, // 2 = PythLib
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
         onchainOracle: {
-          oracleContract: ethers.constants.AddressZero, // no onchain oracle for SUI
-          maxAge: 0,
+          oracleContract: arbitrumChainData.usdPriceFeeds.sui,
+          maxAge: 90_000,
         },
         pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
         pythOracleData: {
@@ -397,6 +549,66 @@ export const arbitrumProdData: IAddresses = {
         pythOracleData: {
           priceId: "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8", // XRP pyth price id
           maxAge: 86_400, // 86400 seconds => 24 hours,
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+      {
+        virtualToken: "0xfDFA0A749dA3bCcee20aE0B4AD50E39B26F58f7C", // virtual HYPE
+        virtualTokenMultiplier: BigNumber.from(10).pow(44), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 8 (token decimals)
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
+        onchainOracle: {
+          oracleContract: arbitrumChainData.usdPriceFeeds.hype,
+          maxAge: 90_000, // 90_000 seconds => 25 hours,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: "0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b", // HYPE pyth price id
+          maxAge: 86_400, // 86400 seconds => 24 hours,
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+      {
+        virtualToken: "0xe5f01aeAcc8288E9838A60016AB00d7b6675900b", // virtual CRV
+        virtualTokenMultiplier: BigNumber.from(10).pow(34), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 18 (token decimals)
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
+        onchainOracle: {
+          oracleContract: arbitrumChainData.usdPriceFeeds.crv,
+          maxAge: 90_000, // 90_000 seconds => 25 hours,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: "0xa19d04ac696c7a6616d291c7e5d1377cc8be437c327b75adb5dc1bad745fcae8", // CRV pyth price id
+          maxAge: 86_400, // 86400 seconds => 24 hours,
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+      {
+        virtualToken: "0x9c060B2fA953b5f69879a8B7B81f62BFfEF360be", // virtual PUMP
+        virtualTokenMultiplier: BigNumber.from(10).pow(34), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 18 (token decimals)
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
+        onchainOracle: {
+          oracleContract: arbitrumChainData.usdPriceFeeds.pump, // note: this onchain oracle decimals is 18, but getTokenMinMaxPrice returns price with 8 decimals
+          maxAge: 90_000, // 90_000 seconds => 25 hours,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: arbitrumChainData.pyth.priceIds.pump, // PUMP pyth price id
+          maxAge: 86_400, // 86400 seconds => 24 hours,
+          minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
+        },
+      },
+      {
+        virtualToken: "0x7624cccCc59361D583F28BEC40D37e7771d2ef5D", // virtual XAUT, Tether Gold
+        virtualTokenMultiplier: BigNumber.from(10).pow(34), // formula for decimals for price feed multiplier: 60 - 8 (external price feed decimals) - 18 (token decimals)
+        oracleLookupType: 2, // 2 = PythLib
+        onchainOracle: {
+          oracleContract: ethers.constants.AddressZero,
+          maxAge: 0,
+        },
+        pythOracleContract: arbitrumChainData.pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: arbitrumChainData.pyth.priceIds.xaut, // XAUT pyth price id
+          maxAge: 1500, // 1500 seconds => 25 mins
           minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
         },
       },
@@ -439,9 +651,26 @@ export const arbitrumProdData: IAddresses = {
     orderAnnouncementModule: "0x2326BB21B769D81E134C9b305ca156f989249fE7",
     orderExecutionModule: "0x7e50AD6E467D9FAFC3B4BFd003247cEaA2F17e5b",
     flatcoinVault: "0x29fAD9d44C550e5D8081AB35763797B39d75b858",
+    whitelistedVaultsForLP: [
+      {
+        poolLogic: "0x3696652233468ab827e5af5155a9f2a0c07682c4", // Test Vault
+        withdrawalAsset: arbitrumChainData.assets.wbtc,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.BTCHOSRTVOL,
+        withdrawalAsset: arbitrumChainData.assets.wbtc,
+      },
+      {
+        poolLogic: arbitrumChainData.torosPools.BTCCOVCALL,
+        withdrawalAsset: arbitrumChainData.assets.wbtc,
+      },
+    ],
+    collateral: arbitrumChainData.assets.wbtc,
   },
 
   odosV2RouterAddress: arbitrumChainData.odosEx.v2Router,
+
+  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
 
   poolLimitOrderManager: {
     defaultSlippageTolerance: 200, // 2%
@@ -453,6 +682,40 @@ export const arbitrumProdData: IAddresses = {
       "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
       "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
     ],
+  },
+
+  fluid: {
+    merkleDistributor: "0x94312a608246Cecfce6811Db84B3Ef4B2619054E",
+  },
+
+  angleProtocol: {
+    distributor: "0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae",
+    rewardTokenSupported: [
+      {
+        token: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8", // aArbWETH
+        tokenType: 2,
+      },
+      {
+        token: "0x513c7E3a9c69cA3e22550eF58AC1C0088e918FFf", // aArbwstETH
+        tokenType: 2,
+      },
+      {
+        token: "0x6533afac2E7BCCB20dca161449A13A32D391fb00", // aArbARB
+        tokenType: 2,
+      },
+      {
+        token: arbitrumChainData.assets.arb,
+        tokenType: 1,
+      },
+      {
+        token: "0x2c63f9da936624Ac7313b972251D340260A4bF08", // Wrapped aArbARB
+        tokenType: 3,
+      },
+    ],
+  },
+
+  kyberSwap: {
+    routerV2: "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5",
   },
 };
 

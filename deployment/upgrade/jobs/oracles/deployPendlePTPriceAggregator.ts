@@ -19,6 +19,9 @@ const deployPendlePTPriceAggregatorJob = async (
   hre: HardhatRuntimeEnvironment,
   assetConfig: IPendlePTPriceAggregatorConfig,
 ) => {
+  const factory = await hre.ethers.getContractAt("IPoolFactory", assetConfig.specificOracleConfig.dhedgeFactoryProxy);
+  const assetHandler = await factory.getAssetHandler();
+
   const PendlePTPriceAggregator = await hre.ethers.getContractFactory("PendlePTPriceAggregator");
 
   console.log("Deploying PendlePTPriceAggregator oracle...");
@@ -26,7 +29,7 @@ const deployPendlePTPriceAggregatorJob = async (
   const args: [Address, Address, Address] = [
     assetConfig.specificOracleConfig.syEquivalentYieldToken,
     assetConfig.specificOracleConfig.pendleChainlinkOracle,
-    assetConfig.specificOracleConfig.dhedgeFactoryProxy,
+    assetHandler,
   ];
 
   const pendlePTPriceAggregator = await PendlePTPriceAggregator.deploy(...args);

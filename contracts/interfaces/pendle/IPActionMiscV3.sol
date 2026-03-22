@@ -49,4 +49,11 @@ interface IPActionMiscV3 {
     uint256 netPyIn,
     TokenOutput calldata output
   ) external returns (uint256 netTokenOut, uint256 netSyInterm);
+
+  function mintPyFromToken(
+    address receiver,
+    address YT,
+    uint256 minPyOut,
+    TokenInput calldata input
+  ) external payable returns (uint256 netPyOut, uint256 netSyInterm);
 }

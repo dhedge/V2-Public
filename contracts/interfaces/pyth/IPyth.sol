@@ -23,6 +23,11 @@ interface IPyth {
     uint256 publishTime;
   }
 
+  /// @notice Returns the required fee to update an array of price updates.
+  /// @param updateData Array of price update data.
+  /// @return feeAmount The required fee in Wei.
+  function getUpdateFee(bytes[] calldata updateData) external view returns (uint256 feeAmount);
+
   /// @notice Update price feeds with given update messages.
   /// This method requires the caller to pay a fee in wei; the required fee can be computed by calling
   /// `getUpdateFee` with the length of the `updateData` array.

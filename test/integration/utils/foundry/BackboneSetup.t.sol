@@ -5,6 +5,7 @@ pragma abicoder v2;
 
 import {Test} from "forge-std/Test.sol";
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
@@ -85,7 +86,6 @@ abstract contract BackboneSetup is Test {
   address public nftTrackerStorage;
   DhedgeNftTrackerStorage public nftTrackerStorageProxy;
   address public withdrawalVault;
-  address public easySwapperV2;
   EasySwapperV2 public easySwapperV2Proxy;
 
   AssetHandler.Asset public usdcData;
@@ -165,5 +165,19 @@ abstract contract BackboneSetup is Test {
     complexAssetsData = new IPoolLogic.ComplexAsset[](
       IHasSupportedAsset(IPoolLogic(_pool).poolManagerLogic()).getSupportedAssets().length
     );
+  }
+
+  function _makeDeposit(
+    PoolLogic _pool,
+    address _depositor,
+    address _token,
+    uint256 _amount
+  ) internal returns (uint256 liquidityMinted) {
+    deal(_token, _depositor, _amount);
+
+    vm.startPrank(_depositor);
+    IERC20(_token).approve(address(_pool), _amount);
+    liquidityMinted = _pool.deposit(_token, _amount);
+    vm.stopPrank();
   }
 }

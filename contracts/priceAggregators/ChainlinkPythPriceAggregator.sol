@@ -42,8 +42,8 @@ contract ChainlinkPythPriceAggregator is IChainlinkAggregatorV3, IGmxCustomPrice
   }
 
   /// @notice Get the min and max USD price of the asset.
-  /// @dev Prices are in the same decimals as provided by the on-chain oracle (Chainlink), typically 8 decimals.
-  /// @dev shouldn't assume always in 8 decimals
+  /// @dev Prices are in 8 decimals.
+  /// @dev Always in 8 decimals
   /// @dev Used for GMX market integration
   function getTokenMinMaxPrice(bool useMinMax) external view override returns (IGmxPrice.Price memory priceMinMax) {
     return

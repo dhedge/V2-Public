@@ -12,6 +12,7 @@ interface IGmxWithdrawal {
     Addresses addresses;
     Numbers numbers;
     Flags flags;
+    bytes32[] _dataList;
   }
 
   // @param account The account to withdraw for.
@@ -34,6 +35,7 @@ interface IGmxWithdrawal {
   // @param minShortTokenAmount The minimum amount of short tokens that must be withdrawn.
   // @param executionFee The execution fee for the withdrawal.
   // @param callbackGasLimit The gas limit for calling the callback contract.
+  // @param srcChainId The source chain id.
   struct Numbers {
     uint256 marketTokenAmount;
     uint256 minLongTokenAmount;
@@ -41,6 +43,7 @@ interface IGmxWithdrawal {
     uint256 updatedAtTime;
     uint256 executionFee;
     uint256 callbackGasLimit;
+    uint256 srcChainId;
   }
 
   // @param shouldUnwrapNativeToken whether to unwrap the native token when

@@ -27,30 +27,18 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
 
   /// @notice Transaction guard for Pancake CL non-fungible Position Manager
   /// @dev Parses the manager transaction data to ensure transaction is valid
-  /// @param poolManagerLogicAddress Pool address
+  /// @param poolManagerLogic address
   /// @param data Transaction call data attempt by manager
   /// @return txType transaction type described in PoolLogic
   /// @return isPublic if the transaction is public or private
   function txGuard(
-    address poolManagerLogicAddress,
+    address poolManagerLogic,
     address to,
     bytes memory data
-  )
-    public
-    override
-    returns (
-      uint16 txType, // transaction type
-      bool // isPublic
-    )
-  {
+  ) public view override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
     bytes memory params = getParams(data);
-    IPancakeNonfungiblePositionManager nonfungiblePositionManager = IPancakeNonfungiblePositionManager(to);
-
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(poolManagerLogicAddress);
-    IHasSupportedAsset poolManagerLogicAssets = IHasSupportedAsset(poolManagerLogicAddress);
-    address pool = poolManagerLogic.poolLogic();
-    require(msg.sender == pool, "not pool logic");
+    address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
     if (method == IPancakeNonfungiblePositionManager.mint.selector) {
       IPancakeNonfungiblePositionManager.MintParams memory mintParams = abi.decode(
@@ -58,14 +46,14 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
         (IPancakeNonfungiblePositionManager.MintParams)
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
-      require(poolManagerLogicAssets.isSupportedAsset(to), "pancake cl asset not enabled");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "pancake cl asset not enabled");
       require(pool == mintParams.recipient, "recipient is not pool");
 
       UniswapV3PriceLibrary.assertFairPrice(
         IPoolLogic(pool).factory(),
-        nonfungiblePositionManager.factory(),
+        IPancakeNonfungiblePositionManager(to).factory(),
         mintParams.token0,
         mintParams.token1,
         mintParams.fee
@@ -81,13 +69,13 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
       // validate token id from nft tracker
       require(isValidOwnedTokenId(pool, increaseLiquidityParams.tokenId), "position is not in track");
 
-      (, , address token0, address token1, uint24 fee, , , , , , , ) = nonfungiblePositionManager.positions(
+      (, , address token0, address token1, uint24 fee, , , , , , , ) = IPancakeNonfungiblePositionManager(to).positions(
         increaseLiquidityParams.tokenId
       );
 
       UniswapV3PriceLibrary.assertFairPrice(
         IPoolLogic(pool).factory(),
-        nonfungiblePositionManager.factory(),
+        IPancakeNonfungiblePositionManager(to).factory(),
         token0,
         token1,
         fee
@@ -103,12 +91,12 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
         params,
         (IPancakeNonfungiblePositionManager.CollectParams)
       );
-      (, , address token0, address token1, , , , , , , , ) = nonfungiblePositionManager.positions(
+      (, , address token0, address token1, , , , , , , , ) = IPancakeNonfungiblePositionManager(to).positions(
         collectParams.tokenId
       );
 
-      require(poolManagerLogicAssets.isSupportedAsset(token0), "unsupported asset: tokenA");
-      require(poolManagerLogicAssets.isSupportedAsset(token1), "unsupported asset: tokenB");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token0), "unsupported asset: tokenA");
+      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(token1), "unsupported asset: tokenB");
       require(pool == collectParams.recipient, "recipient is not pool");
 
       txType = uint16(TransactionType.PancakeCLCollect);
@@ -124,7 +112,7 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
       bytes[] memory multicallParams = abi.decode(params, (bytes[]));
 
       for (uint256 i = 0; i < multicallParams.length; i++) {
-        (txType, ) = txGuard(poolManagerLogicAddress, to, multicallParams[i]);
+        (txType, ) = txGuard(poolManagerLogic, to, multicallParams[i]);
         require(txType > 0, "invalid transaction");
       }
 
@@ -140,7 +128,7 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
   /// @param poolManagerLogic Pool manager logic address
   /// @param to Pancake CL NonfungiblePositionManager address
   /// @param data Transaction data
-  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public virtual override {
+  function afterTxGuard(address poolManagerLogic, address to, bytes memory data) public override {
     _afterTxGuardHandle(poolManagerLogic, to, data);
   }
 
@@ -149,19 +137,16 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
     address to,
     bytes memory data
   ) internal returns (bool isMintOrBurn) {
-    address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-
+    address poolLogic = _accessControl(poolManagerLogic);
     bytes4 method = getMethod(data);
-    IPancakeNonfungiblePositionManager nonfungiblePositionManager = IPancakeNonfungiblePositionManager(to);
 
     if (method == IPancakeNonfungiblePositionManager.mint.selector) {
-      uint256 index = nonfungiblePositionManager.totalSupply();
+      uint256 index = IPancakeNonfungiblePositionManager(to).totalSupply();
       nftTracker.addUintId(
         to,
         nftType,
         poolLogic,
-        nonfungiblePositionManager.tokenByIndex(index - 1), // revert if index is zero
+        IPancakeNonfungiblePositionManager(to).tokenByIndex(index - 1), // revert if index is zero
         positionsLimit
       );
 

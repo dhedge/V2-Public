@@ -3,11 +3,14 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+
 import {AaveV3TestBase, AaveV3TestBaseSharedData} from "test/integration/base/aaveV3/AaveV3TestBase.t.sol";
 import {DeploymentDryRunBase} from "test/integration/utils/foundry/dryRun/DeploymentDryRunBase.t.sol";
 import {BaseConfig} from "test/integration/utils/foundry/config/BaseConfig.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
+import {PoolFactory} from "contracts/PoolFactory.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 import {Governance} from "contracts/Governance.sol";
 import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol";
@@ -26,6 +29,7 @@ contract AaveV3DryRunBase is DeploymentDryRunBase {
     // Extra steps not included in `deployIntegration`:
     address latestPoolLogic = address(new PoolLogic());
     address latestPoolManagerLogic = address(new PoolManagerLogic());
+    address latestPoolFactory = address(new PoolFactory());
     FlatMoneyCollateralAssetGuard flatMoneyCollateralGuard = new FlatMoneyCollateralAssetGuard(
       BaseConfig.FLAT_MONEY_V1_DELAYED_ORDER
     );
@@ -41,6 +45,7 @@ contract AaveV3DryRunBase is DeploymentDryRunBase {
     RewardAssetGuard rewardAssetGuard = new RewardAssetGuard(rewardAssetSettings);
     Governance governance = Governance(poolFactory.governanceAddress());
     vm.startPrank(poolFactory.owner());
+    proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(poolFactory))), latestPoolFactory);
     poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
     governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
     governance.setAssetGuard(
@@ -51,16 +56,14 @@ contract AaveV3DryRunBase is DeploymentDryRunBase {
   }
 
   function getTorosVaults() internal pure returns (address[] memory torosVaults) {
-    torosVaults = new address[](9);
+    torosVaults = new address[](7);
     torosVaults[0] = BaseConfig.BTCBULL3X;
     torosVaults[1] = BaseConfig.BTCBULL2X;
     torosVaults[2] = BaseConfig.BTCBEAR1X;
     torosVaults[3] = BaseConfig.STETHBULL4X;
     torosVaults[4] = BaseConfig.STETHBULL3X;
     torosVaults[5] = BaseConfig.STETHBULL2X;
-    torosVaults[6] = BaseConfig.USDy;
-    torosVaults[7] = BaseConfig.ETHy;
-    torosVaults[8] = BaseConfig.USDmny;
+    torosVaults[6] = BaseConfig.ETHy;
 
     return torosVaults;
   }

@@ -363,7 +363,7 @@ export const clGaugeContractGuardCommonTest = (testParams: IVelodromeCLTestParam
 
         await expect(
           poolLogicProxy.connect(manager).deposit(nonfungiblePositionManager.address, tokenId),
-        ).to.be.revertedWith("NFTs not supported");
+        ).to.be.revertedWith("dh9");
       });
     });
 

@@ -201,83 +201,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "components": [
-          {
-            "components": [
-              {
-                "internalType": "contract IERC20",
-                "name": "token",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "bytes32",
-                    "name": "routerKey",
-                    "type": "bytes32"
-                  },
-                  {
-                    "internalType": "bytes",
-                    "name": "swapData",
-                    "type": "bytes"
-                  }
-                ],
-                "internalType": "struct ISwapper.AggregatorData",
-                "name": "aggregatorData",
-                "type": "tuple"
-              }
-            ],
-            "internalType": "struct ISwapper.SrcTokenSwapDetails[]",
-            "name": "srcData",
-            "type": "tuple[]"
-          },
-          {
-            "components": [
-              {
-                "internalType": "contract IERC20",
-                "name": "destToken",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "minDestAmount",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ISwapper.DestData",
-            "name": "destData",
-            "type": "tuple"
-          }
-        ],
-        "internalType": "struct IWithdrawalVault.MultiInSingleOutData",
-        "name": "_swapData",
-        "type": "tuple"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_expectedDestTokenAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "completeLimitOrderWithdrawal",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "destTokenAmount",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "completeLimitOrderWithdrawal",
     "outputs": [],
@@ -544,6 +467,39 @@
         "type": "address"
       },
       {
+        "internalType": "contract IERC20",
+        "name": "_vaultDepositToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_depositAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
+      }
+    ],
+    "name": "deposit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
         "internalType": "address",
         "name": "_vaultDepositToken",
         "type": "address"
@@ -586,6 +542,39 @@
         "internalType": "uint256",
         "name": "_expectedAmountReceived",
         "type": "uint256"
+      }
+    ],
+    "name": "depositWithCustomCooldown",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_vaultDepositToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_depositAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
       }
     ],
     "name": "depositWithCustomCooldown",
@@ -924,6 +913,52 @@
         "internalType": "uint256",
         "name": "_expectedAmountReceived",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
+      }
+    ],
+    "name": "nativeDeposit",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
+      }
+    ],
+    "name": "nativeDepositWithCustomCooldown",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
       }
     ],
     "name": "nativeDepositWithCustomCooldown",
@@ -955,6 +990,11 @@
         "internalType": "address",
         "name": "_to",
         "type": "address"
+      },
+      {
+        "internalType": "enum IEasySwapperV2.WithdrawalVaultType",
+        "name": "_vaultType",
+        "type": "uint8"
       }
     ],
     "name": "partialWithdraw",
@@ -1345,6 +1385,168 @@
         "internalType": "uint256",
         "name": "_expectedAmountReceived",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
+      }
+    ],
+    "name": "zapDeposit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ISwapper.SrcTokenSwapDetails",
+            "name": "srcData",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "destToken",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minDestAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapper.DestData",
+            "name": "destData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct EasySwapperV2.SingleInSingleOutData",
+        "name": "_swapData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
+      }
+    ],
+    "name": "zapDepositWithCustomCooldown",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ISwapper.SrcTokenSwapDetails",
+            "name": "srcData",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "destToken",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minDestAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapper.DestData",
+            "name": "destData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct EasySwapperV2.SingleInSingleOutData",
+        "name": "_swapData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
       }
     ],
     "name": "zapDepositWithCustomCooldown",
@@ -1424,6 +1626,168 @@
       }
     ],
     "name": "zapNativeDeposit",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ISwapper.SrcTokenSwapDetails",
+            "name": "srcData",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "destToken",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minDestAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapper.DestData",
+            "name": "destData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct EasySwapperV2.SingleInSingleOutData",
+        "name": "_swapData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
+      }
+    ],
+    "name": "zapNativeDeposit",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dHedgeVault",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ISwapper.SrcTokenSwapDetails",
+            "name": "srcData",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "destToken",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minDestAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapper.DestData",
+            "name": "destData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct EasySwapperV2.SingleInSingleOutData",
+        "name": "_swapData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedAmountReceived",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_referralData",
+        "type": "bytes"
+      }
+    ],
+    "name": "zapNativeDepositWithCustomCooldown",
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"

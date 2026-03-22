@@ -68,4 +68,5 @@ runEasySwapperV2GuardsTest({
   swapperAddress: polygonChainData.flatMoney.swapper,
   wrappedNativeToken: polygonChainData.assets.wmatic,
   chainId: 137,
+  poolLimitOrderManagerProxy: "0xB71410736d2C8F2DAf30dA9D332dA10534d2624d",
 });

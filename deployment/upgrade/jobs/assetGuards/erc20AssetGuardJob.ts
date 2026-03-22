@@ -26,7 +26,10 @@ export const erc20GuardJob: IJob<void> = async (
     versions[config.newTag].contracts.ERC20Guard = erc20GuardAddress;
     await tryVerify(hre, erc20GuardAddress, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
 
-    const assetTypesToSetERC20Guard = [AssetType["Chainlink direct USD price feed with 8 decimals"]];
+    const assetTypesToSetERC20Guard = [
+      AssetType["Chainlink direct USD price feed with 8 decimals"],
+      AssetType["Lending Enable Asset"],
+    ];
 
     const governance = await ethers.getContractAt("Governance", versions[config.oldTag].contracts.Governance);
 

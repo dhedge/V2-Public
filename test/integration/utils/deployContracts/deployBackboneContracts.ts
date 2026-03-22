@@ -28,7 +28,14 @@ export const deployBackboneContracts = async ({ assets, usdPriceFeeds }: IBackbo
   const governance = await Governance.deploy();
   await governance.deployed();
 
-  const PoolLogic = await ethers.getContractFactory("PoolLogic");
+  const PoolLogicLib = await ethers.getContractFactory("PoolLogicLib");
+  const poolLogicLib = await PoolLogicLib.deploy();
+
+  const PoolLogic = await ethers.getContractFactory("PoolLogic", {
+    libraries: {
+      PoolLogicLib: poolLogicLib.address,
+    },
+  });
   const poolLogic = await PoolLogic.deploy();
   await poolLogic.deployed();
 

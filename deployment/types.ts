@@ -7,6 +7,8 @@ import { RewardAssetSettingStruct } from "../types/RewardAssetGuard";
 import { PoolSettingStruct, VirtualTokenOracleSettingStruct } from "../types/GmxExchangeRouterContractGuard";
 import { CustomSlippageStruct } from "../types/SynthetixPerpsV2MarketAssetGuard";
 import { CrossChainBridgeStruct } from "../types/AcrossContractGuard";
+import { RewardTokenConfigStruct } from "../types/AngleDistributorContractGuard";
+import { RouteHintStruct } from "../types/DhedgeSuperSwapper";
 
 export interface IUpgradeConfigProposeTx {
   execute: boolean;
@@ -60,7 +62,7 @@ interface IDeploymentsConfig {
 
   sushiMiniChefV2Address?: Address;
 
-  v2RouterAddresses: Address[];
+  v2RouterAddresses?: Address[];
 
   quickStakingRewardsFactoryAddress?: Address;
   quickLpUsdcWethStakingRewardsAddress?: Address;
@@ -158,8 +160,8 @@ interface IDeploymentsConfig {
 
   easySwapperConfig?: IEasySwapperConfig;
 
-  superSwapper: {
-    routeHints: { asset: Address; intermediary: Address }[];
+  superSwapper?: {
+    routeHints: RouteHintStruct[];
   };
 
   synthRedeemer?: Address;
@@ -249,7 +251,7 @@ interface IDeploymentsConfig {
 
   angleProtocol?: {
     distributor: Address;
-    rewardTokenSupported: Address;
+    rewardTokenSupported: RewardTokenConfigStruct[];
   };
 
   poolLimitOrderManager: {
@@ -276,9 +278,13 @@ interface IDeploymentsConfig {
     orderAnnouncementModule: Address;
     orderExecutionModule: Address;
     flatcoinVault: Address;
+    whitelistedVaultsForLP: PoolSettingStruct[];
+    collateral: Address;
   };
 
   odosV2RouterAddress?: Address;
+
+  odosV3RouterAddress?: Address;
 
   flatMoneyV2?: {
     orderAnnouncementModule: Address;
@@ -291,7 +297,6 @@ interface IDeploymentsConfig {
 
   pendle?: {
     pendleRouterV4: Address;
-    marketFactoryV3: Address;
     knownMarkets: Address[];
     yieldContractFactory: Address;
     staticRouter: Address;
@@ -300,6 +305,26 @@ interface IDeploymentsConfig {
   allowApproveGuard?: {
     allowedSpender: Address;
     tokensToSetGuardTo: Address[];
+  };
+
+  fluid?: {
+    merkleDistributor?: Address;
+  };
+
+  kyberSwap?: {
+    routerV2: Address;
+  };
+
+  typedStructuredDataValidator?: {
+    odosLimitOrder?: {
+      permit2: Address;
+      odosLimitOrderRouter: Address;
+      maxUnfavorableDeviationBps: number;
+    };
+    cowSwapOrder?: {
+      gpv2Settlement: Address;
+      maxUnfavorableDeviationBps: number;
+    };
   };
 }
 
@@ -353,6 +378,7 @@ export interface IContracts {
   DhedgeNftTrackerStorage: Address;
   RewardDistribution?: Address[];
   SlippageAccumulator?: Address;
+  ValueManipulationCheck?: Address;
   PoolTokenSwapperProxy?: Address;
   PoolTokenSwapper?: Address;
 
@@ -423,11 +449,17 @@ export interface IContracts {
   FlatMoneyOptionsOrderExecutionGuard?: Address;
   FluidTokenContractGuard?: Address;
   OdosV2ContractGuard?: Address;
+  OdosV3ContractGuard?: Address;
   FlatMoneyV2OrderAnnouncementGuard?: Address;
   FlatMoneyV2OrderExecutionGuard?: Address;
   PendleRouterV4ContractGuard?: Address;
   AllowApproveContractGuard?: Address;
   AaveLendingPoolGuardV3L2Pool?: Address;
+  FluidMerkleDistributorContractGuard?: Address;
+  KyberSwapRouterV2ContractGuard?: Address;
+  LiquifiRewardsContractGuard?: Address;
+  PoolLimitOrderManagerGuard?: Address;
+  GPv2SettlementContractGuard?: Address;
 
   // Asset Guards
   OpenAssetGuard: Address;
@@ -466,14 +498,18 @@ export interface IContracts {
   FluidTokenAssetGuard?: Address;
   FlatMoneyV2PerpMarketAssetGuard?: Address;
   FlatMoneyV2UNITAssetGuard?: Address;
+  FlatMoneyV2UNITOutsideWithdrawalAssetGuard?: Address;
   PendlePTAssetGuard?: Address;
+  VirtualTokenAssetGuard?: Address;
 
   // Libraries
   WeeklyWindowsHelper?: Address;
   GmxClaimableCollateralTrackerLib?: Address;
   GmxHelperLib?: Address;
   GmxAfterTxValidatorLib?: Address;
-  GmxAfterExcutionLib?: Address;
+  GmxAfterExecutionLib?: Address;
+  PoolLogicLib?: Address;
+  GmxEventUtils?: Address;
 
   DhedgeEasySwapperProxy: Address;
   DhedgeEasySwapper: Address;
@@ -492,6 +528,10 @@ export interface IContracts {
   WithdrawalVaultProxy: Address;
   PoolLimitOrderManager: Address;
   PoolLimitOrderManagerProxy: Address;
+  TypedStructuredDataValidator: Address;
+  TypedStructuredDataValidatorProxy: Address;
+  ReferralManager: Address;
+  ReferralManagerProxy: Address;
 }
 
 export type TDeployedAsset = TAssetConfig & { oracleAddress: string };
@@ -526,6 +566,8 @@ export type OracleType =
   | "SonneFinancePriceAggregator"
   | "FlatMoneyUNITPriceAggregator"
   | "ChainlinkPythPriceAggregator"
+  | "ChainlinkAggregatorWrapper"
+  | "ChainlinkTWAPAggregator"
   | "CustomCrossAggregator"
   | "FluidTokenPriceAggregator"
   | "PythPriceAggregator"

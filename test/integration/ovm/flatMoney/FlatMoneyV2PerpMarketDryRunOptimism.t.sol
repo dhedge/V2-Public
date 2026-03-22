@@ -13,7 +13,7 @@ import {AaveLendingPoolAssetGuard} from "contracts/guards/assetGuards/AaveLendin
 import {ERC20Guard} from "contracts/guards/assetGuards/ERC20Guard.sol";
 import {AaveLendingPoolGuardV3L2Pool} from "contracts/guards/contractGuards/AaveLendingPoolGuardV3L2Pool.sol";
 
-contract FlatMoneyV2PerpMarketDryRunOptimism is DeploymentDryRunOptimism {
+contract FlatMoneyV2PerpMarketDryRunOptimismSkip is DeploymentDryRunOptimism {
   constructor() DeploymentDryRunOptimism(FlatMoneyV2PerpMarketTestSharedData.FORK_BLOCK_NUMBER, getTorosVaults()) {}
 
   function setUp() public override {

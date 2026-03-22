@@ -12,7 +12,7 @@ import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
 import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
-import {EasySwapperV3Helpers} from "../easySwapper/EasySwapperV3Helpers.sol";
+import {EasySwapperUniV3Helpers} from "../easySwapper/EasySwapperUniV3Helpers.sol";
 import {EasySwapperVelodromeCLHelpers} from "../easySwapper/EasySwapperVelodromeCLHelpers.sol";
 import {EasySwapperVelodromeLPHelpers} from "../easySwapper/EasySwapperVelodromeLPHelpers.sol";
 import {IEasySwapperV2} from "./interfaces/IEasySwapperV2.sol";
@@ -156,12 +156,18 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       // Aave positions (3 and 8) are withdrawn as regular ERC20s, which are guaranteed to be in `supportedAssets`.
       // Same for "Assets" which use outside liquidity for withdrawals, like Flat Money's Leverage and GMX. Underlying ERC20 is guaranteed to be in `supportedAssets`.
       else if (
-        assetType == 3 || assetType == 8 || assetType == 27 || assetType == 32 || assetType == 36 || assetType == 105
+        assetType == 3 ||
+        assetType == 8 ||
+        assetType == 27 ||
+        assetType == 32 ||
+        assetType == 36 ||
+        assetType == 105 ||
+        assetType == 35
         // solhint-disable-next-line no-empty-blocks
       ) {}
       // Uniswap V3 - already unrolled, just need the assets
       else if (assetType == 7) {
-        unrolledAssets = EasySwapperV3Helpers.getUnsupportedV3Assets(_dHedgeVault, asset);
+        unrolledAssets = EasySwapperUniV3Helpers.getUnsupportedUniV3Assets(_dHedgeVault, asset);
       }
       // Velodrome V2
       else if (assetType == 25) {

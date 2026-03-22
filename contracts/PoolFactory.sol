@@ -11,7 +11,7 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2025 dHEDGE DAO
+// Copyright (c) dHEDGE DAO
 //
 // SPDX-License-Identifier: MIT
 
@@ -95,6 +95,14 @@ contract PoolFactory is
 
   event PoolPauseStatusChanged(address pool, bool pausedShares, bool pausedTrading);
 
+  event SetDataValidator(address dataValidator);
+
+  event ValueManipulationCheckSet(address valueManipulationCheck);
+
+  /// @notice Emitted when the referral manager address is updated
+  /// @param referralManager The new referral manager address
+  event ReferralManagerSet(address referralManager);
+
   address[] public deployedFunds;
 
   address public override daoAddress;
@@ -107,8 +115,8 @@ contract PoolFactory is
   mapping(address => bool) public isPool;
 
   uint256 private maximumPerformanceFeeNumerator;
-  // solhint-disable-next-line var-name-mixedcase
-  uint256 private _MANAGER_FEE_DENOMINATOR;
+
+  uint256 public override feeDenominator;
 
   uint256 internal _exitCooldown;
 
@@ -142,6 +150,14 @@ contract PoolFactory is
   uint256 private maximumExitFeeNumerator;
 
   mapping(address => bool) public override tradingPausedPools;
+
+  // Address of the data validator contract used for validating off-chain signed data (e.g., limit orders)
+  address public dataValidator;
+
+  address public valueManipulationCheck;
+
+  /// @notice The singleton ReferralManager contract for referral fee distribution
+  address public referralManager;
 
   /// @notice Initialize the factory
   /// @param _poolLogic The pool logic address
@@ -189,8 +205,10 @@ contract PoolFactory is
   /// @param _fundSymbol The symbol of the fund
   /// @param _performanceFeeNumerator The numerator of the performance fee
   /// @param _managerFeeNumerator The numerator of the management fee
+  /// @param _entryFeeNumerator The numerator of the entry fee
+  /// @param _exitFeeNum The numerator of the exit fee
   /// @param _supportedAssets An array of supported assets
-  /// @return fund Address of the fund
+  /// @return poolLogic Address of the fund
   function createFund(
     bool _privatePool,
     address _manager,
@@ -199,39 +217,46 @@ contract PoolFactory is
     string memory _fundSymbol,
     uint256 _performanceFeeNumerator,
     uint256 _managerFeeNumerator,
+    uint256 _entryFeeNumerator,
+    uint256 _exitFeeNum,
     IHasSupportedAsset.Asset[] memory _supportedAssets
-  ) external returns (address fund) {
-    require(!paused(), "contracts paused");
+  ) external returns (address poolLogic) {
+    require(!paused(), "dh1");
 
-    bytes memory poolLogicData = abi.encodeWithSignature(
-      "initialize(address,bool,string,string)",
-      address(this),
-      _privatePool,
-      _fundName,
-      _fundSymbol
+    poolLogic = deploy(
+      abi.encodeWithSignature(
+        "initialize(address,bool,string,string)",
+        address(this),
+        _privatePool,
+        _fundName,
+        _fundSymbol
+      ),
+      2
     );
 
-    fund = deploy(poolLogicData, 2);
-
-    bytes memory managerLogicData = abi.encodeWithSignature(
-      "initialize(address,address,string,address,uint256,uint256,(address,bool)[])",
-      address(this),
-      _manager,
-      _managerName,
-      fund,
-      _performanceFeeNumerator,
-      _managerFeeNumerator,
-      _supportedAssets
+    address managerLogic = deploy(
+      abi.encodeWithSignature(
+        "initialize(address,address,string,address,uint256,uint256,uint256,uint256,(address,bool)[])",
+        address(this),
+        _manager,
+        _managerName,
+        poolLogic,
+        _performanceFeeNumerator,
+        _managerFeeNumerator,
+        _entryFeeNumerator,
+        _exitFeeNum,
+        _supportedAssets
+      ),
+      1
     );
 
-    address managerLogic = deploy(managerLogicData, 1);
-    IPoolLogic(fund).setPoolManagerLogic(managerLogic);
+    IPoolLogic(poolLogic).setPoolManagerLogic(managerLogic);
 
-    deployedFunds.push(fund);
-    isPool[fund] = true;
+    deployedFunds.push(poolLogic);
+    isPool[poolLogic] = true;
 
     emit FundCreated(
-      fund,
+      poolLogic,
       _privatePool,
       _fundName,
       _managerName,
@@ -239,7 +264,7 @@ contract PoolFactory is
       block.timestamp,
       _performanceFeeNumerator,
       _managerFeeNumerator,
-      _MANAGER_FEE_DENOMINATOR
+      feeDenominator
     );
   }
 
@@ -342,7 +367,7 @@ contract PoolFactory is
       maximumManagerFeeNumerator,
       maximumEntryFeeNumerator,
       maximumExitFeeNumerator,
-      _MANAGER_FEE_DENOMINATOR
+      feeDenominator
     );
   }
 
@@ -362,7 +387,7 @@ contract PoolFactory is
       _maxManagerFeeNumerator,
       _maxEntryFeeNumerator,
       _maxExitFeeNumerator,
-      _MANAGER_FEE_DENOMINATOR
+      feeDenominator
     );
   }
 
@@ -385,7 +410,7 @@ contract PoolFactory is
     maximumManagerFeeNumerator = _maxManagerFeeNumerator;
     maximumEntryFeeNumerator = _maxEntryFeeNumerator;
     maximumExitFeeNumerator = _maxExitFeeNumerator;
-    _MANAGER_FEE_DENOMINATOR = _denominator;
+    feeDenominator = _denominator;
 
     emit SetMaximumFee(
       _maxPerformanceFeeNumerator,
@@ -460,15 +485,15 @@ contract PoolFactory is
   /// @notice Return the latest price of a given asset
   /// @param _asset The address of the asset
   /// @return price The latest price of a given asset
-  function getAssetPrice(address _asset) external view override returns (uint256 price) {
-    price = IAssetHandler(_assetHandler).getUSDPrice(_asset);
+  function getAssetPrice(address _asset) external view override returns (uint256) {
+    return IAssetHandler(_assetHandler).getUSDPrice(_asset);
   }
 
   /// @notice Return type of the asset
   /// @param _asset The address of the asset
   /// @return assetType The type of the asset
-  function getAssetType(address _asset) external view override returns (uint16 assetType) {
-    assetType = IAssetHandler(_assetHandler).assetTypes(_asset);
+  function getAssetType(address _asset) external view override returns (uint16) {
+    return IAssetHandler(_assetHandler).assetTypes(_asset);
   }
 
   /// @notice Return the address of the asset handler
@@ -489,6 +514,19 @@ contract PoolFactory is
     _assetHandler = _handler;
 
     emit SetAssetHandler(_handler);
+  }
+
+  /// @notice Set the data validator contract address
+  /// @dev The data validator is responsible for validating off-chain structured data (e.g., EIP-712 typed data for limit orders)
+  ///      before it can be used.
+  ///      Note: Changing the validator invalidates all previously validated hashes (no migration support).
+  /// @param _dataValidator The address of the data validator contract
+  function setDataValidator(address _dataValidator) external onlyOwner {
+    require(_dataValidator != address(0), "invalid dataValidator");
+
+    dataValidator = _dataValidator;
+
+    emit SetDataValidator(_dataValidator);
   }
 
   /// @notice call the pause the contract
@@ -597,6 +635,20 @@ contract PoolFactory is
   /// @notice Allows us to just listen to the PoolFactory for all poolManager events
   function emitPoolManagerEvent() external onlyPoolManager {
     emit PoolManagerEvent(msg.sender);
+  }
+
+  /// @notice Set the value manipulation check contract
+  /// @param _valueManipulationCheck Address of the value manipulation check contract
+  function setValueManipulationCheck(address _valueManipulationCheck) external onlyOwner {
+    valueManipulationCheck = _valueManipulationCheck;
+    emit ValueManipulationCheckSet(_valueManipulationCheck);
+  }
+
+  /// @notice Set the referral manager address
+  /// @param _referralManager The new referral manager address (can be address(0) to disable)
+  function setReferralManager(address _referralManager) external onlyOwner {
+    referralManager = _referralManager;
+    emit ReferralManagerSet(_referralManager);
   }
 
   // The Factory is not safe to be inherited by other contracts

@@ -32,7 +32,7 @@ export const flatMoneyOptionsOrderAnnouncementGuardJob: IJob<void> = async (
       nftTrackerStorage,
       "0x77b5498047b3c24d335f231c790c09b91f4c09eab7920578bb188978f18926c7", // keccak256("FLAT_MONEY_V2_LEVERAGE_NFT")
       1,
-      [],
+      addresses.flatMoneyOptions?.whitelistedVaultsForLP || [],
       "10000000000000000000", // 10e18
     ];
     const flatMoneyOptionsOrderAnnouncementGuard = await FlatMoneyOptionsOrderAnnouncementGuard.deploy(...args);

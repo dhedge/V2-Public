@@ -50,10 +50,12 @@ library Order {
   // @param addresses address values
   // @param numbers number values
   // @param flags boolean values
+  // @param _dataList a list of bytes32 values that can be used for additional data
   struct Props {
     Addresses addresses;
     Numbers numbers;
     Flags flags;
+    bytes32[] _dataList;
   }
 
   // @param account the account of the order
@@ -101,7 +103,7 @@ library Order {
   // @param minOutputAmount the minimum output amount for decrease orders and swaps
   // note that for decrease orders, multiple tokens could be received, for this reason, the
   // minOutputAmount value is treated as a USD value for validation in decrease orders
-  // @param updatedAtBlock the block at which the order was last updated
+  // @param srcChainId the source chain id
   struct Numbers {
     OrderType orderType;
     DecreasePositionSwapType decreasePositionSwapType;
@@ -114,6 +116,7 @@ library Order {
     uint256 minOutputAmount;
     uint256 updatedAtTime;
     uint256 validFromTime;
+    uint256 srcChainId;
   }
 
   // @param isLong whether the order is for a long or short

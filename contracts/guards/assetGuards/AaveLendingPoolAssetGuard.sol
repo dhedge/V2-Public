@@ -34,12 +34,14 @@ import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {ClosedAssetGuard} from "./ClosedAssetGuard.sol";
 import {PendlePTHandlerLib} from "../../utils/pendle/PendlePTHandlerLib.sol";
+import {UnsafeMath} from "../../utils/uniswap/libraries/UnsafeMath.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type 3 is for v2
 ///      Asset type 8 is for v3
 contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGuard, ISwapDataConsumingGuard {
   using SafeMath for uint256;
+  using UnsafeMath for uint256;
   using PendlePTHandlerLib for AssetStructure;
 
   struct RepayData {
@@ -225,8 +227,8 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     IPoolLogic(_pool).mintManagerFee();
 
     // If the pool has exit fee set, pool token amount processed for withdrawal will be reduced by the exit fee
-    (, , , uint256 exitFeeNumerator, uint256 denominator) = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic())
-      .getFee();
+    (uint256 exitFeeNumerator, , uint256 denominator) = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic())
+      .getExitFeeInfo();
 
     if (exitFeeNumerator > 0) {
       _poolTokenAmount = _poolTokenAmount.sub(_poolTokenAmount.mul(exitFeeNumerator).div(denominator));
@@ -418,8 +420,7 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
         borrowAsset.amount = IERC20Extended(variableDebtToken).balanceOf(_pool);
         if (borrowAsset.amount != 0) {
           // used to round the amount up instead of down. allows to repay rounded up debt amount downstream
-          uint256 roundingUpFactor = uint256(1e18).sub(1);
-          borrowAsset.amount = borrowAsset.amount.mul(_portion).add(roundingUpFactor).div(1e18);
+          borrowAsset.amount = borrowAsset.amount.mul(_portion).divRoundingUp(1e18);
           borrowAsset.asset = supportedAssets[i].asset;
           break;
         }
@@ -463,10 +464,12 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     // If the amount to swap from in swap data is higher than the amount that is going to be withdrawn from aave, there will be not enough tokens to swap from
     require(_swapSrcData.amount <= _currentSrcData.amount, "amount too high");
 
-    // Amount from swap data can't be less than current amount minus the mismatch delta
+    // Amount from swap data can't be less than current amount minus the mismatch delta.
+    // Round up to avoid small amounts being truncated (rounded down) and causing revert.
+    // Using unsafe as the risk of overflow is neglible, `_currentSrcData.amount` need to be greater than type(uint256).max / mismatchDeltaNumerator, which is large for any realistic token amount
     require(
       _currentSrcData.amount.sub(_swapSrcData.amount) <=
-        _currentSrcData.amount.mul(mismatchDeltaNumerator).div(mismatchDeltaDenominator),
+        _currentSrcData.amount.mul(mismatchDeltaNumerator).divRoundingUp(mismatchDeltaDenominator),
       "src amount mismatch"
     );
   }
@@ -477,7 +480,8 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
   ) internal view {
     require(address(_swapDestData.destToken) == _currentDestData.asset, "dst asset mismatch");
 
-    uint256 delta = _currentDestData.amount.mul(mismatchDeltaNumerator).div(mismatchDeltaDenominator);
+    // See comments for ::_validateSrcToken regarding the use of unsafe rounding up
+    uint256 delta = _currentDestData.amount.mul(mismatchDeltaNumerator).divRoundingUp(mismatchDeltaDenominator);
 
     // Accept minDestAmount deviation by the delta to both sides
     require(
@@ -615,8 +619,9 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
 
     // Going to have 3 types of transactions:
     // 1. Withdraw collateral asset from aave (If all collateral assets are pendle PTs, there might be triple more transactions per collateral asset)
-    // 2. Approve collateral asset to swap from for swapper contract
+    // 2. Approve collateral asset to swap from for swapper contract (deduplicated by token address)
     // 3. Swap collateral assets to repay asset
+    // Note: We use srcTokensLength as upper bound for approvals, actual count may be lower due to token deduplication
     executionData.possibleTransactionsLength = collateralAssetsLength.mul(3).add(executionData.srcTokensLength).add(1);
     transactions = new MultiTransaction[](executionData.possibleTransactionsLength);
 
@@ -650,12 +655,40 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       }
     }
 
+    // Aggregate amounts for duplicate tokens to avoid overwriting approvals
+    address[] memory uniqueTokens = new address[](executionData.srcTokensLength);
+    uint256[] memory aggregatedAmounts = new uint256[](executionData.srcTokensLength);
+    uint256 uniqueTokensCount = 0;
+
     for (uint256 i; i < executionData.srcTokensLength; ++i) {
-      transactions[executionData.txCount].to = address(swapProps.srcData[0].srcTokenSwapDetails[i].token);
+      address currentToken = address(swapProps.srcData[0].srcTokenSwapDetails[i].token);
+      uint256 currentAmount = swapProps.srcData[0].srcTokenSwapDetails[i].amount;
+
+      // Check if token already exists in uniqueTokens array
+      bool tokenFound = false;
+      for (uint256 j; j < uniqueTokensCount; ++j) {
+        if (uniqueTokens[j] == currentToken) {
+          aggregatedAmounts[j] = aggregatedAmounts[j].add(currentAmount);
+          tokenFound = true;
+          break;
+        }
+      }
+
+      // If token not found, add it as a new unique token
+      if (!tokenFound) {
+        uniqueTokens[uniqueTokensCount] = currentToken;
+        aggregatedAmounts[uniqueTokensCount] = currentAmount;
+        uniqueTokensCount++;
+      }
+    }
+
+    // Create approval transactions for unique tokens with aggregated amounts
+    for (uint256 i; i < uniqueTokensCount; ++i) {
+      transactions[executionData.txCount].to = uniqueTokens[i];
       transactions[executionData.txCount].txData = abi.encodeWithSelector(
         IERC20Extended.approve.selector,
         swapper,
-        swapProps.srcData[0].srcTokenSwapDetails[i].amount
+        aggregatedAmounts[i]
       );
       executionData.txCount++;
     }

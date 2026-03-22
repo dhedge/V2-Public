@@ -11,6 +11,7 @@ import {IPyth} from "../interfaces/pyth/IPyth.sol";
 import {IGmxPrice} from "../interfaces/gmx/IGmxPrice.sol";
 import {IGmxCustomPriceFeedProvider} from "../interfaces/gmx/IGmxCustomPriceFeedProvider.sol";
 import {PythPriceLib} from "../utils/pyth/PythPriceLib.sol";
+import {DhedgeMath} from "../utils/DhedgeMath.sol";
 
 contract PythPriceAggregator is IChainlinkAggregatorV3, IGmxCustomPriceFeedProvider {
   using SafeMath for uint256;
@@ -26,7 +27,7 @@ contract PythPriceAggregator is IChainlinkAggregatorV3, IGmxCustomPriceFeedProvi
     pythOracleContract = _pythOracleContract;
     oracleData = _oracleData;
     IPyth.Price memory priceData = pythOracleContract.getPriceUnsafe(oracleData.priceId);
-    require(PythPriceLib.abs(int256(priceData.expo)) == 8, "Invalid Pyth oracle expo");
+    require(DhedgeMath.abs(int256(priceData.expo)) == 8, "Invalid Pyth oracle expo");
   }
 
   function decimals() external pure override returns (uint8) {

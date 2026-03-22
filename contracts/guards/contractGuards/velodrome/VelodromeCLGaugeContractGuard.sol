@@ -28,17 +28,15 @@ contract VelodromeCLGaugeContractGuard is TxDataUtils, IGuard, ITransactionTypes
     address poolManagerLogic,
     address to,
     bytes calldata data
-  ) external virtual override returns (uint16 txType, bool) {
+  ) external view override returns (uint16 txType, bool) {
     address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-    IVelodromeCLGauge velodromeCLGauge = IVelodromeCLGauge(to);
-    address nonfungiblePositionManager = velodromeCLGauge.nft();
+    address nonfungiblePositionManager = IVelodromeCLGauge(to).nft();
     address nonfungiblePositionManagerGuard = IHasGuardInfo(IPoolLogic(poolLogic).factory()).getContractGuard(
       nonfungiblePositionManager
     );
 
     // for deposit, withdraw and getReward
-    address rewardToken = velodromeCLGauge.rewardToken();
+    address rewardToken = IVelodromeCLGauge(to).rewardToken();
     require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(rewardToken), "unsupported asset: rewardToken");
 
     bytes4 method = getMethod(data);

@@ -38,8 +38,6 @@ contract AaveMigrationHelperGuard is IGuard, ITransactionTypes, TxDataUtils {
 
     require(dHedgeVaultsWhitelist[poolLogic], "only whitelisted vaults");
 
-    require(msg.sender == poolLogic, "not pool logic");
-
     bytes4 method = getMethod(_data);
 
     if (method == IMigrationHelper.migrate.selector) {

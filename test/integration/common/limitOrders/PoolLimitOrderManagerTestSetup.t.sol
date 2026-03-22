@@ -1570,6 +1570,45 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
     poolLimitOrderManagerProxy.executeLimitOrdersSafe(partialOrders);
   }
 
+  function test_can_execute_order_with_0_stop_loss_and_max_take_profit() public {
+    vm.startPrank(user);
+
+    uint256 totalAmount = 1000e18;
+
+    IPoolLogic(pool).approve(address(poolLimitOrderManagerProxy), totalAmount);
+
+    poolLimitOrderManagerProxy.createLimitOrder(
+      PoolLimitOrderManager.LimitOrderInfo({
+        amount: totalAmount,
+        stopLossPriceD18: 0,
+        takeProfitPriceD18: type(uint256).max,
+        user: user,
+        pool: pool,
+        pricingAsset: pricingAsset
+      })
+    );
+
+    _setPricingAssetPriceD8(1200e8);
+
+    vm.startPrank(keeper);
+
+    PoolLimitOrderManager.LimitOrderExecution[] memory limitOrders = new PoolLimitOrderManager.LimitOrderExecution[](1);
+    limitOrders[0] = PoolLimitOrderManager.LimitOrderExecution({
+      orderId: _getLimitOrderId(user, pool),
+      complexAssetsData: _getEmptyPoolComplexAssetsData(pool),
+      amount: type(uint256).max
+    });
+
+    poolLimitOrderManagerProxy.executeLimitOrders(limitOrders);
+
+    // Check that the order has been fully executed
+    bytes32 orderId = _getLimitOrderId(user, pool);
+    (uint256 remainingAmount, , , , , ) = poolLimitOrderManagerProxy.limitOrders(orderId);
+    assertEq(remainingAmount, 0);
+    assertEq(IPoolLogic(pool).balanceOf(user), AMOUNT_DEPOSITED - totalAmount);
+    assertEq(poolLimitOrderManagerProxy.getAllLimitOrderIds().length, 0);
+  }
+
   // ============================================
   // Helper Functions
   // ============================================

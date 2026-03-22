@@ -10,7 +10,7 @@ library PolygonConfig {
   // dHEDGE Contracts
   address public constant POOL_FACTORY_PROD = 0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0;
   address public constant NFT_TRACKER_PROD = 0x195AFA2ef88b0A52DFE561E12Fac30F28860A489;
-  address public constant SLIPPAGE_ACCUMULATOR_PROD = 0xb23D4ccFaD52bB632a85c9a5d64c334B90B60E61;
+  address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x8fab778ce0e6f2d3fa3c73C703310C824840a4B6;
   address public constant USD_PRICE_AGGREGATOR_PROD = 0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51;
 
   // Tokens
@@ -18,6 +18,7 @@ library PolygonConfig {
   address public constant WETH = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
   address public constant WBTC = 0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6;
   address public constant DAI = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
+  address public constant USDT = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
 
   // Oracles
   address public constant WETH_CHAINLINK_ORACLE = 0xF9680D99D6C9589e2a93a78A04A279e509205945;
@@ -36,4 +37,5 @@ library PolygonConfig {
   address public constant UNISWAP_V2_ROUTER = 0xedf6066a2b290C185783862C7F4776A2C8077AD1;
   address public constant QUICKSWAP_V2_ROUTER = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
   address public constant SUSHISWAP_ROUTER = 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
+  address public constant UNISWAP_V3_NFT_MANAGER = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
 }

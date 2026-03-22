@@ -432,15 +432,6 @@
     }
   },
   {
-    "assetName": "MAKER DAO",
-    "assetAddress": "0x6f7C932e7684666C9fd1d44527765433e01fF61d",
-    "assetType": "0",
-    "oracleType": "ChainlinkAggregator",
-    "specificOracleConfig": {
-      "chainlinkOracleAddress": "0xa070427bF5bA5709f70e98b94Cb2F435a242C46C"
-    }
-  },
-  {
     "assetName": "The Sandbox",
     "assetAddress": "0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683",
     "assetType": "0",
@@ -470,24 +461,6 @@
   {
     "assetName": "Sushi LP WMATIC-USDC",
     "assetAddress": "0xcd353f79d9fade311fc3119b841e1f456b54e858",
-    "assetType": "2",
-    "oracleType": "UniV2LPAggregator",
-    "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-    }
-  },
-  {
-    "assetName": "Sushi LP MKR-WETH",
-    "assetAddress": "0xbf61e1d82bd440cb9da11d325c046f029a663890",
-    "assetType": "2",
-    "oracleType": "UniV2LPAggregator",
-    "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-    }
-  },
-  {
-    "assetName": "Sushi LP MKR-DAI",
-    "assetAddress": "0x5e8f882dd0d062e2d81bcbe4ec61d7aeabf80c74",
     "assetType": "2",
     "oracleType": "UniV2LPAggregator",
     "specificOracleConfig": {
@@ -837,15 +810,6 @@
     "assetType": 10
   },
   {
-    "assetName": "Balancer LP stMATIC-MATIC",
-    "oracleType": "BalancerComposableStablePoolAggregator",
-    "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
-    },
-    "assetAddress": "0x8159462d255c1d24915cb51ec361f700174cd994",
-    "assetType": 6
-  },
-  {
     "assetName": "Balancer LP MATIC-MaticX",
     "oracleType": "BalancerComposableStablePoolAggregator",
     "specificOracleConfig": {
@@ -867,15 +831,6 @@
     "assetType": 10
   },
   {
-    "assetName": "agEUR",
-    "assetAddress": "0xe0b52e49357fd4daf2c15e02058dce6bc0057db4",
-    "assetType": "4",
-    "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
-    },
-    "oracleType": "ChainlinkAggregator"
-  },
-  {
     "assetName": "Pax Gold",
     "assetAddress": "0x553d3D295e0f695B9228246232eDF400ed3560B5",
     "assetType": "0",
@@ -890,12 +845,10 @@
     "assetType": "0",
     "oracleType": "UniV3TWAPAggregator",
     "specificOracleConfig": {
-      "pool": "0xd866fac7db79994d08c0ca2221fee08935595b4b",
+      "pool": "0xda908C0bf14AD0B61Ea5eBe671aC59B2cE091cBf",
       "mainToken": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
-      "pairTokenUsdAggregator": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
-      "priceLowerLimit": 0,
-      "priceUpperLimit": 1000000000000,
-      "updateInterval": 600
+      "pairTokenUsdAggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945",
+      "updateInterval": 1800
     }
   },
   {

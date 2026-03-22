@@ -404,7 +404,7 @@ describe("ManagerFee Test", function () {
     expect(await poolLogicProxy.tokenPriceAtLastFeeMint()).to.eq(tokenPriceAtLastFeeMintBefore);
   });
 
-  it("should initialize announcedFeeNumerators after commitFeeIncrease", async () => {
+  it("should reset announcedFeeNumerators after commitFeeIncrease", async () => {
     await poolFactory.setMaximumFee(6000, 300, 100, 100);
     await poolFactory.setPerformanceFeeNumeratorChangeDelay(3600 * 24); // fee increase delay for 1 day
 

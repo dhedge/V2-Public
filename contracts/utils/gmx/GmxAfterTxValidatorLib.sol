@@ -13,22 +13,19 @@ import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {GmxPriceLib} from "./GmxPriceLib.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
-import {GmxMarketUtils} from "./GmxMarketUtils.sol";
 import {IGmxPosition} from "../../interfaces/gmx/IGmxPosition.sol";
 import {IGmxExchangeRouterContractGuard} from "../../interfaces/gmx/IGmxExchangeRouterContractGuard.sol";
 import {GmxPosition} from "./GmxPosition.sol";
-import {GmxStructs} from "./GmxStructs.sol";
-import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
-import {TxDataUtils} from "../TxDataUtils.sol";
 import {IPoolFactory} from "../../interfaces/IPoolFactory.sol";
 import {IGmxExchangeRouter} from "../../interfaces/gmx/IGmxExchangeRouter.sol";
 import {SlippageAccumulator} from "../SlippageAccumulator.sol";
 import {GmxDataStoreLib} from "./GmxDataStoreLib.sol";
 import {IGmxVirtualTokenResolver} from "../../interfaces/gmx/IGmxVirtualTokenResolver.sol";
-import {IGmxBaseOrderUtils} from "../../interfaces/gmx/IGmxBaseOrderUtils.sol";
 import {GmxClaimableCollateralTrackerLib} from "./GmxClaimableCollateralTrackerLib.sol";
 import {GmxPositionCollateralAmountLib} from "./GmxPositionCollateralAmountLib.sol";
 import {DhedgeNftTrackerStorage} from "../tracker/DhedgeNftTrackerStorage.sol";
+import {GmxHelperLib} from "./GmxHelperLib.sol";
+import {GmxStructs} from "../../utils/gmx/GmxStructs.sol";
 
 library GmxAfterTxValidatorLib {
   using SafeMath for uint256;
@@ -47,106 +44,6 @@ library GmxAfterTxValidatorLib {
     SlippageAccumulator slippageAccumulator;
     DhedgeNftTrackerStorage nftTracker;
     address assetHandler;
-  }
-
-  function getMaxDepositSlippageData(
-    IGmxDeposit.Props memory latestDeposit,
-    GmxPriceLib.GmxPriceDependecies memory priceDependencies,
-    bool isMinOutputAmountUsed,
-    uint256 optionalOutputAmount
-  ) public view returns (uint256 inputTokensValueD18, uint256 outputTokensValueD18) {
-    // longToken
-    uint256 longTokenPrice = GmxPriceLib
-      .getTokenMinMaxPrice(priceDependencies, latestDeposit.addresses.initialLongToken)
-      .max;
-
-    // shortToken
-    uint256 shortTokenPrice = GmxPriceLib
-      .getTokenMinMaxPrice(priceDependencies, latestDeposit.addresses.initialShortToken)
-      .max;
-
-    uint256 lpTokenPrice = GmxPriceLib.getMarketLpTokenPrice(
-      priceDependencies,
-      priceDependencies.reader.getMarket({
-        _dataStore: priceDependencies.dataStore,
-        _market: latestDeposit.addresses.market
-      }),
-      false
-    );
-
-    // in deposit, for inputTokensValueD18, (long/short amount * price) is in 30 decimals
-    inputTokensValueD18 = latestDeposit
-      .numbers
-      .initialLongTokenAmount
-      .mul(longTokenPrice)
-      .add(latestDeposit.numbers.initialShortTokenAmount.mul(shortTokenPrice))
-      .div(1e12); // convert to 18 decimals, 18 = 30 - 12
-    // in deposit, for outputTokensValueD18, marketTokenAmount and price are both in 18 decimals
-    uint256 minMarketTokens = latestDeposit.numbers.minMarketTokens;
-    if (!isMinOutputAmountUsed) {
-      minMarketTokens = optionalOutputAmount;
-    }
-    outputTokensValueD18 = minMarketTokens.mul(lpTokenPrice).div(1e18); // convert to 18 decimals, 18 = 18 + 18 - 18
-  }
-
-  function getMaxWithdrawalSlippageData(
-    IGmxWithdrawal.Props memory latestWithdrawal,
-    GmxPriceLib.GmxPriceDependecies memory priceDependencies,
-    bool isMinOutputAmountUsed,
-    uint256 optionalOutputLongTokenAmount,
-    uint256 optionalOutputShortTokenAmount
-  ) public view returns (uint256 inputTokensValueD18, uint256 outputTokensValueD18) {
-    IGmxMarket.Props memory market = priceDependencies.reader.getMarket({
-      _dataStore: priceDependencies.dataStore,
-      _market: latestWithdrawal.addresses.market
-    });
-    // in withdrawal, for inputTokensValueD18, marketTokenAmount and price are both in 18 decimals
-    inputTokensValueD18 = latestWithdrawal
-      .numbers
-      .marketTokenAmount
-      .mul(GmxPriceLib.getMarketLpTokenPrice(priceDependencies, market, true))
-      .div(1e18); // convert to 18 decimals, 18 = 18 + 18 - 18
-
-    // longToken
-    uint256 longTokenPrice = GmxPriceLib.getTokenMinMaxPrice(priceDependencies, market.longToken).min;
-
-    // shortToken
-    uint256 shortTokenPrice = GmxPriceLib.getTokenMinMaxPrice(priceDependencies, market.shortToken).min;
-    uint256 longTokenAmount = latestWithdrawal.numbers.minLongTokenAmount;
-    uint256 shortTokenAmount = latestWithdrawal.numbers.minShortTokenAmount;
-    if (!isMinOutputAmountUsed) {
-      longTokenAmount = optionalOutputLongTokenAmount;
-      shortTokenAmount = optionalOutputShortTokenAmount;
-    }
-    // in withdrawal, for outputTokensValueD18, (long/short amount * price) is in 30 decimals
-    outputTokensValueD18 = longTokenAmount.mul(longTokenPrice).add(shortTokenAmount.mul(shortTokenPrice)).div(1e12); // convert to 18 decimals, 18 = 30 - 12
-  }
-
-  function getMaxSwapSlippageData(
-    Order.Props memory latestOrder,
-    GmxPriceLib.GmxPriceDependecies memory priceDependencies,
-    bool isMinOutputAmountUsed,
-    uint256 optionalOutputAmount
-  ) public view returns (uint256 inputTokensValue, uint256 outputTokensValue) {
-    // tokenIn
-    uint256 tokenInPrice = GmxPriceLib
-      .getTokenMinMaxPrice(priceDependencies, latestOrder.addresses.initialCollateralToken)
-      .max;
-
-    // tokenOut
-    IGmxMarket.Props memory marketInfo = priceDependencies.reader.getMarket({
-      _dataStore: priceDependencies.dataStore,
-      _market: latestOrder.addresses.swapPath[0] // the swapMarket for the swap
-    });
-    address tokenOut = GmxMarketUtils.getOppositeToken(latestOrder.addresses.initialCollateralToken, marketInfo);
-    uint256 tokenOutPrice = GmxPriceLib.getTokenMinMaxPrice(priceDependencies, tokenOut).min;
-
-    inputTokensValue = latestOrder.numbers.initialCollateralDeltaAmount.mul(tokenInPrice).div(1e12);
-    if (isMinOutputAmountUsed) {
-      outputTokensValue = latestOrder.numbers.minOutputAmount.mul(tokenOutPrice).div(1e12);
-    } else {
-      outputTokensValue = optionalOutputAmount.mul(tokenOutPrice).div(1e12);
-    }
   }
 
   // get positionCollateralAmount, accounting the position's pnl
@@ -240,28 +137,6 @@ library GmxAfterTxValidatorLib {
     }
   }
 
-  function validateTxGuardParams(
-    address exchangeRouterContractGuard,
-    address poolManagerLogic,
-    bytes memory data
-  )
-    public
-    view
-    returns (bytes4 method, bytes memory params, address poolLogic, GmxStructs.PoolSetting memory poolSetting)
-  {
-    poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
-    require(msg.sender == poolLogic, "not pool logic");
-    poolSetting = IGmxExchangeRouterContractGuard(exchangeRouterContractGuard).dHedgePoolsWhitelist(poolLogic);
-    require(poolSetting.poolLogic == poolLogic, "not gmx whitelisted");
-    //Checking withdrawal and allowed collateral asset
-    require(
-      IHasSupportedAsset(poolManagerLogic).isSupportedAsset(poolSetting.withdrawalAsset),
-      "unsupported withdrawal asset"
-    );
-    method = TxDataUtils(exchangeRouterContractGuard).getMethod(data);
-    params = TxDataUtils(exchangeRouterContractGuard).getParams(data);
-  }
-
   function getAssetHandler(address poolManagerLogic) public view returns (address) {
     return IPoolFactory(IPoolManagerLogic(poolManagerLogic).factory()).getAssetHandler();
   }
@@ -286,36 +161,13 @@ library GmxAfterTxValidatorLib {
     }
   }
 
-  function decodeCreateOrder(
-    address exchangeRouterContractGuard,
-    bytes[] memory multicallParams
-  )
-    public
-    pure
-    returns (
-      bytes memory lastCallData,
-      uint256 numOfCalls,
-      IGmxBaseOrderUtils.CreateOrderParams memory createOrderParams
-    )
-  {
-    numOfCalls = multicallParams.length;
-    require(numOfCalls == 3 || numOfCalls == 2, "invalid multicall params length");
-
-    lastCallData = multicallParams[numOfCalls - 1];
-    bytes4 method = TxDataUtils(exchangeRouterContractGuard).getMethod(lastCallData);
-    bytes memory params = TxDataUtils(exchangeRouterContractGuard).getParams(lastCallData);
-
-    require(method == IGmxExchangeRouter.createOrder.selector, "invalid multicall params");
-    createOrderParams = abi.decode(params, (IGmxBaseOrderUtils.CreateOrderParams));
-  }
-
   function afterTxGuardCheck(
     address exchangeRouterContractGuard,
     address poolManagerLogic,
     address to,
     bytes memory data
   ) external {
-    (bytes4 method, bytes memory params, , ) = validateTxGuardParams(
+    (bytes4 method, bytes memory params, , ) = GmxHelperLib.validateTxGuardParams(
       exchangeRouterContractGuard,
       poolManagerLogic,
       data
@@ -340,7 +192,7 @@ library GmxAfterTxValidatorLib {
     if (method == IGmxExchangeRouter.multicall.selector) {
       bytes[] memory multicallParams = abi.decode(params, (bytes[]));
       bytes memory lastCallData = multicallParams[multicallParams.length - 1];
-      method = TxDataUtils(exchangeRouterContractGuard).getMethod(lastCallData);
+      method = GmxHelperLib.getMethod(lastCallData);
       if (method == IGmxExchangeRouter.createDeposit.selector) {
         bytes32 key = contractGuardVars.dataStore.getCurrentKey();
         IGmxDeposit.Props memory latestDeposit = contractGuardVars.reader.getDeposit(contractGuardVars.dataStore, key);
@@ -349,8 +201,16 @@ library GmxAfterTxValidatorLib {
         );
         require(pendingDepositCount == 1, "only one deposit allowed");
         require(latestDeposit.numbers.callbackGasLimit >= CALLBACK_GAS_LIMIT, "low callback gas limit");
-        (uint256 inputTokensValueD18, uint256 outputTokensValueD18) = getMaxDepositSlippageData({
-          latestDeposit: latestDeposit,
+        (uint256 inputTokensValueD18, uint256 outputTokensValueD18) = GmxHelperLib.getMaxDepositSlippageData({
+          afterDepositData: GmxStructs.GmxAfterDepositData({
+            account: latestDeposit.addresses.account,
+            market: latestDeposit.addresses.market,
+            initialLongToken: latestDeposit.addresses.initialLongToken,
+            initialShortToken: latestDeposit.addresses.initialShortToken,
+            initialLongTokenAmount: latestDeposit.numbers.initialLongTokenAmount,
+            initialShortTokenAmount: latestDeposit.numbers.initialShortTokenAmount,
+            minMarketTokens: latestDeposit.numbers.minMarketTokens
+          }),
           priceDependencies: priceDependencies,
           isMinOutputAmountUsed: true,
           optionalOutputAmount: 0
@@ -377,8 +237,14 @@ library GmxAfterTxValidatorLib {
         );
         require(pendingWithdrawalCount == 1, "only one withdrawal allowed");
         require(latestWithdrawal.numbers.callbackGasLimit >= CALLBACK_GAS_LIMIT, "low callback gas limit");
-        (uint256 inputTokensValue, uint256 outputTokensValue) = getMaxWithdrawalSlippageData({
-          latestWithdrawal: latestWithdrawal,
+        (uint256 inputTokensValue, uint256 outputTokensValue) = GmxHelperLib.getMaxWithdrawalSlippageData({
+          afterWithdrawalData: GmxStructs.GmxAfterWithdrawalData({
+            account: latestWithdrawal.addresses.account,
+            market: latestWithdrawal.addresses.market,
+            marketTokenAmount: latestWithdrawal.numbers.marketTokenAmount,
+            minLongTokenAmount: latestWithdrawal.numbers.minLongTokenAmount,
+            minShortTokenAmount: latestWithdrawal.numbers.minShortTokenAmount
+          }),
           priceDependencies: priceDependencies,
           isMinOutputAmountUsed: true,
           optionalOutputLongTokenAmount: 0,
@@ -396,15 +262,21 @@ library GmxAfterTxValidatorLib {
         );
       } else if (method == IGmxExchangeRouter.createOrder.selector) {
         // preliminary length check and decoding CreateOrderParams
-        decodeCreateOrder(exchangeRouterContractGuard, multicallParams);
+        GmxHelperLib.decodeCreateOrder(multicallParams);
         bytes32 key = contractGuardVars.dataStore.getCurrentKey();
         Order.Props memory latestOrder = contractGuardVars.reader.getOrder(contractGuardVars.dataStore, key);
         uint256 pendingOrderCount = contractGuardVars.dataStore.getAccountOrderCount(latestOrder.addresses.account);
         require(pendingOrderCount == 1, "only one order allowed"); // ensure leverage and slippage check only for the latest order
         require(latestOrder.numbers.callbackGasLimit >= CALLBACK_GAS_LIMIT, "low callback gas limit");
         if (latestOrder.numbers.orderType == Order.OrderType.MarketSwap) {
-          (uint256 inputTokensValue, uint256 outputTokensValue) = getMaxSwapSlippageData({
-            latestOrder: latestOrder,
+          (uint256 inputTokensValue, uint256 outputTokensValue) = GmxHelperLib.getMaxSwapSlippageData({
+            afterSwapOrderData: GmxStructs.GmxAfterSwapOrderData({
+              account: latestOrder.addresses.account,
+              swapPath: latestOrder.addresses.swapPath,
+              initialCollateralToken: latestOrder.addresses.initialCollateralToken,
+              minOutputAmount: latestOrder.numbers.minOutputAmount,
+              initialCollateralDeltaAmount: latestOrder.numbers.initialCollateralDeltaAmount
+            }),
             priceDependencies: priceDependencies,
             isMinOutputAmountUsed: true,
             optionalOutputAmount: 0
@@ -429,6 +301,7 @@ library GmxAfterTxValidatorLib {
         params,
         (address[], address[], uint256[], address)
       );
+      GmxHelperLib.accessControl(address(contractGuardVars.nftTracker.poolFactory()), poolManagerLogic);
       for (uint256 i; i < markets.length; ++i) {
         GmxClaimableCollateralTrackerLib.cleanUpClaimableCollateralTimeKey(
           address(contractGuardVars.nftTracker),

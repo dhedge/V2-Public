@@ -176,6 +176,6 @@ export const getEmptyComplexAssetsData = async (poolLogicProxy: PoolLogic): Prom
   return supportedAssets.map(({ asset }) => ({
     supportedAsset: asset,
     withdrawData: [],
-    slippageTolerance: 0,
+    slippageTolerance: 100,
   }));
 };

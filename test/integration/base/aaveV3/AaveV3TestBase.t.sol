@@ -8,7 +8,7 @@ import {BaseSetup} from "test/integration/utils/foundry/chains/BaseSetup.t.sol";
 import {BaseConfig} from "test/integration/utils/foundry/config/BaseConfig.sol";
 
 library AaveV3TestBaseSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 31387138;
+  uint256 public constant FORK_BLOCK_NUMBER = 33880000;
 }
 
 contract AaveV3TestBase is AaveV3TestSetup, BaseSetup {

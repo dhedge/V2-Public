@@ -53,6 +53,11 @@ contract AaveV3DryRunArbitrum is DeploymentDryRunArbitrum {
       uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
       0x16228Fcd5c9231486C6A02911d0B0627ab4436D9 // ChainlinkPythPriceAggregator currently set to USDC
     );
+    assetHandler.addAsset(
+      ArbitrumConfig.WETH,
+      uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+      0xB8B4574887Bf165dA8c2069e3046F312CE3D6370 // ChainlinkPythPriceAggregator currently set to WETH
+    );
   }
 
   function getTorosVaults() internal pure returns (address[] memory torosVaults) {

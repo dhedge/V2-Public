@@ -87,4 +87,10 @@ library DhedgeMath {
       return uint128(r < r1 ? r : r1);
     }
   }
+
+  /// @dev Returns the absolute unsigned value of a signed value.
+  function abs(int256 n) internal pure returns (uint256) {
+    // must be unchecked in order to support `n = type(int256).min`
+    return uint256(n >= 0 ? n : -n);
+  }
 }

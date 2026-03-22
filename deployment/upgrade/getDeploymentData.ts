@@ -11,6 +11,7 @@ import { optimismProdData, ovmProdFileNames } from "../ovm/deploymentData";
 import { arbitrumProdData, arbitrumProdFileNames } from "../arbitrum/deploymentData";
 import { baseProdData, baseProdFileNames } from "../base/deploymentData";
 import { ethereumProdData, ethereumProdFileNames } from "../ethereum/deploymentData";
+import { plasmaProdData, plasmaProdFileNames } from "../plasma/deploymentData";
 
 export interface IDeploymentData {
   addresses: IAddresses;
@@ -51,6 +52,11 @@ export const getDeploymentData = (chainId: number, deployment: "staging" | "prod
       return {
         addresses: ethereumProdData,
         filenames: ethereumProdFileNames,
+      };
+    case "9745-production":
+      return {
+        addresses: plasmaProdData,
+        filenames: plasmaProdFileNames,
       };
     // Useful for testing with hardhat local fork node.
     // Note that if any upgrade script runs successfully, the version

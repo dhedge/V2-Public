@@ -1,0 +1,138 @@
+{
+  "dh1": {
+    "description": "Factory contract is paused",
+    "action": "Try again later or contact the team on Discord if the issue persists."
+  },
+  "dh2": {
+    "description": "Vault is paused",
+    "action": "Try again later or contact the team on Discord if the issue persists."
+  },
+  "dh3": {
+    "description": "Vault tokens are in cooldown period",
+    "action": "Wait for the cooldown period to expire and try again."
+  },
+  "dh4": {
+    "description": "Only vault manager allowed",
+    "action": "Only the vault manager can perform this action."
+  },
+  "dh5": {
+    "description": "Only allowed addresses can use custom cooldown",
+    "action": "Only whitelisted addresses can perform this action."
+  },
+  "dh6": {
+    "description": "Invalid cooldown duration",
+    "action": "Cooldown must be between 5 minutes and the maximum exit cooldown."
+  },
+  "dh7": {
+    "description": "Only whitelisted vault members allowed",
+    "action": "Only the manager or whitelisted members can deposit to this private vault."
+  },
+  "dh8": {
+    "description": "Asset not supported for deposits",
+    "action": "Use a supported deposit asset."
+  },
+  "dh9": {
+    "description": "ERC721 tokens not supported as deposit asset",
+    "action": "Use an ERC20 token for deposits."
+  },
+  "dh10": {
+    "description": "Amount below minimum threshold",
+    "action": "Change amount to meet the minimum threshold."
+  },
+  "dh11": {
+    "description": "Withdrawal too soon after deposit",
+    "action": "Wait at least one block after deposit before withdrawing."
+  },
+  "dh12": {
+    "description": "Insufficient balance for withdrawal",
+    "action": "Check if you have enough vault tokens for withdrawal."
+  },
+  "dh13": {
+    "description": "Liquidity allocation invariant breach",
+    "action": "Contact the team on Discord."
+  },
+  "dh14": {
+    "description": "Exit fee transfer failed",
+    "action": "Contact the team on Discord."
+  },
+  "dh15": {
+    "description": "Withdraw asset can not be zero",
+    "action": "Contact the team on Discord."
+  },
+  "dh16": {
+    "description": "Value calculation mismatch during withdrawal",
+    "action": "Try again later or contact the team on Discord if the issue persists."
+  },
+  "dh17": {
+    "description": "Supply calculation mismatch during withdrawal",
+    "action": "Try again later or contact the team on Discord if the issue persists."
+  },
+  "dh18": {
+    "description": "Address can not be zero",
+    "action": "Contact the team on Discord."
+  },
+  "dh19": {
+    "description": "Asset mismatch in complex asset data",
+    "action": "Contact the team on Discord."
+  },
+  "dh20": {
+    "description": "Trading is paused for this vault",
+    "action": "Try again later or contact the team on Discord if the issue persists."
+  },
+  "dh21": {
+    "description": "ERC721 transfer not verified",
+    "action": "If you believe this is a bug, contact the team on Discord."
+  },
+  "dh22": {
+    "description": "Asset not enabled in vault",
+    "action": "Add the asset to the vault's supported assets."
+  },
+  "dh23": {
+    "description": "Invalid transaction",
+    "action": "dHEDGE protocol either does not support this action or this is a bug."
+  },
+  "dh24": {
+    "description": "Unauthorized transaction executor",
+    "action": "Only manager, trader, or public transactions are allowed."
+  },
+  "dh25": {
+    "description": "Deposit value below minimum USD requirement",
+    "action": "Increase deposit amount to meet the minimum USD value requirement."
+  },
+  "dh26": {
+    "description": "Withdrawal slippage tolerance exceeded",
+    "action": "Increase slippage tolerance or try again with better market conditions."
+  },
+  "dh27": {
+    "description": "High withdrawal slippage protection triggered",
+    "action": "Try again with better market conditions or contact the team on Discord if the issue persists."
+  },
+  "dh28": {
+    "description": "Unauthorized sender",
+    "action": "Only factory or owner can peform this action."
+  },
+  "dh29": {
+    "description": "Invalid flash loan initiator",
+    "action": "If you believe this is a bug, contact the team on Discord."
+  },
+  "dh30": {
+    "description": "Invalid flash loan sender",
+    "action": "If you believe this is a bug, contact the team on Discord."
+  },
+  "dh31": {
+    "description": "Only PoolManagerLogic contract allowed",
+    "action": "If you believe this is a bug, contact the team on Discord."
+  },
+  "dh32": {
+    "description": "Maximum supply cap reached",
+    "action": "Cannot mint such amount of vault tokens as it would exceed the maximum supply cap."
+  },
+  "dh33": {
+    "description": "Unauthorized signer",
+    "action": "Only signatures from the manager or trader are allowed."
+  },
+  "dh34": {
+    "description": "Invalid signature hash",
+    "action": "The provided signature is invalid or has not been authorized. Contact the team on Discord."
+  }
+}

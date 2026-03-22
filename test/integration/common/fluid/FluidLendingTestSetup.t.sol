@@ -8,8 +8,6 @@ import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {FluidTokenAssetGuard} from "contracts/guards/assetGuards/fluid/FluidTokenAssetGuard.sol";
 import {FluidTokenContractGuard} from "contracts/guards/contractGuards/fluid/FluidTokenContractGuard.sol";
-import {FluidTokenPriceAggregator} from "contracts/priceAggregators/FluidTokenPriceAggregator.sol";
-import {IPoolFactory} from "contracts/interfaces/IPoolFactory.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IFToken} from "contracts/interfaces/fluid/IFToken.sol";
@@ -42,26 +40,26 @@ abstract contract FluidLendingTestSetup is BackboneSetup {
       guardAddress: address(fluidTokenAssetGuard)
     });
 
-    FluidTokenPriceAggregator fluidWethOracle = new FluidTokenPriceAggregator(
-      IFToken(fluidWETH),
-      IPoolFactory(address(poolFactoryProxy))
+    address fluidWethOracle = deployCode(
+      "FluidTokenPriceAggregator.sol",
+      abi.encode(fluidWETH, poolFactoryProxy.getAssetHandler())
     );
 
-    FluidTokenPriceAggregator fluidUsdcOracle = new FluidTokenPriceAggregator(
-      IFToken(fluidUSDC),
-      IPoolFactory(address(poolFactoryProxy))
+    address fluidUsdcOracle = deployCode(
+      "FluidTokenPriceAggregator.sol",
+      abi.encode(fluidUSDC, poolFactoryProxy.getAssetHandler())
     );
 
     IAssetHandler.Asset[] memory fluidTokensToAdd = new IAssetHandler.Asset[](2);
     fluidTokensToAdd[0] = IAssetHandler.Asset({
       asset: fluidWETH,
       assetType: uint16(AssetTypeIncomplete.FLUID_TOKEN),
-      aggregator: address(fluidWethOracle)
+      aggregator: fluidWethOracle
     });
     fluidTokensToAdd[1] = IAssetHandler.Asset({
       asset: fluidUSDC,
       assetType: uint16(AssetTypeIncomplete.FLUID_TOKEN),
-      aggregator: address(fluidUsdcOracle)
+      aggregator: fluidUsdcOracle
     });
 
     assetHandlerProxy.addAssets(fluidTokensToAdd);
@@ -83,6 +81,8 @@ abstract contract FluidLendingTestSetup is BackboneSetup {
         _fundSymbol: "FLT",
         _performanceFeeNumerator: 0,
         _managerFeeNumerator: 0,
+        _entryFeeNumerator: 0,
+        _exitFeeNum: 0,
         _supportedAssets: supportedAssets
       })
     );
