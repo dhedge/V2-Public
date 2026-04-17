@@ -5,7 +5,7 @@ pragma solidity 0.8.28;
 import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
 import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
-import {IPermit2} from "../../interfaces/IPermit2.sol";
+import {IPermit2} from "../../interfaces/permit2/IPermit2.sol";
 import {IERC20Extended} from "../../interfaces/IERC20Extended.sol";
 import {OdosLimitOrderTypeHashLib} from "./OdosLimitOrderTypeHashLib.sol";
 

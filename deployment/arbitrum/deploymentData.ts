@@ -287,6 +287,7 @@ export const arbitrumProdData: IAddresses = {
       arbitrumChainData.torosPools.BTCHOSRTVOL,
       arbitrumChainData.torosPools.BTCCOVCALL,
       arbitrumChainData.torosPools.HYPEBULL3X,
+      arbitrumChainData.dytmTestVaults.DYTMTesting, // for testing Dytm as the index vault(yield basket)
     ],
   },
 
@@ -716,6 +717,47 @@ export const arbitrumProdData: IAddresses = {
 
   kyberSwap: {
     routerV2: "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5",
+  },
+
+  rewardAssetSetting: [
+    {
+      rewardToken: arbitrumChainData.assets.wsteth, // wstETH
+      linkedAssetTypes: [],
+      linkedAssets: [
+        "0x71fBF40651E9D4278a74586AfC99F307f369Ce9A", // PT-wstETH-25JUN2026
+      ],
+    },
+  ],
+
+  pendle: {
+    pendleRouterV4: "0x888888888889758F76e7103c6CbF23ABbF58F946",
+    knownMarkets: [
+      "0xf78452e0f5C0B95fc5dC8353B8CD1e06E53fa25B", // wstETH-25JUN2026
+    ],
+    yieldContractFactory: "0xFF29e023910FB9bfc86729c1050AF193A45a0C0c",
+    staticRouter: "0xAdB09F65bd90d19e3148D9ccb693F3161C6DB3E8",
+  },
+
+  dytm: {
+    dytmOffice: arbitrumChainData.dytm.dytmOffice,
+    dytmPeriphery: arbitrumChainData.dytm.dytmPeriphery,
+    accountSplitterAndMerger: arbitrumChainData.dytm.accountSplitterAndMerger,
+    whitelistedPools: [arbitrumChainData.dytmTestVaults.DYTMTesting2, arbitrumChainData.dytmTestVaults.DYTMTesting3],
+    whitelistedMarkets: [
+      1, // for testing
+    ],
+    maxDytmMarkets: 1,
+    mismatchDeltaNumerator: 5, // 0.05% allowed mismatch
+  },
+
+  easyLimitBuyManager: {
+    permit2: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+    authorizedKeeperAddresses: [
+      "0xFBFE87a8665cE77e4F1f47d0256b7e68Be966498",
+      "0xBA2A62aFAfC662afbE5C726910C101225aDeF591",
+      "0x4C6ced5164042150A63Cd7610af3Efc7fF2fe4B6",
+      "0x3D8D80d65EF8df009AF576dF44d4d06bf39A94DF",
+    ],
   },
 };
 

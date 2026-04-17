@@ -9,14 +9,12 @@ Velodrome V2 LP token withdrawals can incorrectly fail slippage checks (error `d
 The issue stems from a discrepancy in how fees and rewards are handled:
 
 1. **Balance Calculation (Expected Value)**: `VelodromeV2LPAssetGuard.getBalance()` includes:
-
    - LP tokens held directly in the pool
    - LP tokens staked in the gauge
    - Claimable fees from the LP pair (converted to LP-equivalent value)
    - Claimable rewards from the gauge (converted to LP-equivalent value)
 
 2. **Withdrawal Processing (Actual Value)**: During withdrawal, `VelodromeV2LPAssetGuard.withdrawProcessing()`:
-
    - Claims fees and transfers them **directly to the user** (not to the pool)
    - Claims rewards and transfers them **directly to the user** (not to the pool)
    - Withdraws LP tokens from the gauge to the pool
@@ -29,7 +27,6 @@ The issue stems from a discrepancy in how fees and rewards are handled:
    ```
 
 4. **Slippage Check Failure**: [PoolLogic.sol#L580-L587](../contracts/PoolLogic.sol#L580-L587) compares:
-
    - `withdrawBalance` (only LP tokens that arrived in pool)
    - vs `expectedWithdrawValue` (includes fees/rewards that went to user)
 
@@ -47,7 +44,6 @@ The issue stems from a discrepancy in how fees and rewards are handled:
    ```
 
 2. **Fee Transfer** ([VelodromeV2LPAssetGuard.sol#L64-L98](../contracts/guards/assetGuards/velodrome/VelodromeV2LPAssetGuard.sol#L64-L98)):
-
    - Claims fees from LP pair
    - Transfers fee tokens directly to user if not supported in vault
    - **These tokens bypass the pool contract**

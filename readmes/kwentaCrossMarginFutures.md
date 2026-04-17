@@ -22,7 +22,6 @@ Open Limit Order - https://optimistic.etherscan.io/tx/0x51768333900a3b8bd16a9fe5
 
 Cancel Limit Order - https://optimistic.etherscan.io/tx/0x5020106a7f96941e4327506f18bbaa5988c458e161251f94077a63c9fd8b1ac3 - Doesn't automatically return keeper fee need to withdraw
 
-
 Withdraw keeper fee - https://optimistic.etherscan.io/tx/0x76ec159c1a561500d8ec570d942748623784b7b54f4747a68a59031da9c7e8b2
 
 Withdraw Cross Margin - https://optimistic.etherscan.io/tx/0x117514373f0a5067b329030532727f813563ddb0e8dc7add9164d468976d9312

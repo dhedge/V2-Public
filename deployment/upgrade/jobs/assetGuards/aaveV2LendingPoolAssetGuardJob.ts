@@ -26,13 +26,12 @@ export const aaveV2LendingPoolAssetGuardJob: IJob<void> = async (
   if (config.execute) {
     const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
     const args: Parameters<typeof AaveLendingPoolAssetGuard.deploy> = [
-      addresses.aaveV2.aaveProtocolDataProviderAddress,
       addresses.aaveV2.aaveLendingPoolAddress,
       addresses.flatMoney.swapper,
       onchainSwapRouter,
+      hre.ethers.constants.AddressZero, // no pendle for V2
+      hre.ethers.constants.AddressZero, // no pendle for V2
       5, // 0.05% allowed mismatch
-      10_000,
-      10_000,
     ];
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(...args);
 

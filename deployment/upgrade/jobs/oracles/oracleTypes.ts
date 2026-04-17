@@ -28,11 +28,6 @@ export type IVelodromeV2TWAPAggregatorConfig = IAssetConfig<
   "VelodromeV2TWAPAggregator",
   IVelodromeTWAPAggregatorSpecificConfig
 >;
-export type ISonneFinancePriceAggregatorConfig = IAssetConfig<
-  "SonneFinancePriceAggregator",
-  ISonneFinancePriceAggregatorSpecificConfig
->;
-
 export type IRamsesTWAPAggregatorConfig = IAssetConfig<"RamsesTWAPAggregator", IVelodromeTWAPAggregatorSpecificConfig>;
 export type IRamsesLPVariableAggregatorConfig = IAssetConfig<
   "RamsesVariableLPAggregator",
@@ -79,6 +74,11 @@ export type IERC4626PriceAggregatorConfig = IAssetConfig<
   IERC4626PriceAggregatorSpecificConfig
 >;
 
+export type IHyperliquidSpotPriceAggregatorConfig = IAssetConfig<
+  "HyperliquidSpotPriceAggregator",
+  IHyperliquidSpotPriceAggregatorSpecificConfig
+>;
+
 export type TAssetConfig =
   | IAssetConfig<"DhedgeDeployedAggregator", IDhedgeDeployedAggregatorSpecificConfig>
   | IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorSpecificConfig>
@@ -100,7 +100,6 @@ export type TAssetConfig =
   | IVelodromeV2TWAPAggregatorConfig
   | IRamsesTWAPAggregatorConfig
   | IRamsesLPVariableAggregatorConfig
-  | ISonneFinancePriceAggregatorConfig
   | IFlatMoneyUNITPriceAggregatorConfig
   | IChainlinkPythPriceAggregatorConfig
   | IChainlinkAggregatorWrapperConfig
@@ -109,7 +108,8 @@ export type TAssetConfig =
   | IFluidTokenPriceAggregatorConfig
   | IPythPriceAggregatorConfig
   | IPendlePTPriceAggregatorConfig
-  | IERC4626PriceAggregatorConfig;
+  | IERC4626PriceAggregatorConfig
+  | IHyperliquidSpotPriceAggregatorConfig;
 
 export interface IChainlinkAggregatorSpecificConfig extends ITriggerChange {
   chainlinkOracleAddress: Address;
@@ -180,11 +180,6 @@ export interface IDQUICKPriceAggregatorSpecificConfig extends ITriggerChange {
   dhedgeFactoryProxy: Address;
 }
 
-export interface ISonneFinancePriceAggregatorSpecificConfig extends ITriggerChange {
-  comptroller: Address;
-  initialExchangeRateMantissa: number;
-}
-
 interface IETHCrossAggregatorSpecificConfig extends ITriggerChange {
   assetToEthChainlinkOracleAddress: Address;
   ethToUsdChainlinkOracleAddress: Address;
@@ -237,4 +232,9 @@ interface IPendlePTPriceAggregatorSpecificConfig extends ITriggerChange {
 
 export interface IERC4626PriceAggregatorSpecificConfig extends ITriggerChange {
   dhedgeFactoryProxy: Address;
+}
+
+export interface IHyperliquidSpotPriceAggregatorSpecificConfig extends ITriggerChange {
+  spotIndex: number;
+  usdcUsdFeed: Address;
 }

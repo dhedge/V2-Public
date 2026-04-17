@@ -9,6 +9,7 @@ evm_version = 'cancun'
 optimizer = true
 optimizer_runs = 200
 no_match_contract = "Skip"
+ignored_warnings_from = ["lib/forge-std"]
 
 # Profile for FFI-dependent tests - inherits everything from default
 [profile.ffi-tests]
@@ -22,6 +23,7 @@ arbitrum = "${ARBITRUM_URL}"
 polygon = "${POLYGON_URL}"
 ethereum = "${ETHEREUM_URL}"
 plasma = "${PLASMA_URL}"
+hyperevm = "${HYPEREVM_URL}"
 
 [lint]
 lint_on_build = false

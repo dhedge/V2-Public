@@ -14,4 +14,4 @@ assetType,guardName,guardAddress,description
 22,FlatMoneyCollateralAssetGuard,0x7b8E17d3f3331e82DF202Dc7a6a6012C94bDA989,Flat Money Collateral Asset Guard
 200,RewardAssetGuard,0x20E125DA16D93De54D69189f6Aa89F0Ee8ecf799,Reward Asset Guard
 999,ByPassAssetGuard,0x00bC9798a926ED2e9031C2870bb7550F9D80ADEE,ByPass Asset Guard
-8,AaveLendingPoolAssetGuard,0x232B5e5DD3eC435c883fE36A096Db2EbC5284579,Aave V3 Lending Pool
+8,AaveLendingPoolAssetGuard,0x45a992Cf89b7149cA36d8dEaCe6Ff20D58BaE373,Aave V3 Lending Pool

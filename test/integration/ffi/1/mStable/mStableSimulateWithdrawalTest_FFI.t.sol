@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// solhint-disable contract-name-camelcase
+// solhint-disable contract-name-capwords
 pragma solidity 0.7.6;
 pragma abicoder v2;
 

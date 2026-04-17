@@ -13,14 +13,13 @@ Buying Power can also be used to provide liquidity leveraged liquidity to specia
 So in short on Perp, traders can:
 
 1. "Trade" - Take out leveraged long and short tokens against collateral that pay a daily funding rate
-2."Pools" - Provide v3 liquidity in `v` pools.
+   2."Pools" - Provide v3 liquidity in `v` pools.
 
 ## Questions
 
 1. Can I add liquidity to perp pools via Uniswap (or can those tokens only be transferred to uniswap via Clearing House)
 2. What happens if I mint vLiquidity and someone buys vTokens on uniswap and then I get liquidated?
 3. Is there a referral program? `referralCode`
-
 
 ## Important Links
 
@@ -48,25 +47,27 @@ BP: stands for buying power (bp) borrowed from DYDX.
 Everything is Cross collateralised per account. An account is known as a `trader`
 
 ### Balance
+
 Perp exposes a helper function that gives us us a traders net position USD.
 
 Balance: ClearingHouse.sol
- - function getAccountValue(address trader) external view returns (int256);
- -- returns the net value of a traders long/short position in usdc
- -- Includes the usd value of LP positions
- -- Perp do some mitigations of price manipulation
- -- We can revisit the risk after initial implementation
 
+- function getAccountValue(address trader) external view returns (int256);
+  -- returns the net value of a traders long/short position in usdc
+  -- Includes the usd value of LP positions
+  -- Perp do some mitigations of price manipulation
+  -- We can revisit the risk after initial implementation
 
 ### Depositing
+
 Depositing: When depositing we are interacting with IVault.sol. Minimum first deposit is $100 usdc
 https://github.com/perpetual-protocol/perp-lushan/blob/main/contracts/interface/IVault.sol
-Function: deposit(address beneficiary, uint256 amount) ***
+Function: deposit(address beneficiary, uint256 amount) \*\*\*
 https://optimistic.etherscan.io/tx/0x7e143409cf8bdcd7a2c583223583b77b3ebd016923151e8d91f919e3741001b9
 Note: You can get the ClearingHouse address from the IVault.getClearingHouse()
 
-
 ### Long & Short Position
+
 Short+Long of Asset1: Opening a Long and short of the same asset Will net out the position long subtract short
 Short+short of Asset1: Will add the shorts into one position.
 Long+Long of Asset1:Will add the longs into one position.
@@ -75,12 +76,12 @@ Closing Positions:
 
 - If under collateralised need to liquidate
 - To reduce a long or short position we need to take out the opposite position relative to the investors portion.
-For instance if the trader has a 3eth long position to close 33% of it we need to take a short of 1eth
-This will return 1/3 of the buying power back to the trader
+  For instance if the trader has a 3eth long position to close 33% of it we need to take a short of 1eth
+  This will return 1/3 of the buying power back to the trader
 - We then need to withdraw the investors 33% portion of the collateral (usdc) from the IVault.Sol
 
-
 Open Position:
+
 ```
 {
   "method": "openPosition",
@@ -170,14 +171,11 @@ Close Position:
 }
 ```
 
-
-
-
-
 ### LP'ing
 
 Add Liquidity
 https://optimistic.etherscan.io/tx/0xa9dc2247812db444fe6f2462e27fd6a778fcf45dbbd3ca87b67d32155be2c862
+
 ```
 {
   "method": "addLiquidity",
@@ -231,13 +229,12 @@ https://optimistic.etherscan.io/tx/0xa9dc2247812db444fe6f2462e27fd6a778fcf45dbbd
 }
 ```
 
-
 Increase Liquidity: TODO
 Decrease Liquidity: TODO
 
-
 Remove Liquidity:
 https://optimistic.etherscan.io/tx/0x0737f01d9bec51337283e234196ddfe472aa77743667c332aca6cc69d47640f3
+
 ```
 {
   "method": "removeLiquidity",
@@ -284,17 +281,14 @@ https://optimistic.etherscan.io/tx/0x0737f01d9bec51337283e234196ddfe472aa7774366
 }
 ```
 
-
 Rewards: Perp v2 Liquidity Mining - In perp tokens, requires claiming external contract
- -- Distributed every week
-
+-- Distributed every week
 
 Funding Payments: Query Funding payment +/-
 Each position will have a funding rate position that is negative or positive depending on the direction
 This funding rate position is queryable and live/streaming
 
 -- View functions are available that can calculate the net position of an account.
-
 
 After depositing: After we deposit funds we will be interacting with ClearingHouse.sol
 -- Clearing house will check how much buying power you have to make trades.
@@ -314,10 +308,5 @@ a minimum amount of liquidity. This mitigates people manipulating the lp price?
 -- S
 
 Asset Oracles some band and some chainlink
-
-
-
-
-
 
 Contracts OVM - https://metadata.perp.exchange/v2/optimism.json

@@ -136,9 +136,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
       address(superSwapper),
       pendleYieldContractFactory,
       pendleStaticRouter,
-      150, // setting to 1.5% mismatch allowed for the sake of tests, production value should be around 5 (0.05%)
-      10_000,
-      10_000
+      150 // setting to 1.5% mismatch allowed for the sake of tests, production value should be around 5 (0.05%)
     );
     governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
     governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), erc20Guard); // Set ERC20Guard once again (needed for dryrun tests)

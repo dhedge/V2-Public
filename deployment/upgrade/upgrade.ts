@@ -52,8 +52,6 @@ import { removeAssetsJob } from "./jobs/removeAssetsJob";
 import { rewardDistributionJob } from "./jobs/rewardDistributionJob";
 import { dhedgeStakingV2NFTJSONJob } from "./jobs/stakingV2/dhedgeStakingNFTJsonJob";
 import { dhedgeStakingV2Job } from "./jobs/stakingV2/dhedgeStakingV2Job";
-import { easySwapperJob } from "./jobs/swapper/easySwapperJob";
-import { easySwapperConfigurationJob } from "./jobs/swapper/easySwapperConfigurationJob";
 import { superSwapperJob } from "./jobs/swapper/superSwapperJob";
 import { uniV3V2RouterJob } from "./jobs/swapper/uniV3V2RouterJob";
 import { veloUniV2RouterJob } from "./jobs/swapper/veloUniV2RouterJob";
@@ -74,7 +72,6 @@ import { closedContractGuardJob } from "./jobs/contractGuards/closedContractGuar
 import { synthetixV3ContractGuardJob } from "./jobs/contractGuards/synthetixV3ContractGuardJob";
 import { synthetixV3AssetGuardJob } from "./jobs/assetGuards/synthetixV3AssetGuardJob";
 import { synthetixV3PerpsAssetGuardJob } from "./jobs/assetGuards/synthetixV3PerpsAssetGuardJob";
-import { poolTokenSwapperJob } from "./jobs/poolTokenSwapperJob";
 import { poolTokenSwapperGuardJob } from "./jobs/contractGuards/poolTokenSwapperGuardJob";
 import { ramsesLPAssetGuardJob } from "./jobs/assetGuards/ramsesLPAssetGuardJob";
 import { ramsesRouterGuardJob } from "./jobs/contractGuards/ramsesRouterGuardJob";
@@ -82,13 +79,11 @@ import { ramsesXRamGuardJob } from "./jobs/contractGuards/ramsesXRamGuardJob";
 import { ramsesUniV2RouterJob } from "./jobs/swapper/ramsesUniV2RouterJob";
 import { synthetixV3SpotMarketContractGuardJob } from "./jobs/contractGuards/synthetixV3SpotMarketContractGuardJob";
 import { synthetixV3PerpsMarketContractGuardJob } from "./jobs/contractGuards/synthetixV3PerpsMarketContractGuardJob";
-import { sonneFinanceComptrollerContractGuardJob } from "./jobs/contractGuards/sonneFinanceComptrollerContractGuardJob";
 import { aaveDebtTokenContractGuardJob } from "./jobs/contractGuards/aaveDebtTokenContractGuardJob";
 import { aaveMigrationHelperGuardJob } from "./jobs/contractGuards/aaveMigrationHelperGuardJob";
 import { flatMoneyDelayedOrderGuardJob } from "./jobs/contractGuards/flatMoneyDelayedOrderGuardJob";
 import { flatMoneyCollateralAssetGuardJob } from "./jobs/assetGuards/flatMoneyCollateralAssetGuardJob";
 import { flatMoneyUNITAssetGuardJob } from "./jobs/assetGuards/flatMoneyUNITAssetGuardJob";
-import { v1SynthRedeemJob } from "./jobs/v1SynthRedeem/v1SynthRedeemJob";
 import { oneInchV6ContractGuardJob } from "./jobs/contractGuards/oneInchV6ContractGuardJob";
 import { velodromeCLAssetGuardJob } from "./jobs/assetGuards/velodromeCLAssetGuardJob";
 import { velodromeNonfungiblePositionGuardJob } from "./jobs/contractGuards/velodromeNonfungiblePositionGuardJob";
@@ -109,10 +104,11 @@ import { easySwapperV2UnrolledAssetsGuardJob } from "./jobs/assetGuards/easySwap
 import { gmxExchangeRouterContractGuardJob } from "./jobs/contractGuards/gmxExchangeRouterContractGuardJob";
 import { gmxPerpMarketAssetGuardJob } from "./jobs/assetGuards/gmxPerpMarketAssetGuardJob";
 import { changeAssetsJob } from "./jobs/changeAssetsJob";
-import { pseudoPurgeJob } from "./jobs/pseudoPurge/pseudoPurgeJob";
 import { angleDistributorContractGuardJob } from "./jobs/contractGuards/angleDistributorContractGuardJob";
 import { poolLimitOrderManagerJob } from "./jobs/poolLimitOrderManager/poolLimitOrderManagerJob";
 import { poolLimitOrderManagerConfigurationJob } from "./jobs/poolLimitOrderManager/poolLimitOrderManagerConfigurationJob";
+import { easyLimitBuyManagerJob } from "./jobs/easyLimitBuyManager/easyLimitBuyManagerJob";
+import { easyLimitBuyManagerConfigurationJob } from "./jobs/easyLimitBuyManager/easyLimitBuyManagerConfigurationJob";
 import { pancakeNonfungiblePositionGuardJob } from "./jobs/contractGuards/pancakeNonfungiblePositionGuardJob";
 import { pancakeMasterChefV3GuardJob } from "./jobs/contractGuards/pancakeMasterChefV3GuardJob";
 import { pancakeCLAssetGuardJob } from "./jobs/assetGuards/pancakeCLAssetGuardJob";
@@ -129,7 +125,10 @@ import { flatMoneyV2UNITOutsideWithdrawalAssetGuardJob } from "./jobs/assetGuard
 import { flatMoneyV2OrderAnnouncementGuardJob } from "./jobs/contractGuards/flatMoneyV2OrderAnnouncementGuardJob";
 import { flatMoneyV2OrderExecutionGuardJob } from "./jobs/contractGuards/flatMoneyV2OrderExecutionGuardJob";
 import { pendleRouterV4ContractGuardJob } from "./jobs/contractGuards/pendleRouterV4ContractGuardJob";
+import { dytmOfficeContractGuardJob } from "./jobs/contractGuards/dytmOfficeContractGuardJob";
+import { dytmWithdrawProcessorJob } from "./jobs/dytmWithdrawProcessorJob";
 import { pendlePTAssetGuardJob } from "./jobs/assetGuards/pendlePTAssetGuardJob";
+import { dytmOfficeAssetGuardJob } from "./jobs/assetGuards/dytmOfficeAssetGuardJob";
 import { allowApproveContractGuardJob } from "./jobs/contractGuards/allowApproveContractGuardJob";
 import { virtualTokenAssetGuardJob } from "./jobs/assetGuards/virtualTokenAssetGuardJob";
 import { fluidMerkleDistributorContractGuardJob } from "./jobs/contractGuards/fluidMerkleDistributorContractGuardJob";
@@ -142,6 +141,12 @@ import { typedStructuredDataValidatorJob } from "./jobs/typedStructuredDataValid
 import { typedStructuredDataValidatorConfigurationJob } from "./jobs/typedStructuredDataValidator/typedStructuredDataValidatorConfigurationJob";
 import { valueManipulationCheckJob } from "./jobs/valueManipulationCheckJob";
 import { referralManagerJob } from "./jobs/referralManagerJob";
+import { hyperliquidPositionGuardJob } from "./jobs/assetGuards/hyperliquidPositionGuardJob";
+import { hyperliquidCoreWriterContractGuardJob } from "./jobs/contractGuards/hyperliquidCoreWriterContractGuardJob";
+import { hyperliquidSpotGuardJob } from "./jobs/assetGuards/hyperliquidSpotGuardJob";
+import { coreDepositWalletContractGuardJob } from "./jobs/contractGuards/coreDepositWalletContractGuardJob";
+import { hyperliquidERC20GuardJob } from "./jobs/assetGuards/hyperliquidERC20GuardJob";
+import { hyperliquidCoreWriterConfigurationJob } from "./jobs/contractGuards/hyperliquidCoreWriterConfigurationJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   // Swappers related
@@ -150,13 +155,14 @@ const jobs: { [key: string]: IJob<void> } = {
   univ3v2router: uniV3V2RouterJob,
   ramsesuniv2router: ramsesUniV2RouterJob,
   superswapper: superSwapperJob,
-  easyswapper: easySwapperJob,
-  easyswapperconfiguration: easySwapperConfigurationJob,
 
   // External
   rewarddistribution: rewardDistributionJob,
   slippageaccumulator: slippageAccumulatorJob,
-  v1synthredeem: v1SynthRedeemJob,
+  dytmwithdrawprocessor: dytmWithdrawProcessorJob,
+  easylimitbuymanager: easyLimitBuyManagerJob,
+  easylimitbuyconfig: easyLimitBuyManagerConfigurationJob,
+  valuemanipulationcheck: valueManipulationCheckJob,
 
   pause: pauseJob,
 
@@ -167,9 +173,11 @@ const jobs: { [key: string]: IJob<void> } = {
   poolmanagerlogic: poolManagerLogicJob,
   poollogicandmanagerlogic: poolLogicAndManagerLogicJob,
   nfttracker: nftTrackerJob,
-  pooltokenswapper: poolTokenSwapperJob,
   poollimitordermanager: poolLimitOrderManagerJob,
   limitorderconfig: poolLimitOrderManagerConfigurationJob,
+  typedstructureddatavalidator: typedStructuredDataValidatorJob,
+  typedstructureddatavalidatorconfiguration: typedStructuredDataValidatorConfigurationJob,
+  referralmanager: referralManagerJob,
 
   // Dhedge Staking V2
   dhedgestakingv2nftjson: dhedgeStakingV2NFTJSONJob,
@@ -215,7 +223,11 @@ const jobs: { [key: string]: IJob<void> } = {
   flatmoneyv2unitassetguard: flatMoneyV2UNITAssetGuardJob,
   flatmoneyv2unitoutsidewithdrawalassetguard: flatMoneyV2UNITOutsideWithdrawalAssetGuardJob,
   pendleptassetguard: pendlePTAssetGuardJob,
+  dytmofficeassetguard: dytmOfficeAssetGuardJob,
   virtualtokenassetguard: virtualTokenAssetGuardJob,
+  hyperliquidpositionguard: hyperliquidPositionGuardJob,
+  hyperliquidspotguard: hyperliquidSpotGuardJob,
+  hyperliquiderc20guard: hyperliquidERC20GuardJob,
 
   // Contract Guards
   closedcontractguard: closedContractGuardJob,
@@ -252,7 +264,6 @@ const jobs: { [key: string]: IJob<void> } = {
   ramsesxramguard: ramsesXRamGuardJob,
   synthetixv3spotmarketcontractguard: synthetixV3SpotMarketContractGuardJob,
   synthetixv3perpsmarketcontractguard: synthetixV3PerpsMarketContractGuardJob,
-  sonnecomptrollerguard: sonneFinanceComptrollerContractGuardJob,
   aavedebttokencontractguard: aaveDebtTokenContractGuardJob,
   aavemigrationhelperguard: aaveMigrationHelperGuardJob,
   flatmoneydelayedorderguard: flatMoneyDelayedOrderGuardJob,
@@ -282,39 +293,21 @@ const jobs: { [key: string]: IJob<void> } = {
   liquifirewardscontractguard: liquifiRewardsContractGuardJob,
   poollimitordermanagerguard: poolLimitOrderManagerGuardJob,
   gpv2settlementcontractguard: gpv2SettlementContractGuardJob,
+  dytmofficecontractguard: dytmOfficeContractGuardJob,
+  hyperliquidcorewriterguard: hyperliquidCoreWriterContractGuardJob,
+  hyperliquidcorewriterconfiguration: hyperliquidCoreWriterConfigurationJob,
+  coredepositwalletcontractguard: coreDepositWalletContractGuardJob,
 
   // Governance
   assets: assetsJob,
   removeassets: removeAssetsJob,
   deprecatecontractguards: deprecateContractGuardsJob,
   changeassets: changeAssetsJob,
-  pseudopurge: pseudoPurgeJob,
 
   // EasySwapperV2
   easyswapperv2: easySwapperV2Job,
   withdrawalvault: withdrawalVaultJob,
   easyswapperv2configuration: easySwapperV2ConfigurationJob,
-
-  // TypedStructuredDataValidator
-  typedstructureddatavalidator: typedStructuredDataValidatorJob,
-  typedstructureddatavalidatorconfiguration: typedStructuredDataValidatorConfigurationJob,
-
-  // Value Manipulation Check
-  valuemanipulationcheck: valueManipulationCheckJob,
-
-  // ReferralManager
-  referralmanager: referralManagerJob,
-
-  lyraGroup: async (...args) => {
-    await nftTrackerJob(...args);
-    await erc721ContractGuardJob(...args);
-    await lyraOptionMarketWrapperContractGuardJob(...args);
-    await lyraOptionMarketContractGuardJob(...args);
-    await dhedgeOptionMarketWrapperForLyraJob(...args);
-    await lyraOptionMarketWrapperAssetGuardJob(...args);
-    await lyraMarketsContractGuardJob(...args);
-    await assetsJob(...args);
-  },
 
   // Example of how to verify any contract that isn't verified
   // Can edit this job

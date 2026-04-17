@@ -59,4 +59,6 @@ interface IPoolLogic {
   function transferFrom(address from, address to, uint256 value) external returns (bool);
 
   function getExitRemainingCooldown(address sender) external view returns (uint256 remaining);
+
+  function execTransaction(address to, bytes calldata data) external returns (bool success);
 }

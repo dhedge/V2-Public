@@ -41,6 +41,7 @@ export interface IFileNames {
   // This file is an entry point for guards deprecation and is picked by a script. Copy here guards for deprecation.
   deprecatedContractGuardsFileName?: string;
   externalAssetFileName?: string;
+  approvedPerpsFileName?: string;
 }
 
 interface IEasySwapperConfig {
@@ -139,7 +140,7 @@ interface IDeploymentsConfig {
 
   assets: {
     nativeAssetWrapper: Address;
-    weth: Address;
+    weth?: Address;
     usdc?: Address;
     dai?: Address;
     susd?: Address;
@@ -260,6 +261,11 @@ interface IDeploymentsConfig {
     authorizedKeeperAddresses: Address[];
   };
 
+  easyLimitBuyManager: {
+    permit2: Address;
+    authorizedKeeperAddresses: Address[];
+  };
+
   pancakeswap?: {
     nonfungiblePositionManager: Address;
     masterChefV3: Address;
@@ -302,6 +308,16 @@ interface IDeploymentsConfig {
     staticRouter: Address;
   };
 
+  dytm?: {
+    dytmOffice: Address;
+    dytmPeriphery: Address;
+    accountSplitterAndMerger: Address;
+    whitelistedPools: Address[];
+    whitelistedMarkets: number[];
+    maxDytmMarkets: number;
+    mismatchDeltaNumerator: number;
+  };
+
   allowApproveGuard?: {
     allowedSpender: Address;
     tokensToSetGuardTo: Address[];
@@ -325,6 +341,15 @@ interface IDeploymentsConfig {
       gpv2Settlement: Address;
       maxUnfavorableDeviationBps: number;
     };
+  };
+
+  hyperliquid?: {
+    admin: Address;
+    maxSlippage: BigNumberish;
+    whitelistedVaults: {
+      poolLogic: Address;
+      whitelisted: boolean;
+    }[];
   };
 }
 
@@ -426,8 +451,6 @@ export interface IContracts {
   RamsesXRamContractGuard?: Address;
   SynthetixV3SpotMarketContractGuard?: Address;
   SynthetixV3PerpsMarketContractGuard?: Address;
-  SonneFinanceCTokenGuard?: Address;
-  SonneFinanceComptrollerGuard?: Address;
   AaveMigrationHelperGuard?: Address;
   AaveDebtTokenContractGuard?: Address;
   FlatMoneyDelayedOrderContractGuard?: Address;
@@ -460,6 +483,10 @@ export interface IContracts {
   LiquifiRewardsContractGuard?: Address;
   PoolLimitOrderManagerGuard?: Address;
   GPv2SettlementContractGuard?: Address;
+  DytmOfficeContractGuard?: Address;
+  HyperliquidCoreWriterContractGuard?: Address;
+  HyperliquidCoreWriterContractGuardProxy?: Address;
+  HyperliquidCoreDepositWalletContractGuard?: Address;
 
   // Asset Guards
   OpenAssetGuard: Address;
@@ -501,6 +528,10 @@ export interface IContracts {
   FlatMoneyV2UNITOutsideWithdrawalAssetGuard?: Address;
   PendlePTAssetGuard?: Address;
   VirtualTokenAssetGuard?: Address;
+  DytmOfficeAssetGuard?: Address;
+  HyperliquidPositionGuard?: Address;
+  HyperliquidSpotGuard?: Address;
+  HyperliquidERC20Guard?: Address;
 
   // Libraries
   WeeklyWindowsHelper?: Address;
@@ -522,12 +553,14 @@ export interface IContracts {
   Assets: TDeployedAsset[];
   RemovedAssets: TDeployedAsset[];
 
+  DytmWithdrawProcessor?: Address;
   EasySwapperV2: Address;
   EasySwapperV2Proxy: Address;
   WithdrawalVault: Address;
   WithdrawalVaultProxy: Address;
   PoolLimitOrderManager: Address;
   PoolLimitOrderManagerProxy: Address;
+  EasyLimitBuyManager: Address;
   TypedStructuredDataValidator: Address;
   TypedStructuredDataValidatorProxy: Address;
   ReferralManager: Address;
@@ -563,7 +596,6 @@ export type OracleType =
   | "VelodromeV2TWAPAggregator"
   | "RamsesTWAPAggregator"
   | "RamsesVariableLPAggregator"
-  | "SonneFinancePriceAggregator"
   | "FlatMoneyUNITPriceAggregator"
   | "ChainlinkPythPriceAggregator"
   | "ChainlinkAggregatorWrapper"
@@ -572,7 +604,8 @@ export type OracleType =
   | "FluidTokenPriceAggregator"
   | "PythPriceAggregator"
   | "PendlePTPriceAggregator"
-  | "ERC4626PriceAggregator";
+  | "ERC4626PriceAggregator"
+  | "HyperliquidSpotPriceAggregator";
 
 export type ContractGuardType =
   | "BalancerV2GaugeContractGuard"
@@ -584,7 +617,6 @@ export type ContractGuardType =
   | "VelodromeV2GaugeContractGuard"
   | "VelodromePairContractGuard"
   | "RamsesGaugeContractGuard"
-  | "SonneFinanceCTokenGuard"
   | "CompoundV3CometContractGuard"
   | "FluidTokenContractGuard";
 
@@ -600,6 +632,12 @@ export type IVersion = {
     easySwapperV2?: IEasySwapperV2Config;
     poolLimitOrderManager: {
       authorizedKeeperAddresses: Address[];
+    };
+    easyLimitBuyManager: {
+      authorizedKeeperAddresses: Address[];
+    };
+    hyperliquidCoreWriterGuard?: {
+      approvedPerps: { perpName: string; assetId: number; approved: boolean }[];
     };
   };
 };

@@ -89,9 +89,9 @@ export const deployAaveV3TestInfrastructure = async (
     testParams.lendingPool,
     testParams.swapper,
     dhedgeSuperSwapper.address,
+    ethers.constants.AddressZero,
+    ethers.constants.AddressZero,
     5,
-    10_000,
-    10_000,
   );
   await aaveLendingPoolAssetGuard.deployed();
   await deployments.governance.setAssetGuard(

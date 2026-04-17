@@ -44,15 +44,15 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   IWETH public wrappedNativeToken;
 
   /// @notice Lowered lockup time after deposit
-  uint256 public customCooldown;
+  uint256 public override customCooldown;
 
   /// @notice Stores Depositor => WithdrawalVault 1 to 1 relationship
   mapping(address => address) public override withdrawalContracts;
 
   /// @notice Stores dHEDGE vault adresses which are whitelisted for lower lockup time after deposit
-  mapping(address => bool) public customCooldownDepositsWhitelist;
+  mapping(address => bool) public override customCooldownDepositsWhitelist;
 
-  address public dHedgePoolFactory;
+  address public override dHedgePoolFactory;
 
   /// @notice Stores addresses which are allowed to call the `completeLimitOrderWithdrawalFor` function
   mapping(address => bool) public isAuthorizedWithdrawer;
@@ -91,22 +91,20 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   }
 
   /// @param _vaultLogic WithdrawalVault address implementation
-  /// @param _weth WETH address
   /// @param _wrappedNativeToken Wrapped native token address
   /// @param _swapper Swapper contract address
   /// @param _customCooldown Lockup time in seconds
   function initialize(
     address _vaultLogic,
-    address _weth,
+    address,
     IWETH _wrappedNativeToken,
     ISwapper _swapper,
     uint256 _customCooldown
   ) external initializer {
-    require(_weth != address(0) && address(_wrappedNativeToken) != address(0), "invalid address");
+    require(address(_wrappedNativeToken) != address(0), "invalid address");
 
     __VaultProxyFactory_init(_vaultLogic);
 
-    weth = _weth;
     wrappedNativeToken = _wrappedNativeToken;
     _setSwapper(_swapper);
     _setCustomCooldown(_customCooldown);
@@ -541,7 +539,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     address _dHedgeVault,
     address _vaultDepositToken,
     uint256 _depositAmount
-  ) external view returns (uint256 expectedAmountReceived) {
+  ) external view override returns (uint256 expectedAmountReceived) {
     uint256 tokenPrice = IPoolLogic(_dHedgeVault).tokenPrice();
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(_dHedgeVault).poolManagerLogic());
     uint256 depositValue = poolManagerLogic.assetValue(_vaultDepositToken, _depositAmount);
@@ -786,13 +784,16 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   ) internal returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) {
     require(isdHedgeVault(_dHedgeVault), "not a vault");
 
-    IERC20(_dHedgeVault).safeTransferFrom(msg.sender, address(this), _amountIn);
-
     vault = _selectWithdrawalVault(_user, _type);
 
-    IPoolLogic(_dHedgeVault).withdrawToSafe(vault, _amountIn, _complexAssetsData);
+    // Transfer vault tokens directly to the WithdrawalVault (bypassing EasySwapperV2 as intermediary)
+    // so that only the WithdrawalVault needs to be added to the receiverWhitelist,
+    // allowing it to receive vault tokens during lockup/cooldown periods.
+    IERC20(_dHedgeVault).safeTransferFrom(msg.sender, vault, _amountIn);
 
-    IWithdrawalVault(vault).unrollAssets(_dHedgeVault);
+    IWithdrawalVault(vault).withdrawDhedgeVault(_dHedgeVault, _amountIn, _complexAssetsData);
+
+    IWithdrawalVault(vault).unrollAssets(_dHedgeVault, _user, _complexAssetsData);
 
     trackedAssets = IWithdrawalVault(vault).getTrackedAssets();
 

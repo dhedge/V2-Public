@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.6;
+pragma solidity >=0.7.6;
 
-import {BytesLib} from "@uniswap/v3-periphery/contracts/libraries/BytesLib.sol";
+import {BytesLib} from "./BytesLib.sol";
 
 contract TxDataUtils {
   using BytesLib for bytes;

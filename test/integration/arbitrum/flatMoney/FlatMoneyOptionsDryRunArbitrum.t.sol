@@ -30,9 +30,7 @@ contract FlatMoneyOptionsDryRunArbitrum is DeploymentDryRunArbitrum {
       ArbitrumConfig.LEGACY_ONCHAIN_SWAP_ROUTER,
       address(0),
       address(0),
-      1,
-      10000,
-      10000
+      1
     );
     governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
   }

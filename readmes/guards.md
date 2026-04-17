@@ -36,8 +36,3 @@ Other examples to clarify:
 - A pool can hold the SUSHI token. The SUSHI token is configured to use the ERC20Guard as it is a simple erc20 position. The balance of the position is simply the number of tokens. The chainlink usd price feed for that token is use to calculate the positions value.
 - A pool can hold a Balancer ETH/USDC Liquidity Providing Position. The pool holds ETH/USDC LP Tokens which is an ERC20 position and that asset is configured to use ERC20Guard, the balance of the position is simply the number of lp tokens the pool holds. The BalancerV2LpAggregator is used to calculate the value of each of the tokens by looking at the assets the underly the lp tokens.
 - A pool can hold multiple Aave lending(collateral) and debt positions. I.E it can loan Aave wbtc and dai, and borrow weth. The balance of the aaveLendingPool asset is the value in usdc of all the collateral assets in aggregate minus the value of all the debt assets in aggregate. The aaveLendingPoolAssetGuard returns the `balance` of the asset in USDC (and so it's balance is it's value) so a pass through 1:1 USDPriceAggregator is used for this asset.
-
-
-
-
-

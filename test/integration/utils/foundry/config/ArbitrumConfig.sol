@@ -13,6 +13,7 @@ library ArbitrumConfig {
   address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x46B06b49b4811A9e8d3403E0716a74e856318e1D;
   address public constant USD_PRICE_AGGREGATOR_PROD = 0x16fE67E412AC7732F18Eeb318e24651C85AFcF76;
   address public constant LEGACY_ONCHAIN_SWAP_ROUTER = 0x4AF5FC6930599A1117600817CB7fAE428B15CAf6;
+  address public constant EASY_SWAPPER_V2_PROD = 0xA5679C4272A056Bb83f039961fae7D99C48529F5;
 
   // Tokens
   address public constant USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
@@ -21,6 +22,7 @@ library ArbitrumConfig {
   address public constant DAI = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1;
   address public constant WRAPPED_BNB = 0xa9004A5421372E1D83fB1f85b0fc986c912f91f3;
   address public constant LINK = 0xf97f4df75117a78c1A5a0DBb814Af92458539FB4;
+  address public constant WSTETH = 0x5979D7b546E38E414F7E9822514be443A4800529;
 
   // Oracles
   address public constant WBTC_CHAINLINK_ORACLE = 0xd0C7101eACbB49F3deCcCc166d238410D6D46d57;
@@ -37,6 +39,7 @@ library ArbitrumConfig {
   address public constant LINK_CHAINLINK_ORACLE = 0x86E53CF1B870786351Da77A57575e79CB55812CB;
   address public constant PUMP_CHAINLINK_ORACLE = 0x0C997958ccE7A0403AEA7E34d14bbaDA897B5bb3;
   address public constant GOLD_CHAINLINK_ORACLE = 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c;
+  address public constant WSTETH_ORACLE = 0x478D8f26013184D7eEE8184dCB757E741a3C7EC1;
 
   // Toros Vaults
   address public constant BTCBULL3X = 0xaD38255fEbd566809aE387d5bE66ECD287947cb9;
@@ -101,4 +104,7 @@ library ArbitrumConfig {
   address public constant UNISWAP_V2_ROUTER = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
   address public constant FLAT_MONEY_V2_ORDER_ANNOUNCEMENT_MODULE = 0x2326BB21B769D81E134C9b305ca156f989249fE7;
   address public constant FLAT_MONEY_V2_OPTIONS_VAULT = 0x29fAD9d44C550e5D8081AB35763797B39d75b858;
+
+  // Pendle
+  address public constant PENDLE_ROUTER_V4 = 0x888888888889758F76e7103c6CbF23ABbF58F946; // Same for all chains
 }

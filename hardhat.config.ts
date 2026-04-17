@@ -15,6 +15,8 @@ import "./deployment/checks/checkConfig";
 import "./deployment/compileOne";
 import "./deployment/polygon/dynamicBonds";
 import "./deployment/polygon/privateTokenSwap";
+import "./deployment/hyperevm/whitelistSpotAsset";
+import "./deployment/hyperevm/whitelistPerpAssets";
 
 dotenv.config();
 
@@ -63,25 +65,16 @@ export default {
       url: process.env.PLASMA_URL || "https://plasma-mainnet.g.alchemy.com/v2/",
       accounts: process.env.PLASMA_PRIVATE_KEY ? [process.env.PLASMA_PRIVATE_KEY] : [],
     },
+    hyperevm: {
+      chainId: 999,
+      url: process.env.HYPEREVM_URL || "https://hyperliquid-mainnet.g.alchemy.com/v2/",
+      accounts: process.env.HYPEREVM_PRIVATE_KEY ? [process.env.HYPEREVM_PRIVATE_KEY] : [],
+    },
   },
   solidity: {
     compilers: [
       {
         version: "0.7.6",
-        settings: {
-          outputSelection: {
-            "*": {
-              "*": ["storageLayout"],
-            },
-          },
-          optimizer: {
-            enabled: true,
-            runs: 20,
-          },
-        },
-      },
-      {
-        version: "0.8.10",
         settings: {
           outputSelection: {
             "*": {
@@ -138,6 +131,7 @@ export default {
       "contracts/swappers/easySwapperV2/EasySwapperV2",
       "contracts/limitOrders/PoolLimitOrderManager",
       "TypedStructuredDataValidator",
+      "EasyLimitBuyManager",
     ],
     except: ["contracts/interfaces", "contracts/test", "contracts/v2.4.1", "contracts/stakingv2/interfaces"],
     spacing: 2,
@@ -151,6 +145,14 @@ export default {
         urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan/api",
           browserURL: "https://plasmascan.to/",
+        },
+      },
+      {
+        network: "hyperevm",
+        chainId: 999,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://hyperevmscan.io/",
         },
       },
     ],

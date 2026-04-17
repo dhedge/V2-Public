@@ -309,15 +309,19 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     _checkValueManipulation(execution.fundValue, execution.fundValue.add(execution.usdAmount));
     _checkOperationType(IValueManipulationCheck.OperationType.Deposit);
 
-    lastExitCooldown[_recipient] = _calculateCooldown({
-      _currentBalance: balanceOf(_recipient),
-      _liquidityMinted: liquidityMintTo.recipient,
-      _newCooldown: _cooldown,
-      _lastCooldown: lastExitCooldown[_recipient],
-      _lastDepositTime: lastDeposit[_recipient],
-      _blockTimestamp: block.timestamp
-    });
-    lastDeposit[_recipient] = block.timestamp;
+    {
+      // Stack too deep fix: local copy brings _recipient closer on the stack for PoolLogicLib.calculateCooldown
+      address recipient = _recipient;
+      lastExitCooldown[recipient] = PoolLogicLib.calculateCooldown({
+        _currentBalance: balanceOf(recipient),
+        _liquidityMinted: liquidityMintTo.recipient,
+        _newCooldown: _cooldown,
+        _lastCooldown: lastExitCooldown[recipient],
+        _lastDepositTime: lastDeposit[recipient],
+        _blockTimestamp: block.timestamp
+      });
+      lastDeposit[recipient] = block.timestamp;
+    }
 
     // Note: We are making it impossible for someone to mint liquidity < 100_000.
     // This is so that we can mitigate the inflation attack.
@@ -598,13 +602,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       }
     }
 
-    // Leftover: kept for aave withdrawals with swap routed onchain, runs when slippage tolerance is provided
-    if (
-      _complexAssetData.withdrawData.length == 0 &&
-      _complexAssetData.slippageTolerance != 0 &&
-      withdrawAsset != address(0)
-    ) {
-      // Ensure that actual value of tokens transferred is not less than the expected value, corrected by allowed tolerance
+    // Net slippage check: ensures that the actual value of tokens the user receives
+    // is not less than the expected value, corrected by allowed tolerance.
+    // For leveraged positions (e.g. Aave), swap slippage is amplified by leverage ratio,
+    // so this tolerance should account for that amplification.
+    if (_complexAssetData.slippageTolerance != 0 && withdrawAsset != address(0)) {
       require(
         _assetValue(withdrawAsset, withdrawBalance) >=
           params.expectedWithdrawValue.mul(10_000 - _complexAssetData.slippageTolerance).div(10_000),
@@ -619,11 +621,13 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @dev execute transaction for the pool
   /// @param _to The destination address for pool to talk to
   /// @param _data The data that going to send in the transaction
+  /// @param isDelegationCallback Whether this transaction is being executed via a delegation callback
   /// @return success A boolean for success or fail transaction
   function _execTransaction(
     address _to,
-    bytes memory _data
-  ) private nonReentrant whenNotFactoryPaused returns (bool success) {
+    bytes memory _data,
+    bool isDelegationCallback
+  ) private whenNotFactoryPaused returns (bool success) {
     require(!IHasPausable(factory).tradingPausedPools(address(this)), "dh20");
 
     _checkOperationType(IValueManipulationCheck.OperationType.ExecTransaction);
@@ -661,7 +665,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
     require(txType > 0, "dh23");
 
-    require(isPublic || msg.sender == _manager() || msg.sender == _trader(), "dh24");
+    require(isPublic || isDelegationCallback || msg.sender == _manager() || msg.sender == _trader(), "dh24");
 
     success = _to.tryAssemblyCall(_data);
 
@@ -683,16 +687,16 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @param to The destination address for pool to talk to
   /// @param data The data that going to send in the transaction
   /// @return success A boolean for success or fail transaction
-  function execTransaction(address to, bytes calldata data) external returns (bool success) {
-    return _execTransaction(to, data);
+  function execTransaction(address to, bytes calldata data) external nonReentrant returns (bool success) {
+    return _execTransaction(to, data, false);
   }
 
   /// @notice Exposed function to let pool talk to other protocol
   /// @dev Execute multiple transactions for the pool
   /// @param txs Array of structs, each consisting of address and data
-  function execTransactions(TxToExecute[] calldata txs) external {
-    for (uint256 i; i < txs.length; i++) {
-      _execTransaction(txs[i].to, txs[i].data);
+  function execTransactions(TxToExecute[] calldata txs) external nonReentrant {
+    for (uint256 i; i < txs.length; ++i) {
+      _execTransaction(txs[i].to, txs[i].data, false);
     }
   }
 
@@ -844,50 +848,6 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     _emitFactoryEvent();
   }
 
-  /// @notice Calculate lockup cooldown applied to the investor after pool deposit
-  /// @param _currentBalance Investor's current pool tokens balance
-  /// @param _liquidityMinted Liquidity to be minted to investor after pool deposit
-  /// @param _newCooldown New cooldown lockup time
-  /// @param _lastCooldown Last cooldown lockup time applied to investor
-  /// @param _lastDepositTime Timestamp when last pool deposit happened
-  /// @param _blockTimestamp Timestamp of a block
-  /// @return cooldown New lockup cooldown to be applied to investor address
-  function _calculateCooldown(
-    uint256 _currentBalance,
-    uint256 _liquidityMinted,
-    uint256 _newCooldown,
-    uint256 _lastCooldown,
-    uint256 _lastDepositTime,
-    uint256 _blockTimestamp
-  ) internal pure returns (uint256 cooldown) {
-    // Get timestamp when current cooldown ends
-    uint256 cooldownEndsAt = _lastDepositTime.add(_lastCooldown);
-    // Current exit remaining cooldown
-    uint256 remainingCooldown = cooldownEndsAt < _blockTimestamp ? 0 : cooldownEndsAt.sub(_blockTimestamp);
-    // If it's first deposit with zero liquidity, no cooldown should be applied
-    if (_currentBalance == 0 && _liquidityMinted == 0) {
-      cooldown = 0;
-      // If it's first deposit, new cooldown should be applied
-    } else if (_currentBalance == 0) {
-      cooldown = _newCooldown;
-      // If zero liquidity or new cooldown reduces remaining cooldown, apply remaining
-    } else if (_liquidityMinted == 0 || _newCooldown < remainingCooldown) {
-      cooldown = remainingCooldown;
-      // For the rest cases calculate cooldown based on current balance and liquidity minted
-    } else {
-      // If the user already owns liquidity, the additional lockup should be in proportion to their existing liquidity.
-      // Calculated as _newCooldown * _liquidityMinted / _currentBalance
-      // Aggregate additional and remaining cooldowns
-      uint256 aggregatedCooldown = _newCooldown.mul(_liquidityMinted).div(_currentBalance).add(remainingCooldown);
-      // Resulting value is capped at new cooldown time (shouldn't be bigger) and falls back to one second in case of zero
-      cooldown = aggregatedCooldown > _newCooldown
-        ? _newCooldown
-        : aggregatedCooldown != 0
-          ? aggregatedCooldown
-          : 1;
-    }
-  }
-
   /// @notice Get how much time remained for the depositor before they can withdraw from the pool
   /// @param _depositor The address of the depositor
   /// @return remaining The remaining lockup time for the depositor
@@ -955,13 +915,11 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     address initiator,
     bytes calldata params
   ) external override returns (bool success) {
-    require(initiator == address(this), "dh29");
-
-    address aaveLendingPoolAssetGuard = IHasGuardInfo(factory).getAssetGuard(msg.sender);
-    require(
-      aaveLendingPoolAssetGuard != address(0) &&
-        msg.sender == IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).aaveLendingPool(),
-      "dh30"
+    address aaveLendingPoolAssetGuard = PoolLogicLib.validateFlashLoanCallback(
+      factory,
+      initiator,
+      msg.sender,
+      address(this)
     );
 
     uint256 withdrawAssetBalanceBefore = IERC20Upgradeable(assets[0]).balanceOf(address(this));
@@ -978,6 +936,17 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
       withdrawAssetBalanceBefore.add(premiums[0]) <= IERC20Upgradeable(assets[0]).balanceOf(address(this)),
       "dh27"
     );
+  }
+
+  /// @notice Callback function for handling delegation calls of dytm
+  function onDelegationCallback(bytes calldata data) external returns (bytes memory) {
+    PoolLogicLib.validateDelegationCallback(factory, msg.sender, address(this));
+    TxToExecute[] memory txs = abi.decode(data, (TxToExecute[]));
+    for (uint256 i; i < txs.length; ++i) {
+      require(txs[i].to != address(this), "dh36");
+      _execTransaction(txs[i].to, txs[i].data, true);
+    }
+    return "";
   }
 
   /// @notice Emits an event through the factory, so we can just listen to the factory offchain

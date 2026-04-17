@@ -2,9 +2,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {PoolLogic} from "../PoolLogic.sol";
+import {PoolLogicLib} from "../utils/PoolLogicLib.sol";
 
-contract PoolLogicExposed is PoolLogic {
+contract PoolLogicExposed {
   function _calculateCooldownExposed(
     uint256 _currentBalance,
     uint256 _liquidityMinted,
@@ -13,7 +13,7 @@ contract PoolLogicExposed is PoolLogic {
     uint256 _lastDepositTime,
     uint256 _blockTimestamp
   ) external pure returns (uint256 cooldown) {
-    cooldown = _calculateCooldown(
+    cooldown = PoolLogicLib.calculateCooldown(
       _currentBalance,
       _liquidityMinted,
       _newCooldown,

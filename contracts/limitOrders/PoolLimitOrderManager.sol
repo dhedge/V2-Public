@@ -25,8 +25,9 @@ import {IPoolFactory} from "../interfaces/IPoolFactory.sol";
 import {IPoolLogic} from "../interfaces/IPoolLogic.sol";
 import {IEasySwapperV2} from "../swappers/easySwapperV2/interfaces/IEasySwapperV2.sol";
 import {IWithdrawalVault} from "../swappers/easySwapperV2/interfaces/IWithdrawalVault.sol";
+import {ICommonErrors} from "../interfaces/ICommonErrors.sol";
 
-contract PoolLimitOrderManager is OwnableUpgradeable {
+contract PoolLimitOrderManager is OwnableUpgradeable, ICommonErrors {
   using SafeERC20 for IERC20;
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -54,9 +55,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
   //           Errors           //
   ////////////////////////////////
 
-  error InvalidPool(address pool);
   error InvalidAsset(address asset);
-  error ZeroAddress(string varName);
   error InvalidValue(string varName);
   error NotAuthorizedKeeper(address caller);
   error SettlementOrderNotFound(address user);
@@ -64,7 +63,6 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
   error LimitOrderAlreadyExists(address user, address pool);
   error LimitOrderNotFillable(uint256 currentPriceD18, uint256 stopLossPriceD18, uint256 takeProfitPriceD18);
   error InvalidPrices(uint256 stopLossPriceD18, uint256 takeProfitPriceD18, uint256 currentPrice);
-  error ExternalCallerNotAllowed();
   error LimitOrderNotDeletable(address user, address pool);
 
   ////////////////////////////////
@@ -306,7 +304,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
   ////////////////////////////////
 
   function _executeLimitOrder(LimitOrderExecution calldata orderExecutionData_) external {
-    if (msg.sender != address(this)) revert ExternalCallerNotAllowed();
+    if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
 
     if (!limitOrderIds.contains(orderExecutionData_.orderId)) revert LimitOrderNotFound(orderExecutionData_.orderId);
 
@@ -362,7 +360,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable {
   }
 
   function _executeSettlementOrder(address user_, IWithdrawalVault.MultiInSingleOutData calldata swapData_) external {
-    if (msg.sender != address(this)) revert ExternalCallerNotAllowed();
+    if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
 
     _removeSettlementOrder(user_);
 

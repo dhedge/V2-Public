@@ -13,7 +13,6 @@ The general flow for a staker is as follows:
 Unlike Synthetix v2, v3 has multiple pools (not just 1). Anyone can create a pool.
 Just like v2, these pools can have an associated debt and markets (synths).
 
-
 ## Resources
 
 Most of the information for this integration is contained in the following:
@@ -96,7 +95,7 @@ To get an account's full collateral and debt positions in a gas-efficient way, w
 
 - used collateral types
 - delegated pool ids
-By tracking the above, it means that we don't need to loop through all the Synthetix collateral types and pools to get the totals.
+  By tracking the above, it means that we don't need to loop through all the Synthetix collateral types and pools to get the totals.
 
 Tracks an account's collateral and debt positions using the VaultModule:
 

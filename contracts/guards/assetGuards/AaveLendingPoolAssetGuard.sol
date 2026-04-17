@@ -35,6 +35,7 @@ import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {ClosedAssetGuard} from "./ClosedAssetGuard.sol";
 import {PendlePTHandlerLib} from "../../utils/pendle/PendlePTHandlerLib.sol";
 import {UnsafeMath} from "../../utils/uniswap/libraries/UnsafeMath.sol";
+import {WithdrawalHelperLib} from "../../utils/WithdrawalHelperLib.sol";
 
 /// @title Aave lending pool asset guard
 /// @dev Asset type 3 is for v2
@@ -59,6 +60,8 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
 
   address private constant USDT_MAINNET = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
+  uint256 private constant BPS_DENOMINATOR = 10_000;
+
   address public immutable override aaveLendingPool;
 
   address public immutable swapper;
@@ -72,33 +75,23 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
   /// @dev Used to calculate tolerance for mismatch between the amounts passed in swap data and the amounts calculated at the moment of execution
   uint256 private immutable mismatchDeltaNumerator;
 
-  /// @dev Normally set to 10_000 (100%)
-  uint256 private immutable mismatchDeltaDenominator;
-
-  /// @dev Normally set to 10_000 (100%)
-  uint256 private immutable slippageToleranceDenominator;
-
   /// @param _aaveLendingPool Aave lending pool address
   /// @param _swapper Swapper contract address
   /// @param _onchainSwapRouter DhedgeSuperSwapper contract address
-  /// @param _mismatchDelta Numerator for mismatch delta
-  /// @param _mismatchDeltaDenominator Denominator for mismatch delta
-  /// @param _slippageToleranceDenominator Denominator for slippage tolerance
+  /// @param _mismatchDelta Numerator for mismatch delta (bps)
   constructor(
     address _aaveLendingPool,
     address _swapper,
     address _onchainSwapRouter,
     address _pendleYieldContractFactory,
     address _pendleRouterStatic,
-    uint256 _mismatchDelta,
-    uint256 _mismatchDeltaDenominator,
-    uint256 _slippageToleranceDenominator
+    uint256 _mismatchDelta
   ) {
     require(
       _aaveLendingPool != address(0) && _swapper != address(0) && _onchainSwapRouter != address(0),
       "invalid address"
     );
-    require(_mismatchDeltaDenominator > 0 && _mismatchDelta <= _mismatchDeltaDenominator, "numerator must be less");
+    require(_mismatchDelta <= BPS_DENOMINATOR, "numerator must be less");
 
     aaveLendingPool = _aaveLendingPool;
     swapper = _swapper;
@@ -107,8 +100,6 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     pendleRouterStatic = _pendleRouterStatic;
 
     mismatchDeltaNumerator = _mismatchDelta;
-    mismatchDeltaDenominator = _mismatchDeltaDenominator;
-    slippageToleranceDenominator = _slippageToleranceDenominator;
   }
 
   /// @notice Returns the pool position of Aave lending pool
@@ -223,26 +214,14 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     uint256 _poolTokenAmount,
     uint256 _slippageTolerance
   ) public override returns (SwapDataParams memory swapDataParams) {
-    // This is required to update totalSupply of pool token and have portion calculated correctly
-    IPoolLogic(_pool).mintManagerFee();
-
-    // If the pool has exit fee set, pool token amount processed for withdrawal will be reduced by the exit fee
-    (uint256 exitFeeNumerator, , uint256 denominator) = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic())
-      .getExitFeeInfo();
-
-    if (exitFeeNumerator > 0) {
-      _poolTokenAmount = _poolTokenAmount.sub(_poolTokenAmount.mul(exitFeeNumerator).div(denominator));
-    }
-
-    // Calculate what is the current portion of pool tokens intended for withdrawal
-    uint256 portion = _poolTokenAmount.mul(1e18).div(IERC20Extended(_pool).totalSupply());
+    (uint256 portion, ) = WithdrawalHelperLib.calculateWithdrawalPortion(_pool, _poolTokenAmount);
 
     swapDataParams = _calculateSwapDataParams(_pool, portion, _slippageTolerance);
 
     // Lower quote amounts intentionally by 0.01% for cases when management fee is set to avoid 'amount too high' revert
     for (uint256 i; i < swapDataParams.srcData.length; ++i) {
-      swapDataParams.srcData[i].amount = swapDataParams.srcData[i].amount.mul(mismatchDeltaDenominator.sub(1)).div(
-        mismatchDeltaDenominator
+      swapDataParams.srcData[i].amount = swapDataParams.srcData[i].amount.mul(BPS_DENOMINATOR.sub(1)).div(
+        BPS_DENOMINATOR
       );
     }
   }
@@ -252,7 +231,7 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     uint256 _portion,
     uint256 _slippageTolerance
   ) internal view returns (SwapDataParams memory swapDataParams) {
-    require(_slippageTolerance <= slippageToleranceDenominator, "invalid slippage tolerance");
+    require(_slippageTolerance <= BPS_DENOMINATOR, "invalid slippage tolerance");
 
     // Based on the portion we calculate the borrow asset and the collateral assets
     AssetStructure memory borrowAsset = _calculateBorrowAsset(_pool, _portion);
@@ -262,6 +241,8 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     }
 
     uint256 counter;
+    uint256 matchingCollateralValueD18;
+    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic());
     {
       (AssetStructure[] memory collateralAssets, uint256 collateralAssetsLength) = _calculateCollateralAssets(
         _pool,
@@ -275,6 +256,12 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
         if (collateralAssets[i].asset != borrowAsset.asset) {
           filteredSrcData[counter] = collateralAssets[i];
           counter++;
+        } else {
+          // Track the value of collateral matching the debt asset (not swapped)
+          matchingCollateralValueD18 = poolManagerLogic.assetValue(
+            collateralAssets[i].asset,
+            collateralAssets[i].amount
+          );
         }
       }
       uint256 reduceLength = collateralAssetsLength.sub(counter);
@@ -287,7 +274,6 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     }
 
     // Calculate the $ value of all collateral assets to be swapped. This can be used to calculate the minDstAmount
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic());
     uint256 assetsToSwapFromValueD18;
     for (uint256 i; i < counter; ++i) {
       assetsToSwapFromValueD18 = assetsToSwapFromValueD18.add(
@@ -300,14 +286,31 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       }
     }
 
+    // Scale slippage tolerance based on leverage.
+    // Swap slippage is amplified on the net position: net_slippage = swap_slippage × (swapValue / netValue)
+    // Rearranging: swap_tolerance = net_tolerance × (netValue / swapValue)
+    // Uses assetsToSwapFromValueD18 (the actual value being swapped, excluding collateral matching debt asset)
+    // rather than total collateral.
+    {
+      // netValue = (swapped collateral + matching collateral) - debt, using already-available values
+      // Note: SafeMath.sub will revert if position is unhealthy (debt > collateral)
+      uint256 borrowAssetValueD18 = poolManagerLogic.assetValue(borrowAsset.asset, borrowAsset.amount);
+      uint256 netValueD18 = assetsToSwapFromValueD18.add(matchingCollateralValueD18).sub(borrowAssetValueD18);
+      // Only scale if swap value exceeds net value (i.e. leverage amplification exists for the swapped portion)
+      // If netValue is 0 (debt == collateral), slippage tolerance becomes 0 (maximally strict)
+      if (assetsToSwapFromValueD18 > netValueD18) {
+        _slippageTolerance = _slippageTolerance.mul(netValueD18).div(assetsToSwapFromValueD18);
+      }
+    }
+
     // Calculate the minDstAmount based on the borrow asset price and the $ value of all collateral assets to be swapped
     uint256 dstAssetPriceD18 = IHasAssetInfo(IPoolLogic(_pool).factory()).getAssetPrice(borrowAsset.asset);
     uint256 dstAssetDecimals = 10 ** IERC20Extended(borrowAsset.asset).decimals();
     uint256 minDstAmount = assetsToSwapFromValueD18
       .mul(dstAssetDecimals)
       .div(dstAssetPriceD18)
-      .mul(slippageToleranceDenominator.sub(_slippageTolerance))
-      .div(slippageToleranceDenominator); // slippage tolerance correction happens here
+      .mul(BPS_DENOMINATOR.sub(_slippageTolerance))
+      .div(BPS_DENOMINATOR); // slippage tolerance correction happens here
 
     swapDataParams.dstData.asset = borrowAsset.asset;
     swapDataParams.dstData.amount = minDstAmount;
@@ -469,7 +472,7 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     // Using unsafe as the risk of overflow is neglible, `_currentSrcData.amount` need to be greater than type(uint256).max / mismatchDeltaNumerator, which is large for any realistic token amount
     require(
       _currentSrcData.amount.sub(_swapSrcData.amount) <=
-        _currentSrcData.amount.mul(mismatchDeltaNumerator).divRoundingUp(mismatchDeltaDenominator),
+        _currentSrcData.amount.mul(mismatchDeltaNumerator).divRoundingUp(BPS_DENOMINATOR),
       "src amount mismatch"
     );
   }
@@ -481,7 +484,7 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     require(address(_swapDestData.destToken) == _currentDestData.asset, "dst asset mismatch");
 
     // See comments for ::_validateSrcToken regarding the use of unsafe rounding up
-    uint256 delta = _currentDestData.amount.mul(mismatchDeltaNumerator).divRoundingUp(mismatchDeltaDenominator);
+    uint256 delta = _currentDestData.amount.mul(mismatchDeltaNumerator).divRoundingUp(BPS_DENOMINATOR);
 
     // Accept minDestAmount deviation by the delta to both sides
     require(

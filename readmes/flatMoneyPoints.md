@@ -9,7 +9,6 @@ The remainder goes to the Flat Money treasury.
 The Points integration is only for the asset (no contract guard).
 Separately we can integrate the Flatcoin protocol with contract guard.
 
-
 ## Resources
 
 Most of the information for this integration is contained in the Flatcoin repo:
@@ -18,7 +17,7 @@ Most of the information for this integration is contained in the Flatcoin repo:
 
 ## AssetGuard
 
-### _assetValue
+### \_assetValue
 
 The USD price of the FMP can be based on a TWAP LP oracle that we select and provide liquidity for (eg Aerodrome).
 
@@ -35,6 +34,7 @@ Value of points in the vault =
 withdrawableBalance = balance + (lockedBalance * unlockTax / 1e18)
 withdrawableValue = withdrawableBalance * FMP price USD
 ```
+
 ### withdrawProcessing
 
 The withdraw processing should unlock the user's portion of the FMP:

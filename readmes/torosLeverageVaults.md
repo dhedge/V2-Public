@@ -1,6 +1,7 @@
 # Toros Leverage Vaults
 
 ## Ethereum Bull (ETHBULL)
+
 Set up to accept only one deposit asset on the vault's settings side, which is WETH.
 
 ### EasySwapper Deposit assets
@@ -10,10 +11,12 @@ Set up to accept only one deposit asset on the vault's settings side, which is W
 - **Native ETH**. No slippage as only wrapping is required.
 
 ### EasySwapper Withdraw assets
+
 - **WETH**. Flash loan USDC to cover debt -> unlock WETH -> withdraw WETH -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> rest WETH sent to the user. Minor slippage can occur during the swap WETH -> USDC on Uniswap V3.
 - **USDC**. Flash loan USDC to cover debt -> unlock WETH -> withdraw WETH -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to USDC (all swap routers are quoted) and send it to the user. Minor slippage can occur during the x2 swap WETH -> USDC.
 
 ## Bitcoin Bull (BTCBULL)
+
 Set up to accept only one deposit asset on the vault's settings side, which is WBTC.
 
 ### EasySwapper Deposit assets
@@ -23,11 +26,13 @@ Set up to accept only one deposit asset on the vault's settings side, which is W
 - **Native ETH**. There might be slippage, as swap is required.
 
 ### EasySwapper Withdraw assets
+
 - **WBTC**. Flash loan USDC to cover debt -> unlock WBTC -> withdraw WBTC -> swap WBTC to WETH quoting all swap routers -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to WBTC (all swap routers are quoted) and send it to the user.
 - **USDC**. Flash loan USDC to cover debt -> unlock WBTC -> withdraw WBTC -> swap WBTC to WETH quoting all swap routers -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to USDC (all swap routers are quoted) and send it to the user.
 - **WETH**. Flash loan USDC to cover debt -> unlock WBTC -> withdraw WBTC -> swap WBTC to WETH quoting all swap routers -> swap WETH to USDC only through DhedgeUniV3V2Router -> repay flash loan -> rest WETH sent to the user.
 
 ## Ethereum Bear (ETHBEAR)
+
 Set up to accept only one deposit asset on the vault's settings side, which is USDC.
 
 ### EasySwapper Deposit assets
@@ -36,10 +41,12 @@ Set up to accept only one deposit asset on the vault's settings side, which is U
 - **Native ETH**. There might be slippage, as swap is required.
 
 ### EasySwapper Withdraw assets
+
 - **WETH**. Flash loan WETH to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> repay flash loan -> rest WETH sent to the user.
 - **USDC**. Flash loan WETH to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> repay flash loan -> swap rest WETH to USDC (all swap routers are quoted) and send it to the user.
 
 ## Bitcoin Bear (BTCBEAR)
+
 Set up to accept only one deposit asset on the vault's settings side, which is USDC.
 
 ### EasySwapper Deposit assets
@@ -48,6 +55,7 @@ Set up to accept only one deposit asset on the vault's settings side, which is U
 - **Native ETH**. There might be slippage, as swap is required.
 
 ### EasySwapper Withdraw assets
+
 - **WBTC**. Flash loan WBTC to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> swap WETH to WBTC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to WBTC (all swap routers are quoted) and send it to the user.
 - **USDC**. Flash loan WBTC to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> swap WETH to WBTC only through DhedgeUniV3V2Router -> repay flash loan -> swap rest WETH to USDC (all swap routers are quoted) and send it to the user.
 - **WETH**. Flash loan WBTC to cover debt -> unlock USDC -> withdraw USDC -> swap USDC to WETH quoting all swap routers -> swap WETH to WBTC only through DhedgeUniV3V2Router -> repay flash loan -> rest WETH sent to the user.

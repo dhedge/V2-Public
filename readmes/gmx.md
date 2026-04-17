@@ -15,15 +15,15 @@ Key information for this integration can be found in the following resources:
 ### Example Transactions
 
 - **[Request Market Increase](https://arbiscan.io/tx/0x6ef2ef35d2dfa9839e06f799939a0cc324920af2603c629cbf83c06bb420d855):**  
-  This is a `multicall` comprising:  
-  1. `sendWnt`  
-  2. `sendTokens`  
-  3. `createOrder (OrderType.MarketIncrease)`  
+  This is a `multicall` comprising:
+  1. `sendWnt`
+  2. `sendTokens`
+  3. `createOrder (OrderType.MarketIncrease)`
 
 - **[Request Market Decrease](https://arbiscan.io/tx/0x31e5e8d8810f8afe72fbe1d8d1749f45fe7d46b55da7de309053ea262b0ca7bd):**  
-  This is a `multicall` comprising:  
-  1. `sendWnt`  
-  2. `createOrder (OrderType.MarketDecrease)`  
+  This is a `multicall` comprising:
+  1. `sendWnt`
+  2. `createOrder (OrderType.MarketDecrease)`
 
 - **[Claim Funding Fees](https://arbiscan.io/tx/0x7da47db60a98286324c959f638fad3d59e16bd1f19d6b3999e5b9366a1d6d314):**  
   A transaction to claim accrued funding fees.
@@ -34,9 +34,9 @@ Key information for this integration can be found in the following resources:
 
 The general process for creating orders in the GMX UI is as follows:
 
-1. **`sendWnt`:** Wraps ETH from the user’s account (EOA address) and transfers it to the [orderVault](https://arbiscan.io/address/0x31ef83a530fde1b38ee9a18093a333d8bbbc40d5#code) as the execution fee.  
+1. **`sendWnt`:** Wraps ETH from the user’s account (EOA address) and transfers it to the [orderVault](https://arbiscan.io/address/0x31ef83a530fde1b38ee9a18093a333d8bbbc40d5#code) as the execution fee.
 2. **`sendTokens`:** Transfers collateral to the `orderVault`. (no need for `OrderType.MarketDecrease`)
-3. **`createOrder`:** Uses the wrapped ETH and collateral amounts in the `orderVault` to create an order, which adjusts margin and position size.  
+3. **`createOrder`:** Uses the wrapped ETH and collateral amounts in the `orderVault` to create an order, which adjusts margin and position size.
 
 **Note:** These transactions must be executed together in a `multicall` via the [ExchangeRouter](https://arbiscan.io/address/0x69c527fc77291722b52649e45c838e41be8bf5d5). If not, the tokens sent to the `orderVault` may be accessible to other users creating orders.
 in the **`createOrder`**, `initialCollateralDeltaAmount` and `executionFee` will be calculated and [recorded](https://github.com/gmx-io/gmx-synthetics/blob/main/contracts/order/OrderUtils.sol#L81) by the token amounts sent to the `orderVault`
@@ -46,22 +46,22 @@ Once an order is created, it is recorded in the `dataStore`, and then keepers la
 Hence in our integration,
 
 - for `OrderType.MarketDecrease`, txs in a multicall are:
-  1. `sendTokens`  for Execution Fee
+  1. `sendTokens` for Execution Fee
   2. `createOrder (OrderType.MarketDecrease)`
 
 - for `OrderType.MarketDecrease`, txs in a multicall are:
   1. `sendTokens` for Execution Fee
-  2. `sendTokens`  for Collateral Delta Amount
-  3. `createOrder (OrderType.MarketIncrease)`  
+  2. `sendTokens` for Collateral Delta Amount
+  3. `createOrder (OrderType.MarketIncrease)`
 
 ---
 
 #### Margin and Position Size
 
-- **`OrderType.MarketIncrease`:**  
-  - Both `order.numbers.sizeDeltaUsd` and `order.numbers.initialCollateralDeltaAmount` are **added** to the original values.  
-- **`OrderType.MarketDecrease`:**  
-  - Both `order.numbers.sizeDeltaUsd` and `order.numbers.initialCollateralDeltaAmount` are **subtracted** from the original values.  
+- **`OrderType.MarketIncrease`:**
+  - Both `order.numbers.sizeDeltaUsd` and `order.numbers.initialCollateralDeltaAmount` are **added** to the original values.
+- **`OrderType.MarketDecrease`:**
+  - Both `order.numbers.sizeDeltaUsd` and `order.numbers.initialCollateralDeltaAmount` are **subtracted** from the original values.
 
 ---
 
@@ -69,12 +69,12 @@ Hence in our integration,
 
 ### GmxExchangeRouterContractGuard
 
-This component facilitates the creation, adjustment, and closure of perpetual orders, as well as claiming fees. Supported operations via the [ExchangeRouter](https://arbiscan.io/address/0x69c527fc77291722b52649e45c838e41be8bf5d5) include:  
+This component facilitates the creation, adjustment, and closure of perpetual orders, as well as claiming fees. Supported operations via the [ExchangeRouter](https://arbiscan.io/address/0x69c527fc77291722b52649e45c838e41be8bf5d5) include:
 
-- `createOrder` (via `multicall`)  
-- `claimFundingFees`  
-- `claimCollateral`  
-- `cancelOrder`  
+- `createOrder` (via `multicall`)
+- `claimFundingFees`
+- `claimCollateral`
+- `cancelOrder`
 
 ---
 
@@ -82,10 +82,10 @@ This component facilitates the creation, adjustment, and closure of perpetual or
 
 ### GmxPerpMarketAssetGuard
 
-The `getBalance` function calculates the USD value of the GMX asset by considering:  
+The `getBalance` function calculates the USD value of the GMX asset by considering:
 
-1. **Active positions:** The value of collateral in active GMX positions, including price impact and profit/loss.  
-2. **Pending orders:** Deposited collateral in market increase orders, plus execution fees for all orders.  
-3. **Funding fees:** Accrued fees that can be claimed.  
+1. **Active positions:** The value of collateral in active GMX positions, including price impact and profit/loss.
+2. **Pending orders:** Deposited collateral in market increase orders, plus execution fees for all orders.
+3. **Funding fees:** Accrued fees that can be claimed.
 
 ---

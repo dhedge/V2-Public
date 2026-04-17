@@ -1,0 +1,197 @@
+[
+  {
+    "perpName": "BTC",
+    "assetId": 0,
+    "approved": true
+  },
+  {
+    "perpName": "ETH",
+    "assetId": 1,
+    "approved": true
+  },
+  {
+    "perpName": "SOL",
+    "assetId": 5,
+    "approved": true
+  },
+  {
+    "perpName": "AVAX",
+    "assetId": 6,
+    "approved": true
+  },
+  {
+    "perpName": "BNB",
+    "assetId": 7,
+    "approved": true
+  },
+  {
+    "perpName": "LTC",
+    "assetId": 10,
+    "approved": true
+  },
+  {
+    "perpName": "DOGE",
+    "assetId": 12,
+    "approved": true
+  },
+  {
+    "perpName": "SUI",
+    "assetId": 14,
+    "approved": true
+  },
+  {
+    "perpName": "CRV",
+    "assetId": 16,
+    "approved": true
+  },
+  {
+    "perpName": "LINK",
+    "assetId": 18,
+    "approved": true
+  },
+  {
+    "perpName": "XRP",
+    "assetId": 25,
+    "approved": true
+  },
+  {
+    "perpName": "AAVE",
+    "assetId": 28,
+    "approved": true
+  },
+  {
+    "perpName": "TRX",
+    "assetId": 37,
+    "approved": true
+  },
+  {
+    "perpName": "UNI",
+    "assetId": 39,
+    "approved": true
+  },
+  {
+    "perpName": "ADA",
+    "assetId": 65,
+    "approved": true
+  },
+  {
+    "perpName": "ENA",
+    "assetId": 122,
+    "approved": true
+  },
+  {
+    "perpName": "HYPE",
+    "assetId": 159,
+    "approved": true
+  },
+  {
+    "perpName": "FARTCOIN",
+    "assetId": 165,
+    "approved": true
+  },
+  {
+    "perpName": "PAXG",
+    "assetId": 187,
+    "approved": true
+  },
+  {
+    "perpName": "PUMP",
+    "assetId": 200,
+    "approved": true
+  },
+  {
+    "perpName": "XPL",
+    "assetId": 203,
+    "approved": true
+  },
+  {
+    "perpName": "WLFI",
+    "assetId": 204,
+    "approved": true
+  },
+  {
+    "perpName": "ASTER",
+    "assetId": 207,
+    "approved": true
+  },
+  {
+    "perpName": "ZEC",
+    "assetId": 214,
+    "approved": true
+  },
+  {
+    "perpName": "MON",
+    "assetId": 215,
+    "approved": true
+  },
+  {
+    "perpName": "LIT",
+    "assetId": 223,
+    "approved": true
+  },
+  {
+    "perpName": "XMR",
+    "assetId": 224,
+    "approved": true
+  },
+  {
+    "perpName": "DASH",
+    "assetId": 226,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:XYZ100",
+    "assetId": 110000,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:TSLA",
+    "assetId": 110001,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:NVDA",
+    "assetId": 110002,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:GOLD",
+    "assetId": 110003,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:META",
+    "assetId": 110008,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:AAPL",
+    "assetId": 110009,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:MSFT",
+    "assetId": 110010,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:GOOGL",
+    "assetId": 110012,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:AMZN",
+    "assetId": 110013,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:SILVER",
+    "assetId": 110026,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:SP500",
+    "assetId": 110052,
+    "approved": true
+  }
+]

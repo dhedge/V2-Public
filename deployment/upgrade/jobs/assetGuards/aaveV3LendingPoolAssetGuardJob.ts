@@ -32,8 +32,6 @@ export const aaveV3LendingPoolAssetGuardJob: IJob<void> = async (
       addresses.pendle?.yieldContractFactory ?? hre.ethers.constants.AddressZero,
       addresses.pendle?.staticRouter ?? hre.ethers.constants.AddressZero,
       5, // 0.05% allowed mismatch
-      10_000,
-      10_000,
     ];
     const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(...args);
 

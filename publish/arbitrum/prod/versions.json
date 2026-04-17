@@ -123,17 +123,6 @@
           "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
         },
         {
-          "assetName": "Wrapped liquid staked Ether",
-          "assetAddress": "0x5979d7b546e38e414f7e9822514be443a4800529",
-          "assetType": "4",
-          "oracleType": "ETHCrossAggregator",
-          "specificOracleConfig": {
-            "assetToEthChainlinkOracleAddress": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
-            "ethToUsdChainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
-          },
-          "oracleAddress": "0x478D8f26013184D7eEE8184dCB757E741a3C7EC1"
-        },
-        {
           "assetName": "ARB",
           "assetAddress": "0x912ce59144191c1204e64559fe8253a0e49e6548",
           "assetType": "4",
@@ -982,6 +971,46 @@
           "assetType": "0",
           "oracleType": "DHedgePoolAggregator",
           "oracleAddress": "0x9D143fcD62c820723f6F68EC1FFB51A4A968192F"
+        },
+        {
+          "assetName": "Wrapped liquid staked Ether",
+          "assetAddress": "0x5979d7b546e38e414f7e9822514be443a4800529",
+          "assetType": "200",
+          "oracleType": "ETHCrossAggregator",
+          "specificOracleConfig": {
+            "assetToEthChainlinkOracleAddress": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
+            "ethToUsdChainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+          },
+          "oracleAddress": "0x478D8f26013184D7eEE8184dCB757E741a3C7EC1"
+        },
+        {
+          "assetName": "PT-wstETH-25JUN2026",
+          "assetAddress": "0x71fBF40651E9D4278a74586AfC99F307f369Ce9A",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x5979D7b546E38E414F7E9822514be443A4800529",
+            "pendleChainlinkOracle": "0xee667d40493db72a94e08ec0948288a358539961",
+            "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x06b1B1a784578D18E02AC3e8778CD49FF3315954"
+        },
+        {
+          "assetName": "DYTM Office",
+          "assetAddress": "0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001",
+          "assetType": "106",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+          },
+          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        },
+        {
+          "assetName": "DYTM Testing Yield Basket",
+          "assetAddress": "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x10D0e5bAf61D5F6b80f4A71b8dbFA7F21E7dE3A7"
         }
       ],
       "RemovedAssets": [
@@ -1122,7 +1151,7 @@
       "AssetHandlerProxy": "0x1BaF125D53F65a708bCb5559c9a9fdD9D088eDe3",
       "AssetHandler": "0x46c56Ca71F3FCd36d65AB3Ea642D9F777C966c03",
       "PoolLogicProxy": "0xBC1480Cb0dF8884d38cA6F2Af0bAD06A047B508d",
-      "PoolLogic": "0x6555e3117E45496070eB41B5c4d115223F75E801",
+      "PoolLogic": "0xD4c0620078B5E72Dc72b56E7E30151A1e4cE267e",
       "PoolManagerLogicProxy": "0x57d6F7ac271FF522B70385A21DF2D2bbb516C8d9",
       "PoolManagerLogic": "0x934045473F37E37C1e113a66C105D0E62F0cd3C3",
       "Governance": "0x0b844847558A5814CD0d5Ca539AdF62A5486c826",
@@ -1135,7 +1164,7 @@
       "DhedgeSuperSwapper": "0x4AF5FC6930599A1117600817CB7fAE428B15CAf6",
       "DhedgeEasySwapperProxy": "0x80b9411977C4fF8D618f2aC3f29F1e2D623C4d34",
       "DhedgeEasySwapper": "0x0843E589bf27911528bF02D7080fA87F40CBABDf",
-      "AaveLendingPoolAssetGuardV3": "0x3Be276002D514fCb05E4644bA8b79594b008ec49",
+      "AaveLendingPoolAssetGuardV3": "0x26127CeD5277Ee547F09644b55F10c3D05E8c740",
       "LendingEnabledAssetGuard": "0xd0392103419ADA46070D7ea49a3BCd8D2256f219",
       "AaveLendingPoolGuardV3": "0x41fc87D21Aad871EdC65E7AE512b105c8D57Ac74",
       "EasySwapperGuard": "0x60b8a1972f0f43809fEA643cFd4Dce86528a0b59",
@@ -1170,9 +1199,9 @@
       "CompoundV3CometRewardsContractGuard": "0x040A514dD5f3aB9FF9cE0f863cc9b7F4D4558641",
       "CompoundV3CometAssetGuard": "0x81567c5E1A6D6683ecFBC54927150e7cc1Cf41C4",
       "WithdrawalVaultProxy": "0xEB59FC6C0072b6B53B7F2BCef20c55F3b04668b5",
-      "WithdrawalVault": "0x188F217457079DA89801eb19ED49c38606Fba89F",
+      "WithdrawalVault": "0x89c6A19d3a02175F1E66fc3F59220f8236C1cCAC",
       "EasySwapperV2Proxy": "0xA5679C4272A056Bb83f039961fae7D99C48529F5",
-      "EasySwapperV2": "0x2361fFbE98AeDCF9c3CC9dE0e44b892e3016cD83",
+      "EasySwapperV2": "0x0504C6F1ca5D71c2c1595fc180B5184163B928fE",
       "EasySwapperV2ContractGuard": "0xBD270CF66583E51Bdc78C42620Ac23DBe6b0D486",
       "RamsesNonfungiblePositionGuard": "0x618E6593733e819a63BE20f4fdEB61dA4b0500c7",
       "RamsesCLAssetGuard": "0x030c7C2833d0cd321255ef13775EB9458B6CEbDC",
@@ -1198,7 +1227,7 @@
       "PoolLimitOrderManager": "0x32281AE9b4B946bA23c8CC87ad836285A103d8D0",
       "AaveLendingPoolGuardV3L2Pool": "0x2980ABA9120e27A8Ed75a0AA341bF3AfFD34E417",
       "FlatMoneyCollateralAssetGuard": "0xdC57aA97d00E95013ae016D7DFbEcfF482D8fF19",
-      "PoolLogicLib": "0x9127adC9805ED14e53084377f9C1787D0f73583E",
+      "PoolLogicLib": "0x2ad4Af6840946Cd3008f8AbEE972FC8f4eBA916F",
       "VirtualTokenAssetGuard": "0x6b9e1831a6477dE06EA7838440697853a7550746",
       "FluidMerkleDistributorContractGuard": "0xFa104F4290c84954870755Ba24B8C7A608b56825",
       "GmxEventUtils": "0x12606B0B1D36f1036FE2a3453c070569ae47b5E2",
@@ -1212,7 +1241,14 @@
       "ReferralManagerProxy": "0x00023ee98E10B7cd0fB08855B17E1f0ce12CA3a4",
       "ReferralManager": "0x908789146FcBe1A26910542941145aB480555bb2",
       "FlatMoneyV2UNITOutsideWithdrawalAssetGuard": "0xeAC54516a4B2dEB704A467550f7f81452498B42C",
-      "ByPassAssetGuard": "0x615E7825468A8DfF1217cC63E7BEB618dF5a642c"
+      "ByPassAssetGuard": "0x615E7825468A8DfF1217cC63E7BEB618dF5a642c",
+      "PendlePTAssetGuard": "0x8155933aB6A9fd1daac699f8E2B27A80AA6C2903",
+      "PendleRouterV4ContractGuard": "0x8151887e2B44b71270268C7290F9272eb7078229",
+      "RewardAssetGuard": "0x61647D32Ef723089ec60A62d92A2Bc611Ac2713C",
+      "DytmOfficeContractGuard": "0xb6c380514Dbfc6d34724a96c33A1dF2F1D399D07",
+      "DytmWithdrawProcessor": "0xCf5f26D2Ad71DAe6e98564EED4bDb4F0Cd21f540",
+      "DytmOfficeAssetGuard": "0x58d0391ADaAc5c557d331336FEcDd6255FF9fc0e",
+      "EasyLimitBuyManager": "0x40F2978D87348250F085ACEbd680B387842a69eF"
     },
     "network": {
       "name": "arbitrum",
@@ -1220,7 +1256,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Thu, 19 Mar 2026 12:56:24 GMT",
+    "lastUpdated": "Wed, 15 Apr 2026 12:57:57 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -1231,9 +1267,7 @@
           "0x40d30b13666c55b1f41ee11645b5ea3ea2ca31f8",
           "0x27d8fdb0251b48d8edd1ad7bedf553cf99abe7b0"
         ],
-        "feeByPassManagers": [
-          "0xfbD2B4216f422DC1eEe1Cff4Fb64B726F099dEF5"
-        ],
+        "feeByPassManagers": ["0xfbD2B4216f422DC1eEe1Cff4Fb64B726F099dEF5"],
         "feeNumerator": 10,
         "feeDenominator": 10000
       },
@@ -1291,7 +1325,8 @@
           "0xdDaaCbDBf778924e11Eb6D50EB6CE5EB3Cb95DF5",
           "0x8C068d7033d66c4AacaB25CE8219E5688C60155f",
           "0x2FbAdd08aDE2E8A24CF1Fe3a58fE918336b39a72",
-          "0x0219549D65ac79326bD7874f6c610CB5e1B76d33"
+          "0x0219549D65ac79326bD7874f6c610CB5e1B76d33",
+          "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0"
         ]
       },
       "poolLimitOrderManager": {
@@ -1301,6 +1336,14 @@
           "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
           "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
           "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B"
+        ]
+      },
+      "easyLimitBuyManager": {
+        "authorizedKeeperAddresses": [
+          "0xFBFE87a8665cE77e4F1f47d0256b7e68Be966498",
+          "0xBA2A62aFAfC662afbE5C726910C101225aDeF591",
+          "0x4C6ced5164042150A63Cd7610af3Efc7fF2fe4B6",
+          "0x3D8D80d65EF8df009AF576dF44d4d06bf39A94DF"
         ]
       }
     }

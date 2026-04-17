@@ -24,6 +24,7 @@ import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
 import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 abstract contract BackboneSetup is Test {
   enum AssetTypeIncomplete {
@@ -135,13 +136,13 @@ abstract contract BackboneSetup is Test {
       _daoAddress: dao,
       _governanceAddress: address(governance)
     });
-    easySwapperV2Proxy.initialize({
-      _vaultLogic: withdrawalVault,
-      _weth: wethData.asset,
-      _wrappedNativeToken: IWETH(wethData.asset),
-      _swapper: ISwapper(0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D), // Hardcoded because same address on all chains, unlikely to change
-      _customCooldown: 3600 // 1 hour
-    });
+    easySwapperV2Proxy.initialize(
+      withdrawalVault,
+      address(0), // unused (deprecated) parameter
+      IWETH(wethData.asset),
+      ISwapper(EthereumConfig.SWAPPER), // Hardcoded because same address on all chains, unlikely to change
+      3600 // 1 hour
+    );
     easySwapperV2Proxy.setdHedgePoolFactory(address(poolFactoryProxy));
     poolFactoryProxy.addCustomCooldownWhitelist(address(easySwapperV2Proxy));
 

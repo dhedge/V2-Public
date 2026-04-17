@@ -14,5 +14,3 @@ The gauge assets has its own AssetGuard to calculate the value of the staked tok
 # Contract Guard
 
 Each Gauge similarly to Arrakis is configured with a contract guard that enables the `deposit`, `withdraw`, `claim_rewards`.
-
-

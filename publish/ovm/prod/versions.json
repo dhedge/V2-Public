@@ -1508,7 +1508,7 @@
       "PoolManagerLogicProxy": "0x3621f9aAc18a42D2343270849611ea09aAea3e54",
       "PoolManagerLogic": "0x6e86b9553caB24EEfc748B11dBcB20988DE5C16b",
       "PoolLogicProxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
-      "PoolLogic": "0x375C80Ea5AA3B70C4Ce9C2f24E43Ca1d0eA1f31E",
+      "PoolLogic": "0x468F6eB088894550104A06337322DD887e1961D1",
       "PoolFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
       "PoolFactory": "0x44f9a229e07d58B6D5BC1c979778411E6F9CDE2e",
       "Oracles": [
@@ -1524,7 +1524,7 @@
       "OneInchV4Guard": "0x8711fDA4252113F0D883e878C6A9DbAD76Cf7D4C",
       "LendingEnabledAssetGuard": "0xbD0663B0BBC79B8359Be0817DD156d61a15A51f6",
       "SynthetixLendingEnabledAssetGuard": "0xEf4b78348eab4dfD776e1BFfe9C31Cbd76aD24d2",
-      "AaveLendingPoolAssetGuardV3": "0x4a8314C40367EdA49fa3EA2296b13a09f193f718",
+      "AaveLendingPoolAssetGuardV3": "0x1B81F9bb32A8Cf0728C4B6080a37918224E31d01",
       "AaveLendingPoolGuardV3": "0x19810194215869b649B606d03a218A2ab2cF7C61",
       "DhedgeUniV3V2Router": "0x645dc92aDF7632b433FAeCe370a74C378E7236f8",
       "DhedgeSuperSwapper": "0x64a9c356bc131eDF1430C24F47e9dC735Ed237Ef",
@@ -2681,19 +2681,20 @@
       "AllowApproveContractGuard": "0x184Ed594176c54DC30C7Af1B51AECF4206AEFBb1",
       "AaveLendingPoolGuardV3L2Pool": "0x215038646332616617dBA219DdAF8c7e8Ca01627",
       "FlatMoneyCollateralAssetGuard": "0xfEC31677334ebF3fa43274085D373785bdeF4553",
-      "PoolLogicLib": "0xf6611Aa6bd9dcE94c0707d5349D3567B3a216fbf",
+      "PoolLogicLib": "0x6F5caF291F1293FE1B43F69Ca531DA6D3b156457",
       "KyberSwapRouterV2ContractGuard": "0xEB39819256408929B051f8F5440689A4DA97859E",
       "OdosV3ContractGuard": "0xD1F1BB4aaf9F87eC8bb91113A1466315b0A6893f",
       "ValueManipulationCheck": "0xfC8d50AAdcC21E9042c1fCD346E8f90E00a64C85",
       "ReferralManagerProxy": "0x46E2bbD3618aA5b8e811Dad1B4d14088F9516497",
-      "ReferralManager": "0xF4Ed766f0278E478c9D1F1fCce1F72cAA86275e8"
+      "ReferralManager": "0xF4Ed766f0278E478c9D1F1fCce1F72cAA86275e8",
+      "EasyLimitBuyManager": "0xc8DA8A560b62e3ee9e230847537f8Dc7E81ec04F"
     },
     "network": {
       "name": "optimism",
       "chainId": 10,
       "ensAddress": null
     },
-    "lastUpdated": "Tue, 10 Mar 2026 08:33:22 GMT",
+    "lastUpdated": "Wed, 15 Apr 2026 12:57:12 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -2749,6 +2750,16 @@
           "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
           "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
           "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B"
+        ]
+      },
+      "easyLimitBuyManager": {
+        "authorizedKeeperAddresses": [
+          "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
+          "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
+          "0xFBFE87a8665cE77e4F1f47d0256b7e68Be966498",
+          "0xBA2A62aFAfC662afbE5C726910C101225aDeF591",
+          "0x4C6ced5164042150A63Cd7610af3Efc7fF2fe4B6",
+          "0x3D8D80d65EF8df009AF576dF44d4d06bf39A94DF"
         ]
       }
     }

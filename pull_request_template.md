@@ -2,7 +2,7 @@
 
 Trello Ticket:
 
-## What is the problem/What does it do? 
+## What is the problem/What does it do?
 
 ## Solution
 
@@ -16,4 +16,4 @@ What tests were added or removed?
 
 # What needs to be deployed as a result of this PR?
 
-- [ ] *.sol
+- [ ] \*.sol

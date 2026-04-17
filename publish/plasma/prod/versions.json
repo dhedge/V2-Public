@@ -1,0 +1,133 @@
+{
+  "v2.12.0": {
+    "contracts": {
+      "Assets": [
+        {
+          "assetName": "USDT",
+          "assetAddress": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x70b77FcdbE2293423e41AdD2FB599808396807BC"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x70b77FcdbE2293423e41AdD2FB599808396807BC"
+        },
+        {
+          "assetName": "WETH",
+          "assetAddress": "0x9895d81bb462a195b4922ed7de0e3acd007c32cb",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x43A7dd2125266c5c4c26EB86cd61241132426Fe7"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x43A7dd2125266c5c4c26EB86cd61241132426Fe7"
+        },
+        {
+          "assetName": "USDe",
+          "assetAddress": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+          "assetType": "200",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x0DFdCF9AF39Be41E40a52A80fa86e23A69a69C3B"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x0DFdCF9AF39Be41E40a52A80fa86e23A69a69C3B"
+        },
+        {
+          "assetName": "sUSDe",
+          "assetAddress": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+          "assetType": "200",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x0ca32ed285ADDf84E8491f5EDB835E10635945A2"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x0ca32ed285ADDf84E8491f5EDB835E10635945A2"
+        },
+        {
+          "assetName": "Aave Lending Pool V3",
+          "assetAddress": "0x925a2A7214Ed92428B5b1B090F80b25700095e12",
+          "assetType": "8",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x6516866B3695f21dA7aE23CF9a95b3a2A41b2AA3"
+          },
+          "oracleAddress": "0x6516866B3695f21dA7aE23CF9a95b3a2A41b2AA3"
+        },
+        {
+          "assetName": "PT-USDe-15JAN2026",
+          "assetAddress": "0x93b544c330f60a2aa05ced87aeeffb8d38fd8c9a",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+            "pendleChainlinkOracle": "0x706cEc110C2a755F05315A3Ad6d45Ac56e624A45",
+            "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x3F514e59fEe744Ead92e9790d675c490ea5D159e"
+        },
+        {
+          "assetName": "PT-sUSDe-15JAN2026",
+          "assetAddress": "0x02fcc4989b4c9d435b7ced3fe1ba4cf77bbb5dd8",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+            "pendleChainlinkOracle": "0x15A0CFC054935AE485FCC12bD7f11bDA738865e2",
+            "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x7b5D6344FF568A5f6BE99D7C04C94C93e5587A1F"
+        },
+        {
+          "assetName": "PT-sUSDe-09APR2026",
+          "assetAddress": "0xab509448ad489e2e1341e25cc500f2596464cc82",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+            "pendleChainlinkOracle": "0x85656e850e7A74Fd9945f948233fB2E4EBAaB420",
+            "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x2c3B68790D74e3ce6657AD1A8F9e19F7c128F884"
+        },
+        {
+          "assetName": "PT-USDe-09APR2026",
+          "assetAddress": "0x54Dc267be2839303ff1e323584A16e86CeC4Aa44",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+            "pendleChainlinkOracle": "0x04D840b7495b1e2EE4855B63B50F96c298651e99",
+            "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0xf391852fffBca833ecb93f736FD0477e055aaa72"
+        }
+      ],
+      "USDPriceAggregator": "0x6516866B3695f21dA7aE23CF9a95b3a2A41b2AA3",
+      "AssetHandlerProxy": "0x813a3031b02097e136D192BE0aFdd9886d81Ec4b",
+      "AssetHandler": "0xB3778521Bb6b5EC6e8126272E8adb2707df00e06",
+      "PoolLogicLib": "0xeF8b44e2700dfF3C472469d27e91A013E7EE5c15",
+      "PoolLogicProxy": "0xcb94b58c547d0A72858CB92570059f92b547F305",
+      "PoolLogic": "0xA1d46e9C5D2335eb6E6850a8ee1d25F060e975E2",
+      "PoolManagerLogicProxy": "0x575d8aa2F65537C72cB9B8f929B7e8f7C765803E",
+      "PoolManagerLogic": "0xa3A6374545317db1D8c4Fd37d2659Cd678C20FC1",
+      "Governance": "0x8eD0969790cAc76167BD75f1a79355dB3f2563B0",
+      "PoolFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87",
+      "PoolFactory": "0x880Bd40827999c3ab4850758a6c0A02182B2cAC6",
+      "ERC20Guard": "0xA0ef01A936B3b63BC3Fb05F30f6f134f7241dDdc",
+      "SlippageAccumulator": "0xAD463cC407576C25DD9cfE911b8348Bf551548B8",
+      "PendlePTAssetGuard": "0xf1890Ac43838319d2e9Ec924a1E661d2f8391884",
+      "RewardAssetGuard": "0x28F4054CFE68C2894a135A0d7e4af40a956F39fd",
+      "PendleRouterV4ContractGuard": "0x992014237432027011c1C62Fc494dFE859feC989",
+      "AaveLendingPoolGuardV3": "0x1293a6A6C02966a9b4C278Bd4D276fbF40A451CD",
+      "DhedgeSuperSwapper": "0x4a256E59C582f3d2cdF2F8566464F6851Af91563",
+      "AaveLendingPoolAssetGuardV3": "0x65e9726CB8b5918F0b133464Dda845A6c1b70d0F",
+      "KyberSwapRouterV2ContractGuard": "0xD990017853a0B2925ef234e8E41fa52f423E83F1",
+      "AngleDistributorContractGuard": "0x4E90fFD61498B4E5dd8bF6F1e6ab5236a182201F"
+    },
+    "network": {
+      "chainId": 9745,
+      "name": "unknown"
+    },
+    "lastUpdated": "Sun, 22 Mar 2026 17:03:53 GMT",
+    "config": {}
+  }
+}

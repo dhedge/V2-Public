@@ -37,11 +37,11 @@ Note: Ensure to call collect after calling decreaseLiquidity to redeem the LP fo
 
 This component manages the staked NFT position, supporting the following operations:
 
-- [increaseStakedLiquidity](<https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L243>)
-- [decreaseStakedLiquidity](<https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L323>)
+- [increaseStakedLiquidity](https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L243)
+- [decreaseStakedLiquidity](https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L323)
 - [withdraw](https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L214C14-L214C22): Unstake the NFT position.
 - [deposit](https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L183): Stake the NFT position.
-- [getReward](<https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L163>)
+- [getReward](https://github.com/velodrome-finance/slipstream/blob/main/contracts/gauge/CLGauge.sol#L163)
 
 Note: Both increaseStakedLiquidity and decreaseStakedLiquidity will handle the token0 and token1 transfers.
 

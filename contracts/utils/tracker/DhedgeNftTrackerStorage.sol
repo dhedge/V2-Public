@@ -5,9 +5,10 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../../interfaces/IHasGuardInfo.sol";
+import "../../interfaces/tracker/IDhedgeNftTrackerStorage.sol";
 
-contract DhedgeNftTrackerStorage is OwnableUpgradeable {
-  address public poolFactory; // dhedge pool factory
+contract DhedgeNftTrackerStorage is OwnableUpgradeable, IDhedgeNftTrackerStorage {
+  address public override poolFactory; // dhedge pool factory
   mapping(bytes32 => mapping(address => bytes[])) internal _nftTrackData; // keccak of NFT_TYPE -> poolAddress -> data[]
 
   // solhint-disable-next-line no-empty-blocks
@@ -109,7 +110,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
    * @param _pool the poolLogic address
    * @return count all tracked nfts count of given NFT_TYPE & poolLogic
    */
-  function getDataCount(bytes32 _nftType, address _pool) public view returns (uint256) {
+  function getDataCount(bytes32 _nftType, address _pool) public view override returns (uint256) {
     return _nftTrackData[_nftType][_pool].length;
   }
 
@@ -119,7 +120,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
    * @param _pool the poolLogic address
    * @return tokenIds all tracked nfts of given NFT_TYPE & poolLogic
    */
-  function getAllUintIds(bytes32 _nftType, address _pool) public view returns (uint256[] memory tokenIds) {
+  function getAllUintIds(bytes32 _nftType, address _pool) public view override returns (uint256[] memory tokenIds) {
     bytes[] memory data = getAllData(_nftType, _pool);
     tokenIds = new uint256[](data.length);
     for (uint256 i = 0; i < data.length; i++) {
@@ -141,7 +142,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
     address _pool,
     uint256 _nftID,
     uint256 _maxPositions
-  ) external checkContractGuard(_guardedContract) {
+  ) external override checkContractGuard(_guardedContract) {
     _addData(_nftType, _pool, abi.encode(_nftID));
     require(getDataCount(_nftType, _pool) <= _maxPositions, "max position reached");
   }
@@ -159,7 +160,7 @@ contract DhedgeNftTrackerStorage is OwnableUpgradeable {
     bytes32 _nftType,
     address _pool,
     uint256 _nftID
-  ) external checkContractGuard(_guardedContract) {
+  ) external override checkContractGuard(_guardedContract) {
     bytes[] memory data = getAllData(_nftType, _pool);
     for (uint256 i = 0; i < data.length; i++) {
       if (abi.decode(data[i], (uint256)) == _nftID) {

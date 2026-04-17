@@ -1,0 +1,91 @@
+[
+  {
+    "assetName": "USDT",
+    "assetAddress": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x70b77FcdbE2293423e41AdD2FB599808396807BC"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "WETH",
+    "assetAddress": "0x9895d81bb462a195b4922ed7de0e3acd007c32cb",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x43A7dd2125266c5c4c26EB86cd61241132426Fe7"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "USDe",
+    "assetAddress": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+    "assetType": "200",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x0DFdCF9AF39Be41E40a52A80fa86e23A69a69C3B"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "sUSDe",
+    "assetAddress": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+    "assetType": "200",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x0ca32ed285ADDf84E8491f5EDB835E10635945A2"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Aave Lending Pool V3",
+    "assetAddress": "0x925a2A7214Ed92428B5b1B090F80b25700095e12",
+    "assetType": "8",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x6516866B3695f21dA7aE23CF9a95b3a2A41b2AA3"
+    }
+  },
+  {
+    "assetName": "PT-USDe-15JAN2026",
+    "assetAddress": "0x93b544c330f60a2aa05ced87aeeffb8d38fd8c9a",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+      "pendleChainlinkOracle": "0x706cEc110C2a755F05315A3Ad6d45Ac56e624A45",
+      "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "PT-sUSDe-15JAN2026",
+    "assetAddress": "0x02fcc4989b4c9d435b7ced3fe1ba4cf77bbb5dd8",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+      "pendleChainlinkOracle": "0x15A0CFC054935AE485FCC12bD7f11bDA738865e2",
+      "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "PT-sUSDe-09APR2026",
+    "assetAddress": "0xab509448ad489e2e1341e25cc500f2596464cc82",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+      "pendleChainlinkOracle": "0x85656e850e7A74Fd9945f948233fB2E4EBAaB420",
+      "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "PT-USDe-09APR2026",
+    "assetAddress": "0x54Dc267be2839303ff1e323584A16e86CeC4Aa44",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+      "pendleChainlinkOracle": "0x04D840b7495b1e2EE4855B63B50F96c298651e99",
+      "dhedgeFactoryProxy": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  }
+]

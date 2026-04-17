@@ -2291,7 +2291,7 @@
       "USDPriceAggregator": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51",
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0x5B6138b607Cc1721326e433b07CEDcdE9aA3b758",
+      "PoolLogic": "0x25a057AAd5d26c8E4076629B2DBF8d35eA08Cb22",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
       "PoolManagerLogic": "0xE4FfE204c83f5514B3CDb656D892c34096C297E4",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
@@ -2321,7 +2321,7 @@
       "UniswapV3AssetGuard": "0xEc127Cf6A71ec8C0A66f07DF104fF58B7A47FDd5",
       "UniswapV3RouterGuard": "0x2bB3c80434D763A273b478accB47ece86E84B3F1",
       "UniswapV3NonfungiblePositionGuard": "0xAfD119Ac864C6A263dD15908011abF837A6435D0",
-      "AaveLendingPoolAssetGuardV3": "0x043Fc2386e5f04408D36b5A31D7F486dCce20ED4",
+      "AaveLendingPoolAssetGuardV3": "0x33508Ee20c09cAea9A9ff7397c40339773c95a5f",
       "AaveLendingPoolGuardV3": "0x1BEAE148490caB368E731DeB6bD5A92238cAaD99",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6ABB2f1373c06b21655e90864433A3E0d5d8bdC1",
       "ArrakisV1RouterStakingGuard": "0xCA6C89dfF08E4040052088eaF21f59b1D4bc5fA2",
@@ -2357,7 +2357,7 @@
       "OdosV2ContractGuard": "0xD8F07645Cc987c7A40761e2E9D73C8Ed356D375b",
       "PoolLimitOrderManagerProxy": "0xB71410736d2C8F2DAf30dA9D332dA10534d2624d",
       "PoolLimitOrderManager": "0x475E52fb1bF2203E33BDC1922a32722Fb35a8C0A",
-      "PoolLogicLib": "0x1e75620BaE9f87D4586B3E406EDa47BEd659a213",
+      "PoolLogicLib": "0x595C06F8592B3E6f52d709CD328bDf9d27B2eA4D",
       "KyberSwapRouterV2ContractGuard": "0xC80700f6555112C790b6bFC52a42061d84A609eE",
       "OdosV3ContractGuard": "0x96d3FBe3eE60cC5b490034FFAF9d9992D605996E",
       "ValueManipulationCheck": "0xbb30F5FF9124245EBe8E07cB679deB139c93Db2C",
@@ -2372,7 +2372,7 @@
       "chainId": 137,
       "ensAddress": null
     },
-    "lastUpdated": "Tue, 10 Mar 2026 12:16:55 GMT",
+    "lastUpdated": "Sun, 22 Mar 2026 16:19:14 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -2388,9 +2388,7 @@
           "0x86c3dd18baf4370495d9228b58fd959771285c55",
           "0x79d2aefe6a21b26b024d9341a51f6b7897852499"
         ],
-        "feeByPassManagers": [
-          "0x090e7fbd87a673ee3d0b6ccacf0e1d94fb90da59"
-        ],
+        "feeByPassManagers": ["0x090e7fbd87a673ee3d0b6ccacf0e1d94fb90da59"],
         "feeNumerator": 10,
         "feeDenominator": 10000
       },

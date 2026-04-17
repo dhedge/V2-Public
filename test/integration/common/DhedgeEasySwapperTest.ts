@@ -185,13 +185,12 @@ export const DhedgeEasySwapperTests = (
       await governance.connect(govSigner).setContractGuard(dhedgeEasySwapper.address, easySwapperGuard.address);
       const AaveLendingPoolAssetGuard = await ethers.getContractFactory("AaveLendingPoolAssetGuard");
       const aaveLendingPoolAssetGuard = await AaveLendingPoolAssetGuard.deploy(
-        aaveV3.protocolDataProvider,
         aaveV3.lendingPool,
         chainData.flatMoney.swapper,
         swapRouter.address,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
         5,
-        10_000,
-        10_000,
       );
       await aaveLendingPoolAssetGuard.deployed();
       await governance

@@ -8,5 +8,3 @@ There are more details about it here:
 
 - https://forum.openzeppelin.com/t/using-storage-gaps-with-hardhat-upgrades/14567/6
 - https://forum.openzeppelin.com/t/storage-layout-upgrade-with-hardhat-upgrades/14567/3
-
-

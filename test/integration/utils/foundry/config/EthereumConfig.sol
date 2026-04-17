@@ -59,4 +59,5 @@ library EthereumConfig {
   address public constant ODOS_V3_ROUTER = 0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05; // Same for all chains
   address public constant ONE_INCH_V6_ROUTER = 0x111111125421cA6dc452d289314280a0f8842A65; // Same for all chains
   address public constant ANGLE_DISTRIBUTOR_CONTRACT = 0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae; // Same for all chains
+  address public constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3; // Same for all chains
 }

@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 interface IStargateRouter {
-  // solhint-disable-next-line contract-name-camelcase
+  // solhint-disable-next-line contract-name-capwords
   struct lzTxObj {
     uint256 dstGasForCall;
     uint256 dstNativeAmount;

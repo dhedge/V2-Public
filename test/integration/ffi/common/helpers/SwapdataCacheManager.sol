@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.6;
+pragma solidity >=0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {Test} from "forge-std/Test.sol";
@@ -140,13 +140,13 @@ contract SwapdataCacheManager is Test {
     return vm.toString(keccak256(abi.encodePacked(srcToken, destToken, srcAmount, user, slippage, compact)));
   }
 
-  function _getChainId() private pure returns (uint256 chainId) {
+  function _getChainId() private view returns (uint256 chainId) {
     assembly {
       chainId := chainid()
     }
   }
 
-  function _getCacheFilePath() internal pure returns (string memory filePath) {
+  function _getCacheFilePath() internal view returns (string memory filePath) {
     return string(abi.encodePacked(CACHE_DIRECTORY_PATH, vm.toString(_getChainId()), ".json"));
   }
 

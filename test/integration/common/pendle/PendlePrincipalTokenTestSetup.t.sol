@@ -86,7 +86,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPoolManagerLogic = PoolManagerLogic(testPool.poolManagerLogic());
 
     uint8 underlyingYieldTokenDecimals = IERC20Extended(underlyingYieldToken).decimals();
-    uint256 amountToDeposit = 10000 * (10 ** underlyingYieldTokenDecimals);
+    uint256 amountToDeposit = _underlyingDepositAmount() * (10 ** underlyingYieldTokenDecimals);
 
     deal(underlyingYieldToken, manager, amountToDeposit);
     IERC20(underlyingYieldToken).approve(address(testPool), amountToDeposit);
@@ -107,6 +107,10 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     );
 
     vm.stopPrank();
+  }
+
+  function _underlyingDepositAmount() internal virtual returns (uint256) {
+    return 10000;
   }
 
   function deployIntegration(PoolFactory _poolFactory, address, address _slippageAcc, address) public override {

@@ -11,6 +11,8 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
+// Copyright (c) dHEDGE DAO
+//
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.28;
@@ -24,6 +26,7 @@ import {IPoolLogic} from "../interfaces/IPoolLogic.sol";
 import {IManaged} from "../interfaces/IManaged.sol";
 import {IGPv2Settlement} from "../interfaces/cowSwap/IGPv2Settlement.sol";
 import {CowSwapOrderValidator} from "./cowSwap/CowSwapOrderValidator.sol";
+import {ICommonErrors} from "../interfaces/ICommonErrors.sol";
 
 /// @title TypedStructuredDataValidator
 /// @notice Validates EIP-712 typed structured data before orders can be placed on external protocols
@@ -61,17 +64,11 @@ import {CowSwapOrderValidator} from "./cowSwap/CowSwapOrderValidator.sol";
 ///      - If a fill-or-kill order becomes stuck due to insufficient balance, the manager should
 ///        cancel it via cancelOrder() and create a new order with the correct amount.
 ///        Frontend alerts can help detect such situations.
-contract TypedStructuredDataValidator is OwnableUpgradeable, IDataValidator {
+contract TypedStructuredDataValidator is OwnableUpgradeable, IDataValidator, ICommonErrors {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  /// @notice Thrown when the provided pool address is not a valid dHEDGE pool
-  error InvalidPool(address pool);
-  /// @notice Thrown when the caller is not the manager or trader of the pool
-  error UnauthorizedCaller(address caller);
   /// @notice Thrown when the data type is not supported by this validator
   error UnsupportedDataType(uint8 dataType);
-  /// @notice Thrown when a required address parameter is zero
-  error ZeroAddress(string varName);
   /// @notice Thrown when the order hash is not found in the pool's order list
   error OrderNotFound(address pool, bytes32 orderHash);
   /// @notice Thrown when trying to add an order but pool has reached max orders limit

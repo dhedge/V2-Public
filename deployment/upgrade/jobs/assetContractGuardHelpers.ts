@@ -12,7 +12,6 @@ import { synthetixPerpsV2MarketContractGuardJob } from "./contractGuards/synthet
 import { velodromeV2GaugeContractGuardJob } from "./contractGuards/velodromeV2GaugeContractGuardJob";
 import { velodromePairContractGuardJob } from "./contractGuards/velodromePairContractGuardJob";
 import { ramsesGaugeGuardJob } from "./contractGuards/ramsesGaugeGuardJob";
-import { sonneFinanceCTokenContractGuardJob } from "./contractGuards/sonneFinanceCTokenContractGuardJob";
 import { compoundV3CometContractGuardJob } from "./contractGuards/compoundV3CometContractGuardJob";
 import { fluidTokenContractGuardJob } from "./contractGuards/fluidTokenContractGuardJob";
 
@@ -143,7 +142,6 @@ const typeToContractGuardConfigurer: TContractGuardTypeToContractGuardConfigurer
   ),
   VelodromePairContractGuard: getExistingOrDeployGuard("VelodromePairContractGuard", velodromePairContractGuardJob),
   RamsesGaugeContractGuard: getExistingOrDeployedRamsesGuard("RamsesGaugeContractGuard", ramsesGaugeGuardJob),
-  SonneFinanceCTokenGuard: getExistingOrDeployGuard("SonneFinanceCTokenGuard", sonneFinanceCTokenContractGuardJob),
   CompoundV3CometContractGuard: getExistingOrDeployGuard(
     "CompoundV3CometContractGuard",
     compoundV3CometContractGuardJob,

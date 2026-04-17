@@ -68,13 +68,17 @@ library SwapperV2Helpers {
   }
 
   function unrollPendlePT(address _pool, address _principalToken) internal returns (address underlying) {
+    return unrollPendlePTByFactory(IPoolLogic(_pool).factory(), _principalToken);
+  }
+
+  function unrollPendlePTByFactory(address _factory, address _principalToken) internal returns (address underlying) {
     uint256 ptBalance = IPPrincipalToken(_principalToken).balanceOf(address(this));
 
     if (ptBalance == 0) return underlying;
 
     address market;
     // Worst case scenario is revert down here if the asset guard does not contain necessary data
-    (market, underlying) = PendlePTHandlerLib.getPTAssociatedData(_principalToken, _pool);
+    (market, underlying) = PendlePTHandlerLib.getPTAssociatedDataByFactory(_principalToken, _factory);
 
     bool expired = IPPrincipalToken(_principalToken).isExpired();
 

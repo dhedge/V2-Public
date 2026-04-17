@@ -1,0 +1,4 @@
+assetType,guardName,guardAddress,description
+39,HyperliquidPositionGuard,0x5212028d4460da9DD39a8934CEadBBBCc2c057a1,Hyperliquid Position Asset Guard
+40,HyperliquidSpotGuard,0xFb2dC4208e2361631A7c9fD43832b87F0d942e7a,Hyperliquid Spot Asset Guard
+0,HyperliquidERC20Guard,0x43abaC2f2f4Ad3C851a3914Df6c56F5e5E37D56A,Hyperliquid ERC20 Asset Guard

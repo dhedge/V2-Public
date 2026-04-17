@@ -18,6 +18,7 @@
 pragma solidity 0.8.28;
 
 import {IValueManipulationCheck} from "../interfaces/IValueManipulationCheck.sol";
+import {ICommonErrors} from "../interfaces/ICommonErrors.sol";
 
 /// @title ValueManipulationCheck
 /// @notice Prevents atomic vault value manipulation by tracking fund value changes within a transaction
@@ -38,7 +39,7 @@ import {IValueManipulationCheck} from "../interfaces/IValueManipulationCheck.sol
 ///      - It's automatically cleared at the end of the transaction
 ///      - It's cheaper than SSTORE/SLOAD for single-transaction state
 ///      - It perfectly fits the use case of preventing intra-transaction manipulation
-contract ValueManipulationCheck is IValueManipulationCheck {
+contract ValueManipulationCheck is IValueManipulationCheck, ICommonErrors {
   /// @notice Maximum allowed absolute value difference to account for rounding errors
   /// @dev Set to 1e15 (0.001 in 18 decimal terms, or about $0.001 for USD-based pools)
   ///      This allows for minor rounding errors while catching meaningful manipulation
@@ -56,11 +57,6 @@ contract ValueManipulationCheck is IValueManipulationCheck {
   /// @param attemptedOperation The operation type that was attempted
   error OperationTypeMismatch(address pool, OperationType firstOperation, OperationType attemptedOperation);
 
-  /// @notice Error thrown when caller is not the pool
-  /// @param caller The address that attempted to call the function
-  /// @param pool The pool address that was passed as parameter
-  error OnlyPool(address caller, address pool);
-
   /// @notice Checks fund value for manipulation and updates expected value
   /// @dev On first call: stores expectedFundValueAfter as the expected value for next operation
   ///      On subsequent calls: verifies currentFundValue matches stored expected value (within tolerance)
@@ -68,7 +64,7 @@ contract ValueManipulationCheck is IValueManipulationCheck {
   /// @param currentFundValue The current total fund value (before this operation's value change)
   /// @param expectedFundValueAfter The expected fund value after this operation completes
   function checkValueManipulation(address pool, uint256 currentFundValue, uint256 expectedFundValueAfter) external {
-    if (msg.sender != pool) revert OnlyPool(msg.sender, pool);
+    if (msg.sender != pool) revert UnauthorizedCaller(msg.sender);
 
     uint256 storedExpectedValue = _getStoredFundValue(pool);
 
@@ -99,7 +95,7 @@ contract ValueManipulationCheck is IValueManipulationCheck {
   /// @param pool The address of the pool being checked
   /// @param operationType The type of operation being performed
   function checkOperationType(address pool, OperationType operationType) external {
-    if (msg.sender != pool) revert OnlyPool(msg.sender, pool);
+    if (msg.sender != pool) revert UnauthorizedCaller(msg.sender);
 
     OperationType storedOperationType = _getStoredOperationType(pool);
 

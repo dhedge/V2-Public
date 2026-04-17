@@ -132,7 +132,15 @@
     "action": "Only signatures from the manager or trader are allowed."
   },
   "dh34": {
-    "description": "Invalid signature hash",
-    "action": "The provided signature is invalid or has not been authorized. Contact the team on Discord."
+    "description": "Invalid original caller in delegation call",
+    "action": "The pool that initiated the delegation call does not match. If you believe this is a bug, contact the team on Discord."
+  },
+  "dh35": {
+    "description": "Unauthorized delegation callback caller",
+    "action": "Only a registered DYTM Office contract can call onDelegationCallback. If you believe this is a bug, contact the team on Discord."
+  },
+  "dh36": {
+    "description": "Self-call not allowed in delegation callback",
+    "action": "Delegation callback sub-transactions cannot target the pool itself. If you believe this is a bug, contact the team on Discord."
   }
 }

@@ -40,7 +40,6 @@ To run multiple
 pnpm test:integr test/integration/ovm/*.ts
 ```
 
-
 ## CI
 
-All tests unit and integration should be added to the requisite github workflow. Unit tests should execute on every commit and integration 
+All tests unit and integration should be added to the requisite github workflow. Unit tests should execute on every commit and integration

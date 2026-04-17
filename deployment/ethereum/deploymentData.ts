@@ -37,6 +37,8 @@ export const ethereumProdData: IAddresses = {
       ethereumChainData.torosPools.GOLDBULL3X,
       ethereumChainData.torosPools.BTCBEAR1X,
       ethereumChainData.torosPools.ETHBEAR1X,
+      ethereumChainData.torosPools.ETH1X,
+      ethereumChainData.torosPools.BTC1X,
     ],
   },
 

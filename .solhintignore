@@ -1,2 +1,3 @@
 contracts/v2.4.1/
 lib
+test/integration/hyperevm/test-suite/hyperevm-lib

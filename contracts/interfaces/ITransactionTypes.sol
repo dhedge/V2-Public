@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.6;
+pragma solidity >=0.7.6;
 pragma experimental ABIEncoderV2;
 
 /// @title Transaction types used in pool execTransaction() contract guards
@@ -124,6 +124,20 @@ interface ITransactionTypes {
     LimitOrderModify, // 114
     LimitOrderDelete, // 115
     CowSwapPreSign, // 116
-    CowSwapInvalidateOrder // 117
+    CowSwapInvalidateOrder, // 117
+    DytmSupply, // 118
+    DytmWithdraw, // 119
+    DytmBorrow, // 120
+    DytmRepay, // 121
+    DytmDelegationCall, // 122
+    DytmSwitchCollateral, // 123
+    HyperliquidLimitOrder, // 124
+    HyperliquidCloidCancelOrder, // 125
+    HyperliquidOidCancelOrder, // 126
+    HyperliquidSystemAddressTransfer, // 127
+    CoreWalletDeposit, // 128
+    HyperliquidSpotSendAction, // 129
+    HyperliquidUSDClassTransferAction, // 130
+    HyperliquidSendAssetAction // 131
   }
 }

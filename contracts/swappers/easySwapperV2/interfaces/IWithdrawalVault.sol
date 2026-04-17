@@ -3,6 +3,7 @@ pragma solidity >=0.7.6;
 pragma abicoder v2;
 
 import {ISwapper} from "../../../interfaces/flatMoney/swapper/ISwapper.sol";
+import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
 
 interface IWithdrawalVault {
   struct MultiInSingleOutData {
@@ -24,7 +25,17 @@ interface IWithdrawalVault {
     uint256 _expectedDestTokenAmount
   ) external returns (uint256 destTokenAmount);
 
-  function unrollAssets(address _dHedgeVault) external;
+  function unrollAssets(
+    address _dHedgeVault,
+    address _withdrawer,
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
+  ) external;
 
   function getTrackedAssets() external view returns (TrackedAsset[] memory trackedAssets);
+
+  function withdrawDhedgeVault(
+    address _dHedgeVault,
+    uint256 _amountIn,
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
+  ) external;
 }

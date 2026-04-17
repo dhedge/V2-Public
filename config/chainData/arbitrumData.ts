@@ -253,6 +253,18 @@ export const arbitrumChainData = Object.freeze({
     gmxTest6: "0xa457b8A4c1a8478F0d38AF3aDC1DD803131Bef03", // https://dhedge.org/vault/0xa457b8a4c1a8478f0d38af3adc1dd803131bef03
   },
 
+  dytm: {
+    dytmOffice: "0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001",
+    dytmPeriphery: "0x1FBe7Bb394BE505C08e9ee419Dd166c71004e51B",
+    accountSplitterAndMerger: "0xCa52E5c2FBa054059Bc0F25AcFEB365e683C9c31",
+  },
+
+  dytmTestVaults: {
+    DYTMTesting: "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0", // https://dhedge.org/vault/0xA6711f8a184E352c5A0714a48912cD33ca4a16A0
+    DYTMTesting2: "0x2d4CddD2C4Fa854536593Bcf61D0dA3B63Ed80cb", // https://dhedge.org/vault/0x2d4CddD2C4Fa854536593Bcf61D0dA3B63Ed80cb
+    DYTMTesting3: "0x2A94bA82c57c816fA920CD63032B990d1353C974", // https://dhedge.org/vault/0x2A94bA82c57c816fA920CD63032B990d1353C974
+  },
+
   pyth: {
     priceFeedContract: "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
     priceIds: {

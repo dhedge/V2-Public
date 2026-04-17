@@ -33,12 +33,14 @@ import {IHasPausable} from "./interfaces/IHasPausable.sol";
 import {IHasSupportedAsset} from "./interfaces/IHasSupportedAsset.sol";
 import {IGovernance} from "./interfaces/IGovernance.sol";
 import {IManaged} from "./interfaces/IManaged.sol";
+import {SafeSignerAccess} from "./utils/SafeSignerAccess.sol";
 
 /// @title Pool Factory
 /// @dev A Factory to spawn pools
 contract PoolFactory is
   PausableUpgradeable,
   ProxyFactory,
+  SafeSignerAccess,
   IHasDaoInfo,
   IHasFeeInfo,
   IHasAssetInfo,
@@ -530,7 +532,7 @@ contract PoolFactory is
   }
 
   /// @notice call the pause the contract
-  function pause() external onlyOwner {
+  function pause() external onlyOwnerOrSafeSigner(owner()) {
     _pause();
   }
 
@@ -548,12 +550,17 @@ contract PoolFactory is
   /// @notice Set the pause status of the pool
   /// @param _pools The array of pool paused info
   /// @dev This function is used to pause/unpause the pool
-  /// @dev The pool can be paused/unpaused by the owner only
-  function setPoolsPaused(PoolPausedInput[] calldata _pools) external onlyOwner {
+  /// @dev Safe signers can only pause pools (set flags to true), not unpause them
+  function setPoolsPaused(PoolPausedInput[] calldata _pools) external onlyOwnerOrSafeSigner(owner()) {
+    bool isOwner_ = msg.sender == owner();
     uint256 poolsLength = _pools.length;
     for (uint256 i; i < poolsLength; ++i) {
       PoolPausedInput memory poolInfo = _pools[i];
       require(isPool[poolInfo.pool], "invalid pool");
+      if (!isOwner_) {
+        require(poolInfo.pauseShares || !pausedPools[poolInfo.pool], "signers can only pause");
+        require(poolInfo.pauseTrading || !tradingPausedPools[poolInfo.pool], "signers can only pause");
+      }
       pausedPools[poolInfo.pool] = poolInfo.pauseShares;
       tradingPausedPools[poolInfo.pool] = poolInfo.pauseTrading;
 

@@ -10,12 +10,15 @@ import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
 import {EasySwapperV2} from "contracts/swappers/easySwapperV2/EasySwapperV2.sol";
 import {WithdrawalVault} from "contracts/swappers/easySwapperV2/WithdrawalVault.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 /// @dev Test suites to reproduce ths issue during unroll step and to verify the fix
 contract VelodromeCLUnrollTest is Test {
   address public depositor = 0x0385e595a27E2F2Fb3B481D26b48F781A4290bA8;
   address public pool = 0x423582AfB8e8693a427Bf67d76aDf9f6A8E33124;
   address public easySwapperV2Prod = 0x2Ed1bd7f66e47113672f3870308b5E867C5bb743;
+  ProxyAdmin public proxyAdminProd = ProxyAdmin(0x9FEE88a18479bf7f0D41Da03819538AA7A617730);
   uint256 public balance;
 
   function setUp() public {
@@ -34,8 +37,13 @@ contract VelodromeCLUnrollTest is Test {
   }
 
   function test_can_init_withdrawal_successfully() public {
-    address withdrawalVault = address(new WithdrawalVault());
+    // Upgrade EasySwapperV2 proxy to use the new implementation
+    address newEasySwapperV2Implementation = address(new EasySwapperV2());
+    vm.prank(proxyAdminProd.owner());
+    proxyAdminProd.upgrade(TransparentUpgradeableProxy(payable(easySwapperV2Prod)), newEasySwapperV2Implementation);
 
+    // Upgrade WithdrawalVault logic
+    address withdrawalVault = address(new WithdrawalVault());
     vm.prank(EasySwapperV2(easySwapperV2Prod).owner());
     EasySwapperV2(easySwapperV2Prod).setLogic(withdrawalVault);
 

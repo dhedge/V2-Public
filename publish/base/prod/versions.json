@@ -715,7 +715,7 @@
       "AssetHandlerProxy": "0x559082da2Be5b23bF4339Fd610Cd4404Fe5f8013",
       "AssetHandler": "0x9A7D300AaD5F0d59F14c64C7DD607b530fad29a7",
       "PoolLogicProxy": "0x52C86B1726e671a89d9b1Df38eDF5A8186039098",
-      "PoolLogic": "0x0272481950604994e503A04635A32ed0c02c537f",
+      "PoolLogic": "0x11fd60E035bb6C4cea10A41A63C18032ea9A46f5",
       "PoolManagerLogicProxy": "0x1730970cA8667841a31050F5A03705284295f805",
       "PoolManagerLogic": "0x412325F896ccDBa132012A3Ad74f129b81E1cF61",
       "Governance": "0x5f8DEe0D89c9acF30666C1A3cD92C996ca6c3B7B",
@@ -734,7 +734,7 @@
       "VelodromeV2RouterGuard": "0x92DEFBFfe1f17452155cA549cc404fB834b3f990",
       "VelodromeV2LPAssetGuard": "0x5005E1F30bfCfe55BEda58106FDf22Db3DDAa7e6",
       "LendingEnabledAssetGuard": "0xb5DB5311B305ECB90e1D65da3A69264d1F307A4B",
-      "AaveLendingPoolAssetGuardV3": "0x232B5e5DD3eC435c883fE36A096Db2EbC5284579",
+      "AaveLendingPoolAssetGuardV3": "0x45a992Cf89b7149cA36d8dEaCe6Ff20D58BaE373",
       "AaveIncentivesControllerV3Guard": "0x9f4655D46B5C3A40ABAa92BF2665849253E7F1bc",
       "DhedgeUniV3V2Router": "0x7432BA001d31D80C23c58b34F345E258567e6a0b",
       "DhedgeVeloV2UniV2Router": "0x3ed3E205A7e046bbD53e9B1C4E99CD9EC078AF2c",
@@ -778,7 +778,7 @@
       "CompoundV3CometContractGuard": "0x87De1fAC89E47159B991E3310f6Bb7b4AD6E8869",
       "AaveLendingPoolGuardV3L2Pool": "0xc1d03811adf7ea51Aa6c0DcBDE1053E8B5c7c832",
       "ByPassAssetGuard": "0x00bC9798a926ED2e9031C2870bb7550F9D80ADEE",
-      "PoolLogicLib": "0x12f2Ae33632E9F4515A93de718302Aa2Bf195222",
+      "PoolLogicLib": "0xf41fD7ADF57eC196eFa1f6f5706B452C13719c9c",
       "FluidMerkleDistributorContractGuard": "0x909CF0Ebb0d4B3451d2c4Dc414F36c9aBa7a4286",
       "KyberSwapRouterV2ContractGuard": "0x24Bd15453BD493361F7985A40d1903346Bd9c20d",
       "OdosV3ContractGuard": "0xF5d88bdb24eb3505591eB0Ee1B215E9365CF9ecb",
@@ -790,7 +790,7 @@
       "chainId": 8453,
       "name": "unknown"
     },
-    "lastUpdated": "Tue, 10 Mar 2026 12:19:47 GMT",
+    "lastUpdated": "Sun, 22 Mar 2026 16:24:24 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -799,9 +799,7 @@
           "0x15e2f06138aed58ca2a6afb5a1333bbc5f728f80",
           "0xba5f6a0d2ac21a3fec7a6c40facd23407aa84663"
         ],
-        "feeByPassManagers": [
-          "0x5619AD05b0253a7e647Bd2E4C01c7f40CEaB0879"
-        ],
+        "feeByPassManagers": ["0x5619AD05b0253a7e647Bd2E4C01c7f40CEaB0879"],
         "feeNumerator": 10,
         "feeDenominator": 10000
       },

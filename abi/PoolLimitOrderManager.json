@@ -5,11 +5,6 @@
     "type": "constructor"
   },
   {
-    "inputs": [],
-    "name": "ExternalCallerNotAllowed",
-    "type": "error"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -190,6 +185,17 @@
       }
     ],
     "name": "SettlementOrderNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "UnauthorizedCaller",
     "type": "error"
   },
   {

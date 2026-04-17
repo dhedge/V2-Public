@@ -1,0 +1,79 @@
+[
+  {
+    "assetName": "USDC",
+    "assetAddress": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "WHYPE",
+    "assetAddress": "0x5555555555555555555555555555555555555555",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xa5a72eF19F82A579431186402425593a559ed352"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Hyperliquid Perps Account",
+    "assetAddress": "0x3333333333333333333333333333333333333333",
+    "assetType": "39",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x14EB3ab377265cfaEA63386355A556C2e044A9C2"
+    }
+  },
+  {
+    "assetName": "XAUT0",
+    "assetAddress": "0xf4d9235269a96aadafc9adae454a0618ebe37949",
+    "assetType": "40",
+    "specificOracleConfig": {
+      "spotIndex": 182,
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "HyperliquidSpotPriceAggregator"
+  },
+  {
+    "assetName": "UBTC",
+    "assetAddress": "0x9fdbda0a5e284c32744d2f17ee5c74b284993463",
+    "assetType": "40",
+    "specificOracleConfig": {
+      "spotIndex": 142,
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "HyperliquidSpotPriceAggregator"
+  },
+  {
+    "assetName": "UETH",
+    "assetAddress": "0xbe6727b535545c67d5caa73dea54865b92cf7907",
+    "assetType": "40",
+    "specificOracleConfig": {
+      "spotIndex": 151,
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "HyperliquidSpotPriceAggregator"
+  },
+  {
+    "assetName": "USOL",
+    "assetAddress": "0x068f321fa8fb9f0d135f290ef6a3e2813e1c8a29",
+    "assetType": "40",
+    "specificOracleConfig": {
+      "spotIndex": 156,
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "HyperliquidSpotPriceAggregator"
+  },
+  {
+    "assetName": "HYPE",
+    "assetAddress": "0x2222222222222222222222222222222222222222",
+    "assetType": "40",
+    "specificOracleConfig": {
+      "spotIndex": 107,
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "HyperliquidSpotPriceAggregator"
+  }
+]

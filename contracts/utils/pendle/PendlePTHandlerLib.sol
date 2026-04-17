@@ -56,7 +56,16 @@ library PendlePTHandlerLib {
     address _pool,
     address _pendleStaticRouter
   ) internal view {
-    (address market, address underlying) = getPTAssociatedData(_collateralAsset.asset, _pool);
+    convertPendlePTToUnderlyingByFactory(_collateralAsset, IPoolLogic(_pool).factory(), _pendleStaticRouter);
+  }
+
+  /// @dev Mutates passed _collateralAsset in place. Accepts factory address directly.
+  function convertPendlePTToUnderlyingByFactory(
+    ISwapDataConsumingGuard.AssetStructure memory _collateralAsset,
+    address _factory,
+    address _pendleStaticRouter
+  ) internal view {
+    (address market, address underlying) = getPTAssociatedDataByFactory(_collateralAsset.asset, _factory);
 
     bool expired = IPPrincipalToken(_collateralAsset.asset).isExpired();
 
@@ -79,10 +88,15 @@ library PendlePTHandlerLib {
   }
 
   function getPTAssociatedData(address _pt, address _pool) internal view returns (address market, address underlying) {
+    return getPTAssociatedDataByFactory(_pt, IPoolLogic(_pool).factory());
+  }
+
+  function getPTAssociatedDataByFactory(
+    address _pt,
+    address _factory
+  ) internal view returns (address market, address underlying) {
     // Assuming that PendlePTAssetGuard is deployed for pendle's principal token asset type 37 and is not address(0)
-    PendlePTAssetGuard pendlePTGuard = PendlePTAssetGuard(
-      IHasGuardInfo(IPoolLogic(_pool).factory()).getAssetGuard(_pt)
-    );
+    PendlePTAssetGuard pendlePTGuard = PendlePTAssetGuard(IHasGuardInfo(_factory).getAssetGuard(_pt));
 
     // Calldata for pendle router requires market address, which is read from the asset guard, as no onchain interface exists to cross reference market address.
     // Asset guard requires to store associated market data for PTs.

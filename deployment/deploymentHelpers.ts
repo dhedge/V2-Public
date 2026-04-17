@@ -183,6 +183,7 @@ export const proposeTransactions = async (
     42161: [process.env.ARBITRUM_URL, process.env.ARBITRUM_PRIVATE_KEY],
     8453: [process.env.BASE_URL, process.env.BASE_PRIVATE_KEY],
     9745: [process.env.PLASMA_URL, process.env.PLASMA_PRIVATE_KEY, "https://api.safe.global/tx-service/plasma/api"],
+    999: [process.env.HYPEREVM_URL, process.env.HYPEREVM_PRIVATE_KEY, "https://api.safe.global/tx-service/hyper/api"],
   };
 
   const [provider, signer, txServiceUrl] = chainData[config.chainId] ?? [];

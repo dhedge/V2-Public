@@ -32,12 +32,15 @@
 // 36 = Flat Money V2 Perp Market Asset
 // 37 = Pendle Principal Token
 // 38 = Virtual Token
+// 39 = Hyperliquid Perps Account
+// 40 = Hyperliquid Spot Token
 // 100 = Lyra OptionMarketWrapper Asset
 // 101 = Synthetix Futures Perps v1
 // 102 = Synthetix Futures Perps v2
 // 103 = Synthetix V3 Position Asset
 // 104 = Synthetix V3 Perps Position Asset
 // 105 = GMX Perps Market Asset
+// 106 = Dytm Office Asset
 // 200 = Reward Asset (which is linked to other asset types)
 // 999 = Deprecated Asset
 

@@ -2,7 +2,7 @@
 
 ## Brief Summary
 
-EasySwapper was designed to mitigate several unfriendly flaws which affected user experience while using dHEDGE core contracts (PoolLogic, PoolFactory, etc.) Allows to safely bypass limitations imposed by core dHEDGE contracts without the need to refactor core logic. 
+EasySwapper was designed to mitigate several unfriendly flaws which affected user experience while using dHEDGE core contracts (PoolLogic, PoolFactory, etc.) Allows to safely bypass limitations imposed by core dHEDGE contracts without the need to refactor core logic.
 
 ## Top Level Methods
 
@@ -40,7 +40,6 @@ EasySwapper was designed to mitigate several unfriendly flaws which affected use
 
 - `managerFeeBypass` - mapping inside EasySwapper contract where pool manager addresses which aren't charged with entry fee are stored. Usually, depositing through EasySwapper custom cooldown methods takes a 0.1% entry fee. This mapping is for cases like Toros pool manager wants to buy other Toros products (e.g. dSNX pool buys USDy).
 
-
 ## In-depth Knowledge
 
 ### The Interlude
@@ -49,11 +48,11 @@ The initial version of the EasySwapper was created for the Toros Leverage Pools 
 
 The EasySwapper was conceived so that we wouldn't have to manage this liquidity. The original toros leverage pools consisted of usually 2 assets. Mainly a position in aave and some deposit asset. When withdrawing from those toros leverage pools a user would usually receive weth (the aave exit asset) + 1 other asset (usdc or btc).
 
-So for these toros pools the EasySwapper was pretty straightforward, withdraw from the pool, find a swap* for the two assets, and execute those swaps to the exit asset. We also added a slippage check where we would get the value of the toros pool tokens and compare it to the value of the net amount of the exit asset. So we banged out the EasySwapper and it was pretty fit for purpose.
+So for these toros pools the EasySwapper was pretty straightforward, withdraw from the pool, find a swap\* for the two assets, and execute those swaps to the exit asset. We also added a slippage check where we would get the value of the toros pool tokens and compare it to the value of the net amount of the exit asset. So we banged out the EasySwapper and it was pretty fit for purpose.
 
 So TLDR, for these basic toros leverage pools (single asset short or long) the EasySwapper process and gas consumption was reasonable. Everything happens onchain, the withdrawing + the quoting + the swapping.
 
-N.B *For swaps We created another contract called the DhedgeSuperSwapper. This contract basically can get onchain quotes from multiple Univ2 routers, uniV3 and ~~curve~~ (for some configured pairs). The more routers/pairs configured in the SuperSwapper the more gas it costs.
+N.B \*For swaps We created another contract called the DhedgeSuperSwapper. This contract basically can get onchain quotes from multiple Univ2 routers, uniV3 and ~~curve~~ (for some configured pairs). The more routers/pairs configured in the SuperSwapper the more gas it costs.
 
 ### The Metastasis
 

@@ -199,8 +199,6 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       ethers.constants.AddressZero,
       ethers.constants.AddressZero,
       5,
-      10_000,
-      10_000,
     );
     await aaveLendingPoolAssetGuard.deployed();
 
@@ -423,8 +421,6 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       ethers.constants.AddressZero,
       ethers.constants.AddressZero,
       1,
-      10_000,
-      10_000,
     );
     await aaveLendingPoolAssetGuardV2.deployed();
 
@@ -436,8 +432,6 @@ export const deployContracts = async (network: NETWORK): Promise<IDeployments> =
       ethers.constants.AddressZero,
       ethers.constants.AddressZero,
       1,
-      10_000,
-      10_000,
     );
     await aaveLendingPoolAssetGuardV3.deployed();
 

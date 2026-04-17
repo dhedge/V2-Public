@@ -18,6 +18,7 @@ import {EasySwapperVelodromeLPHelpers} from "../easySwapper/EasySwapperVelodrome
 import {IEasySwapperV2} from "./interfaces/IEasySwapperV2.sol";
 import {IWithdrawalVault} from "./interfaces/IWithdrawalVault.sol";
 import {SwapperV2Helpers} from "./libraries/SwapperV2Helpers.sol";
+import {DytmWithdrawLib} from "./libraries/dytm/DytmWithdrawLib.sol";
 
 /// @author dHEDGE team
 contract WithdrawalVault is IWithdrawalVault, Initializable {
@@ -51,10 +52,24 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
     creator = _creator;
   }
 
+  function withdrawDhedgeVault(
+    address _dHedgeVault,
+    uint256 _amountIn,
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
+  ) external override onlyCreator {
+    IPoolLogic(_dHedgeVault).withdrawToSafe(address(this), _amountIn, _complexAssetsData);
+  }
+
   /// @notice Unroll assets from dHEDGE vault to basic ERC20 tokens that can be swapped via DEXes
   /// @param _dHedgeVault dHEDGE Vault address
-  function unrollAssets(address _dHedgeVault) external override onlyCreator {
-    _unrollAssets(_dHedgeVault);
+  /// @param _complexAssetsData Complex assets data from pool withdrawal
+  /// @param _withdrawer Address of the withdrawer (msg.sender of initWithdrawal)
+  function unrollAssets(
+    address _dHedgeVault,
+    address _withdrawer,
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
+  ) external override onlyCreator {
+    _unrollAssets(_dHedgeVault, _withdrawer, _complexAssetsData);
   }
 
   /// @notice Swaps basic assets to a single asset
@@ -133,7 +148,11 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
     }
   }
 
-  function _unrollAssets(address _dHedgeVault) internal {
+  function _unrollAssets(
+    address _dHedgeVault,
+    address _withdrawer,
+    IPoolLogic.ComplexAsset[] memory _complexAssetsData
+  ) internal {
     address poolManagerLogic = IPoolLogic(_dHedgeVault).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     address poolFactory = IPoolLogic(_dHedgeVault).factory();
@@ -204,6 +223,10 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       // Synthetix Perpetuals V2 - settled in sUSD
       else if (assetType == 102) {
         unrolledAssets = _arraify(SwapperV2Helpers.synthetixPerpsV2Helper(asset, poolFactory));
+      }
+      // DYTM Office
+      else if (assetType == 106) {
+        unrolledAssets = DytmWithdrawLib.processDytmPosition(asset, _complexAssetsData, creator, _withdrawer);
       } else {
         revert("assetType not handled");
       }
@@ -238,7 +261,9 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
         // Here we sacrifice slippage protection mechanism.
         // This is equal to calling .withdrawSafe(balance, new IPoolLogic.ComplexAsset[](IHasSupportedAsset(IPoolLogic(_asset).poolManagerLogic()).getSupportedAssets().length))
         IPoolLogic(_asset).withdraw(balance);
-        _unrollAssets(_asset);
+        // address(0) for _withdrawer: only DYTM (type 106) consumes complexAssetsData and _withdrawer;
+        // nested vaults with DYTM positions will revert at "missing DYTM complex asset data".
+        _unrollAssets(_asset, address(0), new IPoolLogic.ComplexAsset[](0));
       }
     } else {
       unrolledAssets = _arraify(_asset);

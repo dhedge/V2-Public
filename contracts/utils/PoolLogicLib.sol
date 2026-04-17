@@ -22,6 +22,10 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import {IPoolManagerLogic} from "../interfaces/IPoolManagerLogic.sol";
 import {IHasDaoInfo} from "../interfaces/IHasDaoInfo.sol";
+import {IHasGuardInfo} from "../interfaces/IHasGuardInfo.sol";
+import {IDytmOfficeContractGuard} from "../interfaces/dytm/IDytmOfficeContractGuard.sol";
+import {IDytmOffice} from "../interfaces/dytm/IDytmOffice.sol";
+import {IAaveLendingPoolAssetGuard} from "../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 
 library PoolLogicLib {
   using SafeMath for uint256;
@@ -167,5 +171,90 @@ library PoolLogicLib {
     if (supplyCap > 0) {
       require(_totalSupply.add(_mintAmount) <= supplyCap, "dh32");
     }
+  }
+
+  /// @notice Calculate lockup cooldown applied to the investor after pool deposit
+  /// @param _currentBalance Investor's current pool tokens balance
+  /// @param _liquidityMinted Liquidity to be minted to investor after pool deposit
+  /// @param _newCooldown New cooldown lockup time
+  /// @param _lastCooldown Last cooldown lockup time applied to investor
+  /// @param _lastDepositTime Timestamp when last pool deposit happened
+  /// @param _blockTimestamp Timestamp of a block
+  /// @return cooldown New lockup cooldown to be applied to investor address
+  function calculateCooldown(
+    uint256 _currentBalance,
+    uint256 _liquidityMinted,
+    uint256 _newCooldown,
+    uint256 _lastCooldown,
+    uint256 _lastDepositTime,
+    uint256 _blockTimestamp
+  ) external pure returns (uint256 cooldown) {
+    // Get timestamp when current cooldown ends
+    uint256 cooldownEndsAt = _lastDepositTime.add(_lastCooldown);
+    // Current exit remaining cooldown
+    uint256 remainingCooldown = cooldownEndsAt < _blockTimestamp ? 0 : cooldownEndsAt.sub(_blockTimestamp);
+    // If it's first deposit with zero liquidity, no cooldown should be applied
+    if (_currentBalance == 0 && _liquidityMinted == 0) {
+      cooldown = 0;
+      // If it's first deposit, new cooldown should be applied
+    } else if (_currentBalance == 0) {
+      cooldown = _newCooldown;
+      // If zero liquidity or new cooldown reduces remaining cooldown, apply remaining
+    } else if (_liquidityMinted == 0 || _newCooldown < remainingCooldown) {
+      cooldown = remainingCooldown;
+      // For the rest cases calculate cooldown based on current balance and liquidity minted
+    } else {
+      // If the user already owns liquidity, the additional lockup should be in proportion to their existing liquidity.
+      // Calculated as _newCooldown * _liquidityMinted / _currentBalance
+      // Aggregate additional and remaining cooldowns
+      uint256 aggregatedCooldown = _newCooldown.mul(_liquidityMinted).div(_currentBalance).add(remainingCooldown);
+      // Resulting value is capped at new cooldown time (shouldn't be bigger) and falls back to one second in case of zero
+      cooldown = aggregatedCooldown > _newCooldown
+        ? _newCooldown
+        : aggregatedCooldown != 0
+          ? aggregatedCooldown
+          : 1;
+    }
+  }
+
+  /// @notice Validate delegation callback caller is a legitimate DYTM office
+  /// @dev Ensures the caller has a registered contract guard matching the DYTM office,
+  ///      and that the original caller context (the account that initiated the delegation call) is this pool.
+  ///      This prevents unauthorized contracts from triggering delegation callbacks on behalf of the pool.
+  /// @param _factory The pool factory address for guard lookup
+  /// @param _caller The msg.sender of the delegation callback (expected to be DYTM office)
+  /// @param _self The address of the pool (this) to verify caller context
+  function validateDelegationCallback(address _factory, address _caller, address _self) external view {
+    address dytmOfficeContractGuard = IHasGuardInfo(_factory).getContractGuard(_caller);
+    require(
+      dytmOfficeContractGuard != address(0) &&
+        _caller == IDytmOfficeContractGuard(dytmOfficeContractGuard).dytmOffice(),
+      "dh35"
+    );
+    address originalCaller = IDytmOffice(_caller).callerContext();
+    require(originalCaller == _self, "dh34");
+  }
+
+  /// @notice Validate flash loan callback caller is a legitimate Aave lending pool
+  /// @dev Ensures the initiator is this pool and the caller has a registered asset guard
+  ///      matching the Aave lending pool. Returns the guard for subsequent flashloanProcessing call.
+  /// @param _factory The pool factory address for guard lookup
+  /// @param _initiator The address that initiated the flash loan (must be this pool)
+  /// @param _caller The msg.sender of the flash loan callback (expected to be Aave lending pool)
+  /// @param _self The address of the pool (this)
+  /// @return aaveLendingPoolAssetGuard The validated asset guard address
+  function validateFlashLoanCallback(
+    address _factory,
+    address _initiator,
+    address _caller,
+    address _self
+  ) external view returns (address aaveLendingPoolAssetGuard) {
+    require(_initiator == _self, "dh29");
+    aaveLendingPoolAssetGuard = IHasGuardInfo(_factory).getAssetGuard(_caller);
+    require(
+      aaveLendingPoolAssetGuard != address(0) &&
+        _caller == IAaveLendingPoolAssetGuard(aaveLendingPoolAssetGuard).aaveLendingPool(),
+      "dh30"
+    );
   }
 }

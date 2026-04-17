@@ -12,4 +12,4 @@ assetType,guardName,guardAddress,description
 10,BalancerV2GaugeAssetGuard,0xD77d3BBD09e5E2af45610cEaE9091ea4C41814Bc,Balancer Staking Gauge Asset
 0,ERC20Guard,0x2033271d6932A82E720F0dDEc7736a0495b4db12,ERC20 tokens
 4,ERC20Guard,0x2033271d6932A82E720F0dDEc7736a0495b4db12,ERC20 tokens
-8,AaveLendingPoolAssetGuard,0x043Fc2386e5f04408D36b5A31D7F486dCce20ED4,Aave V3 Lending Pool
+8,AaveLendingPoolAssetGuard,0x33508Ee20c09cAea9A9ff7397c40339773c95a5f,Aave V3 Lending Pool

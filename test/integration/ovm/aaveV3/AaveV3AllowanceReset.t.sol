@@ -10,12 +10,8 @@ import {IPoolLogic} from "../../../../contracts/interfaces/IPoolLogic.sol";
 import {IERC20Extended} from "../../../../contracts/interfaces/IERC20Extended.sol";
 import {AaveLendingPoolAssetGuard} from "../../../../contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol";
 
-interface IPoolLogicExtended is IPoolLogic {
-  function execTransaction(address to, bytes calldata data) external returns (bool success);
-}
-
 contract AaveV3AllowanceResetTest is Test {
-  IPoolLogicExtended public ETHBULL3X = IPoolLogicExtended(0x32b1D1bFd4B3b0CB9FF2DcD9DAc757aA64d4cb69);
+  IPoolLogic public ETHBULL3X = IPoolLogic(0x32b1D1bFd4B3b0CB9FF2DcD9DAc757aA64d4cb69);
   address public poolManager = 0x813123A13d01d3F07d434673Fdc89cBBA523f14d;
   IERC20Extended public usdc = IERC20Extended(OptimismConfig.USDC);
   address public aaveV3LendingPool = OptimismConfig.AAVE_V3_LENDING_POOL;
@@ -68,9 +64,7 @@ contract AaveV3AllowanceResetTest is Test {
         OptimismConfig.LEGACY_ONCHAIN_SWAP_ROUTER,
         address(0),
         address(0),
-        1,
-        10000,
-        10000
+        1
       )
     );
 

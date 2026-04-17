@@ -1,0 +1,5 @@
+assetType,guardName,guardAddress,description
+0,ERC20Guard,0xA0ef01A936B3b63BC3Fb05F30f6f134f7241dDdc,ERC20 tokens
+200,RewardAssetGuard,0x28F4054CFE68C2894a135A0d7e4af40a956F39fd,Reward Asset Guard
+37,PendlePTAssetGuard,0xf1890Ac43838319d2e9Ec924a1E661d2f8391884,Pendle Principal Token
+8,AaveLendingPoolAssetGuard,0x65e9726CB8b5918F0b133464Dda845A6c1b70d0F,Aave V3 Lending Pool

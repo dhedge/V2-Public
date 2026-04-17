@@ -480,6 +480,18 @@ export const optimismProdData: IAddresses = {
   kyberSwap: {
     routerV2: "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5",
   },
+
+  easyLimitBuyManager: {
+    permit2: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+    authorizedKeeperAddresses: [
+      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
+      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
+      "0xFBFE87a8665cE77e4F1f47d0256b7e68Be966498",
+      "0xBA2A62aFAfC662afbE5C726910C101225aDeF591",
+      "0x4C6ced5164042150A63Cd7610af3Efc7fF2fe4B6",
+      "0x3D8D80d65EF8df009AF576dF44d4d06bf39A94DF",
+    ],
+  },
 };
 
 export const ovmProdFileNames: IFileNames = {

@@ -3,12 +3,12 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@uniswap/v3-periphery/contracts/libraries/Path.sol";
+import {Path} from "@uniswap/v3-periphery/contracts/libraries/Path.sol";
 
-import "../utils/TxDataUtils.sol";
 import {AddressLib} from "../utils/oneInch/libraries/AddressLib.sol";
 import {ProtocolLib} from "../utils/oneInch/libraries/ProtocolLib.sol";
 
+import {TxDataUtils} from "../utils/TxDataUtils.sol";
 import "../interfaces/uniswapV3/IV3SwapRouter.sol";
 import "../interfaces/uniswapV3/IUniswapV3Pool.sol";
 import "../interfaces/oneInch/IAggregationRouterV6.sol";

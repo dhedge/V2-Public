@@ -20,7 +20,6 @@ import { deployVelodromeVariableLPAggregator } from "./deployVelodromeVariableLP
 import { deployETHCrossAggregator } from "./deployETHCrossAggregator";
 import { deployRamsesTWAPAggregator } from "./deployRamsesTWAPAggregator";
 import { deployRamsesVariableLPAggregator } from "./deployRamsesVariableLPAggregator";
-import { deploySonneFinancePriceAggregator } from "./deploySonneFinancePriceAggregator";
 import { deployFlatMoneyUNITPriceAggregator } from "./deployFlatMoneyUNITPriceAggregator";
 import { deployChainlinkPythPriceAggregator } from "./deployChainlinkPythPriceAggregator";
 import { deployChainlinkAggregatorWrapper } from "./deployChainlinkAggregatorWrapper";
@@ -30,6 +29,7 @@ import { deployFluidTokenPriceAggregator } from "./deployFluidTokenPriceAggregat
 import { deployPythPriceAggregator } from "./deployPythPriceAggregator";
 import { deployPendlePTPriceAggregator } from "./deployPendlePTPriceAggregator";
 import { deployERC4626PriceAggregator } from "./deployERC4626PriceAggregator";
+import { deployHyperliquidSpotPriceAggregator } from "./deployHyperliquidSpotPriceAggregator";
 
 export const getOracle = async (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig): Promise<TDeployedAsset> => {
   const oracleAddress = await typeToDeployer[assetConfig.oracleType](hre, assetConfig);
@@ -66,7 +66,6 @@ const typeToDeployer: TOracleTypeToDeployer = {
     deployVelodromeTWAPAggregator(hre, assetConfig, "VelodromeV2TWAPAggregator"),
   RamsesTWAPAggregator: deployRamsesTWAPAggregator,
   RamsesVariableLPAggregator: deployRamsesVariableLPAggregator,
-  SonneFinancePriceAggregator: deploySonneFinancePriceAggregator,
   FlatMoneyUNITPriceAggregator: deployFlatMoneyUNITPriceAggregator,
   ChainlinkPythPriceAggregator: deployChainlinkPythPriceAggregator,
   ChainlinkAggregatorWrapper: deployChainlinkAggregatorWrapper,
@@ -76,4 +75,5 @@ const typeToDeployer: TOracleTypeToDeployer = {
   PythPriceAggregator: deployPythPriceAggregator,
   PendlePTPriceAggregator: deployPendlePTPriceAggregator,
   ERC4626PriceAggregator: deployERC4626PriceAggregator,
+  HyperliquidSpotPriceAggregator: deployHyperliquidSpotPriceAggregator,
 };

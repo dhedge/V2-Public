@@ -20,4 +20,4 @@ assetType,guardName,guardAddress,description
 1,ERC20Guard,0x7389aF54F1a4A4f8DB681Af6710Be3F35E3a9E74,ERC20 tokens
 4,ERC20Guard,0x7389aF54F1a4A4f8DB681Af6710Be3F35E3a9E74,ERC20 tokens
 22,FlatMoneyCollateralAssetGuard,0xfEC31677334ebF3fa43274085D373785bdeF4553,Flat Money Collateral Asset Guard
-8,AaveLendingPoolAssetGuard,0x4a8314C40367EdA49fa3EA2296b13a09f193f718,Aave V3 Lending Pool
+8,AaveLendingPoolAssetGuard,0x1B81F9bb32A8Cf0728C4B6080a37918224E31d01,Aave V3 Lending Pool

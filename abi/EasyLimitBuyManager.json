@@ -1,0 +1,853 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_admin",
+        "type": "address"
+      },
+      {
+        "internalType": "contract ISignatureTransfer",
+        "name": "_permit2",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IPoolFactory",
+        "name": "_poolFactory",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IEasySwapperV2",
+        "name": "_easySwapperV2",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "expected",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "received",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientVaultTokensReceived",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "useZap",
+        "type": "bool"
+      },
+      {
+        "internalType": "address",
+        "name": "inputToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "zapDestToken",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isDepositAsset",
+        "type": "bool"
+      }
+    ],
+    "name": "InvalidDepositAssetConfig",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidPool",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "minPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidPriceRange",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint16",
+        "name": "slippageBps",
+        "type": "uint16"
+      }
+    ],
+    "name": "InvalidSlippage",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "NotAuthorizedKeeper",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "currentPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "PriceConditionNotMet",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "UnauthorizedCaller",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "varName",
+        "type": "string"
+      }
+    ],
+    "name": "ZeroAddress",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "keeper",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorizedKeeperAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "keeper",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorizedKeeperRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "orderHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "reason",
+        "type": "bytes"
+      }
+    ],
+    "name": "LimitBuyFillFailed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "orderHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "targetVault",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "inputToken",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "inputAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "vaultTokensReceived",
+        "type": "uint256"
+      }
+    ],
+    "name": "LimitBuyFilled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "DEFAULT_COOLDOWN",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_SLIPPAGE_BPS",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "SLIPPAGE_DENOMINATOR",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "targetVault",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "pricingAsset",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minTriggerPriceD18",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxTriggerPriceD18",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint16",
+            "name": "slippageToleranceBps",
+            "type": "uint16"
+          }
+        ],
+        "internalType": "struct EasyLimitBuyTypeHashLib.LimitBuyOrder",
+        "name": "_order",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISignatureTransfer.TokenPermissions",
+            "name": "permitted",
+            "type": "tuple"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nonce",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ISignatureTransfer.PermitTransferFrom",
+        "name": "_permit",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_signature",
+        "type": "bytes"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "routerKey",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "bytes",
+                "name": "swapData",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct ISwapper.AggregatorData",
+            "name": "aggregatorData",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "contract IERC20",
+                "name": "destToken",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minDestAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapper.DestData",
+            "name": "destData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct EasyLimitBuyManager.ZapData",
+        "name": "_zapData",
+        "type": "tuple"
+      }
+    ],
+    "name": "_fillLimitBuyExternal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "keeper_",
+        "type": "address"
+      }
+    ],
+    "name": "addAuthorizedKeeper",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "easySwapperV2",
+    "outputs": [
+      {
+        "internalType": "contract IEasySwapperV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "targetVault",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "pricingAsset",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minTriggerPriceD18",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "maxTriggerPriceD18",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint16",
+                "name": "slippageToleranceBps",
+                "type": "uint16"
+              }
+            ],
+            "internalType": "struct EasyLimitBuyTypeHashLib.LimitBuyOrder",
+            "name": "order",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ISignatureTransfer.TokenPermissions",
+                "name": "permitted",
+                "type": "tuple"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nonce",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISignatureTransfer.PermitTransferFrom",
+            "name": "permit",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "contract IERC20",
+                    "name": "destToken",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "minDestAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ISwapper.DestData",
+                "name": "destData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct EasyLimitBuyManager.ZapData",
+            "name": "zapData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct EasyLimitBuyManager.LimitBuyExecution[]",
+        "name": "_executions",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "fillLimitBuyBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "targetVault",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "pricingAsset",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minTriggerPriceD18",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "maxTriggerPriceD18",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint16",
+                "name": "slippageToleranceBps",
+                "type": "uint16"
+              }
+            ],
+            "internalType": "struct EasyLimitBuyTypeHashLib.LimitBuyOrder",
+            "name": "order",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "token",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ISignatureTransfer.TokenPermissions",
+                "name": "permitted",
+                "type": "tuple"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nonce",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISignatureTransfer.PermitTransferFrom",
+            "name": "permit",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "routerKey",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "swapData",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct ISwapper.AggregatorData",
+                "name": "aggregatorData",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "contract IERC20",
+                    "name": "destToken",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "minDestAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ISwapper.DestData",
+                "name": "destData",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct EasyLimitBuyManager.ZapData",
+            "name": "zapData",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct EasyLimitBuyManager.LimitBuyExecution[]",
+        "name": "_executions",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "fillLimitBuySafeBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "keeper",
+        "type": "address"
+      }
+    ],
+    "name": "isAuthorizedKeeper",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "isAuthorized",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "permit2",
+    "outputs": [
+      {
+        "internalType": "contract ISignatureTransfer",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "poolFactory",
+    "outputs": [
+      {
+        "internalType": "contract IPoolFactory",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "keeper_",
+        "type": "address"
+      }
+    ],
+    "name": "removeAuthorizedKeeper",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

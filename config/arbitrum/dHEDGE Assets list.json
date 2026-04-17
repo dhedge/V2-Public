@@ -158,7 +158,7 @@
   {
     "assetName": "Wrapped liquid staked Ether",
     "assetAddress": "0x5979d7b546e38e414f7e9822514be443a4800529",
-    "assetType": "4",
+    "assetType": "200",
     "oracleType": "ETHCrossAggregator",
     "specificOracleConfig": {
       "assetToEthChainlinkOracleAddress": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
@@ -869,6 +869,32 @@
   {
     "assetName": "Toros HYPEBULL3X",
     "assetAddress": "0x0219549D65ac79326bD7874f6c610CB5e1B76d33",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "PT-wstETH-25JUN2026",
+    "assetAddress": "0x71fBF40651E9D4278a74586AfC99F307f369Ce9A",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0x5979D7b546E38E414F7E9822514be443A4800529",
+      "pendleChainlinkOracle": "0xee667d40493db72a94e08ec0948288a358539961",
+      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+    },
+    "oracleType": "PendlePTPriceAggregator"
+  },
+  {
+    "assetName": "DYTM Office",
+    "assetAddress": "0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001",
+    "assetType": "106",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "DYTM Testing Yield Basket",
+    "assetAddress": "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0",
     "assetType": "0",
     "oracleType": "DHedgePoolAggregator"
   }

@@ -11,6 +11,8 @@ library IHasSupportedAssetMock {
 
 interface IPoolFactoryMock {
   function addReceiverWhitelist(address _extAddress) external;
+  function addCustomCooldownWhitelist(address _extAddress) external;
+  function owner() external view returns (address);
   function createFund(
     bool _privatePool,
     address _manager,

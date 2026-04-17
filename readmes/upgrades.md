@@ -3,7 +3,6 @@
 Note: When doing an upgrade it's advisable to pause the PoolFactory (this pauses withdrawals/deposits etc for pools), do the upgrade, does some checks (i.e the value of the pool tokens is correct), then unpause.
 If we intend to be paused for an extended amount of time, we should announce this to the community.
 
-
 ## How to upgrade contracts for an Environment
 
 First the most important thing to understand, upgrading is not for the faint of heart, and that both polygon `staging` and polygon `production` are deployed on the same chain `polygon` mainnet.
@@ -62,7 +61,6 @@ The above will execute an upgrade of all contracts against polygon staging.
 
 By default all contracts will be upgraded unless `--specific` contracts are specified
 
-
 ```
 pnpm hardhat upgrade --network polygon --execute true --specific true --poolperformance true
 ```
@@ -82,7 +80,6 @@ pnpm hardhat upgrade --network polygon --execute true --specific true --pause tr
 ```
 
 This will generate a pause tx at the start and a unpause tx at the end. You can submit the pause tx and the upgrade tx's, check, and then submit the unpause tx when happy.
-
 
 If you want to see a list of all available tasks run
 

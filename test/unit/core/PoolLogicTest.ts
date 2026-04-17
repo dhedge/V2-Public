@@ -1375,7 +1375,7 @@ describe("dHEDGE Pool Deposit", () => {
         poolFactory
           .connect(investor)
           .setPoolsPaused([{ pool: poolLogicProxy.address, pauseShares: true, pauseTrading: false }]),
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
 
     it("can't deposit into paused pool", async () => {

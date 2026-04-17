@@ -17,7 +17,7 @@
 
 pragma solidity 0.8.28;
 
-import {Ownable} from "@openzeppelin/v5/contracts/access/Ownable.sol";
+import {AuthorizedKeepers} from "../utils/keepers/AuthorizedKeepers.sol";
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {IFluidDexT1} from "../interfaces/fluid/IFluidDexT1.sol";
 
@@ -43,7 +43,7 @@ import {IFluidDexT1} from "../interfaces/fluid/IFluidDexT1.sol";
 ///   The initial observations MUST be recorded by a trusted party (e.g., contract deployer).
 /// - RECOVERY PHASE: After a gap where TWAP becomes invalid (stale observations),
 ///   the first recovery observation is NOT validated. Recovery MUST be performed by a trusted party.
-contract FluidDexObservationAggregator is Ownable, IAggregatorV3Interface {
+contract FluidDexObservationAggregator is AuthorizedKeepers, IAggregatorV3Interface {
   /// @notice Observation data point
   struct Observation {
     uint64 timestamp;
@@ -104,16 +104,12 @@ contract FluidDexObservationAggregator is Ownable, IAggregatorV3Interface {
   /// @notice Total number of observations recorded (may exceed buffer size due to wrap-around)
   uint256 public totalObservations;
 
-  /// @notice Mapping of authorized keeper addresses that can call recordObservation()
-  mapping(address => bool) public authorizedKeepers;
-
   // Events
   event ObservationRecorded(uint192 price);
   event TwapPeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
   event MinObservationIntervalUpdated(uint256 oldInterval, uint256 newInterval);
   event MaxStalenessUpdated(uint256 oldStaleness, uint256 newStaleness);
   event VolatilityLimitUpdated(uint256 oldLimit, uint256 newLimit);
-  event KeeperAuthorizationUpdated(address indexed keeper, bool authorized);
 
   // Errors
   error InvalidParameter();
@@ -128,14 +124,6 @@ contract FluidDexObservationAggregator is Ownable, IAggregatorV3Interface {
   error UnexpectedSuccess();
   error InvalidRevertData();
   error ZeroPriceFromPool();
-  error NotAuthorized();
-
-  modifier onlyAuthorizedKeeper() {
-    if (!authorizedKeepers[msg.sender]) {
-      revert NotAuthorized();
-    }
-    _;
-  }
 
   /// @param _owner Contract owner address
   /// @param _pool Fluid DEX pool address
@@ -156,7 +144,7 @@ contract FluidDexObservationAggregator is Ownable, IAggregatorV3Interface {
     uint256 _maxStaleness,
     uint256 _volatilityLimit,
     uint256 _bufferSize
-  ) Ownable(_owner) {
+  ) AuthorizedKeepers(_owner) {
     if (address(_pool) == address(0)) revert InvalidParameter();
     if (_mainToken == address(0)) revert InvalidParameter();
     if (address(_pairTokenUsdAggregator) == address(0)) revert InvalidParameter();
@@ -337,15 +325,6 @@ contract FluidDexObservationAggregator is Ownable, IAggregatorV3Interface {
     if (_volatilityLimit == 0) revert InvalidParameter();
     emit VolatilityLimitUpdated(volatilityLimit, _volatilityLimit);
     volatilityLimit = _volatilityLimit;
-  }
-
-  /// @notice Authorize or revoke a keeper address
-  /// @param _keeper The address of the keeper
-  /// @param _authorized True to authorize, false to revoke
-  function setKeeperAuthorization(address _keeper, bool _authorized) external onlyOwner {
-    authorizedKeepers[_keeper] = _authorized;
-
-    emit KeeperAuthorizationUpdated(_keeper, _authorized);
   }
 
   /* ========== INTERNAL FUNCTIONS ========== */

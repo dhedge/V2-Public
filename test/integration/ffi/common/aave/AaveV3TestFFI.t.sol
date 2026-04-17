@@ -83,7 +83,7 @@ abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
     uint256 totalValueBefore = aaveTestPoolManagerLogic.totalFundValue();
 
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
-    withdrawData.slippageTolerance = 100; // 1%
+    withdrawData.slippageTolerance = 170; // 1.7%
 
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
       address(aaveTestPool),

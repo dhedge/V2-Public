@@ -43,7 +43,7 @@ const deployEasySwapperV2 = async (
   const EasySwapperV2 = await ethers.getContractFactory("EasySwapperV2");
   const initParams = [
     versions[config.oldTag].contracts.WithdrawalVault,
-    addresses.assets.weth,
+    ethers.constants.AddressZero,
     addresses.assets.nativeAssetWrapper,
     addresses.flatMoney.swapper,
     60 * 60, // 60 minutes

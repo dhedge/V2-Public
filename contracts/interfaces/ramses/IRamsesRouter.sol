@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 interface IRamsesRouter {
-  // solhint-disable-next-line contract-name-camelcase
+  // solhint-disable-next-line contract-name-capwords
   struct route {
     address from;
     address to;
