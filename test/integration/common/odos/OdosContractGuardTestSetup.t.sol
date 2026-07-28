@@ -7,7 +7,6 @@ import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {OdosV2ContractGuard} from "contracts/guards/contractGuards/odos/OdosV2ContractGuard.sol";
-import {IOdosRouterV2} from "contracts/interfaces/odos/IOdosRouterV2.sol";
 import {OdosV3ContractGuard} from "contracts/guards/contractGuards/odos/OdosV3ContractGuard.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 import {OdosAPIHelper} from "./OdosAPIHelper.sol";
@@ -233,12 +232,13 @@ abstract contract OdosContractGuardTestSetup is BackboneSetup, OdosAPIHelper {
     (, bytes memory swapdata) = _getSwapData(isCompact, address(testPool), usdcData.asset, 10000e6);
     bytes memory mData;
     if (!isCompact) {
-      bytes memory params = odosContractGuard.getParams(swapdata);
-      IOdosRouterV2.SwapTokenInfo memory swapTokenInfo = abi.decode(params, (IOdosRouterV2.SwapTokenInfo));
-      swapTokenInfo.inputAmount = 0;
-
-      bytes memory encodedData = abi.encode(swapTokenInfo);
-      mData = abi.encodePacked(odosContractGuard.getMethod(swapdata), encodedData);
+      // Zero inputAmount (2nd word of SwapTokenInfo) in place, preserving the trailing swap args
+      // (pathDefinition, executor, referral) that the guard decodes alongside SwapTokenInfo.
+      mData = swapdata;
+      assembly {
+        // data: [selector(4)][inputToken(32)][inputAmount(32)]... -> inputAmount at byte 4 + 32 = 36
+        mstore(add(mData, add(0x20, 36)), 0)
+      }
     } else {
       mData = _wipeInputAmountInMemory(swapdata);
     }

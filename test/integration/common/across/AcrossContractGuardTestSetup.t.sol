@@ -17,10 +17,12 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
   address private immutable approvedDestToken;
   uint256 private immutable approvedDestChainId;
 
-  address private destinationPoolA = makeAddr("destinationPoolA");
+  // `internal` (not `private`) so chain-specific suites can rebuild the implicit-dest-token tx when
+  // they override the test below.
+  address internal destinationPoolA = makeAddr("destinationPoolA");
   address private destinationPoolB = makeAddr("destinationPoolB");
 
-  PoolLogic private testPool;
+  PoolLogic internal testPool;
   AcrossContractGuard private acrossContractGuard;
 
   constructor(address _spokePool, address _approvedDestToken, uint256 _approvedDestChainId) {
@@ -59,7 +61,7 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
 
     vm.startPrank(owner);
 
-    AcrossContractGuard.CrossChainBridge[] memory settings = new AcrossContractGuard.CrossChainBridge[](3);
+    AcrossContractGuard.CrossChainBridge[] memory settings = new AcrossContractGuard.CrossChainBridge[](2);
     settings[0] = AcrossContractGuard.CrossChainBridge({
       sourcePool: address(testPool),
       destinationPool: destinationPoolA,
@@ -74,14 +76,6 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
       destinationToken: address(0),
       destinationChainId: PolygonConfig.CHAIN_ID
     });
-    settings[2] = AcrossContractGuard.CrossChainBridge({
-      sourcePool: address(testPool),
-      destinationPool: destinationPoolA,
-      sourceToken: usdcData.asset,
-      destinationToken: address(0),
-      destinationChainId: approvedDestChainId
-    });
-
     // Deploy the Across contract guard.
     acrossContractGuard = new AcrossContractGuard(settings);
 
@@ -101,38 +95,6 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
       destinationPoolA,
       usdcData.asset,
       approvedDestToken,
-      usdcBalanceOfPoolBefore,
-      usdcBalanceOfPoolBefore,
-      approvedDestChainId,
-      address(0),
-      block.timestamp,
-      0,
-      0,
-      new bytes(0)
-    );
-
-    PoolLogic.TxToExecute[] memory txs = new PoolLogic.TxToExecute[](2);
-    txs[0] = PoolLogic.TxToExecute({to: usdcData.asset, data: approveCallData});
-    txs[1] = PoolLogic.TxToExecute({to: spokePool, data: supplyCallData});
-
-    testPool.execTransactions(txs);
-
-    uint256 usdcBalanceOfPoolAfter = IERC20(usdcData.asset).balanceOf(address(testPool));
-    assertEq(usdcBalanceOfPoolAfter, 0, "USDC balance of pool should be 0 after depositV3");
-  }
-
-  function test_manager_can_call_depositv3_if_whitelisted_implicit_dest_token() public {
-    vm.startPrank(manager);
-
-    uint256 usdcBalanceOfPoolBefore = IERC20(usdcData.asset).balanceOf(address(testPool));
-
-    bytes memory approveCallData = abi.encodeWithSelector(IERC20.approve.selector, spokePool, usdcBalanceOfPoolBefore);
-    bytes memory supplyCallData = abi.encodeWithSelector(
-      V3SpokePoolInterface.depositV3.selector,
-      testPool,
-      destinationPoolA,
-      usdcData.asset,
-      address(0),
       usdcBalanceOfPoolBefore,
       usdcBalanceOfPoolBefore,
       approvedDestChainId,
@@ -270,7 +232,7 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
       testPool,
       destinationPoolA,
       wethData.asset,
-      address(0),
+      approvedDestToken,
       0,
       0,
       approvedDestChainId,
@@ -293,10 +255,10 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
       testPool,
       destinationPoolA,
       usdcData.asset,
-      address(0),
+      approvedDestToken,
       0,
       0,
-      1,
+      9745,
       address(0),
       block.timestamp,
       0,
@@ -316,7 +278,7 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
       testPool,
       makeAddr("destinationPoolC"),
       usdcData.asset,
-      address(0),
+      approvedDestToken,
       0,
       0,
       approvedDestChainId,
@@ -356,7 +318,7 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
       address(newPool),
       destinationPoolA,
       usdcData.asset,
-      address(0),
+      approvedDestToken,
       0,
       0,
       approvedDestChainId,
@@ -369,5 +331,114 @@ abstract contract AcrossContractGuardTestSetup is BackboneSetup {
 
     vm.expectRevert("not approved");
     newPool.execTransaction(spokePool, supplyCallData);
+  }
+
+  // --- bytes32-typed `deposit` (the newer SpokePool entrypoint) ---
+  // Shares the same validation as `depositV3`; these tests prove the bytes32 branch decodes and
+  // converts its args correctly and that the shared checks still fire through it.
+
+  function _toBytes32(address _addr) internal pure returns (bytes32) {
+    return bytes32(uint256(uint160(_addr)));
+  }
+
+  function test_manager_can_call_deposit_if_whitelisted_explicit_dest_token() public {
+    vm.startPrank(manager);
+
+    uint256 usdcBalanceOfPoolBefore = IERC20(usdcData.asset).balanceOf(address(testPool));
+
+    bytes memory approveCallData = abi.encodeWithSelector(IERC20.approve.selector, spokePool, usdcBalanceOfPoolBefore);
+    bytes memory supplyCallData = abi.encodeWithSelector(
+      V3SpokePoolInterface.deposit.selector,
+      _toBytes32(address(testPool)),
+      _toBytes32(destinationPoolA),
+      _toBytes32(usdcData.asset),
+      _toBytes32(approvedDestToken),
+      usdcBalanceOfPoolBefore,
+      usdcBalanceOfPoolBefore,
+      approvedDestChainId,
+      bytes32(0),
+      block.timestamp,
+      uint32(0),
+      uint32(0),
+      new bytes(0)
+    );
+
+    PoolLogic.TxToExecute[] memory txs = new PoolLogic.TxToExecute[](2);
+    txs[0] = PoolLogic.TxToExecute({to: usdcData.asset, data: approveCallData});
+    txs[1] = PoolLogic.TxToExecute({to: spokePool, data: supplyCallData});
+
+    testPool.execTransactions(txs);
+
+    uint256 usdcBalanceOfPoolAfter = IERC20(usdcData.asset).balanceOf(address(testPool));
+    assertEq(usdcBalanceOfPoolAfter, 0, "USDC balance of pool should be 0 after deposit");
+  }
+
+  function test_revert_when_deposit_depositor_not_pool() public {
+    vm.startPrank(manager);
+
+    bytes memory supplyCallData = abi.encodeWithSelector(
+      V3SpokePoolInterface.deposit.selector,
+      _toBytes32(manager),
+      _toBytes32(destinationPoolA),
+      _toBytes32(usdcData.asset),
+      _toBytes32(approvedDestToken),
+      uint256(0),
+      uint256(0),
+      approvedDestChainId,
+      bytes32(0),
+      block.timestamp,
+      uint32(0),
+      uint32(0),
+      new bytes(0)
+    );
+
+    vm.expectRevert("depositor is not pool");
+    testPool.execTransaction(spokePool, supplyCallData);
+  }
+
+  function test_revert_when_deposit_bridging_fees_too_high() public {
+    vm.startPrank(manager);
+
+    bytes memory supplyCallData = abi.encodeWithSelector(
+      V3SpokePoolInterface.deposit.selector,
+      _toBytes32(address(testPool)),
+      _toBytes32(destinationPoolA),
+      _toBytes32(usdcData.asset),
+      _toBytes32(approvedDestToken),
+      uint256(10000e6),
+      uint256(0),
+      approvedDestChainId,
+      bytes32(0),
+      block.timestamp,
+      uint32(0),
+      uint32(0),
+      new bytes(0)
+    );
+
+    vm.expectRevert("output too low");
+    testPool.execTransaction(spokePool, supplyCallData);
+  }
+
+  function test_revert_when_deposit_not_approved_destination() public {
+    vm.startPrank(manager);
+
+    bytes memory supplyCallData = abi.encodeWithSelector(
+      V3SpokePoolInterface.deposit.selector,
+      _toBytes32(address(testPool)),
+      _toBytes32(destinationPoolA),
+      _toBytes32(usdcData.asset),
+      _toBytes32(wethData.asset),
+      uint256(0),
+      uint256(0),
+      approvedDestChainId,
+      bytes32(0),
+      block.timestamp,
+      uint32(0),
+      uint32(0),
+      new bytes(0)
+    );
+
+    vm.expectRevert("not approved");
+    testPool.execTransaction(spokePool, supplyCallData);
   }
 }

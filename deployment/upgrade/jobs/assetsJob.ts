@@ -1,6 +1,6 @@
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { hasDuplicates, proposeTx } from "../../deploymentHelpers";
+import { hasDuplicates, proposeTransactions, MetaTransactionData } from "../../deploymentHelpers";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions, TDeployedAsset } from "../../types";
 import { configureContractGuard } from "./assetContractGuardHelpers";
 import { getOracle } from "./oracles/assetsJobHelpers";
@@ -41,6 +41,9 @@ export enum AssetType {
   "Virtual Token Asset" = 38,
   "Hyperliquid Perps Account" = 39,
   "Hyperliquid ERC20 Spot Linked Asset" = 40,
+  "Ondo GM Token Asset" = 41,
+  "Midas mToken Asset" = 42,
+  "Midas Pending Redemption Asset" = 43,
   "Lyra OptionMarketWrapper Asset" = 100,
   "Synthetix Futures Market Asset" = 101,
   "Synthetix PerpsV2 Market Asset" = 102,
@@ -147,21 +150,48 @@ export const assetsJob: IJob<void> = async (
   const addAssetsABI = assetHandlerLogic.encodeFunctionData("addAssets", [assetHanderAssets]);
 
   if (newAssets.length > 0) {
+    const transactions: MetaTransactionData[] = [];
+    const assetHandlerProxy = versions[config.oldTag].contracts.AssetHandlerProxy;
+
     console.log("AssetsJob: Proposing New Assets");
-    await proposeTx(
-      versions[config.oldTag].contracts.AssetHandlerProxy,
-      addAssetsABI,
-      "Update assets in Asset Handler",
-      config,
-      addresses,
-    );
+    transactions.push({
+      to: assetHandlerProxy,
+      value: "0",
+      data: addAssetsABI,
+    });
 
     const assetsWithNewOracles = new Set<string>(newAssets.map((x) => x.assetAddress));
+    const previousAssets = versions[config.newTag].contracts.Assets || [];
     // Filter out any assets that have a new oracle
-    const existingAssets = (versions[config.newTag].contracts.Assets || []).filter(
+    const existingAssets = previousAssets.filter(
       (existingAsset) => !assetsWithNewOracles.has(existingAsset.assetAddress),
     );
     console.log("New Assets", newAssets);
     versions[config.newTag].contracts.Assets = [...existingAssets, ...newAssets];
+
+    // Set per-asset maxPriceAge floor for assets that require fresh price checks on deposits.
+    for (const newAsset of newAssets) {
+      const previousAsset = previousAssets.find((a) => a.assetAddress === newAsset.assetAddress);
+      if (
+        newAsset.assetMaxPriceAge != null &&
+        newAsset.assetMaxPriceAge > 0 &&
+        previousAsset?.assetMaxPriceAge !== newAsset.assetMaxPriceAge
+      ) {
+        const setMaxPriceAgeABI = assetHandlerLogic.encodeFunctionData("setAssetMaxPriceAge", [
+          newAsset.assetAddress,
+          newAsset.assetMaxPriceAge,
+        ]);
+        console.log(`AssetsJob: Setting asset maxPriceAge for ${newAsset.assetName}: ${newAsset.assetMaxPriceAge}`);
+        transactions.push({
+          to: assetHandlerProxy,
+          value: "0",
+          data: setMaxPriceAgeABI,
+        });
+      }
+    }
+
+    if (config.execute) {
+      await proposeTransactions(transactions, "Update assets in Asset Handler", config, addresses);
+    }
   }
 };

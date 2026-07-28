@@ -873,28 +873,26 @@
     "oracleType": "DHedgePoolAggregator"
   },
   {
-    "assetName": "PT-wstETH-25JUN2026",
-    "assetAddress": "0x71fBF40651E9D4278a74586AfC99F307f369Ce9A",
-    "assetType": "37",
-    "specificOracleConfig": {
-      "syEquivalentYieldToken": "0x5979D7b546E38E414F7E9822514be443A4800529",
-      "pendleChainlinkOracle": "0xee667d40493db72a94e08ec0948288a358539961",
-      "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
-    },
-    "oracleType": "PendlePTPriceAggregator"
+    "assetName": "Toros GOLDBEAR1X",
+    "assetAddress": "0x4EF67f28aB2d3BA16F1D110fA7c084D62d7eF2Cc",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
   },
   {
-    "assetName": "DYTM Office",
-    "assetAddress": "0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001",
-    "assetType": "106",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-    }
+    "assetName": "Toros BTCP1X",
+    "assetAddress": "0x8990f5e57a8E0b5CABB68D1CD5bd790A92e32f5C",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
   },
   {
-    "assetName": "DYTM Testing Yield Basket",
-    "assetAddress": "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0",
+    "assetName": "Toros BTCP2X",
+    "assetAddress": "0x99C917097D455d54F68A6b8e73095E30badddAcE",
+    "assetType": "0",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros BTCP3X",
+    "assetAddress": "0x31481Fa8e8802EAcF1cfa3aaBDD11be24FcC3476",
     "assetType": "0",
     "oracleType": "DHedgePoolAggregator"
   }

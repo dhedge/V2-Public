@@ -145,5 +145,1011 @@
     "specificOracleConfig": {
       "USDPriceOracleAddress": "0x4D4010338beD13483CC85de051d28d2B4f3b6484"
     }
+  },
+  {
+    "assetName": "AAVE",
+    "assetAddress": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x547a514d5e3769680Ce22B2361c10Ea13619e8a9"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "SPYon",
+    "assetAddress": "0xFeDC5f4a6c38211c1338aa411018DFAf26612c08",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "LINK",
+    "assetAddress": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x2c1d072e956AFFC0D435Cb7AC38EF18d24d9127c"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "UNI",
+    "assetAddress": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+    "assetType": "0",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0x553303d460EE0afB37EdFf9bE42922D8FF63220e"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "CRCLon",
+    "assetAddress": "0x3632dea96a953c11dac2f00b4a05a32cd1063fae",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "TSLAon",
+    "assetAddress": "0xf6b1117ec07684d3958cad8beb1b302bfd21103f",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "MSFTon",
+    "assetAddress": "0xb812837b81a3a6b81d7cd74cfb19a7f2784555e5",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "NVDAon",
+    "assetAddress": "0x2d1f7226bd1f780af6b9a49dcc0ae00e8df4bdee",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "MUon",
+    "assetAddress": "0x050362ab1072cb2ce74d74770e22a3203ad04ee5",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "MSTRon",
+    "assetAddress": "0xcabd955322dfbf94c084929ac5e9eca3feb5556f",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "STRCon",
+    "assetAddress": "0xecabe1ff8a9e1dc55899cf58dac8497ece5ae84c",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "GOOGLon",
+    "assetAddress": "0xba47214edd2bb43099611b208f75e4b42fdcfedc",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "INTCon",
+    "assetAddress": "0xfda09936dbd717368de0835ba441d9e62069d36f",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "AVGOon",
+    "assetAddress": "0x0d54d4279b9e8c54cd8547c2c75a8ee81a0bcae8",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "AMDon",
+    "assetAddress": "0x0c1f3412a44ff99e40bf14e06e5ea321ae7b3938",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "ASMLon",
+    "assetAddress": "0xe51ba774ebf6392c45bf1d9e6b334d07992460d3",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "METAon",
+    "assetAddress": "0x59644165402b611b350645555b50afb581c71eb2",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "ARMon",
+    "assetAddress": "0x5bf1b2a808598c0ef4af1673a5457d86fe6d7b3d",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "HIMSon",
+    "assetAddress": "0xca468554e5c0423ee858fe3942c9568c51fcaa79",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "LLYon",
+    "assetAddress": "0xf192957ae52db3eb088654403cc2eded014ae556",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "NVOon",
+    "assetAddress": "0x28151f5888833d3d767c4d6945a0ee50d1b193e3",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "REGNon",
+    "assetAddress": "0x33ac34da58168de69ce74a66fbad81a88f974bd5",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "AMGNon",
+    "assetAddress": "0x1c5fa55eade69ae98571059332520f73733c2d82",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "IBMon",
+    "assetAddress": "0x25d3f236b2d61656eebdea86ac6d42168e340011",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "PANWon",
+    "assetAddress": "0x34bfdff25f0fda6d3ad0c33f1e06c0d40bd68885",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "CRWDon",
+    "assetAddress": "0xcac9aafb2cf51645ae1ab4fb1f35f07d42437f80",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "IONQon",
+    "assetAddress": "0x2f2e4b09b99fbf018f600e031aafd9da6347cc75",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "RGTIon",
+    "assetAddress": "0xfdfdf5db2f4a72cb754ffa8896ea012dc2cc0f5e",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "QBTSon",
+    "assetAddress": "0x3807562a482b824c08a564dfefcc471806d3e00a",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "QUBTon",
+    "assetAddress": "0xc95c9e3fa311664b5e744b3c2716547bec2ba7da",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "AMATon",
+    "assetAddress": "0x6be935eadc71c49c414b1175985946ee40365c67",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "LRCXon",
+    "assetAddress": "0x21be23f5bf87a749670c088f6dee26760f1ab80f",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "IRENon",
+    "assetAddress": "0x0b59fdb1a233a7477ea14061004b9dd776e73cb3",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "CRWVon",
+    "assetAddress": "0x66908813cd7676269494b2c6f6dbab8b4f9e95df",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "GLXYon",
+    "assetAddress": "0xe668e08a6f5792cef0e63e9d98524968fdb5882f",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "NBISon",
+    "assetAddress": "0xe4babaa960ba7d37860f3fe00d7b95d3868e8edc",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "APLDon",
+    "assetAddress": "0x318dcb4f07c3e6ccecc12a252100fb3bf76eeb02",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "CIFRon",
+    "assetAddress": "0x24e5bc45d5b6cef6f38989ac33df587a3fc850cf",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "QQQon",
+    "assetAddress": "0x0e397938c1aa0680954093495b70a9f5e2249aba",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "EFAon",
+    "assetAddress": "0x4111b60bc87f2bd1e81e783e271d7f0ec6ee088b",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "EEMon",
+    "assetAddress": "0x77a1a02e4a888ada8620b93c30de8a41e621126c",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "EWYon",
+    "assetAddress": "0xbd660e96d45e7c175512d1ed0ccc119cb980b81a",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "SQQQon",
+    "assetAddress": "0x0a00c19246fc41b2524d56c87ec44ce8b30ba0f8",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "TQQQon",
+    "assetAddress": "0xa45cd7ac9865b9539166ebaf2abc362df4736580",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "PSQon",
+    "assetAddress": "0x9ebd34d99cc3a45b39cafc14ad7994263fa2be56",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "USOon",
+    "assetAddress": "0x1f5fc5c3c8b0f15c7e21af623936ff2b210b6415",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "GLDon",
+    "assetAddress": "0x423d42e505e64f99b6e277eb7ed324cc5606f139",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "SLVon",
+    "assetAddress": "0xf3e4872e6a4cf365888d93b6146a2baa7348f1a4",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "PPLTon",
+    "assetAddress": "0xf1883461ec7bd883a3668749c5cf5f351080d059",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "UNGon",
+    "assetAddress": "0x7c488cfc874ca9f34e7bdbd0410c27ce6d6af5f9",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "TSMon",
+    "assetAddress": "0x3cafdbfe682aec17d5ace2f97a2f3ab3dcf6a4a9",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "MRKon",
+    "assetAddress": "0xdc8a7db05ea704227d56f5d4a4b77a2d1bba29c0",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "TMOon",
+    "assetAddress": "0x60808f2a0d035e16f57e9043842bd1bfbda24fa2",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "WULFon",
+    "assetAddress": "0x110cae53912c2ed9bf279cd70b3b699e26c79e58",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "AAPLon",
+    "assetAddress": "0x14c3abF95Cb9C93a8b82C1CdCB76D72Cb87b2d4c",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "AMZNon",
+    "assetAddress": "0xbb8774FB97436d23d74C1b882E8E9A69322cFD31",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "ORCLon",
+    "assetAddress": "0x8a23C6BaadB88512b30475C83Df6A63881e33e1E",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "XOMon",
+    "assetAddress": "0xf05ad9840924ea6f977ebccb3b1da87e31dcd0b4",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "Von",
+    "assetAddress": "0xaC37c20C1d0E5285035e056101a64e263Ff94a41",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "CSCOon",
+    "assetAddress": "0x980a1001ee94e54142b231f44C7CA7c9DF71FBe1",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "NFLXon",
+    "assetAddress": "0x032deC3372F25C41EA8054B4987a7c4832CDB338",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "UNHon",
+    "assetAddress": "0x075756F3b6381a79633438fAA8964946bf40163d",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "PLTRon",
+    "assetAddress": "0x0c666485b02F7A87d21AdD7AEb9F5e64975AA490",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "BABAon",
+    "assetAddress": "0x41765F0FCddC276309195166C7A62AE522FA09ef",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "SMCIon",
+    "assetAddress": "0x2ca12a3F9635fD69C21580def14F25C210cA9612",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "LMTon",
+    "assetAddress": "0x691b126cF619707Ed5d16CaB1B27C000aa8De300",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "VRTon",
+    "assetAddress": "0x0752163d221d3d5d4b6e98bd616b22bd2b453964",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "MRVLon",
+    "assetAddress": "0xF404E5f887dBd5508e16a1198fCDD5DE1A4296B8",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "COHRon",
+    "assetAddress": "0x2B7727076B9C9B1834a2f95B81f12EEdD30db9f1",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "GEVon",
+    "assetAddress": "0xA043FDc5A6E2E381e3532d5A97404b82fb7A0af8",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "ETNon",
+    "assetAddress": "0x9b56f5ED5A94Ae3266b7FF21953e6626F94008F1",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "KLACon",
+    "assetAddress": "0xa637ae510cb50e61236a89ac480b93b8c3bccc46",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "PALLon",
+    "assetAddress": "0x0cE36d199bd6851788e03392568849394cBdE722",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "SPCXon",
+    "assetAddress": "0xc9eef266834730340a55b6cc24621b31baf55581",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "BEon",
+    "assetAddress": "0x92e04b1fCC2b16347820241D226853Cf01C9eBAB",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "CBRSon",
+    "assetAddress": "0x61882Bb63aF8e6A39531175CdfDe1Fcd98346503",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "COINon",
+    "assetAddress": "0xF042cfa86cf1D598a75Bdb55c3507a1F39f9493b",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "COSTon",
+    "assetAddress": "0x0c8276E4FeC072cf7854Be69c70F7773D1610857",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "DELLon",
+    "assetAddress": "0xeE9f43476C5b7292b114bA1b280A42A8746792d4",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "DRAMon",
+    "assetAddress": "0xdB5a8f5B4C17f2Ee2e7192A150687E48eB3C415d",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "EWJon",
+    "assetAddress": "0x625Fb557cAD6D4638dae420626F3F08A485b43a8",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "EWZon",
+    "assetAddress": "0x54021fDe36B7c4C4F9C35b02fb9A153eD8F5938A",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "GMEon",
+    "assetAddress": "0x71d24Baeb0A033ec5F90FF65C4210545AF378D97",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "HOODon",
+    "assetAddress": "0x998f02A9E343EF6E3E6f28700d5A20F839fD74E6",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "LITEon",
+    "assetAddress": "0xbF5ab848efff75D897a3DBE4647B939C59D3cdb0",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "NOKon",
+    "assetAddress": "0x01E7eaF05Be1d0c2D1834fC65080188376026d07",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "NOWon",
+    "assetAddress": "0x8bCF9012f4b0c1C3D359eDb7133C294f82f80790",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "QCOMon",
+    "assetAddress": "0xE3419710c1f77D44B4DaB02316d3f048818C4E59",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "RIVNon",
+    "assetAddress": "0x04d94914Cd1D7FF749eFedEe764335777225b962",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "RKLBon",
+    "assetAddress": "0x36E3b8d9aAd0e51aC08E56a75A8f6005bF68535B",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "SNDKon",
+    "assetAddress": "0x71E2400CF1Cb83204f33794eD326636A71a9AAfC",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "URNMon",
+    "assetAddress": "0xa65db7879774BD6758ABaF583A91177AfD96D5A3",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "USARon",
+    "assetAddress": "0xE2c149FA719d43912BfE584c71c9a6a018a5e916",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "WDCon",
+    "assetAddress": "0x44e89d34601b8D0155e16634d2553EF7F54DBab2",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "BNOon",
+    "assetAddress": "0x9ddb2524782684942fad28b44e76552cb7f3f548",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "CPERon",
+    "assetAddress": "0x22a684e0a3cc9b74596719f722cf4e597aafa3ba",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "DYTM Office",
+    "assetAddress": "0x0ff1ceB93DbADfB13722058D60c4B8cD122b06ea",
+    "assetType": "106",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x4D4010338beD13483CC85de051d28d2B4f3b6484"
+    }
+  },
+  {
+    "assetName": "BOTon",
+    "assetAddress": "0x0e05ba0756c504b69aaa642f7379cd1af7c63969",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "SKHYon",
+    "assetAddress": "0xc0fE36F4FFBDf1B38E192215073590a68f9A2Af7",
+    "assetType": "41",
+    "specificOracleConfig": {
+      "ondoAttestationOracle": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9"
+    },
+    "assetMaxPriceAge": 60,
+    "oracleType": "OndoAttestationAggregator"
+  },
+  {
+    "assetName": "mAPOLLO",
+    "assetAddress": "0x7CF9DEC92ca9FD46f8d86e7798B72624Bc116C05",
+    "assetType": "42",
+    "specificOracleConfig": {
+      "midasFeed": "0x84303e5568C7B167fa4fEBc6253CDdfe12b7Ee4B",
+      "heartbeat": 432000
+    },
+    "oracleType": "MidasPriceAggregator"
+  },
+  {
+    "assetName": "mAPOLLO Pending Redemption",
+    "assetAddress": "0x5aeA6D35ED7B3B7aE78694B7da2Ee880756Af5C0",
+    "assetType": "43",
+    "specificOracleConfig": {
+      "midasFeed": "0x84303e5568C7B167fa4fEBc6253CDdfe12b7Ee4B",
+      "heartbeat": 432000
+    },
+    "oracleType": "MidasPriceAggregator"
   }
 ]

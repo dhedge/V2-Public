@@ -31,6 +31,13 @@ export const updateChainlinkAggregators = async (
     latestRoundDataABI,
     ethers.utils.solidityPack(["uint256", "int256", "uint256", "uint256", "uint256"], [0, 3500000000, 0, current, 0]),
   ); // $35
+
+  // Mock oracleHeartbeat() to revert so AssetHandler falls back to chainlinkTimeout
+  const oracleHeartbeatABI = new ethers.utils.Interface(["function oracleHeartbeat() view returns (uint256)"]);
+  const oracleHeartbeatCalldata = oracleHeartbeatABI.encodeFunctionData("oracleHeartbeat", []);
+  await usd_price_feed.givenCalldataRevert(oracleHeartbeatCalldata);
+  await eth_price_feed.givenCalldataRevert(oracleHeartbeatCalldata);
+  await link_price_feed.givenCalldataRevert(oracleHeartbeatCalldata);
 };
 
 export const manipulateChainLinkOracle = async (oracleAddress: string, manipulateByPercent: number) => {

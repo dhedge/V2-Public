@@ -5,6 +5,7 @@ pragma abicoder v2;
 import {PendlePrincipalTokenTestSetup} from "test/integration/common/pendle/PendlePrincipalTokenTestSetup.t.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 contract PendlePrincipalTokenTestArbitrumWstETH25JUN2026 is PendlePrincipalTokenTestSetup, ArbitrumSetup {
   address private constant PENDLE_MARKET_wstETH_25JUN2026 = 0xf78452e0f5C0B95fc5dC8353B8CD1e06E53fa25B;
@@ -13,7 +14,7 @@ contract PendlePrincipalTokenTestArbitrumWstETH25JUN2026 is PendlePrincipalToken
 
   constructor()
     PendlePrincipalTokenTestSetup(
-      ArbitrumConfig.PENDLE_ROUTER_V4,
+      EthereumConfig.PENDLE_ROUTER_V4,
       ArbitrumConfig.WSTETH,
       ArbitrumConfig.WSTETH_ORACLE,
       PENDLE_MARKET_wstETH_25JUN2026,

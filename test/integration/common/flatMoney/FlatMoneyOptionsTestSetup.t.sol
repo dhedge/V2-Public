@@ -17,6 +17,7 @@ import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMo
 import {FlatMoneyOptionsOrderAnnouncementGuard} from "contracts/guards/contractGuards/flatMoney/v2/FlatMoneyOptionsOrderAnnouncementGuard.sol";
 import {FlatMoneyOptionsOrderExecutionGuard} from "contracts/guards/contractGuards/flatMoney/v2/FlatMoneyOptionsOrderExecutionGuard.sol";
 import {FlatMoneyV2OptionsConfig} from "contracts/guards/contractGuards/flatMoney/shared/FlatMoneyV2OptionsConfig.sol";
+import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {IERC20Extended} from "contracts/interfaces/IERC20Extended.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
@@ -85,6 +86,10 @@ abstract contract FlatMoneyOptionsTestSetup is BackboneSetup, IntegrationDeploye
     ProxyAdmin(ArbitrumConfig.PROXY_ADMIN).upgrade(
       TransparentUpgradeableProxy(payable(address(_poolFactory))),
       latestPoolFactory
+    );
+    ProxyAdmin(ArbitrumConfig.PROXY_ADMIN).upgrade(
+      TransparentUpgradeableProxy(payable(_poolFactory.getAssetHandler())),
+      address(new AssetHandler())
     );
     _poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
 

@@ -26,7 +26,7 @@ import {FluidDexObservationAggregator} from "./FluidDexObservationAggregator.sol
 /// @dev Implements custom logic trigger: records observations when price deviates
 ///      beyond threshold OR when time since last observation exceeds maximum.
 ///      Aggregator configs are passed via checkData at upkeep registration.
-///      This contract's address must be authorized in each aggregator's authorizedKeepers.
+///      This contract's address must be authorized in each aggregator's authorizedCallers.
 contract FluidDexObservationAutomation is Ownable, AutomationCompatible {
   /// @notice Configuration for each aggregator to monitor
   struct AggregatorConfig {

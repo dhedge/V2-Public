@@ -29,6 +29,57 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint256",
+        "name": "customCooldown",
+        "type": "uint256"
+      }
+    ],
+    "name": "CustomCooldownSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "toWhitelist",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "whitelisted",
+            "type": "bool"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct EasySwapperV2.WhitelistSetting[]",
+        "name": "whitelistSettings",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "CustomCooldownWhitelistUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "dHedgePoolFactory",
+        "type": "address"
+      }
+    ],
+    "name": "DHedgePoolFactorySet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "address",
         "name": "limitOrderVault",
         "type": "address"
@@ -41,6 +92,19 @@
       }
     ],
     "name": "LimitOrderVaultCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "vaultLogic",
+        "type": "address"
+      }
+    ],
+    "name": "LogicSet",
     "type": "event"
   },
   {
@@ -73,6 +137,19 @@
       }
     ],
     "name": "ProxyCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "swapper",
+        "type": "address"
+      }
+    ],
+    "name": "SwapperSet",
     "type": "event"
   },
   {
@@ -803,7 +880,7 @@
       },
       {
         "internalType": "address",
-        "name": "_weth",
+        "name": "",
         "type": "address"
       },
       {

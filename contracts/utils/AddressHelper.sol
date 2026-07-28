@@ -26,6 +26,7 @@ library AddressHelper {
    * @param to the contract address
    * @param data the call data
    * @return success if the contract call is successful or not
+   * @dev Not a try/catch: on failure this reverts and bubbles up the callee's revert data; `success` is always true on return.
    */
   function tryAssemblyCall(address to, bytes memory data) internal returns (bool success) {
     assembly {
@@ -44,6 +45,7 @@ library AddressHelper {
    * @param to the contract address
    * @param data the call data
    * @return success if the contract call is successful or not
+   * @dev Not a try/catch: on failure this reverts and bubbles up the callee's revert data; `success` is always true on return.
    */
   function tryAssemblyDelegateCall(address to, bytes memory data) internal returns (bool success) {
     assembly {

@@ -90,15 +90,6 @@ contract HyperliquidCoreDepositWalletContractGuard is
     }
   }
 
-  /// @notice Returns the amount of tokens currently in flight for a given pool and asset.
-  /// @dev Used by HyperliquidPositionGuard to read in-flight amounts for balance accounting.
-  /// @param pool The address of the pool.
-  /// @param asset The address of the asset (e.g., USDC).
-  /// @return amount The amount of tokens in flight.
-  function inFlightAmount(address pool, address asset) external view returns (uint256 amount) {
-    return getInFlightAmount(pool, asset);
-  }
-
   function _useContractGuard(
     address _poolFactory
   ) internal view returns (IHyperliquidCoreWriterContractGuard contractguard) {

@@ -89,4 +89,28 @@ library DytmParamStructs {
     uint256 healthFactor;
     bool isHealthy;
   }
+
+  /// @notice Per-asset withdrawal planning entry emitted by `DytmWithdrawalCalculator.previewWithdrawal`.
+  /// @dev    Flat list across all withdrawable DYTM markets; one entry per collateral slot and
+  ///         per debt slot (when non-zero). Carries everything the frontend needs to:
+  ///           - Plan off-chain work (DEX aggregator / Pendle redeem / Ondo attestation) using
+  ///             `asset`, `amount`, `assetType`, `isPool`.
+  ///           - Build the on-chain `WithdrawParams` / `RepayParams` calldata using
+  ///             `accountId`, `marketId`, `tokenId` (collateral) or `debtKey` (debt), and `shares`.
+  ///         Collateral entries: `tokenId` set, `debtKey == 0`, `isDebt == false`.
+  ///         Debt entries:       `tokenId == 0`, `debtKey` set, `isDebt == true`.
+  ///         dHEDGE-vault collateral: `isPool == true`. The frontend handles the vault token's
+  ///         underlying-resolution + per-underlying off-chain handling itself.
+  struct AssetData {
+    address asset;
+    uint256 amount;
+    uint16 assetType;
+    bool isPool;
+    bool isDebt;
+    uint88 marketId;
+    uint256 accountId;
+    uint256 tokenId;
+    uint248 debtKey;
+    uint256 shares;
+  }
 }

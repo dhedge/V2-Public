@@ -16,7 +16,7 @@ import {IHasGuardInfo} from "contracts/interfaces/IHasGuardInfo.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
 import {AaveLendingPoolAssetGuard} from "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol";
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 
 /// @notice Tests that the dh26 net slippage check correctly handles leverage-amplified slippage.
 /// With the updated AaveLendingPoolAssetGuard, the user passes their desired NET slippage tolerance.
@@ -58,7 +58,7 @@ contract AaveNetSlippageTestFFI is Test, OdosAPIHelper {
 
     // Register the new guard via governance
     Governance governance = Governance(factory.governanceAddress());
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.AAVE_V3), address(aaveGuard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.AAVE_V3), address(aaveGuard));
 
     vm.stopPrank();
 
@@ -149,6 +149,7 @@ contract AaveNetSlippageTestFFI is Test, OdosAPIHelper {
         // Guard internally scales it down for the swap based on leverage
         withdrawData.slippageTolerance = _slippageTolerance;
 
+        vm.prank(address(this), address(0));
         AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveGuard.calculateSwapDataParams(
           address(vault),
           _amountToWithdraw,

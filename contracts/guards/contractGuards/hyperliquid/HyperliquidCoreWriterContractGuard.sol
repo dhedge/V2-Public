@@ -2,10 +2,12 @@
 pragma solidity 0.8.28;
 
 import {EnumerableMap} from "@openzeppelin/v5/contracts/utils/structs/EnumerableMap.sol";
+import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/EnumerableSet.sol";
 import {OwnableUpgradeable} from "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {TxDataUtils, BytesLib} from "../../../utils/TxDataUtils.sol";
 import {PrecompileHelper} from "../../../utils/hyperliquid/PrecompileHelper.sol";
+import {HyperliquidConstants} from "../../../utils/hyperliquid/HyperliquidConstants.sol";
 import {FixedPointMathLib} from "../../../utils/FixedPointMathLib.sol";
 
 import {IGuard} from "../../../interfaces/guards/IGuard.sol";
@@ -14,6 +16,7 @@ import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {IHyperliquidCoreWriterContractGuard} from "../../../interfaces/hyperliquid/IHyperliquidCoreWriterContractGuard.sol";
+import {IHyperliquidWithdrawalManager} from "../../../interfaces/hyperliquid/IHyperliquidWithdrawalManager.sol";
 import {SafeSignerAccess} from "../../../utils/SafeSignerAccess.sol";
 
 /// @title HyperliquidCoreWriterContractGuard
@@ -25,6 +28,12 @@ import {SafeSignerAccess} from "../../../utils/SafeSignerAccess.sol";
 /// @dev [!WARNING] As of 25-March-2026, only HIP-3 perps with cross-margin as the default margin type
 ///      SHOULD be approved.
 /// @dev Doesn't allow bridging native HYPE.
+/// @dev [!WARNING] CoreWriter action 9 (register an API wallet / agent) is gated per-pool by the
+///      Factory Owner via `apiWalletEnabled`. A registered agent can trade directly on HyperCore,
+///      which breaks the pool's NAV accounting (positions in unsupported assets are invisible to
+///      the valuation guards). It must therefore only be enabled for private vaults where accounting
+///      accuracy is not required. Asset security is preserved: a Hyperliquid agent can only sign L1
+///      trading actions and cannot withdraw or transfer assets out of the pool's account.
 /// @author dHEDGE DAO
 contract HyperliquidCoreWriterContractGuard is
   IGuard,
@@ -37,6 +46,8 @@ contract HyperliquidCoreWriterContractGuard is
   using BytesLib for bytes;
   using FixedPointMathLib for uint256;
   using EnumerableMap for EnumerableMap.UintToUintMap;
+  using EnumerableSet for EnumerableSet.UintSet;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   /////////////////////////////////////////////
   //                  State                  //
@@ -61,6 +72,17 @@ contract HyperliquidCoreWriterContractGuard is
   ///      be disabled or removed.
   /// @dev Stores the status (enabled/disabled). If the key doesn't exist, it is considered non-existent.
   EnumerableMap.UintToUintMap private dexIdStatus;
+
+  /// @notice Set of approved asset IDs for enumeration.
+  /// @dev Parallel to `approvedAssets` mapping.
+  EnumerableSet.UintSet private _approvedAssetIds;
+
+  /// @notice Pools opted in to Hyperliquid API wallet (agent) registration via CoreWriter action 9.
+  /// @dev Set by the Factory Owner only. See warning in the contract NatSpec.
+  EnumerableSet.AddressSet private _apiWalletEnabledPools;
+
+  /// @notice Reference to the HyperliquidWithdrawalManager contract.
+  address public withdrawalManager;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -105,7 +127,7 @@ contract HyperliquidCoreWriterContractGuard is
     uint24 actionId = _getActionId(actionData);
 
     // Limit order placement action.
-    if (actionId == 1) {
+    if (actionId == HyperliquidConstants.ACTION_LIMIT_ORDER) {
       bytes memory actionParams = getParams(actionData);
       LimitOrderParams memory params = abi.decode(actionParams, (LimitOrderParams));
       AssetType assetType = _getAssetType(params.asset);
@@ -167,8 +189,11 @@ contract HyperliquidCoreWriterContractGuard is
         }
       }
 
-      return (uint16(ITransactionTypes.TransactionType.HyperliquidLimitOrder), false);
-    } else if (actionId == 6) {
+      return (
+        uint16(ITransactionTypes.TransactionType.HyperliquidLimitOrder),
+        _isWithdrawalReduceOrder(poolLogic, params)
+      );
+    } else if (actionId == HyperliquidConstants.ACTION_SPOT_SEND) {
       // Spot send action.
       // Remaining bytes represent the action parameters.
       bytes memory actionParams = getParams(actionData);
@@ -192,17 +217,23 @@ contract HyperliquidCoreWriterContractGuard is
       // removal of any spot asset from the supported assets list until the bridging is completed.
       _spotActionBlockNumber[poolLogic] = block.number;
 
-      return (uint16(ITransactionTypes.TransactionType.HyperliquidSpotSendAction), false);
-    } else if (actionId == 7) {
-      // Transfers USD to/fro the spot and perp accounts on HyperCore.
-      return (uint16(ITransactionTypes.TransactionType.HyperliquidUSDClassTransferAction), false);
-    } else if (actionId == 10) {
+      return (
+        uint16(ITransactionTypes.TransactionType.HyperliquidSpotSendAction),
+        _isWithdrawalBridgeAction(poolLogic)
+      );
+    } else if (actionId == HyperliquidConstants.ACTION_USD_CLASS_TRANSFER) {
+      // Transfers USD to/from the spot and perp accounts on HyperCore.
+      return (
+        uint16(ITransactionTypes.TransactionType.HyperliquidUSDClassTransferAction),
+        _isWithdrawalBridgeAction(poolLogic)
+      );
+    } else if (actionId == HyperliquidConstants.ACTION_OID_CANCEL) {
       // Cancel order by its OID.
       return (uint16(ITransactionTypes.TransactionType.HyperliquidOidCancelOrder), false);
-    } else if (actionId == 11) {
+    } else if (actionId == HyperliquidConstants.ACTION_CLOID_CANCEL) {
       // Cancel order by its CLOID.
       return (uint16(ITransactionTypes.TransactionType.HyperliquidCloidCancelOrder), false);
-    } else if (actionId == 13) {
+    } else if (actionId == HyperliquidConstants.ACTION_SEND_ASSET) {
       // Sends asset from one dex to another within Hyperliquid L1.
       bytes memory actionParams = getParams(actionData);
 
@@ -230,7 +261,25 @@ contract HyperliquidCoreWriterContractGuard is
       // disallow removal of any spot asset from the supported assets list until the action is completed.
       _spotActionBlockNumber[poolLogic] = block.number;
 
-      return (uint16(ITransactionTypes.TransactionType.HyperliquidSendAssetAction), false);
+      // Allow the WM to consolidate USDC from HIP-3 dexes into core perp dex (dex 0) during withdrawals.
+      bool isWithdrawalConsolidation = !isBeingBridgedToEVM &&
+        params.destinationAddress == poolLogic &&
+        params.token == _USDC_TOKEN_INDEX &&
+        params.destinationDexId == _DEX_ID_CORE_PERP;
+
+      return (
+        uint16(ITransactionTypes.TransactionType.HyperliquidSendAssetAction),
+        isWithdrawalConsolidation && _isWithdrawalBridgeAction(poolLogic)
+      );
+    } else if (actionId == HyperliquidConstants.ACTION_ADD_API_WALLET) {
+      // Add API wallet (agent). Gated per-pool by the Factory Owner via `apiWalletEnabled`.
+      // A Hyperliquid agent can only sign L1 trading actions; it cannot withdraw or transfer
+      // assets out of the pool's account (withdraw/usdSend/spotSend/approveAgent are master-signed).
+      // [!WARNING] Once an agent trades unsupported assets, the pool's NAV accounting drifts.
+      //            Only enable for private vaults where accounting accuracy is not required.
+      require(_apiWalletEnabledPools.contains(poolLogic), "api wallet not enabled");
+
+      return (uint16(ITransactionTypes.TransactionType.HyperliquidAddApiWallet), false);
     }
   }
 
@@ -249,6 +298,21 @@ contract HyperliquidCoreWriterContractGuard is
   /// @dev Includes the core perp and spot dexes by default.
   function getApprovedDexIds() external view returns (uint256[] memory) {
     return dexIdStatus.keys();
+  }
+
+  /// @notice Returns the list of approved asset IDs.
+  function getApprovedAssets() external view returns (uint256[] memory) {
+    return _approvedAssetIds.values();
+  }
+
+  /// @notice Returns whether API wallet registration is enabled for a pool.
+  function apiWalletEnabled(address poolLogic) external view returns (bool enabled) {
+    return _apiWalletEnabledPools.contains(poolLogic);
+  }
+
+  /// @notice Returns the list of pools with API wallet registration enabled.
+  function getApiWalletEnabledPools() external view returns (address[] memory) {
+    return _apiWalletEnabledPools.values();
   }
 
   /// @notice Checks if a dex ID is enabled.
@@ -315,9 +379,34 @@ contract HyperliquidCoreWriterContractGuard is
     return tokenInfo(token).evmContract;
   }
 
+  /// @notice Returns true if a reduce-only IOC order is part of an active withdrawal flow.
+  /// @dev Only returns true when the WM itself is the immediate caller (via transient flag).
+  function _isWithdrawalReduceOrder(address, LimitOrderParams memory params) private view returns (bool) {
+    if (withdrawalManager == address(0)) return false;
+    if (!params.reduceOnly) return false;
+    if (params.encodedTif != uint8(OrderType.IOC)) return false;
+
+    return IHyperliquidWithdrawalManager(withdrawalManager).isExecuting();
+  }
+
+  /// @notice Returns true if a bridge action (action 6 or 7) is part of an active withdrawal flow.
+  function _isWithdrawalBridgeAction(address) private view returns (bool) {
+    if (withdrawalManager == address(0)) return false;
+
+    return IHyperliquidWithdrawalManager(withdrawalManager).isExecuting();
+  }
+
   /////////////////////////////////////////////
   //                  Admin                  //
   /////////////////////////////////////////////
+
+  /// @notice Sets the HyperliquidWithdrawalManager contract reference.
+  /// @param _withdrawalManager The address of the WithdrawalManager (or address(0) to disable).
+  function setWithdrawalManager(address _withdrawalManager) external onlyOwner {
+    withdrawalManager = _withdrawalManager;
+
+    emit WithdrawalManagerUpdated(_withdrawalManager);
+  }
 
   /// @notice Adds or removes a dHEDGE pool from the whitelist.
   /// @param settings Array of WhitelistSetting structs.
@@ -328,6 +417,25 @@ contract HyperliquidCoreWriterContractGuard is
       dHedgePoolsWhitelist[settings[i].poolLogic] = settings[i].whitelisted;
 
       emit PoolWhitelistUpdated(settings[i].poolLogic, settings[i].whitelisted);
+    }
+  }
+
+  /// @notice Enables or disables API wallet (agent) registration for a dHEDGE pool.
+  /// @dev [!WARNING] Enabling this allows the pool's manager to register a Hyperliquid agent that
+  ///      can trade directly on HyperCore, breaking the pool's NAV accounting. Only enable for
+  ///      private vaults where accounting accuracy is not required.
+  /// @param settings Array of ApiWalletSetting structs.
+  function setApiWalletEnabled(ApiWalletSetting[] calldata settings) external onlyOwner {
+    for (uint256 i; i < settings.length; ++i) {
+      require(settings[i].poolLogic != address(0), "invalid pool logic");
+
+      if (settings[i].enabled) {
+        _apiWalletEnabledPools.add(settings[i].poolLogic);
+      } else {
+        _apiWalletEnabledPools.remove(settings[i].poolLogic);
+      }
+
+      emit ApiWalletEnabledUpdated(settings[i].poolLogic, settings[i].enabled);
     }
   }
 
@@ -352,6 +460,14 @@ contract HyperliquidCoreWriterContractGuard is
       }
 
       approvedAssets[assetId] = settings[i].approved;
+
+      if (settings[i].approved) {
+        _approvedAssetIds.add(uint256(assetId));
+      } else {
+        _approvedAssetIds.remove(uint256(assetId));
+      }
+
+      emit ApprovedAssetUpdated(assetId, settings[i].approved);
     }
   }
 
@@ -363,6 +479,8 @@ contract HyperliquidCoreWriterContractGuard is
     require(maxSlippage <= 1e18, "max slippage must be <= 100%");
 
     maxPermittedSlippage = maxSlippage;
+
+    emit MaxPermittedSlippageUpdated(maxSlippage);
   }
 
   /// @notice Adds or removes dex IDs from the approved set.
@@ -383,6 +501,8 @@ contract HyperliquidCoreWriterContractGuard is
         // Add or update the dex ID status in the mapping.
         dexIdStatus.set(settings[i].dexId, uint256(settings[i].status));
       }
+
+      emit DexIdStatusUpdated(settings[i].dexId, settings[i].status);
     }
   }
 }

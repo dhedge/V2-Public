@@ -4,8 +4,9 @@ pragma solidity >=0.7.6;
 import {IPoolFactory} from "../../../interfaces/IPoolFactory.sol";
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
 import {IDhedgeNftTrackerStorage} from "../../../interfaces/tracker/IDhedgeNftTrackerStorage.sol";
+import {INftTrackerConsumerGuard} from "../../../interfaces/guards/INftTrackerConsumerGuard.sol";
 
-abstract contract NftTrackerConsumerGuardBase {
+abstract contract NftTrackerConsumerGuardBase is INftTrackerConsumerGuard {
   IDhedgeNftTrackerStorage public immutable nftTracker;
   bytes32 public immutable nftType;
   uint256 public immutable positionsLimit;
@@ -19,12 +20,12 @@ abstract contract NftTrackerConsumerGuardBase {
   }
 
   /// @notice Retrieves the tokenIds owned by the specified poolLogic address
-  function getOwnedTokenIds(address _poolLogic) public view returns (uint256[] memory tokenIds) {
+  function getOwnedTokenIds(address _poolLogic) public view override returns (uint256[] memory tokenIds) {
     return nftTracker.getAllUintIds(nftType, _poolLogic);
   }
 
   /// @notice Checks if the specified tokenId is owned by the given pool
-  function isValidOwnedTokenId(address _poolLogic, uint256 _tokenId) public view returns (bool isValid) {
+  function isValidOwnedTokenId(address _poolLogic, uint256 _tokenId) public view override returns (bool isValid) {
     uint256[] memory tokenIds = getOwnedTokenIds(_poolLogic);
     for (uint256 i; i < tokenIds.length; ++i) {
       if (_tokenId == tokenIds[i]) {

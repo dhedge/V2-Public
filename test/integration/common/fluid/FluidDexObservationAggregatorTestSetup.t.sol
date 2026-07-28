@@ -6,7 +6,7 @@ import {Test} from "forge-std/Test.sol";
 import {FluidDexObservationAggregator} from "contracts/priceAggregators/FluidDexObservationAggregator.sol";
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
 import {IFluidDexT1} from "contracts/interfaces/fluid/IFluidDexT1.sol";
-import {AuthorizedKeepersBase} from "contracts/utils/keepers/AuthorizedKeepersBase.sol";
+import {ICommonErrors} from "contracts/interfaces/ICommonErrors.sol";
 
 /// @notice Chain-agnostic test setup for FluidDexObservationAggregator
 /// @dev This aggregator records price observations externally (via automation) and stores them in its own storage.
@@ -78,7 +78,7 @@ abstract contract FluidDexObservationAggregatorTestSetup is Test {
 
     // Authorize keeper for tests
     vm.prank(owner);
-    aggregator.addAuthorizedKeeper(keeper);
+    aggregator.setAuthorizedCaller(keeper, true);
   }
 
   /* ========== DEPLOYMENT TESTS ========== */
@@ -425,29 +425,29 @@ abstract contract FluidDexObservationAggregatorTestSetup is Test {
 
   /* ========== KEEPER AUTHORIZATION TESTS ========== */
 
-  function test_addAuthorizedKeeper_works_for_owner() public {
+  function test_setAuthorizedCaller_works_for_owner() public {
     address newKeeper = makeAddr("newKeeper");
 
     vm.prank(owner);
-    aggregator.addAuthorizedKeeper(newKeeper);
+    aggregator.setAuthorizedCaller(newKeeper, true);
 
-    assertTrue(aggregator.isAuthorizedKeeper(newKeeper), "Keeper should be authorized");
+    assertTrue(aggregator.isAuthorizedCaller(newKeeper), "Keeper should be authorized");
 
     vm.prank(owner);
-    aggregator.removeAuthorizedKeeper(newKeeper);
+    aggregator.setAuthorizedCaller(newKeeper, false);
 
-    assertFalse(aggregator.isAuthorizedKeeper(newKeeper), "Keeper should be revoked");
+    assertFalse(aggregator.isAuthorizedCaller(newKeeper), "Keeper should be revoked");
   }
 
-  function test_addAuthorizedKeeper_reverts_for_non_owner() public {
+  function test_setAuthorizedCaller_reverts_for_non_owner() public {
     vm.prank(user);
     vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), user));
-    aggregator.addAuthorizedKeeper(user);
+    aggregator.setAuthorizedCaller(user, true);
   }
 
   function test_recordObservation_reverts_for_unauthorized_caller() public {
     vm.prank(user);
-    vm.expectRevert(abi.encodeWithSelector(AuthorizedKeepersBase.NotAuthorizedKeeper.selector, user));
+    vm.expectRevert(abi.encodeWithSelector(ICommonErrors.UnauthorizedCaller.selector, user));
     aggregator.recordObservation();
   }
 

@@ -109,9 +109,7 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
     string memory quoteBody = buildQuoteBody(odosFunctionStruct, chainId, compact);
 
     {
-      string[] memory headers = new string[](2);
-      headers[0] = "accept: application/json";
-      headers[1] = "content-type: application/json";
+      string[] memory headers = _getOdosHeaders();
 
       (uint256 status, bytes memory data) = _postAndRetry(_getQuoteEndpoint(version), headers, quoteBody);
 
@@ -127,7 +125,11 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
 
       string memory transactionBody = buildTransactionBody(string(data), odosFunctionStruct);
 
-      (status, data) = _postAndRetry("https://api.odos.xyz/sor/assemble", headers, transactionBody);
+      (status, data) = _postAndRetry(
+        string(abi.encodePacked(_getOdosBaseUrl(), "/assemble")),
+        headers,
+        transactionBody
+      );
 
       if (status != 200) {
         console.log("Status: ", uint256(status));
@@ -151,13 +153,38 @@ abstract contract OdosAPIHelper is SwapdataCacheManager {
     );
   }
 
-  function _getQuoteEndpoint(string memory version) internal pure returns (string memory quoteEndpoint) {
+  function _getQuoteEndpoint(string memory version) internal view returns (string memory quoteEndpoint) {
+    string memory base = _getOdosBaseUrl();
     if (keccak256(abi.encodePacked((version))) == keccak256(abi.encodePacked(("v2")))) {
-      quoteEndpoint = "https://api.odos.xyz/sor/quote/v2";
+      quoteEndpoint = string(abi.encodePacked(base, "/quote/v2"));
     } else if (keccak256(abi.encodePacked((version))) == keccak256(abi.encodePacked(("v3")))) {
-      quoteEndpoint = "https://api.odos.xyz/sor/quote/v3";
+      quoteEndpoint = string(abi.encodePacked(base, "/quote/v3"));
     } else {
       revert("Unknown Odos API version");
+    }
+  }
+
+  /// @dev Returns the Odos base URL. If `ODOS_API_KEY` env var is set, uses the enterprise
+  ///      endpoint (higher rate limit, key required). Otherwise falls back to the public endpoint.
+  function _getOdosBaseUrl() internal view returns (string memory) {
+    return
+      bytes(vm.envOr("ODOS_API_KEY", string(""))).length > 0
+        ? "https://enterprise-api.odos.xyz/sor"
+        : "https://api.odos.xyz/sor";
+  }
+
+  /// @dev Build request headers. Adds `x-api-key` when `ODOS_API_KEY` env var is set.
+  function _getOdosHeaders() internal view returns (string[] memory headers) {
+    string memory apiKey = vm.envOr("ODOS_API_KEY", string(""));
+    if (bytes(apiKey).length > 0) {
+      headers = new string[](3);
+      headers[0] = "accept: application/json";
+      headers[1] = "content-type: application/json";
+      headers[2] = string(abi.encodePacked("x-api-key: ", apiKey));
+    } else {
+      headers = new string[](2);
+      headers[0] = "accept: application/json";
+      headers[1] = "content-type: application/json";
     }
   }
 }

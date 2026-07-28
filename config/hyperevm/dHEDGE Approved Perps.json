@@ -40,6 +40,11 @@
     "approved": true
   },
   {
+    "perpName": "kPEPE",
+    "assetId": 15,
+    "approved": true
+  },
+  {
     "perpName": "CRV",
     "assetId": 16,
     "approved": true
@@ -62,6 +67,11 @@
   {
     "perpName": "TRX",
     "assetId": 37,
+    "approved": true
+  },
+  {
+    "perpName": "kSHIB",
+    "assetId": 38,
     "approved": true
   },
   {
@@ -185,13 +195,53 @@
     "approved": true
   },
   {
+    "perpName": "xyz:MU",
+    "assetId": 110015,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:SNDK",
+    "assetId": 110016,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:SKHX",
+    "assetId": 110022,
+    "approved": true
+  },
+  {
     "perpName": "xyz:SILVER",
     "assetId": 110026,
     "approved": true
   },
   {
+    "perpName": "xyz:CL",
+    "assetId": 110029,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:BRENTOIL",
+    "assetId": 110049,
+    "approved": true
+  },
+  {
     "perpName": "xyz:SP500",
     "assetId": 110052,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:DRAM",
+    "assetId": 110065,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:SPCX",
+    "assetId": 110076,
+    "approved": true
+  },
+  {
+    "perpName": "xyz:SKHY",
+    "assetId": 110099,
     "approved": true
   }
 ]

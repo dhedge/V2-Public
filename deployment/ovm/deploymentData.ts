@@ -464,11 +464,10 @@ export const optimismProdData: IAddresses = {
     defaultSlippageTolerance: 200, // 2%
     settlementToken: ovmChainData.assets.usdcNative,
     authorizedKeeperAddresses: [
-      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
-      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
-      "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
-      "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
-      "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
+      "0x99c9F65a486C0567495ec58722916c73292D585f",
+      "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
+      "0x962976AA38665fc59B2F981C2457a6f95fFB2aD5",
+      "0x5048d4630c51d02A281Cb77E63a1A3af4Fd8dc33",
     ],
   },
 
@@ -484,8 +483,6 @@ export const optimismProdData: IAddresses = {
   easyLimitBuyManager: {
     permit2: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
     authorizedKeeperAddresses: [
-      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
-      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
       "0xFBFE87a8665cE77e4F1f47d0256b7e68Be966498",
       "0xBA2A62aFAfC662afbE5C726910C101225aDeF591",
       "0x4C6ced5164042150A63Cd7610af3Efc7fF2fe4B6",

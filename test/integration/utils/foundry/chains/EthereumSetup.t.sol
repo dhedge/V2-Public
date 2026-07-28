@@ -6,6 +6,7 @@ pragma abicoder v2;
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {BackboneSetup} from "../BackboneSetup.t.sol";
+import {AssetTypes} from "../AssetTypes.sol";
 
 abstract contract EthereumSetup is BackboneSetup {
   uint256 public forkBlockNumber;
@@ -16,17 +17,17 @@ abstract contract EthereumSetup is BackboneSetup {
     BackboneSetup(
       IAssetHandler.Asset({
         asset: EthereumConfig.USDC,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: EthereumConfig.USDC_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: EthereumConfig.WETH,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: EthereumConfig.WETH_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: EthereumConfig.DAI,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: EthereumConfig.DAI_CHAINLINK_ORACLE
       })
     )

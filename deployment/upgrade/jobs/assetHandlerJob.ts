@@ -28,6 +28,8 @@ export const assetHandlerJob: IJob<void> = async (
 
       const upgradeABI = proxyAdmin.encodeFunctionData("upgrade", [oldAssetHandler, assetHandler]);
       await proposeTx(addresses.proxyAdminAddress, upgradeABI, "Upgrade Asset Handler", config, addresses);
+
+      versions[config.newTag].contracts.AssetHandler = assetHandler;
     } else {
       console.log("Will deploy assethandler");
       if (!versions[config.oldTag].contracts.USDPriceAggregator) {

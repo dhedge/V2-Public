@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "dHEDGE V2 Error Registry",
+  "description": "Canonical, machine-generated registry of decodable smart contract error identifiers (require/revert string reverts and custom Solidity error selectors) with human-facing description/action copy. Generated from contracts/ - do not hand-edit; edit readmes/errorCodes/overlay.json instead and run `pnpm error-registry:generate`.",
+  "type": "object",
+  "required": ["schemaVersion", "stringErrors", "selectorErrors"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": {
+      "type": "integer",
+      "description": "Bumped only when this schema's shape changes, not when entries change."
+    },
+    "stringErrors": {
+      "type": "object",
+      "description": "Keyed by the exact literal string reverted via require(cond, \"...\") or revert(\"...\"). Decode by matching the ABI-decoded Error(string) revert reason against this map.",
+      "additionalProperties": { "$ref": "#/definitions/errorEntry" }
+    },
+    "selectorErrors": {
+      "type": "object",
+      "description": "Keyed by the 4-byte custom error selector (0x-prefixed, lowercase hex). Decode by taking the first 4 bytes of the revert data and matching against this map.",
+      "additionalProperties": { "$ref": "#/definitions/selectorErrorEntry" }
+    }
+  },
+  "definitions": {
+    "errorEntry": {
+      "type": "object",
+      "required": ["description", "action", "source", "curated"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "action": { "type": "string" },
+        "source": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Repo-relative source file(s) where this error is used/declared."
+        },
+        "curated": {
+          "type": "boolean",
+          "description": "False when description/action are generic fallback copy, not yet human-reviewed."
+        }
+      }
+    },
+    "selectorErrorEntry": {
+      "type": "object",
+      "required": ["description", "action", "source", "curated", "signature"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "action": { "type": "string" },
+        "source": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Repo-relative source file(s) where this error is used/declared."
+        },
+        "curated": {
+          "type": "boolean",
+          "description": "False when description/action are generic fallback copy, not yet human-reviewed."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Canonical error signature, e.g. \"InvalidPool(address)\"."
+        }
+      }
+    }
+  }
+}

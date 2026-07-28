@@ -336,6 +336,9 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @param _amount amount of the asset
   /// @return value of the asset
   function assetValue(address _asset, uint256 _amount) public view override returns (uint256 value) {
+    if (_amount == 0) {
+      return 0;
+    }
     uint256 price = IHasAssetInfo(factory).getAssetPrice(_asset);
     uint256 decimals = assetDecimal(_asset);
 
@@ -347,6 +350,25 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
   /// @return value of the asset
   function assetValue(address _asset) public view override returns (uint256 value) {
     value = assetValue(_asset, assetBalance(_asset));
+  }
+
+  /// @notice Get value of the asset with price timestamp and max price age
+  /// @param _asset address of the asset
+  /// @return value of the asset
+  /// @return updatedAt timestamp when the price was last updated
+  /// @return maxPriceAge configured maximum price age for the asset (0 if not set)
+  function assetValueWithTime(
+    address _asset
+  ) public view returns (uint256 value, uint256 updatedAt, uint256 maxPriceAge) {
+    // Note: Even if the balance is 0, we still want to return the timestamp.
+    //       This is because of potential positions like Aave that can have value of the asset.
+    uint256 price;
+    uint256 balance = assetBalance(_asset);
+    uint256 decimals = assetDecimal(_asset);
+
+    (price, updatedAt, maxPriceAge) = IHasAssetInfo(factory).getAssetPriceWithTime(_asset);
+
+    value = price.mul(balance).div(10 ** decimals);
   }
 
   /// @notice Return the fund composition of the pool
@@ -380,6 +402,25 @@ contract PoolManagerLogic is Initializable, IPoolManagerLogic, IHasSupportedAsse
 
     for (uint256 i; i < assetCount; ++i) {
       total = total.add(assetValue(supportedAssets[i].asset));
+    }
+  }
+
+  /// @notice Return the total fund value with oracle liveness check
+  /// @dev For each asset with a non-zero assetMaxPriceAge in AssetHandler, enforces that the
+  ///      oracle price is not older than the configured threshold. Assets without a configured
+  ///      threshold are valued without a freshness check.
+  /// @return total Total value in USD
+  function totalFundValueWithMaxAge() external view override returns (uint256 total) {
+    uint256 assetCount = supportedAssets.length;
+
+    for (uint256 i; i < assetCount; ++i) {
+      (uint256 value, uint256 updatedAt, uint256 maxPriceAge) = assetValueWithTime(supportedAssets[i].asset);
+
+      if (maxPriceAge > 0) {
+        require(block.timestamp.sub(updatedAt) <= maxPriceAge, "dh37");
+      }
+
+      total = total.add(value);
     }
   }
 

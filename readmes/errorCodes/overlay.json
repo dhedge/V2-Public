@@ -1,0 +1,2133 @@
+{
+  "$comment": "Human-authored copy layer. Only 'description' and 'action' belong here - everything else (which codes exist, their selectors, their source files) is derived automatically from contracts/ by scripts/errorRegistry/generate.ts. Do not hand-edit readmes/errorCodes/registry.json.",
+  "stringErrors": {
+    "dh1": {
+      "description": "Factory contract is paused",
+      "action": "Try again later or open a team support message if the issue persists."
+    },
+    "dh2": {
+      "description": "Vault is paused",
+      "action": "Try again later or open a team support message if the issue persists."
+    },
+    "dh3": {
+      "description": "Vault tokens are in cooldown period",
+      "action": "Wait for the cooldown period to expire and try again."
+    },
+    "dh4": {
+      "description": "Only vault manager allowed",
+      "action": "Only the vault manager can perform this action."
+    },
+    "dh5": {
+      "description": "Only allowed addresses can use custom cooldown",
+      "action": "Only whitelisted addresses can perform this action."
+    },
+    "dh6": {
+      "description": "Invalid cooldown duration",
+      "action": "Cooldown must be between 5 minutes and the maximum exit cooldown."
+    },
+    "dh7": {
+      "description": "Only whitelisted vault members allowed",
+      "action": "Only the manager or whitelisted members can deposit to this private vault."
+    },
+    "dh8": {
+      "description": "Asset not supported for deposits",
+      "action": "Use a supported deposit asset."
+    },
+    "dh9": {
+      "description": "ERC721 tokens not supported as deposit asset",
+      "action": "Use an ERC20 token for deposits."
+    },
+    "dh10": {
+      "description": "Amount below minimum threshold",
+      "action": "Change amount to meet the minimum threshold."
+    },
+    "dh11": {
+      "description": "Withdrawal too soon after deposit",
+      "action": "Wait at least one block after deposit before withdrawing."
+    },
+    "dh12": {
+      "description": "Insufficient balance for withdrawal",
+      "action": "Check if you have enough vault tokens for withdrawal."
+    },
+    "dh13": {
+      "description": "Liquidity allocation invariant breach",
+      "action": "Open a team support message."
+    },
+    "dh14": {
+      "description": "Exit fee transfer failed",
+      "action": "Open a team support message."
+    },
+    "dh15": {
+      "description": "Withdraw asset can not be zero",
+      "action": "Open a team support message."
+    },
+    "dh16": {
+      "description": "Value calculation mismatch during withdrawal",
+      "action": "Try again later or open a team support message if the issue persists."
+    },
+    "dh17": {
+      "description": "Supply calculation mismatch during withdrawal",
+      "action": "Try again later or open a team support message if the issue persists."
+    },
+    "dh18": {
+      "description": "Address can not be zero",
+      "action": "Open a team support message."
+    },
+    "dh19": {
+      "description": "Asset mismatch in complex asset data",
+      "action": "Open a team support message."
+    },
+    "dh20": {
+      "description": "Trading is paused for this vault",
+      "action": "Try again later or open a team support message if the issue persists."
+    },
+    "dh21": {
+      "description": "ERC721 transfer not verified",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "dh22": {
+      "description": "Asset not enabled in vault",
+      "action": "Add the asset to the vault's supported assets."
+    },
+    "dh23": {
+      "description": "Invalid transaction",
+      "action": "The protocol either does not support this action or this is a bug."
+    },
+    "dh24": {
+      "description": "Unauthorized transaction executor",
+      "action": "Only manager, trader, or public transactions are allowed."
+    },
+    "dh25": {
+      "description": "Deposit value below minimum USD requirement",
+      "action": "Increase deposit amount to meet the minimum USD value requirement."
+    },
+    "dh26": {
+      "description": "Withdrawal slippage tolerance exceeded",
+      "action": "Increase slippage tolerance or try again with better market conditions."
+    },
+    "dh27": {
+      "description": "High withdrawal slippage protection triggered",
+      "action": "Try again with better market conditions or open a team support message if the issue persists."
+    },
+    "dh28": {
+      "description": "Unauthorized sender",
+      "action": "Only factory or owner can peform this action."
+    },
+    "dh29": {
+      "description": "Invalid flash loan initiator",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "dh30": {
+      "description": "Invalid flash loan sender",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "dh31": {
+      "description": "Only PoolManagerLogic contract allowed",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "dh32": {
+      "description": "Maximum supply cap reached",
+      "action": "Cannot mint such amount of vault tokens as it would exceed the maximum supply cap."
+    },
+    "dh34": {
+      "description": "Invalid original caller in delegation call",
+      "action": "The pool that initiated the delegation call does not match. If you believe this is a bug, open a team support message."
+    },
+    "dh35": {
+      "description": "Unauthorized delegation callback caller",
+      "action": "Only a registered DYTM Office contract can call onDelegationCallback. If you believe this is a bug, open a team support message."
+    },
+    "dh36": {
+      "description": "Self-call not allowed in delegation callback",
+      "action": "Delegation callback sub-transactions cannot target the pool itself. If you believe this is a bug, open a team support message."
+    },
+    "dh37": {
+      "description": "Oracle price too stale",
+      "action": "Try depositing again with less delay."
+    },
+    "Invalid manager": {
+      "description": "Manager address cannot be zero",
+      "action": "Provide a valid manager address."
+    },
+    "Invalid trader": {
+      "description": "Trader address cannot be zero",
+      "action": "Provide a valid trader address."
+    },
+    "only pools": {
+      "description": "Caller must be a Chamber vault contract",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "only managers": {
+      "description": "Caller must be a vault manager contract",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "Invalid daoAddress": {
+      "description": "DAO address cannot be zero",
+      "action": "Provide a valid DAO address."
+    },
+    "Invalid governanceAddress": {
+      "description": "Governance address cannot be zero",
+      "action": "Provide a valid governance address."
+    },
+    "invalid fraction": {
+      "description": "Fee numerator exceeds the denominator",
+      "action": "Use a fee numerator not above the denominator."
+    },
+    "Invalid assetHandler": {
+      "description": "Asset handler address cannot be zero",
+      "action": "Provide a valid asset handler address."
+    },
+    "invalid dataValidator": {
+      "description": "Data validator address cannot be zero",
+      "action": "Provide a valid data validator address."
+    },
+    "invalid pool": {
+      "description": "Address is not a registered vault",
+      "action": "Check the vault address and try again."
+    },
+    "signers can only pause": {
+      "description": "Safe signers cannot unpause vaults",
+      "action": "Ask the protocol owner to unpause the vault."
+    },
+    "Invalid factory": {
+      "description": "Factory address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "Invalid poolLogic": {
+      "description": "Pool logic address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "only manager, owner or trader enabled": {
+      "description": "Not authorized to change vault assets",
+      "action": "Use the manager account or an enabled trader."
+    },
+    "only manager or trader enabled": {
+      "description": "Not authorized to change vault privacy",
+      "action": "Use the manager account or an enabled trader."
+    },
+    "maximum assets reached": {
+      "description": "Vault has reached the maximum asset count",
+      "action": "Remove an unused asset before adding a new one."
+    },
+    "at least one deposit asset": {
+      "description": "Vault must keep at least one deposit asset",
+      "action": "Keep at least one asset enabled for deposits."
+    },
+    "invalid asset": {
+      "description": "Asset is not supported by the protocol",
+      "action": "Choose an asset supported by the protocol."
+    },
+    "cannot add pool asset": {
+      "description": "Cannot add a vault token as an asset",
+      "action": "Choose an asset that is not a Chamber vault."
+    },
+    "asset not supported": {
+      "description": "Asset is not in the vault's asset list",
+      "action": "Check the asset address and try again."
+    },
+    "cannot remove non-empty asset": {
+      "description": "Cannot remove an asset with a balance",
+      "action": "Sell or withdraw the full asset balance first."
+    },
+    "asset in active order": {
+      "description": "Asset is used by an active order",
+      "action": "Wait for or cancel the active order first."
+    },
+    "manager fee too high": {
+      "description": "New fee is above the current fee",
+      "action": "Announce a fee increase and wait for the delay."
+    },
+    "invalid manager fee": {
+      "description": "Fee exceeds the protocol maximum",
+      "action": "Set fees within the protocol maximums."
+    },
+    "exceeded allowed increase": {
+      "description": "Fee increase step exceeds the allowed maximum",
+      "action": "Announce a smaller performance fee increase."
+    },
+    "fee increase delay active": {
+      "description": "Fee increase delay has not passed yet",
+      "action": "Wait for the announced delay to expire."
+    },
+    "invalid numerator": {
+      "description": "Pool fee share exceeds the denominator",
+      "action": "Use a value not above the fee denominator."
+    },
+    "invalid pool logic": {
+      "description": "Pool logic is not linked to this manager",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "Invalid collection": {
+      "description": "Address is not a valid NFT collection",
+      "action": "Provide a valid ERC721 collection address."
+    },
+    "only manager or trader": {
+      "description": "Only the vault manager or trader allowed",
+      "action": "Use the manager or trader account."
+    },
+    "invalid supply cap": {
+      "description": "Supply cap is below the current total supply",
+      "action": "Set zero or a cap above the current supply."
+    },
+    "only owner": {
+      "description": "Only the protocol owner allowed",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "0 slippage not allowed": {
+      "description": "Slippage tolerance cannot be zero",
+      "action": "Set a non-zero slippage tolerance."
+    },
+    "aave not enabled": {
+      "description": "Aave is not enabled in the vault",
+      "action": "Add the Aave lending pool as a vault asset."
+    },
+    "adjusted margin is negative": {
+      "description": "Margin adjustment exceeds available margin",
+      "action": "Reduce the margin withdrawal amount."
+    },
+    "adjusted size is negative": {
+      "description": "Size reduction exceeds the position size",
+      "action": "Reduce the size decrease amount."
+    },
+    "amount0Max is not max": {
+      "description": "amount0Max must be set to the maximum value",
+      "action": "Set amount0Max to uint128 max to collect fees."
+    },
+    "amount1Max is not max": {
+      "description": "amount1Max must be set to the maximum value",
+      "action": "Set amount1Max to uint128 max to collect fees."
+    },
+    "api wallet not enabled": {
+      "description": "API wallet registration is not enabled",
+      "action": "Ask the protocol owner to enable API wallets."
+    },
+    "beyond allowed slippage": {
+      "description": "Slippage tolerance above the allowed maximum",
+      "action": "Reduce the slippage tolerance."
+    },
+    "borrowing asset exists": {
+      "description": "Vault already borrows a different asset",
+      "action": "Repay the existing debt before borrowing anew."
+    },
+    "caller must be pool logic": {
+      "description": "Caller must be the vault contract",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "cannot modify core dex IDs": {
+      "description": "Core dex IDs are locked and cannot change",
+      "action": "Open a team support message."
+    },
+    "collateral not enabled": {
+      "description": "Collateral asset not enabled in the vault",
+      "action": "Add the collateral asset to the vault's assets."
+    },
+    "Compound asset not enabled": {
+      "description": "Compound asset not enabled in the vault",
+      "action": "Add the Compound asset to the vault's assets."
+    },
+    "Compound not enabled": {
+      "description": "Compound market not enabled in the vault",
+      "action": "Add the Compound market to the vault's assets."
+    },
+    "CoreWriter not supported asset": {
+      "description": "CoreWriter not enabled in the vault",
+      "action": "Add the CoreWriter contract as a vault asset."
+    },
+    "decodeCompactCalldata failed": {
+      "description": "Odos swap calldata could not be decoded",
+      "action": "Rebuild the swap with valid Odos calldata."
+    },
+    "depositor is not pool": {
+      "description": "Depositor must be the vault address",
+      "action": "Set the depositor to the vault address."
+    },
+    "direction mismatch": {
+      "description": "Swap path direction does not match tokens",
+      "action": "Rebuild the swap route and try again."
+    },
+    "enable aave asset": {
+      "description": "Aave asset not enabled in the vault",
+      "action": "Add the Aave asset to the vault's assets."
+    },
+    "enable reward token": {
+      "description": "Reward token not enabled in the vault",
+      "action": "Add the reward token to the vault's assets."
+    },
+    "exchange pool not supported": {
+      "description": "Swap route uses an unsupported pool type",
+      "action": "Route via Uniswap V2 or V3 pools only."
+    },
+    "fees not supported": {
+      "description": "Fee receivers are not supported",
+      "action": "Disable fee splitting in the swap params."
+    },
+    "from is not pool": {
+      "description": "Transfer must originate from the vault",
+      "action": "Send the position from the vault address."
+    },
+    "GPv2Guard: dataValidator not set": {
+      "description": "CoW Swap data validator is not configured",
+      "action": "Open a team support message."
+    },
+    "GPv2Guard: invalid poolFactory": {
+      "description": "Pool factory address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "GPv2Guard: invalid Uid length": {
+      "description": "CoW Swap order UID has invalid length",
+      "action": "Submit a correctly encoded order UID."
+    },
+    "GPv2Guard: order expired": {
+      "description": "CoW Swap order has already expired",
+      "action": "Create a new order with a future expiry."
+    },
+    "GPv2Guard: order not validated": {
+      "description": "CoW Swap order was not pre-validated",
+      "action": "Submit the order to the validator first."
+    },
+    "GPv2Guard: owner must be pool": {
+      "description": "Order owner must be the vault address",
+      "action": "Set the order owner to the vault address."
+    },
+    "GTC reduce-only for spot": {
+      "description": "Spot GTC orders must be reduce-only",
+      "action": "Set the reduce-only flag or use an IOC order."
+    },
+    "health factor too low": {
+      "description": "Position health factor would drop too low",
+      "action": "Reduce leverage, repay debt, or add collateral."
+    },
+    "invalid aaveLendingPoolV3": {
+      "description": "Aave V3 lending pool cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid address": {
+      "description": "Address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid bytes32 address": {
+      "description": "Address is not a clean bytes32 EVM address",
+      "action": "Use a valid 20-byte address, zero-padded."
+    },
+    "invalid claimer": {
+      "description": "Rewards claimer must be the vault address",
+      "action": "Set the claimer to the vault address."
+    },
+    "invalid Compound asset": {
+      "description": "Asset is not the Compound base token",
+      "action": "Supply the market's base token only."
+    },
+    "invalid delegatee": {
+      "description": "Delegation to this address is not allowed",
+      "action": "Use the approved delegatee address only."
+    },
+    "invalid destination": {
+      "description": "Destination must be the system address",
+      "action": "Send only to the Hyperliquid system address."
+    },
+    "invalid destination addr": {
+      "description": "Destination must be vault or system address",
+      "action": "Send only to the vault or system address."
+    },
+    "invalid destination dex": {
+      "description": "Destination dex ID is not approved",
+      "action": "Use an approved dex ID."
+    },
+    "invalid dex id": {
+      "description": "Dex ID is not enabled",
+      "action": "Use an enabled dex ID."
+    },
+    "invalid dst asset": {
+      "description": "Destination asset is not a valid asset",
+      "action": "Swap to a protocol-supported asset."
+    },
+    "invalid input amount": {
+      "description": "Swap input amount cannot be zero",
+      "action": "Specify an exact non-zero input amount."
+    },
+    "invalid input token": {
+      "description": "Native token input is not supported",
+      "action": "Use an ERC20 token as the swap input."
+    },
+    "invalid market": {
+      "description": "Market is not valid for this operation",
+      "action": "Use a whitelisted or matching market."
+    },
+    "invalid method": {
+      "description": "Method is not supported by this integration",
+      "action": "Use a supported trading method."
+    },
+    "invalid migrationHelper": {
+      "description": "Migration helper cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid multicall": {
+      "description": "Multicall contains an unsupported call",
+      "action": "Remove unsupported calls from the multicall."
+    },
+    "invalid nftTracker": {
+      "description": "NFT tracker address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid path": {
+      "description": "Swap path is invalid",
+      "action": "Rebuild the swap route and try again."
+    },
+    "invalid quote side": {
+      "description": "Quote side must be buy or sell",
+      "action": "Use a valid buy or sell quote."
+    },
+    "invalid receiver": {
+      "description": "Receiver must be the vault address",
+      "action": "Set the receiver to the vault address."
+    },
+    "invalid recipient": {
+      "description": "Recipient must be the vault address",
+      "action": "Set the recipient to the vault address."
+    },
+    "invalid slippage bps": {
+      "description": "Slippage bps exceeds 100%",
+      "action": "Open a team support message."
+    },
+    "invalid snxSpotMarket": {
+      "description": "Spot market address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid splitter": {
+      "description": "Account splitter address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid src asset": {
+      "description": "Source asset is not a valid asset",
+      "action": "Swap from a protocol-supported asset."
+    },
+    "invalid sub-account addr": {
+      "description": "Sub-account address must be empty",
+      "action": "Set the sub-account address to zero."
+    },
+    "invalid swap assets": {
+      "description": "Swap assets are not valid assets",
+      "action": "Use protocol-supported swap assets."
+    },
+    "invalid target contract": {
+      "description": "Target must be the CoreDepositWallet",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "invalid token type": {
+      "description": "Reward token type cannot be none",
+      "action": "Open a team support message."
+    },
+    "invalid tolerance": {
+      "description": "Slippage tolerance is out of range",
+      "action": "Open a team support message."
+    },
+    "invalid transaction": {
+      "description": "The protocol does not support this action",
+      "action": "Use a supported transaction type."
+    },
+    "invalid vault": {
+      "description": "Vault address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid vault address": {
+      "description": "Vault address cannot be zero",
+      "action": "Open a team support message."
+    },
+    "invalid withdrawal asset": {
+      "description": "Withdrawal asset not enabled in the vault",
+      "action": "Use the configured withdrawal asset."
+    },
+    "invalid yt": {
+      "description": "YT token does not match the PT position",
+      "action": "Use the YT token linked to the PT asset."
+    },
+    "leverage too high": {
+      "description": "Position leverage exceeds the maximum",
+      "action": "Reduce position size or add margin."
+    },
+    "lyra not enabled": {
+      "description": "Lyra market not enabled in the vault",
+      "action": "Add the Lyra asset to the vault's assets."
+    },
+    "mai not enabled": {
+      "description": "MAI not enabled in the vault",
+      "action": "Add MAI to the vault's assets."
+    },
+    "max position reached": {
+      "description": "Maximum NFT position count reached",
+      "action": "Close an existing position before opening more."
+    },
+    "max slippage must be <= 100%": {
+      "description": "Max slippage cannot exceed 100%",
+      "action": "Set max slippage to 100% or less."
+    },
+    "merge HF degradation too high": {
+      "description": "Merge degrades health factor too much",
+      "action": "Merge a smaller amount."
+    },
+    "merge op only": {
+      "description": "Only account merge operations allowed here",
+      "action": "Use a merge operation."
+    },
+    "merge recipient not pool-owned": {
+      "description": "Merge destination not owned by the vault",
+      "action": "Merge into a vault-owned account."
+    },
+    "merge source must be isolated": {
+      "description": "Merge source must be an isolated account",
+      "action": "Merge from an isolated account only."
+    },
+    "mixed debt assets not supported": {
+      "description": "Only one debt asset is allowed at a time",
+      "action": "Repay other debt before borrowing this asset."
+    },
+    "nested delegate call": {
+      "description": "A delegation call is already in progress",
+      "action": "Wait for the current delegation to finish."
+    },
+    "nft not minted": {
+      "description": "Only freshly minted NFTs are accepted",
+      "action": "Do not transfer existing position NFTs in."
+    },
+    "no collect after decrease": {
+      "description": "Collect must follow decreaseLiquidity",
+      "action": "Add a collect call right after the decrease."
+    },
+    "no ongoing delegate call": {
+      "description": "No delegation call is in progress",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "not a HIP-3 asset": {
+      "description": "Asset is not a HIP-3 perp asset",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "not approved": {
+      "description": "Bridge route is not approved",
+      "action": "Use an approved token, chain, and vault route."
+    },
+    "not authorized": {
+      "description": "Caller is not the vault contract",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "not borrow enabled": {
+      "description": "Asset is not borrowable on Aave",
+      "action": "Borrow an asset enabled for borrowing on Aave."
+    },
+    "not perps whitelisted": {
+      "description": "Vault not whitelisted for perps trading",
+      "action": "Ask the protocol team to whitelist the vault."
+    },
+    "not pool logic": {
+      "description": "Caller must be the vault contract",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "not whitelisted": {
+      "description": "Vault not whitelisted for this integration",
+      "action": "Ask the protocol team to whitelist the vault."
+    },
+    "Ondo minting paused": {
+      "description": "Ondo token minting is paused",
+      "action": "Try again once minting resumes."
+    },
+    "Ondo redemptions paused": {
+      "description": "Ondo token redemptions are paused",
+      "action": "Try again once redemptions resume."
+    },
+    "only expired": {
+      "description": "YT can only be redeemed after expiry",
+      "action": "Wait until the Pendle market expires."
+    },
+    "only isolated margin": {
+      "description": "Isolated-margin HIP-3 perps not allowed",
+      "action": "Approve cross-margin HIP-3 perps only."
+    },
+    "only lending": {
+      "description": "Only lending rewards can be claimed",
+      "action": "Claim lending position rewards only."
+    },
+    "only perp assets can be approved": {
+      "description": "Spot assets cannot be approved this way",
+      "action": "Approve perp assets only."
+    },
+    "only pt": {
+      "description": "Only PT can be sold in this action",
+      "action": "Set the LP amount to zero."
+    },
+    "only underlying": {
+      "description": "Only the underlying asset is allowed",
+      "action": "Disable token swaps and use the underlying."
+    },
+    "only variable rate": {
+      "description": "Only variable rate borrowing is allowed",
+      "action": "Use variable interest rate mode."
+    },
+    "only whitelisted vaults": {
+      "description": "Vault not whitelisted for migration",
+      "action": "Ask the protocol team to whitelist the vault."
+    },
+    "output too low": {
+      "description": "Bridge output is over 1% below the input",
+      "action": "Retry when bridge fees are lower."
+    },
+    "pancake CL asset not enabled": {
+      "description": "PancakeSwap CL asset not enabled in vault",
+      "action": "Add the Pancake CL asset to the vault's assets."
+    },
+    "pancake cl asset not enabled": {
+      "description": "PancakeSwap CL asset not enabled in vault",
+      "action": "Add the Pancake CL asset to the vault's assets."
+    },
+    "permit not supported": {
+      "description": "Permit signatures are not supported",
+      "action": "Swap without a permit."
+    },
+    "permit2 not supported": {
+      "description": "Permit2 is not supported",
+      "action": "Disable permit2 for the swap route."
+    },
+    "pool not whitelisted": {
+      "description": "Vault not whitelisted for this integration",
+      "action": "Ask the protocol team to whitelist the vault."
+    },
+    "position is not in track": {
+      "description": "Position is not tracked by the vault",
+      "action": "Use positions created through the vault."
+    },
+    "position is not tracked": {
+      "description": "Position is not tracked by the vault",
+      "action": "Use positions created through the vault."
+    },
+    "pt not enabled": {
+      "description": "Pendle PT not enabled in the vault",
+      "action": "Add the PT token to the vault's assets."
+    },
+    "receiver is not pool": {
+      "description": "Receiver must be the vault address",
+      "action": "Set the receiver to the vault address."
+    },
+    "recipient is not pool": {
+      "description": "Recipient must be the vault address",
+      "action": "Set the recipient to the vault address."
+    },
+    "reward asset not enabled": {
+      "description": "Reward asset not enabled in the vault",
+      "action": "Add the reward asset to the vault's assets."
+    },
+    "reward not supported": {
+      "description": "Reward token is not supported",
+      "action": "Claim a supported reward token."
+    },
+    "Slippage exceeds limit": {
+      "description": "Order price too far from the oracle price",
+      "action": "Adjust the limit price or raise max slippage."
+    },
+    "slippage tolerance mismatch": {
+      "description": "Slippage settings do not match",
+      "action": "Use the same slippage tolerance everywhere."
+    },
+    "slippage too high": {
+      "description": "Swap output below the slippage threshold",
+      "action": "Increase slippage tolerance or try again later."
+    },
+    "sqrtPriceX96 must be 0": {
+      "description": "sqrtPriceX96 must be zero when minting",
+      "action": "Set sqrtPriceX96 to zero."
+    },
+    "swap slippage too high": {
+      "description": "Swap output below the slippage threshold",
+      "action": "Increase slippage tolerance or try again later."
+    },
+    "to is not staking address": {
+      "description": "Transfer must go to the staking contract",
+      "action": "Send the position to the MasterChef address."
+    },
+    "tokenOut mismatch": {
+      "description": "Output token does not match redemption token",
+      "action": "Set tokenOut to the SY redemption token."
+    },
+    "unapproved dex id": {
+      "description": "Dex ID is not approved",
+      "action": "Use an approved dex ID."
+    },
+    "uniswap asset not enabled": {
+      "description": "Uniswap V3 asset not enabled in the vault",
+      "action": "Add the Uniswap position asset to the vault."
+    },
+    "uniV2 pool invalid": {
+      "description": "Uniswap V2 pool does not match token pair",
+      "action": "Rebuild the swap route and try again."
+    },
+    "uniV3 pool invalid": {
+      "description": "Uniswap V3 pool does not match pair and fee",
+      "action": "Rebuild the swap route and try again."
+    },
+    "unknown limit router": {
+      "description": "Limit router is not the official router",
+      "action": "Use the official Pendle limit router or none."
+    },
+    "unsupported asset": {
+      "description": "Asset not enabled in the vault",
+      "action": "Add the asset to the vault's supported assets."
+    },
+    "unsupported asset: rewardToken": {
+      "description": "Reward token not enabled in the vault",
+      "action": "Add the reward token to the vault's assets."
+    },
+    "unsupported asset: token0": {
+      "description": "token0 not enabled in the vault",
+      "action": "Add token0 to the vault's supported assets."
+    },
+    "unsupported asset: token1": {
+      "description": "token1 not enabled in the vault",
+      "action": "Add token1 to the vault's supported assets."
+    },
+    "unsupported asset: tokenA": {
+      "description": "tokenA not enabled in the vault",
+      "action": "Add tokenA to the vault's supported assets."
+    },
+    "unsupported asset: tokenB": {
+      "description": "tokenB not enabled in the vault",
+      "action": "Add tokenB to the vault's supported assets."
+    },
+    "unsupported assets": {
+      "description": "Aave pool or asset not enabled in vault",
+      "action": "Add the Aave pool and asset to the vault."
+    },
+    "unsupported destination asset": {
+      "description": "Destination asset not enabled in the vault",
+      "action": "Add the destination asset to the vault's assets."
+    },
+    "unsupported dex id": {
+      "description": "Dex ID is not enabled for new orders",
+      "action": "Enable the dex ID or place reduce-only orders."
+    },
+    "unsupported gauge token": {
+      "description": "Gauge token not enabled in the vault",
+      "action": "Add the gauge token to the vault's assets."
+    },
+    "unsupported input asset": {
+      "description": "Input asset not enabled in the vault",
+      "action": "Use a supported input asset."
+    },
+    "unsupported lp asset": {
+      "description": "LP token not enabled in the vault",
+      "action": "Add the LP token to the vault's assets."
+    },
+    "unsupported method": {
+      "description": "Method is not supported by this integration",
+      "action": "Use a supported method."
+    },
+    "unsupported repay asset": {
+      "description": "Repay asset not enabled in the vault",
+      "action": "Add the repay asset to the vault's assets."
+    },
+    "unsupported reward asset": {
+      "description": "Reward asset not enabled in the vault",
+      "action": "Add the reward asset to the vault's assets."
+    },
+    "unsupported reward token": {
+      "description": "Reward token not enabled in the vault",
+      "action": "Add the reward token to the vault's assets."
+    },
+    "unsupported source asset": {
+      "description": "Source asset not enabled in the vault",
+      "action": "Add the source asset to the vault's assets."
+    },
+    "unsupported spender approval": {
+      "description": "Approval to this spender is not allowed",
+      "action": "Approve only supported protocol contracts."
+    },
+    "unsupported spot asset": {
+      "description": "Spot asset not enabled in the vault",
+      "action": "Add the spot asset to the vault's assets."
+    },
+    "unsupported src token": {
+      "description": "Source token not enabled in the vault",
+      "action": "Add the source token to the vault's assets."
+    },
+    "unsupported version": {
+      "description": "Action version is not supported",
+      "action": "Use version 1 encoded actions."
+    },
+    "unsupported withdraw asset": {
+      "description": "Withdraw asset not enabled in the vault",
+      "action": "Add the withdraw asset to the vault's assets."
+    },
+    "unsupported withdrawal asset": {
+      "description": "Withdrawal asset not enabled in the vault",
+      "action": "Add the withdrawal asset to the vault's assets."
+    },
+    "unsupported wnt": {
+      "description": "Wrapped native token not enabled in vault",
+      "action": "Add the wrapped native token to the vault."
+    },
+    "USDC not supported asset": {
+      "description": "USDC not enabled in the vault",
+      "action": "Add USDC to the vault's supported assets."
+    },
+    "user is not pool": {
+      "description": "User must be the vault address",
+      "action": "Use the vault address as the user."
+    },
+    "velodrome cl asset not enabled": {
+      "description": "Velodrome CL asset not enabled in the vault",
+      "action": "Add the Velodrome CL asset to the vault."
+    },
+    "WETH unwrap not supported": {
+      "description": "WETH unwrapping is not supported",
+      "action": "Disable WETH unwrap for the swap route."
+    },
+    "invalid index": {
+      "description": "Tracked position index is out of range",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "not correct contract guard": {
+      "description": "Caller is not the registered contract guard",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "not found": {
+      "description": "NFT ID not found in tracked positions",
+      "action": "Use an NFT ID tracked by the vault."
+    },
+    "_factory address cannot be 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "_pair address cannot be 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "_stakingRewardsFactory address cannot be 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "_sushiStaking address cannot be 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "0 src amount": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "1970 and later only": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "account value !0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "aggregator address cannot be 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "already claimed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Already unstaked": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Already unstaked.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "amount too high": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "amountOutMinimum too low": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "approved or owner": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "asset address cannot be 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "asset held as DYTM collateral": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "asset held as DYTM debt": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Asset not found": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "assetType not handled": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "cannot add virtual token": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Cannot be address(0)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Cannot modify position": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Cannot set implementation to EOA": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "cannot unwrap native token": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Cap for pool will be exceeded.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "CCA: Invalid decimals": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "CCA: price too low": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Chainlink price expired": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Claiming to much.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "cooldown active": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "core user not activated": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "delayed order in progress": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "deposit amount exceeded": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "deposit not supported": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "deprecated": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "dhtAddress is required": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "dhtAmount must be => vDHTAccrued": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "dst amount mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "dst asset mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "dst token disabled": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "empty _rewardAssetSetting": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "empty price feed multiplier": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "empty user account": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ERR_ADD_OVERFLOW": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ERR_BPOW_BASE_TOO_HIGH": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ERR_BPOW_BASE_TOO_LOW": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ERR_DIV_INTERNAL": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ERR_DIV_ZERO": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ERR_MUL_OVERFLOW": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ERR_SUB_UNDERFLOW": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "exceed max available payout": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "expired": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "failed to get asset": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Fee is more than margin portion": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Final asset transfer failed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "FixedPoint::fraction: division by zero": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "FixedPoint::fraction: overflow": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "FixedPoint::mul: overflow": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "FullMath: FULLDIV_OVERFLOW": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "gwav divergence too high": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "has open order": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "high deposit slippage": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "high slippage": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "high swap slippage": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Impl not zero": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "input is not array": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "insufficient available payout": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid account type": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid array position": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid bond index": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid bond option index": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid callback contract": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid cancel receiver": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid claimableFactor": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid collateral": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid collateralDeltaAmount": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid cps": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid custom cooldown": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid day of week": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid decimals": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid easySwapperV2": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid EVM decimals": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid exchange rate": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid expiry timestamp": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid exponent": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid extContract address": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid fee receiver": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid flashloan origin": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid guardAddress": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid hour": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid initialCollateralToken": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid initialLongToken": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid initialShortToken": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid length": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid LP staking address": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid lpToken address": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid minRedeemValue": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid mismatch delta": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid mismatch delta numerator": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid multicall params": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid multicall params length": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid onchain oracle decimals": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid ondoGMSwap": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid option type": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid percent": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid poolFactory": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid poolManagerLogic": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid portion": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid priceMinMax": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid processor": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid Pyth oracle data": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid Pyth oracle expo": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid quote assets": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid raw account ID": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid sendTokens tx": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid slippage tolerance": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid src amount": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid src token": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid swap": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid swap path": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid swap type": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid token": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid tokens": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid transaction target": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid transfer receiver": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid usdc": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid USDC/USD feed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Invalid USDC/USD price": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid withdraw portion": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "invalid withdrawAsset": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "LA": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "length doesn't match": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "limit order opened": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "LO": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "locked": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "low callback gas limit": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "LS": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "margin will be below minimum": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "max leverage exceeded": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "missing DYTM complex asset data": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must add some dht": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be greater than 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be less than 2 years": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be less than 20": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be less than 200%": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be less than 30 days": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be less than 90 days": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be lower than 300%": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be lower than 7 million dht": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be more than 10%": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must be more than 30 days": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Must stake some additional dht.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "nmr<=dnmr": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "no eligible pools or not set": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "No exchange token balance": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "No pool tokens staked": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "no-go": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not a vault": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Not authorised guard": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not enough available balance": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not enough available balance_0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not enough available balance_1": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not enough reward token": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Not enough staked dht.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not enough withdrawal liquidity": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not exists": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not gmx whitelisted": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not implemented": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "not owner or Safe owner": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Not Unstaked.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Nothing to claim": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "nothing to distribute": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Null address": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "numerator must be less": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Offchain oracle zero address": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Offchain price invalid": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Onchain oracle price is invalid": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Onchain oracle price is stale": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Onchain oracle zero address": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "only creator": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "only one deposit allowed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "only one order allowed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "only one withdrawal allowed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "only pool flash loan origin": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "only simulated call": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Only user can interact": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "order in progress": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "outputAsset must be USDC": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "overdistribution": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "perp v2 fill price is invalid": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "perp v2 margin is invalid": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "perp v2 withdrawal too large": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Pool cannot be address(0)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "pool ID not configured": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Pool not allowed.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Pool Tokens already staked.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Price aggregator not found": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Price get failed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "price mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Price not available": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "pt not handled": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "pt requires offchain data": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: asset is not valid": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: cannot set pool as asset": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: error on amount out": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: invalid manager address": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: invalid swap fee": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: invalid transaction": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: is not a pool": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: non-zero address required": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: only manager": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: pool is not enabled": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: pool/asset is not enabled": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: price changed, try again": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: sender is not whitelisted": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PTS: transaction failed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Pyth price confidence too low": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "quote quantity > reference": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "quote quantity mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "R": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Reading bytes out of bounds": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "receiver not pool logic": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "remnant too large": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "remove linked asset first": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "repay Aave debt first": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "rewardAmountPerSecond not zero": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Rewards depleted.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "SafeERC20: approve from non-zero to non-zero allowance": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "SafeERC20: ERC20 operation did not succeed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "self-call blocked": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "slice_outOfBounds": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "slice_overflow": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "slippage": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "slippage > 2%": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "slippage impact exceeded": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "SPD": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "spot asset action performed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Spot index 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "src amount mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "src asset mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "staking address is 0": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Staking cap will be exceeded.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "stale outputAsset price": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "STFET not supported": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "STFET not supported.": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Strings: hex length insufficient": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "swap data length mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "swap path not supported": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "T": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "toAddress_outOfBounds": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "toAddress_overflow": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Token is soulbound": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "token0 not less than token1": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "too low payout price": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "too many hops": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "too much slippage": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "toUint24_outOfBounds": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "toUint24_overflow": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "transfer/transferFrom blocked": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Unable to get opposite token": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unauthorized": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unauthorized vault": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unhealthy position too large": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Uni v3 LP price mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Uni v3 price ratio out of bounds": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unknown PT": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unknown type": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unsupported collateral": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unsupported longToken": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unsupported market": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unsupported shortToken": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "unsupported token": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Velodrome CL price mismatch": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "withdraw Aave collateral first": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Withdraw Slippage detected": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "withdrawal asset not enabled": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "Withdrawal asset transfer failed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "withdrawData required": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "wrapper not needed": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "multiplication overflow": {
+      "description": "Math error",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "decodeCompactSwap failed": {
+      "description": "Odos compact swap calldata could not be decoded",
+      "action": "Submit valid Odos compact swap calldata."
+    },
+    "referral fee not allowed": {
+      "description": "Odos swaps with a referral fee are not allowed",
+      "action": "Submit the swap without a referral fee."
+    },
+    "invalid mToken": {
+      "description": "Asset is not the configured vault's mToken",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "too many pending requests": {
+      "description": "Too many unsettled Midas redemption requests",
+      "action": "Wait for outstanding requests to settle, then try again."
+    },
+    "canceled redemption unreconciled": {
+      "description": "A rejected Midas redemption froze vault pricing",
+      "action": "Wait until the tokens are returned and reconciled, then try again."
+    },
+    "pending redemption in progress": {
+      "description": "Asset has an unresolved Midas redemption",
+      "action": "Wait for the redemption request to resolve, then try again."
+    },
+    "pending redemption not supported": {
+      "description": "Midas redemption vault asset not enabled",
+      "action": "Enable the redemption vault asset first."
+    }
+  },
+  "selectorErrors": {
+    "InvalidPool(address)": {
+      "description": "Provided address is not a valid vault",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "UnexpectedFeedDecimals(uint8)": {
+      "description": "Price feed does not report 8 decimals",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "ZeroHeartbeat()": {
+      "description": "Heartbeat cannot be zero",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "UnauthorizedCaller(address)": {
+      "description": "Unauthorized caller",
+      "action": "If you believe this is a bug, open a team support message."
+    },
+    "DomainVersionMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__ZeroAmount()": {
+      "description": "Withdrawal amount cannot be zero",
+      "action": "Enter an amount greater than zero and try again."
+    },
+    "UnsupportedInputToken()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__CoreUserExistsPrecompileFailed()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "OwnableUnauthorizedAccount(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__InvalidPool()": {
+      "description": "Provided address is not a valid vault",
+      "action": "Use a registered vault address."
+    },
+    "InvalidAttestationSignature()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "LimitOrderNotFound(bytes32)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NothingLocked()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidQuoteSide(uint8)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidReceiver()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "OwnableInvalidOwner(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ZeroAmount()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NonceAlreadyUsed()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidDepositAssetConfig(bool,address,address,bool)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__WithdrawalAlreadyPending()": {
+      "description": "A withdrawal is already pending for this user and vault",
+      "action": "Complete or cancel the existing withdrawal before starting a new one."
+    },
+    "InsufficientOutput(uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__NoSpotUsdcFreed()": {
+      "description": "No spot USDC was available to bridge",
+      "action": "Retry after positions are reduced or spot USDC is available in Hyperliquid."
+    },
+    "InvalidProofConfig(string)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "WithdrawalLocked()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "SettlementOrderNotFound(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__FullWithdrawalNotSupported()": {
+      "description": "Full withdrawals are not supported in this flow",
+      "action": "Use a partial amount that is less than your full vault token balance."
+    },
+    "NonZeroFeeAmount()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__SpotBalanceFetchFailed(address,uint64)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NoRecoveryApproved()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__TooEarly()": {
+      "description": "This step was called too early",
+      "action": "Wait at least one block, then call the next withdrawal step again."
+    },
+    "InvalidValue(string)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__SpotAssetNotSupported(uint32)": {
+      "description": "Spot asset is not supported by this vault",
+      "action": "Use supported spot asset IDs and ensure the asset is enabled in the vault."
+    },
+    "ZeroValue(string)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "UnsupportedDataType(uint8)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidPriceRange(uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "MaxOrdersReached(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidDelay(uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "DomainVerifyingContractMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidOrderKind()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__SpotPxPrecompileFailed(uint64)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "SafeERC20FailedOperation(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PriceConditionNotMet(uint256,uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "AmountMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "UnsupportedSellToken()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__PositionFetchFailed(address,uint32)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "QuoteExpirationTooFar()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ValueManipulationDetected(address,uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NotAuthorizedKeeper(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidSellTokenBalance()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__NoPendingWithdrawal()": {
+      "description": "No pending withdrawal found",
+      "action": "Start a withdrawal first, then retry this action."
+    },
+    "SafeCastOverflowedUintDowncast(uint8,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidAsset(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__SpotIndexNotFound(uint64)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__TimeoutNotReached()": {
+      "description": "Withdrawal timeout has not been reached",
+      "action": "Wait for the timeout window to pass before cancelling."
+    },
+    "InvalidFactory()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidChainId()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InputAmountMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "LimitOrderNotFillable(uint256,uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "AssetMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__OraclePxPrecompileFailed(uint32)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__PerpAssetInfoPrecompileFailed(uint32)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "OndoMintingPaused()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ExpiryMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "DomainNameMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__NothingToBridge()": {
+      "description": "There is no Hyperliquid value to bridge for this withdrawal",
+      "action": "Check the requested amount and vault Hyperliquid balances, then try again."
+    },
+    "LimitOrderAlreadyExists(address,address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InputTokenMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidQuoteSide()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidPrices(uint256,uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ArrayLengthMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__NoPositionForAsset(uint32)": {
+      "description": "No open perp position exists for the provided asset ID",
+      "action": "Remove invalid perp asset IDs and include only currently open positions."
+    },
+    "InvalidSettlementToken()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__SummaryFetchFailed(address,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InsufficientVaultTokensReceived(uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__UnreducedPerpPosition()": {
+      "description": "Provided perp asset IDs do not cover open perp exposure",
+      "action": "Include all open perp asset IDs for the vault and retry."
+    },
+    "QuoteValueOutOfRange()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NotVaultManager(address,address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "UnsupportedOutputToken()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "FluidDexPricesAndExchangeRates(tuple)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InsufficientLockedBalance()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "DomainChainMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__PoolHasNoHLIntegration()": {
+      "description": "Vault does not have Hyperliquid CoreWriter integration enabled",
+      "action": "Enable CoreWriter as a supported vault asset before using this withdrawal flow."
+    },
+    "PrecompileHelper__TokenInfoFetchFailed(uint64)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "SpenderMismatch()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NoPriceAvailable()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__L1BlockNumberFetchFailed()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "OrderExpired()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ShareTooHigh(uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidBuyTokenBalance()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__InvalidState(uint8,uint8)": {
+      "description": "Withdrawal is in the wrong state for this step",
+      "action": "Follow the sequence announceAndReduce, then bridge, then settle."
+    },
+    "OndoRedemptionsPaused()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "OrderStillActive(address,bytes32)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NoPendingRequest()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__NoSpotBalanceForAsset(uint32)": {
+      "description": "No spot balance exists for the provided asset ID",
+      "action": "Use spot asset IDs with a non-zero balance in the vault's Hyperliquid account."
+    },
+    "OrderNotFound(address,bytes32)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "SanityCheckDeviationTooLarge()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__NoBridgeNeeded()": {
+      "description": "No bridge is needed because existing EVM USDC already covers this withdrawal",
+      "action": "Use the standard vault withdrawal directly instead of this Hyperliquid bridge flow."
+    },
+    "ECDSAInvalidSignatureS(bytes32)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NotInitializing()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "UnauthorizedUserId()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ExcessiveAmountIn(uint256,uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidAdditionalData()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "LimitOrderNotDeletable(address,address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidSlippage(uint16)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ZeroAddress(string)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "PrecompileHelper__SpotInfoPrecompileFailed(uint64)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "OperationTypeMismatch(address,uint8,uint8)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ECDSAInvalidSignature()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "OrderRateTooUnfavorable()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "InvalidInitialization()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "NotValidVault(address)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "ECDSAInvalidSignatureLength(uint256)": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "UnsupportedBuyToken()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "StaleAttestation()": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "FluidDexPricesAndExchangeRates((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))": {
+      "action": "TODO: fill in a user-facing description/action for this error."
+    },
+    "HyperliquidWithdrawalManager__UnsortedAssetIds()": {
+      "description": "Asset ID list must be strictly ascending with no duplicates",
+      "action": "Sort asset IDs in ascending order and remove duplicates before retrying."
+    }
+  }
+}

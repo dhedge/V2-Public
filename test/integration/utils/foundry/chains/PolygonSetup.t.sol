@@ -5,6 +5,7 @@ pragma abicoder v2;
 
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {BackboneSetup} from "../BackboneSetup.t.sol";
+import {AssetTypes} from "../AssetTypes.sol";
 import {PolygonConfig} from "test/integration/utils/foundry/config/PolygonConfig.sol";
 
 abstract contract PolygonSetup is BackboneSetup {
@@ -16,17 +17,17 @@ abstract contract PolygonSetup is BackboneSetup {
     BackboneSetup(
       IAssetHandler.Asset({
         asset: PolygonConfig.USDC,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: PolygonConfig.USDC_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: PolygonConfig.WETH,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: PolygonConfig.WETH_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: PolygonConfig.DAI,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: PolygonConfig.DAI_CHAINLINK_ORACLE
       })
     )

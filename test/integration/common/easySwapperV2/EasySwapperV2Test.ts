@@ -244,9 +244,7 @@ export const runEasySwapperV2Tests = (chainData: EasySwapperV2TestsData & IBackb
           expect(await asset.balanceOf(withdrawalVaultAddress)).to.be.eq(balance);
         }
 
-        await expect(withdrawalVault.unrollAssets(testPoolAddress, manager.address, [])).to.be.revertedWith(
-          "only creator",
-        );
+        await expect(withdrawalVault.unrollAssets(testPoolAddress, [])).to.be.revertedWith("only creator");
         await expect(withdrawalVault["recoverAssets()"]()).to.be.revertedWith("only creator");
         await expect(withdrawalVault["recoverAssets(uint256,address)"](0, testPoolAddress)).to.be.revertedWith(
           "only creator",

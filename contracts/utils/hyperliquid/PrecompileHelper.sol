@@ -81,6 +81,19 @@ abstract contract PrecompileHelper {
     bool onlyIsolated;
   }
 
+  /// @param szi The signed size of the position (positive = long, negative = short).
+  /// @param entryNtl The entry notional value.
+  /// @param isolatedRawUsd The isolated raw USD (only for isolated margin).
+  /// @param leverage The leverage of the position.
+  /// @param isIsolated Whether the position uses isolated margin.
+  struct Position {
+    int64 szi;
+    uint64 entryNtl;
+    int64 isolatedRawUsd;
+    uint32 leverage;
+    bool isIsolated;
+  }
+
   struct SpotInfo {
     string name;
     uint64[2] tokens;
@@ -104,6 +117,7 @@ abstract contract PrecompileHelper {
   error PrecompileHelper__SummaryFetchFailed(address user, uint256 dexId);
   error PrecompileHelper__PerpAssetInfoPrecompileFailed(uint32 perpIndex);
   error PrecompileHelper__SpotBalanceFetchFailed(address user, uint64 token);
+  error PrecompileHelper__PositionFetchFailed(address user, uint32 asset);
 
   /////////////////////////////////////////////
   //                  State                  //
@@ -120,8 +134,8 @@ abstract contract PrecompileHelper {
   address internal constant _CORE_WRITER = 0x3333333333333333333333333333333333333333;
 
   // Precompile addresses
+  address internal constant _POSITION_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000800;
   address internal constant _SPOT_BALANCE_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000801;
-  address internal constant _POSITION_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000802;
   address internal constant _PERP_ASSET_INFO_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000000080a;
   address internal constant _TOKEN_INFO_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000000080C;
   address internal constant _ACCOUNT_MARGIN_SUMMARY_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000000080F;
@@ -149,6 +163,18 @@ abstract contract PrecompileHelper {
   ///////////////////////////////////////////////
   //             Helper Functions              //
   ///////////////////////////////////////////////
+
+  /// @notice Fetches a perp position from the Position precompile.
+  /// @param user The user address.
+  /// @param asset The perp asset index.
+  /// @return pos The position information.
+  function position(address user, uint32 asset) internal view returns (Position memory) {
+    (bool success, bytes memory result) = _POSITION_PRECOMPILE_ADDRESS.staticcall(abi.encode(user, uint16(asset)));
+
+    if (!success) revert PrecompileHelper__PositionFetchFailed(user, asset);
+
+    return abi.decode(result, (Position));
+  }
 
   /// @notice Checks if a HyperCore account has been activated or not.
   /// @param user The address of the HyperCore account.

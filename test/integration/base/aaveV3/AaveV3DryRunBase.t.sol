@@ -11,9 +11,10 @@ import {BaseConfig} from "test/integration/utils/foundry/config/BaseConfig.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {Governance} from "contracts/Governance.sol";
 import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol";
+import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {RewardAssetGuard} from "contracts/guards/assetGuards/RewardAssetGuard.sol";
 
 contract AaveV3DryRunBase is DeploymentDryRunBase {
@@ -35,8 +36,8 @@ contract AaveV3DryRunBase is DeploymentDryRunBase {
     );
     RewardAssetGuard.RewardAssetSetting[] memory rewardAssetSettings = new RewardAssetGuard.RewardAssetSetting[](1);
     uint16[] memory linkedAssetTypes = new uint16[](2);
-    linkedAssetTypes[0] = uint16(BackboneSetup.AssetTypeIncomplete.VELODROME_V2_LP);
-    linkedAssetTypes[1] = uint16(BackboneSetup.AssetTypeIncomplete.VELODROME_CL);
+    linkedAssetTypes[0] = uint16(AssetTypes.AssetTypeIncomplete.VELODROME_V2_LP);
+    linkedAssetTypes[1] = uint16(AssetTypes.AssetTypeIncomplete.VELODROME_CL);
     rewardAssetSettings[0] = RewardAssetGuard.RewardAssetSetting({
       rewardToken: BaseConfig.AERO,
       linkedAssetTypes: linkedAssetTypes,
@@ -44,12 +45,14 @@ contract AaveV3DryRunBase is DeploymentDryRunBase {
     });
     RewardAssetGuard rewardAssetGuard = new RewardAssetGuard(rewardAssetSettings);
     Governance governance = Governance(poolFactory.governanceAddress());
+    address assetHandlerAddr = poolFactory.getAssetHandler();
     vm.startPrank(poolFactory.owner());
     proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(poolFactory))), latestPoolFactory);
+    proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(assetHandlerAddr)), address(new AssetHandler()));
     poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
     governance.setAssetGuard(
-      uint16(BackboneSetup.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
+      uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
       address(flatMoneyCollateralGuard)
     );
     governance.setAssetGuard(200, address(rewardAssetGuard));

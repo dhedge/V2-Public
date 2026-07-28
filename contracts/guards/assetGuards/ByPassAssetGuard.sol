@@ -32,4 +32,7 @@ contract ByPassAssetGuard is ERC20Guard {
   function getBalance(address, address) public pure override returns (uint256 balance) {
     return 0;
   }
+
+  // solhint-disable-next-line no-empty-blocks
+  function removeAssetCheck(address, address) public pure override {}
 }

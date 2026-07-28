@@ -5,6 +5,7 @@ pragma abicoder v2;
 import {SafeERC20} from "../../../utils/SafeERC20.sol";
 import {IERC20} from "../../../interfaces/IERC20.sol";
 
+import {OndoGMTokenAssetGuard} from "../../../guards/assetGuards/ondo/OndoGMTokenAssetGuard.sol";
 import {SynthetixPerpsV2MarketAssetGuard} from "../../../guards/assetGuards/SynthetixPerpsV2MarketAssetGuard.sol";
 import {PancakeNonfungiblePositionGuard} from "../../../guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol";
 import {ICompoundV3Comet} from "../../../interfaces/compound/ICompoundV3Comet.sol";
@@ -25,6 +26,13 @@ library SwapperV2Helpers {
 
   function synthetixPerpsV2Helper(address _asset, address _poolFactory) internal view returns (address sUSDAddress) {
     sUSDAddress = SynthetixPerpsV2MarketAssetGuard(IHasGuardInfo(_poolFactory).getAssetGuard(_asset)).susdProxy();
+  }
+
+  /// @dev Ondo GM token (assetType 41) is redeemed to USDC inside the asset guard's
+  ///      `withdrawProcessing`. The vault tracks USDC, resolved on-chain from the asset guard
+  ///      so calldata can never substitute a different output token.
+  function ondoGMHelper(address _asset, address _poolFactory) internal view returns (address usdcAddress) {
+    usdcAddress = OndoGMTokenAssetGuard(IHasGuardInfo(_poolFactory).getAssetGuard(_asset)).usdc();
   }
 
   function getUnrolledAssets(address _asset, address _dHedgeVault) internal view returns (address[] memory assets) {
@@ -84,10 +92,8 @@ library SwapperV2Helpers {
 
     IERC20(_principalToken).safeIncreaseAllowance(PendlePTHandlerLib.ROUTER_V4, ptBalance);
 
-    // If exiting to underlying token, slippage check is not required, hence passing 0 as minTokenOut both times
-    // See source code to prove tha above:
-    // ActionMiscV3::exitPostExpToToken https://github.com/pendle-finance/pendle-core-v2-public/blob/main/contracts/router/ActionMiscV3.sol#L302
-    // ActionMiscV3::exitPreExpToToken https://github.com/pendle-finance/pendle-core-v2-public/blob/main/contracts/router/ActionMiscV3.sol#L221
+    // Post-expiry redemption is not manipulable, so minTokenOut == 0 is safe.
+    // Pre-expiry: compute minTokenOut.
     if (expired) {
       IPActionMiscV3(PendlePTHandlerLib.ROUTER_V4).exitPostExpToToken(
         address(this),
@@ -97,13 +103,20 @@ library SwapperV2Helpers {
         IPAllActionTypeV3.createTokenOutputSimple(underlying, 0)
       );
     } else {
+      uint256 minTokenOut = PendlePTHandlerLib.computeMinTokenOutPreExp(
+        _principalToken,
+        ptBalance,
+        underlying,
+        _factory,
+        market
+      );
       IPActionMiscV3(PendlePTHandlerLib.ROUTER_V4).exitPreExpToToken(
         address(this),
         market,
         ptBalance,
         0,
         0,
-        IPAllActionTypeV3.createTokenOutputSimple(underlying, 0),
+        IPAllActionTypeV3.createTokenOutputSimple(underlying, minTokenOut),
         IPAllActionTypeV3.createEmptyLimitOrderData()
       );
     }

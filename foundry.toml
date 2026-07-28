@@ -15,6 +15,11 @@ ignored_warnings_from = ["lib/forge-std"]
 [profile.ffi-tests]
 ffi = true
 fs_permissions = [{ access = "read-write", path = "./swapdatas-cache/" }]
+# Run each top-level call from a test as its own EVM transaction. The DYTM FFI tests bundle
+# manage-pool phases (`pool.execTransaction`) and the subsequent withdrawal in a single test
+# function; without isolation the per-tx `ValueManipulationCheck` (EIP-1153 transient storage)
+# rejects mixed op-types on the same pool. In production these always land in separate txs.
+isolate = true
 
 [rpc_endpoints]
 base = "${BASE_URL}"

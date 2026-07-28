@@ -47,7 +47,7 @@ export const hyperliquidSpotGuardJob: IJob<void> = async (
     await proposeTx(
       versions[config.oldTag].contracts.Governance,
       setAssetGuardTxData,
-      `setAssetGuard for HyperliquidSpotGuard AssetType ${assetType}`,
+      `setAssetGuard for HyperliquidSpotGuard`,
       config,
       addresses,
     );

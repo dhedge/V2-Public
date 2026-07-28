@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
+// solhint-disable one-contract-per-file
 pragma solidity >=0.7.6 <0.9.0;
 
 import {Vm} from "forge-std/Vm.sol";
 import {ERC20} from "@openzeppelin/v5/contracts/token/ERC20/ERC20.sol";
+import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConfig.sol";
 import {HyperCore} from "./HyperCore.sol";
 import {CoreWriterSim} from "./CoreWriterSim.sol";
 import {PrecompileSim} from "./PrecompileSim.sol";
@@ -25,13 +27,10 @@ contract HypeSystemContract {
  * @dev A library used to simulate HyperCore functionality in foundry tests
  */
 library CoreSimulatorLib {
-  uint256 constant NUM_PRECOMPILES = 17;
-  address constant CORE_DEPOSIT_WALLET = 0x6B9E773128f453f5c2C60935Ee2DE2CBc5390A24;
-
-  HyperCore constant hyperCore = HyperCore(payable(0x9999999999999999999999999999999999999999));
+  HyperCore public constant hyperCore = HyperCore(payable(0x9999999999999999999999999999999999999999));
 
   // ERC20 Transfer event signature
-  bytes32 constant TRANSFER_EVENT_SIG = keccak256("Transfer(address,address,uint256)");
+  bytes32 public constant TRANSFER_EVENT_SIG = keccak256("Transfer(address,address,uint256)");
 
   function init() internal returns (HyperCore) {
     vm.pauseGasMetering();
@@ -49,8 +48,8 @@ library CoreSimulatorLib {
     vm.etch(address(coreWriter), type(CoreWriterSim).runtimeCode);
 
     // Initialize precompiles
-    for (uint160 i = 0; i < NUM_PRECOMPILES; i++) {
-      address precompileAddress = address(uint160(0x0000000000000000000000000000000000000800) + i);
+    for (uint160 i = 0; i < HLConstants.NUM_PRECOMPILES; i++) {
+      address precompileAddress = address(uint160(HLConstants.POSITION_PRECOMPILE_ADDRESS) + i);
       vm.etch(precompileAddress, type(PrecompileSim).runtimeCode);
       vm.allowCheatcodes(precompileAddress);
     }
@@ -94,7 +93,7 @@ library CoreSimulatorLib {
         uint256 amount = abi.decode(entry.data, (uint256));
 
         // Check if destination is the token's system address or in case of USDC, the CoreDepositWallet.
-        if (isSystemAddress(entry.emitter, to) || (entry.emitter == CORE_DEPOSIT_WALLET)) {
+        if (isSystemAddress(entry.emitter, to) || (entry.emitter == HyperEVMConfig.CORE_DEPOSIT_WALLET)) {
           uint64 tokenIndex = getTokenIndexFromSystemAddress(to);
 
           if (tokenIndex != 150) hyperCore.executeTokenTransfer(address(0), tokenIndex, from, amount);
@@ -298,13 +297,7 @@ library CoreSimulatorLib {
   }
 
   function getTokenIndexFromSystemAddress(address systemAddr) internal pure returns (uint64) {
-    if (systemAddr == address(0x2222222222222222222222222222222222222222)) {
-      return 150; // HYPE token index
-    }
-
-    if (uint160(systemAddr) < uint160(0x2000000000000000000000000000000000000000)) return type(uint64).max;
-
-    return uint64(uint160(systemAddr) - uint160(0x2000000000000000000000000000000000000000));
+    return HLConstants.getTokenIndexFromSystemAddress(systemAddr);
   }
 
   function tokenExists(uint64 token) internal view returns (bool) {
@@ -320,11 +313,7 @@ library CoreSimulatorLib {
   }
 
   function isForkActive() internal view returns (bool) {
-    try vm.activeFork() returns (uint256) {
-      return true; // Fork is active
-    } catch {
-      return false; // No fork active
-    }
+    return HLConstants.isForkActive();
   }
 }
 

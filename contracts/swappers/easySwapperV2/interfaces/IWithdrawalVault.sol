@@ -25,13 +25,11 @@ interface IWithdrawalVault {
     uint256 _expectedDestTokenAmount
   ) external returns (uint256 destTokenAmount);
 
-  function unrollAssets(
-    address _dHedgeVault,
-    address _withdrawer,
-    IPoolLogic.ComplexAsset[] memory _complexAssetsData
-  ) external;
+  function unrollAssets(address _dHedgeVault, IPoolLogic.ComplexAsset[] memory _complexAssetsData) external;
 
   function getTrackedAssets() external view returns (TrackedAsset[] memory trackedAssets);
+
+  function depositor() external view returns (address);
 
   function withdrawDhedgeVault(
     address _dHedgeVault,

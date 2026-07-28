@@ -226,6 +226,30 @@ interface IDeploymentsConfig {
     swapper: Address;
   };
 
+  ondo?: {
+    gmTokenManager: Address;
+    attestationOracle: {
+      allowedUserId: string;
+      maxProofAge: number;
+      sanityDeviationBps: number;
+      minQuoteValue: string;
+      maxQuoteValue: string;
+    };
+    ondoGMSwapContractGuard?: {
+      maxSlippagePerSwapBps: number;
+    };
+    ondoGMTokenAssetGuard?: {
+      mismatchDeltaNumerator: number;
+      minRedeemValue: string;
+    };
+    // Non-pool addresses authorised to call OndoGMSwap.swapExactInWithAttestation. Pools are
+    // auto-authorised via poolFactory.isPool, so only contracts like DytmWithdrawProcessor go here.
+    // Applied (diffed + setAuthorizedCaller) by ondoGMSwapConfigurationJob; tracked in versions.json.
+    ondoGMSwap?: {
+      authorizedCallers: Address[];
+    };
+  };
+
   rewardAssetSetting?: RewardAssetSettingStruct[];
 
   compoundV3?: {
@@ -304,8 +328,8 @@ interface IDeploymentsConfig {
   pendle?: {
     pendleRouterV4: Address;
     knownMarkets: Address[];
-    yieldContractFactory: Address;
-    staticRouter: Address;
+    yieldContractFactory?: Address;
+    staticRouter?: Address;
   };
 
   dytm?: {
@@ -316,6 +340,16 @@ interface IDeploymentsConfig {
     whitelistedMarkets: number[];
     maxDytmMarkets: number;
     mismatchDeltaNumerator: number;
+  };
+
+  midas?: {
+    // Midas DepositVault (mToken minting entrypoint) — gets MidasDepositVaultContractGuard.
+    depositVault: Address;
+    // Midas RedemptionVault (mToken redemption entrypoint) — gets MidasRedemptionVaultContractGuard,
+    // which is the integration's single owned contract (async request tracking + the pool whitelist).
+    redemptionVault: Address;
+    // Pools allowed to use the integration; seeds the redemption vault contract guard's whitelist.
+    whitelistedPools: Address[];
   };
 
   allowApproveGuard?: {
@@ -350,6 +384,7 @@ interface IDeploymentsConfig {
       poolLogic: Address;
       whitelisted: boolean;
     }[];
+    apiWalletEnabledPools?: Address[]; // pools opted in to API wallet (agent) registration
   };
 }
 
@@ -487,6 +522,8 @@ export interface IContracts {
   HyperliquidCoreWriterContractGuard?: Address;
   HyperliquidCoreWriterContractGuardProxy?: Address;
   HyperliquidCoreDepositWalletContractGuard?: Address;
+  HyperliquidWithdrawalManager?: Address;
+  HyperliquidWithdrawalManagerProxy?: Address;
 
   // Asset Guards
   OpenAssetGuard: Address;
@@ -558,6 +595,7 @@ export interface IContracts {
   EasySwapperV2Proxy: Address;
   WithdrawalVault: Address;
   WithdrawalVaultProxy: Address;
+  DytmWithdrawLib?: Address;
   PoolLimitOrderManager: Address;
   PoolLimitOrderManagerProxy: Address;
   EasyLimitBuyManager: Address;
@@ -565,6 +603,18 @@ export interface IContracts {
   TypedStructuredDataValidatorProxy: Address;
   ReferralManager: Address;
   ReferralManagerProxy: Address;
+  OndoGMSwap?: Address;
+  OndoGMSwapProxy?: Address;
+  OndoGMSwapContractGuard?: Address;
+  OndoGMTokenAssetGuard?: Address;
+  OndoAttestationOracle?: Address;
+  MidasDepositVaultContractGuard?: Address;
+  MidasRedemptionVaultContractGuard?: Address;
+  MidasMTokenAssetGuard?: Address;
+  MidasPendingRedemptionAssetGuard?: Address;
+  OndoAttestationOracleProxy?: Address;
+  WithdrawalGuardian?: Address;
+  WithdrawalGuardianProxy?: Address;
 }
 
 export type TDeployedAsset = TAssetConfig & { oracleAddress: string };
@@ -605,7 +655,9 @@ export type OracleType =
   | "PythPriceAggregator"
   | "PendlePTPriceAggregator"
   | "ERC4626PriceAggregator"
-  | "HyperliquidSpotPriceAggregator";
+  | "HyperliquidSpotPriceAggregator"
+  | "OndoAttestationAggregator"
+  | "MidasPriceAggregator";
 
 export type ContractGuardType =
   | "BalancerV2GaugeContractGuard"
@@ -635,6 +687,9 @@ export type IVersion = {
     };
     easyLimitBuyManager: {
       authorizedKeeperAddresses: Address[];
+    };
+    ondoGMSwap?: {
+      authorizedCallers: Address[];
     };
     hyperliquidCoreWriterGuard?: {
       approvedPerps: { perpName: string; assetId: number; approved: boolean }[];

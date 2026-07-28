@@ -11,9 +11,10 @@ import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConf
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {Governance} from "contracts/Governance.sol";
 import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol";
+import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 
 contract AaveV3DryRunArbitrum is DeploymentDryRunArbitrum {
@@ -37,25 +38,26 @@ contract AaveV3DryRunArbitrum is DeploymentDryRunArbitrum {
     IAssetHandler assetHandler = IAssetHandler(poolFactory.getAssetHandler());
     vm.startPrank(poolFactory.owner());
     proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(poolFactory))), latestPoolFactory);
+    proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(assetHandler))), address(new AssetHandler()));
     poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
     governance.setAssetGuard(
-      uint16(BackboneSetup.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
+      uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
       address(flatMoneyCollateralGuard)
     );
     assetHandler.addAsset(
       ArbitrumConfig.WBTC,
-      uint16(BackboneSetup.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
+      uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
       0x092e0dA71bbbF4f32749719ac3f42B294ebeCc3d // ChainlinkPythPriceAggregator currently set to WBTC
     );
     assetHandler.addAsset(
       ArbitrumConfig.USDC,
-      uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+      uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
       0x16228Fcd5c9231486C6A02911d0B0627ab4436D9 // ChainlinkPythPriceAggregator currently set to USDC
     );
     assetHandler.addAsset(
       ArbitrumConfig.WETH,
-      uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+      uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
       0xB8B4574887Bf165dA8c2069e3046F312CE3D6370 // ChainlinkPythPriceAggregator currently set to WETH
     );
   }

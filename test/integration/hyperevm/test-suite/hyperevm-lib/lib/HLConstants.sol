@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity >=0.7.6 <0.9.0;
 
+import {Vm} from "forge-std/Vm.sol";
 import {ICoreWriter} from "contracts/interfaces/hyperliquid/ICoreWriter.sol";
+import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConfig.sol";
 
 library HLConstants {
     /*//////////////////////////////////////////////////////////////
@@ -26,13 +28,14 @@ library HLConstants {
     address constant ACCOUNT_MARGIN_SUMMARY_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000000080F;
     address constant CORE_USER_EXISTS_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000810;
 
+    uint256 constant NUM_PRECOMPILES = 17;
+
     uint160 constant BASE_SYSTEM_ADDRESS = uint160(0x2000000000000000000000000000000000000000);
     address constant HYPE_SYSTEM_ADDRESS = 0x2222222222222222222222222222222222222222;
 
     address constant USDC_EVM_CONTRACT = 0xb88339CB7199b77E23DB6E890353E22632Ba630f;
     address constant TESTNET_USDC_CONTRACT = 0x2B3370eE501B4a559b57D449569354196457D8Ab;
 
-    address constant CORE_DEPOSIT_WALLET = 0x6B9E773128f453f5c2C60935Ee2DE2CBc5390A24;
     address constant TESTNET_CORE_DEPOSIT_WALLET = 0x0B80659a4076E9E93C7DbE0f10675A16a3e5C206;
 
     uint64 constant USDC_TOKEN_INDEX = 0;
@@ -41,8 +44,15 @@ library HLConstants {
     /*//////////////////////////////////////////////////////////////
                         HYPE Utils
     //////////////////////////////////////////////////////////////*/
+    function _chainId() private view returns (uint256 id) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            id := chainid()
+        }
+    }
+
     function hypeTokenIndex() internal view returns (uint64) {
-        return block.chainid == 998 ? 1105 : 150;
+        return _chainId() == 998 ? 1105 : 150;
     }
 
     function isHype(uint64 index) internal view returns (bool) {
@@ -57,11 +67,11 @@ library HLConstants {
     }
 
     function usdc() internal view returns (address) {
-        return block.chainid == 998 ? TESTNET_USDC_CONTRACT : USDC_EVM_CONTRACT;
+        return _chainId() == 998 ? TESTNET_USDC_CONTRACT : USDC_EVM_CONTRACT;
     }
 
     function coreDepositWallet() internal view returns (address) {
-        return block.chainid == 998 ? TESTNET_CORE_DEPOSIT_WALLET : CORE_DEPOSIT_WALLET;
+        return _chainId() == 998 ? TESTNET_CORE_DEPOSIT_WALLET : HyperEVMConfig.CORE_DEPOSIT_WALLET;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -98,5 +108,23 @@ library HLConstants {
     //////////////////////////////////////////////////////////////*/
     uint32 constant DEFAULT_PERP_DEX = 0;
     uint32 constant SPOT_DEX = type(uint32).max;
-}
 
+    /*//////////////////////////////////////////////////////////////
+                        System Address Utils
+    //////////////////////////////////////////////////////////////*/
+
+    function getTokenIndexFromSystemAddress(address systemAddr) internal pure returns (uint64) {
+        if (systemAddr == HYPE_SYSTEM_ADDRESS) return 150; // HYPE token index
+        if (uint160(systemAddr) < BASE_SYSTEM_ADDRESS) return type(uint64).max;
+        return uint64(uint160(systemAddr) - BASE_SYSTEM_ADDRESS);
+    }
+
+    function isForkActive() internal view returns (bool) {
+        Vm vm = Vm(address(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D));
+        try vm.activeFork() returns (uint256) {
+            return true;
+        } catch {
+            return false;
+        }
+    }
+}

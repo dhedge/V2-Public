@@ -25,6 +25,7 @@ import {HasLogic} from "./HasLogic.sol";
 /// @notice This contract is used to deploy the proxy contract.
 contract ProxyFactory is OwnableUpgradeable, HasLogic {
   event ProxyCreated(address proxy);
+  event LogicSet(address poolLogic, address poolManagerLogic);
 
   address private poolLogic;
 
@@ -37,22 +38,19 @@ contract ProxyFactory is OwnableUpgradeable, HasLogic {
   function __ProxyFactory_init(address _poolLogic, address _poolManagerLogic) internal {
     __Ownable_init();
 
-    require(_poolLogic != address(0), "Invalid poolLogic");
-    require(_poolManagerLogic != address(0), "Invalid poolManagerLogic");
-
-    poolLogic = _poolLogic;
-    poolManagerLogic = _poolManagerLogic;
+    setLogic(_poolLogic, _poolManagerLogic);
   }
 
   /// @notice Setting logic address for both poolLogic and poolManagerLogic
   /// @param _poolLogic address of the pool logic
   /// @param _poolManagerLogic address of the pool manager logic
-  function setLogic(address _poolLogic, address _poolManagerLogic) external onlyOwner {
+  function setLogic(address _poolLogic, address _poolManagerLogic) public onlyOwner {
     require(_poolLogic != address(0), "Invalid poolLogic");
     require(_poolManagerLogic != address(0), "Invalid poolManagerLogic");
 
     poolLogic = _poolLogic;
     poolManagerLogic = _poolManagerLogic;
+    emit LogicSet(_poolLogic, _poolManagerLogic);
   }
 
   /// @notice Return logic address of the pool or the pool manager logic

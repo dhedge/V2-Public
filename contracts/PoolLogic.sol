@@ -29,10 +29,7 @@ import {IFlashLoanReceiver} from "./interfaces/aave/IFlashLoanReceiver.sol";
 import {IAaveLendingPoolAssetGuard} from "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";
 import {IAssetGuard} from "./interfaces/guards/IAssetGuard.sol";
 import {IERC721VerifyingGuard} from "./interfaces/guards/IERC721VerifyingGuard.sol";
-import {IGuard} from "./interfaces/guards/IGuard.sol";
 import {IComplexAssetGuard} from "./interfaces/guards/IComplexAssetGuard.sol";
-import {ITxTrackingGuard} from "./interfaces/guards/ITxTrackingGuard.sol";
-import {IGovernance} from "./interfaces/IGovernance.sol";
 import {IHasDaoInfo} from "./interfaces/IHasDaoInfo.sol";
 import {IHasFeeInfo} from "./interfaces/IHasFeeInfo.sol";
 import {IHasGuardInfo} from "./interfaces/IHasGuardInfo.sol";
@@ -289,7 +286,8 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     }
 
     DepositExecution memory execution;
-    execution.fundValue = _mintManagerFee();
+    // Check oracle price freshness during fund value calculation (reverts if stale when assetMaxPriceAge > 0)
+    execution.fundValue = _mintManagerFee({_checkPrice: true});
 
     _asset.tryAssemblyCall(
       abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)
@@ -433,7 +431,7 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
     require(balanceOf(msg.sender) >= _fundTokenAmount, "dh12");
 
     WithdrawExecution memory execution;
-    execution.fundValue = _mintManagerFee();
+    execution.fundValue = _mintManagerFee({_checkPrice: false});
 
     PoolLogicLib.PoolTokensAllocation memory tokens = PoolLogicLib.computePoolTokensAllocation({
       _redeemAmount: _fundTokenAmount,
@@ -621,65 +619,14 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
   /// @dev execute transaction for the pool
   /// @param _to The destination address for pool to talk to
   /// @param _data The data that going to send in the transaction
-  /// @param isDelegationCallback Whether this transaction is being executed via a delegation callback
+  /// @param _isDelegationCallback Whether this transaction is being executed via a delegation callback
   /// @return success A boolean for success or fail transaction
   function _execTransaction(
     address _to,
     bytes memory _data,
-    bool isDelegationCallback
+    bool _isDelegationCallback
   ) private whenNotFactoryPaused returns (bool success) {
-    require(!IHasPausable(factory).tradingPausedPools(address(this)), "dh20");
-
-    _checkOperationType(IValueManipulationCheck.OperationType.ExecTransaction);
-
-    require(_to != address(0), "dh18");
-
-    address contractGuard = IHasGuardInfo(factory).getContractGuard(_to);
-    address assetGuard;
-    address guard;
-    uint16 txType;
-    bool isPublic;
-
-    if (contractGuard != address(0)) {
-      guard = contractGuard;
-      (txType, isPublic) = IGuard(contractGuard).txGuard(poolManagerLogic, _to, _data);
-    }
-
-    // invalid contract guard call, try asset guard
-    if (txType == 0) {
-      // no contract guard configured, get asset guard
-      assetGuard = IHasGuardInfo(factory).getAssetGuard(_to);
-
-      if (assetGuard == address(0)) {
-        // If there is no contractGuard and no assetGuard then use the ERC20Guard for the transaction,
-        // which will only allow a valid approve transaction
-        address governanceAddress = IPoolFactory(factory).governanceAddress();
-        assetGuard = IGovernance(governanceAddress).assetGuards(0); // get ERC20Guard (assetType 0)
-      } else {
-        // if asset is configured, ensure that it's enabled in the pool
-        require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(_to), "dh22");
-      }
-      guard = assetGuard;
-      (txType, isPublic) = IGuard(assetGuard).txGuard(poolManagerLogic, _to, _data);
-    }
-
-    require(txType > 0, "dh23");
-
-    require(isPublic || isDelegationCallback || msg.sender == _manager() || msg.sender == _trader(), "dh24");
-
-    success = _to.tryAssemblyCall(_data);
-
-    // call afterTxGuard to track transactions
-    // to make it compatible with previous version, we use low-level call before calling afterTxGuard() function
-    // the low level call will return `false` if its execution reverts
-    // solhint-disable-next-line avoid-low-level-calls
-    (bool hasFunction, bytes memory returnData) = guard.call(abi.encodeWithSignature("isTxTrackingGuard()"));
-    if (hasFunction && abi.decode(returnData, (bool))) {
-      ITxTrackingGuard(guard).afterTxGuard(poolManagerLogic, _to, _data);
-    }
-
-    emit TransactionExecuted(address(this), _manager(), txType, block.timestamp);
-    _emitFactoryEvent();
+    return PoolLogicLib.execTransaction(_to, _data, _isDelegationCallback, factory, poolManagerLogic);
   }
 
   /// @notice Exposed function to let pool talk to other protocol
@@ -806,13 +753,19 @@ contract PoolLogic is ERC20Upgradeable, ReentrancyGuardUpgradeable, IERC721Recei
 
   /// @notice Mint the manager fee of the pool
   function mintManagerFee() external nonReentrant whenNotFactoryPaused whenNotPaused {
-    _mintManagerFee();
+    _mintManagerFee({_checkPrice: false});
   }
 
-  /// @notice Get mint manager fee of the pool internal call
-  /// @return fundValue The total fund value of the pool
-  function _mintManagerFee() internal returns (uint256 fundValue) {
-    fundValue = _totalValue();
+  /// @notice Mint manager fee with optional oracle liveness check
+  /// @param _checkPrice If true, uses totalFundValueWithMaxAge which may revert if prices are stale
+  /// @return fundValue The total fund value
+  function _mintManagerFee(bool _checkPrice) internal returns (uint256 fundValue) {
+    if (_checkPrice) {
+      fundValue = IPoolManagerLogic(poolManagerLogic).totalFundValueWithMaxAge();
+    } else {
+      fundValue = _totalValue();
+    }
+
     uint256 tokenSupply = totalSupply();
 
     (uint256 performanceFeeNumerator, uint256 managementFeeNumerator, , , uint256 denominator) = _managerFees();

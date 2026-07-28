@@ -395,6 +395,24 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
     testPool.execTransaction(address(poolLimitOrderManagerProxy), modifyCallData);
   }
 
+  function test_revert_initLimitOrderWithdrawalFor_called_by_unauthorized() public {
+    // initLimitOrderWithdrawalFor must only be callable by authorized withdrawers
+    // (e.g. PoolLimitOrderManager). Without this restriction, anyone could push
+    // a victim's pre-existing limit-order WithdrawalVault through an attacker-
+    // crafted unroll plan and drain its balances.
+    address attacker = makeAddr("attacker");
+    IPoolLogic.ComplexAsset[] memory emptyComplexAssetsData = new IPoolLogic.ComplexAsset[](0);
+
+    vm.prank(attacker);
+    vm.expectRevert("not authorized");
+    easySwapperV2Proxy.initLimitOrderWithdrawalFor(
+      address(testPool), // victim
+      address(testTorosPool),
+      1,
+      emptyComplexAssetsData
+    );
+  }
+
   function test_revert_unsupported_function_call() public {
     vm.startPrank(manager);
 

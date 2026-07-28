@@ -6,7 +6,7 @@ pragma abicoder v2;
 interface IPoolLogic {
   struct ComplexAsset {
     address supportedAsset;
-    bytes withdrawData; // at the moment could be only struct ComplexAssetSwapData
+    bytes withdrawData; // shape depends on the asset's complex guard: ComplexAssetSwapData (Aave), DytmWithdrawLib.UnwindPlan (DYTM), or OndoGMTokenAssetGuard.OndoWithdrawData (Ondo GM, type 41)
     uint256 slippageTolerance; // duplicated from ComplexAssetSwapData on purpose
   }
 
@@ -37,6 +37,8 @@ interface IPoolLogic {
   function withdraw(uint256 _fundTokenAmount) external;
 
   function withdrawSafe(uint256 _fundTokenAmount, ComplexAsset[] memory _complexAssetsData) external;
+
+  function withdrawTo(address _recipient, uint256 _fundTokenAmount) external;
 
   function withdrawToSafe(
     address _recipient,

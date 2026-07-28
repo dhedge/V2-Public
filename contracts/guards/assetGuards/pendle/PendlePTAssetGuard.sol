@@ -8,7 +8,8 @@ import {IPMarket} from "../../../interfaces/pendle/IPMarket.sol";
 import {IStandardizedYield} from "../../../interfaces/pendle/IStandardizedYield.sol";
 import {ERC20Guard} from "../ERC20Guard.sol";
 
-/// @notice Core features are identical to ERC20Guard, with the addition of onchain storage for PT associated data, to workaround unrolling PTs during single assset withdrawals
+/// @notice Core features are identical to ERC20Guard, with the addition of onchain storage for
+///         PT associated data, to workaround unrolling PTs during single asset withdrawals.
 /// @dev Asset type = 37
 contract PendlePTAssetGuard is ERC20Guard, IAddAssetCheckGuard {
   struct PTAssociatedData {
@@ -17,7 +18,8 @@ contract PendlePTAssetGuard is ERC20Guard, IAddAssetCheckGuard {
     address yt;
   }
 
-  bool public override isAddAssetCheckGuard = true;
+  // solhint-disable-next-line const-name-snakecase
+  bool public constant override isAddAssetCheckGuard = true;
 
   mapping(address => PTAssociatedData) public ptAssociatedData;
 

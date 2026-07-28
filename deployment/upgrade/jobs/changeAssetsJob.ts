@@ -7,6 +7,9 @@ const VAULTS_TO_REMOVE_FROM: string[] = [];
 
 const ASSET_ADDRESSES_TO_REMOVE: string[] = [];
 
+// Asset to add as deposit if removing the only deposit asset(s) would leave a vault with none
+const REPLACEMENT_DEPOSIT_ASSET = "";
+
 export const changeAssetsJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
@@ -37,8 +40,7 @@ export const changeAssetsJob: IJob<void> = async (
       const isSupported = await poolManagerLogicContract.isSupportedAsset(assetAddress);
       if (!isSupported) continue;
 
-      const assetContract = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", assetAddress);
-      const balance = await assetContract.balanceOf(vaultAddress);
+      const balance = await poolManagerLogicContract.assetBalance(assetAddress);
       if (!balance.eq(0)) {
         console.warn(`Skipping ${assetAddress} in vault ${vaultAddress}: non-zero balance (${balance.toString()})`);
         continue;
@@ -48,11 +50,30 @@ export const changeAssetsJob: IJob<void> = async (
     }
 
     if (assetsToRemove.length > 0) {
+      const depositAssets: string[] = await poolManagerLogicContract.getDepositAssets();
+      const remainingDepositAssets = depositAssets.filter(
+        (d: string) => !assetsToRemove.some((r) => r.toLowerCase() === d.toLowerCase()),
+      );
+
+      let addAssets: { asset: string; isDeposit: boolean }[] = [];
+
+      if (remainingDepositAssets.length === 0) {
+        if (!REPLACEMENT_DEPOSIT_ASSET) {
+          throw new Error(
+            `Vault ${vaultAddress}: removing all deposit assets but no REPLACEMENT_DEPOSIT_ASSET configured`,
+          );
+        }
+        console.log(
+          `Vault ${vaultAddress}: adding ${REPLACEMENT_DEPOSIT_ASSET} as deposit asset (last deposit removed)`,
+        );
+        addAssets = [{ asset: REPLACEMENT_DEPOSIT_ASSET, isDeposit: true }];
+      }
+
       console.log(`Vault ${vaultAddress}: removing ${assetsToRemove.length} asset(s)`);
       safeTransactionData.push({
         to: poolManagerLogicContractAddress,
         value: "0",
-        data: poolManagerLogicContract.interface.encodeFunctionData("changeAssets", [[], assetsToRemove]),
+        data: poolManagerLogicContract.interface.encodeFunctionData("changeAssets", [addAssets, assetsToRemove]),
       });
     }
   }

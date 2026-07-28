@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.7.6;
 
 contract AutomationBase {
-  error OnlySimulatedBackend();
-
   /**
    * @notice method that allows it to be simulated via eth_call by checking that
    * the sender is the zero address.
    */
   function _preventExecution() internal view {
-    // solhint-disable-next-line avoid-tx-origin
-    if (tx.origin != address(0) && tx.origin != address(0x1111111111111111111111111111111111111111)) {
-      revert OnlySimulatedBackend();
-    }
+    require(
+      // solhint-disable-next-line avoid-tx-origin
+      tx.origin == address(0) || tx.origin == address(0x1111111111111111111111111111111111111111),
+      "only simulated call"
+    );
   }
 
   /**

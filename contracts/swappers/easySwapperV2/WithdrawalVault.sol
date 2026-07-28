@@ -30,7 +30,7 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
   uint256 internal constant ASSET_MULTIPLIER = 5;
 
   /// @notice The address to which the vault belongs to
-  address public depositor;
+  address public override depositor;
   /// @notice Factory contract which spawned this vault
   address public creator;
 
@@ -63,13 +63,11 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
   /// @notice Unroll assets from dHEDGE vault to basic ERC20 tokens that can be swapped via DEXes
   /// @param _dHedgeVault dHEDGE Vault address
   /// @param _complexAssetsData Complex assets data from pool withdrawal
-  /// @param _withdrawer Address of the withdrawer (msg.sender of initWithdrawal)
   function unrollAssets(
     address _dHedgeVault,
-    address _withdrawer,
     IPoolLogic.ComplexAsset[] memory _complexAssetsData
   ) external override onlyCreator {
-    _unrollAssets(_dHedgeVault, _withdrawer, _complexAssetsData);
+    _unrollAssets(_dHedgeVault, _complexAssetsData);
   }
 
   /// @notice Swaps basic assets to a single asset
@@ -148,11 +146,7 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
     }
   }
 
-  function _unrollAssets(
-    address _dHedgeVault,
-    address _withdrawer,
-    IPoolLogic.ComplexAsset[] memory _complexAssetsData
-  ) internal {
+  function _unrollAssets(address _dHedgeVault, IPoolLogic.ComplexAsset[] memory _complexAssetsData) internal {
     address poolManagerLogic = IPoolLogic(_dHedgeVault).poolManagerLogic();
     IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();
     address poolFactory = IPoolLogic(_dHedgeVault).factory();
@@ -181,7 +175,9 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
         assetType == 32 ||
         assetType == 36 ||
         assetType == 105 ||
-        assetType == 35
+        assetType == 35 ||
+        assetType == 39 ||
+        assetType == 40
         // solhint-disable-next-line no-empty-blocks
       ) {}
       // Uniswap V3 - already unrolled, just need the assets
@@ -220,13 +216,18 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       else if (assetType == 37) {
         unrolledAssets = _arraify(SwapperV2Helpers.unrollPendlePT(_dHedgeVault, asset));
       }
+      // Ondo GM Token — pool redeemed to USDC inside withdrawProcessing; track USDC.
+      else if (assetType == 41) {
+        unrolledAssets = _arraify(SwapperV2Helpers.ondoGMHelper(asset, poolFactory));
+      }
       // Synthetix Perpetuals V2 - settled in sUSD
       else if (assetType == 102) {
         unrolledAssets = _arraify(SwapperV2Helpers.synthetixPerpsV2Helper(asset, poolFactory));
       }
       // DYTM Office
       else if (assetType == 106) {
-        unrolledAssets = DytmWithdrawLib.processDytmPosition(asset, _complexAssetsData, creator, _withdrawer);
+        require(i < _complexAssetsData.length, "missing DYTM complex asset data");
+        unrolledAssets = DytmWithdrawLib.processDytmPosition(asset, _complexAssetsData[i], creator, _dHedgeVault);
       } else {
         revert("assetType not handled");
       }
@@ -261,9 +262,9 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
         // Here we sacrifice slippage protection mechanism.
         // This is equal to calling .withdrawSafe(balance, new IPoolLogic.ComplexAsset[](IHasSupportedAsset(IPoolLogic(_asset).poolManagerLogic()).getSupportedAssets().length))
         IPoolLogic(_asset).withdraw(balance);
-        // address(0) for _withdrawer: only DYTM (type 106) consumes complexAssetsData and _withdrawer;
-        // nested vaults with DYTM positions will revert at "missing DYTM complex asset data".
-        _unrollAssets(_asset, address(0), new IPoolLogic.ComplexAsset[](0));
+        // Empty complexAssetsData: only DYTM (type 106) consumes it; nested vaults with DYTM
+        // positions will revert with "missing DYTM complex asset data".
+        _unrollAssets(_asset, new IPoolLogic.ComplexAsset[](0));
       }
     } else {
       unrolledAssets = _arraify(_asset);

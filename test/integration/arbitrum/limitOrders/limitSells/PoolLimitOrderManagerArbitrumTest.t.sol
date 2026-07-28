@@ -10,7 +10,6 @@ contract PoolLimitOrderManagerArbitrumTest is PoolLimitOrderManagerTestSetup {
   constructor()
     PoolLimitOrderManagerTestSetup(
       ArbitrumConfig.WETH,
-      ArbitrumConfig.WETH,
       ArbitrumConfig.SWAPPER,
       ArbitrumConfig.POOL_FACTORY_PROD,
       ArbitrumConfig.USDC,

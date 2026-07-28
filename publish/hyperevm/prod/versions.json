@@ -23,16 +23,6 @@
           "oracleAddress": "0xa5a72eF19F82A579431186402425593a559ed352"
         },
         {
-          "assetName": "Hyperliquid Perps Account",
-          "assetAddress": "0x3333333333333333333333333333333333333333",
-          "assetType": "39",
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0x14EB3ab377265cfaEA63386355A556C2e044A9C2"
-          },
-          "oracleAddress": "0x14EB3ab377265cfaEA63386355A556C2e044A9C2"
-        },
-        {
           "assetName": "XAUT0",
           "assetAddress": "0xf4d9235269a96aadafc9adae454a0618ebe37949",
           "assetType": "40",
@@ -86,6 +76,16 @@
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
           "oracleAddress": "0x85F60cE2105323B60956458e6a607E30a4005945"
+        },
+        {
+          "assetName": "Hyperliquid Perps Account",
+          "assetAddress": "0x3333333333333333333333333333333333333333",
+          "assetType": "39",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
         }
       ],
       "USDPriceAggregator": "0x14EB3ab377265cfaEA63386355A556C2e044A9C2",
@@ -98,28 +98,33 @@
       "PoolManagerLogic": "0x3Ac4c357d3000E391532f30A508f8Df6CAd19387",
       "Governance": "0x509Bc4e19E58041cD835F65541dAc23F67B7a9db",
       "PoolFactoryProxy": "0x615037C2Df6FA97634c5aD2d8144708b9dd3B176",
-      "PoolFactory": "0x3C2c245BBA2DAd8A8d04d349a90D7956789634C4",
+      "PoolFactory": "0x574b15cEC9c1F7eE3DB06EC07f61Bca4e683Eb00",
       "SlippageAccumulator": "0x7E3d6d84046783721260ae8E5Fa7D29Bd227EE6A",
       "ValueManipulationCheck": "0xbF31E2a62a070B6459af23e0342729E5334b1a0b",
       "ReferralManagerProxy": "0x96D461C73a7Dc6931fcC48Cb4EFEbD2cdE6B8918",
       "ReferralManager": "0xFd66443af088A1E849e697e0b9FFd4d00aE03c3B",
       "WithdrawalVaultProxy": "0x08C2bFC0DaB916040db24fDAd8F77e1947b99597",
-      "WithdrawalVault": "0x0F3e7Cd6cc5d2e2Bd6Cef2a756c4E715eE9ECc5e",
+      "WithdrawalVault": "0x3d51064e002e3D0cF2974DAB2e705e6aD24B6B50",
       "EasySwapperV2Proxy": "0x47065E508433E22d73Be3c5B61EB9abafD450364",
-      "EasySwapperV2": "0x6ABc1fed07e64830DBadAe929adE5DdCFc1e8b18",
+      "EasySwapperV2": "0x3C0D1CD8fF66Ed9B9b3336692f2474F0E0E0b513",
       "KyberSwapRouterV2ContractGuard": "0x41276b2144ac99Fff3CCBb924934576ADB92f579",
-      "HyperliquidPositionGuard": "0x5212028d4460da9DD39a8934CEadBBBCc2c057a1",
-      "HyperliquidSpotGuard": "0xFb2dC4208e2361631A7c9fD43832b87F0d942e7a",
+      "HyperliquidPositionGuard": "0xfA1e4e067a565241417Ea6daAa9daA1F117eB211",
+      "HyperliquidSpotGuard": "0x894fe625195C199f8eeF6b61A394de8E734F41eD",
       "HyperliquidCoreWriterContractGuardProxy": "0x69bAd630798814588Ed024F9DFf3Aac1bC3533D2",
-      "HyperliquidCoreWriterContractGuard": "0xAC2ebA684fe5E7183f542e77c2ED03D970AbBb0D",
-      "HyperliquidCoreDepositWalletContractGuard": "0x2446A34a77516204045d0A92B47055743E5d937b",
-      "HyperliquidERC20Guard": "0x43abaC2f2f4Ad3C851a3914Df6c56F5e5E37D56A"
+      "HyperliquidCoreWriterContractGuard": "0xb1fE7E7c1320aC9D61B9452B72551B02cE45873d",
+      "HyperliquidCoreDepositWalletContractGuard": "0x7CD4c9562bf73544F78bd0d3D0162Ac7F4041153",
+      "HyperliquidERC20Guard": "0x43abaC2f2f4Ad3C851a3914Df6c56F5e5E37D56A",
+      "PoolLimitOrderManagerProxy": "0x6b696eA2602068a7043C92961B5F202a65A3eF9C",
+      "PoolLimitOrderManager": "0x6660324DBd2333B2b22d368FCc6D9de1580EC2cA",
+      "AcrossContractGuard": "0x43804F6a5fF927446C1b4EfcE86601Bb3c71EEe2",
+      "HyperliquidWithdrawalManagerProxy": "0xE63275a043c60DbdD7fF6315208de553F4127c5c",
+      "HyperliquidWithdrawalManager": "0x54331931B510D38723586C1Bc887136f435F845c"
     },
     "network": {
       "chainId": 999,
       "name": "unknown"
     },
-    "lastUpdated": "Tue, 14 Apr 2026 20:11:13 GMT",
+    "lastUpdated": "Thu, 23 Jul 2026 12:17:11 GMT",
     "config": {
       "hyperliquidCoreWriterGuard": {
         "approvedPerps": [
@@ -164,6 +169,11 @@
             "approved": true
           },
           {
+            "perpName": "kPEPE",
+            "assetId": 15,
+            "approved": true
+          },
+          {
             "perpName": "CRV",
             "assetId": 16,
             "approved": true
@@ -186,6 +196,11 @@
           {
             "perpName": "TRX",
             "assetId": 37,
+            "approved": true
+          },
+          {
+            "perpName": "kSHIB",
+            "assetId": 38,
             "approved": true
           },
           {
@@ -309,15 +324,77 @@
             "approved": true
           },
           {
+            "perpName": "xyz:MU",
+            "assetId": 110015,
+            "approved": true
+          },
+          {
+            "perpName": "xyz:SNDK",
+            "assetId": 110016,
+            "approved": true
+          },
+          {
+            "perpName": "xyz:SKHX",
+            "assetId": 110022,
+            "approved": true
+          },
+          {
             "perpName": "xyz:SILVER",
             "assetId": 110026,
+            "approved": true
+          },
+          {
+            "perpName": "xyz:CL",
+            "assetId": 110029,
+            "approved": true
+          },
+          {
+            "perpName": "xyz:BRENTOIL",
+            "assetId": 110049,
             "approved": true
           },
           {
             "perpName": "xyz:SP500",
             "assetId": 110052,
             "approved": true
+          },
+          {
+            "perpName": "xyz:DRAM",
+            "assetId": 110065,
+            "approved": true
+          },
+          {
+            "perpName": "xyz:SPCX",
+            "assetId": 110076,
+            "approved": true
+          },
+          {
+            "perpName": "xyz:SKHY",
+            "assetId": 110099,
+            "approved": true
           }
+        ]
+      },
+      "easySwapperV2": {
+        "customCooldownDepositsWhitelist": [
+          "0xb360401bAeBE769aAEDF0212cb1ad6Fd8430A282",
+          "0xc722466CFc5bc7E7cc6e01A984621900376c5FfF",
+          "0x46F34e200Aa5a1a220B74E5d28665CC3CFCC739a",
+          "0xf1bBA105ee5Eb20129A943ab23ba1FaEaeF6b947",
+          "0x6379297d251535BD4497C90d001787b53603CCA1",
+          "0xEe55e2Df9a98ABC3F9a2f40FA96279742b1858bE",
+          "0x0AC8D6A003De1869d450216116736ae4B8b4F471",
+          "0xa8B3f14d88593e1B5460654cF8eCdaf6d47165A9",
+          "0xBc8124fa384247dF4E6f3EA2548bb78aB4bA9Fe4",
+          "0xBDb2a2641d8E291437e244c08e4433A13796E8dE"
+        ]
+      },
+      "poolLimitOrderManager": {
+        "authorizedKeeperAddresses": [
+          "0x99c9F65a486C0567495ec58722916c73292D585f",
+          "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
+          "0x962976AA38665fc59B2F981C2457a6f95fFB2aD5",
+          "0x5048d4630c51d02A281Cb77E63a1A3af4Fd8dc33"
         ]
       }
     }

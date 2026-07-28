@@ -11,7 +11,8 @@ import {PolygonConfig} from "test/integration/utils/foundry/config/PolygonConfig
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
+import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {Governance} from "contracts/Governance.sol";
 
 contract AaveV3DryRunPolygon is DeploymentDryRunPolygon {
@@ -29,10 +30,12 @@ contract AaveV3DryRunPolygon is DeploymentDryRunPolygon {
     address latestPoolManagerLogic = address(new PoolManagerLogic());
     address latestPoolFactory = address(new PoolFactory());
     Governance governance = Governance(poolFactory.governanceAddress());
+    address assetHandlerAddr = poolFactory.getAssetHandler();
     vm.startPrank(poolFactory.owner());
     proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(poolFactory))), latestPoolFactory);
+    proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(assetHandlerAddr)), address(new AssetHandler()));
     poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
   }
 
   function getVaultsToCheck() internal pure returns (address[] memory torosVaults) {

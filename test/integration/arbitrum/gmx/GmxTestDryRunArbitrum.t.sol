@@ -99,6 +99,7 @@ contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer 
     address latestPoolManagerLogic = address(new PoolManagerLogic());
     address latestPoolFactory = address(new PoolFactory());
     proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(_poolFactory))), latestPoolFactory);
+    proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(assetHandler))), address(new AssetHandler()));
     _poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
 
     GmxExchangeRouterContractGuard gmxExchangeRouterContractGuard = new GmxExchangeRouterContractGuard(

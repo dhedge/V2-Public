@@ -15,7 +15,7 @@ contract SwapdataCacheManager is Test {
 
   // APIs related constants
   uint8 public constant RETRIES = 10;
-  uint16 public constant DEFAULT_HALT_MILLISECONDS = 2000;
+  uint16 public constant DEFAULT_HALT_MILLISECONDS = 5000;
 
   function __SwapdataCacheManager_init(bool useCachedSwapData_) public {
     useCachedSwapData = useCachedSwapData_;

@@ -9,7 +9,7 @@ import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 
 library DytmEasySwapperV2WithdrawalTestArbitrumSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 437906125;
+  uint256 public constant FORK_BLOCK_NUMBER = 463313610;
 
   address public constant DYTM_OFFICE = 0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001;
   address public constant DYTM_PERIPHERY = 0x1FBe7Bb394BE505C08e9ee419Dd166c71004e51B;

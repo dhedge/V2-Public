@@ -33,6 +33,7 @@ import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {ClosedAssetGuard} from "./ClosedAssetGuard.sol";
+import {AutomationBase} from "../../utils/chainlink/AutomationBase.sol";
 import {PendlePTHandlerLib} from "../../utils/pendle/PendlePTHandlerLib.sol";
 import {UnsafeMath} from "../../utils/uniswap/libraries/UnsafeMath.sol";
 import {WithdrawalHelperLib} from "../../utils/WithdrawalHelperLib.sol";
@@ -40,7 +41,12 @@ import {WithdrawalHelperLib} from "../../utils/WithdrawalHelperLib.sol";
 /// @title Aave lending pool asset guard
 /// @dev Asset type 3 is for v2
 ///      Asset type 8 is for v3
-contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGuard, ISwapDataConsumingGuard {
+contract AaveLendingPoolAssetGuard is
+  ClosedAssetGuard,
+  IAaveLendingPoolAssetGuard,
+  ISwapDataConsumingGuard,
+  AutomationBase
+{
   using SafeMath for uint256;
   using UnsafeMath for uint256;
   using PendlePTHandlerLib for AssetStructure;
@@ -213,16 +219,14 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     address _pool,
     uint256 _poolTokenAmount,
     uint256 _slippageTolerance
-  ) public override returns (SwapDataParams memory swapDataParams) {
+  ) public override cannotExecute returns (SwapDataParams memory swapDataParams) {
     (uint256 portion, ) = WithdrawalHelperLib.calculateWithdrawalPortion(_pool, _poolTokenAmount);
 
     swapDataParams = _calculateSwapDataParams(_pool, portion, _slippageTolerance);
 
     // Lower quote amounts intentionally by 0.01% for cases when management fee is set to avoid 'amount too high' revert
     for (uint256 i; i < swapDataParams.srcData.length; ++i) {
-      swapDataParams.srcData[i].amount = swapDataParams.srcData[i].amount.mul(BPS_DENOMINATOR.sub(1)).div(
-        BPS_DENOMINATOR
-      );
+      swapDataParams.srcData[i].amount = WithdrawalHelperLib.applyPortionShrinkBuffer(swapDataParams.srcData[i].amount);
     }
   }
 
@@ -243,6 +247,7 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     uint256 counter;
     uint256 matchingCollateralValueD18;
     IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic());
+    address factory = IPoolLogic(_pool).factory();
     {
       (AssetStructure[] memory collateralAssets, uint256 collateralAssetsLength) = _calculateCollateralAssets(
         _pool,
@@ -250,17 +255,23 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       );
       // It is possible that borrow asset is the same as one of the collateral assets, that's the reason why
       // we do not assign `collateralAssets` as `swapDataParams.srcData`, we need to filter out the borrow asset first.
-      // If collateral asset is the same as borrow asset, we don't need to swap it
+      // If collateral asset is the same as borrow asset, we don't need to swap it.
+      // - Compare on the EFFECTIVE asset (PT's underlying, else raw asset) so a PT whose underlying is the borrow
+      //   asset is also excluded, avoiding a degenerate token == dstData.asset srcData entry.
       AssetStructure[] memory filteredSrcData = new AssetStructure[](collateralAssetsLength);
       for (uint256 i; i < collateralAssetsLength; ++i) {
-        if (collateralAssets[i].asset != borrowAsset.asset) {
+        address effective = collateralAssets[i].asset;
+        if (collateralAssets[i].detectPendlePT(pendleYieldContractFactory)) {
+          (, effective) = PendlePTHandlerLib.getPTAssociatedDataByFactory(collateralAssets[i].asset, factory);
+        }
+        if (effective != borrowAsset.asset) {
           filteredSrcData[counter] = collateralAssets[i];
           counter++;
         } else {
-          // Track the value of collateral matching the debt asset (not swapped)
-          matchingCollateralValueD18 = poolManagerLogic.assetValue(
-            collateralAssets[i].asset,
-            collateralAssets[i].amount
+          // Track the value of collateral matching the debt asset (not swapped).
+          // - Accumulated so multiple matches (PT-underlying and/or raw debt asset) are all counted.
+          matchingCollateralValueD18 = matchingCollateralValueD18.add(
+            poolManagerLogic.assetValue(collateralAssets[i].asset, collateralAssets[i].amount)
           );
         }
       }
@@ -304,7 +315,7 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
     }
 
     // Calculate the minDstAmount based on the borrow asset price and the $ value of all collateral assets to be swapped
-    uint256 dstAssetPriceD18 = IHasAssetInfo(IPoolLogic(_pool).factory()).getAssetPrice(borrowAsset.asset);
+    uint256 dstAssetPriceD18 = IHasAssetInfo(factory).getAssetPrice(borrowAsset.asset);
     uint256 dstAssetDecimals = 10 ** IERC20Extended(borrowAsset.asset).decimals();
     uint256 minDstAmount = assetsToSwapFromValueD18
       .mul(dstAssetDecimals)
@@ -609,6 +620,8 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       _portion
     );
 
+    address factory = IPoolLogic(_pool).factory();
+
     // Get the swap props for the swapper contract
     ISwapper.InOutData memory swapProps;
     ISwapper.SrcData[] memory srcData = new ISwapper.SrcData[](1);
@@ -632,12 +645,22 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       bool isPT = collateralAssets[i].detectPendlePT(pendleYieldContractFactory);
 
       if (isPT) {
-        executionData.srcAssetsCount++;
+        // PT is always unrolled below; it consumes a srcData slot only when its unrolled underlying is swapped:
+        // - underlying != debt: included in swap data, gets swapped -> advance cursor
+        // - underlying == debt: excluded from swap data, repays flashloan directly -> do not advance
+        // (destData.destToken == debt asset, validated upstream by _validateDstToken)
+        (, address underlying) = PendlePTHandlerLib.getPTAssociatedDataByFactory(collateralAssets[i].asset, factory);
+        if (underlying != address(_swapData.destData.destToken)) {
+          executionData.srcAssetsCount++;
+        }
       }
       // Here it is decided if the amount to withdraw should be taken from the swap data (validated upstream) or at the moment of execution.
       // Always chooses the amount from the swap data to withdraw exact amount which will be then swapped downstream.
       // Only if one of the collateral assets is the same as the borrow asset, amount at the moment of execution is used. (such asset won't be present in swap data)
+      // The `srcAssetsCount < srcTokensLength` guard prevents an out-of-bounds read when the collateral matching the
+      // debt asset (excluded from swap data) is ordered after the last source asset.
       else if (
+        executionData.srcAssetsCount < executionData.srcTokensLength &&
         collateralAssets[i].asset == address(srcData[0].srcTokenSwapDetails[executionData.srcAssetsCount].token)
       ) {
         collateralAssets[i].amount = srcData[0].srcTokenSwapDetails[executionData.srcAssetsCount].amount;
@@ -717,10 +740,7 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       _portion
     );
 
-    // We have 3 transactions for each collateral asset:
-    // 1. Withdraw collateral asset from aave
-    // 2. Approve collateral asset for swap router
-    // 3. Swap collateral asset to repay asset
+    // At most 3 transactions per collateral asset: a withdraw, plus either an approve + swap, or a 2-tx Pendle unroll.
     uint256 length = collateralAssetsLength.mul(3);
     transactions = new MultiTransaction[](length);
 
@@ -738,7 +758,17 @@ contract AaveLendingPoolAssetGuard is ClosedAssetGuard, IAaveLendingPoolAssetGua
       );
       txCount++;
 
-      if (collateralAssets[i].asset != _repayAsset) {
+      if (collateralAssets[i].detectPendlePT(pendleYieldContractFactory)) {
+        // PT can't be routed through the UniV2-style router; unroll it via Pendle instead.
+        // - underlying == repay asset: unrolled underlying repays the flashloan directly, no swap needed
+        // - underlying != repay asset: swap needs a runtime-unknown amount, unsupported here -> use offchain swap data
+        (, address underlying) = PendlePTHandlerLib.getPTAssociatedDataByFactory(
+          collateralAssets[i].asset,
+          IPoolLogic(_pool).factory()
+        );
+        require(underlying == _repayAsset, "pt requires offchain data");
+        txCount = collateralAssets[i].processTransactions(transactions, txCount, _pool);
+      } else if (collateralAssets[i].asset != _repayAsset) {
         transactions[txCount].to = collateralAssets[i].asset;
         transactions[txCount].txData = abi.encodeWithSelector(
           IERC20Extended.approve.selector,

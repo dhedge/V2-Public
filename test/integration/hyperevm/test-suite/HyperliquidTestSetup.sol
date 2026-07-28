@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/v5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {HyperliquidBackboneSetup, IChangeAssets} from "./HyperliquidBackboneSetup.sol";
+import {CoreBackboneSetup, IChangeAssets} from "test/integration/utils/foundry/CoreBackboneSetup.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IERC20Extended} from "contracts/interfaces/IERC20Extended.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
@@ -29,7 +29,7 @@ import {HyperliquidSpotPriceAggregator} from "contracts/priceAggregators/Hyperli
 /// @title Hyperliquid Test Setup for Foundry integration tests
 /// @notice Abstract contract providing setup for Hyperliquid integration testing on HyperEVM
 /// @dev Extend this contract and implement chain-specific configuration in child contracts
-abstract contract HyperliquidTestSetup is HyperliquidBackboneSetup {
+abstract contract HyperliquidTestSetup is CoreBackboneSetup {
   /////////////////////////////////////////////
   //                 State                   //
   /////////////////////////////////////////////
@@ -55,6 +55,9 @@ abstract contract HyperliquidTestSetup is HyperliquidBackboneSetup {
   /// @notice Deployed HyperliquidSpotGuard instance (for spot assets like XAUT0)
   address public hyperliquidSpotGuard;
 
+  /// @notice Guard for regular ERC20 assets on HyperEVM
+  address public hyperliquidERC20Guard;
+
   /// @notice Deployed HyperliquidSpotPriceAggregator for XAUT0
   address public xaut0PriceAggregator;
 
@@ -70,6 +73,10 @@ abstract contract HyperliquidTestSetup is HyperliquidBackboneSetup {
   /// @notice Deploys all Hyperliquid-related contracts and guards
   function deployIntegration() internal {
     vm.startPrank(owner);
+
+    // Deploy HyperliquidERC20Guard for regular ERC20 assets
+    hyperliquidERC20Guard = deployCode("HyperliquidERC20Guard.sol");
+    governance.setAssetGuard(uint16(AssetTypeIncomplete.CHAINLINK), hyperliquidERC20Guard);
 
     // Deploy HyperliquidCoreWriterContractGuard implementation
     address coreWriterGuardImplementation = deployCode("HyperliquidCoreWriterContractGuard.sol");
@@ -106,7 +113,12 @@ abstract contract HyperliquidTestSetup is HyperliquidBackboneSetup {
 
     // Add assets to the asset handler
     // CoreWriter address is used as the asset address for perps positions
-    assetHandlerProxy.addAsset(coreWriter, uint16(AssetTypeIncomplete.HYPERLIQUID_PERPS_ASSET), usdPriceAggregator);
+    // Use USDC/USD Chainlink feed since getBalance returns USDC-denominated value, not USD
+    assetHandlerProxy.addAsset(
+      coreWriter,
+      uint16(AssetTypeIncomplete.HYPERLIQUID_PERPS_ASSET),
+      HyperEVMConfig.USDC_USD_PRICE_FEED
+    );
     // USDC is now a regular ERC20 asset - uses Chainlink price feed for USDC/USD
     assetHandlerProxy.addAsset(usdc, uint16(AssetTypeIncomplete.CHAINLINK), HyperEVMConfig.USDC_USD_PRICE_FEED);
 
@@ -250,5 +262,12 @@ abstract contract HyperliquidTestSetup is HyperliquidBackboneSetup {
   /// @return balance The USDC balance
   function _getPoolUSDCBalance() internal view returns (uint256 balance) {
     return IERC20(usdc).balanceOf(address(hyperliquidTestPool));
+  }
+
+  /// @notice Scales a value from one decimal precision to another
+  function _scale(uint256 value, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
+    if (fromDecimals == toDecimals) return value;
+    if (fromDecimals < toDecimals) return value * (10 ** (toDecimals - fromDecimals));
+    return value / (10 ** (fromDecimals - toDecimals));
   }
 }

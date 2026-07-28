@@ -11,9 +11,14 @@ import {Governance} from "contracts/Governance.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {IDytmOfficeContractGuard} from "contracts/interfaces/dytm/IDytmOfficeContractGuard.sol";
 import {DytmOfficeAssetGuard} from "contracts/guards/assetGuards/dytm/DytmOfficeAssetGuard.sol";
+import {DytmWithdrawProcessor} from "contracts/swappers/easySwapperV2/DytmWithdrawProcessor.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {IntegrationDeployer} from "test/integration/utils/foundry/dryRun/IntegrationDeployer.t.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
+import {IHasAssetInfo} from "contracts/interfaces/IHasAssetInfo.sol";
+import {IPActionMarketCoreStatic} from "contracts/interfaces/pendle/IPActionMarketCoreStatic.sol";
+import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {IERC20Extended} from "contracts/interfaces/IERC20Extended.sol";
 import {IDytmOffice} from "contracts/interfaces/dytm/IDytmOffice.sol";
 import {IDytmPeriphery} from "contracts/interfaces/dytm/IDytmPeriphery.sol";
@@ -73,6 +78,11 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
   address public immutable pendleMarket;
   address public immutable pendlePTUnderlying;
   address public immutable pendleStaticRouter;
+
+  // Scratch slot used by `_leverage_down` to hold the predicted `pendlePTUnderlying` (wstETH)
+  // amount produced by `unrollPendlePT` inside `EasySwapperV2.initWithdrawal`. Lifted to
+  // storage to keep that function's locals under the stack-depth limit.
+  uint256 internal _predictedWstethFromPt;
 
   bytes4 private constant DEPOSIT_CUSTOM_COOLDOWN_SELECTOR =
     bytes4(keccak256("depositWithCustomCooldown(address,address,uint256,uint256)"));
@@ -154,15 +164,24 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
 
     vm.startPrank(_poolFactory.owner());
 
+    // Deploy DYTM unwind processor (used by the asset guard's withdrawal lib).
+    // Bind to `easySwapperV2Instance` — the actual EasySwapperV2 the tests call `initWithdrawal`
+    // on — so the processor's vault-auth lookup finds the freshly-registered WithdrawalVault.
+    // `borrowAsset` is the chain's canonical USDC for these tests.
+    DytmWithdrawProcessor dytmWithdrawProcessor = new DytmWithdrawProcessor(
+      address(easySwapperV2Instance),
+      address(_poolFactory),
+      borrowAsset
+    );
+
     // Deploy Dytm Office Asset Guard
     dytmOfficeAssetGuard = new DytmOfficeAssetGuard(
       5,
-      pendleStaticRouter,
       dytmOffice,
       address(_poolFactory),
       dytmPeriphery,
       accountSplitterAndMerger,
-      address(0) // dytmWithdrawProcessor — set later when deployed
+      address(dytmWithdrawProcessor)
     );
     governance.setAssetGuard(uint16(106), address(dytmOfficeAssetGuard)); // Asset type 106 for DYTM
 
@@ -173,20 +192,20 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
     if (isCollateralDhedgePoolToken) {
       // Deploy DHedgePoolAggregator via deployCode (0.8.28 contract, can't use `new` from 0.7.6)
       address dhedgePoolAggregator = deployCode("DHedgePoolAggregator.sol", abi.encode(collateralAsset));
-      assetHandler.addAsset(collateralAsset, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), dhedgePoolAggregator);
+      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), dhedgePoolAggregator);
     } else {
-      assetHandler.addAsset(collateralAsset, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), collateralOracle);
+      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), collateralOracle);
     }
 
     // Add borrow asset
-    assetHandler.addAsset(borrowAsset, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), borrowOracle);
+    assetHandler.addAsset(borrowAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), borrowOracle);
 
     // Add swap destination asset (e.g., WETH)
-    assetHandler.addAsset(swapToAsset, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), swapToAssetOracle);
+    assetHandler.addAsset(swapToAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), swapToAssetOracle);
 
     assetHandler.addAsset(
       address(easySwapperV2Instance),
-      uint16(BackboneSetup.AssetTypeIncomplete.EASYSWAPPER_V2_UNROLLED),
+      uint16(AssetTypes.AssetTypeIncomplete.EASYSWAPPER_V2_UNROLLED),
       _usdPriceAggregator
     );
 
@@ -219,7 +238,9 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
       dytmPeriphery: dytmPeriphery,
       dhedgePoolFactory: address(_poolFactory),
       nftTracker: nftTracker,
-      maxDytmMarkets: maxDytmMarkets
+      accountSplitterAndMerger: accountSplitterAndMerger,
+      maxDytmMarkets: maxDytmMarkets,
+      admin: _poolFactory.owner()
     });
 
     // Deploy DytmOfficeContractGuard via deployCode (0.8.28 contract, can't use `new` from 0.7.6)
@@ -253,12 +274,14 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
 
     vm.startPrank(manager);
 
-    // Create pool without DYTM Office initially (contract guard must be set before addAssetCheck)
-    IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](4);
-    supportedAssets[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: true});
-    supportedAssets[1] = IHasSupportedAsset.Asset({asset: borrowAsset, isDeposit: false});
-    supportedAssets[2] = IHasSupportedAsset.Asset({asset: swapToAsset, isDeposit: false});
-    supportedAssets[3] = IHasSupportedAsset.Asset({asset: address(easySwapperV2Instance), isDeposit: false});
+    // Create pool without DYTM Office initially (contract guard must be set before addAssetCheck).
+    // When the collateral is a dHedge pool token, `EasySwapperV2.initWithdrawal` redeems it to its
+    // full underlying mix (PT → `pendlePTUnderlying` via `unrollPendlePT` included) and surfaces
+    // each underlying as a tracked asset on this pool's WithdrawalVault. The EasySwapperV2 guard's
+    // afterTxGuard requires every tracked asset to be supported on the calling pool, so mirror
+    // every underlying the collateral pool currently exposes — matches what real PT-aware fund
+    // managers configure (e.g. the on-chain "DYTM Testing 2" vault).
+    IHasSupportedAsset.Asset[] memory supportedAssets = _buildTestPoolSupportedAssets();
 
     dytmTestPool = PoolLogic(
       dhedgePoolFactory.createFund({
@@ -280,19 +303,22 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
 
     //
 
-    // Upgrade PoolFactory implementation to support valueManipulationCheck
+    // Upgrade PoolFactory and AssetHandler implementations
     vm.startPrank(dhedgePoolFactory.owner());
     proxyAdminProd.upgrade(
       TransparentUpgradeableProxy(payable(address(dhedgePoolFactory))),
       address(new PoolFactory())
     );
+    proxyAdminProd.upgrade(
+      TransparentUpgradeableProxy(payable(dhedgePoolFactory.getAssetHandler())),
+      address(new AssetHandler())
+    );
 
-    // Deploy new PoolLogic implementation with onDelegationCallback support
+    // Deploy new PoolLogic and PoolManagerLogic implementations
     PoolLogic newPoolLogicImplementation = new PoolLogic();
-    // Get the current PoolManagerLogic implementation
-    address currentPoolManagerLogicImpl = dhedgePoolFactory.getLogic(1); // Logic type 1 is PoolManagerLogic
+    PoolManagerLogic newPoolManagerLogicImplementation = new PoolManagerLogic();
 
-    dhedgePoolFactory.setLogic(address(newPoolLogicImplementation), currentPoolManagerLogicImpl); // Logic type 2 is PoolLogic
+    dhedgePoolFactory.setLogic(address(newPoolLogicImplementation), address(newPoolManagerLogicImplementation));
 
     // dhedgePoolFactory.addReceiverWhitelist(easySwapperV2Instance)
 
@@ -455,6 +481,85 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
       slippage: slippage
     });
     (destAmount, swapData) = getDataFromOdos(params, chainId, true, "v3");
+  }
+
+  /// @dev Build the `dytmTestPool`'s supported assets. Starts with the four roles the test always
+  ///      needs (collateral / borrow / swap / EasySwapperV2 tracker) and, when the collateral is
+  ///      a dHedge pool token, appends every supported asset of the collateral pool so the test
+  ///      pool can receive whatever `EasySwapperV2.initWithdrawal` ends up surfacing as a tracked
+  ///      asset on its WithdrawalVault.
+  function _buildTestPoolSupportedAssets() internal view returns (IHasSupportedAsset.Asset[] memory result) {
+    IHasSupportedAsset.Asset[] memory underlyings;
+    if (isCollateralDhedgePoolToken) {
+      underlyings = IHasSupportedAsset(PoolLogic(collateralAsset).poolManagerLogic()).getSupportedAssets();
+    }
+
+    IHasSupportedAsset.Asset[] memory buffer = new IHasSupportedAsset.Asset[](4 + underlyings.length);
+    buffer[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: true});
+    buffer[1] = IHasSupportedAsset.Asset({asset: borrowAsset, isDeposit: false});
+    buffer[2] = IHasSupportedAsset.Asset({asset: swapToAsset, isDeposit: false});
+    buffer[3] = IHasSupportedAsset.Asset({asset: address(easySwapperV2Instance), isDeposit: false});
+
+    uint256 count = 4;
+    for (uint256 i; i < underlyings.length; ++i) {
+      address ua = underlyings[i].asset;
+      bool exists;
+      for (uint256 j; j < count; ++j) {
+        if (buffer[j].asset == ua) {
+          exists = true;
+          break;
+        }
+      }
+      if (!exists) {
+        buffer[count++] = IHasSupportedAsset.Asset({asset: ua, isDeposit: false});
+      }
+    }
+
+    result = new IHasSupportedAsset.Asset[](count);
+    for (uint256 i; i < count; ++i) result[i] = buffer[i];
+  }
+
+  /// @dev Predict how much `pendlePTUnderlying` (wstETH) the test pool will hold after
+  ///      `EasySwapperV2.initWithdrawal` redeems PT inside `unrollPendlePT`. Returns 0 if the
+  ///      collateral pool isn't a dHedge pool / has no PT / has no PT-share-of-redeem.
+  function _previewWstethFromPt(uint256 _collateralToWithdraw) internal view returns (uint256 wstethOut) {
+    if (!isCollateralDhedgePoolToken || pendlePT == address(0)) return 0;
+    uint256 ptInCollateralPool = IERC20Extended(pendlePT).balanceOf(collateralAsset);
+    if (ptInCollateralPool == 0) return 0;
+    uint256 totalPoolSupplyForPt = IERC20Extended(collateralAsset).totalSupply();
+    uint256 predictedPt = (ptInCollateralPool * _collateralToWithdraw) / totalPoolSupplyForPt;
+    if (predictedPt == 0) return 0;
+    (wstethOut, , , , ) = IPActionMarketCoreStatic(pendleStaticRouter).swapExactPtForTokenStatic(
+      pendleMarket,
+      predictedPt,
+      pendlePTUnderlying
+    );
+  }
+
+  /// @dev Helper for `_leverage_down`: inserts the approve + Odos swap pair that converts the
+  ///      `pendlePTUnderlying` (wstETH) the pool ends up holding after PT redemption back into
+  ///      `swapToAsset` so the existing WETH→USDC leg can absorb the value. Kept in a separate
+  ///      function so `_leverage_down`'s already-large local set doesn't go stack-too-deep.
+  function _appendWstethToSwapToAssetLeg(
+    PoolLogic.TxToExecute[] memory _txs,
+    uint256 _idx,
+    uint256 _wstethAmount
+  ) internal returns (uint256 newIdx, uint256 wethOut) {
+    _txs[_idx++] = PoolLogic.TxToExecute({
+      to: pendlePTUnderlying,
+      data: abi.encodeWithSelector(IERC20.approve.selector, odosRouter, _wstethAmount)
+    });
+    // 2% slippage: PT-diluted DYTMT leaves the WETH leg small (~$5), and Odos's multi-hop
+    // (DODO + Uni V3) at that size spreads ~1–1.5%, just over the usual 1% headroom.
+    bytes memory wstethSwapData;
+    (wethOut, wstethSwapData) = _getSwapData({
+      srcToken: pendlePTUnderlying,
+      destToken: swapToAsset,
+      srcAmount: _wstethAmount,
+      slippage: 2
+    });
+    _txs[_idx++] = PoolLogic.TxToExecute({to: odosRouter, data: wstethSwapData});
+    newIdx = _idx;
   }
 
   //a simple test for delegation call to one supply tx
@@ -705,8 +810,8 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
     assertApproxEqRel(
       positionAfterLeverageDown.debt.debtAssets,
       positionAfterLeverageUp.debt.debtAssets / 2,
-      0.05e18,
-      "Should have approximately half the debt remaining (5% tolerance)"
+      0.01e18,
+      "Should have approximately half the debt remaining (1% tolerance)"
     );
   }
 
@@ -776,8 +881,17 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
       collateralToWithdraw = swapToAssetToSwapBack;
     }
 
+    // If the collateral pool holds Pendle PT, `EasySwapperV2.initWithdrawal` will redeem PT
+    // → `pendlePTUnderlying` (e.g. wstETH) inside `unrollPendlePT`, and the pool ends up
+    // holding raw wstETH that isn't a tracked supported asset on `dytmTestPool`. Predict that
+    // amount here so we can add an extra Odos leg `wstETH → swapToAsset` to fold the value
+    // back into the WETH→USDC leg below. Stored on the contract instead of as a local to
+    // keep `_leverage_down`'s stack from blowing up.
+    _predictedWstethFromPt = _previewWstethFromPt(collateralToWithdraw);
+
     // Build deleverage multicall in REVERSE order
     uint256 callCount = isCollateralDhedgePoolToken ? 5 : 3; // Added +1 for the swap after unroll
+    if (_predictedWstethFromPt > 0) callCount += 2; // approve + odos swap for wstETH→swapToAsset
     PoolLogic.TxToExecute[] memory txs = new PoolLogic.TxToExecute[](callCount);
 
     // REVERSE ORDER (opposite of leverage up):
@@ -851,6 +965,12 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
         if (asset == swapToAsset || asset == borrowAsset || asset == address(0)) {
           continue; // Skip swapToAsset and borrowAsset
         }
+        // Pendle PT is redeemed to its underlying inside `EasySwapperV2.initWithdrawal` (via
+        // `SwapperV2Helpers.unrollPendlePT`), so we never see raw PT on this side and Odos
+        // would 500 on a `PT → swapToAsset` quote anyway.
+        if (IHasAssetInfo(address(dhedgePoolFactory)).getAssetType(asset) == 37 /* PENDLE_PT */) {
+          continue;
+        }
 
         uint256 assetBalanceInPool = IERC20Extended(asset).balanceOf(collateralAsset);
         uint256 expectedAssetAmount = (assetBalanceInPool * withdrawProportion) / 1e18;
@@ -876,23 +996,37 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
       uint256 borrowAssetBalanceInPool = IERC20Extended(borrowAsset).balanceOf(collateralAsset);
       uint256 expectedBorrowAssetFromUnroll = (borrowAssetBalanceInPool * withdrawProportion) / 1e18;
 
+      uint256 nextIdx = 3;
+      uint256 additionalWethFromWsteth;
+
+      // (NEW) If PT was in the collateral pool, `unrollPendlePT` inside `initWithdrawal` will
+      // have produced `pendlePTUnderlying` (wstETH) on the pool. Convert it to `swapToAsset`
+      // (WETH) and roll the result into the WETH→USDC leg below so the unwound value flows
+      // all the way through to USDC for repay — keeping the pool's value conserved without
+      // adding wstETH as a supported asset.
+      if (_predictedWstethFromPt > 0) {
+        (nextIdx, additionalWethFromWsteth) = _appendWstethToSwapToAssetLeg(txs, nextIdx, _predictedWstethFromPt);
+      }
+
       // Call 4 (REVERSE): Swap swapToAsset -> borrowAsset
-      // Step 4: Get swap data for swapToAsset -> borrowAsset with the amount we'll receive from unroll
+      // Step 4: Get swap data for swapToAsset -> borrowAsset with the unroll-WETH plus any
+      // wstETH-derived WETH from the leg above. 2% slippage absorbs Odos's multi-hop spread
+      // on PT-diluted small amounts.
       (uint256 expectedBorrowAssetFromSwap, bytes memory swapDataDown) = _getSwapData({
         srcToken: swapToAsset,
         destToken: borrowAsset,
-        srcAmount: expectedSwapToAssetFromUnroll, // Use the actual amount we'll receive from unroll
-        slippage: 1 // 1% slippage
+        srcAmount: expectedSwapToAssetFromUnroll + additionalWethFromWsteth,
+        slippage: 2
       });
 
-      txs[3] = PoolLogic.TxToExecute({to: odosRouter, data: swapDataDown});
+      txs[nextIdx++] = PoolLogic.TxToExecute({to: odosRouter, data: swapDataDown});
 
       // Call 5 (REVERSE): Repay debt to DYTM
       // Total borrowAsset = from swap + any borrowAsset directly from unroll
       // Apply 2% haircut to account for prediction inaccuracy (withdrawal fees, slippage, rounding)
       uint256 totalBorrowAssetToRepay = ((expectedBorrowAssetFromSwap + expectedBorrowAssetFromUnroll) * 98) / 100;
 
-      txs[4] = PoolLogic.TxToExecute({
+      txs[nextIdx] = PoolLogic.TxToExecute({
         to: dytmOffice,
         data: abi.encodeWithSelector(
           IDytmOffice.repay.selector,
@@ -1182,7 +1316,9 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
       dytmPeriphery: dytmPeriphery,
       dhedgePoolFactory: address(dhedgePoolFactory),
       nftTracker: nftTracker,
-      maxDytmMarkets: 2
+      accountSplitterAndMerger: accountSplitterAndMerger,
+      maxDytmMarkets: 2,
+      admin: dhedgePoolFactory.owner()
     });
 
     dytmOfficeContractGuard = IDytmOfficeContractGuard(

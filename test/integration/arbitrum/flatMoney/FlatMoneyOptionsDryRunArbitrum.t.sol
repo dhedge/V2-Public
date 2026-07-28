@@ -8,7 +8,7 @@ import {FlatMoneyOptionsTestSharedData} from "test/integration/arbitrum/flatMone
 import {DeploymentDryRunArbitrum} from "test/integration/utils/foundry/dryRun/DeploymentDryRunArbitrum.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 import {Governance} from "contracts/Governance.sol";
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {AaveLendingPoolAssetGuard} from "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol";
 
 contract FlatMoneyOptionsDryRunArbitrum is DeploymentDryRunArbitrum {
@@ -32,7 +32,7 @@ contract FlatMoneyOptionsDryRunArbitrum is DeploymentDryRunArbitrum {
       address(0),
       1
     );
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
   }
 
   function getTorosVaults() internal pure returns (address[] memory torosVaults) {

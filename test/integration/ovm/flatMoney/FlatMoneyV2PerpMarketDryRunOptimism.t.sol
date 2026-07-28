@@ -8,7 +8,7 @@ import {FlatMoneyV2PerpMarketTestSharedData} from "test/integration/ovm/flatMone
 import {DeploymentDryRunOptimism} from "test/integration/utils/foundry/dryRun/DeploymentDryRunOptimism.t.sol";
 import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 import {Governance} from "contracts/Governance.sol";
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {AaveLendingPoolAssetGuard} from "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol";
 import {ERC20Guard} from "contracts/guards/assetGuards/ERC20Guard.sol";
 import {AaveLendingPoolGuardV3L2Pool} from "contracts/guards/contractGuards/AaveLendingPoolGuardV3L2Pool.sol";
@@ -35,13 +35,13 @@ contract FlatMoneyV2PerpMarketDryRunOptimismSkip is DeploymentDryRunOptimism {
       address(0),
       1
     );
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
 
     ERC20Guard erc20Guard = new ERC20Guard();
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), address(erc20Guard));
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.SNX_SYNTH), address(erc20Guard));
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.LENDING_ENABLED), address(erc20Guard));
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.SNX_SYNTH_LENDING_ENABLED), address(erc20Guard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), address(erc20Guard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.SNX_SYNTH), address(erc20Guard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.LENDING_ENABLED), address(erc20Guard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.SNX_SYNTH_LENDING_ENABLED), address(erc20Guard));
 
     AaveLendingPoolGuardV3L2Pool aaveLendingPoolGuardV3L2Pool = new AaveLendingPoolGuardV3L2Pool();
     governance.setContractGuard(OptimismConfig.AAVE_V3_LENDING_POOL, address(aaveLendingPoolGuardV3L2Pool));

@@ -129,6 +129,7 @@ import { dytmOfficeContractGuardJob } from "./jobs/contractGuards/dytmOfficeCont
 import { dytmWithdrawProcessorJob } from "./jobs/dytmWithdrawProcessorJob";
 import { pendlePTAssetGuardJob } from "./jobs/assetGuards/pendlePTAssetGuardJob";
 import { dytmOfficeAssetGuardJob } from "./jobs/assetGuards/dytmOfficeAssetGuardJob";
+import { ondoGMTokenAssetGuardJob } from "./jobs/assetGuards/ondoGMTokenAssetGuardJob";
 import { allowApproveContractGuardJob } from "./jobs/contractGuards/allowApproveContractGuardJob";
 import { virtualTokenAssetGuardJob } from "./jobs/assetGuards/virtualTokenAssetGuardJob";
 import { fluidMerkleDistributorContractGuardJob } from "./jobs/contractGuards/fluidMerkleDistributorContractGuardJob";
@@ -147,6 +148,18 @@ import { hyperliquidSpotGuardJob } from "./jobs/assetGuards/hyperliquidSpotGuard
 import { coreDepositWalletContractGuardJob } from "./jobs/contractGuards/coreDepositWalletContractGuardJob";
 import { hyperliquidERC20GuardJob } from "./jobs/assetGuards/hyperliquidERC20GuardJob";
 import { hyperliquidCoreWriterConfigurationJob } from "./jobs/contractGuards/hyperliquidCoreWriterConfigurationJob";
+import { hyperliquidCoreWriterApiWalletJob } from "./jobs/contractGuards/hyperliquidCoreWriterApiWalletJob";
+import { hyperliquidWithdrawalManagerJob } from "./jobs/hyperliquidWithdrawalManage/hyperliquidWithdrawalManagerJob";
+import { ondoAttestationOracleJob } from "./jobs/ondo/ondoAttestationOracleJob";
+import { ondoAttestationOracleConfigurationJob } from "./jobs/ondo/ondoAttestationOracleConfigurationJob";
+import { ondoGMSwapJob } from "./jobs/ondo/ondoGMSwapJob";
+import { ondoGMSwapConfigurationJob } from "./jobs/ondo/ondoGMSwapConfigurationJob";
+import { ondoGMSwapContractGuardJob } from "./jobs/contractGuards/ondoGMSwapContractGuardJob";
+import { midasRedemptionVaultContractGuardJob } from "./jobs/contractGuards/midasRedemptionVaultContractGuardJob";
+import { midasDepositVaultContractGuardJob } from "./jobs/contractGuards/midasDepositVaultContractGuardJob";
+import { midasMTokenAssetGuardJob } from "./jobs/assetGuards/midasMTokenAssetGuardJob";
+import { midasPendingRedemptionAssetGuardJob } from "./jobs/assetGuards/midasPendingRedemptionAssetGuardJob";
+import { withdrawalGuardianJob } from "./jobs/withdrawalGuardian/withdrawalGuardianJob";
 
 const jobs: { [key: string]: IJob<void> } = {
   // Swappers related
@@ -159,7 +172,6 @@ const jobs: { [key: string]: IJob<void> } = {
   // External
   rewarddistribution: rewardDistributionJob,
   slippageaccumulator: slippageAccumulatorJob,
-  dytmwithdrawprocessor: dytmWithdrawProcessorJob,
   easylimitbuymanager: easyLimitBuyManagerJob,
   easylimitbuyconfig: easyLimitBuyManagerConfigurationJob,
   valuemanipulationcheck: valueManipulationCheckJob,
@@ -177,7 +189,13 @@ const jobs: { [key: string]: IJob<void> } = {
   limitorderconfig: poolLimitOrderManagerConfigurationJob,
   typedstructureddatavalidator: typedStructuredDataValidatorJob,
   typedstructureddatavalidatorconfiguration: typedStructuredDataValidatorConfigurationJob,
+  withdrawalguardian: withdrawalGuardianJob,
   referralmanager: referralManagerJob,
+  ondoattestationoracle: ondoAttestationOracleJob,
+  ondoattestationoracleconfiguration: ondoAttestationOracleConfigurationJob,
+  ondogmswap: ondoGMSwapJob,
+  ondogmswapconfig: ondoGMSwapConfigurationJob,
+  hyperliquidwithdrawalmanager: hyperliquidWithdrawalManagerJob,
 
   // Dhedge Staking V2
   dhedgestakingv2nftjson: dhedgeStakingV2NFTJSONJob,
@@ -223,11 +241,15 @@ const jobs: { [key: string]: IJob<void> } = {
   flatmoneyv2unitassetguard: flatMoneyV2UNITAssetGuardJob,
   flatmoneyv2unitoutsidewithdrawalassetguard: flatMoneyV2UNITOutsideWithdrawalAssetGuardJob,
   pendleptassetguard: pendlePTAssetGuardJob,
+  dytmwithdrawprocessor: dytmWithdrawProcessorJob,
   dytmofficeassetguard: dytmOfficeAssetGuardJob,
+  ondogmtokenassetguard: ondoGMTokenAssetGuardJob,
   virtualtokenassetguard: virtualTokenAssetGuardJob,
   hyperliquidpositionguard: hyperliquidPositionGuardJob,
   hyperliquidspotguard: hyperliquidSpotGuardJob,
   hyperliquiderc20guard: hyperliquidERC20GuardJob,
+  midasmtokenassetguard: midasMTokenAssetGuardJob,
+  midaspendingredemptionassetguard: midasPendingRedemptionAssetGuardJob,
 
   // Contract Guards
   closedcontractguard: closedContractGuardJob,
@@ -296,7 +318,11 @@ const jobs: { [key: string]: IJob<void> } = {
   dytmofficecontractguard: dytmOfficeContractGuardJob,
   hyperliquidcorewriterguard: hyperliquidCoreWriterContractGuardJob,
   hyperliquidcorewriterconfiguration: hyperliquidCoreWriterConfigurationJob,
+  hyperliquidcorewriterapiwallet: hyperliquidCoreWriterApiWalletJob,
   coredepositwalletcontractguard: coreDepositWalletContractGuardJob,
+  ondogmswapcontractguard: ondoGMSwapContractGuardJob,
+  midasredemptionvaultcontractguard: midasRedemptionVaultContractGuardJob,
+  midasdepositvaultcontractguard: midasDepositVaultContractGuardJob,
 
   // Governance
   assets: assetsJob,

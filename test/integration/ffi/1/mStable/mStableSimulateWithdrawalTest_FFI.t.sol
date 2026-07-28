@@ -41,6 +41,7 @@ contract mStableSimulateWithdrawalTestFFI is mStableTroubleshootingTest, OdosAPI
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
     withdrawData.slippageTolerance = 100; // 1%
 
+    vm.prank(address(this), address(0));
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = AaveLendingPoolAssetGuard(
       0x8c2673aB7dad2C6f50D54B6FaFE5F67EaFa16810
     ).calculateSwapDataParams(address(vault), amountToWithdraw, withdrawData.slippageTolerance);

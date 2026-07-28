@@ -8,7 +8,7 @@ import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 
 library DytmDelegationCallTestArbitrumSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 437520103;
+  uint256 public constant FORK_BLOCK_NUMBER = 465705846;
 
   address public constant DYTM_OFFICE = 0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001;
   address public constant DYTM_PERIPHERY = 0x1FBe7Bb394BE505C08e9ee419Dd166c71004e51B;
@@ -68,6 +68,13 @@ contract DytmDelegationCallTestFFIArbitrum is DytmDelegationCallTestSetup, Arbit
     config.isCollateralDhedgePoolToken = DytmDelegationCallTestArbitrumSharedData.IS_COLLATERAL_DHEDGE_POOL_TOKEN;
     config.marketCreator = DytmDelegationCallTestArbitrumSharedData.MARKET_CREATOR;
     config.dytmMarketId = DytmDelegationCallTestArbitrumSharedData.DYTM_MARKET_ID;
+
+    // Pendle PT config — required so leverage-down can route PT → wstETH → WETH → USDC repay.
+    // Without it, the wstETH leg is skipped and PT value strands in the pool.
+    config.pendlePT = 0x71fBF40651E9D4278a74586AfC99F307f369Ce9A; // PT-wstETH-25JUN2026
+    config.pendleMarket = 0xf78452e0f5C0B95fc5dC8353B8CD1e06E53fa25B;
+    config.pendlePTUnderlying = 0x5979D7b546E38E414F7E9822514be443A4800529; // wstETH
+    config.pendleStaticRouter = 0xAdB09F65bd90d19e3148D9ccb693F3161C6DB3E8;
 
     // Odos configuration
     config.odosRouter = DytmDelegationCallTestArbitrumSharedData.ODOS_ROUTER;

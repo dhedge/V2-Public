@@ -11,6 +11,7 @@ import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {AaveLendingPoolGuardV3} from "contracts/guards/contractGuards/AaveLendingPoolGuardV3.sol";
 import {AaveLendingPoolGuardV3L2Pool} from "contracts/guards/contractGuards/AaveLendingPoolGuardV3L2Pool.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {IntegrationDeployer} from "test/integration/utils/foundry/dryRun/IntegrationDeployer.t.sol";
 import {DhedgeUniV3V2Router} from "contracts/routers/DhedgeUniV3V2Router.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
@@ -138,16 +139,16 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
       pendleStaticRouter,
       150 // setting to 1.5% mismatch allowed for the sake of tests, production value should be around 5 (0.05%)
     );
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), erc20Guard); // Set ERC20Guard once again (needed for dryrun tests)
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.AAVE_V3), address(aaveLendingPoolAssetGuard));
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), erc20Guard); // Set ERC20Guard once again (needed for dryrun tests)
 
     uint16 assetType0 = _selectAssetType(token0ToLend);
     uint16 assetType1 = _selectAssetType(token1ToLend);
 
-    assetHandler.addAsset(aaveV3Pool, uint16(BackboneSetup.AssetTypeIncomplete.AAVE_V3), _usdPriceAggregator);
+    assetHandler.addAsset(aaveV3Pool, uint16(AssetTypes.AssetTypeIncomplete.AAVE_V3), _usdPriceAggregator);
     assetHandler.addAsset(token0ToLend, assetType0, token0Oracle);
     assetHandler.addAsset(token1ToLend, assetType1, token1Oracle);
-    assetHandler.addAsset(tokenToBorrow, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), tokenToBorrowOracle);
+    assetHandler.addAsset(tokenToBorrow, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), tokenToBorrowOracle);
 
     if (token0ToLendPendleMarket != address(0) || token1ToLendPendleMarket != address(0)) {
       // Count non-zero markets
@@ -176,7 +177,11 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
 
       governance.setAssetGuard(uint16(AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN), address(pendlePTAssetGuard));
       governance.setAssetGuard(200, address(rewardAssetGuard));
-      assetHandler.addAsset(token0ToLendUnderlying, 200, token0ToLendUnderlyingOracle);
+      // PT underlying == borrow asset: it is already registered above as CHAINLINK, so skip the duplicate addAsset.
+      // - the unrolled underlying is valued/withdrawn as that first-class debt asset (reward linkage not needed).
+      if (token0ToLendUnderlying != tokenToBorrow) {
+        assetHandler.addAsset(token0ToLendUnderlying, 200, token0ToLendUnderlyingOracle);
+      }
     }
 
     vm.stopPrank();
@@ -779,8 +784,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
   function test_can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_no_swapdata() public {
     // Skip the test if token to lend is PT token: onchain legacy way of withdrawing doesn't support PT tokens
     // Skip the test if uniV3Factory is not set: only offchain swap data withdrawal is supported in that case
-    bool shouldSkip = _selectAssetType(token0ToLend) ==
-      uint16(BackboneSetup.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN) ||
+    bool shouldSkip = _selectAssetType(token0ToLend) == uint16(AssetTypes.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN) ||
       uniV3Factory == address(0);
 
     vm.skip(shouldSkip);
@@ -836,7 +840,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
 
   // ========== Offchain swap data revert tests ==========
 
-  function test_revert_withdraw_with_swap_data_length_mismatch() public {
+  function test_revert_withdraw_with_swap_data_length_mismatch() public virtual {
     skip(1 days);
 
     _supplyAndBorrow();
@@ -847,6 +851,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
     withdrawData.slippageTolerance = 100; // 1%
 
+    vm.prank(address(this), address(0));
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
       address(aaveTestPool),
       amountToWithdraw,
@@ -880,7 +885,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     aaveTestPool.withdrawSafe(amountToWithdraw, complexAssetsData);
   }
 
-  function test_revert_withdraw_with_src_token_mismatch() public {
+  function test_revert_withdraw_with_src_token_mismatch() public virtual {
     skip(1 days);
 
     _supplyAndBorrow();
@@ -891,6 +896,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
     withdrawData.slippageTolerance = 100; // 1%
 
+    vm.prank(address(this), address(0));
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
       address(aaveTestPool),
       amountToWithdraw,
@@ -933,7 +939,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     aaveTestPool.withdrawSafe(amountToWithdraw, complexAssetsData);
   }
 
-  function test_revert_withdraw_with_src_amount_too_high() public {
+  function test_revert_withdraw_with_src_amount_too_high() public virtual {
     skip(1 days);
 
     _supplyAndBorrow();
@@ -944,6 +950,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
     withdrawData.slippageTolerance = 100; // 1%
 
+    vm.prank(address(this), address(0));
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
       address(aaveTestPool),
       amountToWithdraw,
@@ -987,7 +994,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     aaveTestPool.withdrawSafe(amountToWithdraw, complexAssetsData);
   }
 
-  function test_revert_withdraw_with_src_amount_mismatch() public {
+  function test_revert_withdraw_with_src_amount_mismatch() public virtual {
     skip(1 days);
 
     _supplyAndBorrow();
@@ -998,6 +1005,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
     withdrawData.slippageTolerance = 100; // 1%
 
+    vm.prank(address(this), address(0));
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
       address(aaveTestPool),
       amountToWithdraw,
@@ -1053,6 +1061,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
     withdrawData.slippageTolerance = 100; // 1%
 
+    vm.prank(address(this), address(0));
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
       address(aaveTestPool),
       amountToWithdraw,
@@ -1092,7 +1101,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     aaveTestPool.withdrawSafe(amountToWithdraw, complexAssetsData);
   }
 
-  function test_revert_withdraw_with_dst_amount_mismatch() public {
+  function test_revert_withdraw_with_dst_amount_mismatch() public virtual {
     skip(1 days);
 
     _supplyAndBorrow();
@@ -1103,6 +1112,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
     withdrawData.slippageTolerance = 100; // 1%
 
+    vm.prank(address(this), address(0));
     AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
       address(aaveTestPool),
       amountToWithdraw,
@@ -1144,6 +1154,66 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     aaveTestPool.withdrawSafe(amountToWithdraw, complexAssetsData);
   }
 
+  // Test for an out-of-bounds read in `AaveLendingPoolAssetGuard._withdrawCollateralTransactions` (offchain
+  // swap path). When the debt asset is also supplied as collateral, that collateral is excluded from the swap data, so
+  // its index must not advance the src-token cursor. Before the fix, iterating it after the last src asset read past the
+  // end of `srcData`, reverting with the `INVALID` (0xFE) opcode.
+  function test_withdrawSafe_builds_collateral_txs_when_debt_asset_collateral_is_after_last_src_asset() public virtual {
+    skip(1 days);
+
+    uint256 amountToWithdraw = IERC20Extended(address(aaveTestPool)).balanceOf(investor) / 2;
+
+    _supplyAndBorrow();
+
+    uint256 debtAssetBalance = IERC20Extended(tokenToBorrow).balanceOf(address(aaveTestPool));
+
+    vm.prank(manager);
+    aaveTestPool.execTransaction(
+      aaveV3Pool,
+      abi.encodeWithSelector(IAaveV3Pool.supply.selector, tokenToBorrow, debtAssetBalance, address(aaveTestPool), 0)
+    );
+
+    AaveLendingPoolAssetGuard.ComplexAssetSwapData memory withdrawData;
+    withdrawData.slippageTolerance = 100; // 1%
+
+    vm.prank(address(this), address(0));
+    AaveLendingPoolAssetGuard.SwapDataParams memory swapDataParams = aaveLendingPoolAssetGuard.calculateSwapDataParams(
+      address(aaveTestPool),
+      amountToWithdraw,
+      withdrawData.slippageTolerance
+    );
+
+    withdrawData.destData.destToken = IERC20(swapDataParams.dstData.asset);
+    withdrawData.destData.minDestAmount = swapDataParams.dstData.amount;
+
+    ISwapper.SrcTokenSwapDetails[] memory srcData = new ISwapper.SrcTokenSwapDetails[](swapDataParams.srcData.length);
+
+    for (uint256 i = 0; i < srcData.length; i++) {
+      srcData[i].token = IERC20(swapDataParams.srcData[i].asset);
+      srcData[i].amount = swapDataParams.srcData[i].amount;
+    }
+
+    withdrawData.srcData = abi.encode(srcData);
+
+    PoolManagerLogic.Asset[] memory poolAssets = aaveTestPoolManagerLogic.getSupportedAssets();
+    IPoolLogic.ComplexAsset[] memory complexAssetsData = new IPoolLogic.ComplexAsset[](poolAssets.length);
+
+    for (uint256 i = 0; i < complexAssetsData.length; i++) {
+      complexAssetsData[i].supportedAsset = poolAssets[i].asset;
+
+      if (complexAssetsData[i].supportedAsset == aaveV3Pool) {
+        complexAssetsData[i].withdrawData = abi.encode(withdrawData);
+        complexAssetsData[i].slippageTolerance = withdrawData.slippageTolerance;
+      }
+    }
+
+    // Execution now reaches the swap step and reverts with `InvalidAggregator(bytes32)` (0x76c68c3b) because the
+    // placeholder swap data carries no aggregator.
+    vm.prank(investor);
+    vm.expectRevert(abi.encodeWithSelector(bytes4(0x76c68c3b), bytes32(0)));
+    aaveTestPool.withdrawSafe(amountToWithdraw, complexAssetsData);
+  }
+
   // ========== Helper Functions ==========
 
   function _supply() internal {
@@ -1174,10 +1244,10 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
   }
 
   function _selectAssetType(address _asset) internal view returns (uint16 assetType) {
-    if (pendleYieldContractFactory == address(0)) return uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK);
+    if (pendleYieldContractFactory == address(0)) return uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK);
 
     assetType = IPYieldContractFactory(pendleYieldContractFactory).isPT(_asset)
-      ? uint16(BackboneSetup.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN)
-      : uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK);
+      ? uint16(AssetTypes.AssetTypeIncomplete.PENDLE_PRINCIPAL_TOKEN)
+      : uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK);
   }
 }

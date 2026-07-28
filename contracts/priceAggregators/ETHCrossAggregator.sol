@@ -1,10 +1,8 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.28;
 
-import "@openzeppelin/contracts/math/SignedSafeMath.sol";
-
-import "../interfaces/IAggregatorV3Interface.sol";
+import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 
 /**
  * @title USD cross ETH price aggregator.
@@ -12,8 +10,6 @@ import "../interfaces/IAggregatorV3Interface.sol";
  * @dev This should have `latestRoundData` function as chainlink pricing oracle.
  */
 contract ETHCrossAggregator is IAggregatorV3Interface {
-  using SignedSafeMath for int256;
-
   address public token;
   IAggregatorV3Interface public tokenEthAggregator;
   IAggregatorV3Interface public ethUsdAggregator;
@@ -45,7 +41,7 @@ contract ETHCrossAggregator is IAggregatorV3Interface {
     (, int256 tokenEthPrice, , uint256 tokenEthUpdatedAt, ) = tokenEthAggregator.latestRoundData();
     (, int256 ethUsdPrice, , uint256 ethUsdUpdatedAt, ) = ethUsdAggregator.latestRoundData();
 
-    answer = tokenEthPrice.mul(ethUsdPrice).div(1e18);
+    answer = (tokenEthPrice * ethUsdPrice) / 1e18;
     return (0, answer, 0, tokenEthUpdatedAt > ethUsdUpdatedAt ? ethUsdUpdatedAt : tokenEthUpdatedAt, 0);
   }
 }

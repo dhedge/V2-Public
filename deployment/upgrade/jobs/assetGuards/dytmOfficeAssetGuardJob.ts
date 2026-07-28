@@ -20,14 +20,12 @@ export const dytmOfficeAssetGuardJob: IJob<void> = async (
   if (config.execute) {
     const ethers = hre.ethers;
     const poolFactoryAddress = versions[config.oldTag].contracts.PoolFactoryProxy;
-    const pendleStaticRouter = addresses.pendle?.staticRouter;
-    const dytmWithdrawProcessorAddress = versions[config.oldTag].contracts.DytmWithdrawProcessor;
+    const dytmWithdrawProcessorAddress =
+      versions[config.newTag].contracts.DytmWithdrawProcessor ??
+      versions[config.oldTag].contracts.DytmWithdrawProcessor;
 
     if (!poolFactoryAddress) {
       return console.warn("PoolFactoryProxy could not be found: skipping.");
-    }
-    if (!pendleStaticRouter) {
-      return console.warn("pendle.staticRouter not configured: skipping.");
     }
     if (!dytmWithdrawProcessorAddress) {
       return console.warn("DytmWithdrawProcessor could not be found: skipping.");
@@ -35,9 +33,8 @@ export const dytmOfficeAssetGuardJob: IJob<void> = async (
 
     const DytmOfficeAssetGuard = await ethers.getContractFactory("DytmOfficeAssetGuard");
 
-    const args: [number, Address, Address, Address, Address, Address, Address] = [
+    const args: [number, Address, Address, Address, Address, Address] = [
       addresses.dytm.mismatchDeltaNumerator,
-      pendleStaticRouter,
       addresses.dytm.dytmOffice,
       poolFactoryAddress,
       addresses.dytm.dytmPeriphery,

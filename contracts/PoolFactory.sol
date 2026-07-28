@@ -105,6 +105,10 @@ contract PoolFactory is
   /// @param referralManager The new referral manager address
   event ReferralManagerSet(address referralManager);
 
+  event CustomCooldownWhitelistUpdated(address extAddress, bool enabled);
+
+  event ReceiverWhitelistUpdated(address extAddress, bool enabled);
+
   address[] public deployedFunds;
 
   address public override daoAddress;
@@ -180,7 +184,7 @@ contract PoolFactory is
     _setAssetHandler(_assetHandlerAddress);
     _setDAOAddress(_daoAddress);
     _setGovernanceAddress(_governanceAddress);
-    _setMaximumFee(5000, 300, 100, 100, 10000); // 50% performance fee, 3% management fee, 1% entry fee, 1% exit fee
+    _setMaximumFee(5000, 300, 200, 200, 10000); // 50% performance fee, 3% management fee, 2% entry fee, 2% exit fee
     _setDaoFee(10, 100); // 10%
     _setExitCooldown(1 days);
     setPerformanceFeeNumeratorChangeDelay(2 weeks);
@@ -275,6 +279,7 @@ contract PoolFactory is
   /// @param _extAddress The address to add to whitelist
   function addCustomCooldownWhitelist(address _extAddress) external onlyOwner {
     customCooldownWhitelist[_extAddress] = true;
+    emit CustomCooldownWhitelistUpdated(_extAddress, true);
   }
 
   /// @notice Remove an address from the whitelist
@@ -282,6 +287,7 @@ contract PoolFactory is
   /// @param _extAddress The address to remove from whitelist
   function removeCustomCooldownWhitelist(address _extAddress) external onlyOwner {
     customCooldownWhitelist[_extAddress] = false;
+    emit CustomCooldownWhitelistUpdated(_extAddress, false);
   }
 
   /// @notice Add an address to the whitelist
@@ -289,6 +295,7 @@ contract PoolFactory is
   /// @param _extAddress The address to add to whitelist
   function addReceiverWhitelist(address _extAddress) external onlyOwner {
     receiverWhitelist[_extAddress] = true;
+    emit ReceiverWhitelistUpdated(_extAddress, true);
   }
 
   /// @notice Remove an address from the whitelist
@@ -296,6 +303,7 @@ contract PoolFactory is
   /// @param _extAddress The address to remove from whitelist
   function removeReceiverWhitelist(address _extAddress) external onlyOwner {
     receiverWhitelist[_extAddress] = false;
+    emit ReceiverWhitelistUpdated(_extAddress, false);
   }
 
   // DAO info
@@ -489,6 +497,17 @@ contract PoolFactory is
   /// @return price The latest price of a given asset
   function getAssetPrice(address _asset) external view override returns (uint256) {
     return IAssetHandler(_assetHandler).getUSDPrice(_asset);
+  }
+
+  /// @notice Return the latest price, update timestamp, and max price age of a given asset
+  /// @param _asset The address of the asset
+  /// @return price The latest price of a given asset
+  /// @return updatedAt The timestamp when the price was last updated
+  /// @return maxPriceAge The configured maximum price age for the asset (0 if not set)
+  function getAssetPriceWithTime(
+    address _asset
+  ) external view override returns (uint256 price, uint256 updatedAt, uint256 maxPriceAge) {
+    (price, updatedAt, maxPriceAge) = IAssetHandler(_assetHandler).getUSDPriceWithTime(_asset);
   }
 
   /// @notice Return type of the asset

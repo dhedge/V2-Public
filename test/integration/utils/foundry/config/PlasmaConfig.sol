@@ -29,5 +29,4 @@ library PlasmaConfig {
   // Auxiliary Contracts
   address public constant SWAPPER = 0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D;
   address public constant AAVE_V3_LENDING_POOL = 0x925a2A7214Ed92428B5b1B090F80b25700095e12;
-  address public constant PENDLE_ROUTER_V4 = 0x888888888889758F76e7103c6CbF23ABbF58F946;
 }

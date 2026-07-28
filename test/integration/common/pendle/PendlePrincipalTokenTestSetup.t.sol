@@ -8,7 +8,9 @@ import {PendlePTAssetGuard} from "contracts/guards/assetGuards/pendle/PendlePTAs
 import {PendleRouterV4ContractGuard} from "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol";
 import {IPActionSwapPTV3} from "contracts/interfaces/pendle/IPActionSwapPTV3.sol";
 import {IPActionMiscV3} from "contracts/interfaces/pendle/IPActionMiscV3.sol";
-import {IPMarket} from "contracts/interfaces/pendle/IPMarket.sol";
+import {IPMarket, MarketState} from "contracts/interfaces/pendle/IPMarket.sol";
+import {PendlePTHandlerLib} from "contracts/utils/pendle/PendlePTHandlerLib.sol";
+import {PendleLogExpMath} from "contracts/utils/pendle/PendleLogExpMath.sol";
 
 import {Governance} from "contracts/Governance.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";
@@ -137,12 +139,14 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     governance.setAssetGuard(200, address(rewardAssetGuard));
 
+    address effectiveAggregator = underlyingYieldTokenPriceFeed;
+    // Wrap oracle if it doesn't return 8 decimals (e.g. apxUSD chainlink oracle returns 18)
+    if (IAggregatorV3Interface(underlyingYieldTokenPriceFeed).decimals() != 8) {
+      effectiveAggregator = deployCode("ChainlinkAggregatorWrapper.sol", abi.encode(underlyingYieldTokenPriceFeed));
+    }
+
     IAssetHandler.Asset[] memory assets = new IAssetHandler.Asset[](1);
-    assets[0] = IAssetHandler.Asset({
-      asset: underlyingYieldToken,
-      assetType: 200,
-      aggregator: underlyingYieldTokenPriceFeed
-    });
+    assets[0] = IAssetHandler.Asset({asset: underlyingYieldToken, assetType: 200, aggregator: effectiveAggregator});
     assetHandler.addAssets(assets);
 
     address pendlePTOracleAddress = deployCode(
@@ -880,6 +884,21 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     uint256 expectedPtWithdrawal = ptBalanceBefore / 4;
     uint256 expectedPtWithdrawalValueD18 = testPoolManagerLogic.assetValue(PT, expectedPtWithdrawal);
 
+    // Compute expected minTokenOut before withdrawal (prediction)
+    uint256 computedMinTokenOut = PendlePTHandlerLib.computeMinTokenOutPreExp(
+      PT,
+      expectedPtWithdrawal,
+      underlyingYieldToken,
+      address(poolFactoryProxy),
+      pendleMarket
+    );
+
+    // Compute fee rate before withdrawal
+    MarketState memory state = IPMarket(pendleMarket).readState(PendlePTHandlerLib.ROUTER_V4);
+    uint256 lnFeeExponent = (state.lnFeeRateRoot * (state.expiry - block.timestamp)) / 365 days;
+    uint256 feeRate = uint256(PendleLogExpMath.exp(int256(lnFeeExponent)));
+    uint256 feeValueD18 = (expectedPtWithdrawalValueD18 * (feeRate - 1e18)) / feeRate;
+
     testPool.approve(address(easySwapperV2Proxy), withdrawAmount);
     easySwapperV2Proxy.initWithdrawal(
       address(testPool),
@@ -895,11 +914,20 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     assertEq(IERC20(PT).balanceOf(managersWithdrawalVault), 0, "PT tokens should not be in withdrawal vault");
 
+    // Actual output should be close to the computed minimum (it's a tight bound)
+    assertApproxEqRel(
+      actualUnderlyingBalance,
+      computedMinTokenOut,
+      0.001e18, // 0.1% tolerance
+      "Actual output deviates from computed minTokenOut"
+    );
+
+    // Verify actual value matches expected value minus fee
     assertApproxEqRel(
       actualUnderlyingValueD18,
-      expectedPtWithdrawalValueD18,
+      expectedPtWithdrawalValueD18 - feeValueD18,
       0.001e18, // 0.1% tolerance
-      "Incorrect underlying value received in withdrawal"
+      "Actual value doesn't match expected minus fee"
     );
   }
 
@@ -1263,13 +1291,13 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     uint256 ptBalance = IERC20(PT).balanceOf(address(testPool));
 
     // Change asset type of underlyingYieldToken to 0 just for the sake of this test
+    IAssetHandler assetHandler = IAssetHandler(poolFactoryProxy.getAssetHandler());
     IAssetHandler.Asset[] memory assets = new IAssetHandler.Asset[](1);
     assets[0] = IAssetHandler.Asset({
       asset: underlyingYieldToken,
       assetType: 0,
-      aggregator: underlyingYieldTokenPriceFeed
+      aggregator: assetHandler.priceAggregators(underlyingYieldToken)
     });
-    IAssetHandler assetHandler = IAssetHandler(poolFactoryProxy.getAssetHandler());
     vm.prank(poolFactoryProxy.owner());
     assetHandler.addAssets(assets);
 
@@ -1301,5 +1329,49 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     vm.expectRevert("tokenOut mismatch");
     testPool.execTransaction(pendleRouterV4, sellPTCalldata);
+  }
+
+  function test_revert_single_asset_withdraw_sandwich_attack_pre_expiry() public {
+    // Buy all underlying into PT
+    vm.startPrank(manager);
+
+    uint256 underlyingAmount = IERC20(underlyingYieldToken).balanceOf(address(testPool));
+
+    bytes memory buyPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactTokenForPt.selector,
+      address(testPool),
+      pendleMarket,
+      0,
+      IPAllActionTypeV3.createDefaultApproxParams(),
+      IPAllActionTypeV3.createTokenInputSimple(underlyingYieldToken, underlyingAmount),
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+
+    skip(1 days);
+
+    uint256 poolManagerBalance = IERC20(address(testPool)).balanceOf(manager);
+    uint256 withdrawAmount = poolManagerBalance / 4;
+
+    // Simulate sandwich: mock the PT oracle 20 bps above its real reading
+    IAssetHandler ah = IAssetHandler(poolFactoryProxy.getAssetHandler());
+    address ptOracle = ah.priceAggregators(PT);
+    (, int256 realPtPriceD8, , uint256 realUpdatedAt, ) = IAggregatorV3Interface(ptOracle).latestRoundData();
+    vm.mockCall(
+      ptOracle,
+      abi.encodeWithSelector(IAggregatorV3Interface.latestRoundData.selector),
+      abi.encode(uint80(0), (realPtPriceD8 * 10020) / 10000, uint256(0), realUpdatedAt, uint80(0))
+    );
+
+    testPool.approve(address(easySwapperV2Proxy), withdrawAmount);
+
+    IPoolLogic.ComplexAsset[] memory complexAssetsData = _getEmptyPoolComplexAssetsData(address(testPool));
+
+    // Pendle router enforces minTokenOut > actual output → revert.
+    vm.expectRevert("Slippage: INSUFFICIENT_TOKEN_OUT");
+    easySwapperV2Proxy.initWithdrawal(address(testPool), withdrawAmount, complexAssetsData);
+
+    vm.clearMockedCalls();
   }
 }

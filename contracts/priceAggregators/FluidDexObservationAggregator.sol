@@ -17,7 +17,7 @@
 
 pragma solidity 0.8.28;
 
-import {AuthorizedKeepers} from "../utils/keepers/AuthorizedKeepers.sol";
+import {AuthorizedCallers} from "../utils/callers/AuthorizedCallers.sol";
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {IFluidDexT1} from "../interfaces/fluid/IFluidDexT1.sol";
 
@@ -43,7 +43,7 @@ import {IFluidDexT1} from "../interfaces/fluid/IFluidDexT1.sol";
 ///   The initial observations MUST be recorded by a trusted party (e.g., contract deployer).
 /// - RECOVERY PHASE: After a gap where TWAP becomes invalid (stale observations),
 ///   the first recovery observation is NOT validated. Recovery MUST be performed by a trusted party.
-contract FluidDexObservationAggregator is AuthorizedKeepers, IAggregatorV3Interface {
+contract FluidDexObservationAggregator is AuthorizedCallers, IAggregatorV3Interface {
   /// @notice Observation data point
   struct Observation {
     uint64 timestamp;
@@ -144,7 +144,7 @@ contract FluidDexObservationAggregator is AuthorizedKeepers, IAggregatorV3Interf
     uint256 _maxStaleness,
     uint256 _volatilityLimit,
     uint256 _bufferSize
-  ) AuthorizedKeepers(_owner) {
+  ) AuthorizedCallers(_owner) {
     if (address(_pool) == address(0)) revert InvalidParameter();
     if (_mainToken == address(0)) revert InvalidParameter();
     if (address(_pairTokenUsdAggregator) == address(0)) revert InvalidParameter();
@@ -256,7 +256,7 @@ contract FluidDexObservationAggregator is AuthorizedKeepers, IAggregatorV3Interf
   /// @dev Protected by minObservationInterval and volatility check against TWAP.
   /// @dev WARNING: During bootstrap (insufficient observations) or recovery (after staleness gap),
   ///      the volatility check is skipped. These phases require trusted callers.
-  function recordObservation() external onlyAuthorizedKeeper {
+  function recordObservation() external onlyAuthorizedCaller {
     // Check minimum interval since last observation
     if (totalObservations > 0) {
       uint256 latestIndex = _getLatestIndex();

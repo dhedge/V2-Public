@@ -1370,7 +1370,7 @@ describe("PoolFactory", function () {
     ]);
 
     await expect(
-      poolLogicProxy.connect(logicOwner).execTransaction(synthetix.address, exchangeWithTrackingABI),
+      poolLogicProxy.connect(user1).execTransaction(synthetix.address, exchangeWithTrackingABI),
     ).to.be.revertedWith("dh24");
   });
 

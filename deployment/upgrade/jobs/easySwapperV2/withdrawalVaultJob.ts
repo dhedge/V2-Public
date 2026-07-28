@@ -17,11 +17,33 @@ export const withdrawalVaultJob: IJob<void> = async (
   if (config.execute) {
     const proxy = versions[config.oldTag].contracts.WithdrawalVaultProxy;
 
+    // DytmWithdrawLib is an external library linked into WithdrawalVault. Redeploy on every
+    // upgrade to mirror the `PoolLogicLib` pattern in `poolLogicJob.ts`.
+    const DytmWithdrawLib = await ethers.getContractFactory("DytmWithdrawLib");
+    const dytmWithdrawLib = await DytmWithdrawLib.deploy();
+    await dytmWithdrawLib.deployed();
+    console.log("DytmWithdrawLib deployed at:", dytmWithdrawLib.address);
+    versions[config.newTag].contracts.DytmWithdrawLib = dytmWithdrawLib.address;
+
+    await tryVerify(
+      hre,
+      dytmWithdrawLib.address,
+      "contracts/swappers/easySwapperV2/libraries/dytm/DytmWithdrawLib.sol:DytmWithdrawLib",
+      [],
+    );
+
+    const WithdrawalVault = await ethers.getContractFactory("WithdrawalVault", {
+      libraries: {
+        DytmWithdrawLib: dytmWithdrawLib.address,
+      },
+    });
+
     if (proxy) {
       console.log("Will upgrade WithdrawalVault");
 
-      const WithdrawalVault = await ethers.getContractFactory("WithdrawalVault");
-      const newImplementation = await upgrades.prepareUpgrade(proxy, WithdrawalVault);
+      const newImplementation = await upgrades.prepareUpgrade(proxy, WithdrawalVault, {
+        unsafeAllow: ["external-library-linking"],
+      });
 
       console.log("WithdrawalVault deployed to: ", newImplementation);
       versions[config.newTag].contracts.WithdrawalVault = newImplementation;
@@ -47,8 +69,10 @@ export const withdrawalVaultJob: IJob<void> = async (
     } else {
       console.log("Will deploy WithdrawalVault");
 
-      const WithdrawalVault = await ethers.getContractFactory("WithdrawalVault");
-      const withdrawalVaultProxy = await upgrades.deployProxy(WithdrawalVault, [], { initializer: false });
+      const withdrawalVaultProxy = await upgrades.deployProxy(WithdrawalVault, [], {
+        initializer: false,
+        unsafeAllow: ["external-library-linking"],
+      });
       await withdrawalVaultProxy.deployed();
 
       console.log("WithdrawalVaultProxy deployed at: ", withdrawalVaultProxy.address);

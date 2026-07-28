@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.6;
+pragma solidity >=0.7.6;
 pragma experimental ABIEncoderV2;
 
 interface IDytmAccountSplitterAndMerger {
@@ -16,6 +16,13 @@ interface IDytmAccountSplitterAndMerger {
 
   struct SplitAccountParams {
     uint256 sourceAccount;
+    uint88 market;
+    uint64 fraction;
+  }
+
+  struct MergeAccountsParams {
+    uint256 sourceAccount;
+    uint256 recipientAccount;
     uint88 market;
     uint64 fraction;
   }

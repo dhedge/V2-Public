@@ -66,7 +66,7 @@ abstract contract InFlightTracker is PrecompileHelper {
   /// @param pool The address of the pool.
   /// @param asset The system address of the spot asset on HyperCore.
   /// @return amount The amount of tokens in flight.
-  function getInFlightAmount(address pool, address asset) internal view returns (uint256 amount) {
+  function getInFlightAmount(address pool, address asset) public view returns (uint256 amount) {
     InFlightTrackingData memory trackingData = inFlightData[pool][asset];
 
     return (_composeBlockNumber() == trackingData.inFlightCompositeBlockNumber) ? trackingData.amount : 0;

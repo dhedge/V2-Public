@@ -23,12 +23,23 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IPoolManagerLogic} from "../interfaces/IPoolManagerLogic.sol";
 import {IHasDaoInfo} from "../interfaces/IHasDaoInfo.sol";
 import {IHasGuardInfo} from "../interfaces/IHasGuardInfo.sol";
+import {IHasPausable} from "../interfaces/IHasPausable.sol";
+import {IHasSupportedAsset} from "../interfaces/IHasSupportedAsset.sol";
+import {IGovernance} from "../interfaces/IGovernance.sol";
+import {IGuard} from "../interfaces/guards/IGuard.sol";
+import {IHasOwnable} from "../interfaces/IHasOwnable.sol";
+import {IManaged} from "../interfaces/IManaged.sol";
+import {IPoolFactory} from "../interfaces/IPoolFactory.sol";
+import {IValueManipulationCheck} from "../interfaces/IValueManipulationCheck.sol";
+import {ITxTrackingGuard} from "../interfaces/guards/ITxTrackingGuard.sol";
 import {IDytmOfficeContractGuard} from "../interfaces/dytm/IDytmOfficeContractGuard.sol";
 import {IDytmOffice} from "../interfaces/dytm/IDytmOffice.sol";
 import {IAaveLendingPoolAssetGuard} from "../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import {AddressHelper} from "./AddressHelper.sol";
 
 library PoolLogicLib {
   using SafeMath for uint256;
+  using AddressHelper for address;
 
   struct LiquidityMintTo {
     uint256 recipient;
@@ -43,6 +54,8 @@ library PoolLogicLib {
     uint256 toTransferDao;
     uint256 toGetPortionFrom;
   }
+
+  event TransactionExecuted(address pool, address manager, uint16 transactionType, uint256 time);
 
   /// @notice Compute how deposited value is split into liquidity tokens for recipient, manager, DAO, and optionally referrer
   /// @dev When a valid referrer address is provided and referral is enabled for the pool,
@@ -214,6 +227,97 @@ library PoolLogicLib {
         : aggregatedCooldown != 0
           ? aggregatedCooldown
           : 1;
+    }
+  }
+
+  /// @notice Execute a guarded transaction on behalf of the pool
+  /// @dev Resolves the appropriate guard, validates authorization, executes the transaction,
+  ///      and handles post-transaction tracking. Called via DELEGATECALL from PoolLogic.
+  /// @param _to The destination address for pool to talk to
+  /// @param _data The data that going to send in the transaction
+  /// @param _isDelegationCallback Whether this transaction is being executed via a delegation callback
+  /// @param _factory The pool factory address
+  /// @param _poolManagerLogic The pool manager logic address
+  /// @return success A boolean for success or fail transaction
+  function execTransaction(
+    address _to,
+    bytes memory _data,
+    bool _isDelegationCallback,
+    address _factory,
+    address _poolManagerLogic
+  ) external returns (bool success) {
+    require(!IHasPausable(_factory).tradingPausedPools(address(this)), "dh20");
+
+    {
+      address checker = IPoolFactory(_factory).valueManipulationCheck();
+      if (checker != address(0)) {
+        IValueManipulationCheck(checker).checkOperationType(
+          address(this),
+          IValueManipulationCheck.OperationType.ExecTransaction
+        );
+      }
+    }
+
+    require(_to != address(0), "dh18");
+
+    address guard;
+    uint16 txType;
+    bool isPublic;
+
+    {
+      address contractGuard = IHasGuardInfo(_factory).getContractGuard(_to);
+
+      if (contractGuard != address(0)) {
+        guard = contractGuard;
+        (txType, isPublic) = IGuard(contractGuard).txGuard(_poolManagerLogic, _to, _data);
+      }
+    }
+
+    // invalid contract guard call, try asset guard
+    if (txType == 0) {
+      // no contract guard configured, get asset guard
+      address assetGuard = IHasGuardInfo(_factory).getAssetGuard(_to);
+
+      if (assetGuard == address(0)) {
+        // If there is no contractGuard and no assetGuard then use the ERC20Guard for the transaction,
+        // which will only allow a valid approve transaction
+        address governanceAddress = IPoolFactory(_factory).governanceAddress();
+        assetGuard = IGovernance(governanceAddress).assetGuards(0); // get ERC20Guard (assetType 0)
+      } else {
+        // if asset is configured, ensure that it's enabled in the pool
+        require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(_to), "dh22");
+      }
+      guard = assetGuard;
+      (txType, isPublic) = IGuard(assetGuard).txGuard(_poolManagerLogic, _to, _data);
+    }
+
+    require(txType > 0, "dh23");
+
+    {
+      address manager = IManaged(_poolManagerLogic).manager();
+
+      require(
+        isPublic ||
+          _isDelegationCallback ||
+          msg.sender == manager ||
+          msg.sender == IManaged(_poolManagerLogic).trader() ||
+          msg.sender == IHasOwnable(_factory).owner(),
+        "dh24"
+      );
+
+      success = _to.tryAssemblyCall(_data);
+
+      // call afterTxGuard to track transactions
+      // to make it compatible with previous version, we use low-level call before calling afterTxGuard() function
+      // the low level call will return `false` if its execution reverts
+      // solhint-disable-next-line avoid-low-level-calls
+      (bool hasFunction, bytes memory returnData) = guard.call(abi.encodeWithSignature("isTxTrackingGuard()"));
+      if (hasFunction && abi.decode(returnData, (bool))) {
+        ITxTrackingGuard(guard).afterTxGuard(_poolManagerLogic, _to, _data);
+      }
+
+      emit TransactionExecuted(address(this), manager, txType, block.timestamp);
+      IPoolFactory(_factory).emitPoolEvent();
     }
   }
 

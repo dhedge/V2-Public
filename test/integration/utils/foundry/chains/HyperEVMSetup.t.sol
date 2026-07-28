@@ -12,7 +12,7 @@ abstract contract HyperEVMSetup is HyperliquidTestSetup {
   uint256 public constant forkBlockNumber = 25342036;
 
   function setUp() public virtual override {
-    vm.createSelectFork("hyperevm", forkBlockNumber);
+    vm.createSelectFork("hyperevm", _forkBlockNumber());
 
     // Mock the USDC/USD Chainlink price feed to always return exactly $1
     // This ensures deterministic test results regardless of actual market price
@@ -21,7 +21,12 @@ abstract contract HyperEVMSetup is HyperliquidTestSetup {
     super.setUp();
   }
 
-  function _mockUSDCPriceFeed() internal {
+  /// @dev Overridable so individual test suites can pin a different fork block.
+  function _forkBlockNumber() internal pure virtual returns (uint256) {
+    return forkBlockNumber;
+  }
+
+  function _mockUSDCPriceFeed() internal virtual {
     // Mock latestRoundData to return $1.00
     vm.mockCall(
       HyperEVMConfig.USDC_USD_PRICE_FEED,

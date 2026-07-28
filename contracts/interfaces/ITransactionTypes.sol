@@ -138,6 +138,9 @@ interface ITransactionTypes {
     CoreWalletDeposit, // 128
     HyperliquidSpotSendAction, // 129
     HyperliquidUSDClassTransferAction, // 130
-    HyperliquidSendAssetAction // 131
+    HyperliquidSendAssetAction, // 131
+    DytmMerge, // 132
+    HyperliquidAddApiWallet, // 133
+    AcrossDeposit // 134
   }
 }

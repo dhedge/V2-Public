@@ -36,7 +36,6 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
   address public poolLimitOrderManager;
   PoolLimitOrderManager public poolLimitOrderManagerProxy;
 
-  address public weth;
   address public wnt;
   address public swapper;
   address public poolFactory;
@@ -47,7 +46,6 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
   address public pricingAssetOracle;
 
   constructor(
-    address _weth,
     address _wnt,
     address _swapper,
     address _poolFactory,
@@ -57,7 +55,6 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
     address _pricingAsset,
     address _pricingAssetOracle
   ) {
-    weth = _weth;
     wnt = _wnt;
     swapper = _swapper;
     poolFactory = _poolFactory;
@@ -77,7 +74,7 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
 
     // It's not necessary to deploy contracts as upgradeable proxies as we are not testing upgradeability
     easySwapperV2Proxy = IEasySwapperV2Mock(address(new TransparentUpgradeableProxy(easySwapperV2, proxyAdmin, "")));
-    easySwapperV2Proxy.initialize(withdrawalVault, weth, wnt, swapper, 3600);
+    easySwapperV2Proxy.initialize(withdrawalVault, address(0), wnt, swapper, 3600);
     easySwapperV2Proxy.setdHedgePoolFactory(poolFactory);
 
     poolLimitOrderManager = address(new PoolLimitOrderManager());
@@ -1110,7 +1107,7 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
 
     // Create a pool with WETH and USDC as supported assets
     IHasSupportedAssetMock.Asset[] memory supportedAssets = new IHasSupportedAssetMock.Asset[](2);
-    supportedAssets[0] = IHasSupportedAssetMock.Asset({asset: weth, isDeposit: true});
+    supportedAssets[0] = IHasSupportedAssetMock.Asset({asset: wnt, isDeposit: true});
     supportedAssets[1] = IHasSupportedAssetMock.Asset({asset: usdc, isDeposit: true});
 
     address testPool = IPoolFactoryMock(poolFactory).createFund(
@@ -1125,19 +1122,19 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
     );
 
     // Deposit WETH and USDC into pool
-    deal(weth, user, 4e18);
+    deal(wnt, user, 4e18);
     deal(usdc, user, 1000e6);
     vm.startPrank(user);
-    IERC20(weth).approve(testPool, 4e18);
+    IERC20(wnt).approve(testPool, 4e18);
     IERC20(usdc).approve(testPool, 1000e6);
-    IPoolLogic(testPool).deposit(weth, 4e18);
+    IPoolLogic(testPool).deposit(wnt, 4e18);
     IPoolLogic(testPool).deposit(usdc, 1000e6);
 
-    assertEq(IERC20(weth).balanceOf(testPool), 4e18);
+    assertEq(IERC20(wnt).balanceOf(testPool), 4e18);
     assertEq(IERC20(usdc).balanceOf(testPool), 1000e6);
     assertGt(IERC20(testPool).totalSupply(), 0);
 
-    assertEq(IERC20(weth).balanceOf(user), 0);
+    assertEq(IERC20(wnt).balanceOf(user), 0);
     assertEq(IERC20(usdc).balanceOf(user), 0);
     uint256 userTestPoolBalance = IERC20(testPool).balanceOf(user);
     assertGt(userTestPoolBalance, 0);
@@ -1180,8 +1177,8 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
     swapData.destData.destToken = IERC20(usdc);
     swapData.destData.minDestAmount = 10825000000;
     swapData.srcData = new ISwapper.SrcTokenSwapDetails[](1);
-    swapData.srcData[0].token = IERC20(weth);
-    swapData.srcData[0].amount = IERC20(weth).balanceOf(vault);
+    swapData.srcData[0].token = IERC20(wnt);
+    swapData.srcData[0].amount = IERC20(wnt).balanceOf(vault);
     swapData.srcData[0].aggregatorData.routerKey = bytes32("PARASWAP_V6");
     swapData
       .srcData[0]
@@ -1200,10 +1197,10 @@ abstract contract PoolLimitOrderManagerTestSetup is Test {
 
     // Verify tokens were transferred correctly
     assertEq(IERC20(usdc).balanceOf(address(poolLimitOrderManagerProxy)), 0);
-    assertEq(IERC20(weth).balanceOf(address(poolLimitOrderManagerProxy)), 0);
+    assertEq(IERC20(wnt).balanceOf(address(poolLimitOrderManagerProxy)), 0);
 
     assertEq(IERC20(usdc).balanceOf(vault), 0);
-    assertEq(IERC20(weth).balanceOf(vault), 0);
+    assertEq(IERC20(wnt).balanceOf(vault), 0);
 
     assertGt(IERC20(usdc).balanceOf(user), swapData.destData.minDestAmount + 1000e6);
   }

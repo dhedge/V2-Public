@@ -217,6 +217,9 @@ export const arbitrumChainData = Object.freeze({
     BTCHOSRTVOL: "0x8C068d7033d66c4AacaB25CE8219E5688C60155f",
     BTCCOVCALL: "0x2FbAdd08aDE2E8A24CF1Fe3a58fE918336b39a72",
     HYPEBULL3X: "0x0219549D65ac79326bD7874f6c610CB5e1B76d33",
+    BTCP1X: "0x8990f5e57a8E0b5CABB68D1CD5bd790A92e32f5C",
+    BTCP2X: "0x99C917097D455d54F68A6b8e73095E30badddAcE",
+    BTCP3X: "0x31481Fa8e8802EAcF1cfa3aaBDD11be24FcC3476",
   },
 
   zeroEx: {
@@ -254,9 +257,9 @@ export const arbitrumChainData = Object.freeze({
   },
 
   dytm: {
-    dytmOffice: "0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001",
-    dytmPeriphery: "0x1FBe7Bb394BE505C08e9ee419Dd166c71004e51B",
-    accountSplitterAndMerger: "0xCa52E5c2FBa054059Bc0F25AcFEB365e683C9c31",
+    dytmOffice: "",
+    dytmPeriphery: "",
+    accountSplitterAndMerger: "",
   },
 
   dytmTestVaults: {

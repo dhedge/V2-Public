@@ -30,6 +30,8 @@ import { deployPythPriceAggregator } from "./deployPythPriceAggregator";
 import { deployPendlePTPriceAggregator } from "./deployPendlePTPriceAggregator";
 import { deployERC4626PriceAggregator } from "./deployERC4626PriceAggregator";
 import { deployHyperliquidSpotPriceAggregator } from "./deployHyperliquidSpotPriceAggregator";
+import { deployOndoAttestationAggregator } from "./deployOndoAttestationAggregator";
+import { deployMidasPriceAggregator } from "./deployMidasPriceAggregator";
 
 export const getOracle = async (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig): Promise<TDeployedAsset> => {
   const oracleAddress = await typeToDeployer[assetConfig.oracleType](hre, assetConfig);
@@ -76,4 +78,6 @@ const typeToDeployer: TOracleTypeToDeployer = {
   PendlePTPriceAggregator: deployPendlePTPriceAggregator,
   ERC4626PriceAggregator: deployERC4626PriceAggregator,
   HyperliquidSpotPriceAggregator: deployHyperliquidSpotPriceAggregator,
+  OndoAttestationAggregator: deployOndoAttestationAggregator,
+  MidasPriceAggregator: deployMidasPriceAggregator,
 };

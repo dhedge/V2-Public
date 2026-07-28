@@ -4,42 +4,29 @@ pragma solidity >=0.7.6;
 
 import {BytesLib} from "./BytesLib.sol";
 
-contract TxDataUtils {
+abstract contract TxDataUtils {
   using BytesLib for bytes;
 
-  function getMethod(bytes memory data) public pure returns (bytes4) {
+  function getMethod(bytes memory data) internal pure returns (bytes4) {
     return read4left(data, 0);
   }
 
-  function getParams(bytes memory data) public pure returns (bytes memory) {
+  function getParams(bytes memory data) internal pure returns (bytes memory) {
     return data.slice(4, data.length - 4);
   }
 
-  function getInput(bytes memory data, uint8 inputNum) public pure returns (bytes32) {
+  function getInput(bytes memory data, uint8 inputNum) internal pure returns (bytes32) {
     return read32(data, 32 * inputNum + 4, 32);
   }
 
-  function getBytes(bytes memory data, uint8 inputNum, uint256 offset) public pure returns (bytes memory) {
-    require(offset < 20, "invalid offset"); // offset is in byte32 slots, not bytes
-    offset = offset * 32; // convert offset to bytes
-    uint256 bytesLenPos = uint256(read32(data, 32 * inputNum + 4 + offset, 32));
-    uint256 bytesLen = uint256(read32(data, bytesLenPos + 4 + offset, 32));
-    return data.slice(bytesLenPos + 4 + offset + 32, bytesLen);
-  }
-
-  function getArrayLast(bytes memory data, uint8 inputNum) public pure returns (bytes32) {
+  function getArrayLast(bytes memory data, uint8 inputNum) internal pure returns (bytes32) {
     bytes32 arrayPos = read32(data, 32 * inputNum + 4, 32);
     bytes32 arrayLen = read32(data, uint256(arrayPos) + 4, 32);
     require(arrayLen > 0, "input is not array");
     return read32(data, uint256(arrayPos) + 4 + (uint256(arrayLen) * 32), 32);
   }
 
-  function getArrayLength(bytes memory data, uint8 inputNum) public pure returns (uint256) {
-    bytes32 arrayPos = read32(data, 32 * inputNum + 4, 32);
-    return uint256(read32(data, uint256(arrayPos) + 4, 32));
-  }
-
-  function getArrayIndex(bytes memory data, uint8 inputNum, uint8 arrayIndex) public pure returns (bytes32) {
+  function getArrayIndex(bytes memory data, uint8 inputNum, uint8 arrayIndex) internal pure returns (bytes32) {
     bytes32 arrayPos = read32(data, 32 * inputNum + 4, 32);
     bytes32 arrayLen = read32(data, uint256(arrayPos) + 4, 32);
     require(arrayLen > 0, "input is not array");
@@ -47,14 +34,14 @@ contract TxDataUtils {
     return read32(data, uint256(arrayPos) + 4 + ((1 + uint256(arrayIndex)) * 32), 32);
   }
 
-  function read4left(bytes memory data, uint256 offset) public pure returns (bytes4 o) {
+  function read4left(bytes memory data, uint256 offset) internal pure returns (bytes4 o) {
     require(data.length >= offset + 4, "Reading bytes out of bounds");
     assembly {
       o := mload(add(data, add(32, offset)))
     }
   }
 
-  function read32(bytes memory data, uint256 offset, uint256 length) public pure returns (bytes32 o) {
+  function read32(bytes memory data, uint256 offset, uint256 length) internal pure returns (bytes32 o) {
     require(data.length >= offset + length, "Reading bytes out of bounds");
     assembly {
       o := mload(add(data, add(32, offset)))
@@ -65,16 +52,7 @@ contract TxDataUtils {
     }
   }
 
-  function convert32toAddress(bytes32 data) public pure returns (address o) {
+  function convert32toAddress(bytes32 data) internal pure returns (address o) {
     return address(uint160(uint256(data)));
-  }
-
-  function sliceUint(bytes memory data, uint256 start) internal pure returns (uint256) {
-    require(data.length >= start + 32, "slicing out of range");
-    uint256 x;
-    assembly {
-      x := mload(add(data, add(0x20, start)))
-    }
-    return x;
   }
 }

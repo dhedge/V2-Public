@@ -11,9 +11,10 @@ import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConf
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {Governance} from "contracts/Governance.sol";
 import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol";
+import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 
 contract AaveV3DryRunOptimism is DeploymentDryRunOptimism {
@@ -37,21 +38,22 @@ contract AaveV3DryRunOptimism is DeploymentDryRunOptimism {
     IAssetHandler assetHandler = IAssetHandler(poolFactory.getAssetHandler());
     vm.startPrank(poolFactory.owner());
     proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(poolFactory))), latestPoolFactory);
+    proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(assetHandler))), address(new AssetHandler()));
     poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.SNX_SYNTH), aaveV3Test.erc20Guard());
-    governance.setAssetGuard(uint16(BackboneSetup.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.SNX_SYNTH), aaveV3Test.erc20Guard());
+    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
     governance.setAssetGuard(
-      uint16(BackboneSetup.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
+      uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
       address(flatMoneyCollateralGuard)
     );
     assetHandler.addAsset(
       OptimismConfig.WBTC,
-      uint16(BackboneSetup.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
+      uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
       OptimismConfig.WBTC_CHAINLINK_ORACLE
     );
     assetHandler.addAsset(
       OptimismConfig.sUSD,
-      uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+      uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
       0xcD139d422824A79109890e95F7e9a389B5704Bfe // TWAP currently set to sUSD
     );
   }

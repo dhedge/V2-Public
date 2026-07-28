@@ -11,9 +11,11 @@ import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IGuard} from "contracts/interfaces/guards/IGuard.sol";
 import {ICoreWriter} from "contracts/interfaces/hyperliquid/ICoreWriter.sol";
+import {IHyperliquidCoreWriterContractGuard} from "contracts/interfaces/hyperliquid/IHyperliquidCoreWriterContractGuard.sol";
+import {ITransactionTypes} from "contracts/interfaces/ITransactionTypes.sol";
 import {PrecompileHelper} from "contracts/utils/hyperliquid/PrecompileHelper.sol";
 import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConfig.sol";
-import {IChangeAssets} from "test/integration/hyperevm/test-suite/HyperliquidBackboneSetup.sol";
+import {IChangeAssets} from "test/integration/utils/foundry/CoreBackboneSetup.sol";
 import {FixedPointMathLib} from "contracts/utils/FixedPointMathLib.sol";
 
 /// @title HyperEVM Integration Tests
@@ -531,8 +533,160 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
   }
 
   /////////////////////////////////////////////
+  //          API Wallet (Agent) Tests       //
+  /////////////////////////////////////////////
+
+  /// @notice Helper to build an action 9 (Add API wallet) raw CoreWriter action.
+  function _addApiWalletAction(address apiWallet, string memory name) internal pure returns (bytes memory) {
+    return abi.encodePacked(uint8(1), uint24(9), abi.encode(apiWallet, name));
+  }
+
+  /// @notice Helper to enable/disable API wallet registration for the test pool as the owner.
+  function _setApiWalletEnabled(bool enabled) internal {
+    IHyperliquidCoreWriterContractGuard.ApiWalletSetting[]
+      memory settings = new IHyperliquidCoreWriterContractGuard.ApiWalletSetting[](1);
+    settings[0] = IHyperliquidCoreWriterContractGuard.ApiWalletSetting({
+      poolLogic: hyperliquidTestPool,
+      enabled: enabled
+    });
+
+    vm.prank(owner);
+    hyperliquidCoreWriterContractGuard.setApiWalletEnabled(settings);
+  }
+
+  /// @notice Action 9 must revert when the pool has not been opted in by the owner (disabled by default).
+  function test_revert_add_api_wallet_when_not_enabled() public {
+    bytes memory txData = abi.encodeWithSelector(
+      ICoreWriter.sendRawAction.selector,
+      _addApiWalletAction(address(0xABCD), "agent")
+    );
+
+    vm.prank(hyperliquidTestPool);
+    vm.expectRevert("api wallet not enabled");
+    IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(hyperliquidTestPoolManagerLogic, coreWriter, txData);
+  }
+
+  /// @notice Once enabled by the owner, the manager can register any API wallet address via action 9.
+  function test_add_api_wallet_succeeds_when_enabled() public {
+    _setApiWalletEnabled(true);
+
+    assertTrue(hyperliquidCoreWriterContractGuard.apiWalletEnabled(hyperliquidTestPool));
+
+    bytes memory txData = abi.encodeWithSelector(
+      ICoreWriter.sendRawAction.selector,
+      _addApiWalletAction(address(0xABCD), "agent")
+    );
+
+    vm.prank(hyperliquidTestPool);
+    (uint16 txType, bool isPublic) = IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(
+      hyperliquidTestPoolManagerLogic,
+      coreWriter,
+      txData
+    );
+
+    assertEq(txType, uint16(ITransactionTypes.TransactionType.HyperliquidAddApiWallet));
+    assertFalse(isPublic);
+
+    // End-to-end: the manager can route the action through the pool without reverting.
+    vm.prank(manager);
+    IPoolLogic(hyperliquidTestPool).execTransaction(coreWriter, txData);
+  }
+
+  /// @notice Action 9 still requires the pool to be on the dHEDGE whitelist, even when api wallet is enabled.
+  function test_revert_add_api_wallet_when_pool_not_whitelisted() public {
+    _setApiWalletEnabled(true);
+
+    // Remove the pool from the whitelist.
+    IHyperliquidCoreWriterContractGuard.WhitelistSetting[]
+      memory whitelistSettings = new IHyperliquidCoreWriterContractGuard.WhitelistSetting[](1);
+    whitelistSettings[0] = IHyperliquidCoreWriterContractGuard.WhitelistSetting({
+      poolLogic: hyperliquidTestPool,
+      whitelisted: false
+    });
+    vm.prank(owner);
+    hyperliquidCoreWriterContractGuard.setDhedgePoolsWhitelist(whitelistSettings);
+
+    bytes memory txData = abi.encodeWithSelector(
+      ICoreWriter.sendRawAction.selector,
+      _addApiWalletAction(address(0xABCD), "agent")
+    );
+
+    vm.prank(hyperliquidTestPool);
+    vm.expectRevert("pool not whitelisted");
+    IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(hyperliquidTestPoolManagerLogic, coreWriter, txData);
+  }
+
+  /// @notice Only the owner can toggle the per-pool API wallet flag.
+  function test_revert_setApiWalletEnabled_non_owner() public {
+    IHyperliquidCoreWriterContractGuard.ApiWalletSetting[]
+      memory settings = new IHyperliquidCoreWriterContractGuard.ApiWalletSetting[](1);
+    settings[0] = IHyperliquidCoreWriterContractGuard.ApiWalletSetting({poolLogic: hyperliquidTestPool, enabled: true});
+
+    vm.prank(manager);
+    vm.expectRevert();
+    hyperliquidCoreWriterContractGuard.setApiWalletEnabled(settings);
+  }
+
+  /////////////////////////////////////////////
   //          Spot Asset Trading Tests       //
   /////////////////////////////////////////////
+
+  /// @notice Test non-system spot withdrawals pay mixed assets: spot token (EVM leg) + USDC (Core leg)
+  function test_spotAsset_nonSystem_withdraw_mixedPayout() public {
+    // Setup: make the EVM token address a supported type-40 spot asset and remove the system-address mapping.
+    vm.startPrank(owner);
+    assetHandlerProxy.addAsset(xaut, uint16(AssetTypeIncomplete.HYPERLIQUID_SPOT), xaut0PriceAggregator);
+    vm.stopPrank();
+
+    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
+    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: xaut, isDeposit: false});
+
+    address[] memory assetsToRemove = new address[](1);
+    assetsToRemove[0] = HyperEVMConfig.XAUT0_SYSTEM_ADDRESS;
+
+    vm.prank(manager);
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(assetsToAdd, assetsToRemove);
+
+    // Set XAUT0 spot price to $2800 and buy 1 XAUT0 on Core.
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+
+    uint256 poolUSDCBalance = _getPoolUSDCBalance();
+    _bridgeUSDCToCore(poolUSDCBalance / 2, HLConstants.SPOT_DEX);
+    CoreSimulatorLib.nextBlock();
+
+    uint64 normalizedPrice = xaut0Price * 100;
+    uint64 limitPrice = normalizedPrice + ((normalizedPrice * 1) / 100);
+    uint32 xaut0AssetId = 10000 + uint32(HyperEVMConfig.XAUT0_SPOT_INDEX);
+
+    bytes memory orderActionData = abi.encodePacked(
+      uint8(1),
+      HLConstants.LIMIT_ORDER_ACTION,
+      abi.encode(xaut0AssetId, true, limitPrice, uint64(1e8), false, HLConstants.LIMIT_ORDER_TIF_IOC, uint128(1))
+    );
+
+    _placeLimitOrder(orderActionData);
+    CoreSimulatorLib.nextBlock();
+
+    // Seed EVM-side XAUT balance so withdrawal has an in-kind leg.
+    uint256 evmXautInPool = 1e8;
+    deal(xaut, hyperliquidTestPool, evmXautInPool);
+
+    uint256 managerXautBefore = IERC20(xaut).balanceOf(manager);
+    uint256 managerUsdcBefore = IERC20(usdc).balanceOf(manager);
+    uint256 managerShares = IPoolLogic(hyperliquidTestPool).balanceOf(manager);
+
+    // Withdraw half shares (portion = 0.5).
+    skip(5 minutes + 1);
+    vm.prank(manager);
+    IPoolLogic(hyperliquidTestPool).withdraw(managerShares / 2);
+
+    // Mixed payout expectations:
+    // 1) manager receives XAUT from the EVM-held leg,
+    // 2) manager receives USDC for the Core-held leg.
+    assertGt(IERC20(xaut).balanceOf(manager) - managerXautBefore, 0, "manager should receive XAUT in-kind");
+    assertGt(IERC20(usdc).balanceOf(manager) - managerUsdcBefore, 0, "manager should receive USDC for core leg");
+  }
 
   /// @notice Test spot asset (XAUT0) integration: place IOC order, verify accounting, and withdrawal
   /// @dev Complete flow: bridge USDC, buy XAUT0, check balances, and withdraw
@@ -734,26 +888,5 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
       ),
       "XAUT0 system address should be a supported asset"
     );
-  }
-
-  /////////////////////////////////////////////
-  //              Helper Functions           //
-  /////////////////////////////////////////////
-
-  /// @notice Scales a value from one decimal precision to another
-  /// @param value The value to scale
-  /// @param fromDecimals The current decimal precision of the value
-  /// @param toDecimals The target decimal precision
-  /// @return scaled The scaled value
-  function _scale(uint256 value, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256 scaled) {
-    if (fromDecimals == toDecimals) {
-      return value;
-    } else if (fromDecimals < toDecimals) {
-      // Scale up
-      scaled = value * (10 ** (toDecimals - fromDecimals));
-    } else {
-      // Scale down
-      scaled = value / (10 ** (fromDecimals - toDecimals));
-    }
   }
 }

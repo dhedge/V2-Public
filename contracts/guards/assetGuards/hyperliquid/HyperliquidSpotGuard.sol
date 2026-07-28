@@ -33,6 +33,7 @@ import {IHyperliquidCoreWriterContractGuard} from "../../../interfaces/hyperliqu
 
 import {InFlightTracker} from "../../../utils/hyperliquid/InFlightTracker.sol";
 import {FixedPointMathLib} from "../../../utils/FixedPointMathLib.sol";
+import {OutsidePositionWithdrawalHelper} from "../OutsidePositionWithdrawalHelper.sol";
 
 /// @title Hyperliquid ERC20 asset guard
 /// @notice Asset guard for spot assets and combination of asset and contract guard for linked EVM tokens on HyperEVM.
@@ -50,7 +51,8 @@ contract HyperliquidSpotGuard is
   IAssetGuard,
   ITransactionTypes,
   IAddAssetCheckGuard,
-  InFlightTracker
+  InFlightTracker,
+  OutsidePositionWithdrawalHelper
 {
   using FixedPointMathLib for uint256;
 
@@ -139,7 +141,7 @@ contract HyperliquidSpotGuard is
     address pool,
     address asset,
     uint256 portion,
-    address /* to */
+    address to
   )
     external
     view
@@ -147,7 +149,14 @@ contract HyperliquidSpotGuard is
     override
     returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
-    return _withdrawProcessing({_pool: pool, _asset: asset, _withdrawPortion: portion});
+    // Revert withdraw from single remaining depositor
+    require(portion < FixedPointMathLib.WAD, "invalid withdraw portion");
+
+    if (isSystemAddress(asset)) {
+      return _withdrawProcessingSystemAsset(pool, asset, portion);
+    }
+
+    return _withdrawProcessingNonSystemAsset(pool, asset, portion, to);
   }
 
   /// @notice Returns the balance of the managed asset
@@ -155,7 +164,10 @@ contract HyperliquidSpotGuard is
   /// @param pool Address of the pool
   /// @param asset Address of the managed asset
   /// @return balance The asset balance of given pool
-  function getBalance(address pool, address asset) public view virtual override returns (uint256 balance) {
+  function getBalance(
+    address pool,
+    address asset
+  ) public view virtual override(IAssetGuard, OutsidePositionWithdrawalHelper) returns (uint256 balance) {
     // If the `asset` is a system address, just get the balance on HyperCore.
     if (isSystemAddress(asset)) {
       balance = getCoreBalance(pool, getTokenIndexFromSystemAddress(asset));
@@ -234,60 +246,70 @@ contract HyperliquidSpotGuard is
     }
   }
 
-  /// @notice Helper function for withdrawing using specially configured asset sitting in the pool outside
-  /// @dev Adapted from `OutsidePositionWithdrawalHelper.sol`.
-  /// @param _pool PoolLogic address
-  /// @param _asset Complex position address
-  /// @param _withdrawPortion Portion to withdraw
-  /// @return withdrawAsset By default this will be USDC.
-  /// @return withdrawBalance Amount to withdraw
-  /// @return transactions Transactions to be executed
-  function _withdrawProcessing(
-    address _pool,
-    address _asset,
-    uint256 _withdrawPortion
+  function _withdrawProcessingSystemAsset(
+    address pool,
+    address asset,
+    uint256 withdrawPortion
   )
     internal
     view
     returns (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransaction[] memory transactions)
   {
-    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(_pool).poolManagerLogic());
+    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(pool).poolManagerLogic());
 
-    // Get asset balance and convert to USD value (18 decimals)
-    uint256 valueToWithdraw = poolManagerLogic.assetValue(_asset, getBalance(_pool, _asset)).mulWadDown(
-      _withdrawPortion
-    );
-
-    if (valueToWithdraw == 0) {
-      return (withdrawAsset, withdrawBalance, transactions);
-    }
+    uint256 valueToWithdraw = poolManagerLogic.assetValue(asset, getBalance(pool, asset)).mulWadDown(withdrawPortion);
+    if (valueToWithdraw == 0) return (withdrawAsset, withdrawBalance, transactions);
 
     withdrawAsset = _USDC_ADDRESS;
+    withdrawBalance = _calculateWithdrawBalance(
+      pool,
+      address(poolManagerLogic),
+      _USDC_ADDRESS,
+      valueToWithdraw,
+      withdrawPortion
+    );
+  }
 
-    // If withdrawal asset (USDC) configured for current pool is not enabled, then withdraw should revert.
-    require(
-      IHasSupportedAsset(address(poolManagerLogic)).isSupportedAsset(withdrawAsset),
-      "withdrawal asset not enabled"
+  function _withdrawProcessingNonSystemAsset(
+    address pool,
+    address asset,
+    uint256 withdrawPortion,
+    address to
+  )
+    internal
+    view
+    returns (address withdrawAsset, uint256 withdrawBalance, IAssetGuard.MultiTransaction[] memory transactions)
+  {
+    IPoolManagerLogic poolManagerLogic = IPoolManagerLogic(IPoolLogic(pool).poolManagerLogic());
+
+    uint256 evmBalance = IERC20(asset).balanceOf(pool);
+    withdrawAsset = asset;
+    withdrawBalance = evmBalance.mulWadDown(withdrawPortion);
+
+    // Convert only the non-EVM part (Core + in-flight) into USDC payout.
+    uint256 totalBalance = getBalance(pool, asset);
+    uint256 coreAndInFlightBalance = totalBalance > evmBalance ? totalBalance - evmBalance : 0;
+    uint256 coreValueToWithdraw = poolManagerLogic.assetValue(asset, coreAndInFlightBalance).mulWadDown(
+      withdrawPortion
     );
 
-    uint256 withdrawAssetBalanceInPool = IERC20(withdrawAsset).balanceOf(_pool);
-    uint256 withdrawAssetValueInPool = poolManagerLogic.assetValue(withdrawAsset, withdrawAssetBalanceInPool);
+    if (coreValueToWithdraw == 0) return (withdrawAsset, withdrawBalance, transactions);
 
-    // if withdrawal asset is enabled, but has no balance or no value (for some reason), then withdraw should revert.
-    require(withdrawAssetValueInPool > 0, "not enough available balance_0");
-
-    // Revert withdraw from single remaining depositor, assuming that integration will only be available for Toros.
-    require(_withdrawPortion < FixedPointMathLib.WAD, "invalid withdraw portion");
-
-    // How many withdrawal asset tokens should be withdrawn for depositor's portion of leverage position.
-    // Both valueToWithdraw and withdrawAssetValueInPool are in 18 decimals.
-    // Also apply compensation factor for other guards withdrawing USDC proportionally.
-    withdrawBalance = withdrawAssetBalanceInPool.mulDivDown(valueToWithdraw, withdrawAssetValueInPool).divWadDown(
-      FixedPointMathLib.WAD - _withdrawPortion
+    uint256 usdcWithdrawBalance = _calculateWithdrawBalance(
+      pool,
+      address(poolManagerLogic),
+      _USDC_ADDRESS,
+      coreValueToWithdraw,
+      withdrawPortion
     );
 
-    // Otherwise there is not enough withdrawal asset balance to cover leverage position portion
-    require(withdrawAssetBalanceInPool >= withdrawBalance, "not enough available balance_1");
+    if (usdcWithdrawBalance > 0) {
+      transactions = new MultiTransaction[](1);
+      transactions[0] = MultiTransaction({
+        to: _USDC_ADDRESS,
+        txData: abi.encodeWithSelector(IERC20.transfer.selector, to, usdcWithdrawBalance)
+      });
+    }
   }
 
   function _useContractGuard(

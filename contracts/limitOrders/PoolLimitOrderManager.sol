@@ -26,8 +26,9 @@ import {IPoolLogic} from "../interfaces/IPoolLogic.sol";
 import {IEasySwapperV2} from "../swappers/easySwapperV2/interfaces/IEasySwapperV2.sol";
 import {IWithdrawalVault} from "../swappers/easySwapperV2/interfaces/IWithdrawalVault.sol";
 import {ICommonErrors} from "../interfaces/ICommonErrors.sol";
+import {SafeSignerAccess} from "../utils/SafeSignerAccess.sol";
 
-contract PoolLimitOrderManager is OwnableUpgradeable, ICommonErrors {
+contract PoolLimitOrderManager is OwnableUpgradeable, SafeSignerAccess, ICommonErrors {
   using SafeERC20 for IERC20;
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -536,7 +537,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable, ICommonErrors {
 
   /// @notice Function to add an authorized keeper.
   /// @param keeper_ The address of the keeper to add.
-  function addAuthorizedKeeper(address keeper_) external onlyOwner {
+  function addAuthorizedKeeper(address keeper_) external onlyOwnerOrSafeSigner(owner()) {
     isAuthorizedKeeper[keeper_] = true;
 
     emit AuthorizedKeeperAdded(keeper_);
@@ -544,7 +545,7 @@ contract PoolLimitOrderManager is OwnableUpgradeable, ICommonErrors {
 
   /// @notice Function to remove an authorized keeper.
   /// @param keeper_ The address of the keeper to remove.
-  function removeAuthorizedKeeper(address keeper_) external onlyOwner {
+  function removeAuthorizedKeeper(address keeper_) external onlyOwnerOrSafeSigner(owner()) {
     isAuthorizedKeeper[keeper_] = false;
 
     emit AuthorizedKeeperRemoved(keeper_);

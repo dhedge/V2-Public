@@ -60,4 +60,8 @@ library EthereumConfig {
   address public constant ONE_INCH_V6_ROUTER = 0x111111125421cA6dc452d289314280a0f8842A65; // Same for all chains
   address public constant ANGLE_DISTRIBUTOR_CONTRACT = 0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae; // Same for all chains
   address public constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3; // Same for all chains
+
+  // Ondo
+  address public constant ONDO_GM_TOKEN_MANAGER = 0x2c158BC456e027b2AfFCCadF1BDBD9f5fC4c5C8c;
+  address public constant GOOGLON = 0xbA47214eDd2bb43099611b208f75E4b42FDcfEDc;
 }

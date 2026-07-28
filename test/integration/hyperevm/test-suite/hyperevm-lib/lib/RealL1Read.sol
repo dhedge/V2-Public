@@ -3,6 +3,7 @@ pragma solidity >=0.7.6 <0.9.0;
 
 import {Vm} from "forge-std/Vm.sol";
 import {PrecompileLib} from "./PrecompileLib.sol";
+import {HLConstants} from "./HLConstants.sol";
 import {HyperCore} from "../HyperCore.sol";
 
 HyperCore constant hyperCore = HyperCore(payable(0x9999999999999999999999999999999999999999));
@@ -86,11 +87,7 @@ library RealL1Read {
     }
 
     function isForkActive() internal view returns (bool) {
-        try vm.activeFork() returns (uint256) {
-            return true; // Fork is active
-        } catch {
-            return false; // No fork active
-        }
+        return HLConstants.isForkActive();
     }
 
     function position(address user, uint16 perp) internal returns (PrecompileLib.Position memory) {

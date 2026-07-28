@@ -287,7 +287,9 @@ export const arbitrumProdData: IAddresses = {
       arbitrumChainData.torosPools.BTCHOSRTVOL,
       arbitrumChainData.torosPools.BTCCOVCALL,
       arbitrumChainData.torosPools.HYPEBULL3X,
-      arbitrumChainData.dytmTestVaults.DYTMTesting, // for testing Dytm as the index vault(yield basket)
+      arbitrumChainData.torosPools.BTCP1X,
+      arbitrumChainData.torosPools.BTCP2X,
+      arbitrumChainData.torosPools.BTCP3X,
     ],
   },
 
@@ -677,11 +679,10 @@ export const arbitrumProdData: IAddresses = {
     defaultSlippageTolerance: 200, // 2%
     settlementToken: arbitrumChainData.assets.usdcNative,
     authorizedKeeperAddresses: [
-      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
-      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
-      "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
-      "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
-      "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
+      "0x99c9F65a486C0567495ec58722916c73292D585f",
+      "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
+      "0x962976AA38665fc59B2F981C2457a6f95fFB2aD5",
+      "0x5048d4630c51d02A281Cb77E63a1A3af4Fd8dc33",
     ],
   },
 
@@ -734,8 +735,6 @@ export const arbitrumProdData: IAddresses = {
     knownMarkets: [
       "0xf78452e0f5C0B95fc5dC8353B8CD1e06E53fa25B", // wstETH-25JUN2026
     ],
-    yieldContractFactory: "0xFF29e023910FB9bfc86729c1050AF193A45a0C0c",
-    staticRouter: "0xAdB09F65bd90d19e3148D9ccb693F3161C6DB3E8",
   },
 
   dytm: {
@@ -747,7 +746,7 @@ export const arbitrumProdData: IAddresses = {
       1, // for testing
     ],
     maxDytmMarkets: 1,
-    mismatchDeltaNumerator: 5, // 0.05% allowed mismatch
+    mismatchDeltaNumerator: 1, // 0.01% allowed mismatch
   },
 
   easyLimitBuyManager: {

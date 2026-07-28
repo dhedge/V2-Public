@@ -78,6 +78,10 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   event WithdrawalVaultCreated(address withdrawalVault, address indexed depositor);
   event LimitOrderVaultCreated(address limitOrderVault, address indexed depositor);
   event AuthorizedWithdrawersSet(WhitelistSetting[] whitelistSettings);
+  event CustomCooldownWhitelistUpdated(WhitelistSetting[] whitelistSettings);
+  event SwapperSet(address swapper);
+  event CustomCooldownSet(uint256 customCooldown);
+  event DHedgePoolFactorySet(address dHedgePoolFactory);
 
   /// @notice Reverts if vault can not be deposited into with custom lockup time
   modifier isCustomCooldownAllowed(address _dHedgeVault) {
@@ -86,7 +90,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
   }
 
   modifier onlyAuthorizedWithdrawers(address _caller) {
-    require(isAuthorizedWithdrawer[_caller], "not authorized");
+    _checkAuthorizedWithdrawer(_caller);
     _;
   }
 
@@ -411,6 +415,10 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
   /// @notice Function to be called by contract managing limit orders
   /// @dev Need to allow EasySwapperV2 to spend dHEDGE Vault tokens
+  /// @dev Restricted to authorized withdrawers, symmetric with `completeLimitOrderWithdrawalFor`:
+  ///      the per-user WithdrawalVault may run an opaque action list during unrolling (e.g. via
+  ///      DYTM delegation callbacks), so only trusted callers (e.g. PoolLimitOrderManager) which
+  ///      pre-validate `_complexAssetsData` are allowed to drive this entry point.
   /// @param _user Address of the depositor
   /// @param _dHedgeVault dHEDGE Vault address
   /// @param _amountIn Amount of dHEDGE Vault tokens to withdraw
@@ -422,7 +430,12 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     address _dHedgeVault,
     uint256 _amountIn,
     IPoolLogic.ComplexAsset[] memory _complexAssetsData
-  ) external override returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) {
+  )
+    external
+    override
+    onlyAuthorizedWithdrawers(msg.sender)
+    returns (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault)
+  {
     return _initWithdrawalFor(_user, _dHedgeVault, _amountIn, _complexAssetsData, WithdrawalVaultType.LIMIT_ORDER);
   }
 
@@ -595,6 +608,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
       customCooldownDepositsWhitelist[_whitelistSettings[i].toWhitelist] = _whitelistSettings[i].whitelisted;
     }
+    emit CustomCooldownWhitelistUpdated(_whitelistSettings);
   }
 
   /// @notice Setter to set Swapper contract (resides at flat.money contracts)
@@ -615,6 +629,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     require(_dHedgePoolFactory != address(0), "invalid address");
 
     dHedgePoolFactory = _dHedgePoolFactory;
+    emit DHedgePoolFactorySet(_dHedgePoolFactory);
   }
 
   function setAuthorizedWithdrawers(WhitelistSetting[] calldata _whitelistSettings) external onlyOwner {
@@ -635,11 +650,16 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     require(customCooldownDepositsWhitelist[_dHedgeVault], "not whitelisted");
   }
 
+  function _checkAuthorizedWithdrawer(address _caller) internal view {
+    require(isAuthorizedWithdrawer[_caller], "not authorized");
+  }
+
   /// @param _swapper New swapper address
   function _setSwapper(ISwapper _swapper) internal {
     require(address(_swapper) != address(0), "invalid address");
 
     swapper = _swapper;
+    emit SwapperSet(address(_swapper));
   }
 
   /// @param _customCooldown New custom cooldown
@@ -647,6 +667,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
     require(_customCooldown >= 5 minutes && _customCooldown <= DEFAULT_COOLDOWN, "invalid custom cooldown");
 
     customCooldown = _customCooldown;
+    emit CustomCooldownSet(_customCooldown);
   }
 
   function _deployVault(address _depositor, WithdrawalVaultType _type) internal returns (address vault) {
@@ -793,7 +814,7 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
 
     IWithdrawalVault(vault).withdrawDhedgeVault(_dHedgeVault, _amountIn, _complexAssetsData);
 
-    IWithdrawalVault(vault).unrollAssets(_dHedgeVault, _user, _complexAssetsData);
+    IWithdrawalVault(vault).unrollAssets(_dHedgeVault, _complexAssetsData);
 
     trackedAssets = IWithdrawalVault(vault).getTrackedAssets();
 

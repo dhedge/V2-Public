@@ -1,4 +1,7 @@
+import { ethers } from "ethers";
+
 import { ethereumChainData } from "../../config/chainData/ethereumData";
+import { hyperevmChainData } from "../../config/chainData/hyperevmData";
 import { IAddresses, IFileNames } from "../types";
 
 export const ethereumProdData: IAddresses = {
@@ -18,6 +21,7 @@ export const ethereumProdData: IAddresses = {
   assets: {
     nativeAssetWrapper: ethereumChainData.assets.weth,
     weth: ethereumChainData.assets.weth,
+    usdc: ethereumChainData.assets.usdc,
   },
 
   oneInchV6RouterAddress: ethereumChainData.oneInch.v6Router,
@@ -39,6 +43,21 @@ export const ethereumProdData: IAddresses = {
       ethereumChainData.torosPools.ETHBEAR1X,
       ethereumChainData.torosPools.ETH1X,
       ethereumChainData.torosPools.BTC1X,
+      ethereumChainData.torosPools.SP500BULL1X,
+      ethereumChainData.torosPools.SP500BULL2X,
+      ethereumChainData.torosPools.SP500BULL3X,
+      ethereumChainData.torosPools.NVDABULL1X,
+      ethereumChainData.torosPools.NVDABULL2X,
+      ethereumChainData.torosPools.MUBULL1X,
+      ethereumChainData.torosPools.MUBULL2X,
+      ethereumChainData.torosPools.IRENBULL1X,
+      ethereumChainData.torosPools.IRENBULL2X,
+      ethereumChainData.torosPools.STRCBULL1X,
+      ethereumChainData.torosPools.STRCBULL2X,
+      ethereumChainData.torosPools.AMATBULL1X,
+      ethereumChainData.torosPools.AMATBULL2X,
+      ethereumChainData.torosPools.SPCXBULL1X,
+      ethereumChainData.torosPools.SPCXBULL2X,
     ],
   },
 
@@ -46,25 +65,18 @@ export const ethereumProdData: IAddresses = {
     defaultSlippageTolerance: 200, // 2%
     settlementToken: ethereumChainData.assets.usdc,
     authorizedKeeperAddresses: [
-      "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
-      "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
-      "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
-      "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
-      "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B",
+      "0x99c9F65a486C0567495ec58722916c73292D585f",
+      "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
+      "0x962976AA38665fc59B2F981C2457a6f95fFB2aD5",
+      "0x5048d4630c51d02A281Cb77E63a1A3af4Fd8dc33",
     ],
   },
 
   pendle: {
     pendleRouterV4: "0x888888888889758F76e7103c6CbF23ABbF58F946",
     knownMarkets: [
-      "0x9Df192D13D61609D1852461c4850595e1F56E714", // USDe-31JUL2025
-      "0x4339Ffe2B7592Dc783ed13cCE310531aB366dEac", // sUSDE-31JUL2025
-      "0x6d98a2b6CDbF44939362a3E99793339Ba2016aF4", // USDe-25SEP2025
-      "0xA36b60A14A1A5247912584768C6e53E1a269a9F7", // sUSDE-25SEP2025
-      "0x4eaA571EaFCD96f51728756BD7F396459BB9B869", // USDe-27NOV2025
-      "0xb6aC3d5da138918aC4E84441e924a20daA60dBdd", // sUSDE-27NOV2025
-      "0xAADBC004DAcF10e1fdbd87ca1a40ecAF77CC5B02", // USDe-05FEB2026
-      "0xed81f8bA2941C3979de2265C295748a6b6956567", // sUSDe-05FEB2026
+      "0x50DCE085af29CABa28f7308beA57C4043757b491", // apxUSD-18JUN2026
+      "0xaf0349FB9B1bA07D34381870c59b560b31412660", // apxUSD-05NOV2026
     ],
     yieldContractFactory: "0x35A338522a435D46f77Be32C70E215B813D0e3aC",
     staticRouter: "0x263833d47eA3fA4a30f269323aba6a107f9eB14C",
@@ -93,23 +105,11 @@ export const ethereumProdData: IAddresses = {
 
   rewardAssetSetting: [
     {
-      rewardToken: ethereumChainData.assets.usde,
+      rewardToken: "0x98A878b1Cd98131B271883B390f68D2c90674665", // apxUSD
       linkedAssetTypes: [],
       linkedAssets: [
-        "0x917459337CaAC939D41d7493B3999f571D20D667", // PT-USDe-31JUL2025
-        "0xBC6736d346a5eBC0dEbc997397912CD9b8FAe10a", // PT-USDe-25SEP2025
-        "0x62C6E813b9589C3631Ba0Cdb013acdB8544038B7", // PT-USDe-27NOV2025
-        "0x1f84a51296691320478c98b8d77f2bbd17d34350", // PT-USDe-05FEB2026
-      ],
-    },
-    {
-      rewardToken: ethereumChainData.assets.susde,
-      linkedAssetTypes: [],
-      linkedAssets: [
-        "0x3b3fB9C57858EF816833dC91565EFcd85D96f634", // PT-sUSDe-31JUL2025
-        "0x9F56094C450763769BA0EA9Fe2876070c0fD5F77", // PT-sUSDE-25SEP2025
-        "0xe6A934089BBEe34F832060CE98848359883749B3", // PT-sUSDe-27NOV2025
-        "0xe8483517077afa11a9b07f849cee2552f040d7b2", // PT-sUSDe-05FEB2026
+        "0x92a6A01B07984de46c24E8EBa248449beB8B1dCB", // PT-apxUSD-18JUN2026
+        "0xAF687B5EcB525Ccea96115088999B4eD80C388b6", // PT-apxUSD-05NOV2026
       ],
     },
   ],
@@ -127,6 +127,89 @@ export const ethereumProdData: IAddresses = {
       },
     ],
   },
+
+  ondo: {
+    gmTokenManager: "0x2c158BC456e027b2AfFCCadF1BDBD9f5fC4c5C8c",
+    attestationOracle: {
+      allowedUserId: "0x474d000000000000b50d13795402932300000000000000000000000000000000",
+      maxProofAge: 24 * 60 * 60, // 24 hours
+      sanityDeviationBps: 1000, // 10%
+      minQuoteValue: ethers.utils.parseEther("10").toString(), // $10
+      maxQuoteValue: ethers.utils.parseEther("10000").toString(), // $10,000
+    },
+    ondoGMSwapContractGuard: {
+      maxSlippagePerSwapBps: 500, // 5%
+    },
+    ondoGMTokenAssetGuard: {
+      mismatchDeltaNumerator: 5, // 0.05%
+      // Skip the redeem when a depositor's GM portion is worth less than this. Set above
+      // Ondo's ~$1 attestation-swap minimum to absorb oracle-vs-attestation price drift.
+      minRedeemValue: ethers.utils.parseEther("1.1").toString(), // $1.10
+    },
+    ondoGMSwap: {
+      // Non-pool OndoGMSwap callers.
+      authorizedCallers: [
+        "0x159d5cE26dBDCB1f2e34EC5C689f9411De0C85FE", // DytmWithdrawProcessor
+      ],
+    },
+  },
+
+  midas: {
+    depositVault: "0xc21511EDd1E6eCdc36e8aD4c82117033e50D5921", // mAPOLLO DepositVault
+    redemptionVault: "0x5aeA6D35ED7B3B7aE78694B7da2Ee880756Af5C0", // mAPOLLO RedemptionVaultWithSwapper
+    whitelistedPools: [
+      "0x80B119f36f81032cd87C182AdC2b0145D901bA8b", // test vault
+      "0xfec2adfa296fe189f53089fd5ccd8c28dd559cf2", // mStable
+    ],
+  },
+
+  dytm: {
+    dytmOffice: ethereumChainData.dytm.dytmOffice,
+    dytmPeriphery: ethereumChainData.dytm.dytmPeriphery,
+    accountSplitterAndMerger: ethereumChainData.dytm.accountSplitterAndMerger,
+    whitelistedPools: [
+      ethereumChainData.dytmWhitelistedVaults.DYTMMainnetTesting1,
+      ethereumChainData.torosPools.SP500BULL2X,
+      ethereumChainData.torosPools.SP500BULL3X,
+      ethereumChainData.torosPools.NVDABULL2X,
+      ethereumChainData.torosPools.MUBULL2X,
+      ethereumChainData.torosPools.IRENBULL2X,
+      ethereumChainData.torosPools.STRCBULL2X,
+      ethereumChainData.torosPools.AMATBULL2X,
+      ethereumChainData.torosPools.SPCXBULL2X,
+    ],
+    whitelistedMarkets: [
+      1, // for testing
+    ],
+    maxDytmMarkets: 1,
+    mismatchDeltaNumerator: 5, // 0.05% allowed mismatch
+  },
+  across: {
+    spokePool: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5", // Across SpokePool on Ethereum
+    approvedDestinations: [
+      {
+        sourcePool: ethereumChainData.ondoHyperliquidMarketMaking.ondoVault,
+        sourceToken: ethereumChainData.assets.usdc,
+        destinationChainId: 999, // HyperEVM
+        destinationPool: hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault,
+        destinationToken: hyperevmChainData.assets.usdc,
+      },
+      {
+        sourcePool: ethereumChainData.ondoHyperliquidMarketMaking.ondoVault2,
+        sourceToken: ethereumChainData.assets.usdc,
+        destinationChainId: 999, // HyperEVM
+        destinationPool: hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault2,
+        destinationToken: hyperevmChainData.assets.usdc,
+      },
+      {
+        sourcePool: ethereumChainData.ondoHyperliquidMarketMaking.ondoVault3,
+        sourceToken: ethereumChainData.assets.usdc,
+        destinationChainId: 999, // HyperEVM
+        destinationPool: hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault3,
+        destinationToken: hyperevmChainData.assets.usdc,
+      },
+    ],
+  },
 };
 
 export const ethereumProdFileNames: IFileNames = {
@@ -134,4 +217,5 @@ export const ethereumProdFileNames: IFileNames = {
   assetsFileName: "./config/ethereum/dHEDGE Assets list.json",
   assetGuardsFileName: "./config/ethereum/dHEDGE Governance Asset Guards.csv",
   contractGuardsFileName: "./config/ethereum/dHEDGE Governance Contract Guards.csv",
+  deprecatedContractGuardsFileName: "./config/ethereum/dHEDGE Deprecated Contract Guards.csv",
 } as const;

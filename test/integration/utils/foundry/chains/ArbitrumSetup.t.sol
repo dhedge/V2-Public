@@ -6,6 +6,7 @@ pragma abicoder v2;
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {BackboneSetup} from "../BackboneSetup.t.sol";
+import {AssetTypes} from "../AssetTypes.sol";
 
 abstract contract ArbitrumSetup is BackboneSetup {
   uint256 public forkBlockNumber;
@@ -16,17 +17,17 @@ abstract contract ArbitrumSetup is BackboneSetup {
     BackboneSetup(
       IAssetHandler.Asset({
         asset: ArbitrumConfig.USDC,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: ArbitrumConfig.USDC_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: ArbitrumConfig.WETH,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: ArbitrumConfig.WETH_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: ArbitrumConfig.DAI,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: ArbitrumConfig.DAI_CHAINLINK_ORACLE
       })
     )

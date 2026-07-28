@@ -11,10 +11,9 @@ import {IDytmAccountSplitterAndMerger} from "../../../interfaces/dytm/IDytmAccou
 import {IDytmOffice} from "../../../interfaces/dytm/IDytmOffice.sol";
 import {IDytmDelegatee} from "../../../interfaces/dytm/IDytmDelegatee.sol";
 import {DytmSplitTokenIdTracker} from "./DytmSplitTokenIdTracker.sol";
-import {DytmSwapDataCalculator} from "./DytmSwapDataCalculator.sol";
+import {DytmWithdrawalCalculator} from "./DytmWithdrawalCalculator.sol";
 import {DytmHelperLib} from "../../../utils/dytm/DytmHelperLib.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
-import {ISwapDataConsumingGuard} from "../../../interfaces/guards/ISwapDataConsumingGuard.sol";
 import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 
@@ -23,8 +22,7 @@ import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 contract DytmOfficeAssetGuard is
   ClosedAssetGuard,
   DytmSplitTokenIdTracker,
-  DytmSwapDataCalculator,
-  ISwapDataConsumingGuard,
+  DytmWithdrawalCalculator,
   IAddAssetCheckGuard
 {
   using SafeMath for uint256;
@@ -32,37 +30,39 @@ contract DytmOfficeAssetGuard is
 
   bool public override isAddAssetCheckGuard = true;
 
+  /// @notice Processor used by `DytmWithdrawLib` to run the DYTM unwind in an isolated context.
+  address public immutable dytmWithdrawProcessor;
+
   function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) external view override {
     require(!_asset.isDeposit, "deposit not supported");
     require(_useContractGuard().poolsWhitelist(_poolLogic), "pool not whitelisted");
   }
 
   /// @param _mismatchDeltaNumerator Numerator for mismatch delta tolerance
-  /// @param _pendleStaticRouter Pendle static router address for PT conversion
   /// @param _dytmOffice DYTM Office address
   /// @param _poolFactory dHEDGE pool factory address
   /// @param _dytmPeriphery DYTM Periphery address
   /// @param _accountSplitterAndMerger Account splitter and merger address
-  /// @param _dytmWithdrawProcessor DYTM withdraw processor address
+  /// @param _dytmWithdrawProcessor DYTM unwind processor address
   constructor(
     uint256 _mismatchDeltaNumerator,
-    address _pendleStaticRouter,
     address _dytmOffice,
     address _poolFactory,
     address _dytmPeriphery,
     address _accountSplitterAndMerger,
     address _dytmWithdrawProcessor
   )
-    DytmSwapDataCalculator(
+    DytmWithdrawalCalculator(
       _mismatchDeltaNumerator,
-      _pendleStaticRouter,
       _dytmOffice,
       _poolFactory,
       _dytmPeriphery,
-      _accountSplitterAndMerger,
-      _dytmWithdrawProcessor
+      _accountSplitterAndMerger
     )
-  {}
+  {
+    require(_dytmWithdrawProcessor != address(0), "invalid processor");
+    dytmWithdrawProcessor = _dytmWithdrawProcessor;
+  }
 
   /// @notice Returns the balance of the Dytm Office User Account of the pool
   /// @dev Returns the balance to be priced in USD
@@ -75,8 +75,9 @@ contract DytmOfficeAssetGuard is
         account: DytmHelperLib.toUserAccount(_pool),
         market: uint88(marketIds[i])
       });
-      if (position.isHealthy) {
-        balance = balance.add(position.totalCollateralValueUSD).sub(position.debt.debtValueUSD);
+      // Net equity clamped at zero: unhealthy (weighted HF < 1) positions can still have collateral > debt.
+      if (position.totalCollateralValueUSD > position.debt.debtValueUSD) {
+        balance = balance.add(position.totalCollateralValueUSD.sub(position.debt.debtValueUSD));
       }
     }
   }
@@ -85,15 +86,6 @@ contract DytmOfficeAssetGuard is
   /// @dev Returns decimal 18 (USD pricing)
   function getDecimals(address) external pure override returns (uint256 decimals) {
     decimals = 18;
-  }
-
-  /// @notice Calculates swap data parameters for DYTM withdrawal (ISwapDataConsumingGuard interface)
-  function calculateSwapDataParams(
-    address _pool,
-    uint256 _poolTokenAmount,
-    uint256 _slippageTolerance
-  ) public override(DytmSwapDataCalculator, ISwapDataConsumingGuard) returns (SwapDataParams memory params) {
-    return DytmSwapDataCalculator.calculateSwapDataParams(_pool, _poolTokenAmount, _slippageTolerance);
   }
 
   /// @notice Process withdrawal for DYTM positions (IComplexAssetGuard variant)
@@ -132,13 +124,16 @@ contract DytmOfficeAssetGuard is
     return _withdrawProcessingInternal(_pool, _asset, _portion, _to);
   }
 
-  /// @dev Internal implementation for withdraw processing, shared by both overloads
+  /// @dev Internal implementation for withdraw processing, shared by both overloads.
+  ///      - `_to` receives the freshly-split DYTM isolated account; the market's hook usually
+  ///        blocks `beforeBorrow` for non-whitelisted owners, so the recipient can't borrow.
+  ///      - Returns no withdraw asset/balance — value reaches `_to` via the split-account transfers.
   function _withdrawProcessingInternal(
     address _pool,
     address _asset,
     uint256 _portion,
     address _to
-  ) internal returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions) {
+  ) internal returns (address, uint256, MultiTransaction[] memory transactions) {
     uint256 newAccountIdCount = uint256(IDytmOffice(dytmOffice).getAccountCount()).add(1);
     uint256[] memory marketIds = _useContractGuard().getOwnedTokenIds(_pool);
 
@@ -149,44 +144,24 @@ contract DytmOfficeAssetGuard is
 
     transactions = new MultiTransaction[](marketIds.length.mul(2));
     uint256 txCount;
-    uint256 accountId = DytmHelperLib.toUserAccount(_pool);
-    uint64 fraction = _portion.toUint64();
+    // Running total of net equity in the unhealthy markets skipped below
+    uint256 skippedEquityUSD;
 
     for (uint256 i; i < marketIds.length; ++i) {
       uint88 marketId = uint88(marketIds[i]);
 
-      // Check if position is healthy and has collateral
-      (bool isWithdrawable, ) = _isPositionWithdrawable(_pool, marketId, dytmPeriphery);
+      // Skip markets that can't be split (unhealthy / no collateral); reverts when skipped
+      // net equity exceeds MAX_FORFEIT_VALUE_USD
+      bool isWithdrawable;
+      (isWithdrawable, , skippedEquityUSD) = _checkWithdrawableAndForfeitBound(_pool, marketId, skippedEquityUSD);
       if (!isWithdrawable) {
         continue;
       }
 
-      {
-        // Prepare split account parameters
-        bytes memory callbackData = abi.encode(
-          IDytmAccountSplitterAndMerger.CallbackData({
-            operation: IDytmAccountSplitterAndMerger.Operation.SPLIT_ACCOUNT,
-            data: abi.encode(
-              IDytmAccountSplitterAndMerger.SplitAccountParams({
-                fraction: fraction,
-                sourceAccount: accountId,
-                market: marketId
-              })
-            )
-          })
-        );
-
-        // Transaction 1: Split account to create isolated account with portion of assets/debts
-        transactions[txCount].to = _asset;
-        transactions[txCount].txData = abi.encodeWithSelector(
-          IDytmOffice.delegationCall.selector,
-          DytmParamStructs.DelegationCallParams({
-            callbackData: callbackData,
-            delegatee: IDytmDelegatee(accountSplitterAndMerger)
-          })
-        );
-        ++txCount;
-      }
+      // Transaction 1: Split account to create isolated account with portion of assets/debts
+      transactions[txCount].to = _asset;
+      transactions[txCount].txData = _encodeSplitDelegationCall(_pool, _portion, marketId);
+      ++txCount;
 
       // Transaction 2: Transfer the split isolated account to the withdrawer
       transactions[txCount].to = _asset; // DYTM Office address
@@ -206,6 +181,36 @@ contract DytmOfficeAssetGuard is
       mstore(transactions, sub(mload(transactions), reduceLength))
     }
 
-    return (withdrawAsset, withdrawBalance, transactions);
+    return (address(0), 0, transactions);
+  }
+
+  /// @dev Build the `delegationCall` calldata that splits `_portion` of the pool's position in
+  ///      `_marketId` into a fresh isolated account.
+  ///      - Extracted so the withdraw loop above stays within 0.7.6's stack limit.
+  function _encodeSplitDelegationCall(
+    address _pool,
+    uint256 _portion,
+    uint88 _marketId
+  ) private view returns (bytes memory txData) {
+    bytes memory callbackData = abi.encode(
+      IDytmAccountSplitterAndMerger.CallbackData({
+        operation: IDytmAccountSplitterAndMerger.Operation.SPLIT_ACCOUNT,
+        data: abi.encode(
+          IDytmAccountSplitterAndMerger.SplitAccountParams({
+            fraction: _portion.toUint64(),
+            sourceAccount: DytmHelperLib.toUserAccount(_pool),
+            market: _marketId
+          })
+        )
+      })
+    );
+
+    txData = abi.encodeWithSelector(
+      IDytmOffice.delegationCall.selector,
+      DytmParamStructs.DelegationCallParams({
+        callbackData: callbackData,
+        delegatee: IDytmDelegatee(accountSplitterAndMerger)
+      })
+    );
   }
 }

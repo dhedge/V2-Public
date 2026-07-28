@@ -12,40 +12,17 @@ import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {SourceAssetCheckGuard} from "../SourceAssetCheckGuard.sol";
 
 /// @dev As this contract inherits `SlippageAccumulatorUser`, it also inherits the `ITxTrackingGuard` interface.
-contract OdosSharedContractGuard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUser, SourceAssetCheckGuard {
+/// @dev Abstract; `OdosV2ContractGuard` and `OdosV3ContractGuard` implement `txGuard`.
+abstract contract OdosSharedContractGuard is
+  TxDataUtils,
+  ITransactionTypes,
+  SlippageAccumulatorUser,
+  SourceAssetCheckGuard
+{
   bytes4 public immutable odosSwapSelector;
 
   constructor(address _slippageAccumulator, bytes4 _swapSelector) SlippageAccumulatorUser(_slippageAccumulator) {
     odosSwapSelector = _swapSelector;
-  }
-
-  /// @dev  Support methods `swapCompact, `swap`
-  /// @param _poolManagerLogic Pool manager logic address
-  /// @param _data Transaction data
-  /// @return txType Transaction type
-  /// @return isPublic If the transaction is public or private
-  function txGuard(
-    address _poolManagerLogic,
-    address _to,
-    bytes memory _data
-  ) external override returns (uint16 txType, bool) {
-    address poolLogic = _accessControl(_poolManagerLogic);
-    bytes4 method = getMethod(_data);
-
-    if (method == odosSwapSelector) {
-      bytes memory params = getParams(_data);
-      IOdosRouterV2.SwapTokenInfo memory swapTokenInfo = abi.decode(params, (IOdosRouterV2.SwapTokenInfo));
-      txType = _verifySwap(swapTokenInfo, _poolManagerLogic, poolLogic);
-    } else if (method == IOdosRouterV2.swapCompact.selector) {
-      (bool success, bytes memory swapData) = address(this).staticcall(
-        abi.encodePacked(this._decodeCompactCalldata.selector, _to, _data)
-      );
-      require(success, "decodeCompactCalldata failed");
-      IOdosRouterV2.SwapTokenInfo memory swapTokenInfo = abi.decode(swapData, (IOdosRouterV2.SwapTokenInfo));
-      txType = _verifySwap(swapTokenInfo, _poolManagerLogic, poolLogic);
-    }
-
-    return (txType, false);
   }
 
   function afterTxGuard(address _poolManagerLogic, address _to, bytes memory _data) public override {
@@ -109,12 +86,14 @@ contract OdosSharedContractGuard is TxDataUtils, ITransactionTypes, SlippageAccu
   /// @notice Decode the compact calldata for a swap
   /// modified from https://github.com/odos-xyz/odos-router-v2/blob/main/contracts/OdosRouterV2.sol#L103
   /// and use assembly to call storage variable `address[] public addressList` in the OdosRouterV2 contract
-  function _decodeCompactCalldata() public view returns (IOdosRouterV2.SwapTokenInfo memory tokenInfo) {
+  function _decodeCompactCalldata()
+    public
+    view
+    returns (IOdosRouterV2.SwapTokenInfo memory tokenInfo, uint256 referralPos)
+  {
     address executor;
 
     {
-      address msgSender = msg.sender;
-
       assembly {
         // Define function to load in token address, either from calldata or from storage
         function getAddress(currPos, routerAddress) -> result, newPos {
@@ -189,14 +168,12 @@ contract OdosSharedContractGuard is TxDataUtils, ITransactionTypes, SlippageAccu
         }
         mstore(add(tokenInfo, 0x40), result)
 
-        // Load in the destination to send the output to - Zero denotes msg.sender
+        // No "0 => msg.sender" default: a null outputReceiver fails the poolLogic check in _verifySwap.
         result, pos := getAddress(pos, routerAddress)
-        if eq(result, 0) {
-          result := msgSender
-        }
         mstore(add(tokenInfo, 0xC0), result)
-        //
-        // we don't need to load the referral code and the pathDefinition
+
+        // `pos` points at the referral block; the child reads the referral from here.
+        referralPos := pos
       }
     }
   }

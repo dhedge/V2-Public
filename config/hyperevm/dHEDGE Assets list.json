@@ -21,10 +21,10 @@
     "assetName": "Hyperliquid Perps Account",
     "assetAddress": "0x3333333333333333333333333333333333333333",
     "assetType": "39",
-    "oracleType": "USDPriceAggregator",
     "specificOracleConfig": {
-      "USDPriceOracleAddress": "0x14EB3ab377265cfaEA63386355A556C2e044A9C2"
-    }
+      "chainlinkOracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "ChainlinkAggregator"
   },
   {
     "assetName": "XAUT0",

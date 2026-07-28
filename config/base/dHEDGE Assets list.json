@@ -215,16 +215,6 @@
     }
   },
   {
-    "assetName": "rETH",
-    "assetAddress": "0xb6fe221fe9eef5aba221c348ba20a1bf5e73624c",
-    "assetType": "22",
-    "oracleType": "ETHCrossAggregator",
-    "specificOracleConfig": {
-      "assetToEthChainlinkOracleAddress": "0xf397bF97280B488cA19ee3093E81C0a77F02e9a5",
-      "ethToUsdChainlinkOracleAddress": "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70"
-    }
-  },
-  {
     "assetName": "SNX",
     "assetAddress": "0x22e6966b799c4d5b13be962e1d117b56327fda66",
     "assetType": "0",
@@ -249,19 +239,6 @@
     "oracleType": "USDPriceAggregator",
     "specificOracleConfig": {
       "USDPriceOracleAddress": "0xe84e43dd22a608efbc7f453f16c2bf398876417a"
-    }
-  },
-  {
-    "assetName": "Aerodrome STABLE WETH/rETH",
-    "assetAddress": "0xb8866732424AcDdd729C6fcf7146b19bFE4A2e36",
-    "assetType": "25",
-    "oracleType": "VelodromeStableLPAggregator",
-    "specificOracleConfig": {
-      "dhedgeFactoryProxy": "0x49Afe3abCf66CF09Fab86cb1139D8811C8afe56F"
-    },
-    "specificContractGuardConfig": {
-      "contractGuard": "VelodromeV2GaugeContractGuard",
-      "extraContractGuard": "VelodromePairContractGuard"
     }
   },
   {

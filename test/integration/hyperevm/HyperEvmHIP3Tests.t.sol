@@ -128,10 +128,20 @@ contract HyperEvmHIP3Tests is HyperEVMSetup, PrecompileHelper {
 
     bytes memory txData = abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, limitOrderAction);
 
+    uint256 poolValueBefore = _getTotalFundValue();
+
     // Reduce-only orders are allowed even with a disabled dex to enable position closure
     IPoolLogic(hyperliquidTestPool).execTransaction(coreWriter, txData);
 
     vm.stopPrank();
+
+    // Guard state must not have been mutated by the transaction
+    assertFalse(
+      hyperliquidCoreWriterContractGuard.isEnabledDexId(TEST_DEX_ID),
+      "Dex should remain disabled after reduce-only order"
+    );
+    // No funds should have been drained
+    assertEq(_getTotalFundValue(), poolValueBefore, "Pool value should be unchanged after reduce-only order");
   }
 
   /// @notice Test that HIP-3 non-reduce-only limit orders are also allowed when dex ID is approved
@@ -169,18 +179,28 @@ contract HyperEvmHIP3Tests is HyperEVMSetup, PrecompileHelper {
 
     bytes memory txData = abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, limitOrderAction);
 
-    // Should succeed - HIP-3 orders are allowed regardless of reduce-only status
+    uint256 poolValueBefore = _getTotalFundValue();
+
+    // Non-reduce-only orders are allowed when the dex ID is enabled
     IPoolLogic(hyperliquidTestPool).execTransaction(coreWriter, txData);
 
     vm.stopPrank();
+
+    // Guard state must not have been mutated by the transaction
+    assertTrue(
+      hyperliquidCoreWriterContractGuard.isEnabledDexId(TEST_DEX_ID),
+      "Dex should remain enabled after placing order"
+    );
+    // No funds should have been drained
+    assertEq(_getTotalFundValue(), poolValueBefore, "Pool value should be unchanged after placing order");
   }
 
   /////////////////////////////////////////////
   //       Pool Valuation Tests              //
   /////////////////////////////////////////////
 
-  /// @notice Test that pool valuation includes all approved dex IDs
-  function test_pool_valuation_with_multiple_dex_ids() public {
+  /// @notice Test that pool value is unchanged when an empty HIP-3 dex ID is added
+  function test_pool_value_unchanged_when_empty_dex_id_added() public {
     // Setup: Activate the pool account and bridge some USDC
     uint256 bridgeAmount = 10_000e6; // 10,000 USDC
 
@@ -318,16 +338,5 @@ contract HyperEvmHIP3Tests is HyperEVMSetup, PrecompileHelper {
     );
 
     return bytes.concat(action, params);
-  }
-
-  /// @notice Helper to scale amounts between different decimal places
-  function _scale(uint256 amount, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
-    if (fromDecimals == toDecimals) {
-      return amount;
-    } else if (fromDecimals < toDecimals) {
-      return amount * (10 ** (toDecimals - fromDecimals));
-    } else {
-      return amount / (10 ** (fromDecimals - toDecimals));
-    }
   }
 }

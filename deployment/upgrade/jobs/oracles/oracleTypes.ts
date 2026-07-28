@@ -13,6 +13,7 @@ export interface IAssetConfig<TOracleType extends OracleType, TSpecificOracleCon
   assetName: string;
   assetAddress: string;
   specificOracleConfig: TSpecificOracleConfig;
+  assetMaxPriceAge?: number;
   specificContractGuardConfig?: {
     contractGuard: ContractGuardType;
     extraContractGuard?: ContractGuardType;
@@ -79,6 +80,13 @@ export type IHyperliquidSpotPriceAggregatorConfig = IAssetConfig<
   IHyperliquidSpotPriceAggregatorSpecificConfig
 >;
 
+export type IOndoAttestationAggregatorConfig = IAssetConfig<
+  "OndoAttestationAggregator",
+  IOndoAttestationAggregatorSpecificConfig
+>;
+
+export type IMidasPriceAggregatorConfig = IAssetConfig<"MidasPriceAggregator", IMidasPriceAggregatorSpecificConfig>;
+
 export type TAssetConfig =
   | IAssetConfig<"DhedgeDeployedAggregator", IDhedgeDeployedAggregatorSpecificConfig>
   | IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorSpecificConfig>
@@ -109,7 +117,9 @@ export type TAssetConfig =
   | IPythPriceAggregatorConfig
   | IPendlePTPriceAggregatorConfig
   | IERC4626PriceAggregatorConfig
-  | IHyperliquidSpotPriceAggregatorConfig;
+  | IHyperliquidSpotPriceAggregatorConfig
+  | IOndoAttestationAggregatorConfig
+  | IMidasPriceAggregatorConfig;
 
 export interface IChainlinkAggregatorSpecificConfig extends ITriggerChange {
   chainlinkOracleAddress: Address;
@@ -237,4 +247,16 @@ export interface IERC4626PriceAggregatorSpecificConfig extends ITriggerChange {
 export interface IHyperliquidSpotPriceAggregatorSpecificConfig extends ITriggerChange {
   spotIndex: number;
   usdcUsdFeed: Address;
+}
+
+interface IOndoAttestationAggregatorSpecificConfig extends ITriggerChange {
+  ondoAttestationOracle: Address;
+}
+
+interface IMidasPriceAggregatorSpecificConfig extends ITriggerChange {
+  // Midas CustomAggregatorV3CompatibleFeed (mToken/USD, 8 decimals) to wrap.
+  midasFeed: Address;
+  // Max acceptable staleness (seconds) of the feed's latest update; overrides the AssetHandler
+  // default chainlink timeout (Midas pushes NAV ~daily with occasional multi-day gaps).
+  heartbeat: number;
 }

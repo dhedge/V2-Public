@@ -15,7 +15,7 @@ export const liquifiRewardsContractGuardJob: IJob<void> = async (
 
   console.log("Will deploy LiquifiRewardsContractGuard");
 
-  const unverifiedLiquifiClaimer = "0xC3b7D4ada2Af58E6dc7b4fb303A0de47Ade894C9";
+  const unverifiedLiquifiClaimer = "0xA4D47A2ca5F11175323155E1258bB15932f0534C";
 
   if (config.execute) {
     const liquifiRewardsContractGuardFactory = await ethers.getContractFactory("LiquifiRewardsContractGuard");

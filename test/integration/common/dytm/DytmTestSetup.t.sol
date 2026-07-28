@@ -10,7 +10,9 @@ import {Governance} from "contracts/Governance.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {IDytmOfficeContractGuard} from "contracts/interfaces/dytm/IDytmOfficeContractGuard.sol";
 import {DytmOfficeAssetGuard} from "contracts/guards/assetGuards/dytm/DytmOfficeAssetGuard.sol";
+import {DytmWithdrawProcessor} from "contracts/swappers/easySwapperV2/DytmWithdrawProcessor.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {IntegrationDeployer} from "test/integration/utils/foundry/dryRun/IntegrationDeployer.t.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IERC20Extended} from "contracts/interfaces/IERC20Extended.sol";
@@ -21,6 +23,13 @@ import {DytmConfigStructs} from "contracts/utils/dytm/DytmConfigStructs.sol";
 import {IDytmAddressAccountBaseWhitelist} from "./dytmInterface/IDytmAddressAccountBaseWhitelist.sol";
 import {IMarketConfig} from "./dytmInterface/IDytmMarketConfig.sol";
 import {IDytmWeights} from "./dytmInterface/IDytmWeights.sol";
+import {MockSafe} from "./MockSafe.sol";
+
+/// @dev setPoolsWhitelist is intentionally not on IDytmOfficeContractGuard (no external contract calls it);
+///      declared locally so tests can call it.
+interface IDytmOfficeContractGuardAdmin {
+  function setPoolsWhitelist(IDytmOfficeContractGuard.WhitelistSetting[] calldata settings) external;
+}
 
 abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
   address public immutable dytmOffice;
@@ -45,6 +54,7 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
   PoolManagerLogic public dytmTestPoolManagerLogic;
   IDytmOfficeContractGuard public dytmOfficeContractGuard;
   DytmOfficeAssetGuard public dytmOfficeAssetGuard;
+  DytmWithdrawProcessor public dytmWithdrawProcessor;
 
   struct DytmTestConfig {
     address dhedgePoolFactory;
@@ -91,15 +101,18 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
 
     vm.startPrank(_poolFactory.owner());
 
+    // Deploy DYTM unwind processor (must be deployed before the asset guard so its address can be baked in).
+    // `borrowAsset` doubles as USDC in this test config (Arbitrum native USDC).
+    dytmWithdrawProcessor = new DytmWithdrawProcessor(address(easySwapperV2Proxy), address(_poolFactory), borrowAsset);
+
     // Deploy Dytm Office Asset Guard
     dytmOfficeAssetGuard = new DytmOfficeAssetGuard(
       5,
-      address(0),
       dytmOffice,
       address(_poolFactory),
       dytmPeriphery,
       accountSplitterAndMerger,
-      address(0) // dytmWithdrawProcessor — set later when deployed
+      address(dytmWithdrawProcessor)
     );
     governance.setAssetGuard(uint16(106), address(dytmOfficeAssetGuard)); // Asset type 106 for DYTM
 
@@ -108,12 +121,12 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
     if (isCollateralDhedgePoolToken) {
       // Deploy DHedgePoolAggregator via deployCode (0.8.28 contract, can't use `new` from 0.7.6)
       address dhedgePoolAggregator = deployCode("DHedgePoolAggregator.sol", abi.encode(collateralAsset));
-      assetHandler.addAsset(collateralAsset, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), dhedgePoolAggregator);
+      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), dhedgePoolAggregator);
     } else {
-      assetHandler.addAsset(collateralAsset, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), collateralOracle);
+      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), collateralOracle);
     }
 
-    assetHandler.addAsset(borrowAsset, uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK), borrowOracle);
+    assetHandler.addAsset(borrowAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), borrowOracle);
 
     vm.stopPrank();
   }
@@ -136,7 +149,9 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
       dytmPeriphery: dytmPeriphery,
       dhedgePoolFactory: address(_poolFactory),
       nftTracker: nftTracker,
-      maxDytmMarkets: maxDytmMarkets
+      accountSplitterAndMerger: accountSplitterAndMerger,
+      maxDytmMarkets: maxDytmMarkets,
+      admin: _poolFactory.owner()
     });
 
     // Deploy DytmOfficeContractGuard via deployCode (0.8.28 contract, can't use `new` from 0.7.6)
@@ -298,6 +313,54 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
 
     assertEq(borrowAssetBalanceAfter, borrowed, "Test pool should have borrowed asset after borrow");
     assertApproxEqRel(totalValueAfter, totalValueBefore, 0.0001e18, "Total value should not change after borrow"); // 0.01%
+  }
+
+  function test_getBalance_values_unhealthy_position_at_clamped_equity() public {
+    _supplyAndBorrow();
+
+    uint256 account = uint256(uint160(address(dytmTestPool)));
+    DytmParamStructs.AccountPosition memory position = IDytmPeriphery(dytmPeriphery).getAccountPosition(
+      account,
+      marketId
+    );
+    uint256 equity = position.totalCollateralValueUSD - position.debt.debtValueUSD;
+    assertGt(equity, 0, "Position should have positive net equity");
+    assertEq(
+      dytmOfficeAssetGuard.getBalance(address(dytmTestPool), dytmOffice),
+      equity,
+      "Healthy position should be valued at net equity"
+    );
+
+    // Unhealthy but solvent (weighted HF < 1, collateral > debt): still valued at net equity
+    position.isHealthy = false;
+    position.healthFactor = 0.9e18;
+    vm.mockCall(
+      dytmPeriphery,
+      abi.encodeWithSelector(IDytmPeriphery.getAccountPosition.selector, account, marketId),
+      abi.encode(position)
+    );
+    assertFalse(
+      IDytmPeriphery(dytmPeriphery).getAccountPosition(account, marketId).isHealthy,
+      "Mocked position should be unhealthy"
+    );
+    assertEq(
+      dytmOfficeAssetGuard.getBalance(address(dytmTestPool), dytmOffice),
+      equity,
+      "Unhealthy solvent position should be valued at net equity"
+    );
+
+    // Insolvent (debt > collateral): contributes zero without reverting
+    position.debt.debtValueUSD = position.totalCollateralValueUSD + 1;
+    vm.mockCall(
+      dytmPeriphery,
+      abi.encodeWithSelector(IDytmPeriphery.getAccountPosition.selector, account, marketId),
+      abi.encode(position)
+    );
+    assertEq(
+      dytmOfficeAssetGuard.getBalance(address(dytmTestPool), dytmOffice),
+      0,
+      "Insolvent position should contribute zero"
+    );
   }
 
   function test_can_repay_to_dytm() public {
@@ -479,6 +542,96 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
     nonWhitelistedPoolManager.changeAssets(dytmAsset, new address[](0));
 
     vm.stopPrank();
+  }
+
+  // ========== setPoolsWhitelist / getWhitelistedPools ==========
+
+  function test_constructor_seeds_whitelisted_pools_set() public view {
+    address[] memory pools = dytmOfficeContractGuard.getWhitelistedPools();
+    assertTrue(_containsAddress(pools, address(dytmTestPool)), "seeded pool should be enumerated");
+  }
+
+  function test_setPoolsWhitelist_owner_adds_and_enumerates() public {
+    address newPool = address(0xBEEF);
+
+    assertFalse(dytmOfficeContractGuard.poolsWhitelist(newPool));
+
+    IDytmOfficeContractGuard.WhitelistSetting[] memory settings = new IDytmOfficeContractGuard.WhitelistSetting[](1);
+    settings[0] = IDytmOfficeContractGuard.WhitelistSetting({poolLogic: newPool, whitelisted: true});
+
+    vm.prank(dhedgePoolFactory.owner());
+    IDytmOfficeContractGuardAdmin(address(dytmOfficeContractGuard)).setPoolsWhitelist(settings);
+
+    assertTrue(dytmOfficeContractGuard.poolsWhitelist(newPool));
+    address[] memory pools = dytmOfficeContractGuard.getWhitelistedPools();
+    assertTrue(_containsAddress(pools, newPool), "new pool should be enumerated");
+    assertTrue(_containsAddress(pools, address(dytmTestPool)), "seeded pool should remain enumerated");
+  }
+
+  function test_setPoolsWhitelist_owner_removes_and_updates_enumeration() public {
+    IDytmOfficeContractGuard.WhitelistSetting[] memory settings = new IDytmOfficeContractGuard.WhitelistSetting[](1);
+    settings[0] = IDytmOfficeContractGuard.WhitelistSetting({poolLogic: address(dytmTestPool), whitelisted: false});
+
+    vm.prank(dhedgePoolFactory.owner());
+    IDytmOfficeContractGuardAdmin(address(dytmOfficeContractGuard)).setPoolsWhitelist(settings);
+
+    assertFalse(dytmOfficeContractGuard.poolsWhitelist(address(dytmTestPool)));
+    address[] memory pools = dytmOfficeContractGuard.getWhitelistedPools();
+    assertFalse(_containsAddress(pools, address(dytmTestPool)), "removed pool should not be enumerated");
+  }
+
+  function test_revert_setPoolsWhitelist_zero_pool() public {
+    address guardOwner = dhedgePoolFactory.owner();
+
+    IDytmOfficeContractGuard.WhitelistSetting[] memory settings = new IDytmOfficeContractGuard.WhitelistSetting[](1);
+    settings[0] = IDytmOfficeContractGuard.WhitelistSetting({poolLogic: address(0), whitelisted: true});
+
+    vm.prank(guardOwner);
+    vm.expectRevert("invalid pool logic");
+    IDytmOfficeContractGuardAdmin(address(dytmOfficeContractGuard)).setPoolsWhitelist(settings);
+  }
+
+  /// @dev Deploys a standalone guard owned by a Safe to exercise the onlyOwnerOrSafeSigner path:
+  ///      a Safe signer can call, and a random address reverts with the clean message.
+  function test_setPoolsWhitelist_safe_signer_and_unauthorized() public {
+    MockSafe safe = new MockSafe();
+    address safeSigner = address(0x51517);
+    safe.setOwner(safeSigner, true);
+
+    DytmConfigStructs.DytmConfig memory dytmConfig = DytmConfigStructs.DytmConfig({
+      dytmOffice: dytmOffice,
+      dytmPeriphery: dytmPeriphery,
+      dhedgePoolFactory: address(dhedgePoolFactory),
+      nftTracker: nftTracker,
+      accountSplitterAndMerger: accountSplitterAndMerger,
+      maxDytmMarkets: maxDytmMarkets,
+      admin: address(safe)
+    });
+    IDytmOfficeContractGuard guard = IDytmOfficeContractGuard(
+      deployCode("DytmOfficeContractGuard.sol", abi.encode(new address[](0), new uint88[](0), dytmConfig))
+    );
+    IDytmOfficeContractGuardAdmin guardAdmin = IDytmOfficeContractGuardAdmin(address(guard));
+
+    address newPool = address(0xBEEF);
+    IDytmOfficeContractGuard.WhitelistSetting[] memory settings = new IDytmOfficeContractGuard.WhitelistSetting[](1);
+    settings[0] = IDytmOfficeContractGuard.WhitelistSetting({poolLogic: newPool, whitelisted: true});
+
+    // A Safe signer (not the Safe itself) can manage the whitelist.
+    vm.prank(safeSigner);
+    guardAdmin.setPoolsWhitelist(settings);
+    assertTrue(guard.poolsWhitelist(newPool));
+
+    // A non-signer reverts with the clean message.
+    vm.prank(address(0xBAD));
+    vm.expectRevert("not owner or Safe owner");
+    guardAdmin.setPoolsWhitelist(settings);
+  }
+
+  function _containsAddress(address[] memory _arr, address _target) private pure returns (bool) {
+    for (uint256 i; i < _arr.length; ++i) {
+      if (_arr[i] == _target) return true;
+    }
+    return false;
   }
 
   function test_revert_supply_unsupported_asset() public {
@@ -1104,7 +1257,9 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
       dytmPeriphery: dytmPeriphery,
       dhedgePoolFactory: address(dhedgePoolFactory),
       nftTracker: nftTracker,
-      maxDytmMarkets: 2
+      accountSplitterAndMerger: accountSplitterAndMerger,
+      maxDytmMarkets: 2,
+      admin: dhedgePoolFactory.owner()
     });
 
     dytmOfficeContractGuard = IDytmOfficeContractGuard(

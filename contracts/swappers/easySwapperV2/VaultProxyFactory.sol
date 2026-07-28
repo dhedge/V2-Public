@@ -10,23 +10,23 @@ contract VaultProxyFactory is OwnableUpgradeable, HasLogic {
   address private vaultLogic;
 
   event ProxyCreated(address proxy);
+  event LogicSet(address vaultLogic);
 
   /// @param _vaultLogic WithdrawalVault address
   // solhint-disable-next-line func-name-mixedcase
   function __VaultProxyFactory_init(address _vaultLogic) internal {
     __Ownable_init();
 
-    require(_vaultLogic != address(0), "invalid address");
-
-    vaultLogic = _vaultLogic;
+    setLogic(_vaultLogic);
   }
 
   /// @notice Setting logic address for WithdrawalVault
   /// @param _vaultLogic WithdrawalVault address
-  function setLogic(address _vaultLogic) external onlyOwner {
+  function setLogic(address _vaultLogic) public onlyOwner {
     require(_vaultLogic != address(0), "invalid address");
 
     vaultLogic = _vaultLogic;
+    emit LogicSet(_vaultLogic);
   }
 
   /// @notice Return logic address of WithdrawalVault

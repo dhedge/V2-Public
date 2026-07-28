@@ -26,6 +26,9 @@ contract Managed is IManaged {
   using SafeMathUpgradeable for uint256;
 
   event ManagerUpdated(address newManager, string newManagerName);
+  event TraderSet(address newTrader);
+  event MemberAdded(address member);
+  event MemberRemoved(address member);
 
   address public override manager;
   string public override managerName;
@@ -113,11 +116,13 @@ contract Managed is IManaged {
   function setTrader(address _newTrader) external onlyManager {
     require(_newTrader != address(0), "Invalid trader");
     trader = _newTrader;
+    emit TraderSet(_newTrader);
   }
 
   /// @notice Remove the trader
   function removeTrader() external onlyManager {
     trader = address(0);
+    emit TraderSet(address(0));
   }
 
   /// @notice Return the number of members
@@ -129,6 +134,7 @@ contract Managed is IManaged {
   function _addMember(address _member) internal {
     _memberList.push(_member);
     _memberPosition[_member] = _memberList.length;
+    emit MemberAdded(_member);
   }
 
   function _removeMember(address _member) internal {
@@ -142,6 +148,7 @@ contract Managed is IManaged {
     _memberPosition[_member] = 0;
 
     _memberList.pop();
+    emit MemberRemoved(_member);
   }
 
   function _isCallerManager() internal view {

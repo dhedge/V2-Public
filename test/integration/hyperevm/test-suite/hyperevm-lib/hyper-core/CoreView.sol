@@ -5,6 +5,7 @@ import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/Enumerable
 import {DoubleEndedQueue} from "@openzeppelin/v5/contracts/utils/structs/DoubleEndedQueue.sol";
 import {SafeCast} from "@openzeppelin/v5/contracts/utils/math/SafeCast.sol";
 import {PrecompileLib} from "../lib/PrecompileLib.sol";
+import {HLConstants} from "../lib/HLConstants.sol";
 import {RealL1Read} from "../lib/RealL1Read.sol";
 import {CoreState} from "./CoreState.sol";
 
@@ -264,12 +265,6 @@ contract CoreView is CoreState {
   }
 
   function getTokenIndexFromSystemAddress(address systemAddr) internal pure returns (uint64) {
-    if (systemAddr == address(0x2222222222222222222222222222222222222222)) {
-      return 150; // HYPE token index
-    }
-
-    if (uint160(systemAddr) < uint160(0x2000000000000000000000000000000000000000)) return type(uint64).max;
-
-    return uint64(uint160(systemAddr) - uint160(0x2000000000000000000000000000000000000000));
+    return HLConstants.getTokenIndexFromSystemAddress(systemAddr);
   }
 }

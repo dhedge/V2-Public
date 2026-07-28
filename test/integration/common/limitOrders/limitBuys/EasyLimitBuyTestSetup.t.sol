@@ -11,7 +11,6 @@ import {IPoolFactory} from "contracts/interfaces/IPoolFactory.sol";
 import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
 import {IEasySwapperV2} from "contracts/swappers/easySwapperV2/interfaces/IEasySwapperV2.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
-import {AuthorizedKeepersBase} from "contracts/utils/keepers/AuthorizedKeepersBase.sol";
 import {IPoolFactoryMock} from "test/integration/common/limitOrders/IPoolFactoryMock.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
@@ -70,7 +69,7 @@ abstract contract EasyLimitBuyTestSetup is Test {
       IPoolFactory(poolFactory),
       IEasySwapperV2(easySwapperV2)
     );
-    easyLimitBuyManager.addAuthorizedKeeper(keeper);
+    easyLimitBuyManager.setAuthorizedCaller(keeper, true);
 
     vm.stopPrank();
 
@@ -93,11 +92,11 @@ abstract contract EasyLimitBuyTestSetup is Test {
     EasyLimitBuyManager.LimitBuyExecution[] memory executions = new EasyLimitBuyManager.LimitBuyExecution[](0);
 
     vm.prank(user);
-    vm.expectRevert(abi.encodeWithSelector(AuthorizedKeepersBase.NotAuthorizedKeeper.selector, user));
+    vm.expectRevert(abi.encodeWithSelector(ICommonErrors.UnauthorizedCaller.selector, user));
     easyLimitBuyManager.fillLimitBuyBatch(executions);
 
     vm.prank(user);
-    vm.expectRevert(abi.encodeWithSelector(AuthorizedKeepersBase.NotAuthorizedKeeper.selector, user));
+    vm.expectRevert(abi.encodeWithSelector(ICommonErrors.UnauthorizedCaller.selector, user));
     easyLimitBuyManager.fillLimitBuySafeBatch(executions);
   }
 

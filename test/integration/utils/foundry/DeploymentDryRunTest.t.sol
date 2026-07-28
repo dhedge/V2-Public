@@ -65,7 +65,13 @@ abstract contract DeploymentDryRunTest is Test {
   }
 
   function setUp() public virtual {
-    vm.createSelectFork(network, forkBlockNumber);
+    if (forkBlockNumber == 0) {
+      vm.createSelectFork(network);
+    } else {
+      vm.createSelectFork(network, forkBlockNumber);
+    }
+
+    _afterForkCreated();
 
     vm.label(usdc, "USDC");
     vm.label(weth, "WETH");
@@ -90,7 +96,7 @@ abstract contract DeploymentDryRunTest is Test {
     }
   }
 
-  function test_deposits_should_work_after_new_deployment() public {
+  function test_deposits_should_work_after_new_deployment() public virtual {
     for (uint256 i; i < torosVaultsToCheck.length; ++i) {
       uint256 tokenPriceBefore = PoolLogic(torosVaultsToCheck[i]).tokenPrice();
       _depositIntoVault(torosVaultsToCheck[i]);
@@ -126,7 +132,7 @@ abstract contract DeploymentDryRunTest is Test {
     address depositAsset = _findDepositAsset(_vault);
     uint8 depositAssetDecimals = ERC20(depositAsset).decimals();
     uint256 depositAssetPriceD18 = poolFactory.getAssetPrice(depositAsset);
-    uint256 amountToDeposit = (1000e18 * (10 ** depositAssetDecimals)) / depositAssetPriceD18; // $1000 worth of deposit asset
+    uint256 amountToDeposit = (60000e18 * (10 ** depositAssetDecimals)) / depositAssetPriceD18; // $60000 worth of deposit asset
     deal(depositAsset, depositor, amountToDeposit);
     vm.startPrank(depositor);
     ERC20(depositAsset).approve(_vault, amountToDeposit);
@@ -151,4 +157,8 @@ abstract contract DeploymentDryRunTest is Test {
 
     return string(str);
   }
+
+  /// @dev Hook called after fork creation but before token price snapshotting.
+  // solhint-disable-next-line no-empty-blocks
+  function _afterForkCreated() internal virtual {}
 }

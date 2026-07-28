@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {SkyPSM3ContractGuardTestSetup} from "test/integration/common/sky/SkyPSM3ContractGuardTestSetup.t.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
@@ -15,14 +15,14 @@ contract SkyPSM3ContractGuardTestArbitrum is SkyPSM3ContractGuardTestSetup, Arbi
   IAssetHandler.Asset private usdsData =
     IAssetHandler.Asset({
       asset: 0x6491c05A82219b8D1479057361ff1654749b876b,
-      assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+      assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
       aggregator: 0x37833E5b3fbbEd4D613a3e0C354eF91A42B81eeB
     });
 
   IAssetHandler.Asset private susdsData =
     IAssetHandler.Asset({
       asset: 0xdDb46999F8891663a8F2828d25298f70416d7610,
-      assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+      assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
       aggregator: address(0) // need to deploy it in the test
     });
 

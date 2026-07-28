@@ -20,7 +20,7 @@ pragma solidity 0.8.28;
 import {SafeERC20} from "@openzeppelin/v5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20 as IERC20OZ} from "@openzeppelin/v5/contracts/token/ERC20/IERC20.sol";
 
-import {AuthorizedKeepers} from "../utils/keepers/AuthorizedKeepers.sol";
+import {AuthorizedCallers} from "../utils/callers/AuthorizedCallers.sol";
 
 import {ICommonErrors} from "../interfaces/ICommonErrors.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
@@ -35,7 +35,7 @@ import {EasyLimitBuyTypeHashLib} from "./EasyLimitBuyTypeHashLib.sol";
 /// @title EasyLimitBuyManager
 /// @notice Manages limit buy orders for dHEDGE vaults using Permit2 signatures
 /// @dev Users sign EIP-712 messages off-chain, keepers execute when price conditions are met
-contract EasyLimitBuyManager is AuthorizedKeepers, ICommonErrors {
+contract EasyLimitBuyManager is AuthorizedCallers, ICommonErrors {
   using SafeERC20 for IERC20OZ;
 
   // ============ Constants ============
@@ -112,7 +112,7 @@ contract EasyLimitBuyManager is AuthorizedKeepers, ICommonErrors {
     ISignatureTransfer _permit2,
     IPoolFactory _poolFactory,
     IEasySwapperV2 _easySwapperV2
-  ) AuthorizedKeepers(_admin) {
+  ) AuthorizedCallers(_admin) {
     if (address(_permit2) == address(0)) revert ZeroAddress("permit2");
     if (address(_poolFactory) == address(0)) revert ZeroAddress("poolFactory");
     if (address(_easySwapperV2) == address(0)) revert ZeroAddress("easySwapperV2");
@@ -127,7 +127,7 @@ contract EasyLimitBuyManager is AuthorizedKeepers, ICommonErrors {
   /// @notice Execute multiple limit buy orders in a single transaction
   /// @dev Reverts if any order fails
   /// @param _executions Array of limit buy executions
-  function fillLimitBuyBatch(LimitBuyExecution[] calldata _executions) external onlyAuthorizedKeeper {
+  function fillLimitBuyBatch(LimitBuyExecution[] calldata _executions) external onlyAuthorizedCaller {
     for (uint256 i; i < _executions.length; ++i) {
       _fillLimitBuy(_executions[i].order, _executions[i].permit, _executions[i].signature, _executions[i].zapData);
     }
@@ -136,7 +136,7 @@ contract EasyLimitBuyManager is AuthorizedKeepers, ICommonErrors {
   /// @notice Execute multiple limit buy orders, continuing even if some fail
   /// @dev Emits LimitBuyFillFailed for failed orders instead of reverting
   /// @param _executions Array of limit buy executions
-  function fillLimitBuySafeBatch(LimitBuyExecution[] calldata _executions) external onlyAuthorizedKeeper {
+  function fillLimitBuySafeBatch(LimitBuyExecution[] calldata _executions) external onlyAuthorizedCaller {
     for (uint256 i; i < _executions.length; ++i) {
       bytes32 orderHash = EasyLimitBuyTypeHashLib.hashLimitBuyOrder(_executions[i].order);
       try

@@ -23,4 +23,5 @@ interface IDytmOffice {
   function accrueInterest(uint248 key) external returns (uint256 interest);
   function getAllCollateralIds(uint256 account, uint88 market) external view returns (uint256[] memory);
   function getDebtId(uint256 account, uint88 market) external view returns (uint256);
+  function ownerOf(uint256 account) external view returns (address owner);
 }

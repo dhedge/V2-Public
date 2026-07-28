@@ -1254,46 +1254,6 @@
           "oracleAddress": "0xcc37315085087a0c324d32494eC8E36a1DFE4bFC"
         },
         {
-          "assetName": "Frax Share",
-          "assetAddress": "0x3e121107f6f22da4911079845a470757af4e1a1b",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x6C0fe985D3cAcbCdE428b84fc9431792694d0f51"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0x6C0fe985D3cAcbCdE428b84fc9431792694d0f51"
-        },
-        {
-          "assetName": "Frax USD",
-          "assetAddress": "0x104592a158490a9228070e0a8e5343b499e125d0",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x00DBeB1e45485d53DF7C2F0dF1Aa0b6Dc30311d3"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0x00DBeB1e45485d53DF7C2F0dF1Aa0b6Dc30311d3"
-        },
-        {
-          "assetName": "Sushi LP FXS-FRAX",
-          "assetAddress": "0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca",
-          "assetType": "2",
-          "oracleType": "UniV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "oracleAddress": "0x98461A379168a4860C7D511d9ef117a98e3029ed"
-        },
-        {
-          "assetName": "Sushi LP FRAX-USDC",
-          "assetAddress": "0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0",
-          "assetType": "2",
-          "oracleType": "UniV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "oracleAddress": "0xC3e468ebE1a19E36A6D22aBfa290b5BaeC61aCE5"
-        },
-        {
           "assetName": "Aave Lending Pool",
           "assetAddress": "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf",
           "assetType": "3",
@@ -1361,26 +1321,6 @@
           "oracleAddress": "0x692D43274A6F20f1Dac1578B31C5B5438eb1eD9C"
         },
         {
-          "assetName": "TrueUSD",
-          "assetAddress": "0x2e1ad108ff1d8c782fcbbb89aad783ac49586756",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x7C5D415B64312D38c56B54358449d0a4058339d2"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0x7C5D415B64312D38c56B54358449d0a4058339d2"
-        },
-        {
-          "assetName": "renBTC",
-          "assetAddress": "0xdbf31df14b66535af65aac99c32e9ea844e14501",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
-        },
-        {
           "assetName": "Solana",
           "assetAddress": "0x7DfF46370e9eA5f0Bad3C4E29711aD50062EA7A4",
           "assetType": "0",
@@ -1389,26 +1329,6 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0x10C8264C0935b3B9870013e057f330Ff3e9C56dC"
-        },
-        {
-          "assetName": "Sushi LP WBTC-renBTC",
-          "assetAddress": "0x24619c126cC93C6Dfb2cF4eCC5D4d7CFCe73c97D",
-          "assetType": "2",
-          "oracleType": "UniV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "oracleAddress": "0xAD393bc32EBB54Ec42d3c52AcF23cd53BE946700"
-        },
-        {
-          "assetName": "Sushi LP USDC-TUSD",
-          "assetAddress": "0x4AB66a7138F50Db9B7aDaF8CE8aFB3F638B22f7f",
-          "assetType": "2",
-          "oracleType": "UniV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "oracleAddress": "0x22a6904E0C595B06cC3db6063ab468f0cD651d72"
         },
         {
           "assetName": "Sush LP WMATIC-GHST",
@@ -1519,16 +1439,6 @@
           "oracleAddress": "0x336584C8E6Dc19637A5b36206B1c79923111b405"
         },
         {
-          "assetName": "Balancer",
-          "assetAddress": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
-          "assetType": "4",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0xd106b538f2a868c28ca1ec7e298c3325e0251d66"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0xd106b538f2a868c28ca1ec7e298c3325e0251d66"
-        },
-        {
           "assetName": "Aavegotchi",
           "assetAddress": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
           "assetType": "4",
@@ -1537,15 +1447,6 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0xDD229Ce42f11D8Ee7fFf29bDB71C7b81352e11be"
-        },
-        {
-          "assetName": "DODO bird",
-          "assetAddress": "0xe4bf2864ebec7b7fdf6eeca9bacae7cdfdaffe78",
-          "assetType": "0",
-          "oracleType": "ChainlinkAggregator",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
-          }
         },
         {
           "assetName": "The Sandbox",
@@ -1747,145 +1648,6 @@
           "oracleAddress": "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0"
         },
         {
-          "assetName": "Balancer LP WMATIC-USDC-WETH-BAL",
-          "oracleType": "BalancerV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
-          "assetType": 6,
-          "oracleAddress": "0x18f7eDe0Fc695f0C3e120789d4EcF7F3FddF0D0c"
-        },
-        {
-          "assetName": "Balancer LP WETH-BAL",
-          "oracleType": "BalancerV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
-          "assetType": 6,
-          "oracleAddress": "0x0AA5667B3057CC032AD874F5344559a7C0FD99c9"
-        },
-        {
-          "assetName": "Balancer LP USDC-LINK-WETH-BAL-AAVE",
-          "oracleType": "BalancerV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
-          "assetType": 6,
-          "oracleAddress": "0x212C3403aBfad1180deB8e9c7f60CD57AdaAE8D2"
-        },
-        {
-          "assetName": "Balancer LP WBTC-USDC-WETH",
-          "oracleType": "BalancerV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
-          "assetType": 6,
-          "oracleAddress": "0x969238BFe3Eee033000B83ebb4DB29A904B88A66"
-        },
-        {
-          "assetName": "Balancer LP LINK-WETH-BAL-AAVE",
-          "oracleType": "BalancerV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0xce66904b68f1f070332cbc631de7ee98b650b499",
-          "assetType": 6,
-          "oracleAddress": "0x237c564B77E01D35392f407d4Dd08AF83dAa6C6e"
-        },
-        {
-          "assetName": "Balancer LP WBTC-WETH",
-          "oracleType": "BalancerV2LPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
-          "assetType": 6,
-          "oracleAddress": "0x67F44A03B6cffd2Fe1aC86a55eCd8e031cB94aDE"
-        },
-        {
-          "assetName": "Balancer LP BPSP-TUSD",
-          "oracleType": "BalancerStablePoolAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
-          "assetType": 6,
-          "oracleAddress": "0x8e2C4244B39dc330F07f5b7B1E57588Ed23C848E"
-        },
-        {
-          "assetName": "Balancer LP BPSP",
-          "oracleType": "BalancerStablePoolAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
-          "assetType": 6,
-          "oracleAddress": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8"
-        },
-        {
-          "assetName": "Balancer LP WBTC-renBTC",
-          "oracleType": "BalancerStablePoolAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
-          "assetType": 6,
-          "oracleAddress": "0xffF58887963f23B54BdC14F688385b76281845b3"
-        },
-        {
-          "assetName": "Balancer LP BPSP RewardGauge",
-          "specificContractGuardConfig": {
-            "contractGuard": "BalancerV2GaugeContractGuard"
-          },
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-          },
-          "assetAddress": "0x72843281394e68de5d55bcf7072bb9b2ebc24150",
-          "assetType": 10,
-          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-        },
-        {
-          "assetName": "Balancer LP stMATIC-MATIC (old)",
-          "oracleType": "BalancerStablePoolAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0xaF5E0B5425dE1F5a630A8cB5AA9D97B8141C908D",
-          "assetType": 6,
-          "oracleAddress": "0xC5a4899050621792Bc2345e584c321e2f3b8E6Ab"
-        },
-        {
-          "assetName": "Balancer LP stMATIC-MATIC RewardGauge (old)",
-          "specificContractGuardConfig": {
-            "contractGuard": "BalancerV2GaugeContractGuard"
-          },
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-          },
-          "assetAddress": "0x9928340f9E1aaAd7dF1D95E27bd9A5c715202a56",
-          "assetType": 10,
-          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-        },
-        {
-          "assetName": "Balancer LP MATIC-MaticX RewardGauge (old)",
-          "specificContractGuardConfig": {
-            "contractGuard": "BalancerV2GaugeContractGuard"
-          },
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-          },
-          "assetAddress": "0x48534d027f8962692122dB440714fFE88Ab1fA85",
-          "assetType": 10,
-          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-        },
-        {
           "assetName": "Polygon Bear 1x",
           "assetAddress": "0x8987ca55e635d0d3ba9469ee31e9b8a7d447e9cc",
           "assetType": "0",
@@ -1900,70 +1662,11 @@
           "oracleAddress": "0xca119c49Ec7Ae996e1Fe9597C3DaAEc4859d33e2"
         },
         {
-          "assetName": "Balancer LP WBTC-USDC-WETH RewardGauge",
-          "specificContractGuardConfig": {
-            "contractGuard": "BalancerV2GaugeContractGuard"
-          },
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-          },
-          "assetAddress": "0x0F09F70Ed59202c77aC667f574A5f79bC65CeA48",
-          "assetType": 10,
-          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-        },
-        {
-          "assetName": "Balancer LP MATIC-MaticX (old)",
-          "oracleType": "BalancerStablePoolAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
-          },
-          "assetAddress": "0xC17636e36398602dd37Bb5d1B3a9008c7629005f",
-          "assetType": 6,
-          "oracleAddress": "0x0129c119a9F32E8205dAd9c1a87D555b7371B5bd"
-        },
-        {
           "assetName": "USD Market Neutral Yield",
           "assetAddress": "0xc4c6333afdd510066786e0d257eb91095fd729e3",
           "assetType": "0",
           "oracleType": "DHedgePoolAggregator",
           "oracleAddress": "0x1C831A64a93dAb8F5D093FfED37C7a51F2D67e3E"
-        },
-        {
-          "assetName": "Balancer LP stMATIC-MATIC RewardGauge",
-          "specificContractGuardConfig": {
-            "contractGuard": "BalancerV2GaugeContractGuard"
-          },
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-          },
-          "assetAddress": "0x2aa6fb79efe19a3fce71c46ae48efc16372ed6dd",
-          "assetType": 10,
-          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-        },
-        {
-          "assetName": "Balancer LP MATIC-MaticX",
-          "oracleType": "BalancerComposableStablePoolAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
-          },
-          "assetAddress": "0xb20fc01d21a50d2c734c4a1262b4404d41fa7bf0",
-          "assetType": 6,
-          "oracleAddress": "0xB9cBeB98c72552A5a4f0531897734eF93c47852F"
-        },
-        {
-          "assetName": "Balancer LP MATIC-MaticX RewardGauge",
-          "specificContractGuardConfig": {
-            "contractGuard": "BalancerV2GaugeContractGuard"
-          },
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-          },
-          "assetAddress": "0xdffe97094394680362ec9706a759eb9366d804c2",
-          "assetType": 10,
-          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
         },
         {
           "assetName": "Pax Gold",
@@ -1984,16 +1687,6 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428"
-        },
-        {
-          "assetName": "stMatic",
-          "assetAddress": "0x3a58a54c066fdc0f2d55fc9c89f0415c92ebf3c4",
-          "assetType": "4",
-          "oracleType": "ChainlinkAggregator",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
-          },
-          "oracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
         },
         {
           "assetName": "MaticX",
@@ -2278,24 +1971,325 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD"
-        }
-      ],
-      "Oracles": [
+        },
         {
-          "name": "dUSD Oracle for Balancer LP",
-          "oracleName": "BalancerDHedgePoolPriceOracle",
-          "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
-          "oracleAddress": "0x703FEAcab4F7b7B8ac8a42F04C6eDCa60e415Bd4"
+          "assetName": "DODO bird",
+          "assetAddress": "0xe4bf2864ebec7b7fdf6eeca9bacae7cdfdaffe78",
+          "assetType": "0",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x59161117086a4C7A9beDA16C66e40Bdaa1C5a8B6"
+          }
+        },
+        {
+          "assetName": "TrueUSD",
+          "assetAddress": "0x2e1ad108ff1d8c782fcbbb89aad783ac49586756",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x7C5D415B64312D38c56B54358449d0a4058339d2"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x7C5D415B64312D38c56B54358449d0a4058339d2"
+        },
+        {
+          "assetName": "Sushi LP USDC-TUSD",
+          "assetAddress": "0x4AB66a7138F50Db9B7aDaF8CE8aFB3F638B22f7f",
+          "assetType": "2",
+          "oracleType": "UniV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "oracleAddress": "0x22a6904E0C595B06cC3db6063ab468f0cD651d72"
+        },
+        {
+          "assetName": "Balancer LP BPSP-TUSD",
+          "oracleType": "BalancerStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0x0d34e5dD4D8f043557145598E4e2dC286B35FD4f",
+          "assetType": 6,
+          "oracleAddress": "0x8e2C4244B39dc330F07f5b7B1E57588Ed23C848E"
+        },
+        {
+          "assetName": "Sushi LP FXS-FRAX",
+          "assetAddress": "0xd53a56ae0f48c9a03660cd36c2e4ae20493a1eca",
+          "assetType": "2",
+          "oracleType": "UniV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "oracleAddress": "0x98461A379168a4860C7D511d9ef117a98e3029ed"
+        },
+        {
+          "assetName": "Sushi LP FRAX-USDC",
+          "assetAddress": "0x9e20a8d3501bf96eda8e69b96dd84840058a1cb0",
+          "assetType": "2",
+          "oracleType": "UniV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "oracleAddress": "0xC3e468ebE1a19E36A6D22aBfa290b5BaeC61aCE5"
+        },
+        {
+          "assetName": "Frax Share",
+          "assetAddress": "0x3e121107f6f22da4911079845a470757af4e1a1b",
+          "assetType": "999",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x6C0fe985D3cAcbCdE428b84fc9431792694d0f51"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x6C0fe985D3cAcbCdE428b84fc9431792694d0f51"
+        },
+        {
+          "assetName": "Frax USD",
+          "assetAddress": "0x104592a158490a9228070e0a8e5343b499e125d0",
+          "assetType": "999",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x00DBeB1e45485d53DF7C2F0dF1Aa0b6Dc30311d3"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x00DBeB1e45485d53DF7C2F0dF1Aa0b6Dc30311d3"
+        },
+        {
+          "assetName": "Balancer LP WMATIC-USDC-WETH-BAL",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0x0297e37f1873d2dab4487aa67cd56b58e2f27875",
+          "assetType": "999",
+          "oracleAddress": "0x18f7eDe0Fc695f0C3e120789d4EcF7F3FddF0D0c"
+        },
+        {
+          "assetName": "Balancer LP WETH-BAL",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0x7eb878107af0440f9e776f999ce053d277c8aca8",
+          "assetType": "999",
+          "oracleAddress": "0x0AA5667B3057CC032AD874F5344559a7C0FD99c9"
+        },
+        {
+          "assetName": "Balancer LP stMATIC-MATIC RewardGauge (old)",
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+          },
+          "assetAddress": "0x9928340f9E1aaAd7dF1D95E27bd9A5c715202a56",
+          "assetType": 10,
+          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+        },
+        {
+          "assetName": "Balancer LP stMATIC-MATIC RewardGauge",
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+          },
+          "assetAddress": "0x2aa6fb79efe19a3fce71c46ae48efc16372ed6dd",
+          "assetType": 10,
+          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+        },
+        {
+          "assetName": "stMatic",
+          "assetAddress": "0x3a58a54c066fdc0f2d55fc9c89f0415c92ebf3c4",
+          "assetType": "999",
+          "oracleType": "ChainlinkAggregator",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
+          },
+          "oracleAddress": "0x97371dF4492605486e23Da797fA68e55Fc38a13f"
+        },
+        {
+          "assetName": "Balancer LP stMATIC-MATIC (old)",
+          "oracleType": "BalancerStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0xaF5E0B5425dE1F5a630A8cB5AA9D97B8141C908D",
+          "assetType": "999",
+          "oracleAddress": "0xC5a4899050621792Bc2345e584c321e2f3b8E6Ab"
+        },
+        {
+          "assetName": "Balancer LP BPSP RewardGauge",
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+          },
+          "assetAddress": "0x72843281394e68de5d55bcf7072bb9b2ebc24150",
+          "assetType": 10,
+          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+        },
+        {
+          "assetName": "Balancer LP MATIC-MaticX RewardGauge (old)",
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+          },
+          "assetAddress": "0x48534d027f8962692122dB440714fFE88Ab1fA85",
+          "assetType": 10,
+          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+        },
+        {
+          "assetName": "Balancer LP WBTC-USDC-WETH RewardGauge",
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+          },
+          "assetAddress": "0x0F09F70Ed59202c77aC667f574A5f79bC65CeA48",
+          "assetType": "999",
+          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+        },
+        {
+          "assetName": "Balancer LP MATIC-MaticX RewardGauge",
+          "specificContractGuardConfig": {
+            "contractGuard": "BalancerV2GaugeContractGuard"
+          },
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+          },
+          "assetAddress": "0xdffe97094394680362ec9706a759eb9366d804c2",
+          "assetType": "999",
+          "oracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
+        },
+        {
+          "assetName": "Balancer LP USDC-LINK-WETH-BAL-AAVE",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0x36128d5436d2d70cab39c9af9cce146c38554ff0",
+          "assetType": "999",
+          "oracleAddress": "0x212C3403aBfad1180deB8e9c7f60CD57AdaAE8D2"
+        },
+        {
+          "assetName": "Balancer LP WBTC-USDC-WETH",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0x03cd191f589d12b0582a99808cf19851e468e6b5",
+          "assetType": "999",
+          "oracleAddress": "0x969238BFe3Eee033000B83ebb4DB29A904B88A66"
+        },
+        {
+          "assetName": "Balancer LP LINK-WETH-BAL-AAVE",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0xce66904b68f1f070332cbc631de7ee98b650b499",
+          "assetType": "999",
+          "oracleAddress": "0x237c564B77E01D35392f407d4Dd08AF83dAa6C6e"
+        },
+        {
+          "assetName": "Balancer LP WBTC-WETH",
+          "oracleType": "BalancerV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0xcf354603a9aebd2ff9f33e1b04246d8ea204ae95",
+          "assetType": "999",
+          "oracleAddress": "0x67F44A03B6cffd2Fe1aC86a55eCd8e031cB94aDE"
+        },
+        {
+          "assetName": "Balancer LP BPSP",
+          "oracleType": "BalancerStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0x06df3b2bbb68adc8b0e302443692037ed9f91b42",
+          "assetType": "999",
+          "oracleAddress": "0x8DC927A72806dbbA49b2cDe101E33C68C3f19Ac8"
+        },
+        {
+          "assetName": "Balancer LP WBTC-renBTC",
+          "oracleType": "BalancerStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0xfeadd389a5c427952d8fdb8057d6c8ba1156cc56",
+          "assetType": "999",
+          "oracleAddress": "0xffF58887963f23B54BdC14F688385b76281845b3"
+        },
+        {
+          "assetName": "Balancer LP MATIC-MaticX (old)",
+          "oracleType": "BalancerStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "assetAddress": "0xC17636e36398602dd37Bb5d1B3a9008c7629005f",
+          "assetType": "999",
+          "oracleAddress": "0x0129c119a9F32E8205dAd9c1a87D555b7371B5bd"
+        },
+        {
+          "assetName": "Balancer LP MATIC-MaticX",
+          "oracleType": "BalancerComposableStablePoolAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53"
+          },
+          "assetAddress": "0xb20fc01d21a50d2c734c4a1262b4404d41fa7bf0",
+          "assetType": "999",
+          "oracleAddress": "0xB9cBeB98c72552A5a4f0531897734eF93c47852F"
+        },
+        {
+          "assetName": "renBTC",
+          "assetAddress": "0xdbf31df14b66535af65aac99c32e9ea844e14501",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xc907E116054Ad103354f2D350FD2514433D57F6f"
+        },
+        {
+          "assetName": "Sushi LP WBTC-renBTC",
+          "assetAddress": "0x24619c126cC93C6Dfb2cF4eCC5D4d7CFCe73c97D",
+          "assetType": "2",
+          "oracleType": "UniV2LPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0"
+          },
+          "oracleAddress": "0xAD393bc32EBB54Ec42d3c52AcF23cd53BE946700"
+        },
+        {
+          "assetName": "Balancer",
+          "assetAddress": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
+          "assetType": "999",
+          "oracleType": "ETHCrossAggregator",
+          "specificOracleConfig": {
+            "assetToEthChainlinkOracleAddress": "0x03CD157746c61F44597dD54C6f6702105258C722",
+            "ethToUsdChainlinkOracleAddress": "0xF9680D99D6C9589e2a93a78A04A279e509205945"
+          },
+          "oracleAddress": "0xF24C681D8f6F6FD70C0c9f1d13ECfBc7051E1fd1"
         }
       ],
       "USDPriceAggregator": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51",
       "Governance": "0x206CbDa3381e7afdF448621b90f549f89555A588",
       "PoolFactoryProxy": "0xfdc7b8bFe0DD3513Cc669bB8d601Cb83e2F69cB0",
-      "PoolLogic": "0x25a057AAd5d26c8E4076629B2DBF8d35eA08Cb22",
+      "PoolLogic": "0xf4D903D70D970259CEDA7457C1ABD75cd95Fa796",
       "PoolLogicProxy": "0xd3adaC91958322B2e287940aD1d77bAA86c5f1ea",
-      "PoolManagerLogic": "0xE4FfE204c83f5514B3CDb656D892c34096C297E4",
+      "PoolManagerLogic": "0x2930DB9B43a0797c073152085474Ae2c552a02a1",
       "PoolManagerLogicProxy": "0xd1deB63DE0c659104e955d8478F7523182B3F3DD",
       "AssetHandlerProxy": "0x760FE3179c8491f4b75b21A81F3eE4a5D616A28a",
+      "AssetHandler": "0x3204DDb9D2b061a6840A3C862d7Db80defc717F5",
       "ERC20Guard": "0x2033271d6932A82E720F0dDEc7736a0495b4db12",
       "UniswapV2RouterGuard": "0x8130906D038ac7161f07cF76FC119Cc72764b65f",
       "SushiMiniChefV2Guard": "0xB80344Bc1EA92502dE950d88Bb1fc9A41b29BE77",
@@ -2310,7 +2304,7 @@
       "OneInchV3Guard": "0x641B2F974068FDfC52Ff694848eC3d6102BA4b44",
       "BalancerV2Guard": "0xf9Dd3000500E5ea6921E515a87f1C101dF1ee09e",
       "OneInchV4Guard": "0x708Fb18D76Ca9E80792810758aCd81E60C6D987d",
-      "PoolFactory": "0xCEa50c9193eE9EB355cC63839810814554380F4D",
+      "PoolFactory": "0x63E35730474109168a6F3e5244CfAdccee62c7e0",
       "BalancerMerkleOrchardGuard": "0x75bE6311B6F649F4D8Be433c8AFFaf67d9CaD826",
       "PoolPerformanceProxy": "0xD91315356F83529E321c73F74f93AD92d5B66018",
       "PoolPerformance": "0xb7De1766d13f845C91f6552880DCeC75ee670DA9",
@@ -2321,7 +2315,7 @@
       "UniswapV3AssetGuard": "0xEc127Cf6A71ec8C0A66f07DF104fF58B7A47FDd5",
       "UniswapV3RouterGuard": "0x2bB3c80434D763A273b478accB47ece86E84B3F1",
       "UniswapV3NonfungiblePositionGuard": "0xAfD119Ac864C6A263dD15908011abF837A6435D0",
-      "AaveLendingPoolAssetGuardV3": "0x33508Ee20c09cAea9A9ff7397c40339773c95a5f",
+      "AaveLendingPoolAssetGuardV3": "0x8A6766a966649f6Db674f3a7938d7a18D70656F9",
       "AaveLendingPoolGuardV3": "0x1BEAE148490caB368E731DeB6bD5A92238cAaD99",
       "ArrakisLiquidityGaugeV4ContractGuard": "0x6ABB2f1373c06b21655e90864433A3E0d5d8bdC1",
       "ArrakisV1RouterStakingGuard": "0xCA6C89dfF08E4040052088eaF21f59b1D4bc5fA2",
@@ -2356,10 +2350,10 @@
       "ByPassAssetGuard": "0x2B6737daFb942E2b70EA14C6C9B01D46eA7E1310",
       "OdosV2ContractGuard": "0xD8F07645Cc987c7A40761e2E9D73C8Ed356D375b",
       "PoolLimitOrderManagerProxy": "0xB71410736d2C8F2DAf30dA9D332dA10534d2624d",
-      "PoolLimitOrderManager": "0x475E52fb1bF2203E33BDC1922a32722Fb35a8C0A",
-      "PoolLogicLib": "0x595C06F8592B3E6f52d709CD328bDf9d27B2eA4D",
+      "PoolLimitOrderManager": "0xf3F14Ac5CF27725c0bEC33703b1Fb6756e2Bf99a",
+      "PoolLogicLib": "0x8B2358BAE80054198679a90dfee815aCafc5255A",
       "KyberSwapRouterV2ContractGuard": "0xC80700f6555112C790b6bFC52a42061d84A609eE",
-      "OdosV3ContractGuard": "0x96d3FBe3eE60cC5b490034FFAF9d9992D605996E",
+      "OdosV3ContractGuard": "0x64c7c77a0Ca02dDf6FB27b4ebAae202eE87C8bF5",
       "ValueManipulationCheck": "0xbb30F5FF9124245EBe8E07cB679deB139c93Db2C",
       "GPv2SettlementContractGuard": "0x417c0384551E324d485cd6d7052d29d69e24eaa7",
       "TypedStructuredDataValidatorProxy": "0x893223Be4e941fAA8A8DB93D0C097fCac37801ce",
@@ -2372,7 +2366,7 @@
       "chainId": 137,
       "ensAddress": null
     },
-    "lastUpdated": "Sun, 22 Mar 2026 16:19:14 GMT",
+    "lastUpdated": "Mon, 20 Jul 2026 13:06:55 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -2404,11 +2398,10 @@
       },
       "poolLimitOrderManager": {
         "authorizedKeeperAddresses": [
-          "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
-          "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
-          "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
-          "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
-          "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B"
+          "0x99c9F65a486C0567495ec58722916c73292D585f",
+          "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
+          "0x962976AA38665fc59B2F981C2457a6f95fFB2aD5",
+          "0x5048d4630c51d02A281Cb77E63a1A3af4Fd8dc33"
         ]
       }
     }

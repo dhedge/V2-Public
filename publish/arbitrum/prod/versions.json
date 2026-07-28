@@ -984,33 +984,32 @@
           "oracleAddress": "0x478D8f26013184D7eEE8184dCB757E741a3C7EC1"
         },
         {
-          "assetName": "PT-wstETH-25JUN2026",
-          "assetAddress": "0x71fBF40651E9D4278a74586AfC99F307f369Ce9A",
-          "assetType": "37",
-          "specificOracleConfig": {
-            "syEquivalentYieldToken": "0x5979D7b546E38E414F7E9822514be443A4800529",
-            "pendleChainlinkOracle": "0xee667d40493db72a94e08ec0948288a358539961",
-            "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
-          },
-          "oracleType": "PendlePTPriceAggregator",
-          "oracleAddress": "0x06b1B1a784578D18E02AC3e8778CD49FF3315954"
-        },
-        {
-          "assetName": "DYTM Office",
-          "assetAddress": "0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001",
-          "assetType": "106",
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-          },
-          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-        },
-        {
-          "assetName": "DYTM Testing Yield Basket",
-          "assetAddress": "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0",
+          "assetName": "Toros GOLDBEAR1X",
+          "assetAddress": "0x4EF67f28aB2d3BA16F1D110fA7c084D62d7eF2Cc",
           "assetType": "0",
           "oracleType": "DHedgePoolAggregator",
-          "oracleAddress": "0x10D0e5bAf61D5F6b80f4A71b8dbFA7F21E7dE3A7"
+          "oracleAddress": "0x6Fba15c192bA72cd4d6Ba65fb94BB47b472E561a"
+        },
+        {
+          "assetName": "Toros BTCP1X",
+          "assetAddress": "0x8990f5e57a8E0b5CABB68D1CD5bd790A92e32f5C",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x874E0E6ed2253f00d3856864C6C265b917959c1e"
+        },
+        {
+          "assetName": "Toros BTCP2X",
+          "assetAddress": "0x99C917097D455d54F68A6b8e73095E30badddAcE",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0xb9024ab3acf556e531De898dAf180d802990e873"
+        },
+        {
+          "assetName": "Toros BTCP3X",
+          "assetAddress": "0x31481Fa8e8802EAcF1cfa3aaBDD11be24FcC3476",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x8F881eB15462167e9D6922313Fadd4e7992a0bAC"
         }
       ],
       "RemovedAssets": [
@@ -1145,6 +1144,35 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0xBE5eA816870D11239c543F84b71439511D70B94f"
+        },
+        {
+          "assetName": "PT-wstETH-25JUN2026",
+          "assetAddress": "0x71fBF40651E9D4278a74586AfC99F307f369Ce9A",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0x5979D7b546E38E414F7E9822514be443A4800529",
+            "pendleChainlinkOracle": "0xee667d40493db72a94e08ec0948288a358539961",
+            "dhedgeFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0x06b1B1a784578D18E02AC3e8778CD49FF3315954"
+        },
+        {
+          "assetName": "DYTM Office",
+          "assetAddress": "0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001",
+          "assetType": "106",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+          },
+          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        },
+        {
+          "assetName": "DYTM Testing Yield Basket",
+          "assetAddress": "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x10D0e5bAf61D5F6b80f4A71b8dbFA7F21E7dE3A7"
         }
       ],
       "USDPriceAggregator": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76",
@@ -1157,14 +1185,14 @@
       "Governance": "0x0b844847558A5814CD0d5Ca539AdF62A5486c826",
       "ERC20Guard": "0x60427184a3C6Ff4382a0A189a6857ADbaE5CF0bb",
       "PoolFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535",
-      "PoolFactory": "0xD35B69453677CE35015ecb9933fb8874bd01E977",
+      "PoolFactory": "0xD0EAe0fBa24FA2817BBa16fe5030a9a5B63946a3",
       "DhedgeNftTrackerStorageProxy": "0xd40ef0EbE8C024CC31c2325B01649A7c024f45A4",
       "DhedgeNftTrackerStorage": "0x67e34Cc20F8A982d7D804C8A5199f1e3E895d398",
       "DhedgeUniV3V2Router": "0x9f9eeb27C9a9B17923F475DC624d33Be9A764C35",
       "DhedgeSuperSwapper": "0x4AF5FC6930599A1117600817CB7fAE428B15CAf6",
       "DhedgeEasySwapperProxy": "0x80b9411977C4fF8D618f2aC3f29F1e2D623C4d34",
       "DhedgeEasySwapper": "0x0843E589bf27911528bF02D7080fA87F40CBABDf",
-      "AaveLendingPoolAssetGuardV3": "0x26127CeD5277Ee547F09644b55F10c3D05E8c740",
+      "AaveLendingPoolAssetGuardV3": "0x671b73ee0487dAA40E39051302C361BaF615Aa08",
       "LendingEnabledAssetGuard": "0xd0392103419ADA46070D7ea49a3BCd8D2256f219",
       "AaveLendingPoolGuardV3": "0x41fc87D21Aad871EdC65E7AE512b105c8D57Ac74",
       "EasySwapperGuard": "0x60b8a1972f0f43809fEA643cFd4Dce86528a0b59",
@@ -1224,7 +1252,7 @@
       "FluidTokenContractGuard": "0xB954CED0748fdcf04d57f28Cf5786a42409f52c8",
       "OdosV2ContractGuard": "0xB432b16b12cfE39DC059c878A65820F897478D42",
       "PoolLimitOrderManagerProxy": "0x26a687e8244f1866E9Aa2D400c8b9957Aa8e6Ad4",
-      "PoolLimitOrderManager": "0x32281AE9b4B946bA23c8CC87ad836285A103d8D0",
+      "PoolLimitOrderManager": "0x0e56A9F9619b487459B7DbD4979ab40c45cfC7F3",
       "AaveLendingPoolGuardV3L2Pool": "0x2980ABA9120e27A8Ed75a0AA341bF3AfFD34E417",
       "FlatMoneyCollateralAssetGuard": "0xdC57aA97d00E95013ae016D7DFbEcfF482D8fF19",
       "PoolLogicLib": "0x2ad4Af6840946Cd3008f8AbEE972FC8f4eBA916F",
@@ -1234,7 +1262,7 @@
       "GmxAfterExecutionLib": "0x204DE34c130Dc670F233Ad02a71D36Ae20942649",
       "AngleDistributorContractGuard": "0x443dd00eA148c2434e3d84fC4e6FeAdE64478cBD",
       "KyberSwapRouterV2ContractGuard": "0xD585DCc441e885458A18385c2aC4B30a9D001fF2",
-      "OdosV3ContractGuard": "0xa87B1102Db626fA7213fc4C5F5B4EB744eE72609",
+      "OdosV3ContractGuard": "0x8192C5F83217AfCd59b898cea0657191cDeEEa43",
       "PoolLimitOrderManagerGuard": "0x20F1f9F2c52f1820020c6641f35890ADd3670F1F",
       "FlatMoneyV2UNITAssetGuard": "0xB021783154442f94020F6A5A49cA378F4553Ad19",
       "ValueManipulationCheck": "0xa39daAFc1c004087495D75AF9DeD3f15288f61C4",
@@ -1256,7 +1284,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Wed, 15 Apr 2026 12:57:57 GMT",
+    "lastUpdated": "Mon, 20 Jul 2026 13:04:42 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [
@@ -1326,16 +1354,17 @@
           "0x8C068d7033d66c4AacaB25CE8219E5688C60155f",
           "0x2FbAdd08aDE2E8A24CF1Fe3a58fE918336b39a72",
           "0x0219549D65ac79326bD7874f6c610CB5e1B76d33",
-          "0xA6711f8a184E352c5A0714a48912cD33ca4a16A0"
+          "0x8990f5e57a8E0b5CABB68D1CD5bd790A92e32f5C",
+          "0x99C917097D455d54F68A6b8e73095E30badddAcE",
+          "0x31481Fa8e8802EAcF1cfa3aaBDD11be24FcC3476"
         ]
       },
       "poolLimitOrderManager": {
         "authorizedKeeperAddresses": [
-          "0xfF5C66B0799bb1cD834e2178866225F020A87A7f",
-          "0xD411D209d3C602bdB7F99A16775A2e30aEb51009",
-          "0xc804F6F95973f3380D8f52fd7aFF475337e2eea2",
-          "0x83336A07e2257c537EfcA180E9c89819fa40ECCd",
-          "0xfB2f4AE9584c82d3dB9Cd00B5CB664c8cf44470B"
+          "0x99c9F65a486C0567495ec58722916c73292D585f",
+          "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
+          "0x962976AA38665fc59B2F981C2457a6f95fFB2aD5",
+          "0x5048d4630c51d02A281Cb77E63a1A3af4Fd8dc33"
         ]
       },
       "easyLimitBuyManager": {

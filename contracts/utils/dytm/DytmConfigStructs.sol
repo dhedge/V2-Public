@@ -8,6 +8,8 @@ library DytmConfigStructs {
     address dytmPeriphery;
     address dhedgePoolFactory;
     address nftTracker;
+    address accountSplitterAndMerger;
     uint256 maxDytmMarkets;
+    address admin;
   }
 }

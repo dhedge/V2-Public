@@ -34,13 +34,25 @@ import {IAaveLendingPoolAssetGuard} from "../../interfaces/guards/IAaveLendingPo
 import {IGovernance} from "../../interfaces/IGovernance.sol";
 import {IPoolFactory} from "../../interfaces/IPoolFactory.sol";
 import {IAaveV3Pool} from "../../interfaces/aave/v3/IAaveV3Pool.sol";
+import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
+import {IMidasRedemptionVault} from "../../interfaces/midas/IMidasRedemptionVault.sol";
+import {IMidasRedemptionVaultContractGuard} from "../../interfaces/midas/IMidasRedemptionVaultContractGuard.sol";
 import {IPoolLimitOrderManager} from "../../interfaces/IPoolLimitOrderManager.sol";
+import {IDytmOfficeContractGuard} from "../../interfaces/dytm/IDytmOfficeContractGuard.sol";
+import {IDytmPeriphery} from "../../interfaces/dytm/IDytmPeriphery.sol";
+import {DytmParamStructs} from "../../utils/dytm/DytmParamStructs.sol";
+import {DytmHelperLib} from "../../utils/dytm/DytmHelperLib.sol";
 import {EasySwapperV2UnrolledAssetsGuard} from "./EasySwapperV2UnrolledAssetsGuard.sol";
+import {DytmOfficeAssetGuard} from "./dytm/DytmOfficeAssetGuard.sol";
 
 /// @title Generic ERC20 asset guard
 /// @dev Asset type = 0
 contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
   using SafeMath for uint256;
+
+  /// @dev Must match `AssetHandler` asset type 43 (Midas Pending Redemption Asset); used by
+  ///      `_checkMidasPendingRedemptions` to find the pool's Midas redemption vault positions.
+  uint16 internal constant MIDAS_PENDING_REDEMPTION_ASSET_TYPE = 43;
 
   /// @notice Transaction guard for approving assets
   /// @dev Parses the manager transaction data to ensure transaction is valid
@@ -123,6 +135,8 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
 
     _checkAaveAssetPositions(pool, asset, governance);
     _checkLimitOrderPositions(pool, asset, governance);
+    _checkDytmAssetPositions(pool, asset, factory, governance);
+    _checkMidasPendingRedemptions(pool, asset, factory, governance);
   }
 
   function _checkAaveAssetPositions(address pool, address asset, address governance) internal view {
@@ -173,6 +187,96 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
           poolLimitOrderManagerProxy.hasSettlementOrder(pool) == false,
         "has open order"
       );
+    }
+  }
+
+  /// @notice Block removal while the asset is held as DYTM collateral or debt — prevents
+  ///         bypassing the per-asset oracle-freshness gate that runs on deposits.
+  function _checkDytmAssetPositions(address pool, address asset, address factory, address governance) internal view {
+    // Magic number 106 is DYTM Office asset type
+    address dytmGuard = IGovernance(governance).assetGuards(106);
+
+    if (dytmGuard == address(0)) {
+      // If DYTM Office asset guard is not set, skip the check
+      return;
+    }
+
+    address dytmOffice = DytmOfficeAssetGuard(dytmGuard).dytmOffice();
+
+    if (!IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic()).isSupportedAsset(dytmOffice)) {
+      // If DYTM Office is not supported by the pool, skip the check
+      return;
+    }
+
+    address periphery = DytmOfficeAssetGuard(dytmGuard).dytmPeriphery();
+    uint256[] memory marketIds = IDytmOfficeContractGuard(IHasGuardInfo(factory).getContractGuard(dytmOffice))
+      .getOwnedTokenIds(pool);
+    uint256 account = DytmHelperLib.toUserAccount(pool);
+
+    for (uint256 i; i < marketIds.length; ++i) {
+      DytmParamStructs.AccountPosition memory pos = IDytmPeriphery(periphery).getAccountPosition({
+        account: account,
+        market: uint88(marketIds[i])
+      });
+
+      require(pos.debt.debtAsset != asset, "asset held as DYTM debt");
+
+      for (uint256 j; j < pos.collaterals.length; ++j) {
+        require(pos.collaterals[j].asset != asset, "asset held as DYTM collateral");
+      }
+    }
+  }
+
+  /// @notice Block removal while a Midas async redemption involving the asset is unresolved:
+  ///         settlement (`approveRequest`) pays the request's `tokenOut` into the pool, and a
+  ///         rejected (Canceled) request is settled by Midas ops transferring the mToken back
+  ///         manually — either way the incoming tokens would sit in the pool unaccounted if the
+  ///         asset were no longer enabled. The mToken is owed back on BOTH Pending (via rejection)
+  ///         and Canceled (return in flight); `tokenOut` is only owed while Pending.
+  ///         NOTE: this protection only runs for assets whose asset guard inherits ERC20Guard —
+  ///         which holds for Midas payment tokens (plain ERC20 stablecoins like USDC) and mTokens
+  ///         (`MidasMTokenAssetGuard` extends ERC20Guard).
+  function _checkMidasPendingRedemptions(
+    address pool,
+    address asset,
+    address factory,
+    address governance
+  ) internal view {
+    if (IGovernance(governance).assetGuards(MIDAS_PENDING_REDEMPTION_ASSET_TYPE) == address(0)) {
+      // If Midas pending redemption asset guard is not set, skip the check
+      return;
+    }
+
+    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(IPoolLogic(pool).poolManagerLogic())
+      .getSupportedAssets();
+
+    for (uint256 i; i < supportedAssets.length; ++i) {
+      address redemptionVault = supportedAssets[i].asset;
+
+      if (IHasAssetInfo(factory).getAssetType(redemptionVault) != MIDAS_PENDING_REDEMPTION_ASSET_TYPE) continue;
+
+      address contractGuard = IHasGuardInfo(factory).getContractGuard(redemptionVault);
+      if (contractGuard == address(0)) continue;
+
+      bool isMToken = IMidasRedemptionVault(redemptionVault).mToken() == asset;
+      uint256[] memory requestIds = IMidasRedemptionVaultContractGuard(contractGuard).getPendingRequestIds(
+        pool,
+        redemptionVault
+      );
+
+      for (uint256 j; j < requestIds.length; ++j) {
+        (address sender, address tokenOut, uint8 status, , , ) = IMidasRedemptionVault(redemptionVault).redeemRequests(
+          requestIds[j]
+        );
+
+        if (sender != pool) continue;
+
+        if (status == uint8(IMidasRedemptionVault.RequestStatus.Pending)) {
+          require(!isMToken && tokenOut != asset, "pending redemption in progress");
+        } else if (status == uint8(IMidasRedemptionVault.RequestStatus.Canceled)) {
+          require(!isMToken, "pending redemption in progress");
+        }
+      }
     }
   }
 }

@@ -2,6 +2,7 @@ import fs from "fs";
 import util from "util";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTransactions } from "../../deploymentHelpers";
+import { aggregate3InChunks, getMulticall3 } from "../../multicall";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions, TDeployedAsset } from "../../types";
 import { TAssetConfig } from "./oracles/oracleTypes";
 
@@ -41,40 +42,110 @@ export const removeAssetsJob: IJob<void> = async (
   }
 
   if (assetAddressesToRemove.length) {
-    const deployedFunds = await poolFactory.getDeployedFunds();
+    const deployedFunds: string[] = await poolFactory.getDeployedFunds();
     const fundsWithAssetsToRemove: string[] = [];
 
+    // Reads are batched through Multicall3 to avoid a per-fund fan-out that resets flaky RPCs.
+    const multicall = getMulticall3(ethers.provider);
+    const poolLogicInterface = new ethers.utils.Interface(["function poolManagerLogic() view returns (address)"]);
+    const managerLogicInterface = new ethers.utils.Interface([
+      "function isSupportedAsset(address) view returns (bool)",
+      "function assetBalance(address) view returns (uint256)",
+    ]);
+
+    console.log(
+      `Checking ${assetAddressesToRemove.length} asset(s) across ${deployedFunds.length} funds via multicall...`,
+    );
+
+    // Pass 1: resolve each fund's PoolManagerLogic.
+    const managerLogicResults = await aggregate3InChunks(
+      multicall,
+      deployedFunds.map((fund) => ({
+        target: fund,
+        allowFailure: true,
+        callData: poolLogicInterface.encodeFunctionData("poolManagerLogic"),
+      })),
+    );
+    const funds = deployedFunds
+      .map((fund, i) => {
+        const result = managerLogicResults[i];
+        if (!result.success || result.returnData === "0x") {
+          console.warn(`Skipping fund ${fund}: poolManagerLogic() reverted`);
+          return undefined;
+        }
+        const managerLogic: string = poolLogicInterface.decodeFunctionResult("poolManagerLogic", result.returnData)[0];
+        return { fund, managerLogic };
+      })
+      .filter((f): f is { fund: string; managerLogic: string } => f !== undefined);
+    console.log(`Pass 1: resolved ${funds.length}/${deployedFunds.length} funds (poolManagerLogic)`);
+
+    // Pass 2: isSupportedAsset(asset) for every (asset, fund) pair. Call order is
+    // asset-major: index === assetIndex * funds.length + fundIndex.
+    const supportResults = await aggregate3InChunks(
+      multicall,
+      assetAddressesToRemove.flatMap((asset) =>
+        funds.map(({ managerLogic }) => ({
+          target: managerLogic,
+          allowFailure: true,
+          callData: managerLogicInterface.encodeFunctionData("isSupportedAsset", [asset]),
+        })),
+      ),
+    );
+
+    const supportedPairs: { asset: string; fund: string; managerLogic: string }[] = [];
+    assetAddressesToRemove.forEach((asset, assetIndex) => {
+      funds.forEach(({ fund, managerLogic }, fundIndex) => {
+        const result = supportResults[assetIndex * funds.length + fundIndex];
+        if (
+          result.success &&
+          result.returnData !== "0x" &&
+          managerLogicInterface.decodeFunctionResult("isSupportedAsset", result.returnData)[0]
+        ) {
+          supportedPairs.push({ asset, fund, managerLogic });
+        }
+      });
+    });
+    console.log(
+      `Pass 2: ${supportResults.length} support checks (= ${assetAddressesToRemove.length} assets × ${funds.length} funds), ${supportedPairs.length} supported`,
+    );
+
+    // Pass 3: PoolManagerLogic.assetBalance(asset) only for supported pairs.
+    const balanceResults = await aggregate3InChunks(
+      multicall,
+      supportedPairs.map(({ asset, managerLogic }) => ({
+        target: managerLogic,
+        allowFailure: true,
+        callData: managerLogicInterface.encodeFunctionData("assetBalance", [asset]),
+      })),
+    );
+    console.log(`Pass 3: ${balanceResults.length} balance checks (= ${supportedPairs.length} supported pairs)`);
+
+    // Per-asset reporting + gather every fund that still has the asset enabled.
     // Here we check that no pools have enabled the asset we're removing
     // Comment this loop out if you want to by pass it
     for (const asset of assetAddressesToRemove) {
+      const supportingFunds: string[] = [];
       const fundsWithPositiveBalance: string[] = [];
-      const assetContract = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", asset);
-      console.log("Checking if any pool has enabled: ", asset);
-      const results = await Promise.all(
-        deployedFunds.map(async (fund) => {
-          const pool = await ethers.getContractAt("PoolLogic", fund);
-          const managerLogic = await ethers.getContractAt("PoolManagerLogic", await pool.poolManagerLogic());
-          const isSupported = await managerLogic["isSupportedAsset(address)"](asset);
-          if (isSupported) {
-            const balance = await assetContract.balanceOf(fund);
-            if (balance.gt(0)) fundsWithPositiveBalance.push(fund);
-            return fund;
-          }
-        }),
-      );
-      const filteredResults = results.filter((poolAddress): poolAddress is string => poolAddress !== undefined);
-      if (filteredResults.length) {
-        console.log("Pools that contain: ", asset, util.inspect(filteredResults, { maxArrayLength: null }));
-        fundsWithAssetsToRemove.push(...filteredResults);
-      }
 
+      supportedPairs.forEach((pair, i) => {
+        if (pair.asset !== asset) return;
+        supportingFunds.push(pair.fund);
+        const balanceResult = balanceResults[i];
+        if (balanceResult.success && balanceResult.returnData !== "0x") {
+          const balance = managerLogicInterface.decodeFunctionResult("assetBalance", balanceResult.returnData)[0];
+          if (balance.gt(0)) fundsWithPositiveBalance.push(pair.fund);
+        }
+      });
+
+      if (supportingFunds.length) {
+        console.log("Pools that contain: ", asset, util.inspect(supportingFunds, { maxArrayLength: null }));
+        fundsWithAssetsToRemove.push(...supportingFunds);
+      }
       console.log(
         "Pools with positive balance of: ",
         asset,
         util.inspect(fundsWithPositiveBalance, { maxArrayLength: null }),
       );
-
-      console.log("Checking finished of", asset);
     }
 
     console.log("Funds with assets to remove", util.inspect(fundsWithAssetsToRemove, { maxArrayLength: null }));

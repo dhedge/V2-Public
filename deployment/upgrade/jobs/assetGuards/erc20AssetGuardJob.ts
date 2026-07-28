@@ -4,6 +4,8 @@ import { addOrReplaceGuardInFile } from "../helpers";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 import { AssetType } from "../assetsJob";
 
+const ASSET_TYPES_TO_SET_GUARAD_TO = [AssetType["Chainlink direct USD price feed with 8 decimals"]];
+
 export const erc20GuardJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
@@ -26,14 +28,9 @@ export const erc20GuardJob: IJob<void> = async (
     versions[config.newTag].contracts.ERC20Guard = erc20GuardAddress;
     await tryVerify(hre, erc20GuardAddress, "contracts/guards/assetGuards/ERC20Guard.sol:ERC20Guard", []);
 
-    const assetTypesToSetERC20Guard = [
-      AssetType["Chainlink direct USD price feed with 8 decimals"],
-      AssetType["Lending Enable Asset"],
-    ];
-
     const governance = await ethers.getContractAt("Governance", versions[config.oldTag].contracts.Governance);
 
-    for (const assetType of assetTypesToSetERC20Guard) {
+    for (const assetType of ASSET_TYPES_TO_SET_GUARAD_TO) {
       const existingAssetGuardAddress = await governance.assetGuards(assetType);
 
       // If the asset guard is not set, set it

@@ -12,6 +12,14 @@ import {IERC20Extended} from "../interfaces/IERC20Extended.sol";
 library WithdrawalHelperLib {
   using SafeMath for uint256;
 
+  uint256 private constant BPS_DENOMINATOR = 10_000;
+
+  /// @notice Reduces an amount by 0.01% (1 bps) to account for fee accrual between
+  ///         off-chain simulation (`callStatic`) and on-chain execution.
+  function applyPortionShrinkBuffer(uint256 _amount) internal pure returns (uint256) {
+    return _amount.mul(BPS_DENOMINATOR.sub(1)).div(BPS_DENOMINATOR);
+  }
+
   /// @notice Mints manager fee, applies exit fee, and calculates withdrawal portion
   /// @param _pool The pool (or vault token) address
   /// @param _tokenAmount The amount of pool tokens to be withdrawn

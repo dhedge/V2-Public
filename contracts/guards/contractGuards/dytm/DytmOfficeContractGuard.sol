@@ -1,41 +1,102 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import {Ownable} from "@openzeppelin/v5/contracts/access/Ownable.sol";
+import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/EnumerableSet.sol";
+
 import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {IDytmOffice} from "../../../interfaces/dytm/IDytmOffice.sol";
+import {IDytmAccountSplitterAndMerger} from "../../../interfaces/dytm/IDytmAccountSplitterAndMerger.sol";
+import {IDytmOfficeContractGuard} from "../../../interfaces/dytm/IDytmOfficeContractGuard.sol";
 import {DytmHelperLib} from "../../../utils/dytm/DytmHelperLib.sol";
 import {DytmParamStructs} from "../../../utils/dytm/DytmParamStructs.sol";
 import {DytmConfigStructs} from "../../../utils/dytm/DytmConfigStructs.sol";
 import {DytmDelegationCallCheckGuard} from "./DytmDelegationCallCheckGuard.sol";
 import {IDytmPeriphery} from "../../../interfaces/dytm/IDytmPeriphery.sol";
 import {NftTrackerConsumerGuardV2} from "../shared/NftTrackerConsumerGuardV2.sol";
+import {SafeSignerAccess} from "../../../utils/SafeSignerAccess.sol";
 
 /// @title DYTM Office Contract Guard
 /// @notice Guards DYTM Office interactions, validates operations and tracks active markets
-contract DytmOfficeContractGuard is ITxTrackingGuard, NftTrackerConsumerGuardV2, DytmDelegationCallCheckGuard {
-  mapping(address => bool) public poolsWhitelist;
-  mapping(uint88 => bool) public dytmMarketsWhitelist;
-  address public immutable poolFactory;
-  address public immutable dytmOffice;
-  address public immutable dytmPeriphery;
+contract DytmOfficeContractGuard is
+  IDytmOfficeContractGuard,
+  ITxTrackingGuard,
+  NftTrackerConsumerGuardV2,
+  DytmDelegationCallCheckGuard,
+  Ownable,
+  SafeSignerAccess
+{
+  using EnumerableSet for EnumerableSet.AddressSet;
+
+  mapping(address => bool) public override poolsWhitelist;
+  mapping(uint88 => bool) public override dytmMarketsWhitelist;
+  address public immutable override poolFactory;
+  address public immutable override dytmOffice;
+  address public immutable override dytmPeriphery;
+  address public immutable accountSplitterAndMerger;
   bool public override isTxTrackingGuard = true;
   uint256 public constant HEALTH_FACTOR_LOWER_BOUNDARY = 1.01e18;
+  /// @dev Max relative drop of the pool's main-account HF allowed per merge, in bps.
+  ///      Backstops the dust cap on split remnants by bounding leverage folded into `main`.
+  uint256 public constant MERGE_MAX_HF_DEGRADATION_BPS = 500; // 5%
+  uint256 private constant _BPS_DENOMINATOR = 10_000;
+
+  /// @dev Pre-merge HF of the pool's main account on the merge market.
+  ///      - set in `txGuard`, consumed and cleared in `afterTxGuard`.
+  ///      - a single slot suffices: PoolLogic runs txGuard → call → afterTxGuard per
+  ///        `execTransaction`, and DYTM's delegation context blocks nested merges.
+  uint256 private transient _preMergeMainHealthFactor;
+
+  /// @notice Set of whitelisted pools for enumeration.
+  /// @dev Parallel to `poolsWhitelist` mapping; kept in sync by the constructor and `setPoolsWhitelist`.
+  EnumerableSet.AddressSet private _whitelistedPoolsSet;
 
   constructor(
     address[] memory _whitelistedPools,
     uint88[] memory _whitelistedMarkets,
     DytmConfigStructs.DytmConfig memory _dytmConfig
-  ) NftTrackerConsumerGuardV2(_dytmConfig.nftTracker, keccak256("DYTM_MARKET_ID_TYPE"), _dytmConfig.maxDytmMarkets) {
+  )
+    NftTrackerConsumerGuardV2(_dytmConfig.nftTracker, keccak256("DYTM_MARKET_ID_TYPE"), _dytmConfig.maxDytmMarkets)
+    Ownable(_dytmConfig.admin)
+  {
+    require(_dytmConfig.accountSplitterAndMerger != address(0), "invalid splitter");
     poolFactory = _dytmConfig.dhedgePoolFactory;
     dytmPeriphery = _dytmConfig.dytmPeriphery;
     dytmOffice = _dytmConfig.dytmOffice;
+    accountSplitterAndMerger = _dytmConfig.accountSplitterAndMerger;
     for (uint256 i; i < _whitelistedPools.length; ++i) {
-      poolsWhitelist[_whitelistedPools[i]] = true;
+      address pool = _whitelistedPools[i];
+      require(pool != address(0), "invalid pool logic");
+      poolsWhitelist[pool] = true;
+      _whitelistedPoolsSet.add(pool);
     }
     for (uint256 j; j < _whitelistedMarkets.length; ++j) {
       dytmMarketsWhitelist[_whitelistedMarkets[j]] = true;
     }
+  }
+
+  /// @notice Adds or removes dHEDGE pools from the whitelist.
+  /// @param settings Array of WhitelistSetting structs.
+  function setPoolsWhitelist(WhitelistSetting[] calldata settings) external onlyOwnerOrSafeSigner(owner()) {
+    for (uint256 i; i < settings.length; ++i) {
+      require(settings[i].poolLogic != address(0), "invalid pool logic");
+
+      poolsWhitelist[settings[i].poolLogic] = settings[i].whitelisted;
+
+      if (settings[i].whitelisted) {
+        _whitelistedPoolsSet.add(settings[i].poolLogic);
+      } else {
+        _whitelistedPoolsSet.remove(settings[i].poolLogic);
+      }
+
+      emit PoolWhitelistUpdated(settings[i].poolLogic, settings[i].whitelisted);
+    }
+  }
+
+  /// @notice Returns the list of whitelisted pools.
+  function getWhitelistedPools() external view override returns (address[] memory) {
+    return _whitelistedPoolsSet.values();
   }
 
   /// @notice Validates supply/withdraw/borrow/repay/delegationCall transactions before execution
@@ -94,9 +155,47 @@ contract DytmOfficeContractGuard is ITxTrackingGuard, NftTrackerConsumerGuardV2,
         getParams(data),
         (DytmParamStructs.DelegationCallParams)
       );
-      require(address(params.delegatee) == poolLogic, "invalid delegatee");
-      _checkAndSetDytmDelegateCall(poolLogic);
-      txType = uint16(TransactionType.DytmDelegationCall);
+      address delegatee = address(params.delegatee);
+      if (delegatee == poolLogic) {
+        _checkAndSetDytmDelegateCall(poolLogic);
+        txType = uint16(TransactionType.DytmDelegationCall);
+      } else if (delegatee == accountSplitterAndMerger) {
+        // Manager-initiated merge of pool-owned isolated DYTM accounts.
+        // - source must be isolated: main can never be a source, so value can't leave
+        //   `getBalance`'s view (it only sums the main account).
+        // - recipient must be pool-owned: DYTM only enforces source ownership (and same owner
+        //   on both sides for debt) but lets collateral go to ANY recipient — this blocks
+        //   routing dust collateral out of the pool.
+        IDytmAccountSplitterAndMerger.CallbackData memory cbData = abi.decode(
+          params.callbackData,
+          (IDytmAccountSplitterAndMerger.CallbackData)
+        );
+        require(cbData.operation == IDytmAccountSplitterAndMerger.Operation.MERGE_ACCOUNTS, "merge op only");
+        IDytmAccountSplitterAndMerger.MergeAccountsParams memory mergeParams = abi.decode(
+          cbData.data,
+          (IDytmAccountSplitterAndMerger.MergeAccountsParams)
+        );
+        require(
+          DytmHelperLib.getAccountType(mergeParams.sourceAccount) == DytmHelperLib.AccountType.ISOLATED_ACCOUNT,
+          "merge source must be isolated"
+        );
+        require(dytmMarketsWhitelist[mergeParams.market], "invalid market");
+        require(
+          IDytmOffice(dytmOffice).ownerOf(mergeParams.recipientAccount) == poolLogic,
+          "merge recipient not pool-owned"
+        );
+        // Merging into the pool's main account: snapshot its pre-merge HF so `afterTxGuard`
+        // can bound the degradation. Isolated recipients don't affect main's accounted leverage.
+        uint256 mainAccount = DytmHelperLib.toUserAccount(poolLogic);
+        if (mergeParams.recipientAccount == mainAccount) {
+          _preMergeMainHealthFactor = IDytmPeriphery(dytmPeriphery)
+            .getAccountPosition(mainAccount, mergeParams.market)
+            .healthFactor;
+        }
+        txType = uint16(TransactionType.DytmMerge);
+      } else {
+        revert("invalid delegatee");
+      }
     }
     return (txType, false);
   }
@@ -148,18 +247,40 @@ contract DytmOfficeContractGuard is ITxTrackingGuard, NftTrackerConsumerGuardV2,
         _addMarketToCheckHFTransientStorage(poolLogic, rawMarketId);
       }
     } else if (method == IDytmOffice.delegationCall.selector) {
-      (uint88[] memory marketsForHFCheck, uint88[] memory marketsForActiveStorage) = _clearOngoingDelegationCall(
-        poolLogic
+      DytmParamStructs.DelegationCallParams memory params = abi.decode(
+        getParams(data),
+        (DytmParamStructs.DelegationCallParams)
       );
-      for (uint256 i; i < marketsForHFCheck.length; ++i) {
-        _checkHealthFactorLowerBoundary(DytmHelperLib.toUserAccount(poolLogic), marketsForHFCheck[i]);
+      if (address(params.delegatee) == accountSplitterAndMerger) {
+        IDytmAccountSplitterAndMerger.MergeAccountsParams memory mergeParams = abi.decode(
+          abi.decode(params.callbackData, (IDytmAccountSplitterAndMerger.CallbackData)).data,
+          (IDytmAccountSplitterAndMerger.MergeAccountsParams)
+        );
+        // Track and check only merges into the pool's main user account:
+        // - main is the only account `getBalance` sums.
+        // - pool-owned isolated recipients stay unaccounted by design; the manager can
+        //   later merge them into main.
+        uint256 mainAccount = DytmHelperLib.toUserAccount(poolLogic);
+        if (mergeParams.recipientAccount == mainAccount) {
+          _updateActiveMarketIds(poolLogic, to, mergeParams.market);
+          _checkPositionAssetsSupported(poolManagerLogic, mainAccount, mergeParams.market);
+          _checkNoMixedDebtAssets(poolLogic);
+          _checkMergeHFDegradation(poolLogic, mergeParams.market);
+        }
+      } else {
+        (uint88[] memory marketsForHFCheck, uint88[] memory marketsForActiveStorage) = _clearOngoingDelegationCall(
+          poolLogic
+        );
+        for (uint256 i; i < marketsForHFCheck.length; ++i) {
+          _checkHealthFactorLowerBoundary(DytmHelperLib.toUserAccount(poolLogic), marketsForHFCheck[i]);
+        }
+        _cleanupInactiveMarkets(poolLogic, to);
+        for (uint256 j; j < marketsForActiveStorage.length; ++j) {
+          _updateActiveMarketIds(poolLogic, to, marketsForActiveStorage[j]);
+        }
+        // After all markets are tracked, verify no mixed debt assets
+        _checkNoMixedDebtAssets(poolLogic);
       }
-      _cleanupInactiveMarkets(poolLogic, to);
-      for (uint256 j; j < marketsForActiveStorage.length; ++j) {
-        _updateActiveMarketIds(poolLogic, to, marketsForActiveStorage[j]);
-      }
-      // After all markets are tracked, verify no mixed debt assets
-      _checkNoMixedDebtAssets(poolLogic);
     }
   }
 
@@ -182,7 +303,30 @@ contract DytmOfficeContractGuard is ITxTrackingGuard, NftTrackerConsumerGuardV2,
     }
   }
 
-  /// @notice Enforces minimum health factor after borrow/withdraw operations
+  /// @notice Validates the pool's main-account HF after a merge into it.
+  ///         - absolute floor: post-merge HF must be at least HEALTH_FACTOR_LOWER_BOUNDARY.
+  ///         - relative cap: if main had debt pre-merge (finite snapshot), the drop from the
+  ///           pre-merge HF is capped at MERGE_MAX_HF_DEGRADATION_BPS.
+  /// @dev Always clears the transient snapshot.
+  function _checkMergeHFDegradation(address _poolLogic, uint88 _marketId) internal {
+    uint256 hfBefore = _preMergeMainHealthFactor;
+    _preMergeMainHealthFactor = 0;
+
+    uint256 hfAfter = IDytmPeriphery(dytmPeriphery)
+      .getAccountPosition(DytmHelperLib.toUserAccount(_poolLogic), _marketId)
+      .healthFactor;
+    require(hfAfter >= HEALTH_FACTOR_LOWER_BOUNDARY, "health factor too low");
+
+    // No pre-merge debt (periphery returns max when debt is zero, including when main has no
+    // position at all) — no baseline to measure degradation against; the floor above suffices.
+    if (hfBefore == type(uint256).max) return;
+    require(
+      hfAfter * _BPS_DENOMINATOR >= hfBefore * (_BPS_DENOMINATOR - MERGE_MAX_HF_DEGRADATION_BPS),
+      "merge HF degradation too high"
+    );
+  }
+
+  /// @notice Enforces minimum health factor after borrow/withdraw/switchCollateral operations
   function _checkHealthFactorLowerBoundary(uint256 accountId, uint88 marketId) internal view {
     DytmParamStructs.AccountPosition memory position = IDytmPeriphery(dytmPeriphery).getAccountPosition(
       accountId,
@@ -263,6 +407,22 @@ contract DytmOfficeContractGuard is ITxTrackingGuard, NftTrackerConsumerGuardV2,
           require(debtAsset == currentDebtAsset, "mixed debt assets not supported");
         }
       }
+    }
+  }
+
+  /// @notice Asserts every collateral and debt asset of an account's position on a market is
+  ///         a supported pool asset:
+  ///         - keeps pool-side oracle/pricing guarantees for the position.
+  ///         - entry-side counterpart of ERC20Guard's removeAssetCheck, which locks these
+  ///           assets on exit.
+  function _checkPositionAssetsSupported(address _poolManagerLogic, uint256 _account, uint88 _market) internal view {
+    uint256[] memory collateralIds = IDytmOffice(dytmOffice).getAllCollateralIds(_account, _market);
+    for (uint256 i; i < collateralIds.length; ++i) {
+      _checkAssetsSupported(_poolManagerLogic, DytmHelperLib.getAssetFromTokenId(collateralIds[i]));
+    }
+    uint256 debtId = IDytmOffice(dytmOffice).getDebtId(_account, _market);
+    if (debtId > 0) {
+      _checkAssetsSupported(_poolManagerLogic, DytmHelperLib.getAssetFromTokenId(debtId));
     }
   }
 

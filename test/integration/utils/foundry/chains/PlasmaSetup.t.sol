@@ -6,6 +6,7 @@ pragma abicoder v2;
 import {PlasmaConfig} from "test/integration/utils/foundry/config/PlasmaConfig.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {BackboneSetup} from "../BackboneSetup.t.sol";
+import {AssetTypes} from "../AssetTypes.sol";
 
 abstract contract PlasmaSetup is BackboneSetup {
   uint256 public forkBlockNumber;
@@ -16,17 +17,17 @@ abstract contract PlasmaSetup is BackboneSetup {
     BackboneSetup(
       IAssetHandler.Asset({
         asset: PlasmaConfig.USDT, // USDT is used instead of USDC on Plasma, mind it might cause issues in tests
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: PlasmaConfig.USDT_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: PlasmaConfig.WETH,
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: PlasmaConfig.WETH_CHAINLINK_ORACLE
       }),
       IAssetHandler.Asset({
         asset: PlasmaConfig.USDe, // USDe is used instead of DAI on Plasma, mind it might cause issues in tests
-        assetType: uint16(BackboneSetup.AssetTypeIncomplete.CHAINLINK),
+        assetType: uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK),
         aggregator: PlasmaConfig.USDe_CHAINLINK_ORACLE
       })
     )

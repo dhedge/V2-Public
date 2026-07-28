@@ -2405,14 +2405,6 @@
           "oracleAddress": "0x2D455E55e8Ad3BA965E3e95e7AaB7dF1C671af19"
         }
       ],
-      "Oracles": [
-        {
-          "name": "dUSD Oracle for Balancer LP",
-          "oracleName": "BalancerDHedgePoolPriceOracle",
-          "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
-          "oracleAddress": "0x703FEAcab4F7b7B8ac8a42F04C6eDCa60e415Bd4"
-        }
-      ],
       "Governance": "0x23D43c5bd76009c46F20fe633183589229c56C90",
       "PoolFactoryProxy": "0xDd87eCdB10cFF7004276AAbAbd30e7a08F69bb53",
       "PoolFactory": "0x14A690b67062994b3b2e829AeD7d096C53Cc6A58",

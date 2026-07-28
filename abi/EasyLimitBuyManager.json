@@ -109,17 +109,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      }
-    ],
-    "name": "NotAuthorizedKeeper",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "owner",
         "type": "address"
       }
@@ -198,24 +187,17 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "keeper",
+        "name": "caller",
         "type": "address"
-      }
-    ],
-    "name": "AuthorizedKeeperAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
+      },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "keeper",
-        "type": "address"
+        "indexed": false,
+        "internalType": "bool",
+        "name": "authorized",
+        "type": "bool"
       }
     ],
-    "name": "AuthorizedKeeperRemoved",
+    "name": "AuthorizedCallerSet",
     "type": "event"
   },
   {
@@ -470,16 +452,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "authorizedCallers",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "keeper_",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
-    "name": "addAuthorizedKeeper",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -763,15 +745,15 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "keeper",
+        "name": "caller",
         "type": "address"
       }
     ],
-    "name": "isAuthorizedKeeper",
+    "name": "isAuthorizedCaller",
     "outputs": [
       {
         "internalType": "bool",
-        "name": "isAuthorized",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -818,21 +800,26 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "keeper_",
-        "type": "address"
-      }
-    ],
-    "name": "removeAuthorizedKeeper",
+    "inputs": [],
+    "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "renounceOwnership",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "authorized",
+        "type": "bool"
+      }
+    ],
+    "name": "setAuthorizedCaller",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

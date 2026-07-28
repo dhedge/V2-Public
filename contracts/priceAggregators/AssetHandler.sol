@@ -34,6 +34,9 @@
 // 38 = Virtual Token
 // 39 = Hyperliquid Perps Account
 // 40 = Hyperliquid Spot Token
+// 41 = Ondo GM Token Asset
+// 42 = Midas mToken Asset
+// 43 = Midas Pending Redemption Asset
 // 100 = Lyra OptionMarketWrapper Asset
 // 101 = Synthetix Futures Perps v1
 // 102 = Synthetix Futures Perps v2
@@ -54,6 +57,7 @@ import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/Safe
 
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
+import {IOracleHeartbeat} from "../interfaces/IOracleHeartbeat.sol";
 
 /// @title dHEDGE Asset Price Feeds
 /// @dev Returns USD price with 18 decimals
@@ -66,14 +70,19 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   mapping(address => uint16) public override assetTypes; // for asset types refer to header comment
   mapping(address => address) public override priceAggregators;
 
-  event SetChainlinkTimeout(uint256 _chainlinkTimeout);
+  // Per-asset maximum price age floor (seconds). 0 = no freshness check required.
+  mapping(address => uint256) public override assetMaxPriceAge;
+
+  event SetChainlinkTimeout(uint256 timeout);
+
+  event AssetMaxPriceAgeSet(address indexed asset, uint256 maxAge);
 
   /// @notice initialisation for the contract
   /// @param assets An array of assets to initialise
   function initialize(Asset[] memory assets) external initializer {
     __Ownable_init();
 
-    chainlinkTimeout = 90000; // 25 hours
+    setChainlinkTimeout(90000); // 25 hours
     addAssets(assets);
   }
 
@@ -83,6 +92,26 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   /// @param asset the asset address
   /// @return price Returns the latest price of a given asset (decimal: 18)
   function getUSDPrice(address asset) external view override returns (uint256 price) {
+    (price, ) = _getUSDPrice(asset);
+  }
+
+  /// @dev Calculate the USD price of a given asset with timestamp and max price age.
+  /// @param asset the asset address
+  /// @return price Returns the latest price of a given asset (decimal: 18)
+  /// @return updatedAt Returns the timestamp of the price update
+  /// @return maxPriceAge Returns the configured maximum price age for the asset (0 if not set)
+  function getUSDPriceWithTime(
+    address asset
+  ) external view override returns (uint256 price, uint256 updatedAt, uint256 maxPriceAge) {
+    (price, updatedAt) = _getUSDPrice(asset);
+    maxPriceAge = assetMaxPriceAge[asset];
+  }
+
+  /// @dev Internal function to get USD price with timestamp
+  /// @param asset the asset address
+  /// @return price Returns the latest price of a given asset (decimal: 18)
+  /// @return updatedAt Returns the timestamp of the price update
+  function _getUSDPrice(address asset) internal view returns (uint256 price, uint256 updatedAt) {
     address aggregator = priceAggregators[asset];
 
     require(aggregator != address(0), "Price aggregator not found");
@@ -91,15 +120,24 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
       uint80,
       int256 _price,
       uint256,
-      uint256 updatedAt,
+      uint256 _updatedAt,
       uint80
     ) {
-      // check chainlink price updated within 25 hours
-      require(updatedAt.add(chainlinkTimeout) >= block.timestamp, "Chainlink price expired");
+      // Aggregators can override the default chainlinkTimeout by exposing oracleHeartbeat().
+      // Used by feeds with slower update cadences (e.g. Ondo's ~2 day attestation oracle).
+      if (_updatedAt.add(chainlinkTimeout) < block.timestamp) {
+        uint256 timeout = chainlinkTimeout;
+        try IOracleHeartbeat(aggregator).oracleHeartbeat() returns (uint256 heartbeat) {
+          timeout = heartbeat;
+          // solhint-disable-next-line no-empty-blocks
+        } catch {}
+        require(_updatedAt.add(timeout) >= block.timestamp, "Chainlink price expired");
+      }
 
       if (_price > 0) {
         price = uint256(_price).mul(10 ** 10); // convert Chainlink decimals 8 -> 18
       }
+      updatedAt = _updatedAt;
     } catch {
       revert("Price get failed");
     }
@@ -113,7 +151,7 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
 
   /// @notice Setting the timeout for the Chainlink price feed
   /// @param newTimeoutPeriod A new time in seconds for the timeout
-  function setChainlinkTimeout(uint256 newTimeoutPeriod) external onlyOwner {
+  function setChainlinkTimeout(uint256 newTimeoutPeriod) public onlyOwner {
     chainlinkTimeout = newTimeoutPeriod;
     emit SetChainlinkTimeout(newTimeoutPeriod);
   }
@@ -145,9 +183,21 @@ contract AssetHandler is OwnableUpgradeable, IAssetHandler {
   function removeAsset(address asset) external override onlyOwner {
     assetTypes[asset] = 0;
     priceAggregators[asset] = address(0);
+    assetMaxPriceAge[asset] = 0;
 
     emit RemovedAsset(asset);
   }
 
-  uint256[50] private __gap;
+  /// @notice Set the maximum price age floor for an asset
+  /// @dev A non-zero value enables the freshness check for this asset on deposits.
+  ///      Set to 0 to disable the freshness check.
+  /// @param asset Address of the asset
+  /// @param maxAge Maximum allowed price age in seconds (0 to disable)
+  function setAssetMaxPriceAge(address asset, uint256 maxAge) external override onlyOwner {
+    require(priceAggregators[asset] != address(0), "Asset not found");
+    assetMaxPriceAge[asset] = maxAge;
+    emit AssetMaxPriceAgeSet(asset, maxAge);
+  }
+
+  uint256[49] private __gap;
 }

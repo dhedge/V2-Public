@@ -6,3 +6,5 @@ cache
 types
 pnpm-lock.yaml
 lib
+readmes/errorCodes/registry.json
+readmes/errorCodes/overlay.json
