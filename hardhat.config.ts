@@ -20,6 +20,20 @@ import "./deployment/hyperevm/whitelistPerpAssets";
 
 dotenv.config();
 
+const getHardhatForkOverrides = () => {
+  switch (process.env.HARDHAT_FORK_CHAIN) {
+    case "arbitrum":
+      return {
+        // Hardhat has no configurable Arbitrum-style per-transaction cap,
+        // so approximate Arbitrum's 32m L2 execution cap with the local block limit.
+        hardfork: "cancun",
+        blockGasLimit: 32_000_000,
+      };
+    default:
+      return {};
+  }
+};
+
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -30,6 +44,9 @@ export default {
     showTimeSpent: true,
   },
   networks: {
+    hardhat: {
+      ...getHardhatForkOverrides(),
+    },
     localhost: {
       chainId: 31337,
       url: "http://127.0.0.1:8545",

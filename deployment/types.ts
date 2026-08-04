@@ -574,6 +574,7 @@ export interface IContracts {
   WeeklyWindowsHelper?: Address;
   GmxClaimableCollateralTrackerLib?: Address;
   GmxHelperLib?: Address;
+  GmxPerpMarketAssetGuardLib?: Address;
   GmxAfterTxValidatorLib?: Address;
   GmxAfterExecutionLib?: Address;
   PoolLogicLib?: Address;

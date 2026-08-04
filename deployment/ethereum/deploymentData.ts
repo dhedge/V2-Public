@@ -99,10 +99,6 @@ export const ethereumProdData: IAddresses = {
     aaveLendingPoolAddress: ethereumChainData.aaveV3.lendingPool,
   },
 
-  odosV2RouterAddress: "0xCf5540fFFCdC3d510B18bFcA6d2b9987b0772559",
-
-  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
-
   rewardAssetSetting: [
     {
       rewardToken: "0x98A878b1Cd98131B271883B390f68D2c90674665", // apxUSD

@@ -272,10 +272,6 @@ export const ovmChainData = Object.freeze({
     },
   },
 
-  odosEx: {
-    v2Router: "0xCa423977156BB05b13A2BA3b76Bc5419E2fE9680",
-  },
-
   flatMoneyV2Vaults: {
     flatMoneyV2MarketMaker: "0x1c57f6769fb3e51e65ad24c8c12dbd956ea716b6", // Flat Money V2 Market Maker https://dhedge.org/vault/0x1c57f6769fb3e51e65ad24c8c12dbd956ea716b6
   },

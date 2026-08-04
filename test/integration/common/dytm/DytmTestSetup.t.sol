@@ -23,7 +23,7 @@ import {DytmConfigStructs} from "contracts/utils/dytm/DytmConfigStructs.sol";
 import {IDytmAddressAccountBaseWhitelist} from "./dytmInterface/IDytmAddressAccountBaseWhitelist.sol";
 import {IMarketConfig} from "./dytmInterface/IDytmMarketConfig.sol";
 import {IDytmWeights} from "./dytmInterface/IDytmWeights.sol";
-import {MockSafe} from "./MockSafe.sol";
+import {MockSafe} from "test/integration/utils/foundry/MockSafe.sol";
 
 /// @dev setPoolsWhitelist is intentionally not on IDytmOfficeContractGuard (no external contract calls it);
 ///      declared locally so tests can call it.

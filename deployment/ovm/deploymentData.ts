@@ -396,10 +396,6 @@ export const optimismProdData: IAddresses = {
     rewards: ovmChainData.compoundV3.rewards,
   },
 
-  odosV2RouterAddress: ovmChainData.odosEx.v2Router,
-
-  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
-
   flatMoneyV2: {
     orderAnnouncementModule: "0xd917A0C9B21Bb71DF1209d2c211Ad83004F01554",
     orderExecutionModule: "0x7805CB7fb2C2e70FDdF92949065D9Ee1Fc2F72a8",

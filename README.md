@@ -1,27 +1,29 @@
-# dHEDGE
+# Chamber
 
-dHEDGE is all-in-one destination for managing vaults on Polygon, Optimism, Arbitrum and Base. Put your capital to work with confidence in various strategies backed by a transparent track record.
+Chamber (formerly dHEDGE) is an onchain platform for vault-based asset management, deployed across multiple EVM chains. A single vault can hold tokenized stocks, commodities and crypto, so a manager can run one strategy across all of them against a transparent, verifiable track record.
 
-- 🔒 **Non-custodial**: Users retain ownership over their funds. Vault managers can't make off with deposited money.
+This repository contains the protocol's smart contracts.
 
-- 🌐 **Decentralized Asset Management**: dHEDGE is on a mission to create a permissionless, unstoppable protocol for asset management.
+**Non-custodial.** Depositors retain ownership of their funds at all times; a vault manager can direct capital but never withdraw it.
 
-Please keep in mind that this repository is under development.
+**Onchain guardrails.** The Guard System bounds what a manager may do with depositor capital, protocol by protocol and asset by asset.
 
-For the documentation, visit [dHEDGE Docs](https://docs.dhedge.org).
+**Permissionless.** Anyone can create a vault, manage a strategy, or deposit into one, without gatekeepers.
 
-## Explore dHEDGE 🚀
+> **Note on naming.** The rebrand from dHEDGE to Chamber changed the name and positioning only. Vault addresses, share tokens, the DHT token and all contract APIs are unchanged, so the code, deployment configs and repository paths in this repo continue to use the `dHEDGE`/`dhedge` naming.
 
-📈 **Official DApp**: [dhedge.org](https://dhedge.org)
+This repository is under active development.
 
-## Join the Community 🌍
+## Documentation
 
-📣 **Discord**: [Join our Discord](https://discord.gg/BAWTbRA/)
+- [Chamber Docs](https://docs.chamberfi.com) — protocol, integration and manager documentation
+- [`./readmes/`](./readmes/) — technical notes on the contracts in this repository
 
-🐦 **X**: [Follow us on X](https://x.com/dhedgeorg)
+## Links
 
-🔐 **Immunefi**: [dHEDGE Bug Bounty](https://immunefi.com/bug-bounty/dhedge/information/)
-
-## Repository Guide 📖
-
-📚 All the technical documentation is in the `./readmes/` directory.
+| Resource   | Link                                             |
+| ---------- | ------------------------------------------------ |
+| App        | [chamberfi.com](https://chamberfi.com)           |
+| X          | [@chamberfi](https://x.com/chamberfi)            |
+| Discord    | [discord.gg/BAWTbRA](https://discord.gg/BAWTbRA) |
+| Bug bounty | [Immunefi](https://immunefi.com/bounty/dhedge)   |

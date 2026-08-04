@@ -1235,9 +1235,9 @@
       "RamsesCLAssetGuard": "0x030c7C2833d0cd321255ef13775EB9458B6CEbDC",
       "EasySwapperV2UnrolledAssetsGuard": "0xBF51D01e9aCe59205Be63B956C75cf1358835Fe8",
       "GmxExchangeRouterContractGuard": "0xe22F402Cd923b3c08617D04A9e825c6E12dBa555",
-      "GmxPerpMarketAssetGuard": "0xA1971b2251802ed62cF763fB8B023dCDB94f9c8a",
-      "GmxClaimableCollateralTrackerLib": "0x01E7036e82804AA178A2023e8fBcc0649E879A0D",
-      "GmxHelperLib": "0x754a1d546563FCbc3857249E983ea1E0199225e2",
+      "GmxPerpMarketAssetGuard": "0xC6457D639e4d9959d531b7c83621AfE27CDcB520",
+      "GmxClaimableCollateralTrackerLib": "0x37D093eaF6CdB17cfb3D387144256a91f92043c2",
+      "GmxHelperLib": "0x3Fd4007AEc15A93A9fb090F9Fa4627A43B8D6295",
       "GmxAfterTxValidatorLib": "0x274fbAD1D33e66373883a93A9D39a935413A8CAE",
       "GmxAfterExcutionLib": "0xde70a7674947BF736bC42aEF10130DFeAA40e91f",
       "AcrossContractGuard": "0xAc8DC0420d3938FF8acDD2e550B5b7eE7ab7b1d8",
@@ -1276,7 +1276,8 @@
       "DytmOfficeContractGuard": "0xb6c380514Dbfc6d34724a96c33A1dF2F1D399D07",
       "DytmWithdrawProcessor": "0xCf5f26D2Ad71DAe6e98564EED4bDb4F0Cd21f540",
       "DytmOfficeAssetGuard": "0x58d0391ADaAc5c557d331336FEcDd6255FF9fc0e",
-      "EasyLimitBuyManager": "0x40F2978D87348250F085ACEbd680B387842a69eF"
+      "EasyLimitBuyManager": "0x40F2978D87348250F085ACEbd680B387842a69eF",
+      "GmxPerpMarketAssetGuardLib": "0x8de6Eef9FDbBCD5DAec63049B5342a1fdcd3d6C8"
     },
     "network": {
       "name": "arbitrum",
@@ -1284,7 +1285,7 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Mon, 20 Jul 2026 13:04:42 GMT",
+    "lastUpdated": "Mon, 03 Aug 2026 08:33:12 GMT",
     "config": {
       "easySwapperConfig": {
         "customLockupAllowedPools": [

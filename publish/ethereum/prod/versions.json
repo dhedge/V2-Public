@@ -1434,7 +1434,7 @@
       "WithdrawalVaultProxy": "0xe4701267F26B053960843F44f6fE09D2B4eC8dE2",
       "WithdrawalVault": "0xE216646F79246e3C5eeD50308c0C61F0648A09a9",
       "EasySwapperV2Proxy": "0xbDd84294bC8299861A2121F749A25EFEb7168a32",
-      "EasySwapperV2": "0x50eff3DF511C25Ce252bFB795BCD61fc9497C725",
+      "EasySwapperV2": "0x264650303833AFE6dE9914e84F1C9B2D5A4D0547",
       "AaveLendingPoolGuardV3": "0x346C65ac2EEfC0a6F84B1B1e96BE006e5e93005e",
       "DhedgeUniV3V2Router": "0xc49b0e838C2a83adaE7D82d82792082DD5cfAf8A",
       "DhedgeSuperSwapper": "0x0e2b20d47228729e8649aF41138d479b172F30b6",
@@ -1478,7 +1478,7 @@
       "chainId": 1,
       "ensAddress": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
     },
-    "lastUpdated": "Mon, 27 Jul 2026 18:56:05 GMT",
+    "lastUpdated": "Mon, 03 Aug 2026 08:29:15 GMT",
     "config": {
       "easySwapperV2": {
         "customCooldownDepositsWhitelist": [

@@ -15,10 +15,11 @@ import {IPoolFactory} from "../../interfaces/IPoolFactory.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {IWETH} from "../../interfaces/IWETH.sol";
+import {SafeSignerAccess} from "../../utils/SafeSignerAccess.sol";
 import {VaultProxyFactory} from "./VaultProxyFactory.sol";
 
 /// @author dHEDGE team
-contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
+contract EasySwapperV2 is VaultProxyFactory, SafeSignerAccess, IEasySwapperV2 {
   using SafeERC20 for IERC20;
   using SafeMathUpgradeable for uint256;
 
@@ -601,8 +602,11 @@ contract EasySwapperV2 is VaultProxyFactory, IEasySwapperV2 {
    */
 
   /// @notice Setter to add/remove dHEDGE vaults to/from custom cooldown whitelist
+  /// @dev Callable by the owner or, when the owner is a Safe, by any of its signers
   /// @param _whitelistSettings Array of dHEDGE vaults with whitelist status
-  function setCustomCooldownWhitelist(WhitelistSetting[] calldata _whitelistSettings) external onlyOwner {
+  function setCustomCooldownWhitelist(
+    WhitelistSetting[] calldata _whitelistSettings
+  ) external onlyOwnerOrSafeSigner(owner()) {
     for (uint256 i; i < _whitelistSettings.length; ++i) {
       require(isdHedgeVault(_whitelistSettings[i].toWhitelist), "not a vault");
 

@@ -48,10 +48,26 @@ export const gmxPerpMarketAssetGuardJob: IJob<void> = async (
     );
     versions[config.newTag].contracts.GmxClaimableCollateralTrackerLib = gmxClaimableCollateralTrackerLibAddress;
 
-    const GmxPerpMarketAssetGuard = await ethers.getContractFactory("GmxPerpMarketAssetGuard", {
+    const GmxPerpMarketAssetGuardLib = await ethers.getContractFactory("GmxPerpMarketAssetGuardLib", {
       libraries: {
         GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLibAddress,
-        GmxHelperLib: gmxHelperLib.address,
+      },
+    });
+    const gmxPerpMarketAssetGuardLib = await GmxPerpMarketAssetGuardLib.deploy();
+    await gmxPerpMarketAssetGuardLib.deployed();
+    const gmxPerpMarketAssetGuardLibAddress = gmxPerpMarketAssetGuardLib.address;
+
+    await tryVerify(
+      hre,
+      gmxPerpMarketAssetGuardLibAddress,
+      "contracts/utils/gmx/GmxPerpMarketAssetGuardLib.sol:GmxPerpMarketAssetGuardLib",
+      [],
+    );
+    versions[config.newTag].contracts.GmxPerpMarketAssetGuardLib = gmxPerpMarketAssetGuardLibAddress;
+
+    const GmxPerpMarketAssetGuard = await ethers.getContractFactory("GmxPerpMarketAssetGuard", {
+      libraries: {
+        GmxPerpMarketAssetGuardLib: gmxPerpMarketAssetGuardLibAddress,
       },
     });
 

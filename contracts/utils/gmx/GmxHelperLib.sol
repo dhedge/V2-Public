@@ -21,14 +21,11 @@ import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {IPoolFactory} from "../../interfaces/IPoolFactory.sol";
 import {GmxPriceLib} from "./GmxPriceLib.sol";
 import {GmxMarketUtils} from "./GmxMarketUtils.sol";
-import {IGmxWithdrawal} from "../../interfaces/gmx/IGmxWithdrawal.sol";
 
 library GmxHelperLib {
   using GmxDataStoreLib for IGmxDataStore;
   using BytesLib for bytes;
   using SafeMath for uint256;
-
-  bytes32 private constant ACCOUNT_WITHDRAWAL_LIST = keccak256(abi.encode("ACCOUNT_WITHDRAWAL_LIST"));
 
   function getMethod(bytes memory data) public pure returns (bytes4) {
     return read4left(data, 0);
@@ -522,34 +519,5 @@ library GmxHelperLib {
   function assetValue(IPoolManagerLogic poolManagerLogic, address token, uint256 amount) public view returns (uint256) {
     uint256 assetVal = poolManagerLogic.assetValue(token, amount);
     return assetVal;
-  }
-
-  function balanceWithdrawalVault(
-    address pool,
-    IPoolManagerLogic poolManagerLogic,
-    IGmxMarket.Props memory market,
-    GmxPriceLib.GmxPriceDependecies memory priceDependencies
-  ) public view returns (uint256 balance) {
-    bytes32[] memory withdrawalKeys = priceDependencies.dataStore.getBytes32ValuesAt(
-      keccak256(abi.encode(ACCOUNT_WITHDRAWAL_LIST, pool)),
-      0,
-      type(uint256).max
-    );
-
-    for (uint256 i; i < withdrawalKeys.length; i++) {
-      IGmxWithdrawal.Props memory withdrawal = priceDependencies.reader.getWithdrawal({
-        _dataStore: priceDependencies.dataStore,
-        key: withdrawalKeys[i]
-      });
-      balance = balance.add(
-        assetValue(poolManagerLogic, priceDependencies.dataStore.wnt(), withdrawal.numbers.executionFee)
-      );
-      balance = balance.add(
-        GmxPriceLib
-          .getMarketLpTokenPrice(priceDependencies, market, false)
-          .mul(withdrawal.numbers.marketTokenAmount)
-          .div(1e18)
-      );
-    }
   }
 }

@@ -112,10 +112,6 @@ export const arbitrumChainData = Object.freeze({
     v6Router: "0x111111125421ca6dc452d289314280a0f8842a65",
   },
 
-  odosEx: {
-    v2Router: "0xa669e7A0d4b3e4Fa48af2dE86BD4CD7126Be4e13",
-  },
-
   balancer: {
     v2Vault: "0xba12222222228d8ba445958a75a0704d566bf2c8",
     stable: {

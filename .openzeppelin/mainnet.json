@@ -7830,6 +7830,181 @@
         },
         "namespaces": {}
       }
+    },
+    "b733d495b49958d05e39f2e578a0dea5d58bfa5fbf0fecda18bab4b62528f89c": {
+      "address": "0x264650303833AFE6dE9914e84F1C9B2D5A4D0547",
+      "txHash": "0xf0e0f4be8c33280d29e18f908f83d97aae455ba87b12850a6c73fe78bd8cb691",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "label": "vaultLogic",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "VaultProxyFactory",
+            "src": "contracts/swappers/easySwapperV2/VaultProxyFactory.sol:10"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "VaultProxyFactory",
+            "src": "contracts/swappers/easySwapperV2/VaultProxyFactory.sol:67"
+          },
+          {
+            "label": "weth",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:39"
+          },
+          {
+            "label": "swapper",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_contract(ISwapper)73997",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:42"
+          },
+          {
+            "label": "wrappedNativeToken",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_contract(IWETH)72095",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:45"
+          },
+          {
+            "label": "customCooldown",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:48"
+          },
+          {
+            "label": "withdrawalContracts",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:51"
+          },
+          {
+            "label": "customCooldownDepositsWhitelist",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:54"
+          },
+          {
+            "label": "dHedgePoolFactory",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_address",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:56"
+          },
+          {
+            "label": "isAuthorizedWithdrawer",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:59"
+          },
+          {
+            "label": "limitOrderContracts",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "EasySwapperV2",
+            "src": "contracts/swappers/easySwapperV2/EasySwapperV2.sol:62"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(ISwapper)73997": {
+            "label": "contract ISwapper",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IWETH)72095": {
+            "label": "contract IWETH",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {}
+      }
     }
   }
 }

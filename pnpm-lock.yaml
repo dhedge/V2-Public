@@ -42,9 +42,6 @@ importers:
       '@openzeppelin/upgrades-core':
         specifier: ^1.34.1
         version: 1.34.1
-      '@pythnetwork/pyth-evm-js':
-        specifier: ^1.61.0
-        version: 1.61.0(bufferutil@4.0.6)(utf-8-validate@5.0.9)
       '@safe-global/api-kit':
         specifier: ^4.0.0
         version: 4.0.0(bufferutil@4.0.6)(typescript@4.3.5)(utf-8-validate@5.0.9)
@@ -596,16 +593,6 @@ packages:
     resolution: {integrity: sha512-yfRcuupmxxeDOSxvw4g+wFCrGiPD0L32f5WMzqMXp7Rl93EOCdFiDcaSNnZ10Up9GdNqkj70UTa8hfhPFphaZA==}
     engines: {node: '>=12'}
 
-  '@pythnetwork/price-service-client@1.9.0':
-    resolution: {integrity: sha512-SLm3IFcfmy9iMqHeT4Ih6qMNZhJEefY14T9yTlpsH2D/FE5+BaGGnfcexUifVlfH6M7mwRC4hEFdNvZ6ebZjJg==}
-    deprecated: This package is deprecated and is no longer maintained. Please use @pythnetwork/hermes-client instead.
-
-  '@pythnetwork/price-service-sdk@1.3.0':
-    resolution: {integrity: sha512-MCHKBh/oa/ACBcOgHSv/rCoc0KP2ul1/dKNEWs9jkbXeUUOGmim62tgjv7vYRIodktG+uN9T41rIN03mIJWzvg==}
-
-  '@pythnetwork/pyth-evm-js@1.61.0':
-    resolution: {integrity: sha512-NPFUH7nC7x1PvgFgRQZZ/wm+SP1Yas9qhl+8SLl9LnqV5NKUMRhfq6PuHwZ/80sfxgIN7yONpq1fjCRPLHC9VA==}
-
   '@resolver-engine/core@0.3.3':
     resolution: {integrity: sha512-eB8nEbKDJJBi5p5SrvrvILn4a0h42bKtbCTri3ZxCGt6UvoQyp7HnGOfki944bUjBSHKK3RvgfViHn+kqdXtnQ==}
 
@@ -911,9 +898,6 @@ packages:
   '@types/sinonjs__fake-timers@15.0.1':
     resolution: {integrity: sha512-Ko2tjWJq8oozHzHV+reuvS5KYIRAokHnGbDwGh/J64LntgpbuylF74ipEL24HCyRjf9FOlBiBHWBR1RlVKsI1w==}
 
-  '@types/ws@8.5.5':
-    resolution: {integrity: sha512-lwhs8hktwxSjf9UaZ9tG5M03PGogvFaH8gUgLNbN9HKIg0dvv6q+gkSuJ8HN4/VbyxkuLzCjlN7GquQ0gUJfIg==}
-
   '@typescript-eslint/eslint-plugin@5.40.0':
     resolution: {integrity: sha512-FIBZgS3DVJgqPwJzvZTuH4HNsZhHMa9SjxTKAZTlMsPw/UzpEjcf9f4dfgDJEHjK+HboUJo123Eshl6niwEm/Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -1029,6 +1013,17 @@ packages:
 
   abitype@1.1.1:
     resolution: {integrity: sha512-Loe5/6tAgsBukY95eGaPSDmQHIjRZYQq8PB1MpsNccDIK8WiV+Uw6WzaIXipvaxTEL2yEB0OpEaQv3gs8pkS9Q==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+      zod: ^3.22.0 || ^4.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      zod:
+        optional: true
+
+  abitype@1.2.3:
+    resolution: {integrity: sha512-Ofer5QUnuUdTFsBRwARMoWKOH1ND5ehwYhJ3OJ/BQO+StkwQjHw0XyVh4vDttzHB7QOFhPHa/o413PJ82gU/Tg==}
     peerDependencies:
       typescript: '>=5.0.4'
       zod: ^3.22.0 || ^4.0.0
@@ -1261,9 +1256,6 @@ packages:
 
   aws4@1.11.0:
     resolution: {integrity: sha512-xh1Rl34h6Fi1DC2WWKfxUTVqRsNnr6LsKz2+hfwDxQJWmrx8+c7ylaqBMcHfl1U1r2dsifOvKX3LQuLNZ+XSvA==}
-
-  axios-retry@3.9.1:
-    resolution: {integrity: sha512-8PJDLJv7qTTMMwdnbMvrLYuvB47M81wRtxQmEdV5w4rgbTXTt+vtPkXwajOfOdSyv/wZICJOC+/UhXH4aQ/R+w==}
 
   axios@1.18.0:
     resolution: {integrity: sha512-E32NzpYKp++W7XRe52rHiXV2ehxmh3wbdgO7MHeFM+vqxLBYHzt0ElkiImtOBxtOmyp0yoC8C6uESVV84Y2/hw==}
@@ -2889,10 +2881,6 @@ packages:
     resolution: {integrity: sha512-kvRdxDsxZjhzUX07ZnLydzS1TU/TJlTUHHY4YLL87e37oUA49DfkLqgy+VjFocowy29cKvcSiu+kIv728jTTVg==}
     engines: {node: '>= 0.4'}
 
-  is-retry-allowed@2.2.0:
-    resolution: {integrity: sha512-XVm7LOeLpTW4jV19QSH38vkswxoLud8sQ57YwJVTPWdiaI9I8keEhGFpBlslyVsgdQy4Opg8QOLb8YRgsyZiQg==}
-    engines: {node: '>=10'}
-
   is-shared-array-buffer@1.0.2:
     resolution: {integrity: sha512-sqN2UDu1/0y6uvXyStCOzyhAjCSlHceFoMKJW8W9EU9cvic/QdsZ0kEU93HEy3IUEFZIiH/3w+AH/UQbPHNdhA==}
 
@@ -2947,11 +2935,6 @@ packages:
 
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
-
-  isomorphic-ws@4.0.1:
-    resolution: {integrity: sha512-BhBvN2MBpWTaSHdWRb/bwdZJ1WaehQ2L1KngkCkfLUGF0mAWAT1sQUQacEmQ0jXkFw/czDXPNQSL5u2/Krsz1w==}
-    peerDependencies:
-      ws: '*'
 
   isows@1.0.7:
     resolution: {integrity: sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==}
@@ -4458,9 +4441,6 @@ packages:
     peerDependencies:
       typescript: '>=3.7.0'
 
-  ts-log@2.2.5:
-    resolution: {integrity: sha512-PGcnJoTBnVGy6yYNFxWVNkdcAuAMstvutN9MgDJIV6L0oG8fB+ZNNy1T+wJzah8RPGor1mZuPQkVfXNDpy9eHA==}
-
   ts-node@10.9.2:
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
     hasBin: true
@@ -4902,18 +4882,6 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.13.0:
-    resolution: {integrity: sha512-x9vcZYTrFPC7aSIbj7sRCYo7L/Xb8Iy+pW0ng0wt2vCJv7M9HOMy0UoN3rr+IFC7hb7vXoqS+P9ktyLLLhO+LA==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.18.3:
     resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
     engines: {node: '>=10.0.0'}
@@ -5027,6 +4995,7 @@ snapshots:
   '@babel/runtime@7.19.4':
     dependencies:
       regenerator-runtime: 0.13.10
+    optional: true
 
   '@chainlink/contracts@0.1.9(bufferutil@4.0.6)(utf-8-validate@5.0.9)':
     optionalDependencies:
@@ -5736,33 +5705,6 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@pythnetwork/price-service-client@1.9.0(bufferutil@4.0.6)(utf-8-validate@5.0.9)':
-    dependencies:
-      '@pythnetwork/price-service-sdk': 1.3.0
-      '@types/ws': 8.5.5
-      axios: 1.18.0
-      axios-retry: 3.9.1
-      isomorphic-ws: 4.0.1(ws@8.13.0(bufferutil@4.0.6)(utf-8-validate@5.0.9))
-      ts-log: 2.2.5
-      ws: 8.13.0(bufferutil@4.0.6)(utf-8-validate@5.0.9)
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
-
-  '@pythnetwork/price-service-sdk@1.3.0': {}
-
-  '@pythnetwork/pyth-evm-js@1.61.0(bufferutil@4.0.6)(utf-8-validate@5.0.9)':
-    dependencies:
-      '@pythnetwork/price-service-client': 1.9.0(bufferutil@4.0.6)(utf-8-validate@5.0.9)
-      buffer: 6.0.3
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
-
   '@resolver-engine/core@0.3.3':
     dependencies:
       debug: 3.2.7
@@ -6227,10 +6169,6 @@ snapshots:
 
   '@types/sinonjs__fake-timers@15.0.1': {}
 
-  '@types/ws@8.5.5':
-    dependencies:
-      '@types/node': 18.11.0
-
   '@typescript-eslint/eslint-plugin@5.40.0(@typescript-eslint/parser@5.14.0(eslint@8.10.0)(typescript@4.3.5))(eslint@8.10.0)(typescript@4.3.5)':
     dependencies:
       '@typescript-eslint/parser': 5.14.0(eslint@8.10.0)(typescript@4.3.5)
@@ -6361,6 +6299,10 @@ snapshots:
       typescript: 4.3.5
 
   abitype@1.1.1(typescript@4.3.5):
+    optionalDependencies:
+      typescript: 4.3.5
+
+  abitype@1.2.3(typescript@4.3.5):
     optionalDependencies:
       typescript: 4.3.5
 
@@ -6574,11 +6516,6 @@ snapshots:
 
   aws4@1.11.0: {}
 
-  axios-retry@3.9.1:
-    dependencies:
-      '@babel/runtime': 7.19.4
-      is-retry-allowed: 2.2.0
-
   axios@1.18.0:
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.0)
@@ -6766,6 +6703,7 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
+    optional: true
 
   bufferutil@4.0.5:
     dependencies:
@@ -8740,8 +8678,6 @@ snapshots:
       call-bind: 1.0.7
       has-tostringtag: 1.0.2
 
-  is-retry-allowed@2.2.0: {}
-
   is-shared-array-buffer@1.0.2:
     dependencies:
       call-bind: 1.0.7
@@ -8794,10 +8730,6 @@ snapshots:
   isarray@2.0.5: {}
 
   isexe@2.0.0: {}
-
-  isomorphic-ws@4.0.1(ws@8.13.0(bufferutil@4.0.6)(utf-8-validate@5.0.9)):
-    dependencies:
-      ws: 8.13.0(bufferutil@4.0.6)(utf-8-validate@5.0.9)
 
   isows@1.0.7(ws@8.18.3(bufferutil@4.0.6)(utf-8-validate@5.0.9)):
     dependencies:
@@ -9450,7 +9382,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.1.1(typescript@4.3.5)
+      abitype: 1.2.3(typescript@4.3.5)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 4.3.5
@@ -9764,7 +9696,8 @@ snapshots:
 
   reduce-flatten@2.0.0: {}
 
-  regenerator-runtime@0.13.10: {}
+  regenerator-runtime@0.13.10:
+    optional: true
 
   regexp.prototype.flags@1.4.3:
     dependencies:
@@ -10489,8 +10422,6 @@ snapshots:
     dependencies:
       typescript: 4.3.5
 
-  ts-log@2.2.5: {}
-
   ts-node@10.9.2(@types/node@22.10.6)(typescript@4.3.5):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -11069,11 +11000,6 @@ snapshots:
       utf-8-validate: 5.0.9
 
   ws@7.5.10(bufferutil@4.0.6)(utf-8-validate@5.0.9):
-    optionalDependencies:
-      bufferutil: 4.0.6
-      utf-8-validate: 5.0.9
-
-  ws@8.13.0(bufferutil@4.0.6)(utf-8-validate@5.0.9):
     optionalDependencies:
       bufferutil: 4.0.6
       utf-8-validate: 5.0.9

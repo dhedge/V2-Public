@@ -151,10 +151,6 @@ const polygonData: IAddresses = {
     ],
   },
 
-  odosV2RouterAddress: polygonChainData.odosEx.v2Router,
-
-  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
-
   poolLimitOrderManager: {
     defaultSlippageTolerance: 200, // 2%
     settlementToken: polygonChainData.assets.usdcNative,

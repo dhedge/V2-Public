@@ -944,7 +944,8 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "assetType not handled": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Vault holds a position we cannot unroll",
+      "action": "Withdraw using All Assets or open a team support message."
     },
     "cannot add virtual token": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1073,13 +1074,16 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "high deposit slippage": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Deposit would return fewer vault tokens than expected",
+      "action": "Increase slippage tolerance or try again later."
     },
     "high slippage": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Withdrawal would return less than the slippage tolerance allows",
+      "action": "Increase slippage tolerance or try again later."
     },
     "high swap slippage": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Withdrawal swap would return less than expected",
+      "action": "Increase slippage tolerance or try again later."
     },
     "Impl not zero": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1559,7 +1563,8 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "remove linked asset first": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "The asset still has linked assets enabled in the vault",
+      "action": "Remove the linked assets before removing this asset."
     },
     "repay Aave debt first": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1613,7 +1618,8 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "Staking cap will be exceeded.": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Stake would exceed the global staking value cap",
+      "action": "Decrease the staking amount and try again."
     },
     "stale outputAsset price": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1709,7 +1715,8 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "withdraw Aave collateral first": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Asset is still deposited as Aave collateral",
+      "action": "Withdraw the asset from Aave before removing it."
     },
     "Withdraw Slippage detected": {
       "action": "TODO: fill in a user-facing description/action for this error."

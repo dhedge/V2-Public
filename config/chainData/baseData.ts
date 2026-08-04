@@ -60,10 +60,6 @@ export const baseChainData = Object.freeze({
     exchangeProxy: "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
   },
 
-  odosEx: {
-    v2Router: "0x19cEeAd7105607Cd444F5ad10dd51356436095a1",
-  },
-
   synthetixV3: {
     core: "0x32C222A9A159782aFD7529c87FA34b96CA72C696",
     accountNFT: "0x63f4Dd0434BEB5baeCD27F3778a909278d8cf5b8",

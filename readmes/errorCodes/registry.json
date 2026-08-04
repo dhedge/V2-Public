@@ -223,13 +223,13 @@
       "curated": true
     },
     "assetType not handled": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Vault holds a position we cannot unroll",
+      "action": "Withdraw using All Assets or open a team support message.",
       "source": [
         "contracts/swappers/easySwapper/EasySwapperWithdrawer.sol",
         "contracts/swappers/easySwapperV2/WithdrawalVault.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "at least one deposit asset": {
       "description": "Vault must keep at least one deposit asset",
@@ -433,14 +433,6 @@
       "action": "Rebuild the swap with valid Odos calldata.",
       "source": [
         "contracts/guards/contractGuards/odos/OdosSharedContractGuard.sol"
-      ],
-      "curated": true
-    },
-    "decodeCompactSwap failed": {
-      "description": "Odos compact swap calldata could not be decoded",
-      "action": "Submit valid Odos compact swap calldata.",
-      "source": [
-        "contracts/guards/contractGuards/odos/OdosV3ContractGuard.sol"
       ],
       "curated": true
     },
@@ -1124,29 +1116,29 @@
       "curated": true
     },
     "high deposit slippage": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Deposit would return fewer vault tokens than expected",
+      "action": "Increase slippage tolerance or try again later.",
       "source": [
         "contracts/swappers/easySwapperV2/EasySwapperV2.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "high slippage": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Withdrawal would return less than the slippage tolerance allows",
+      "action": "Increase slippage tolerance or try again later.",
       "source": [
         "contracts/swappers/easySwapperV2/libraries/dytm/DytmWithdrawLib.sol",
         "contracts/utils/gmx/GmxAfterTxValidatorLib.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "high swap slippage": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Withdrawal swap would return less than expected",
+      "action": "Increase slippage tolerance or try again later.",
       "source": [
         "contracts/swappers/easySwapperV2/WithdrawalVault.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "Impl not zero": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -3383,14 +3375,6 @@
       ],
       "curated": true
     },
-    "referral fee not allowed": {
-      "description": "Odos swaps with a referral fee are not allowed",
-      "action": "Submit the swap without a referral fee.",
-      "source": [
-        "contracts/guards/contractGuards/odos/OdosV3ContractGuard.sol"
-      ],
-      "curated": true
-    },
     "remnant too large": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
@@ -3400,12 +3384,12 @@
       "curated": false
     },
     "remove linked asset first": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "The asset still has linked assets enabled in the vault",
+      "action": "Remove the linked assets before removing this asset.",
       "source": [
         "contracts/guards/assetGuards/RewardAssetGuard.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "repay Aave debt first": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -3604,12 +3588,12 @@
       "curated": false
     },
     "Staking cap will be exceeded.": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Stake would exceed the global staking value cap",
+      "action": "Decrease the staking amount and try again.",
       "source": [
         "contracts/stakingv2/DhedgeStakingV2.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "stale outputAsset price": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -4208,12 +4192,12 @@
       "curated": true
     },
     "withdraw Aave collateral first": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Asset is still deposited as Aave collateral",
+      "action": "Withdraw the asset from Aave before removing it.",
       "source": [
         "contracts/guards/assetGuards/ERC20Guard.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "Withdraw Slippage detected": {
       "description": "No curated description yet - raw error identifier shown.",

@@ -14,7 +14,6 @@ assetType,guardName,guardAddress,description
 30,EasySwapperV2UnrolledAssetsGuard,0xBF51D01e9aCe59205Be63B956C75cf1358835Fe8,EasySwapperV2 Unrolled Assets Guard
 0,ERC20Guard,0x60427184a3C6Ff4382a0A189a6857ADbaE5CF0bb,ERC20 tokens
 4,ERC20Guard,0x60427184a3C6Ff4382a0A189a6857ADbaE5CF0bb,ERC20 tokens
-105,GmxPerpMarketAssetGuard,0xA1971b2251802ed62cF763fB8B023dCDB94f9c8a,Gmx Perps Market Asset Guard
 22,FlatMoneyCollateralAssetGuard,0xdC57aA97d00E95013ae016D7DFbEcfF482D8fF19,Flat Money Collateral Asset Guard
 999,ByPassAssetGuard,0x615E7825468A8DfF1217cC63E7BEB618dF5a642c,ByPass Asset Guard
 35,FlatMoneyV2UNITOutsideWithdrawalAssetGuard,0xeAC54516a4B2dEB704A467550f7f81452498B42C,Flat Money V2 UNIT Outside Withdrawal Asset Guard
@@ -22,3 +21,4 @@ assetType,guardName,guardAddress,description
 200,RewardAssetGuard,0x61647D32Ef723089ec60A62d92A2Bc611Ac2713C,Reward Asset Guard
 106,DytmOfficeAssetGuard,0x58d0391ADaAc5c557d331336FEcDd6255FF9fc0e,DYTM Office Asset
 8,AaveLendingPoolAssetGuard,0x671b73ee0487dAA40E39051302C361BaF615Aa08,Aave V3 Lending Pool
+105,GmxPerpMarketAssetGuard,0xC6457D639e4d9959d531b7c83621AfE27CDcB520,Gmx Perps Market Asset Guard

@@ -44,10 +44,16 @@ export const deployGmxInfrastructure = async (deployments: IBackboneDeployments,
   });
   const gmxClaimableCollateralTrackerLib = await GmxClaimableCollateralTrackerLib.deploy();
 
-  const GmxPerpMarketAssetGuard = await ethers.getContractFactory("GmxPerpMarketAssetGuard", {
+  const GmxPerpMarketAssetGuardLib = await ethers.getContractFactory("GmxPerpMarketAssetGuardLib", {
     libraries: {
       GmxClaimableCollateralTrackerLib: gmxClaimableCollateralTrackerLib.address,
-      GmxHelperLib: gmxHelperLib.address,
+    },
+  });
+  const gmxPerpMarketAssetGuardLib = await GmxPerpMarketAssetGuardLib.deploy();
+
+  const GmxPerpMarketAssetGuard = await ethers.getContractFactory("GmxPerpMarketAssetGuard", {
+    libraries: {
+      GmxPerpMarketAssetGuardLib: gmxPerpMarketAssetGuardLib.address,
     },
   });
   const gmxPerpMarketAssetGuard = await GmxPerpMarketAssetGuard.deploy(deploymentParams.exchangeRouter);

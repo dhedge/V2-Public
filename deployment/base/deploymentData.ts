@@ -308,10 +308,6 @@ export const baseProdData: IAddresses = {
     ],
   },
 
-  odosV2RouterAddress: baseChainData.odosEx.v2Router,
-
-  odosV3RouterAddress: "0x0D05a7D3448512B78fa8A9e46c4872C88C4a0D05",
-
   compoundV3: {
     rewards: baseChainData.compoundV3.rewards,
   },
