@@ -117,5 +117,7 @@ interface IGmxPosition {
     int256 basePnlUsd;
     int256 uncappedBasePnlUsd;
     int256 pnlAfterPriceImpactUsd;
+    // GMX-computed net position value including collateral, claimable funding, PnL, price impact and fees.
+    int256 positionValueInUsd;
   }
 }

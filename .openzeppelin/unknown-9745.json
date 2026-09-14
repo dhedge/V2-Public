@@ -24,6 +24,10 @@
       "address": "0xAec4975Fc8ad911464D2948D771488b30F6eEE87",
       "txHash": "0xe33e33c79fda40eb3cfb11e7dc981738687a15d2f39d0618bd484d71c5e59cf1",
       "kind": "transparent"
+    },
+    {
+      "address": "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -1842,6 +1846,151 @@
           }
         },
         "namespaces": {}
+      }
+    },
+    "596fb09be4f62719c94feb0da900b5a62c125abda628c2b9af1f749b8f3bdf8e": {
+      "address": "0x9A49c648C2Ef4056ac8753cFB8AE46b85f240637",
+      "layout": {
+        "storage": [],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IWETH)2969": {
+            "label": "contract IWETH"
+          },
+          "t_mapping(t_bytes32,t_address)": {
+            "label": "mapping(bytes32 => address)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "contracts/swappers/swapper/reference/SwapperV2.flattened.sol:862"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "contracts/swappers/swapper/reference/SwapperV2.flattened.sol:448"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "contracts/swappers/swapper/reference/SwapperV2.flattened.sol:452"
+            }
+          ],
+          "erc7201:Swapper.TokenTransferMethods": [
+            {
+              "contract": "TokenTransferMethodsStorage",
+              "label": "permit2",
+              "type": "t_address",
+              "src": "contracts/swappers/swapper/reference/SwapperV2.flattened.sol:811"
+            },
+            {
+              "contract": "TokenTransferMethodsStorage",
+              "label": "wrappedNativeToken",
+              "type": "t_contract(IWETH)2969",
+              "src": "contracts/swappers/swapper/reference/SwapperV2.flattened.sol:812"
+            }
+          ],
+          "erc7201:Swapper.RouterProcessor": [
+            {
+              "contract": "RouterProcessorStorage",
+              "label": "routers",
+              "type": "t_mapping(t_bytes32,t_address)",
+              "src": "contracts/swappers/swapper/reference/SwapperV2.flattened.sol:614"
+            }
+          ]
+        }
+      }
+    },
+    "e73df5060c29c888666f80ae654dcfb95bb8d8e430276a59646936e396d4f18a": {
+      "address": "0x4933b162b9F84182A098e2F06fdfD72068573B64",
+      "txHash": "0x50b4d3c14e5299f364fe6af710c07183bd7c03f2eaf122ebca7c4ad66aa95b65",
+      "layout": {
+        "storage": [],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_contract(IWETH)11346": {
+            "label": "contract IWETH"
+          },
+          "t_mapping(t_bytes32,t_address)": {
+            "label": "mapping(bytes32 => address)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol:24"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/v5/contracts-upgradeable/proxy/utils/Initializable.sol:69"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/v5/contracts-upgradeable/proxy/utils/Initializable.sol:73"
+            }
+          ],
+          "erc7201:Swapper.TokenTransferMethods": [
+            {
+              "contract": "TokenTransferMethodsStorage",
+              "label": "permit2",
+              "type": "t_address",
+              "src": "contracts/swappers/swapper/TokenTransferMethodsStorage.sol:21"
+            },
+            {
+              "contract": "TokenTransferMethodsStorage",
+              "label": "wrappedNativeToken",
+              "type": "t_contract(IWETH)11346",
+              "src": "contracts/swappers/swapper/TokenTransferMethodsStorage.sol:22"
+            }
+          ],
+          "erc7201:Swapper.RouterProcessor": [
+            {
+              "contract": "RouterProcessorStorage",
+              "label": "routers",
+              "type": "t_mapping(t_bytes32,t_address)",
+              "src": "contracts/swappers/swapper/RouterProcessorStorage.sol:19"
+            }
+          ]
+        }
       }
     }
   }

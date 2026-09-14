@@ -75,5 +75,25 @@
       "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
+  },
+  {
+    "assetName": "UZEC",
+    "assetAddress": "0x20000000000000000000000000000000000001a3",
+    "assetType": "40",
+    "specificOracleConfig": {
+      "spotIndex": 272,
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "HyperliquidSpotPriceAggregator"
+  },
+  {
+    "assetName": "UPUMP",
+    "assetAddress": "0x27ec642013bcb3d80ca3706599d3cda04f6f4452",
+    "assetType": "40",
+    "specificOracleConfig": {
+      "spotIndex": 188,
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+    },
+    "oracleType": "HyperliquidSpotPriceAggregator"
   }
 ]

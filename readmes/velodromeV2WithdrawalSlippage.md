@@ -156,7 +156,8 @@ When `slippageTolerance == 0`, the **entire slippage check is skipped**, prevent
 
 ## Testing Evidence
 
-Test file: [WithdrawRevertTest.t.sol](../test/integration/ovm/velodromeV2/WithdrawRevertTest.t.sol)
+Reproduced on-chain by replaying the withdrawal calldata against pool `0xCc65...a80F` at the two
+blocks below (the one-off replay test `WithdrawRevertTest.t.sol` was removed after the fix landed):
 
 ### Block 145760000 - Reverts
 
@@ -189,4 +190,3 @@ Slippage check: 0 >= 0 → PASS
 
 - [PoolLogic.sol](../contracts/PoolLogic.sol) - Main withdrawal logic with slippage check
 - [VelodromeV2LPAssetGuard.sol](../contracts/guards/assetGuards/velodrome/VelodromeV2LPAssetGuard.sol) - Asset guard handling fee transfers
-- [WithdrawRevertTest.t.sol](../test/integration/ovm/velodromeV2/WithdrawRevertTest.t.sol) - Test cases demonstrating the issue

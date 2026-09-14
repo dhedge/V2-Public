@@ -27,6 +27,15 @@ library HyperEVMConfig {
   uint32 public constant XAUT0_TOKEN_INDEX = 297;
   uint64 public constant XAUT0_SPOT_INDEX = 182;
 
+  /// @dev XAUT0's SECOND spot pair on HyperCore (index 209), quoted in USDT0 rather than USDC. It shares
+  ///      its base token with `XAUT0_SPOT_INDEX`, so both pair ids resolve to the one XAUT0 Core balance.
+  ///      HyperCore lists a token against several quote assets (mainnet: XAUT0 has 2 pairs, HYPE has 4),
+  ///      and only the USDC-quoted one pays the vault in something its asset guards value.
+  uint64 public constant XAUT0_ALT_SPOT_INDEX = 209;
+
+  /// @dev Quote token of `XAUT0_ALT_SPOT_INDEX`. Not a dHEDGE asset, so nothing values it.
+  uint64 public constant USDT0_TOKEN_INDEX = 268;
+
   // Auxiliary Contracts
   address public constant CORE_DEPOSIT_WALLET = 0x6B9E773128f453f5c2C60935Ee2DE2CBc5390A24;
 

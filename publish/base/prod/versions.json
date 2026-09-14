@@ -724,7 +724,7 @@
       "PoolFactory": "0x7256070a6340E0A8d8a2b4eC3969bb4c5977Ec3c",
       "DhedgeNftTrackerStorageProxy": "0x08A664cA241DD50B1Dd5c9EBB97eCA33aC6f744E",
       "DhedgeNftTrackerStorage": "0xe2317CA7ab6D54608470ae368b04E7a00164Be36",
-      "SlippageAccumulator": "0xcF427956142901D5b125073F80fDd06370fba237",
+      "SlippageAccumulator": "0xE0C4567B8C9Ed82D9e985cDEc417dF1b9A5143a3",
       "OneInchV5Guard": "0xFeF15116DcdB396932dcBD7D635B35f292C525C5",
       "ZeroExContractGuard": "0x86837253574f52DF2C2338a9e9dD9478F9840B0F",
       "SynthetixV3SpotMarketContractGuard": "0x4FdF868B5372b3952b98aEda7478Da6f925d892F",
@@ -734,7 +734,7 @@
       "VelodromeV2RouterGuard": "0x92DEFBFfe1f17452155cA549cc404fB834b3f990",
       "VelodromeV2LPAssetGuard": "0x5005E1F30bfCfe55BEda58106FDf22Db3DDAa7e6",
       "LendingEnabledAssetGuard": "0xb5DB5311B305ECB90e1D65da3A69264d1F307A4B",
-      "AaveLendingPoolAssetGuardV3": "0xcd9150618ff5A4ef6ea8A1E37862f44739581757",
+      "AaveLendingPoolAssetGuardV3": "0x804c67d3b9078806E02CFEF036BD3C3c404aF9fF",
       "AaveIncentivesControllerV3Guard": "0x9f4655D46B5C3A40ABAa92BF2665849253E7F1bc",
       "DhedgeUniV3V2Router": "0x7432BA001d31D80C23c58b34F345E258567e6a0b",
       "DhedgeVeloV2UniV2Router": "0x3ed3E205A7e046bbD53e9B1C4E99CD9EC078AF2c",
@@ -746,7 +746,7 @@
       "FlatMoneyDelayedOrderContractGuard": "0xD12104168B1281E2095cF97A57ccddf19b2fbAEa",
       "FlatMoneyCollateralAssetGuard": "0x7b8E17d3f3331e82DF202Dc7a6a6012C94bDA989",
       "FlatMoneyUNITAssetGuard": "0xB54EB255d6F77d38F527317A2339a96bEd9a7F93",
-      "OneInchV6Guard": "0x9cbEd9994a19BA9d1AB3656b15044e2Dae4e9258",
+      "OneInchV6Guard": "0xa88a379A9cbCB21e9EE306d665fEB2da7C05eB44",
       "FlatMoneyPerpMarketAssetGuard": "0x3Ee9f17c2450E170987EC0FC0dd54976C207e3FD",
       "VelodromeV2GaugeContractGuard": "0x35a075CDCc286bAa324d9c02fd0e954634C6C4DF",
       "SynthetixV3PerpsMarketContractGuard": "0x227B5A2aaE1403B2382E24c425e64726712B6293",
@@ -760,7 +760,7 @@
       "WithdrawalVault": "0x0a74bB846922f1fa7217cD87A054A2B1941Ea565",
       "EasySwapperV2Proxy": "0xf067575Eb60c7587C11e867907AA7284833704d1",
       "EasySwapperV2": "0xCbA9A53815c1454A083D9b8bee01240ED3fA3156",
-      "EasySwapperV2ContractGuard": "0x0b08A59D18cE53B6A00222c3EB65B2c0effe8115",
+      "EasySwapperV2ContractGuard": "0xD130FA890B96750020c61742878F6c4D311AFF05",
       "EasySwapperV2UnrolledAssetsGuard": "0x8aE987DbAC9dE602fA9C915E4E161A319bF8AE46",
       "AngleDistributorContractGuard": "0xCF601962107B04B18553085E8962EfFC1c27ec7A",
       "PoolLimitOrderManagerProxy": "0xFcBEc28c43E356693971a24bf3F2Fd7D965E2ebA",
@@ -774,37 +774,28 @@
       "FluidTokenAssetGuard": "0x9134069fAa797304Da01903838551073F0B44c41",
       "FluidTokenContractGuard": "0x1e393066C9a15C3704f7e3BD53A469ad49192E4f",
       "CompoundV3CometRewardsContractGuard": "0xaB9a62192dA98d256CBF60808daB20FF63B4Ed58",
-      "CompoundV3CometAssetGuard": "0x1fa1814fEADa03df792ab603c8a93D193f98C331",
+      "CompoundV3CometAssetGuard": "0x6EbCc2e0E8a0E4AfF24946407dD14Ea96ce91604",
       "CompoundV3CometContractGuard": "0x87De1fAC89E47159B991E3310f6Bb7b4AD6E8869",
       "AaveLendingPoolGuardV3L2Pool": "0xc1d03811adf7ea51Aa6c0DcBDE1053E8B5c7c832",
       "ByPassAssetGuard": "0x00bC9798a926ED2e9031C2870bb7550F9D80ADEE",
       "PoolLogicLib": "0x23a7FBaDEEbd1b92481300515932af3EEBe7D0B7",
       "FluidMerkleDistributorContractGuard": "0x909CF0Ebb0d4B3451d2c4Dc414F36c9aBa7a4286",
-      "KyberSwapRouterV2ContractGuard": "0x24Bd15453BD493361F7985A40d1903346Bd9c20d",
+      "KyberSwapRouterV2ContractGuard": "0xE907C1A18701c6936714FFC3fe1d3951F28a0076",
       "OdosV3ContractGuard": "0x857dFE5EFB74532e038E855e28A5FE021Ae0927a",
       "ValueManipulationCheck": "0x42E8b6CDCd6BFf2bc4e30E3FAEc8a0858E1c2336",
       "ReferralManagerProxy": "0x73E2608B3fc855be716f74969dA7CfcD39f1a47B",
       "ReferralManager": "0x759F959659e4e1d22D321EEac043c56E782b6258",
       "WithdrawalGuardianProxy": "0x042d9d2f12d62Ec91960C9B8d66bF9B4b8B58C6b",
-      "WithdrawalGuardian": "0x14E4Efb9F28eBe6a4Ec33219330Dd292e0056F1f"
+      "WithdrawalGuardian": "0x14E4Efb9F28eBe6a4Ec33219330Dd292e0056F1f",
+      "SwapperProxy": "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+      "Swapper": "0x3275833bE5cB3ca6a6B9B94E5c5d059eA0277484"
     },
     "network": {
       "chainId": 8453,
       "name": "unknown"
     },
-    "lastUpdated": "Mon, 03 Aug 2026 08:30:28 GMT",
+    "lastUpdated": "Sun, 13 Sep 2026 13:18:29 GMT",
     "config": {
-      "easySwapperConfig": {
-        "customLockupAllowedPools": [
-          "0xc1e02884af4a283ca25ab63c45360d220d69da52",
-          "0xa672e882acbb96486393d43e0efdab5ebebddc1d",
-          "0x15e2f06138aed58ca2a6afb5a1333bbc5f728f80",
-          "0xba5f6a0d2ac21a3fec7a6c40facd23407aa84663"
-        ],
-        "feeByPassManagers": ["0x5619AD05b0253a7e647Bd2E4C01c7f40CEaB0879"],
-        "feeNumerator": 10,
-        "feeDenominator": 10000
-      },
       "easySwapperV2": {
         "customCooldownDepositsWhitelist": [
           "0xc1e02884af4a283ca25ab63c45360d220d69da52",

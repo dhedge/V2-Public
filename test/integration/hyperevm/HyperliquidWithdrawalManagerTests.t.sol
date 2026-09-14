@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/v5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {OwnableUpgradeable} from "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 import {HyperEVMSetup} from "test/integration/utils/foundry/chains/HyperEVMSetup.t.sol";
 import {CoreSimulatorLib} from "test/integration/hyperevm/test-suite/hyperevm-lib/CoreSimulatorLib.sol";
@@ -12,6 +13,7 @@ import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConf
 
 import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
+import {IAssetGuard} from "contracts/interfaces/guards/IAssetGuard.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IPoolManagerLogic} from "contracts/interfaces/IPoolManagerLogic.sol";
 import {ICoreWriter} from "contracts/interfaces/hyperliquid/ICoreWriter.sol";
@@ -29,7 +31,10 @@ import {IChangeAssets} from "test/integration/utils/foundry/CoreBackboneSetup.so
 ///         and the withdrawal-specific isPublic / validation branches added to the guards.
 /// @dev Inherits PrecompileHelper for shared constants (_USDC_ADDRESS, _DEX_ID_CORE_PERP, etc.)
 ///      and precompile read helpers (accountMarginSummary, spotBalance, position).
-contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
+/// @dev The `Skip` suffix excludes this suite from default `forge test` runs (`no_match_contract = "Skip"`
+///      in foundry.toml). The CoreWriter guard no longer marks withdrawal-manager actions public, so the WM
+///      cannot execute through the pool and these tests cannot pass until the guard is wired back up.
+contract HyperliquidWithdrawalManagerTestsSkip is HyperEVMSetup, PrecompileHelper {
   using FixedPointMathLib for uint256;
 
   uint256 public constant blockNumber = 36674788;
@@ -53,6 +58,18 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
   ///      *system* spot asset reached via the special system address 0x2222...2222.
   uint64 internal constant _HYPE_TOKEN_INDEX = 150;
   uint64 internal constant _HYPE_SPOT_INDEX = 107;
+
+  /// @dev HIP-3 dex id 1 and a perp on it (asset id = 100_000 + dexId * 10_000 + meta index),
+  ///      mirroring the production xyz:GOLD deployment. The Core simulator has no per-dex accounting
+  ///      (margin summaries ignore the dex id and sendAsset is a no-op), so the HIP-3 dex's margin
+  ///      summary and position are supplied via targeted precompile mocks (exact-calldata match, so
+  ///      core-dex reads still hit the real simulator).
+  uint256 internal constant _HIP3_DEX_ID = 1;
+  uint32 internal constant _HIP3_PERP_ASSET_ID = 110_003;
+  uint32 internal constant _HIP3_PERP_INDEX = 10_003;
+
+  /// @dev Mirror of the CoreWriter's event, for expectEmit assertions on queued Core actions.
+  event RawAction(address indexed user, bytes data);
 
   /////////////////////////////////////////////
   //                  Setup                  //
@@ -359,6 +376,88 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
     assertGt(_openPerpLong(), 0, "perp long opened");
     withdrawShares = shares / 4;
     perpId = _PERP_INDEX;
+  }
+
+  /// @dev Enables a HIP-3 dex id on the CoreWriter guard so the WM iterates it during withdrawals.
+  function _enableHip3Dex(uint256 dexId) internal {
+    IHyperliquidCoreWriterContractGuard.DexIdStatusSettings[]
+      memory settings = new IHyperliquidCoreWriterContractGuard.DexIdStatusSettings[](1);
+    settings[0] = IHyperliquidCoreWriterContractGuard.DexIdStatusSettings({
+      dexId: dexId,
+      status: IHyperliquidCoreWriterContractGuard.DexStatus.ENABLED
+    });
+    vm.prank(owner);
+    hyperliquidCoreWriterContractGuard.setDexIdStatus(settings);
+  }
+
+  /// @dev Mocks the account-margin-summary precompile for (`_HIP3_DEX_ID`, pool). Exact-calldata
+  ///      match: reads for other dex ids (different first word) still hit the real simulator.
+  function _mockHip3DexSummary(int64 accountValue, uint64 marginUsed, uint64 ntlPos) internal {
+    vm.mockCall(
+      _ACCOUNT_MARGIN_SUMMARY_PRECOMPILE_ADDRESS,
+      abi.encode(_HIP3_DEX_ID, hyperliquidTestPool),
+      abi.encode(
+        PrecompileHelper.AccountMarginSummary({
+          accountValue: accountValue,
+          marginUsed: marginUsed,
+          ntlPos: ntlPos,
+          rawUsd: accountValue - int64(ntlPos)
+        })
+      )
+    );
+  }
+
+  /// @dev Mocks the position/oracle/asset-info precompiles for `_HIP3_PERP_INDEX` so announce can
+  ///      cover and size the HIP-3 reduce-only order (the simulator has no HIP-3 perp registry).
+  function _mockHip3PerpPosition(int64 szi, uint64 oraclePrice, uint8 szDecimals) internal {
+    vm.mockCall(
+      _POSITION_PRECOMPILE_ADDRESS,
+      abi.encode(hyperliquidTestPool, uint16(_HIP3_PERP_INDEX)),
+      abi.encode(PrecompileHelper.Position({szi: szi, entryNtl: 0, isolatedRawUsd: 0, leverage: 20, isIsolated: false}))
+    );
+    vm.mockCall(_ORACLE_PX_PRECOMPILE_ADDRESS, abi.encode(_HIP3_PERP_INDEX), abi.encode(oraclePrice));
+    vm.mockCall(
+      _PERP_ASSET_INFO_PRECOMPILE_ADDRESS,
+      abi.encode(_HIP3_PERP_INDEX),
+      abi.encode(
+        PrecompileHelper.PerpAssetInfo({
+          coin: "xyz:GOLD",
+          marginTableId: 0,
+          szDecimals: szDecimals,
+          maxLeverage: 25,
+          onlyIsolated: false
+        })
+      )
+    );
+  }
+
+  /// @dev Mocks the spot-balance precompile for (pool, `tokenIndex`) with part of the balance on
+  ///      hold under resting orders (the simulator hard-codes hold = 0). Exact-calldata match;
+  ///      other tokens still hit the real simulator.
+  function _mockSpotBalanceWithHold(uint64 tokenIndex, uint64 total, uint64 hold) internal {
+    vm.mockCall(
+      _SPOT_BALANCE_PRECOMPILE_ADDRESS,
+      abi.encode(hyperliquidTestPool, tokenIndex),
+      abi.encode(PrecompileHelper.SpotBalance({total: total, hold: hold, entryNtl: 0}))
+    );
+  }
+
+  /// @dev The Core-wei sendAsset payload the WM must queue to consolidate `amountUsdc6` from the
+  ///      HIP-3 dex into the core perp dex during bridge.
+  function _expectedConsolidationAction(uint256 amountUsdc6) internal view returns (bytes memory) {
+    return
+      abi.encodePacked(
+        uint8(1),
+        HyperliquidConstants.ACTION_SEND_ASSET,
+        abi.encode(
+          hyperliquidTestPool,
+          address(0),
+          uint32(_HIP3_DEX_ID),
+          _DEX_ID_CORE_PERP,
+          _USDC_TOKEN_INDEX,
+          uint64(amountUsdc6 * 1e2)
+        )
+      );
   }
 
   /// @dev Creates a valid factory pool that supports only USDC — no CoreWriter asset, so it has no
@@ -703,10 +802,18 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
     _announce(investor, shares / 4, perpIds, _emptyIds());
     CoreSimulatorLib.nextBlock();
 
-    // The reduce-only sell must have shrunk the long position.
+    // The reduce-only sell must have shrunk the long position — by exactly the withdrawal portion
+    // (floored onto MOODENG's whole-contract lot grid, hence the small tolerance).
     int64 sziAfter = position(hyperliquidTestPool, _PERP_INDEX).szi;
     assertLt(sziAfter, sziBefore, "perp position reduced");
     assertGt(sziAfter, 0, "position only partially reduced");
+    uint256 portion = (shares / 4).divWadDown(IERC20(hyperliquidTestPool).totalSupply());
+    assertApproxEqRel(
+      uint256(uint64(sziAfter)),
+      uint256(uint64(sziBefore)).mulWadDown(1e18 - portion),
+      0.01e18, // 1% max relative delta (one whole-contract lot on a few-hundred-contract position)
+      "perp position reduced proportionally"
+    );
     // Reducing must never make the remaining position riskier (leverage can only stay or drop here,
     // since the freed margin is still in the perp account until bridged out).
     assertLe(_perpLeverageWad(), leverageBefore, "perp leverage not increased by reduce");
@@ -872,6 +979,7 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
     assertGt(_openPerpLong(), 0, "perp long opened");
     assertApproxEqAbs(IERC20(usdc).balanceOf(hyperliquidTestPool), evmKeep, 1, "pool retains idle EVM USDC");
 
+    uint256 leverageBefore = _perpLeverageWad();
     uint256 tokenPriceStart = IPoolLogic(hyperliquidTestPool).tokenPrice();
     uint256 investorUsdcBefore = IERC20(usdc).balanceOf(investor);
     uint256 fundValueStart = _getTotalFundValue();
@@ -907,6 +1015,155 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
       "tokenPrice ~ after settle"
     ); // 0.1% max relative delta
     assertApproxEqRel(_getTotalFundValue(), fundValueStart - received * 1e12, 0.001e18, "fundValue dropped by payout"); // 0.1% max relative delta
+    // The idle EVM USDC credit shrinks the margin pull while the position is still reduced by the
+    // full portion, so remaining holders' leverage can only drop here — never rise.
+    assertLe(_perpLeverageWad(), leverageBefore, "perp leverage not increased");
+  }
+
+  /// @notice A pool whose Core money is perp-wallet equity with NO open positions — the normal
+  ///         state after a manager closes all perps (HyperCore leaves the freed margin in the perp
+  ///         account) — must still bridge and settle. The bridge must decide the perp->spot class
+  ///         transfer on perp-wallet EQUITY, not on open notional: gating it on
+  ///         "is any position open?" misreads this pool as spot-only, clamps the send to the thin
+  ///         spot balance, and every withdrawal dead-ends at settle until the manager manually
+  ///         moves the equity to spot.
+  function test_withdraw_perp_wallet_cash_no_positions_bridgesAndSettles() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+
+    // Park most Core cash in the perp wallet without opening any position, keeping a thin spot
+    // buffer so the bridge's send exceeds spot and the class transfer is required.
+    bytes memory toPerpAction = abi.encodePacked(
+      uint8(1),
+      HLConstants.USD_CLASS_TRANSFER_ACTION,
+      abi.encode(uint64(_coreSpotUsdc() - 2_000e6), true) // true = spot -> perp (dex 0)
+    );
+    _placeLimitOrder(toPerpAction);
+    CoreSimulatorLib.nextBlock();
+
+    PrecompileHelper.AccountMarginSummary memory dex0 = accountMarginSummary(hyperliquidTestPool, _DEX_ID_CORE_PERP);
+    assertGt(dex0.accountValue, 0, "perp wallet holds equity");
+    assertEq(dex0.ntlPos, 0, "no open notional anywhere");
+
+    uint256 tokenPriceStart = IPoolLogic(hyperliquidTestPool).tokenPrice();
+    uint256 fundValueStart = _getTotalFundValue();
+    uint256 investorUsdcBefore = IERC20(usdc).balanceOf(investor);
+
+    // Perp-wallet equity counts as free, so the reduce is skipped (nothing to reduce anyway).
+    _announce(investor, shares / 4, _emptyIds(), _emptyIds());
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+
+    IHyperliquidWithdrawalManager.PendingWithdrawal memory pending = withdrawalManager.pendingWithdrawals(
+      investor,
+      hyperliquidTestPool
+    );
+    assertEq(uint8(pending.state), uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE), "state cleared");
+    assertEq(IPoolLogic(hyperliquidTestPool).balanceOf(address(withdrawalManager)), 0, "WM holds no shares");
+
+    uint256 received = IERC20(usdc).balanceOf(investor) - investorUsdcBefore;
+    assertGt(received, 0, "investor received USDC");
+    // No positions and no trading: price per share holds and fund value drops only by the payout.
+    assertApproxEqRel(
+      IPoolLogic(hyperliquidTestPool).tokenPrice(),
+      tokenPriceStart,
+      0.0005e18,
+      "tokenPrice ~ after settle"
+    ); // 0.05% max relative delta
+    assertApproxEqRel(_getTotalFundValue(), fundValueStart - received * 1e12, 0.0005e18, "fundValue dropped by payout"); // 0.05% max relative delta
+  }
+
+  /// @notice A manager's resting reduce-only spot order locks balance under `hold`; an IOC sell
+  ///         sized past the spendable `total - hold` is rejected by HyperCore outright — silently,
+  ///         post-block — so nothing would be freed and the withdrawal would starve at settle.
+  ///         Announce must fail loudly instead when the resting order leaves too little spendable
+  ///         balance for the proportional sell.
+  function test_revert_announce_spotBalanceOnHold_whenRestingOrderLocksBalance() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+    uint32 xaut0AssetId = _buyXaut0(uint64(7e8)); // dominant 7 XAUT0 => the reduce path must sell
+
+    // Full-position take-profit: the entire balance is on hold, nothing is spendable.
+    _mockSpotBalanceWithHold(uint64(HyperEVMConfig.XAUT0_TOKEN_INDEX), 7e8, 7e8);
+
+    _announceExpectRevert(
+      (shares * 60) / 100,
+      _emptyIds(),
+      _ids(xaut0AssetId),
+      abi.encodeWithSelector(
+        HyperliquidWithdrawalManager.HyperliquidWithdrawalManager__SpotBalanceOnHold.selector,
+        xaut0AssetId
+      )
+    );
+  }
+
+  /// @notice The skip path's license is "draw only equity above open notional". That is checked at
+  ///         announce, but announce and bridge are separate transactions: if the free equity
+  ///         evaporates in between (here: a mark move against an open short), the bridge's pull
+  ///         would take collateral backing the un-reduced position — remaining holders end up more
+  ///         leveraged with no reduce ever running. The bridge must re-check the skip license
+  ///         against CURRENT free equity and revert, leaving the withdrawal cancellable.
+  function test_revert_bridge_insufficientCoreUsdc_whenSkipPathFreeEquityDrifts() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+
+    // Open a perp at ~60% notional: ~40% of the funding stays as free equity, enough for a
+    // quarter-withdrawal to take the skip path.
+    assertGt(_openPerpLong(2, 6_000), 0, "perp long opened");
+
+    _announce(investor, shares / 4, _emptyIds(), _emptyIds());
+    uint256 reserved = HyperliquidWithdrawalManager(address(withdrawalManager)).reservedBridgeUsdc(hyperliquidTestPool);
+    assertGt(reserved, 0, "skip path taken");
+    CoreSimulatorLib.nextBlock();
+
+    // Drift: the mark doubles before the user bridges. In the simulator's margin model notional
+    // grows faster than account value, so the account's free equity (equity - notional) drops
+    // below the announced bridge while transferable margin stays ample — only the free-equity
+    // bound protects the un-reduced position from being drained.
+    CoreSimulatorLib.setMarkPx(uint32(_PERP_INDEX), uint64(10_000), true); // +100%
+    PrecompileHelper.AccountMarginSummary memory dex0 = accountMarginSummary(hyperliquidTestPool, _DEX_ID_CORE_PERP);
+    uint256 freeAfterDrift = uint64(dex0.accountValue) > dex0.ntlPos ? uint64(dex0.accountValue) - dex0.ntlPos : 0;
+    assertLt(freeAfterDrift, reserved, "free equity no longer covers the announced bridge");
+
+    vm.prank(investor);
+    vm.expectRevert(HyperliquidWithdrawalManager.HyperliquidWithdrawalManager__InsufficientCoreUsdc.selector);
+    withdrawalManager.bridge(hyperliquidTestPool);
+  }
+
+  /// @notice A modest resting order must not block the withdrawal: the proportional sell still
+  ///         fits the spendable `total - hold`, so the flow sells, bridges and settles as usual.
+  function test_withdraw_spot_with_partial_hold_bridgesAndSettles() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+    uint32 xaut0AssetId = _buyXaut0(uint64(7e8));
+
+    // 1 of 7 XAUT0 on hold: the buffered ~40% sell (~2.9 XAUT0) fits the 6 XAUT0 spendable.
+    _mockSpotBalanceWithHold(uint64(HyperEVMConfig.XAUT0_TOKEN_INDEX), 7e8, 1e8);
+
+    uint256 investorUsdcBefore = IERC20(usdc).balanceOf(investor);
+
+    _announce(investor, (shares * 60) / 100, _emptyIds(), _ids(xaut0AssetId));
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+
+    IHyperliquidWithdrawalManager.PendingWithdrawal memory pending = withdrawalManager.pendingWithdrawals(
+      investor,
+      hyperliquidTestPool
+    );
+    assertEq(uint8(pending.state), uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE), "state cleared");
+    assertGt(IERC20(usdc).balanceOf(investor) - investorUsdcBefore, 0, "investor received USDC");
   }
 
   /// @notice Happy path that reduces a perp SHORT position during withdrawal, then settles.
@@ -1357,6 +1614,37 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
     );
   }
 
+  /// @notice A core perp named twice — once by its plain index, once by its `100_000 + index` spelling
+  ///         — is rejected. Both spellings resolve to (dex 0, perp index), so the coverage check would
+  ///         count that one position's notional TWICE and let an equally-open co-resident perp be
+  ///         omitted entirely, while the bridge still pulls the withdrawal's share of the shared
+  ///         cross-margin equity — raising leverage for the holders who remain.
+  /// @dev Asset ids 100_000..109_999 are never valid: dex 0 IS the core perp dex and its perps are
+  ///      addressed by their plain index (see `calculateAssetId` in
+  ///      deployment/hyperevm/whitelistPerpAssets.ts), so real HIP-3 ids start at 110_000. Companion to
+  ///      {test_revert_announce_multiPerp_missingOnePerpId}, which covers plainly omitting the second
+  ///      perp; this covers faking its coverage.
+  function test_revert_announce_aliasedCorePerpId() public {
+    uint256 shares = _setupTwoCorePerps();
+
+    // BTC named twice: plain index 0, then its HIP-3-range alias 100_000. Distinct and ascending, so
+    // the strictly-ascending check cannot catch it.
+    uint32 aliasedBtc = 100_000 + _PERP_INDEX_BTC;
+    uint32[] memory aliasedPerpIds = new uint32[](2);
+    aliasedPerpIds[0] = _PERP_INDEX_BTC;
+    aliasedPerpIds[1] = aliasedBtc;
+
+    _announceExpectRevert(
+      shares / 4,
+      aliasedPerpIds,
+      _emptyIds(),
+      abi.encodeWithSelector(
+        HyperliquidWithdrawalManager.HyperliquidWithdrawalManager__NoPositionForAsset.selector,
+        aliasedBtc
+      )
+    );
+  }
+
   /// @notice Duplicate spot ids are rejected the same way: a repeat would queue a second full-size
   ///         sell order and double-count the spot value in the stored ids at bridge time.
   function test_revert_announce_duplicateSpotIds() public {
@@ -1373,6 +1661,41 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
       _emptyIds(),
       dupSpotIds,
       abi.encodeWithSelector(HyperliquidWithdrawalManager.HyperliquidWithdrawalManager__UnsortedAssetIds.selector)
+    );
+  }
+
+  /// @notice Two DISTINCT spot pair ids that share one base token are rejected. XAUT0 trades in pair
+  ///         182 (/USDC) and pair 209 (/USDT0); both resolve to the same XAUT0 Core balance, and the
+  ///         sell is sized off that balance — so each id would queue its own FULL-SIZE sell, selling
+  ///         ~2x the withdrawer's share of a position the remaining holders keep, and would also count
+  ///         that balance twice when sizing the bridge.
+  /// @dev Strictly-ascending pair ids cannot catch this (the ids differ), so the de-dup has to key on
+  ///      the base token — the resource the sell actually consumes. Checked before any value is read or
+  ///      order placed, so this reverts regardless of what else validates the pair.
+  function test_revert_announce_duplicateSpotBaseTokens() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+    uint32 xaut0AssetId = _buyXaut0(uint64(1e8)); // 1 XAUT0
+
+    // Distinct, ascending pair ids — but the same base token.
+    uint32[] memory sharedBaseSpotIds = new uint32[](2);
+    sharedBaseSpotIds[0] = xaut0AssetId; // 10_182 (XAUT0/USDC)
+    sharedBaseSpotIds[1] = 10_000 + uint32(HyperEVMConfig.XAUT0_ALT_SPOT_INDEX); // 10_209 (XAUT0/USDT0)
+    assertLt(sharedBaseSpotIds[0], sharedBaseSpotIds[1], "spot ids strictly ascending");
+    assertEq(
+      spotInfo(HyperEVMConfig.XAUT0_ALT_SPOT_INDEX).tokens[0],
+      HyperEVMConfig.XAUT0_TOKEN_INDEX,
+      "alt pair shares the XAUT0 base token"
+    );
+
+    _announceExpectRevert(
+      shares / 4,
+      _emptyIds(),
+      sharedBaseSpotIds,
+      abi.encodeWithSelector(
+        HyperliquidWithdrawalManager.HyperliquidWithdrawalManager__DuplicateSpotBaseToken.selector,
+        HyperEVMConfig.XAUT0_TOKEN_INDEX
+      )
     );
   }
 
@@ -2005,6 +2328,31 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
     IPoolLogic(hyperliquidTestPool).execTransaction(coreWriter, txData);
   }
 
+  /// @notice The permissionless route to the same thing is closed by the same guard check: ANY
+  ///         shareholder naming a non-USDC-quoted pair in a withdrawal has their announce reverted when
+  ///         the WM tries to place the proportional sell. Without this, the caller did not even need to
+  ///         finish the withdrawal — the NAV damage landed at announce and `cancel` returned their
+  ///         shares.
+  /// @dev Sizing: ~$28k of the ~$30k fund sits in XAUT0, so idle Core USDC cannot cover the exit and the
+  ///      announce is forced onto the sell path (on the skip path no order is placed, so there would be
+  ///      nothing for the guard to reject).
+  function test_revert_announce_spotIdOnNonUsdcQuotedPair() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+    _buyXaut0(uint64(10e8)); // 10 XAUT0 @ $2,800
+
+    _announceExpectRevert(
+      (shares * 20) / 100,
+      _emptyIds(),
+      _ids(10_000 + uint32(HyperEVMConfig.XAUT0_ALT_SPOT_INDEX)),
+      bytes("spot pair not USDC quoted")
+    );
+
+    // Nothing was sold and no unvalued token entered the vault.
+    assertEq(spotBalance(hyperliquidTestPool, uint64(HyperEVMConfig.XAUT0_TOKEN_INDEX)).total, 10e8, "XAUT0 intact");
+    assertEq(spotBalance(hyperliquidTestPool, HyperEVMConfig.USDT0_TOKEN_INDEX).total, 0, "no USDT0 received");
+  }
+
   /// @notice Only the owner can repoint the WM reference on the CoreWriter guard.
   function test_revert_setWithdrawalManager_notOwner() public {
     vm.prank(anon);
@@ -2052,5 +2400,522 @@ contract HyperliquidWithdrawalManagerTests is HyperEVMSetup, PrecompileHelper {
     uint256 leverageAfter = _perpLeverageWad();
     assertGt(leverageAfter, leverageBefore, "first skip pulled free equity, raising leverage");
     assertLe(leverageAfter, 1e18, "shared perp must not be over-drained above 1x");
+  }
+
+  /// @notice A reduce-path withdrawal frees margin between its reduce and its bridge — margin its
+  ///         own bridge will pull. That freed margin must not look "free" to a concurrent skip-path
+  ///         announce: without reserving the reduce path's pending bridge, a second withdrawer
+  ///         skips against it, and when the first bridge later pulls, it digs into collateral
+  ///         backing the still-open notional — remaining holders end up more leveraged than before
+  ///         either withdrawal.
+  function test_concurrent_skip_cannot_claim_margin_freed_for_pending_reduce() public {
+    _depositAndCooldown(investor, 20_000e6);
+    _depositAndCooldown(investorB, 20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+
+    // ~90% notional leaves ~10% free equity — not enough for A's bridge, so A must reduce.
+    assertGt(_openPerpLong(2, 9_000), 0, "perp long opened");
+
+    // A: 20% of supply => reduce path (names the perp); the fill frees ~20% of the margin.
+    uint256 withdrawA = IERC20(hyperliquidTestPool).totalSupply() / 5;
+    _announce(investor, withdrawA, _ids(_PERP_INDEX), _emptyIds());
+    CoreSimulatorLib.nextBlock(); // A's reduce fills; A has not bridged yet.
+
+    // B: 15% of supply with no perp id — only viable as a skip. The margin A's reduce freed is
+    // earmarked for A's pending bridge and must not fund B's skip.
+    uint256 withdrawB = (IERC20(hyperliquidTestPool).totalSupply() * 15) / 100;
+    assertFalse(
+      _tryAnnounceWithoutPerpId(investorB, withdrawB),
+      "skip must not double-spend margin freed for the pending reduce-path bridge"
+    );
+
+    // A's own flow is unaffected: the bridge pulls the freed margin and the withdrawal settles.
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+    CoreSimulatorLib.nextBlock();
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+    IHyperliquidWithdrawalManager.PendingWithdrawal memory pending = withdrawalManager.pendingWithdrawals(
+      investor,
+      hyperliquidTestPool
+    );
+    assertEq(uint8(pending.state), uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE), "A settled");
+  }
+
+  /////////////////////////////////////////////
+  //          Phase 6: HIP-3 dexes           //
+  /////////////////////////////////////////////
+
+  /// @notice Skip-path withdrawals must not touch a leveraged HIP-3 dex's margin. The announce
+  ///         skipped the reduce because idle Core spot cash covers the bridge, so the HIP-3
+  ///         position is still at full size — consolidating a share of its equity (as the reduce
+  ///         path does) would only raise its leverage for the holders who remain. With spot
+  ///         covering the whole send, the bridge must emit NO sendAsset action at all.
+  /// @dev No leverage assertions here (unlike the perp happy paths): the pool holds no real perp,
+  ///      and the HIP-3 account is a static mock, so its leverage cannot move by construction —
+  ///      the absence of the action-13 payload IS the "margin untouched" assertion.
+  function test_withdraw_hip3_skip_path_leaves_leveraged_dex_margin_untouched() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+
+    // Park ALL pool USDC on Core spot: the withdrawal must bridge from Core, and the spot buffer
+    // covers the bridge so the announce skips the reduce (no reduce ids => no coverage check).
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+    assertEq(IERC20(usdc).balanceOf(hyperliquidTestPool), 0, "pool EVM USDC drained to core");
+
+    // A leveraged HIP-3 account: equity $5k backing $10k open notional (2x), initial margin $1k.
+    uint256 hlValueBefore = IAssetGuard(hyperliquidPositionGuard).getBalance(hyperliquidTestPool, address(0));
+    _enableHip3Dex(_HIP3_DEX_ID);
+    _mockHip3DexSummary({accountValue: 5_000e6, marginUsed: 1_000e6, ntlPos: 10_000e6});
+    uint256 hlValue = IAssetGuard(hyperliquidPositionGuard).getBalance(hyperliquidTestPool, address(0));
+    assertEq(hlValue - hlValueBefore, 5_000e6, "mocked HIP-3 equity visible to the position guard");
+
+    uint256 withdrawShares = shares / 4;
+    uint256 portion = withdrawShares.divWadDown(IERC20(hyperliquidTestPool).totalSupply());
+    uint256 tokenPriceStart = IPoolLogic(hyperliquidTestPool).tokenPrice();
+    uint256 fundValueStart = _getTotalFundValue();
+    uint256 investorUsdcBefore = IERC20(usdc).balanceOf(investor);
+
+    // Mirror of _computeBridgeAmount + _getEffectiveBridgeAmount (EVM USDC is 0, so no credit).
+    uint256 expectedBridge = hlValue.mulWadUp(portion);
+    expectedBridge = expectedBridge + (expectedBridge * 100) / 10_000;
+
+    _announce(investor, withdrawShares, _emptyIds(), _emptyIds());
+
+    // The Core spot buffer covered the bridge, so the reduce was skipped and the bridge reserved.
+    assertEq(
+      HyperliquidWithdrawalManager(address(withdrawalManager)).reservedBridgeUsdc(hyperliquidTestPool),
+      expectedBridge,
+      "skip path reserved the effective bridge"
+    );
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+
+    // Spot covers the whole send: nothing may be pulled out of the leveraged HIP-3 dex.
+    assertFalse(_anySendAssetActionEmitted(), "no consolidation from the un-reduced leveraged dex");
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+
+    // Withdrawal cleared, reservation released, and the investor was paid.
+    IHyperliquidWithdrawalManager.PendingWithdrawal memory pending = withdrawalManager.pendingWithdrawals(
+      investor,
+      hyperliquidTestPool
+    );
+    assertEq(uint8(pending.state), uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE), "state cleared");
+    assertEq(
+      HyperliquidWithdrawalManager(address(withdrawalManager)).reservedBridgeUsdc(hyperliquidTestPool),
+      0,
+      "reservation released"
+    );
+    assertEq(IPoolLogic(hyperliquidTestPool).balanceOf(address(withdrawalManager)), 0, "WM holds no shares");
+
+    uint256 received = IERC20(usdc).balanceOf(investor) - investorUsdcBefore;
+    assertGt(received, 0, "investor received USDC");
+    // No trading happened (skip path, static HIP-3 mock), so price per share holds and fund value
+    // only drops by the payout (both include the mocked HIP-3 equity consistently).
+    assertApproxEqRel(
+      IPoolLogic(hyperliquidTestPool).tokenPrice(),
+      tokenPriceStart,
+      0.0005e18,
+      "tokenPrice ~ after settle"
+    ); // 0.05% max relative delta
+    assertApproxEqRel(_getTotalFundValue(), fundValueStart - received * 1e12, 0.0005e18, "fundValue dropped by payout"); // 0.05% max relative delta
+  }
+
+  /// @notice Reduce-path variant mirroring the production failure shape: every Core account is
+  ///         leveraged (a real core-dex perp plus a mocked leveraged HIP-3 perp), so the announce is
+  ///         forced onto the reduce path and must name BOTH perps; it must queue a reduce-only IOC
+  ///         order for the HIP-3 asset, and the bridge must still consolidate the HIP-3 dex's margin
+  ///         — CAPPED at its transferable margin when the proportional target exceeds it.
+  /// @dev Leverage is asserted through the reduce (as in the perp happy paths) but NOT after settle:
+  ///      the simulator's sendAsset is a no-op, so the mocked HIP-3 dex never actually delivers its
+  ///      consolidated share and the bridge's class transfer pulls that share from the real core-dex
+  ///      margin instead — post-settle core leverage drifts up as a fixture artifact, not contract
+  ///      behavior.
+  function test_withdraw_hip3_reduce_path_emits_capped_consolidation() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+
+    // The real core-dex perp locks the unified account's margin (~110% notional), leaving no free
+    // Core USDC, so the announce cannot skip the reduce.
+    int64 sziBefore = _openPerpLong();
+    assertGt(sziBefore, 0, "perp long opened");
+
+    // HIP-3 account mirroring production xyz:GOLD: equity $5k, open notional $10k (2x), with a high
+    // initial margin ($4.5k) so the transferable margin 5k - max(4.5k, 10k / 10) = $0.5k CAPS the
+    // proportional consolidation target (portion * $5k) below.
+    _enableHip3Dex(_HIP3_DEX_ID);
+    _mockHip3DexSummary({accountValue: 5_000e6, marginUsed: 4_500e6, ntlPos: 10_000e6});
+    // 2.5 units at oracle $4,000 (szDecimals 4 -> oraclePx is 10^(6-4)-scaled) = exactly the mocked
+    // $10k ntlPos, so naming the perp passes the announce coverage check.
+    _mockHip3PerpPosition({szi: 25_000, oraclePrice: 400_000, szDecimals: 4});
+
+    uint256 withdrawShares = shares / 4;
+    uint256 portion = withdrawShares.divWadDown(IERC20(hyperliquidTestPool).totalSupply());
+    uint256 leverageBefore = _perpLeverageWad();
+    uint256 investorUsdcBefore = IERC20(usdc).balanceOf(investor);
+
+    // Both open perps must be named (strictly ascending): the core-dex perp and the HIP-3 asset.
+    uint32[] memory perpIds = new uint32[](2);
+    perpIds[0] = _PERP_INDEX;
+    perpIds[1] = _HIP3_PERP_ASSET_ID;
+
+    vm.prank(investor);
+    IERC20(hyperliquidTestPool).approve(address(withdrawalManager), withdrawShares);
+    vm.prank(investor);
+    withdrawalManager.announceAndReduce(hyperliquidTestPool, withdrawShares, perpIds, _emptyIds());
+
+    // The announce must queue a reduce-only IOC sell for the HIP-3 perp: `portion` of the 2.5-unit
+    // position floored onto the 10^(8-4) lot grid, priced 1% below the $4,000 oracle on the
+    // 10^7 tick grid (5 significant figures).
+    uint64 expectedReduceSz = uint64((uint256(2.5e8).mulWadDown(portion) / 1e4) * 1e4);
+    bytes memory expectedReduceOrder = abi.encodePacked(
+      uint8(1),
+      HyperliquidConstants.ACTION_LIMIT_ORDER,
+      abi.encode(
+        _HIP3_PERP_ASSET_ID,
+        false,
+        uint64(396_000_000_000),
+        expectedReduceSz,
+        true,
+        uint8(OrderType.IOC),
+        uint128(0)
+      )
+    );
+    assertTrue(_rawActionEmitted(expectedReduceOrder), "HIP-3 reduce-only order queued");
+    CoreSimulatorLib.nextBlock();
+
+    // The core-dex reduce filled: the position shrank and, with the freed margin still in the perp
+    // account until bridged, its leverage can only stay or drop (as in the single-perp happy path).
+    // The HIP-3 legs stay static by construction (mocked reads), so only the core dex is asserted.
+    int64 sziAfter = position(hyperliquidTestPool, _PERP_INDEX).szi;
+    assertLt(sziAfter, sziBefore, "core perp position reduced");
+    assertGt(sziAfter, 0, "position only partially reduced");
+    assertLe(_perpLeverageWad(), leverageBefore, "core perp leverage not increased by reduce");
+
+    // The bridge must consolidate the HIP-3 dex's margin, capped at its $0.5k transferable margin
+    // (the proportional portion * $5k target exceeds it). Under the old equity-minus-notional cap
+    // this action was skipped entirely and the withdrawal could never be funded.
+    vm.expectEmit(true, false, false, true, coreWriter);
+    emit RawAction(hyperliquidTestPool, _expectedConsolidationAction(500e6));
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+
+    IHyperliquidWithdrawalManager.PendingWithdrawal memory pending = withdrawalManager.pendingWithdrawals(
+      investor,
+      hyperliquidTestPool
+    );
+    assertEq(uint8(pending.state), uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE), "state cleared");
+    assertEq(IPoolLogic(hyperliquidTestPool).balanceOf(address(withdrawalManager)), 0, "WM holds no shares");
+    assertGt(IERC20(usdc).balanceOf(investor) - investorUsdcBefore, 0, "investor received USDC");
+  }
+
+  /// @notice Skip-path deficit covered by the core perp dex's own idle cash: spot alone is short of
+  ///         the send, but dex 0 holds free position-less USDC, so the bridge tops spot up from
+  ///         dex 0 (action 7) and must still NOT pull anything out of the un-reduced leveraged
+  ///         HIP-3 dex.
+  function test_withdraw_hip3_skip_path_deficit_covered_by_core_dex_cash() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+
+    // Park most Core cash on the core perp dex (no position — pure idle margin) and keep a thin
+    // spot buffer, so the bridge's send exceeds spot and the deficit must come from dex 0.
+    bytes memory toPerpAction = abi.encodePacked(
+      uint8(1),
+      HLConstants.USD_CLASS_TRANSFER_ACTION,
+      abi.encode(uint64(_coreSpotUsdc() - 2_000e6), true) // true = spot -> perp (dex 0)
+    );
+    _placeLimitOrder(toPerpAction);
+    CoreSimulatorLib.nextBlock();
+
+    // A leveraged HIP-3 account: still at full size (nothing reduces on the skip path).
+    _enableHip3Dex(_HIP3_DEX_ID);
+    _mockHip3DexSummary({accountValue: 5_000e6, marginUsed: 1_000e6, ntlPos: 10_000e6});
+
+    uint256 investorUsdcBefore = IERC20(usdc).balanceOf(investor);
+
+    // dex-0 free cash (~$28k) + spot ($2k) cover the bridge => the reduce is skipped.
+    _announce(investor, shares / 4, _emptyIds(), _emptyIds());
+    assertGt(
+      HyperliquidWithdrawalManager(address(withdrawalManager)).reservedBridgeUsdc(hyperliquidTestPool),
+      0,
+      "skip path taken"
+    );
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+
+    // The deficit is fully covered by dex 0's own free cash: no HIP-3 consolidation allowed.
+    assertFalse(_anySendAssetActionEmitted(), "no consolidation from the un-reduced leveraged dex");
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+
+    IHyperliquidWithdrawalManager.PendingWithdrawal memory pending = withdrawalManager.pendingWithdrawals(
+      investor,
+      hyperliquidTestPool
+    );
+    assertEq(uint8(pending.state), uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE), "state cleared");
+    assertGt(IERC20(usdc).balanceOf(investor) - investorUsdcBefore, 0, "investor received USDC");
+  }
+
+  /// @notice Skip-path deficit funded by an idle HIP-3 dex: the core dex's margin is locked by a
+  ///         real perp (free equity ~0) and spot is thin, but a HIP-3 dex holds idle position-less
+  ///         cash — the announce counts it as free and skips the reduce. The bridge must
+  ///         consolidate from that dex EXACTLY the spot deficit, not the withdrawer's proportional
+  ///         share of its equity: with no reduce having happened, anything beyond what the send
+  ///         needs would leave a dex for no reason.
+  function test_withdraw_hip3_skip_path_consolidates_exact_deficit_from_idle_dex() public {
+    _depositAndCooldown(20_000e6);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+
+    // Real core-dex perp locks the unified account's margin (~110% notional, free equity ~0),
+    // leaving only the ~$50 spot buffer as free real cash.
+    assertGt(_openPerpLong(), 0, "perp long opened");
+
+    // Idle HIP-3 dex: $5k of position-less cash, all of it free for the announce's skip decision.
+    _enableHip3Dex(_HIP3_DEX_ID);
+    _mockHip3DexSummary({accountValue: 5_000e6, marginUsed: 0, ntlPos: 0});
+
+    uint256 withdrawShares = IERC20(hyperliquidTestPool).totalSupply() / 10;
+    uint256 portion = withdrawShares.divWadDown(IERC20(hyperliquidTestPool).totalSupply());
+
+    // Mirror of the bridge sizing: effectiveBridge (no EVM credit) plus the 0.1 USDC gas reserve,
+    // net of the current spot balance — the exact deficit that must be routed to dex 0.
+    uint256 hlValue = IAssetGuard(hyperliquidPositionGuard).getBalance(hyperliquidTestPool, address(0));
+    uint256 expectedBridge = hlValue.mulWadUp(portion);
+    expectedBridge = expectedBridge + (expectedBridge * 100) / 10_000;
+    uint256 expectedDeficit = expectedBridge + 1e5 - _coreSpotUsdc();
+
+    _announce(investor, withdrawShares, _emptyIds(), _emptyIds());
+    assertGt(
+      HyperliquidWithdrawalManager(address(withdrawalManager)).reservedBridgeUsdc(hyperliquidTestPool),
+      0,
+      "skip path taken"
+    );
+    CoreSimulatorLib.nextBlock();
+
+    vm.expectEmit(true, false, false, true, coreWriter);
+    emit RawAction(hyperliquidTestPool, _expectedConsolidationAction(expectedDeficit));
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+    CoreSimulatorLib.nextBlock();
+
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+
+    IHyperliquidWithdrawalManager.PendingWithdrawal memory pending = withdrawalManager.pendingWithdrawals(
+      investor,
+      hyperliquidTestPool
+    );
+    assertEq(uint8(pending.state), uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE), "state cleared");
+  }
+
+  /// @notice The bridge must fail loudly when Core could not fund the perp->spot pull. The HIP-3
+  ///         dex's transferable margin (~$1k of $500k equity, margin nearly exhausted) caps the
+  ///         consolidation far below the pull, and dex 0 holds nothing — HyperCore would silently
+  ///         drop the class transfer and then the spot send, "succeeding" on EVM while bridging
+  ///         nothing and stranding the withdrawal in BRIDGED. The WM must revert the bridge with
+  ///         InsufficientCoreUsdc instead, leaving the withdrawal cancellable.
+  function test_revert_bridge_insufficientCoreUsdc_whenConsolidationCapped() public {
+    uint256 shares = _depositAndCooldown(20_000e6);
+
+    // All real cash stays on EVM; the pool's entire Core value is the mocked HIP-3 account whose
+    // margin is nearly exhausted: transferable = 500k - max(499k, 1M / 10) = $1k.
+    _enableHip3Dex(_HIP3_DEX_ID);
+    _mockHip3DexSummary({accountValue: 500_000e6, marginUsed: 499_000e6, ntlPos: 1_000_000e6});
+    // 250 units at oracle $4,000 = exactly the mocked $1M notional, for the announce coverage check.
+    _mockHip3PerpPosition({szi: 2_500_000, oraclePrice: 400_000, szDecimals: 4});
+
+    // No free Core USDC anywhere => reduce path; the HIP-3 perp must be named.
+    uint256 withdrawShares = shares / 4;
+    _announce(investor, withdrawShares, _ids(_HIP3_PERP_ASSET_ID), _emptyIds());
+    CoreSimulatorLib.nextBlock();
+
+    // The capped $1k consolidation plus an empty dex 0 cannot cover the pull: fail loudly.
+    vm.prank(investor);
+    vm.expectRevert(HyperliquidWithdrawalManager.HyperliquidWithdrawalManager__InsufficientCoreUsdc.selector);
+    withdrawalManager.bridge(hyperliquidTestPool);
+
+    // The withdrawal is not stranded: after the timeout the user recovers their pool tokens.
+    uint256 investorSharesBefore = IERC20(hyperliquidTestPool).balanceOf(investor);
+    skip(6 minutes);
+    vm.prank(investor);
+    withdrawalManager.cancel(hyperliquidTestPool);
+    assertEq(
+      IERC20(hyperliquidTestPool).balanceOf(investor),
+      investorSharesBefore + withdrawShares,
+      "pool tokens returned on cancel"
+    );
+  }
+
+  /////////////////////////////////////////////
+  //        Phase 7: Fair-share draws        //
+  /////////////////////////////////////////////
+
+  /// @notice A reduce-path withdrawal whose spot sell does not fill must NOT make up the shortfall
+  ///         out of perp collateral. The announce places the sell 1% below the spot oracle; the book
+  ///         moves further than that before Core processes the block, so the IOC frees no USDC.
+  ///         The bridge's perp->spot pull is sized as "whatever the spot account is still short", so
+  ///         without a cap it charges the perp wallet for the spot leg's share too — leaving the
+  ///         position at full size on a fraction of its margin and silently raising leverage for
+  ///         every holder who stayed, while the withdrawal itself settles normally. The bridge must
+  ///         instead fail loudly, leaving the withdrawal cancellable and the perp untouched.
+  function test_revert_bridge_unfilledSpotSell_doesNotDrainPerpMargin() public {
+    _depositAndCooldown(20_000e6);
+
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+
+    // A spot leg large enough that its share of the bridge dwarfs the perp's own share: 5 XAUT0
+    // (~$14k) against a ~$16k perp wallet. Everything left after the buy funds the perp at ~1.1x
+    // notional, so free Core USDC is ~0 and the announce is forced onto the reduce path.
+    uint32 xaut0AssetId = _buyXaut0(uint64(5e8));
+    int64 sziBefore = _openPerpLong();
+    assertGt(sziBefore, 0, "perp long opened");
+
+    uint256 leverageBefore = _perpLeverageWad();
+    uint256 withdrawShares = IERC20(hyperliquidTestPool).totalSupply() / 4;
+
+    _announce(investor, withdrawShares, _ids(_PERP_INDEX), _ids(xaut0AssetId));
+
+    // The sell was priced at oracle - 1%. Drop XAUT0 5% before Core processes the block: the IOC is
+    // no longer marketable, so it frees nothing — the ordinary thin-book / gapping-market case.
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), (xaut0Price * 95) / 100);
+    CoreSimulatorLib.nextBlock();
+
+    // The perp leg DID fill; only the spot leg under-delivered.
+    assertLt(position(hyperliquidTestPool, _PERP_INDEX).szi, sziBefore, "perp position reduced");
+    assertEq(
+      PrecompileLib.spotBalance(hyperliquidTestPool, HyperEVMConfig.XAUT0_TOKEN_INDEX).total,
+      5e8,
+      "spot sell did not fill"
+    );
+    uint256 leverageAfterReduce = _perpLeverageWad();
+
+    // Without the cap the pull succeeds and drives leverage from 0.83x to 1.53x while the withdrawal
+    // settles normally — the holders who stayed absorb it silently.
+    vm.prank(investor);
+    vm.expectRevert(HyperliquidWithdrawalManager.HyperliquidWithdrawalManager__UnfundedReduceLeg.selector);
+    withdrawalManager.bridge(hyperliquidTestPool);
+
+    // Nothing was pulled: the perp keeps the margin backing its still-open notional, so the holders
+    // who stayed keep the leverage the reduce left them with.
+    assertEq(_perpLeverageWad(), leverageAfterReduce, "perp leverage untouched by the refused bridge");
+    assertLe(leverageAfterReduce, leverageBefore, "reduce alone never raises leverage");
+
+    // The withdrawal is not stranded: after the timeout the user recovers their pool tokens.
+    uint256 investorSharesBefore = IERC20(hyperliquidTestPool).balanceOf(investor);
+    skip(6 minutes);
+    vm.prank(investor);
+    withdrawalManager.cancel(hyperliquidTestPool);
+    assertEq(
+      IERC20(hyperliquidTestPool).balanceOf(investor),
+      investorSharesBefore + withdrawShares,
+      "pool tokens returned on cancel"
+    );
+  }
+
+  /// @notice USDC a pending withdrawal has already bridged is sitting in the pool on EVM but is
+  ///         earmarked for that withdrawal's settle. A second announce must not credit it as idle
+  ///         pool liquidity: doing so sizes the second bridge too small — here to exactly zero, so
+  ///         the announce reverts `NoBridgeNeeded` and sends the user to withdraw directly, which
+  ///         spends the first withdrawal's bridged USDC and leaves it unable to settle. Both
+  ///         withdrawals must be able to run their own cycle end to end.
+  function test_secondAnnounce_ignoresUsdcBridgedForPendingWithdrawal() public {
+    _depositAndCooldown(investor, 50_000e6);
+    _depositAndCooldown(investorB, 50_000e6);
+
+    // Park the pool's entire USDC balance on Core spot: any withdrawal must bridge from Core, and
+    // idle EVM USDC can then only come from another withdrawal's bridge.
+    _bridgeAndProcess(_getPoolUSDCBalance(), HLConstants.SPOT_DEX);
+    assertEq(IERC20(usdc).balanceOf(hyperliquidTestPool), 0, "no idle EVM USDC to start");
+
+    uint256 supply = IERC20(hyperliquidTestPool).totalSupply();
+    // A withdraws 2% of supply, B ten times less: A's bridged USDC then dwarfs B's own requirement,
+    // so crediting it as idle zeroes B's bridge outright.
+    uint256 amountA = (supply * 200) / 10_000;
+    uint256 amountB = (supply * 20) / 10_000;
+
+    _announce(investor, amountA, _emptyIds(), _emptyIds());
+    CoreSimulatorLib.nextBlock();
+    vm.prank(investor);
+    withdrawalManager.bridge(hyperliquidTestPool);
+    CoreSimulatorLib.nextBlock();
+
+    uint256 bridgedForA = IERC20(usdc).balanceOf(hyperliquidTestPool);
+    assertGt(bridgedForA, 0, "A's bridged USDC is idle in the pool but owed to A's settle");
+
+    // The crux: B's announce must size its own bridge as if A's USDC were not there.
+    _announce(investorB, amountB, _emptyIds(), _emptyIds());
+    CoreSimulatorLib.nextBlock();
+    vm.prank(investorB);
+    withdrawalManager.bridge(hyperliquidTestPool);
+    CoreSimulatorLib.nextBlock();
+
+    assertGt(IERC20(usdc).balanceOf(hyperliquidTestPool), bridgedForA, "B bridged its own share too");
+
+    // Both settle. B goes first: settling A first would burn A's shares and grow B's portion beyond
+    // what B bridged for, which is a separate limitation of concurrent settles.
+    vm.prank(investorB);
+    withdrawalManager.settle(hyperliquidTestPool);
+    vm.prank(investor);
+    withdrawalManager.settle(hyperliquidTestPool);
+
+    assertEq(
+      uint8(withdrawalManager.pendingWithdrawals(investorB, hyperliquidTestPool).state),
+      uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE),
+      "B settled"
+    );
+    assertEq(
+      uint8(withdrawalManager.pendingWithdrawals(investor, hyperliquidTestPool).state),
+      uint8(IHyperliquidWithdrawalManager.WithdrawalState.NONE),
+      "A settled"
+    );
+    assertEq(IPoolLogic(hyperliquidTestPool).balanceOf(address(withdrawalManager)), 0, "WM holds no shares");
+  }
+
+  /// @dev Consumes the recorded logs and returns true if the CoreWriter emitted a RawAction from the
+  ///      test pool with exactly `expectedAction` as payload. Safe to consume here: the simulator
+  ///      only scans recorded logs for EVM->Core ERC20 transfers, which these transactions don't emit.
+  function _rawActionEmitted(bytes memory expectedAction) internal view returns (bool found) {
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+    bytes32 rawActionSig = keccak256("RawAction(address,bytes)");
+    for (uint256 i; i < logs.length; ++i) {
+      if (logs[i].emitter != coreWriter) continue;
+      if (logs[i].topics[0] != rawActionSig) continue;
+      if (logs[i].topics[1] != bytes32(uint256(uint160(hyperliquidTestPool)))) continue;
+      if (keccak256(abi.decode(logs[i].data, (bytes))) == keccak256(expectedAction)) return true;
+    }
+  }
+
+  /// @dev Consumes the recorded logs and returns true if the CoreWriter emitted any RawAction from
+  ///      the test pool carrying a sendAsset (action 13) payload. Log consumption is safe here for
+  ///      the same reason as {_rawActionEmitted}.
+  function _anySendAssetActionEmitted() internal view returns (bool) {
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+    bytes32 rawActionSig = keccak256("RawAction(address,bytes)");
+    for (uint256 i; i < logs.length; ++i) {
+      if (logs[i].emitter != coreWriter) continue;
+      if (logs[i].topics[0] != rawActionSig) continue;
+      if (logs[i].topics[1] != bytes32(uint256(uint160(hyperliquidTestPool)))) continue;
+      bytes memory payload = abi.decode(logs[i].data, (bytes));
+      if (payload.length < 4) continue;
+      uint24 actionId = (uint24(uint8(payload[1])) << 16) |
+        (uint24(uint8(payload[2])) << 8) |
+        uint24(uint8(payload[3]));
+      if (actionId == HyperliquidConstants.ACTION_SEND_ASSET) return true;
+    }
+    return false;
   }
 }

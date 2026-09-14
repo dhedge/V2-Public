@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TAssetConfig, IChainlinkPythPriceAggregatorConfig } from "./oracleTypes";
 import { tryVerify } from "../../../deploymentHelpers";
 import { Address } from "../../../types";
-import { arbitrumChainData } from "../../../../config/chainData/arbitrumData";
+import { gmx as arbitrumGmx } from "../../../arbitrum/deploymentData";
 
 // check if the chainlink oracle set the asset config is compatible with GMX
 // checking the chainlink oracle address and price feed multiplier in GMX data store
@@ -25,7 +25,7 @@ const validateChainlinkOracleForGmx = async (
   if (hre.network.name === "arbitrum") {
     const chainlinkOracleAddress = assetConfig.specificOracleConfig.chainlinkOracleAddress;
     const assetAddress = assetConfig.assetAddress;
-    const gmxDataStore = await ethers.getContractAt("IGmxDataStore", arbitrumChainData.gmx.dataStore);
+    const gmxDataStore = await ethers.getContractAt("IGmxDataStore", arbitrumGmx.dataStore);
     const chainlinkOracleInGmx = await gmxDataStore.getAddress(
       hashData(["bytes32", "address"], [hashString("PRICE_FEED"), assetAddress]),
     );

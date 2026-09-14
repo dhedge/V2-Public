@@ -32,6 +32,7 @@ const upgradeReferralManager = async (
   const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
 
   const proxy = versions[config.oldTag].contracts.ReferralManagerProxy;
+  if (!proxy) return console.warn("ReferralManagerProxy missing... skipping.");
 
   const ReferralManager = await ethers.getContractFactory("ReferralManager");
 

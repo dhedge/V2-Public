@@ -112,6 +112,8 @@ contract KyberSwapRouterV2ContractGuard is
     // dHEDGE vault can't sign permit message
     require(_desc.permit.length == 0, "permit not supported");
 
+    _beforeSwapSourceGuard(_poolManagerLogic, _desc.srcToken);
+
     _setSourceAsset(_poolLogic, _poolManagerLogic, _desc.srcToken);
 
     intermediateSwapData = SlippageAccumulator.SwapData({

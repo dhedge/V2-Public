@@ -176,19 +176,6 @@ abstract contract HyperliquidTestSetup is CoreBackboneSetup {
 
     hyperliquidTestPoolManagerLogic = IPoolLogic(hyperliquidTestPool).poolManagerLogic();
 
-    // Whitelist the test pool for Hyperliquid
-    IHyperliquidCoreWriterContractGuard.WhitelistSetting[]
-      memory poolWhitelistSettings = new IHyperliquidCoreWriterContractGuard.WhitelistSetting[](1);
-    poolWhitelistSettings[0] = IHyperliquidCoreWriterContractGuard.WhitelistSetting({
-      poolLogic: address(hyperliquidTestPool),
-      whitelisted: true
-    });
-
-    vm.startPrank(owner);
-    hyperliquidCoreWriterContractGuard.setDhedgePoolsWhitelist(poolWhitelistSettings);
-
-    vm.startPrank(manager);
-
     // Create supported assets for the test pool
     // For now keep it empty as addition of spot and perp assets will require activation of the HyperCore account.
     supportedAssets = new IHasSupportedAsset.Asset[](2);

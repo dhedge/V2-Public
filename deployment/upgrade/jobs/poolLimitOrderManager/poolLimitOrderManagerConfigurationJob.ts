@@ -9,9 +9,16 @@ export const poolLimitOrderManagerConfigurationJob: IJob<void> = async (
   _filenames: IFileNames,
   addresses: IAddresses,
 ) => {
+  if (!addresses.poolLimitOrderManager) {
+    return console.warn("poolLimitOrderManager config not set for poolLimitOrderManagerConfigurationJob: skipping.");
+  }
+
   console.log("Will update PoolLimitOrderManager configuration");
 
   const poolLimitOrderManagerProxy = versions[config.newTag].contracts.PoolLimitOrderManagerProxy;
+  if (!poolLimitOrderManagerProxy) {
+    return console.warn("PoolLimitOrderManagerProxy not deployed: skipping.");
+  }
 
   const poolLimitOrderManagerContract = await hre.ethers.getContractAt(
     "PoolLimitOrderManager",
@@ -61,6 +68,6 @@ export const poolLimitOrderManagerConfigurationJob: IJob<void> = async (
       );
     }
 
-    versions[config.newTag].config.poolLimitOrderManager.authorizedKeeperAddresses = newAddresses;
+    versions[config.newTag].config.poolLimitOrderManager = { authorizedKeeperAddresses: newAddresses };
   }
 };

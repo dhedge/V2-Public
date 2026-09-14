@@ -31,11 +31,15 @@ import {MaliciousYT} from "./MaliciousYT.sol";
 import {MaliciousMarket} from "./MaliciousMarket.sol";
 
 abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDeployer {
+  address private constant LIMIT_ROUTER = 0x000000000000c9B3E2C3Ec88B1B4c0cD853f4321;
+  /// @dev Stands in for the YT of an unrelated Pendle market
+  address private constant FOREIGN_YT = 0x1234567890123456789012345678901234567890;
+
   address internal immutable pendleRouterV4;
   address internal immutable underlyingYieldToken;
   address internal immutable underlyingYieldTokenPriceFeed;
   address internal immutable pendleMarket;
-  IAggregatorV3Interface internal immutable pendleChainlinkOracle;
+  IAggregatorV3Interface internal pendleChainlinkOracle;
 
   address private PT;
   address private YT;
@@ -59,6 +63,10 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
   function setUp() public virtual override {
     super.setUp();
+
+    if (address(pendleChainlinkOracle) == address(0)) {
+      pendleChainlinkOracle = IAggregatorV3Interface(_createPendleChainlinkOracle());
+    }
 
     (, PT, YT) = IPMarket(pendleMarket).readTokens();
 
@@ -115,6 +123,38 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     return 10000;
   }
 
+  /// @dev Override in chain tests for markets which have no PendleChainlinkOracle deployed at the fork block;
+  ///      called after the fork is created, so the oracle can be created via Pendle's permissionless factory.
+  function _createPendleChainlinkOracle() internal virtual returns (address) {
+    revert("pendle oracle not provided");
+  }
+
+  /// @dev Pendle's YT caches its PY index per block (`doCacheIndexSameBlock`) and any market interaction arms
+  ///      the cache for the current block. Moving time without also mining a block would settle later YT flows
+  ///      (redemptions, market swaps) at the stale index. On a real chain a time gap always comes with new
+  ///      blocks, and for yield tokens accruing by timestamp (e.g. sUSDS) the stale index diverges from live
+  ///      oracle pricing, so every time move must advance a block as well.
+  function _skipWithRoll(uint256 _time) internal {
+    skip(_time);
+    vm.roll(block.number + 1);
+  }
+
+  function _warpPastExpiry() internal {
+    vm.warp(IPMarket(pendleMarket).expiry() + 1);
+    vm.roll(block.number + 1);
+  }
+
+  /// @dev Override in chain tests where the underlying yield token has no ready USD price feed onchain,
+  ///      e.g. to deploy an ERC4626PriceAggregator. Runs pranked as pool factory owner.
+  function _underlyingYieldTokenAggregator(IAssetHandler) internal virtual returns (address) {
+    // Wrap oracle if it doesn't return 8 decimals (e.g. apxUSD chainlink oracle returns 18)
+    if (IAggregatorV3Interface(underlyingYieldTokenPriceFeed).decimals() != 8) {
+      return deployCode("ChainlinkAggregatorWrapper.sol", abi.encode(underlyingYieldTokenPriceFeed));
+    }
+
+    return underlyingYieldTokenPriceFeed;
+  }
+
   function deployIntegration(PoolFactory _poolFactory, address, address _slippageAcc, address) public override {
     Governance governance = Governance(_poolFactory.governanceAddress());
     IAssetHandler assetHandler = IAssetHandler(_poolFactory.getAssetHandler());
@@ -139,11 +179,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     governance.setAssetGuard(200, address(rewardAssetGuard));
 
-    address effectiveAggregator = underlyingYieldTokenPriceFeed;
-    // Wrap oracle if it doesn't return 8 decimals (e.g. apxUSD chainlink oracle returns 18)
-    if (IAggregatorV3Interface(underlyingYieldTokenPriceFeed).decimals() != 8) {
-      effectiveAggregator = deployCode("ChainlinkAggregatorWrapper.sol", abi.encode(underlyingYieldTokenPriceFeed));
-    }
+    address effectiveAggregator = _underlyingYieldTokenAggregator(assetHandler);
 
     IAssetHandler.Asset[] memory assets = new IAssetHandler.Asset[](1);
     assets[0] = IAssetHandler.Asset({asset: underlyingYieldToken, assetType: 200, aggregator: effectiveAggregator});
@@ -273,8 +309,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     // Simulate time moving past expiry
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     // Now test redemption post-expiry
     uint256 totalValueBeforeRedeem = testPoolManagerLogic.totalFundValue();
@@ -302,11 +337,9 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     uint256 ptBalanceAfter = IERC20(PT).balanceOf(address(testPool));
     uint256 underlyingBalanceAfter = IERC20(underlyingYieldToken).balanceOf(address(testPool));
 
-    assertGt(
-      totalValueBeforeRedeem - (totalValueBeforeRedeem * 0.01e18), // test should allow for enough time to pass
-      totalValueBefore,
-      "totalValue should increase over time after buying PT"
-    );
+    // PT accretes towards par as expiry approaches, so having warped to expiry the pool must be worth strictly
+    // more than at purchase time; the exact magnitude is market-dependent (initial PT discount, underlying accrual)
+    assertGt(totalValueBeforeRedeem, totalValueBefore, "totalValue should increase over time after buying PT");
 
     // Upon maturity, PT can be redeemed at 1:1 for the accounting asset, so delta is very tight
     assertApproxEqRel(totalValueAfterRedeem, totalValueBeforeRedeem, 0.000012e18, "totalValue deviation is huge"); // 0.0012% tolerance
@@ -334,8 +367,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     // Simulate time moving past expiry
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     // Now test redemption post-expiry using redeemPyToToken
     uint256 totalValueBeforeRedeem = testPoolManagerLogic.totalFundValue();
@@ -362,11 +394,9 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     uint256 ptBalanceAfter = IERC20(PT).balanceOf(address(testPool));
     uint256 underlyingBalanceAfter = IERC20(underlyingYieldToken).balanceOf(address(testPool));
 
-    assertGt(
-      totalValueBeforeRedeem - (totalValueBeforeRedeem * 0.01e18), // test should allow for enough time to pass
-      totalValueBefore,
-      "totalValue should increase over time after buying PT"
-    );
+    // PT accretes towards par as expiry approaches, so having warped to expiry the pool must be worth strictly
+    // more than at purchase time; the exact magnitude is market-dependent (initial PT discount, underlying accrual)
+    assertGt(totalValueBeforeRedeem, totalValueBefore, "totalValue should increase over time after buying PT");
 
     // Upon maturity, PT can be redeemed at 1:1 for the accounting asset, so delta is very tight
     assertApproxEqRel(totalValueAfterRedeem, totalValueBeforeRedeem, 0.000012e18, "totalValue deviation is huge"); // 0.0012% tolerance
@@ -457,8 +487,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     // Simulate time moving past expiry
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     uint256 ptBalance = IERC20(PT).balanceOf(address(testPool));
 
@@ -503,8 +532,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     // Simulate time moving past expiry
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     uint256 ptBalance = IERC20(PT).balanceOf(address(testPool));
 
@@ -601,8 +629,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     // Simulate time moving past expiry
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     // Now try to redeem but send to manager instead of pool
     uint256 ptBalance = IERC20(PT).balanceOf(address(testPool));
@@ -639,8 +666,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     // Simulate time moving past expiry
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     // Now try to redeem but send to manager instead of pool
     uint256 ptBalance = IERC20(PT).balanceOf(address(testPool));
@@ -826,7 +852,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
-    skip(1 days);
+    _skipWithRoll(1 days);
 
     // Now test withdrawal with PT
     uint256 ptBalanceBefore = IERC20(PT).balanceOf(address(testPool));
@@ -869,7 +895,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
-    skip(1 days);
+    _skipWithRoll(1 days);
 
     // Now test withdrawal with PT
     uint256 ptBalanceBefore = IERC20(PT).balanceOf(address(testPool));
@@ -950,8 +976,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
     // Simulate time moving past expiry
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     // Now test withdrawal with PT
     uint256 ptBalanceBefore = IERC20(PT).balanceOf(address(testPool));
@@ -990,7 +1015,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
   }
 
   function test_single_asset_withdraw_from_pool_with_PT_enabled_but_zero_balance() public {
-    skip(1 days);
+    _skipWithRoll(1 days);
 
     vm.startPrank(manager);
 
@@ -1029,7 +1054,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     vm.prank(manager);
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
-    skip(1 days);
+    _skipWithRoll(1 days);
 
     address[] memory knownPendleMarkets = new address[](0);
     PendlePTAssetGuard pendlePTAssetGuard = new PendlePTAssetGuard(knownPendleMarkets);
@@ -1158,6 +1183,243 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, sellPTCalldata);
   }
 
+  function test_revert_buy_PT_when_normal_fill_carries_foreign_yt() public {
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(
+      _getLimitOrderData(LIMIT_ROUTER, _getFills(FOREIGN_YT, IPAllActionTypeV3.OrderType.PT_FOR_SY), true)
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("invalid yt");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  function test_revert_buy_PT_when_flash_fill_carries_foreign_yt() public {
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(
+      _getLimitOrderData(LIMIT_ROUTER, _getFills(FOREIGN_YT, IPAllActionTypeV3.OrderType.SY_FOR_YT), false)
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("invalid yt");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  function test_revert_buy_PT_when_fills_provided_without_limit_router() public {
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(
+      _getLimitOrderData(address(0), _getFills(YT, IPAllActionTypeV3.OrderType.PT_FOR_SY), true)
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("unknown limit router");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  function test_revert_buy_PT_when_normal_fill_has_wrong_order_type() public {
+    // Buying PT expects normal fills to be PT_FOR_SY; SY_FOR_PT is the sell-side type and must be rejected.
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(
+      _getLimitOrderData(LIMIT_ROUTER, _getFills(YT, IPAllActionTypeV3.OrderType.SY_FOR_PT), true)
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("invalid order type");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  function test_revert_buy_PT_when_flash_fill_has_wrong_order_type() public {
+    // Buying PT expects flash fills to be SY_FOR_YT; YT_FOR_SY is the sell-side flash type and must be rejected.
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(
+      _getLimitOrderData(LIMIT_ROUTER, _getFills(YT, IPAllActionTypeV3.OrderType.YT_FOR_SY), false)
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("invalid order type");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  function test_revert_buy_PT_when_maker_token_is_zero() public {
+    // Correct YT and order type, but a raw native (address(0)) maker token must be rejected.
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(
+      _getLimitOrderData(LIMIT_ROUTER, _getFills(YT, IPAllActionTypeV3.OrderType.PT_FOR_SY, address(0)), true)
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("invalid maker token");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  function test_revert_buy_PT_when_epsSkipMarket_not_zero() public {
+    // A non-zero epsilon must be rejected even with no fills attached.
+    IPAllActionTypeV3.LimitOrderData memory limitOrderData = IPAllActionTypeV3.createEmptyLimitOrderData();
+    limitOrderData.limitRouter = LIMIT_ROUTER;
+    limitOrderData.epsSkipMarket = 1;
+
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(limitOrderData);
+
+    vm.prank(manager);
+    vm.expectRevert("eps skip market not zero");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  function test_revert_sell_PT_when_normal_fill_carries_foreign_yt() public {
+    vm.startPrank(manager);
+
+    testPool.execTransaction(
+      pendleRouterV4,
+      _getBuyPTCalldataWithLimitOrder(IPAllActionTypeV3.createEmptyLimitOrderData())
+    );
+
+    bytes memory sellPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactPtForToken.selector,
+      address(testPool),
+      pendleMarket,
+      IERC20(PT).balanceOf(address(testPool)),
+      IPAllActionTypeV3.createTokenOutputSimple(underlyingYieldToken, 0),
+      _getLimitOrderData(LIMIT_ROUTER, _getFills(FOREIGN_YT, IPAllActionTypeV3.OrderType.SY_FOR_PT), true)
+    );
+
+    vm.expectRevert("invalid yt");
+    testPool.execTransaction(pendleRouterV4, sellPTCalldata);
+  }
+
+  /// @dev Fills carrying the market's own YT and correct direction must reach Pendle instead of being rejected by
+  ///      the guard. The order is unsigned, so reverting inside the limit order protocol is proof the guard let a
+  ///      well formed fill through.
+  function test_buy_PT_with_well_formed_fill_reaches_limit_order_protocol() public {
+    bytes memory buyPTCalldata = _getBuyPTCalldataWithLimitOrder(
+      _getLimitOrderData(LIMIT_ROUTER, _getFills(YT, IPAllActionTypeV3.OrderType.PT_FOR_SY), true)
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("LOP: bad signature");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+  }
+
+  /// @dev The economic bound (AR-001 defense): a manager-initiated PT swap whose received value falls more than
+  ///      the allowed slippage below the value spent must revert, even through the plain AMM path. Modelled by
+  ///      marking the PT oracle above its real reading so the underlying received is worth too little.
+  function test_revert_sell_PT_when_value_loss_exceeds_cap() public {
+    vm.startPrank(manager);
+
+    uint256 underlyingAmount = IERC20(underlyingYieldToken).balanceOf(address(testPool)) / 2;
+    testPool.execTransaction(
+      pendleRouterV4,
+      abi.encodeWithSelector(
+        IPActionSwapPTV3.swapExactTokenForPt.selector,
+        address(testPool),
+        pendleMarket,
+        0,
+        IPAllActionTypeV3.createDefaultApproxParams(),
+        IPAllActionTypeV3.createTokenInputSimple(underlyingYieldToken, underlyingAmount),
+        IPAllActionTypeV3.createEmptyLimitOrderData()
+      )
+    );
+
+    uint256 ptBalance = IERC20(PT).balanceOf(address(testPool));
+
+    // Mark PT ~1% above its true oracle price: selling it then returns underlying worth < 99.5% of the marked PT.
+    address ptOracle = IAssetHandler(poolFactoryProxy.getAssetHandler()).priceAggregators(PT);
+    (, int256 realPtPrice, , uint256 updatedAt, ) = IAggregatorV3Interface(ptOracle).latestRoundData();
+    vm.mockCall(
+      ptOracle,
+      abi.encodeWithSelector(IAggregatorV3Interface.latestRoundData.selector),
+      abi.encode(uint80(0), (realPtPrice * 10100) / 10000, uint256(0), updatedAt, uint80(0))
+    );
+
+    testPool.execTransaction(PT, abi.encodeWithSelector(IERC20.approve.selector, pendleRouterV4, ptBalance));
+
+    bytes memory sellPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactPtForToken.selector,
+      address(testPool),
+      pendleMarket,
+      ptBalance,
+      IPAllActionTypeV3.createTokenOutputSimple(underlyingYieldToken, 0),
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    vm.expectRevert("swap slippage too high");
+    testPool.execTransaction(pendleRouterV4, sellPTCalldata);
+
+    vm.clearMockedCalls();
+  }
+
+  function test_revert_buy_PT_when_value_loss_exceeds_cap() public {
+    // Mark PT ~1% below its true oracle price: buying it then books PT worth < 99.5% of the underlying spent.
+    address ptOracle = IAssetHandler(poolFactoryProxy.getAssetHandler()).priceAggregators(PT);
+    (, int256 realPtPrice, , uint256 updatedAt, ) = IAggregatorV3Interface(ptOracle).latestRoundData();
+    vm.mockCall(
+      ptOracle,
+      abi.encodeWithSelector(IAggregatorV3Interface.latestRoundData.selector),
+      abi.encode(uint80(0), (realPtPrice * 9900) / 10000, uint256(0), updatedAt, uint80(0))
+    );
+
+    uint256 underlyingAmount = IERC20(underlyingYieldToken).balanceOf(address(testPool)) / 2;
+    bytes memory buyPTCalldata = abi.encodeWithSelector(
+      IPActionSwapPTV3.swapExactTokenForPt.selector,
+      address(testPool),
+      pendleMarket,
+      0,
+      IPAllActionTypeV3.createDefaultApproxParams(),
+      IPAllActionTypeV3.createTokenInputSimple(underlyingYieldToken, underlyingAmount),
+      IPAllActionTypeV3.createEmptyLimitOrderData()
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("swap slippage too high");
+    testPool.execTransaction(pendleRouterV4, buyPTCalldata);
+
+    vm.clearMockedCalls();
+  }
+
+  function _getBuyPTCalldataWithLimitOrder(
+    IPAllActionTypeV3.LimitOrderData memory _limitOrderData
+  ) internal view returns (bytes memory) {
+    return
+      abi.encodeWithSelector(
+        IPActionSwapPTV3.swapExactTokenForPt.selector,
+        address(testPool),
+        pendleMarket,
+        0,
+        IPAllActionTypeV3.createDefaultApproxParams(),
+        IPAllActionTypeV3.createTokenInputSimple(
+          underlyingYieldToken,
+          IERC20(underlyingYieldToken).balanceOf(address(testPool)) / 2
+        ),
+        _limitOrderData
+      );
+  }
+
+  function _getLimitOrderData(
+    address _limitRouter,
+    IPAllActionTypeV3.FillOrderParams[] memory _fills,
+    bool _normal
+  ) internal pure returns (IPAllActionTypeV3.LimitOrderData memory limitOrderData) {
+    limitOrderData.limitRouter = _limitRouter;
+    limitOrderData.normalFills = _normal ? _fills : new IPAllActionTypeV3.FillOrderParams[](0);
+    limitOrderData.flashFills = _normal ? new IPAllActionTypeV3.FillOrderParams[](0) : _fills;
+  }
+
+  function _getFills(
+    address _yt,
+    IPAllActionTypeV3.OrderType _orderType
+  ) internal view returns (IPAllActionTypeV3.FillOrderParams[] memory fills) {
+    fills = _getFills(_yt, _orderType, underlyingYieldToken);
+  }
+
+  function _getFills(
+    address _yt,
+    IPAllActionTypeV3.OrderType _orderType,
+    address _makerToken
+  ) internal view returns (IPAllActionTypeV3.FillOrderParams[] memory fills) {
+    fills = new IPAllActionTypeV3.FillOrderParams[](1);
+    fills[0].order.YT = _yt;
+    fills[0].order.orderType = _orderType;
+    fills[0].order.token = _makerToken;
+    fills[0].order.maker = manager;
+    fills[0].order.receiver = manager;
+    fills[0].order.expiry = block.timestamp + 1 days;
+    fills[0].makingAmount = 1e18;
+    fills[0].signature = new bytes(65);
+  }
+
   function test_revert_redeemPyToToken_when_not_expired() public {
     // First buy some PT tokens
     vm.startPrank(manager);
@@ -1208,8 +1470,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     uint256 ptBalanceOfPool = IERC20(PT).balanceOf(address(testPool));
 
-    uint256 expiry = IPMarket(pendleMarket).expiry();
-    vm.warp(expiry + 1);
+    _warpPastExpiry();
 
     address maliciousYT = address(new MaliciousYT(PT, address(pendleRouterV4ContractGuard)));
     bytes memory redeemCalldata = abi.encodeWithSelector(
@@ -1349,7 +1610,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
 
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
 
-    skip(1 days);
+    _skipWithRoll(1 days);
 
     uint256 poolManagerBalance = IERC20(address(testPool)).balanceOf(manager);
     uint256 withdrawAmount = poolManagerBalance / 4;

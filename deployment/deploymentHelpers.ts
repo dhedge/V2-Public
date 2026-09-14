@@ -1,6 +1,4 @@
 import fs from "fs";
-import util from "util";
-import { exec } from "child_process";
 import { Input } from "csv-stringify";
 import stringify from "csv-stringify/lib/sync";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -8,10 +6,9 @@ import Safe from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
 import { IProposeTxProperties, IUpgradeConfigProposeTx } from "./types";
 import { retryWithDelay } from "./utils";
+import { ChainId } from "./chainIds";
 
 export type MetaTransactionData = Parameters<Safe["createTransactionBatch"]>[0][0];
-
-const execProm = util.promisify(exec);
 
 let nonce: number;
 
@@ -19,14 +16,6 @@ export const nonceLog: {
   nonce: number;
   message: string;
 }[] = [];
-
-export const getTag = async () => {
-  try {
-    await execProm("git pull --tags");
-  } catch {}
-  const result = await execProm("git tag | sort -V | tail -1");
-  return result.stdout.trim();
-};
 
 export const hasDuplicates = <T extends Record<string, unknown>>(array: T[], keyCreator: (v: T) => string) => {
   const valueArr = array
@@ -177,13 +166,21 @@ export const proposeTransactions = async (
   addresses: IProposeTxProperties,
 ) => {
   const chainData = {
-    1: [process.env.ETHEREUM_URL, process.env.ETHEREUM_PRIVATE_KEY],
-    137: [process.env.POLYGON_URL, process.env.POLYGON_PRIVATE_KEY],
-    10: [process.env.OPTIMISM_URL, process.env.OVM_PRIVATE_KEY],
-    42161: [process.env.ARBITRUM_URL, process.env.ARBITRUM_PRIVATE_KEY],
-    8453: [process.env.BASE_URL, process.env.BASE_PRIVATE_KEY],
-    9745: [process.env.PLASMA_URL, process.env.PLASMA_PRIVATE_KEY, "https://api.safe.global/tx-service/plasma/api"],
-    999: [process.env.HYPEREVM_URL, process.env.HYPEREVM_PRIVATE_KEY, "https://api.safe.global/tx-service/hyper/api"],
+    [ChainId.ethereum]: [process.env.ETHEREUM_URL, process.env.ETHEREUM_PRIVATE_KEY],
+    [ChainId.polygon]: [process.env.POLYGON_URL, process.env.POLYGON_PRIVATE_KEY],
+    [ChainId.optimism]: [process.env.OPTIMISM_URL, process.env.OVM_PRIVATE_KEY],
+    [ChainId.arbitrum]: [process.env.ARBITRUM_URL, process.env.ARBITRUM_PRIVATE_KEY],
+    [ChainId.base]: [process.env.BASE_URL, process.env.BASE_PRIVATE_KEY],
+    [ChainId.plasma]: [
+      process.env.PLASMA_URL,
+      process.env.PLASMA_PRIVATE_KEY,
+      "https://api.safe.global/tx-service/plasma/api",
+    ],
+    [ChainId.hyperevm]: [
+      process.env.HYPEREVM_URL,
+      process.env.HYPEREVM_PRIVATE_KEY,
+      "https://api.safe.global/tx-service/hyper/api",
+    ],
   };
 
   const [provider, signer, txServiceUrl] = chainData[config.chainId] ?? [];

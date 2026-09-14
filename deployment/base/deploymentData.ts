@@ -1,62 +1,70 @@
-import { BigNumber } from "ethers";
-import { baseChainData } from "../../config/chainData/baseData";
 import { IAddresses, IFileNames } from "../types";
 import { AssetType } from "../upgrade/jobs/assetsJob";
-import { arbitrumChainData } from "../../config/chainData/arbitrumData";
+
+// Created before new chain deployment
+const protocolDao = "0x4A83129Ce9C8865EF3f91Fc87130dA25b64F9100";
+const protocolTreasury = "0xEE27793EBAf6a446c74C2cDd23Bba615e9472264";
+// Should be fetched from the oz file
+const proxyAdmin = "0xD3113A115676EaF2c33bc40C336aa0595CbC8BDa";
+
+export const assets = {
+  weth: "0x4200000000000000000000000000000000000006",
+  usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  reth: "0xb6fe221fe9eef5aba221c348ba20a1bf5e73624c",
+};
+
+const torosPools = {
+  USDMNY: "0xede61eefa4850b459e3b09fe6d8d371480d6ff00",
+  sUSDCy: "0xc1e02884af4a283ca25ab63c45360d220d69da52",
+  STETHBULL2X: "0xa672e882acbb96486393d43e0efdab5ebebddc1d",
+  STETHBULL3X: "0x15e2f06138aed58ca2a6afb5a1333bbc5f728f80",
+  STETHBULL4X: "0xba5f6a0d2ac21a3fec7a6c40facd23407aa84663",
+  FAy: "0xd258da1a96c53676301b60000918a1406e367d3e",
+  USDy: "0x1c980456751AE40315Ff73CaaC0843Be643321Be",
+  BTCBEAR1X: "0xd2f23773bf5e2d59f6bb925c2232f6e83f3f79e0",
+  BTCBULL2X: "0x9e0501537723c71250307F5B1A8eE60e167D21C9",
+  BTCBULL3X: "0xCAF08BF08D0c87e2c74dd9EBEC9C776037bD7e8E",
+};
 
 export const FLAT_MONEY_PERP_MARKET_BOT_TEST = "0xCF51f81652779C07D08F1C7d0AcAf66E5C3b7377"; // https://dhedge.org/vault/0xcf51f81652779c07d08f1c7d0acaf66e5c3b7377
 
+const aerodromeVoter = "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5";
+
 export const baseProdData: IAddresses = {
-  protocolDaoAddress: baseChainData.dHEDGE.daoMultisig,
-  protocolTreasuryAddress: baseChainData.dHEDGE.treasury,
-  proxyAdminAddress: baseChainData.proxyAdmin,
+  protocolDaoAddress: protocolDao,
+  protocolTreasuryAddress: protocolTreasury,
+  proxyAdminAddress: proxyAdmin,
 
-  easySwapperConfig: {
-    customLockupAllowedPools: [
-      baseChainData.torosPools.sUSDCy,
-      baseChainData.torosPools.STETHBULL2X,
-      baseChainData.torosPools.STETHBULL3X,
-      baseChainData.torosPools.STETHBULL4X,
-    ], // Add here Toros pools on Base
-    feeByPassManagers: ["0x5619AD05b0253a7e647Bd2E4C01c7f40CEaB0879"], // Add here Toros manager address on Base
-    feeNumerator: 10,
-    feeDenominator: 10000,
-  },
-
-  v2RouterAddresses: baseChainData.v2Routers,
+  v2RouterAddresses: ["0x6bded42c6da8fbf0d2ba55b2fa120c5e0c8d7891"], // SushiSwap V2 Router
 
   superSwapper: {
-    routeHints: baseChainData.routeHints,
+    routeHints: [],
   },
 
   assets: {
-    nativeAssetWrapper: baseChainData.assets.weth,
-    weth: baseChainData.assets.weth,
-    dai: baseChainData.assets.dai,
+    nativeAssetWrapper: assets.weth,
   },
 
   uniV2: {
-    factory: baseChainData.uniswapV2.factory,
+    factory: "0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6",
   },
 
   uniV3: {
-    uniswapV3FactoryAddress: baseChainData.uniswapV3.factory,
-    uniswapV3RouterAddress: baseChainData.uniswapV3.router,
+    uniswapV3FactoryAddress: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
+    uniswapV3RouterAddress: "0x2626664c2603336E57B271c5C0b26F421741e481",
   },
 
-  oneInchV5RouterAddress: baseChainData.oneInch.v5Router,
-  oneInchV6RouterAddress: baseChainData.oneInch.v6Router,
+  oneInchV6RouterAddress: "0x111111125421ca6dc452d289314280a0f8842a65",
 
   velodrome: {
-    factoryV2: baseChainData.aerodrome.factory,
-    routerV2: baseChainData.aerodrome.router,
-    voterV2: baseChainData.aerodrome.voter,
+    factoryV2: "0x420DD381b31aEf6683db6B902084cB0FFECe40Da",
+    routerV2: "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43",
+    voterV2: aerodromeVoter,
   },
 
   velodromeCL: {
-    nonfungiblePositionManager: baseChainData.aerodromeCL.nonfungiblePositionManager,
-    factory: baseChainData.aerodromeCL.factory,
-    voter: baseChainData.aerodrome.voter,
+    nonfungiblePositionManager: "0x827922686190790b37229fd06084350E74485b72",
+    voter: aerodromeVoter,
     enabledGauges: [
       "0xBd85D45f1636fCEB2359d9Dcf839f12b3cF5AF3F", // CL1-USDC/USDT
       "0x2A1f7bf46bd975b5004b61c6040597E1B6117040", // CL1-WETH/wstETH
@@ -69,159 +77,48 @@ export const baseProdData: IAddresses = {
     ],
   },
 
-  zeroExExchangeProxy: baseChainData.zeroEx.exchangeProxy,
-
-  synthetixV3: {
-    core: baseChainData.synthetixV3.core,
-    dHedgeVaultsWhitelist: [
-      {
-        poolLogic: baseChainData.torosPools.sUSDCy,
-        collateralAsset: baseChainData.assets.susdc,
-        debtAsset: baseChainData.assets.snxUSD,
-        snxLiquidityPoolId: 1,
-      },
-      {
-        poolLogic: "0xE404FA05a4298dC657EA826ddAEec8BD630e414A", // Synthetix USDC Yield Test https://dhedge.org/vault/0xe404fa05a4298dc657ea826ddaeec8bd630e414a
-        collateralAsset: baseChainData.assets.susdc,
-        debtAsset: baseChainData.assets.snxUSD,
-        snxLiquidityPoolId: 1,
-      },
-      {
-        poolLogic: baseChainData.torosPools.FAy, // Funding Arbitrage Yield https://dhedge.org/vault/0xd258da1a96c53676301b60000918a1406e367d3e
-        collateralAsset: baseChainData.assets.susdc,
-        debtAsset: baseChainData.assets.snxUSD,
-        snxLiquidityPoolId: 1,
-      },
-      {
-        poolLogic: "0x5334d0184a11f210de806fcd5b556bf19981a7be", // Flat Money Market Maker https://dhedge.org/vault/0x5334d0184a11f210de806fcd5b556bf19981a7be
-        collateralAsset: baseChainData.assets.susdc,
-        debtAsset: baseChainData.assets.snxUSD,
-        snxLiquidityPoolId: 1,
-      },
-      {
-        poolLogic: FLAT_MONEY_PERP_MARKET_BOT_TEST,
-        collateralAsset: baseChainData.assets.susdc,
-        debtAsset: baseChainData.assets.snxUSD,
-        snxLiquidityPoolId: 1,
-      },
-      {
-        poolLogic: "0xa1a0fcc73689549b244e9938d71b6638e18032d7", // Synthetix V3 Perps Bot Test https://dhedge.org/vault/0xa1a0fcc73689549b244e9938d71b6638e18032d7
-        collateralAsset: baseChainData.assets.susdc,
-        debtAsset: baseChainData.assets.snxUSD,
-        snxLiquidityPoolId: 1,
-      },
-    ],
-    spotMarket: baseChainData.synthetixV3.spotMarket,
-    perpsMarket: baseChainData.synthetixV3.perpsMarket,
-    perpsWithdrawAsset: baseChainData.assets.usdc,
-    allowedMarkets: [
-      {
-        marketId: 1,
-        collateralSynth: baseChainData.assets.susdc,
-        collateralAsset: baseChainData.assets.usdc,
-        atomicSwapSettings: {
-          isAtomicSwapAllowed: true,
-          isOneToOneSwap: true,
-        },
-      },
-      {
-        marketId: 4,
-        collateralSynth: "0xEDE1d04C864EeEC40393ED4cb454B85A5ABD071C", // Synthetic Coinbase Wrapped BTC https://basescan.org/address/0xEDE1d04C864EeEC40393ED4cb454B85A5ABD071C
-        collateralAsset: baseChainData.assets.cbbtc,
-        atomicSwapSettings: {
-          isAtomicSwapAllowed: false,
-          isOneToOneSwap: false,
-        },
-      },
-      {
-        marketId: 6,
-        collateralSynth: "0xFA24Be208408F20395914Ba82Def333d987E0080", // Synthetic Wrapped ETH https://basescan.org/address/0xFA24Be208408F20395914Ba82Def333d987E0080
-        collateralAsset: baseChainData.assets.weth,
-        atomicSwapSettings: {
-          isAtomicSwapAllowed: false,
-          isOneToOneSwap: false,
-        },
-      },
-      {
-        marketId: 7,
-        collateralSynth: "0x3526D453D1Edb105E4e2b8448760fC501050d976", // Synthetic Lido Wrapped Staked ETH https://basescan.org/address/0x3526D453D1Edb105E4e2b8448760fC501050d976
-        collateralAsset: baseChainData.assets.wsteth,
-        atomicSwapSettings: {
-          isAtomicSwapAllowed: false,
-          isOneToOneSwap: false,
-        },
-      },
-    ],
-    windows: {
-      delegationWindow: {
-        start: {
-          dayOfWeek: 2,
-          hour: 0,
-        },
-        end: {
-          dayOfWeek: 4,
-          hour: 12,
-        },
-      },
-      undelegationWindow: {
-        start: {
-          dayOfWeek: 4,
-          hour: 12,
-        },
-        end: {
-          dayOfWeek: 7,
-          hour: 23,
-        },
-      },
-    },
-    withdrawalLimit: {
-      usdValue: BigNumber.from(50_000).mul(BigNumber.from(10).pow(18)), // $50k
-      percent: BigNumber.from(100).mul(BigNumber.from(10).pow(16)), // 100%
-    },
-  },
-
   aaveV3: {
-    aaveLendingPoolAddress: baseChainData.aaveV3.lendingPool,
-    aaveIncentivesControllerAddress: baseChainData.aaveV3.incentivesController,
+    aaveLendingPoolAddress: "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+    aaveIncentivesControllerAddress: "0xf9cc4F0D883F1a1eb2c253bdb46c254Ca51E1F44",
   },
 
   flatMoney: {
-    delayedOrder: baseChainData.flatMoney.delayedOrder,
+    delayedOrder: "0x6D857e9D24a7566bB72a3FB0847A3E0e4E1c2879",
     perpMarketWhitelistedVaults: [
       {
-        poolLogic: baseChainData.torosPools.FAy, // Funding Arbitrage Yield https://dhedge.org/vault/0xd258da1a96c53676301b60000918a1406e367d3e
-        withdrawalAsset: baseChainData.assets.usdc,
+        poolLogic: torosPools.FAy, // Funding Arbitrage Yield https://dhedge.org/vault/0xd258da1a96c53676301b60000918a1406e367d3e
+        withdrawalAsset: assets.usdc,
       },
       {
         poolLogic: "0x5334d0184a11f210de806fcd5b556bf19981a7be", // Flat Money Market Maker https://dhedge.org/vault/0x5334d0184a11f210de806fcd5b556bf19981a7be
-        withdrawalAsset: baseChainData.assets.reth,
+        withdrawalAsset: assets.reth,
       },
       {
         poolLogic: FLAT_MONEY_PERP_MARKET_BOT_TEST,
-        withdrawalAsset: baseChainData.assets.usdc,
+        withdrawalAsset: assets.usdc,
       },
       {
         poolLogic: "0xa1a0fcc73689549b244e9938d71b6638e18032d7", // Synthetix V3 Perps Bot Test https://dhedge.org/vault/0xa1a0fcc73689549b244e9938d71b6638e18032d7
-        withdrawalAsset: baseChainData.assets.reth,
+        withdrawalAsset: assets.reth,
       },
       {
-        poolLogic: baseChainData.torosPools.STETHBULL2X,
-        withdrawalAsset: baseChainData.assets.reth,
+        poolLogic: torosPools.STETHBULL2X,
+        withdrawalAsset: assets.reth,
       },
       {
-        poolLogic: baseChainData.torosPools.STETHBULL3X,
-        withdrawalAsset: baseChainData.assets.reth,
+        poolLogic: torosPools.STETHBULL3X,
+        withdrawalAsset: assets.reth,
       },
       {
-        poolLogic: baseChainData.torosPools.STETHBULL4X,
-        withdrawalAsset: baseChainData.assets.reth,
+        poolLogic: torosPools.STETHBULL4X,
+        withdrawalAsset: assets.reth,
       },
       {
         poolLogic: "0x631d238c4Fd232c14BF318174711538f737C0c7c", // Ethereum Surge https://dhedge.org/vault/0x631d238c4Fd232c14BF318174711538f737C0c7c
-        withdrawalAsset: baseChainData.assets.reth,
+        withdrawalAsset: assets.reth,
       },
     ],
-    swapper: baseChainData.flatMoney.swapper,
+    swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
   },
 
   slippageAccumulator: {
@@ -231,7 +128,7 @@ export const baseProdData: IAddresses = {
 
   rewardAssetSetting: [
     {
-      rewardToken: baseChainData.aerodrome.aero,
+      rewardToken: "0x940181a94a35a4569e4529a3cdfb74e38fd98631",
       linkedAssetTypes: [
         AssetType["Velodrome V2 LP/Gauge Asset"], // 25
         AssetType["Velodrome CL NFT Position Asset"], // 26
@@ -242,16 +139,16 @@ export const baseProdData: IAddresses = {
 
   easySwapperV2: {
     customCooldownDepositsWhitelist: [
-      baseChainData.torosPools.sUSDCy,
-      baseChainData.torosPools.STETHBULL2X,
-      baseChainData.torosPools.STETHBULL3X,
-      baseChainData.torosPools.STETHBULL4X,
+      torosPools.sUSDCy,
+      torosPools.STETHBULL2X,
+      torosPools.STETHBULL3X,
+      torosPools.STETHBULL4X,
       "0xCC4D4e673046e843C0E41ED150aD7a4be95b62ea", // SwapperTest https://dhedge.org/vault/0xcc4d4e673046e843c0e41ed150ad7a4be95b62ea
-      baseChainData.torosPools.USDy,
-      baseChainData.torosPools.USDMNY,
-      baseChainData.torosPools.BTCBEAR1X,
-      baseChainData.torosPools.BTCBULL2X,
-      baseChainData.torosPools.BTCBULL3X,
+      torosPools.USDy,
+      torosPools.USDMNY,
+      torosPools.BTCBEAR1X,
+      torosPools.BTCBULL2X,
+      torosPools.BTCBULL3X,
     ],
   },
 
@@ -270,7 +167,7 @@ export const baseProdData: IAddresses = {
 
   poolLimitOrderManager: {
     defaultSlippageTolerance: 200, // 2%
-    settlementToken: baseChainData.assets.usdc,
+    settlementToken: assets.usdc,
     authorizedKeeperAddresses: [
       "0x99c9F65a486C0567495ec58722916c73292D585f",
       "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
@@ -284,32 +181,12 @@ export const baseProdData: IAddresses = {
     masterChefV3: "0xC6A2Db661D5a5690172d8eB0a7DEA2d3008665A3",
   },
 
-  sky: {
-    psm3: "0x1601843c5E9bC251A3272907010AFa41Fa18347E",
-  },
-
   across: {
     spokePool: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-    approvedDestinations: [
-      {
-        sourcePool: FLAT_MONEY_PERP_MARKET_BOT_TEST,
-        sourceToken: baseChainData.assets.usdc,
-        destinationChainId: 42161,
-        destinationPool: arbitrumChainData.gmxTestVaults.gmxTest2,
-        destinationToken: arbitrumChainData.assets.usdcNative,
-      },
-      {
-        sourcePool: FLAT_MONEY_PERP_MARKET_BOT_TEST,
-        sourceToken: baseChainData.assets.usdc,
-        destinationChainId: 42161,
-        destinationPool: arbitrumChainData.gmxTestVaults.gmxTest6,
-        destinationToken: arbitrumChainData.assets.usdcNative,
-      },
-    ],
   },
 
   compoundV3: {
-    rewards: baseChainData.compoundV3.rewards,
+    rewards: "0x123964802e6ABabBE1Bc9547D72Ef1B69B00A6b1",
   },
 
   fluid: {
@@ -326,6 +203,5 @@ export const baseProdFileNames: IFileNames = {
   assetsFileName: "./config/base/dHEDGE Assets list.json",
   assetGuardsFileName: "./config/base/dHEDGE Governance Asset Guards.csv",
   contractGuardsFileName: "./config/base/dHEDGE Governance Contract Guards.csv",
-  governanceNamesFileName: "./config/base/dHEDGE Governance Names.csv",
   deprecatedContractGuardsFileName: "./config/base/dHEDGE Deprecated Contract Guards.csv",
 } as const;

@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { getAcrossApprovedDestinations } from "../../../acrossRoutes";
 import { proposeTx, tryVerify } from "../../../deploymentHelpers";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 import { addOrReplaceGuardInFile } from "../helpers";
@@ -15,9 +16,9 @@ export const acrossContractGuardJob: IJob<void> = async (
 
   if (!spokePool) return console.warn("SpokePool address not configured for AcrossContractGuard. Skipping.");
 
-  const approvedDestinations = addresses.across?.approvedDestinations;
+  const approvedDestinations = getAcrossApprovedDestinations(config.chainId);
 
-  if (!approvedDestinations || approvedDestinations.length === 0) {
+  if (approvedDestinations.length === 0) {
     return console.warn("Approved destinations not configured for AcrossContractGuard. Skipping.");
   }
 

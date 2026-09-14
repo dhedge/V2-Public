@@ -110,20 +110,45 @@ contract SlippageAccumulator is Ownable {
 
       // Only update the cumulative slippage in case the amount received is lesser than amount sent/traded.
       if (dstValue < srcValue) {
-        uint128 newSlippage = srcValue.sub(dstValue).mul(SCALING_FACTOR).div(srcValue).toUint128();
-
-        uint128 newCumulativeSlippage = (uint256(newSlippage).add(getCumulativeSlippageImpact(poolManagerLogic)))
-          .toUint128();
-
-        require(newCumulativeSlippage < maxCumulativeSlippage, "slippage impact exceeded");
-
-        // Update the last traded timestamp.
-        managerData[poolManagerLogic].lastTradeTimestamp = (block.timestamp).toUint64();
-
-        // Update the accumulated slippage impact for the poolManager.
-        managerData[poolManagerLogic].accumulatedSlippage = newCumulativeSlippage;
+        _accumulateSlippage(poolManagerLogic, srcValue.sub(dstValue), srcValue);
       }
     }
+  }
+
+  /// @notice Cumulative slippage check based on the pool's total fund value delta across an operation.
+  /// @dev Complements `updateSlippageImpact` for swaps with an unsupported source asset, where per-asset
+  ///      pricing is skipped and value could leave unmeasured. Any net DROP counts as slippage; preserving
+  ///      or increasing fund value (e.g. selling an unaccounted reward token) is a no-op.
+  /// @dev NOTE: It's important that the calling guard checks that the msg.sender in its scope is authorised.
+  /// @param poolManagerLogic Address of the poolManager whose cumulative impact is stored.
+  /// @param router Address of the router contract used for swapping.
+  /// @param totalValueBefore Pool total fund value before the swap.
+  /// @param totalValueAfter Pool total fund value after the swap.
+  function updateSlippageImpactByValue(
+    address poolManagerLogic,
+    address router,
+    uint256 totalValueBefore,
+    uint256 totalValueAfter
+  ) external onlyContractGuard(router) {
+    // Only a net DROP is accounted (this also covers totalValueBefore == 0).
+    if (totalValueAfter < totalValueBefore) {
+      _accumulateSlippage(poolManagerLogic, totalValueBefore.sub(totalValueAfter), totalValueBefore);
+    }
+  }
+
+  /// @dev Adds `valueLost / valueBase` (scaled) to the decaying cumulative slippage and reverts if over the
+  ///      cap. Callers must ensure `valueBase != 0`.
+  function _accumulateSlippage(address poolManagerLogic, uint256 valueLost, uint256 valueBase) internal {
+    uint128 newSlippage = valueLost.mul(SCALING_FACTOR).div(valueBase).toUint128();
+
+    uint128 newCumulativeSlippage = (uint256(newSlippage).add(getCumulativeSlippageImpact(poolManagerLogic)))
+      .toUint128();
+
+    require(newCumulativeSlippage < maxCumulativeSlippage, "slippage impact exceeded");
+
+    managerData[poolManagerLogic].lastTradeTimestamp = (block.timestamp).toUint64();
+
+    managerData[poolManagerLogic].accumulatedSlippage = newCumulativeSlippage;
   }
 
   /// Function to calculate an asset amount's value in usd.

@@ -1,58 +1,60 @@
-import fs from "fs";
-import { polygonChainData } from "../../config/chainData/polygonData";
-import { IAddresses, IFileNames } from "../types";
 import { BigNumber } from "ethers";
+import { IAddresses, IFileNames } from "../types";
 
-const { aaveV3, torosPools, uniswapV3, assets, aaveV2 } = polygonChainData;
+const protocolDao = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
+const protocolTreasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
+const proxyAdmin = "0x0C0a10C9785a73018077dBC74B2A006695849252";
 
-// Openzepplin doesn't support having two distinct deployments of the same contracts to the same chain.
-// Itt always looks for the file "polygon.json" (previous unknown-137.json as 137 is the chainId).
-// To be able to have two distinct deployments we switch files in and out as "polygon.json" depending on where we targeting to deploy
-export const switchPolygonOzFile = (isProduction: boolean) => {
-  console.log("Switching Polygon Openzepplin files.");
-  const ozPath = "./.openzeppelin/";
-  const ozEnvFile = ozPath + (isProduction ? "polygon-production.json" : "polygon-staging.json");
-  const ozExpectedFile = ozPath + "polygon.json";
-  fs.renameSync(ozEnvFile, ozExpectedFile);
-  let renameComplete = false;
-  const rename = () => {
-    if (renameComplete) {
-      return;
-    }
-    console.log("Process Exiting, Switching Back Filename");
-    console.log("Renaming to ", ozEnvFile);
-    try {
-      fs.renameSync(ozExpectedFile, ozEnvFile);
-      renameComplete = true;
-    } catch (e) {
-      console.error(`Could not rename ${ozEnvFile} back.`);
-      console.error(e);
-    }
-    // eventually exit
-    process.exit();
-  };
-
-  process.on("SIGINT", rename);
-  process.on("exit", rename);
+const torosPools = {
+  ETHBULL3X: "0x460b60565cb73845d56564384ab84bf84c13e47d",
+  BTCBULL3X: "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
+  MATICBEAR1X: "0x8987ca55e635d0d3ba9469ee31e9b8a7d447e9cc",
+  MATICBULL2X: "0x7dab035a8a65f7d33f1628a450c6780323d3c5e1",
+  BTCBEAR1X: "0x86c3dd18baf4370495d9228b58fd959771285c55",
+  ETHBEAR1X: "0x79d2aefe6a21b26b024d9341a51f6b7897852499",
 };
 
-const polygonData: IAddresses = {
-  // Dhedge Internal
-  protocolDaoAddress: polygonChainData.protocolDao,
-  protocolTreasuryAddress: polygonChainData.protocolTreasury,
-  // Should be fetched from the oz file
-  proxyAdminAddress: polygonChainData.proxyAdmin,
+const assets = {
+  wmatic: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+  weth: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+  usdc: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+  balancer: "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
+  dht: "0x8C92e38eCA8210f4fcBf17F0951b198Dd7668292",
+  // No chainlink feed, unsupported
+  maticX: "0xfa68FB4628DFF1028CFEc22b4162FCcd0d45efb6",
+  agEur: "0xe0b52e49357fd4daf2c15e02058dce6bc0057db4",
+  usdcNative: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+};
 
-  balancerV2VaultAddress: polygonChainData.balancer.v2Vault,
-  balancerMerkleOrchardAddress: polygonChainData.balancer.merkleOrchard,
-
-  sushiMiniChefV2Address: polygonChainData.sushi.minichef,
-
-  aaveV2: {
-    aaveProtocolDataProviderAddress: aaveV2.protocolDataProvider,
-    aaveLendingPoolAddress: aaveV2.lendingPool,
-    aaveIncentivesControllerAddress: aaveV2.incentivesController,
+const aaveV3 = {
+  lendingPool: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+  incentivesController: "0x929EC64c34a17401F460460D4B9390518E5B473e",
+  variableDebtTokens: {
+    usdc: "0xFCCf3cAbbe80101232d343252614b6A3eE81C989",
+    weth: "0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351",
+    wbtc: "0x92b42c66840c7ad907b4bf74879ff3ef7c529473",
   },
+};
+
+const uniswapV3 = {
+  factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+  router: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
+  nonfungiblePositionManager: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+};
+
+const routeHints = [
+  { asset: assets.agEur, intermediary: assets.usdc },
+  { asset: assets.balancer, intermediary: assets.weth },
+  { asset: assets.maticX, intermediary: assets.wmatic },
+  { asset: assets.usdcNative, intermediary: assets.usdc },
+];
+
+export const polygonProdData: IAddresses = {
+  // Dhedge Internal
+  protocolDaoAddress: protocolDao,
+  protocolTreasuryAddress: protocolTreasury,
+  // Should be fetched from the oz file
+  proxyAdminAddress: proxyAdmin,
 
   aaveV3: {
     aaveLendingPoolAddress: aaveV3.lendingPool,
@@ -61,14 +63,6 @@ const polygonData: IAddresses = {
 
   aaveMigrationHelper: {
     migrationHelperAddress: "0x3db487975aB1728DB5787b798866c2021B24ec52",
-    dHedgeVaultsWhitelist: [
-      "0xf4b3a195587d2735b656b7ffe9060f478faf1b32", // Test vault with portfolio same as Ethereum Bear 2X
-      "0xcc940b5c6136994bed41bff5d88b170929921e9e", // Test vault with portfolio same as Bitcoin Bear 2X
-      assets.ETHBEAR2X,
-      assets.BTCBEAR2X,
-      assets.ETHBULL3X,
-      assets.BTCBULL3X,
-    ],
     aaveV3DebtTokensWhitelist: [
       aaveV3.variableDebtTokens.usdc,
       aaveV3.variableDebtTokens.weth,
@@ -76,20 +70,19 @@ const polygonData: IAddresses = {
     ],
   },
 
-  quickStakingRewardsFactoryAddress: polygonChainData.quickswap.stakingRewardsFactory,
-  quickLpUsdcWethStakingRewardsAddress: polygonChainData.quickswap.pools.usdc_weth.stakingRewards,
   quickswap: {
-    uniV2Factory: polygonChainData.quickswap.factoryV2,
+    uniV2Factory: "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32",
   },
 
-  v2RouterAddresses: polygonChainData.v2Routers,
+  v2RouterAddresses: [
+    "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", // SushiSwap V2 Router
+    "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff", // QuickSwap V2 Router
+  ],
 
-  oneInchV4RouterAddress: polygonChainData.oneinch.v4Router,
-  oneInchV5RouterAddress: polygonChainData.oneinch.v5Router,
-  oneInchV6RouterAddress: polygonChainData.oneinch.v6Router,
+  oneInchV6RouterAddress: "0x111111125421ca6dc452d289314280a0f8842a65",
 
   uniV2: {
-    factory: polygonChainData.uniswapV2.factory,
+    factory: "0x9e5A52f57b3038F1B8EeE45F28b3C1967e22799C",
   },
 
   uniV3: {
@@ -98,38 +91,15 @@ const polygonData: IAddresses = {
     uniswapV3FactoryAddress: uniswapV3.factory,
   },
 
-  arrakisV1: {
-    arrakisV1RouterStakingAddress: polygonChainData.arrakis.v1RouterStaking,
-  },
-
   assets: {
     nativeAssetWrapper: assets.wmatic,
     usdc: assets.usdc,
-    weth: assets.weth,
-    dai: assets.dai,
     dht: assets.dht,
   },
 
-  easySwapperConfig: {
-    customLockupAllowedPools: Object.values(torosPools),
-    feeByPassManagers: [
-      // Toros
-      "0x090e7fbd87a673ee3d0b6ccacf0e1d94fb90da59",
-    ],
-    feeNumerator: 10, // 0.1% buy fee to enable Stablecoin Yield buys by managers at low cost and without need for secondary market
-    feeDenominator: 10000,
-  },
-
-  stargate: {
-    router: polygonChainData.stargate.router,
-    staking: polygonChainData.stargate.staking,
-  },
-
   superSwapper: {
-    routeHints: polygonChainData.routeHints,
+    routeHints: routeHints,
   },
-
-  zeroExExchangeProxy: polygonChainData.zeroEx.exchangeProxy,
 
   slippageAccumulator: {
     decayTime: 86400, // 24 hours
@@ -137,7 +107,7 @@ const polygonData: IAddresses = {
   },
 
   flatMoney: {
-    swapper: polygonChainData.flatMoney.swapper,
+    swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
   },
 
   easySwapperV2: {
@@ -153,7 +123,7 @@ const polygonData: IAddresses = {
 
   poolLimitOrderManager: {
     defaultSlippageTolerance: 200, // 2%
-    settlementToken: polygonChainData.assets.usdcNative,
+    settlementToken: assets.usdcNative,
     authorizedKeeperAddresses: [
       "0x99c9F65a486C0567495ec58722916c73292D585f",
       "0xC0F49445a9B8A60778EF8bCa99059Ceabb066e19",
@@ -167,20 +137,12 @@ const polygonData: IAddresses = {
   },
 
   typedStructuredDataValidator: {
-    odosLimitOrder: {
-      permit2: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-      odosLimitOrderRouter: "0x93052961c75c92Fd5d6362655936C239EF2D5336",
-      maxUnfavorableDeviationBps: 100, // 1%
-    },
     cowSwapOrder: {
       gpv2Settlement: "0x9008D19f58AAbD9eD0D60971565AA8510560ab41",
       maxUnfavorableDeviationBps: 100, // 1%
     },
   },
-};
 
-export const polygonProdData: IAddresses = {
-  ...polygonData,
   stakingV2: {
     emissionsRate: 1000,
     dhtCap: BigNumber.from(2_000_000).mul(BigNumber.from(10).pow(18)),
@@ -191,34 +153,10 @@ export const polygonProdData: IAddresses = {
   },
 };
 
-export const polygonStagingData: IAddresses = {
-  ...polygonData,
-  stakingV2: {
-    emissionsRate: 1000,
-    dhtCap: BigNumber.from(1_000).mul(BigNumber.from(10).pow(18)),
-    whitelistedPools: [
-      { pool: "0xfec92c0eebdefd1127440febd424d8e184826610", cap: BigNumber.from(1000).mul(BigNumber.from(10).pow(18)) },
-      { pool: "0x14339e6e505b9b1f4806b166edf4a3512a2e1412", cap: BigNumber.from(1000).mul(BigNumber.from(10).pow(18)) },
-      { pool: "0xe28c65873065327b984ab0459981c0c663140ada", cap: BigNumber.from(1000).mul(BigNumber.from(10).pow(18)) },
-      { pool: "0xc95ced22defe7eadc5c23f423e5f614b8fdd618d", cap: BigNumber.from(1000).mul(BigNumber.from(10).pow(18)) },
-    ],
-  },
-};
-
-export const polygonStagingFileNames: IFileNames = {
-  versionsFileName: "./publish/polygon/staging/versions.json",
-  assetsFileName: "./config/polygonStaging/dHEDGE Assets list - Polygon Staging.json",
-  governanceNamesFileName: "./config/polygonStaging/dHEDGE Governance Names - Polygon Staging.csv",
-  contractGuardsFileName: "./config/polygonStaging/dHEDGE Governance Contract Guards - Polygon Staging.csv",
-  assetGuardsFileName: "./config/polygonStaging/dHEDGE Governance Asset Guards - Polygon Staging.csv",
-};
-
 export const polygonProdFileNames: IFileNames = {
   versionsFileName: "./publish/polygon/prod/versions.json",
-  assetsFileName: "./config/polygonProd/dHEDGE Assets list - Polygon.json",
-  governanceNamesFileName: "./config/polygonProd/dHEDGE Governance Names - Polygon.csv",
-  contractGuardsFileName: "./config/polygonProd/dHEDGE Governance Contract Guards - Polygon.csv",
-  assetGuardsFileName: "./config/polygonProd/dHEDGE Governance Asset Guards - Polygon.csv",
-  deprecatedContractGuardsFileName: "./config/polygonProd/dHEDGE Deprecated Contract Guards - Polygon.csv",
-  externalAssetFileName: "./config/polygonProd/dHEDGE Assets list - Polygon External.csv",
+  assetsFileName: "./config/polygon/dHEDGE Assets list.json",
+  contractGuardsFileName: "./config/polygon/dHEDGE Governance Contract Guards.csv",
+  assetGuardsFileName: "./config/polygon/dHEDGE Governance Asset Guards.csv",
+  deprecatedContractGuardsFileName: "./config/polygon/dHEDGE Deprecated Contract Guards.csv",
 };

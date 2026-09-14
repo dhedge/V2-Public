@@ -3,7 +3,8 @@ import util from "util";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { proposeTransactions } from "../../deploymentHelpers";
 import { aggregate3InChunks, getMulticall3 } from "../../multicall";
-import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions, TDeployedAsset } from "../../types";
+import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../types";
+import { TDeployedAsset } from "./oracles/oracleTypes";
 import { TAssetConfig } from "./oracles/oracleTypes";
 
 export const removeAssetsJob: IJob<void> = async (
@@ -66,17 +67,17 @@ export const removeAssetsJob: IJob<void> = async (
         callData: poolLogicInterface.encodeFunctionData("poolManagerLogic"),
       })),
     );
-    const funds = deployedFunds
-      .map((fund, i) => {
-        const result = managerLogicResults[i];
-        if (!result.success || result.returnData === "0x") {
-          console.warn(`Skipping fund ${fund}: poolManagerLogic() reverted`);
-          return undefined;
-        }
-        const managerLogic: string = poolLogicInterface.decodeFunctionResult("poolManagerLogic", result.returnData)[0];
-        return { fund, managerLogic };
-      })
-      .filter((f): f is { fund: string; managerLogic: string } => f !== undefined);
+    // Fails closed: a skipped fund would not be counted by the still-enabled safety gate below, so
+    // the asset could be removed from the AssetHandler while that fund still supports it,
+    // permanently breaking its pricing.
+    const funds = deployedFunds.map((fund, i) => {
+      const result = managerLogicResults[i];
+      if (!result.success || result.returnData === "0x") {
+        throw new Error(`Scan incomplete: poolManagerLogic() failed for fund ${fund}; aborting`);
+      }
+      const managerLogic: string = poolLogicInterface.decodeFunctionResult("poolManagerLogic", result.returnData)[0];
+      return { fund, managerLogic };
+    });
     console.log(`Pass 1: resolved ${funds.length}/${deployedFunds.length} funds (poolManagerLogic)`);
 
     // Pass 2: isSupportedAsset(asset) for every (asset, fund) pair. Call order is
@@ -96,11 +97,10 @@ export const removeAssetsJob: IJob<void> = async (
     assetAddressesToRemove.forEach((asset, assetIndex) => {
       funds.forEach(({ fund, managerLogic }, fundIndex) => {
         const result = supportResults[assetIndex * funds.length + fundIndex];
-        if (
-          result.success &&
-          result.returnData !== "0x" &&
-          managerLogicInterface.decodeFunctionResult("isSupportedAsset", result.returnData)[0]
-        ) {
+        if (!result.success || result.returnData === "0x") {
+          throw new Error(`Scan incomplete: isSupportedAsset(${asset}) failed for fund ${fund}; aborting`);
+        }
+        if (managerLogicInterface.decodeFunctionResult("isSupportedAsset", result.returnData)[0]) {
           supportedPairs.push({ asset, fund, managerLogic });
         }
       });

@@ -44,10 +44,10 @@ import {PoolsWhitelist} from "../../../utils/PoolsWhitelist.sol";
 /// @dev    The mToken cannot be removed while a redemption request is unresolved — enforced by the
 ///         inherited `ERC20Guard._checkMidasPendingRedemptions` (settlement pays `tokenOut` in;
 ///         a rejected request is settled by Midas ops returning the mToken manually).
-/// @dev    EasySwapperV2 withdrawals are NOT supported for pools holding this asset: withdrawals pay
-///         the mToken in-kind, and mTokens have no secondary-market liquidity, so the swapper cannot
-///         unroll the received mToken into the single withdrawal asset. Withdraw from the pool
-///         directly instead; the mToken is redeemed via Midas.
+/// @dev    EasySwapperV2 withdrawals pay the mToken in-kind into the WithdrawalVault, which tracks
+///         it as a claimable asset. mTokens have no secondary-market liquidity, so the swap-based
+///         `completeWithdrawal` cannot unroll them into the single withdrawal asset — depositors
+///         claim via the no-swap `completeWithdrawal()` and redeem the mToken via Midas themselves.
 /// @dev    The integration is gated to protocol-chosen vaults: only whitelisted pools can enable an
 ///         mToken or the pending-redemption asset. The whitelist has a single owned holder — the
 ///         redemption vault's contract guard (`PoolsWhitelist`) — resolved through Governance at

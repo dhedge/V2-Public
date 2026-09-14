@@ -141,6 +141,7 @@ interface ITransactionTypes {
     HyperliquidSendAssetAction, // 131
     DytmMerge, // 132
     HyperliquidAddApiWallet, // 133
-    AcrossDeposit // 134
+    AcrossDeposit, // 134
+    GmxSetSavedCallbackContract // 135
   }
 }

@@ -11,7 +11,6 @@ contract SwapdataCacheManager is Test {
   using Surl for string;
 
   bool internal useCachedSwapData;
-  string public constant CACHE_DIRECTORY_PATH = "swapdatas-cache/odos-v2/";
 
   // APIs related constants
   uint8 public constant RETRIES = 10;
@@ -25,8 +24,9 @@ contract SwapdataCacheManager is Test {
     }
 
     // Create a directory if it doesn't exist.
-    if (!vm.isDir(CACHE_DIRECTORY_PATH)) {
-      vm.createDir(CACHE_DIRECTORY_PATH, true);
+    string memory cacheDirectoryPath = _getCacheDirectoryPath();
+    if (!vm.isDir(cacheDirectoryPath)) {
+      vm.createDir(cacheDirectoryPath, true);
     }
 
     string memory cacheFilePath = _getCacheFilePath();
@@ -52,16 +52,20 @@ contract SwapdataCacheManager is Test {
     bool compact,
     bytes memory swapData
   ) internal {
-    uint256 forkBlockNumber = vm.getBlockNumber();
-    string memory forkBlockKey = vm.toString(forkBlockNumber);
-    string memory swapKey = _getKey(srcToken, destToken, srcAmount, user, slippage, compact);
-    string memory swapObj = _getObjToAppend(srcToken, destToken, srcAmount, destAmount, user, swapData);
+    _appendNewObj(
+      _getKey(srcToken, destToken, srcAmount, user, slippage, compact),
+      _getObjToAppend(srcToken, destToken, srcAmount, destAmount, user, swapData)
+    );
+  }
+
+  /// @dev `swapKey` is stored prefixed with the fork block number, see `_getFlatKey`.
+  function _appendNewObj(string memory swapKey, string memory swapObj) internal {
     string memory filePath = _getCacheFilePath();
 
     // Use a simple flat structure: "forkBlock_swapKey" -> swapData
     // This avoids the complex JSON merging issues
     string memory rootKey = "root";
-    string memory flatKey = string(abi.encodePacked(forkBlockKey, "_", swapKey));
+    string memory flatKey = _getFlatKey(swapKey);
 
     // Read existing cache if file exists to preserve other entries
     if (vm.isFile(filePath)) {
@@ -106,14 +110,16 @@ contract SwapdataCacheManager is Test {
     uint8 slippage,
     bool compact
   ) internal view returns (bool exists, uint256 destAmount, bytes memory swapData) {
-    uint256 forkBlockNumber = vm.getBlockNumber();
-    string memory forkBlockKey = vm.toString(forkBlockNumber);
-    string memory swapKey = _getKey(srcToken, destToken, srcAmount, user, slippage, compact);
+    return _checkAndGetSwapDatas(_getKey(srcToken, destToken, srcAmount, user, slippage, compact));
+  }
+
+  function _checkAndGetSwapDatas(
+    string memory swapKey
+  ) internal view returns (bool exists, uint256 destAmount, bytes memory swapData) {
     string memory cacheJson = _getCacheJson();
 
     // Use the same flat structure: "forkBlock_swapKey"
-    string memory flatKey = string(abi.encodePacked(forkBlockKey, "_", swapKey));
-    string memory fullPath = string(abi.encodePacked(".", flatKey));
+    string memory fullPath = string(abi.encodePacked(".", _getFlatKey(swapKey)));
 
     exists = vm.keyExistsJson(cacheJson, fullPath);
 
@@ -147,7 +153,17 @@ contract SwapdataCacheManager is Test {
   }
 
   function _getCacheFilePath() internal view returns (string memory filePath) {
-    return string(abi.encodePacked(CACHE_DIRECTORY_PATH, vm.toString(_getChainId()), ".json"));
+    return string(abi.encodePacked(_getCacheDirectoryPath(), vm.toString(_getChainId()), ".json"));
+  }
+
+  /// @dev Override to keep a separate cache per API helper.
+  function _getCacheDirectoryPath() internal pure virtual returns (string memory directoryPath) {
+    return "swapdatas-cache/odos-v2/";
+  }
+
+  /// @dev Prefixes `swapKey` with the fork block number so entries fetched at different fork blocks never collide.
+  function _getFlatKey(string memory swapKey) private view returns (string memory flatKey) {
+    return string(abi.encodePacked(vm.toString(vm.getBlockNumber()), "_", swapKey));
   }
 
   function _getAndRetry(

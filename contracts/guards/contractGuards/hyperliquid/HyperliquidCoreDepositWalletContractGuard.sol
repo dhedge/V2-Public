@@ -68,8 +68,6 @@ contract HyperliquidCoreDepositWalletContractGuard is
     address poolFactory = IPoolLogic(poolLogic).factory();
     IHyperliquidCoreWriterContractGuard contractGuard = _useContractGuard(poolFactory);
 
-    require(contractGuard.dHedgePoolsWhitelist(poolLogic), "pool not whitelisted");
-
     bytes4 method = getMethod(data);
 
     if (method == ICoreDepositWallet.deposit.selector) {

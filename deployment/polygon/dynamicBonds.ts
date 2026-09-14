@@ -4,15 +4,15 @@ import { BigNumber, Contract, utils } from "ethers";
 import fs from "fs";
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { polygonChainData } from "../../config/chainData/polygonData";
 import { DynamicBonds } from "../../types"; // Unit test fails on Github Actions
 import { proposeTx, tryVerify } from "../deploymentHelpers";
 import { IUpgradeConfigProposeTx, IVersion, IVersions } from "../types";
 import { getDeploymentData, IDeploymentData } from "../upgrade/getDeploymentData";
+import { polygonProdData } from "./deploymentData";
 
 const coingeckoNetwork = "polygon-pos";
 
-const { protocolDao, protocolTreasury } = polygonChainData;
+const { protocolDaoAddress: protocolDao, protocolTreasuryAddress: protocolTreasury } = polygonProdData;
 
 // Addresses
 const depositToken = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174"; // USDC
@@ -295,7 +295,6 @@ const getTokenDecimals = async (hre: HardhatRuntimeEnvironment) => {
 task("dynamicBonds", "Deploy Dynamic Bonds contract")
   .addOptionalParam("restartnonce", "propose transactions", false, types.boolean)
   .addOptionalParam("execute", "propose transactions", false, types.boolean)
-  .addOptionalParam("production", "run in production environment", false, types.boolean)
   .addOptionalParam("deploy", "deploy Dynamic Bonds", false, types.boolean)
   .addOptionalParam("upgrade", "upgrade Dynamic Bonds", false, types.boolean)
   .addOptionalParam("updateTerms", "update bond terms", false, types.boolean)
@@ -310,7 +309,7 @@ task("dynamicBonds", "Deploy Dynamic Bonds contract")
 
     const upgradeConfig: IUpgradeConfigProposeTx = { execute: taskArgs.execute, restartnonce: taskArgs.restartnonce };
 
-    const deploymentData = getDeploymentData(network.chainId, taskArgs.production ? "production" : "staging");
+    const deploymentData = getDeploymentData(network.chainId);
     // Init contracts
     const ProxyAdmin = await hre.artifacts.readArtifact("ProxyAdmin");
     const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);

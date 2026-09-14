@@ -1,7 +1,8 @@
 node_modules
 .env
 .openzeppelin/unknown-31337.json
-.openzeppelin/unknown-137.json
+.claude/worktrees/
+.claude/settings.local.json
 
 #Hardhat files
 cache
@@ -25,3 +26,8 @@ coverage.json
 cache_forge
 out
 broadcast
+
+# Runtime-only GMX live-price cache
+swapdatas-cache/gmx/.live-arbitrum.json
+swapdatas-cache/gmx/.live-arbitrum.lock/
+swapdatas-cache/gmx/.live-arbitrum.*.tmp

@@ -143,6 +143,8 @@ contract OneInchV6Guard is TxDataUtils, ITransactionTypes, SlippageAccumulatorUs
       "unsupported destination asset"
     );
 
+    _beforeSwapSourceGuard(_poolManagerLogic, _swapData.srcAsset);
+
     intermediateSwapData = _swapData;
 
     txType = uint16(TransactionType.Exchange);

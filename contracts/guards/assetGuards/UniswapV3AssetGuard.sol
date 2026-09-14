@@ -1,3 +1,4 @@
+//
 //        __  __    __  ________  _______    ______   ________
 //       /  |/  |  /  |/        |/       \  /      \ /        |
 //   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/
@@ -10,52 +11,36 @@
 //
 // dHEDGE DAO - https://dhedge.org
 //
-// Copyright (c) 2021 dHEDGE DAO
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
-import "@uniswap/v3-periphery/contracts/libraries/PositionValue.sol";
-import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import {PositionValue} from "@uniswap/v3-periphery/contracts/libraries/PositionValue.sol";
 
-import "./ERC20Guard.sol";
-import "../../interfaces/IHasAssetInfo.sol";
-import "../../interfaces/IPoolLogic.sol";
-import "../../interfaces/IERC20Extended.sol";
-import "../contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol";
-import "../../utils/uniswap/UniswapV3PriceLibrary.sol";
+import {ClosedAssetGuard} from "./ClosedAssetGuard.sol";
+import {UniswapV3NonfungiblePositionGuard} from "../contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol";
+import {IERC20Extended} from "../../interfaces/IERC20Extended.sol";
+import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
+import {IHasGuardInfo} from "../../interfaces/IHasGuardInfo.sol";
+import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
+import {UniswapV3PriceLibrary} from "../../utils/uniswap/UniswapV3PriceLibrary.sol";
 
 /// @title Uniswap V3 asset guard
 /// @dev Asset type = 7
-contract UniswapV3AssetGuard is ERC20Guard {
-  using SafeMathUpgradeable for uint256;
+/// @dev The managed asset is the NonfungiblePositionManager, so the pool's position is a set of ERC721
+///      token IDs tracked by the contract guard rather than a fungible balance.
+contract UniswapV3AssetGuard is ClosedAssetGuard {
+  using SafeMath for uint256;
   using PositionValue for INonfungiblePositionManager;
 
+  /// @dev Grouped to avoid stack too deep in `getBalance`
   struct UniV3PoolParams {
     address token0;
     address token1;
@@ -63,9 +48,17 @@ contract UniswapV3AssetGuard is ERC20Guard {
     uint160 sqrtPriceX96;
   }
 
-  /// @notice Returns the pool position of Uniswap v3
-  /// @dev Returns the balance priced in USD
+  /// @dev Grouped to avoid stack too deep in `withdrawProcessing`
+  struct DecreaseLiquidity {
+    uint128 lpAmount;
+    uint256 amount0;
+    uint256 amount1;
+  }
+
+  /// @notice Returns the value of the pool's Uniswap V3 positions
+  /// @dev Returns the balance priced in USD, 18 decimals
   /// @param pool The pool logic address
+  /// @param asset Address of the NonfungiblePositionManager
   /// @return balance The total balance of the pool
   function getBalance(address pool, address asset) public view override returns (uint256 balance) {
     address factory = IPoolLogic(pool).factory();
@@ -75,7 +68,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       IHasGuardInfo(factory).getContractGuard(asset)
     );
     uint256[] memory tokenIds = guard.getOwnedTokenIds(pool);
-    for (uint256 i = 0; i < tokenIds.length; ++i) {
+    for (uint256 i; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
       UniV3PoolParams memory poolParams;
       (, , poolParams.token0, poolParams.token1, poolParams.fee, , , , , , , ) = nonfungiblePositionManager.positions(
@@ -106,26 +99,25 @@ contract UniswapV3AssetGuard is ERC20Guard {
     }
   }
 
-  function _assetValue(address factory, address token, uint256 amount) internal view returns (uint256) {
-    if (IHasAssetInfo(factory).isValidAsset(token)) {
-      uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token);
-      return tokenPriceInUsd.mul(amount).div(10 ** IERC20Extended(token).decimals());
-    } else {
-      return 0;
-    }
-  }
-
-  /// @notice Returns decimal of the Aave lending pool asset
-  /// @dev Returns decimal 18
+  /// @notice Returns the decimals of the Uniswap V3 position asset
+  /// @dev Positions are valued in USD, which is always 18 decimals in this codebase
+  /// @return decimals The decimals of the given asset
   function getDecimals(address) external pure override returns (uint256 decimals) {
     decimals = 18;
   }
 
-  /// @notice Creates transaction data for withdrawing tokens
-  /// @dev Withdrawal processing is not applicable for this guard
-  /// @return withdrawAsset and
-  /// @return withdrawBalance are used to withdraw portion of asset balance to investor
-  /// @return transactions is used to execute the withdrawal transaction in PoolLogic
+  /// @notice Creates the transactions that unroll a portion of the pool's Uniswap V3 positions
+  /// @dev For each tracked NFT position: decrease its liquidity by the portion, then collect the freed
+  ///      principal along with the proportional share of accrued fees directly to the withdrawer.
+  /// @dev `withdrawAsset` and `withdrawBalance` are intentionally left unset - nothing is paid out by
+  ///      PoolLogic itself, the whole withdrawal happens through the returned transactions.
+  /// @param pool Address of the pool
+  /// @param asset Address of the NonfungiblePositionManager
+  /// @param portion Portion of the pool's positions to withdraw, in 10^18 scale
+  /// @param to Address receiving the withdrawn tokens
+  /// @return withdrawAsset Unused by this guard, always the zero address
+  /// @return withdrawBalance Unused by this guard, always zero
+  /// @return transactions are used to execute the withdrawal transactions in PoolLogic
   function withdrawProcessing(
     address pool,
     address asset,
@@ -138,11 +130,6 @@ contract UniswapV3AssetGuard is ERC20Guard {
     override
     returns (address withdrawAsset, uint256 withdrawBalance, MultiTransaction[] memory transactions)
   {
-    // withdraw Processing
-    // for each nft Position:
-    // 1. decrease liuidity of a position based on the portion
-    // 2. collect fees + decreased principals directly to user
-
     INonfungiblePositionManager nonfungiblePositionManager = INonfungiblePositionManager(asset);
 
     address factory = IPoolLogic(pool).factory();
@@ -152,7 +139,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
     uint256[] memory tokenIds = guard.getOwnedTokenIds(pool);
     uint256 txCount;
     transactions = new MultiTransaction[](tokenIds.length.mul(2));
-    for (uint256 i = 0; i < tokenIds.length; ++i) {
+    for (uint256 i; i < tokenIds.length; ++i) {
       DecreaseLiquidity memory decreaseLiquidity = _calcDecreaseLiquidity(
         nonfungiblePositionManager,
         tokenIds[i],
@@ -191,7 +178,7 @@ contract UniswapV3AssetGuard is ERC20Guard {
       }
     }
 
-    // Reduce length the empty items
+    // Shrink the array by the number of unused slots
     uint256 reduceLength = tokenIds.length.mul(2).sub(txCount);
     assembly {
       mstore(transactions, sub(mload(transactions), reduceLength))
@@ -200,17 +187,19 @@ contract UniswapV3AssetGuard is ERC20Guard {
     return (withdrawAsset, withdrawBalance, transactions);
   }
 
-  // for stack too deep
-  struct DecreaseLiquidity {
-    uint128 lpAmount;
-    uint256 amount0;
-    uint256 amount1;
+  function _assetValue(address factory, address token, uint256 amount) internal view returns (uint256) {
+    if (IHasAssetInfo(factory).isValidAsset(token)) {
+      uint256 tokenPriceInUsd = IHasAssetInfo(factory).getAssetPrice(token);
+      return tokenPriceInUsd.mul(amount).div(10 ** IERC20Extended(token).decimals());
+    } else {
+      return 0;
+    }
   }
 
-  /// @notice Calculates liquidity withdraw balances
-  /// @param tokenId nft position id
-  /// @param portion withdraw portion
-  /// @return decreaseLiquidity withdraw info
+  /// @param nonfungiblePositionManager Uniswap V3 NonfungiblePositionManager
+  /// @param tokenId NFT position id
+  /// @param portion Withdraw portion, in 10^18 scale
+  /// @return decreaseLiquidity Liquidity to remove plus the token amounts it frees, fees included
   function _calcDecreaseLiquidity(
     INonfungiblePositionManager nonfungiblePositionManager,
     uint256 tokenId,

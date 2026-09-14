@@ -9,9 +9,16 @@ export const easyLimitBuyManagerConfigurationJob: IJob<void> = async (
   _filenames: IFileNames,
   addresses: IAddresses,
 ) => {
+  if (!addresses.easyLimitBuyManager) {
+    return console.warn("easyLimitBuyManager config not set for easyLimitBuyManagerConfigurationJob: skipping.");
+  }
+
   console.log("Will update EasyLimitBuyManager configuration");
 
   const easyLimitBuyManagerAddress = versions[config.newTag].contracts.EasyLimitBuyManager;
+  if (!easyLimitBuyManagerAddress) {
+    return console.warn("EasyLimitBuyManager not deployed: skipping.");
+  }
 
   const easyLimitBuyManagerContract = await hre.ethers.getContractAt("EasyLimitBuyManager", easyLimitBuyManagerAddress);
 
@@ -36,7 +43,7 @@ export const easyLimitBuyManagerConfigurationJob: IJob<void> = async (
       await proposeTransactions(
         addedAddresses.map((address) => ({
           to: easyLimitBuyManagerAddress,
-          data: easyLimitBuyManagerContract.interface.encodeFunctionData("addAuthorizedKeeper", [address]),
+          data: easyLimitBuyManagerContract.interface.encodeFunctionData("setAuthorizedCaller", [address, true]),
           value: "0",
         })),
         "EasyLimitBuyManager - Add new authorized keepers",
@@ -49,7 +56,7 @@ export const easyLimitBuyManagerConfigurationJob: IJob<void> = async (
       await proposeTransactions(
         removedAddresses.map((address) => ({
           to: easyLimitBuyManagerAddress,
-          data: easyLimitBuyManagerContract.interface.encodeFunctionData("removeAuthorizedKeeper", [address]),
+          data: easyLimitBuyManagerContract.interface.encodeFunctionData("setAuthorizedCaller", [address, false]),
           value: "0",
         })),
         "EasyLimitBuyManager - Remove authorized keepers",
@@ -58,6 +65,6 @@ export const easyLimitBuyManagerConfigurationJob: IJob<void> = async (
       );
     }
 
-    versions[config.newTag].config.easyLimitBuyManager.authorizedKeeperAddresses = newAddresses;
+    versions[config.newTag].config.easyLimitBuyManager = { authorizedKeeperAddresses: newAddresses };
   }
 };

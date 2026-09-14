@@ -14,17 +14,13 @@ export const superSwapperJob: IJob<void> = async (
 
   console.log("Will deploy DhedgeSuperSwapper");
   const DhedgeSuperSwapper = await ethers.getContractFactory("DhedgeSuperSwapper");
-  const v2Routers = [...(addresses.v2RouterAddresses ?? [])];
-
-  if (versions[config.newTag].contracts.DhedgeUniV3V2Router) {
-    v2Routers.push(versions[config.newTag].contracts.DhedgeUniV3V2Router);
-  }
-  if (versions[config.newTag].contracts.DhedgeVeloV2UniV2Router) {
-    v2Routers.push(versions[config.newTag].contracts.DhedgeVeloV2UniV2Router);
-  }
-  if (versions[config.newTag].contracts.DhedgeRamsesUniV2Router) {
-    v2Routers.push(versions[config.newTag].contracts.DhedgeRamsesUniV2Router);
-  }
+  const { DhedgeUniV3V2Router, DhedgeVeloV2UniV2Router, DhedgeRamsesUniV2Router } = versions[config.newTag].contracts;
+  const v2Routers = [
+    ...(addresses.v2RouterAddresses ?? []),
+    ...[DhedgeUniV3V2Router, DhedgeVeloV2UniV2Router, DhedgeRamsesUniV2Router].filter(
+      (router): router is Address => !!router,
+    ),
+  ];
 
   console.log("Deploying SwapRouter with", v2Routers);
 

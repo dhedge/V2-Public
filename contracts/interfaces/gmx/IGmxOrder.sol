@@ -103,6 +103,7 @@ library Order {
   // @param minOutputAmount the minimum output amount for decrease orders and swaps
   // note that for decrease orders, multiple tokens could be received, for this reason, the
   // minOutputAmount value is treated as a USD value for validation in decrease orders
+  // @param uiFeeFactor the UI fee factor snapshotted when the order was created
   // @param srcChainId the source chain id
   struct Numbers {
     OrderType orderType;
@@ -114,6 +115,7 @@ library Order {
     uint256 executionFee;
     uint256 callbackGasLimit;
     uint256 minOutputAmount;
+    uint256 uiFeeFactor;
     uint256 updatedAtTime;
     uint256 validFromTime;
     uint256 srcChainId;

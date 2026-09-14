@@ -411,7 +411,7 @@ contract FakeUniswapV3PoolAttackTest is Test {
   function _deployFixedOneInchV6Guard() internal {
     OneInchV6Guard oneInchV6RouterGuard = new OneInchV6Guard(
       PolygonConfig.SLIPPAGE_ACCUMULATOR_PROD,
-      IUniswapV2Factory(0x9e5A52f57b3038F1B8EeE45F28b3C1967e22799C),
+      IUniswapV2Factory(PolygonConfig.UNISWAP_V2_FACTORY),
       IUniswapV3Factory(PolygonConfig.UNISWAP_V3_FACTORY),
       address(0)
     );

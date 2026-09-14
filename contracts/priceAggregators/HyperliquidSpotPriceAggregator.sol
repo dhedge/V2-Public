@@ -50,17 +50,15 @@ contract HyperliquidSpotPriceAggregator is IAggregatorV3Interface, PrecompileHel
     override
     returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
   {
-    // Get spot price in USDC (8 decimals)
     uint256 spotPriceInUSDC = normalizedSpotPx(SPOT_INDEX);
 
-    // Get USDC/USD rate from Chainlink (8 decimals)
-    (, int256 usdcUsdRate, , , ) = USDC_USD_FEED.latestRoundData();
+    (, int256 usdcUsdRate, , uint256 usdcUsdUpdatedAt, ) = USDC_USD_FEED.latestRoundData();
     require(usdcUsdRate > 0, "Invalid USDC/USD price");
 
-    // Convert to USD: (TOKEN/USDC) * (USDC/USD) = TOKEN/USD
-    // spotPriceInUSDC is 8 decimals, usdcUsdRate is 8 decimals
+    // Convert to USD: (TOKEN/USDC) * (USDC/USD) = TOKEN/USD, both 8 decimals
     uint256 spotPriceInUSD = (spotPriceInUSDC * uint256(usdcUsdRate)) / 1e8;
 
-    return (0, int256(spotPriceInUSD), 0, block.timestamp, 0);
+    // Return the USDC/USD feed timestamp so downstream staleness checks have a real timestamp (the spot precompile has none).
+    return (0, int256(spotPriceInUSD), 0, usdcUsdUpdatedAt, 0);
   }
 }

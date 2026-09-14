@@ -40,6 +40,8 @@ const deployEasySwapperV2 = async (
 
   if (!addresses.flatMoney?.swapper) return console.warn("Swapper contract address missing... skipping.");
 
+  if (!addresses.assets?.nativeAssetWrapper) return console.warn("nativeAssetWrapper missing... skipping.");
+
   const EasySwapperV2 = await ethers.getContractFactory("EasySwapperV2");
   const initParams = [
     versions[config.oldTag].contracts.WithdrawalVault,
@@ -102,6 +104,7 @@ const upgradeEasySwapperV2 = async (
   const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
 
   const proxy = versions[config.oldTag].contracts.EasySwapperV2Proxy;
+  if (!proxy) return console.warn("EasySwapperV2Proxy missing... skipping.");
 
   const EasySwapperV2 = await ethers.getContractFactory("EasySwapperV2");
   const newLogic = await upgrades.prepareUpgrade(proxy, EasySwapperV2);

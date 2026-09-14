@@ -49,9 +49,10 @@ import {PoolsWhitelist} from "../../../utils/PoolsWhitelist.sol";
 ///         the conversion is the identity — no oracle is involved in this leg. If the free mToken
 ///         balance cannot cover the (grossed-up) payment, the withdrawal reverts until the curator
 ///         settles the request.
-/// @dev    EasySwapperV2 withdrawals are NOT supported for pools holding this asset: the claim's
-///         withdrawal leg is paid in the mToken, which has no secondary-market liquidity for the
-///         swapper to unroll into the single withdrawal asset. Withdraw from the pool directly.
+/// @dev    EasySwapperV2 withdrawals: the claim's withdrawal leg is paid in the mToken, which the
+///         WithdrawalVault tracks through the mToken's own supported-asset entry (type 42). Having
+///         no secondary-market liquidity, the mToken can only be claimed in-kind via the no-swap
+///         `completeWithdrawal()`, never swapped into the single withdrawal asset.
 /// @dev    ORDERING INVARIANT: the grossing-up in `OutsidePositionWithdrawalHelper` (`x / (1 - portion)`)
 ///         is exact only because this asset (type 43) is processed BEFORE the mToken asset (type 42) in
 ///         `PoolLogic._withdrawTo` — supported assets are sorted by asset type DESCENDING

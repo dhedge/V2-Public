@@ -29,6 +29,12 @@ interface IGmxExchangeRouter {
 
   function multicall(bytes[] calldata data) external payable returns (bytes[] memory results);
 
+  /**
+   * @dev Saves the callback contract for an account and market, used for keeper-created orders
+   * (liquidations and ADLs) that cannot carry a per-order callback contract.
+   */
+  function setSavedCallbackContract(address market, address callbackContract) external payable;
+
   function claimFundingFees(
     address[] memory markets,
     address[] memory tokens,

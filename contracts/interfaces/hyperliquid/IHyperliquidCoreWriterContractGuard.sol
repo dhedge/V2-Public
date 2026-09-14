@@ -19,11 +19,6 @@ interface IHyperliquidCoreWriterContractGuard {
     DISABLED
   }
 
-  struct WhitelistSetting {
-    address poolLogic;
-    bool whitelisted;
-  }
-
   struct ApprovedAssetSetting {
     uint64 assetId;
     bool approved;
@@ -42,7 +37,6 @@ interface IHyperliquidCoreWriterContractGuard {
   /////////////////////////////////////////////
   //                Events                   //
   /////////////////////////////////////////////
-  event PoolWhitelistUpdated(address indexed poolLogic, bool whitelisted);
   event ApprovedAssetUpdated(uint64 indexed assetId, bool approved);
   event DexIdStatusUpdated(uint256 indexed dexId, DexStatus status);
   event MaxPermittedSlippageUpdated(uint64 maxPermittedSlippage);
@@ -53,10 +47,11 @@ interface IHyperliquidCoreWriterContractGuard {
   //                Functions                //
   /////////////////////////////////////////////
   function initialize(address admin, uint64 maxSlippage) external;
-  function dHedgePoolsWhitelist(address poolLogic) external view returns (bool isWhitelisted);
   function apiWalletEnabled(address poolLogic) external view returns (bool enabled);
   function getApiWalletEnabledPools() external view returns (address[] memory);
   function hasPerformedSpotAction(address pool) external view returns (bool);
+  // solhint-disable-next-line func-name-mixedcase
+  function SPOT_ACTION_LOCK_BLOCKS() external view returns (uint256);
   function getApprovedAssets() external view returns (uint256[] memory);
   function getApprovedDexIds() external view returns (uint256[] memory);
   function isEnabledDexId(uint256 dexId) external view returns (bool);
@@ -64,7 +59,6 @@ interface IHyperliquidCoreWriterContractGuard {
 
   // Admin functions
   function setMaxPermittedSlippage(uint64 maxSlippage) external;
-  function setDhedgePoolsWhitelist(WhitelistSetting[] memory settings) external;
   function setApprovedAssets(ApprovedAssetSetting[] calldata settings) external;
   function setDexIdStatus(DexIdStatusSettings[] calldata settings) external;
   function setApiWalletEnabled(ApiWalletSetting[] calldata settings) external;

@@ -1,32 +1,21 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { OracleType, TDeployedAsset } from "../../../types";
-import { deployBalancerStablePoolAggregator } from "./deployBalancerStablePoolAggregator";
-import { deployBalancerComposableStablePoolAggregator } from "./deployBalancerComposableStablePoolAggregator";
-import { deployBalancerV2LPAggregator } from "./deployBalancerV2LPAggregator";
+import { OracleType, TDeployedAsset } from "./oracleTypes";
 import { deployDhedgePoolAggregator } from "./deployDhedgePoolAggregator";
-import { deployMedianTWAPAggregator } from "./deployMedianTWAPAggregator";
-import { deploySynthPriceAggregator } from "./deploySynthPriceAggregator";
-import { deployUniV2LPAggregator } from "./deployUniV2LPAggregator";
 import { deployUniV3TWAPAggregator } from "./deployUniV3TWAPAggregator";
 import { deployUSDPriceAggregator } from "./deployUSDPriceAggregator";
-import { deployMaticXPriceAggregator } from "./deployMaticXPriceAggregator";
 import { checkChainlinkConfig } from "./checkChainlinkConfig";
 import { TAssetConfig, TOracleDeployer } from "./oracleTypes";
 import { checkDeployedConfig } from "./checkDeployedConfig";
-import { deployDQUICKPriceAggregator } from "./deployDQUICKPriceAggregator";
 import { deployVelodromeTWAPAggregator } from "./deployVelodromeTWAPAggregator";
 import { deployVelodromeStableLPAggregator } from "./deployVelodromeStableLPAggregator";
 import { deployVelodromeVariableLPAggregator } from "./deployVelodromeVariableLPAggregator";
 import { deployETHCrossAggregator } from "./deployETHCrossAggregator";
-import { deployRamsesTWAPAggregator } from "./deployRamsesTWAPAggregator";
-import { deployRamsesVariableLPAggregator } from "./deployRamsesVariableLPAggregator";
 import { deployFlatMoneyUNITPriceAggregator } from "./deployFlatMoneyUNITPriceAggregator";
 import { deployChainlinkPythPriceAggregator } from "./deployChainlinkPythPriceAggregator";
 import { deployChainlinkAggregatorWrapper } from "./deployChainlinkAggregatorWrapper";
 import { deployChainlinkTWAPAggregator } from "./deployChainlinkTWAPAggregator";
 import { deployCustomCrossAggregator } from "./deployCustomCrossAggregator";
 import { deployFluidTokenPriceAggregator } from "./deployFluidTokenPriceAggregator";
-import { deployPythPriceAggregator } from "./deployPythPriceAggregator";
 import { deployPendlePTPriceAggregator } from "./deployPendlePTPriceAggregator";
 import { deployERC4626PriceAggregator } from "./deployERC4626PriceAggregator";
 import { deployHyperliquidSpotPriceAggregator } from "./deployHyperliquidSpotPriceAggregator";
@@ -46,19 +35,11 @@ type TOracleTypeToDeployer = {
 };
 
 const typeToDeployer: TOracleTypeToDeployer = {
-  BalancerV2LPAggregator: deployBalancerV2LPAggregator,
-  BalancerStablePoolAggregator: deployBalancerStablePoolAggregator,
-  BalancerComposableStablePoolAggregator: deployBalancerComposableStablePoolAggregator,
   DHedgePoolAggregator: deployDhedgePoolAggregator,
-  MedianTWAPAggregator: deployMedianTWAPAggregator,
-  UniV2LPAggregator: deployUniV2LPAggregator,
   USDPriceAggregator: deployUSDPriceAggregator,
-  SynthPriceAggregator: deploySynthPriceAggregator,
   UniV3TWAPAggregator: deployUniV3TWAPAggregator,
   ChainlinkAggregator: checkChainlinkConfig,
   DhedgeDeployedAggregator: checkDeployedConfig,
-  DQUICKPriceAggregator: deployDQUICKPriceAggregator,
-  MaticXPriceAggregator: deployMaticXPriceAggregator,
   VelodromeTWAPAggregator: (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig) =>
     deployVelodromeTWAPAggregator(hre, assetConfig, "VelodromeTWAPAggregator"),
   VelodromeStableLPAggregator: deployVelodromeStableLPAggregator,
@@ -66,15 +47,12 @@ const typeToDeployer: TOracleTypeToDeployer = {
   ETHCrossAggregator: deployETHCrossAggregator,
   VelodromeV2TWAPAggregator: (hre: HardhatRuntimeEnvironment, assetConfig: TAssetConfig) =>
     deployVelodromeTWAPAggregator(hre, assetConfig, "VelodromeV2TWAPAggregator"),
-  RamsesTWAPAggregator: deployRamsesTWAPAggregator,
-  RamsesVariableLPAggregator: deployRamsesVariableLPAggregator,
   FlatMoneyUNITPriceAggregator: deployFlatMoneyUNITPriceAggregator,
   ChainlinkPythPriceAggregator: deployChainlinkPythPriceAggregator,
   ChainlinkAggregatorWrapper: deployChainlinkAggregatorWrapper,
   ChainlinkTWAPAggregator: deployChainlinkTWAPAggregator,
   CustomCrossAggregator: deployCustomCrossAggregator,
   FluidTokenPriceAggregator: deployFluidTokenPriceAggregator,
-  PythPriceAggregator: deployPythPriceAggregator,
   PendlePTPriceAggregator: deployPendlePTPriceAggregator,
   ERC4626PriceAggregator: deployERC4626PriceAggregator,
   HyperliquidSpotPriceAggregator: deployHyperliquidSpotPriceAggregator,

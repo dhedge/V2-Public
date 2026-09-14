@@ -1,10 +1,10 @@
-import { assert } from "chai";
+import assert from "assert";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Contract } from "ethers";
 
 import { InitType } from "./initialize";
 import { isSameBytecode } from "../deploymentHelpers";
-import { IContracts } from "../types";
+import { IContracts } from "../versionsContracts";
 
 export const checkBytecode = async (initializeData: InitType, hre: HardhatRuntimeEnvironment) => {
   const { ethers } = hre;

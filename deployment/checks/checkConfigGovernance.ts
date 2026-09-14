@@ -1,7 +1,7 @@
 import { InitType } from "./initialize";
-import { assert } from "chai";
+import assert from "assert";
 import csv from "csvtojson";
-import { IContracts } from "../types";
+import { IContracts } from "../versionsContracts";
 
 export const checkGovernance = async (initializeData: InitType) => {
   const { assetGuardsFileName, contractGuardsFileName, contracts, governance } = initializeData;

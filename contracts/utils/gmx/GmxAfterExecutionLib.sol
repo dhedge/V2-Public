@@ -150,12 +150,13 @@ library GmxAfterExecutionLib {
       });
     }
 
+    // GMX v2.2c returns uintItems[0] with field name "outputAmount":
+    // https://github.com/gmx-io/gmx-synthetics/blob/23c9d1600c58e385c6116b0bb422e42fc0270e62/contracts/order/SwapOrderUtils.sol#L88-L93
     (uint256 inputTokensValue, uint256 outputTokensValue) = GmxHelperLib.getMaxSwapSlippageData(
       afterSwapOrderData,
       priceDeps,
       false,
-      // https://github.com/gmx-io/gmx-synthetics/blob/main/contracts/order/SwapOrderUtils.sol#L78
-      eventData.uintItems.items[0].value
+      eventData.uintItems.get("outputAmount")
     );
 
     _accessControl(slippageAccumulator.poolFactory(), afterSwapOrderData.account);
@@ -180,7 +181,12 @@ library GmxAfterExecutionLib {
     address exchangeRouterContractGuard
   ) public {
     Order.OrderType orderType = Order.OrderType(orderData.uintItems.get("orderType"));
-    if (orderType == Order.OrderType.MarketDecrease) {
+    if (
+      orderType == Order.OrderType.MarketDecrease ||
+      // Liquidations are keeper-created orders that reach this callback through the account's
+      // saved callback contract and can also credit claimable collateral to the account.
+      orderType == Order.OrderType.Liquidation
+    ) {
       address account = orderData.addressItems.get("account");
       address market = orderData.addressItems.get("market");
       DhedgeNftTrackerStorage nftTracker = IGmxExchangeRouterContractGuard(exchangeRouterContractGuard).nftTracker();
@@ -251,12 +257,13 @@ library GmxAfterExecutionLib {
         virtualTokenResolver: IGmxVirtualTokenResolver(exchangeRouterContractGuard)
       });
     }
+    // GMX v2.2c passes uintItems[0] with field name "receivedMarketTokens":
+    // https://github.com/gmx-io/gmx-synthetics/blob/23c9d1600c58e385c6116b0bb422e42fc0270e62/contracts/deposit/ExecuteDepositUtils.sol#L273-L275
     (uint256 inputTokensValue, uint256 outputTokensValue) = GmxHelperLib.getMaxDepositSlippageData({
       afterDepositData: afterDepositData,
       priceDependencies: priceDeps,
       isMinOutputAmountUsed: false,
-      // https://github.com/gmx-io/gmx-synthetics/blob/main/contracts/deposit/ExecuteDepositUtils.sol#L279
-      optionalOutputAmount: eventData.uintItems.items[0].value
+      optionalOutputAmount: eventData.uintItems.get("receivedMarketTokens")
     });
     _accessControl(slippageAccumulator.poolFactory(), afterDepositData.account);
     slippageAccumulator.updateSlippageImpact(
@@ -309,15 +316,14 @@ library GmxAfterExecutionLib {
     uint256 inputTokensValue;
     uint256 outputTokensValue;
     {
-      // https://github.com/gmx-io/gmx-synthetics/blob/main/contracts/withdrawal/ExecuteWithdrawalUtils.sol#L148
-      uint256 outputAmount = eventData.uintItems.items[0].value; // longToken
-      uint256 secondaryOutputAmount = eventData.uintItems.items[1].value; // shortToken
+      // GMX v2.2c passes uintItems[0] as "outputAmount" and uintItems[1] as "secondaryOutputAmount":
+      // https://github.com/gmx-io/gmx-synthetics/blob/23c9d1600c58e385c6116b0bb422e42fc0270e62/contracts/withdrawal/ExecuteWithdrawalUtils.sol#L143-L149
       (inputTokensValue, outputTokensValue) = GmxHelperLib.getMaxWithdrawalSlippageData({
         afterWithdrawalData: afterWithdrawalData,
         priceDependencies: priceDeps,
         isMinOutputAmountUsed: false,
-        optionalOutputLongTokenAmount: outputAmount,
-        optionalOutputShortTokenAmount: secondaryOutputAmount
+        optionalOutputLongTokenAmount: eventData.uintItems.get("outputAmount"),
+        optionalOutputShortTokenAmount: eventData.uintItems.get("secondaryOutputAmount")
       });
     }
 

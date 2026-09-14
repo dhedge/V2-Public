@@ -330,8 +330,8 @@
       "action": "Add the Compound market to the vault's assets."
     },
     "CoreWriter not supported asset": {
-      "description": "CoreWriter not enabled in the vault",
-      "action": "Add the CoreWriter contract as a vault asset."
+      "description": "Hyperliquid Perps Account asset not enabled in the vault",
+      "action": "Enable the Hyperliquid Perps Account asset in the vault."
     },
     "decodeCompactCalldata failed": {
       "description": "Odos swap calldata could not be decoded",
@@ -981,7 +981,8 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "core user not activated": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Vault's HyperCore account is not activated",
+      "action": "Activate by transferring 1 USDC from EVM to Spot using the trade interface."
     },
     "delayed order in progress": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1374,10 +1375,12 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "not enough available balance_0": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Vault has no withdrawal asset balance",
+      "action": "Try again later."
     },
     "not enough available balance_1": {
-      "action": "TODO: fill in a user-facing description/action for this error."
+      "description": "Not enough withdrawal asset in the vault to cover the withdrawal",
+      "action": "Withdraw a smaller amount or try again later."
     },
     "not enough reward token": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1764,6 +1767,54 @@
     "pending redemption not supported": {
       "description": "Midas redemption vault asset not enabled",
       "action": "Enable the redemption vault asset first."
+    },
+    "src token not swappable": {
+      "description": "Midas mToken has no market liquidity and cannot be swapped",
+      "action": "Claim the asset without a swap to complete the withdrawal."
+    },
+    "spot pair not USDC quoted": {
+      "description": "Spot pair is not quoted in USDC",
+      "action": "Trade this asset on its USDC-quoted Hyperliquid pair."
+    },
+    "USDC required for HL": {
+      "description": "USDC cannot be removed while the vault uses Hyperliquid",
+      "action": "Remove the Hyperliquid position asset first, then remove USDC."
+    },
+    "eps skip market not zero": {
+      "description": "Pendle limit order sets epsSkipMarket, which could skip the market leg.",
+      "action": "Set epsSkipMarket to 0 so any remainder routes through the market."
+    },
+    "invalid maker token": {
+      "description": "Pendle limit order fill uses the zero (native) maker token.",
+      "action": "Use a limit order whose maker token is an ERC20, not the native token."
+    },
+    "invalid order type": {
+      "description": "Pendle limit order fill has the wrong order type for the swap direction.",
+      "action": "Use fills whose order type matches the buy or sell direction."
+    },
+    "aave position underwater": {
+      "description": "The vault's Aave debt exceeds its collateral, which freezes vault pricing",
+      "action": "Wait until the Aave position is repaid or liquidated back above water, then try again."
+    },
+    "accounted token source": {
+      "description": "This token's value is already counted by another position.",
+      "action": "Exit the position via its protocol, then swap."
+    },
+    "evm contract mismatch": {
+      "description": "Token registry index does not match the token's linked HyperEVM contract",
+      "action": "Check the Hyperliquid token registry entry for this token."
+    },
+    "only USDC self-transfers": {
+      "description": "Only USDC can be moved between Hyperliquid dexes",
+      "action": "Transfer USDC, or bridge the token to HyperEVM instead."
+    },
+    "resting spot order must be sell": {
+      "description": "Resting (GTC/ALO) spot orders can only be sells",
+      "action": "Use an IOC order to buy spot assets."
+    },
+    "unsupported tif": {
+      "description": "Order time-in-force is not supported",
+      "action": "Use a GTC, IOC or ALO order."
     }
   },
   "selectorErrors": {
@@ -1786,10 +1837,6 @@
     "DomainVersionMismatch()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__ZeroAmount()": {
-      "description": "Withdrawal amount cannot be zero",
-      "action": "Enter an amount greater than zero and try again."
-    },
     "UnsupportedInputToken()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
@@ -1798,10 +1845,6 @@
     },
     "OwnableUnauthorizedAccount(address)": {
       "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "HyperliquidWithdrawalManager__InvalidPool()": {
-      "description": "Provided address is not a valid vault",
-      "action": "Use a registered vault address."
     },
     "InvalidAttestationSignature()": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1830,16 +1873,8 @@
     "InvalidDepositAssetConfig(bool,address,address,bool)": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__WithdrawalAlreadyPending()": {
-      "description": "A withdrawal is already pending for this user and vault",
-      "action": "Complete or cancel the existing withdrawal before starting a new one."
-    },
     "InsufficientOutput(uint256,uint256)": {
       "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "HyperliquidWithdrawalManager__NoSpotUsdcFreed()": {
-      "description": "No spot USDC was available to bridge",
-      "action": "Retry after positions are reduced or spot USDC is available in Hyperliquid."
     },
     "InvalidProofConfig(string)": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1850,10 +1885,6 @@
     "SettlementOrderNotFound(address)": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__FullWithdrawalNotSupported()": {
-      "description": "Full withdrawals are not supported in this flow",
-      "action": "Use a partial amount that is less than your full vault token balance."
-    },
     "NonZeroFeeAmount()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
@@ -1863,16 +1894,8 @@
     "NoRecoveryApproved()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__TooEarly()": {
-      "description": "This step was called too early",
-      "action": "Wait at least one block, then call the next withdrawal step again."
-    },
     "InvalidValue(string)": {
       "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "HyperliquidWithdrawalManager__SpotAssetNotSupported(uint32)": {
-      "description": "Spot asset is not supported by this vault",
-      "action": "Use supported spot asset IDs and ensure the asset is enabled in the vault."
     },
     "ZeroValue(string)": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1925,22 +1948,11 @@
     "InvalidSellTokenBalance()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__NoPendingWithdrawal()": {
-      "description": "No pending withdrawal found",
-      "action": "Start a withdrawal first, then retry this action."
-    },
-    "SafeCastOverflowedUintDowncast(uint8,uint256)": {
-      "action": "TODO: fill in a user-facing description/action for this error."
-    },
     "InvalidAsset(address)": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "PrecompileHelper__SpotIndexNotFound(uint64)": {
       "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "HyperliquidWithdrawalManager__TimeoutNotReached()": {
-      "description": "Withdrawal timeout has not been reached",
-      "action": "Wait for the timeout window to pass before cancelling."
     },
     "InvalidFactory()": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -1972,10 +1984,6 @@
     "DomainNameMismatch()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__NothingToBridge()": {
-      "description": "There is no Hyperliquid value to bridge for this withdrawal",
-      "action": "Check the requested amount and vault Hyperliquid balances, then try again."
-    },
     "LimitOrderAlreadyExists(address,address)": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
@@ -1991,10 +1999,6 @@
     "ArrayLengthMismatch()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__NoPositionForAsset(uint32)": {
-      "description": "No open perp position exists for the provided asset ID",
-      "action": "Remove invalid perp asset IDs and include only currently open positions."
-    },
     "InvalidSettlementToken()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
@@ -2003,10 +2007,6 @@
     },
     "InsufficientVaultTokensReceived(uint256,uint256)": {
       "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "HyperliquidWithdrawalManager__UnreducedPerpPosition()": {
-      "description": "Provided perp asset IDs do not cover open perp exposure",
-      "action": "Include all open perp asset IDs for the vault and retry."
     },
     "QuoteValueOutOfRange()": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -2025,10 +2025,6 @@
     },
     "DomainChainMismatch()": {
       "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "HyperliquidWithdrawalManager__PoolHasNoHLIntegration()": {
-      "description": "Vault does not have Hyperliquid CoreWriter integration enabled",
-      "action": "Enable CoreWriter as a supported vault asset before using this withdrawal flow."
     },
     "PrecompileHelper__TokenInfoFetchFailed(uint64)": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -2051,10 +2047,6 @@
     "InvalidBuyTokenBalance()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__InvalidState(uint8,uint8)": {
-      "description": "Withdrawal is in the wrong state for this step",
-      "action": "Follow the sequence announceAndReduce, then bridge, then settle."
-    },
     "OndoRedemptionsPaused()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
@@ -2064,19 +2056,11 @@
     "NoPendingRequest()": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__NoSpotBalanceForAsset(uint32)": {
-      "description": "No spot balance exists for the provided asset ID",
-      "action": "Use spot asset IDs with a non-zero balance in the vault's Hyperliquid account."
-    },
     "OrderNotFound(address,bytes32)": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "SanityCheckDeviationTooLarge()": {
       "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "HyperliquidWithdrawalManager__NoBridgeNeeded()": {
-      "description": "No bridge is needed because existing EVM USDC already covers this withdrawal",
-      "action": "Use the standard vault withdrawal directly instead of this Hyperliquid bridge flow."
     },
     "ECDSAInvalidSignatureS(bytes32)": {
       "action": "TODO: fill in a user-facing description/action for this error."
@@ -2132,9 +2116,49 @@
     "FluidDexPricesAndExchangeRates((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "HyperliquidWithdrawalManager__UnsortedAssetIds()": {
-      "description": "Asset ID list must be strictly ascending with no duplicates",
-      "action": "Sort asset IDs in ascending order and remove duplicates before retrying."
+    "FailedToApproveParaswap(bytes)": {
+      "description": "Could not read the Paraswap token transfer proxy",
+      "action": "Check the PARASWAP router address on this chain or use another aggregator."
+    },
+    "EmptyPayload()": {
+      "description": "Swap data for the aggregator router is empty",
+      "action": "Fetch fresh swap data from the aggregator and retry."
+    },
+    "NativeTokenSentWithoutNativeSwap()": {
+      "description": "Native token was sent but no native swap is included",
+      "action": "Do not send value unless the swap contains a NATIVE transfer method leg."
+    },
+    "NotEnoughNativeTokenSent(uint256,uint256)": {
+      "description": "Native token sent does not match the amount in the swap data",
+      "action": "Send exactly the source amount of the native leg as transaction value."
+    },
+    "SwapFailed(address,(address,uint256,(bytes32,bytes)),bytes)": {
+      "description": "The aggregator router rejected the swap",
+      "action": "Fetch fresh swap data from the aggregator and retry."
+    },
+    "UnsupportedTokenTransferMethod()": {
+      "description": "Unknown source token transfer method",
+      "action": "Use ALLOWANCE, PERMIT2 or NATIVE as the transfer method."
+    },
+    "InvalidNativeTokenTransferEncoding()": {
+      "description": "Native swap must contain exactly one source entry for the wrapped native token",
+      "action": "Encode the native leg as a single wrapped native token source with the NATIVE transfer method."
+    },
+    "UnsupportedPermit2Method(uint8)": {
+      "description": "Unknown Permit2 transfer type",
+      "action": "Use SINGLE_TRANSFER or BATCH_TRANSFER for the Permit2 method data."
+    },
+    "InvalidAggregator(bytes32)": {
+      "description": "Router key is not whitelisted on the Swapper",
+      "action": "Use one of the supported router keys for this chain."
+    },
+    "InsufficientAmountReceived(address,uint256,uint256)": {
+      "description": "Swap returned less than the minimum destination amount",
+      "action": "Fetch fresh swap data or raise the slippage tolerance and retry."
+    },
+    "AmountsAfterPermit2TransferMismatch(address,uint256,uint256)": {
+      "description": "Permit2 transferred a different token amount than the swap specified",
+      "action": "Make the Permit2 signature cover exactly the source token amounts in the swap data."
     }
   }
 }

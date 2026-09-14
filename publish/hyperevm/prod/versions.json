@@ -23,6 +23,16 @@
           "oracleAddress": "0xa5a72eF19F82A579431186402425593a559ed352"
         },
         {
+          "assetName": "Hyperliquid Perps Account",
+          "assetAddress": "0x3333333333333333333333333333333333333333",
+          "assetType": "39",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+        },
+        {
           "assetName": "XAUT0",
           "assetAddress": "0xf4d9235269a96aadafc9adae454a0618ebe37949",
           "assetType": "40",
@@ -31,7 +41,7 @@
             "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x6441c387cbcc5C3e7ecE9952906F8Bc2947ebB1D"
+          "oracleAddress": "0x626a390FdA6cb505f5fBf57CeE141F822EF762bc"
         },
         {
           "assetName": "UBTC",
@@ -42,7 +52,7 @@
             "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x980F5Ba8408DDF76e6A7E87E1721203F864E5300"
+          "oracleAddress": "0xa670Fe17a4e7B1D7aD80d65E67884Bc4E220ba45"
         },
         {
           "assetName": "UETH",
@@ -53,7 +63,7 @@
             "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x2B154e3DA8BC9D1689F12E580e03bAd4F8C9A7eF"
+          "oracleAddress": "0x9304E8329090BF0f7Cf7dCF6E78020B9fb9ae5e7"
         },
         {
           "assetName": "USOL",
@@ -64,7 +74,7 @@
             "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x042c6bff00759002831905917Fe214d1ED6ab49D"
+          "oracleAddress": "0xB29aaD90CAe77a35293A61c8ED464cdD373381d9"
         },
         {
           "assetName": "HYPE",
@@ -75,17 +85,29 @@
             "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x85F60cE2105323B60956458e6a607E30a4005945"
+          "oracleAddress": "0xB06605849b9827512205278634DD29316d3e975F"
         },
         {
-          "assetName": "Hyperliquid Perps Account",
-          "assetAddress": "0x3333333333333333333333333333333333333333",
-          "assetType": "39",
+          "assetName": "UZEC",
+          "assetAddress": "0x20000000000000000000000000000000000001a3",
+          "assetType": "40",
           "specificOracleConfig": {
-            "chainlinkOracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "spotIndex": 272,
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
           },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+          "oracleType": "HyperliquidSpotPriceAggregator",
+          "oracleAddress": "0x3562202bc04F6A51E7F25719f2fE6f67C91Fc048"
+        },
+        {
+          "assetName": "UPUMP",
+          "assetAddress": "0x27ec642013bcb3d80ca3706599d3cda04f6f4452",
+          "assetType": "40",
+          "specificOracleConfig": {
+            "spotIndex": 188,
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+          },
+          "oracleType": "HyperliquidSpotPriceAggregator",
+          "oracleAddress": "0xF3BCb05975b6e8A1c97FA0A10aF704dDa059CB50"
         }
       ],
       "USDPriceAggregator": "0x14EB3ab377265cfaEA63386355A556C2e044A9C2",
@@ -104,27 +126,30 @@
       "ReferralManagerProxy": "0x96D461C73a7Dc6931fcC48Cb4EFEbD2cdE6B8918",
       "ReferralManager": "0xFd66443af088A1E849e697e0b9FFd4d00aE03c3B",
       "WithdrawalVaultProxy": "0x08C2bFC0DaB916040db24fDAd8F77e1947b99597",
-      "WithdrawalVault": "0x3d51064e002e3D0cF2974DAB2e705e6aD24B6B50",
+      "WithdrawalVault": "0x2cc1aB4F57aA50525B51eb964aDf64eA5e6692A5",
       "EasySwapperV2Proxy": "0x47065E508433E22d73Be3c5B61EB9abafD450364",
-      "EasySwapperV2": "0x3C0D1CD8fF66Ed9B9b3336692f2474F0E0E0b513",
+      "EasySwapperV2": "0x9686f6Ce4AA4CCD0446453FFE2a97eEe9e331656",
       "KyberSwapRouterV2ContractGuard": "0x41276b2144ac99Fff3CCBb924934576ADB92f579",
-      "HyperliquidPositionGuard": "0xfA1e4e067a565241417Ea6daAa9daA1F117eB211",
-      "HyperliquidSpotGuard": "0x894fe625195C199f8eeF6b61A394de8E734F41eD",
+      "HyperliquidPositionGuard": "0x9C0283D4A3782549879Ec6EB45bED1efc2e6EeA1",
+      "HyperliquidSpotGuard": "0x62Cb27b5e8DCE5B008D1FBB2855Bd34b4CbA9d62",
       "HyperliquidCoreWriterContractGuardProxy": "0x69bAd630798814588Ed024F9DFf3Aac1bC3533D2",
-      "HyperliquidCoreWriterContractGuard": "0xb1fE7E7c1320aC9D61B9452B72551B02cE45873d",
-      "HyperliquidCoreDepositWalletContractGuard": "0x7CD4c9562bf73544F78bd0d3D0162Ac7F4041153",
-      "HyperliquidERC20Guard": "0x43abaC2f2f4Ad3C851a3914Df6c56F5e5E37D56A",
+      "HyperliquidCoreWriterContractGuard": "0x4A6B8076F143266f2Fe41Df138c80006fBD2566D",
+      "HyperliquidCoreDepositWalletContractGuard": "0x5a14c3A5e2176593B1A74048B44c45D317dB4fb6",
+      "HyperliquidERC20Guard": "0xdAf333e3B2E7Da8b11499C8e136DB431e7dEF498",
       "PoolLimitOrderManagerProxy": "0x6b696eA2602068a7043C92961B5F202a65A3eF9C",
       "PoolLimitOrderManager": "0x6660324DBd2333B2b22d368FCc6D9de1580EC2cA",
       "AcrossContractGuard": "0x43804F6a5fF927446C1b4EfcE86601Bb3c71EEe2",
       "HyperliquidWithdrawalManagerProxy": "0xE63275a043c60DbdD7fF6315208de553F4127c5c",
-      "HyperliquidWithdrawalManager": "0x54331931B510D38723586C1Bc887136f435F845c"
+      "HyperliquidWithdrawalManager": "0x54331931B510D38723586C1Bc887136f435F845c",
+      "DytmWithdrawLib": "0xD66D5909bB36c7Ef9B0840c84ba4E3cAB8c0e070",
+      "SwapperProxy": "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+      "Swapper": "0x79674Ba8d036e9A0FB290d173749f9C2126474b3"
     },
     "network": {
       "chainId": 999,
       "name": "unknown"
     },
-    "lastUpdated": "Thu, 23 Jul 2026 12:17:11 GMT",
+    "lastUpdated": "Sun, 13 Sep 2026 13:22:35 GMT",
     "config": {
       "hyperliquidCoreWriterGuard": {
         "approvedPerps": [
@@ -189,8 +214,18 @@
             "approved": true
           },
           {
+            "perpName": "APT",
+            "assetId": 27,
+            "approved": true
+          },
+          {
             "perpName": "AAVE",
             "assetId": 28,
+            "approved": true
+          },
+          {
+            "perpName": "WLD",
+            "assetId": 31,
             "approved": true
           },
           {
@@ -209,8 +244,28 @@
             "approved": true
           },
           {
+            "perpName": "DOT",
+            "assetId": 48,
+            "approved": true
+          },
+          {
             "perpName": "ADA",
             "assetId": 65,
+            "approved": true
+          },
+          {
+            "perpName": "NEAR",
+            "assetId": 74,
+            "approved": true
+          },
+          {
+            "perpName": "ONDO",
+            "assetId": 106,
+            "approved": true
+          },
+          {
+            "perpName": "TAO",
+            "assetId": 116,
             "approved": true
           },
           {
@@ -271,11 +326,6 @@
           {
             "perpName": "XMR",
             "assetId": 224,
-            "approved": true
-          },
-          {
-            "perpName": "DASH",
-            "assetId": 226,
             "approved": true
           },
           {

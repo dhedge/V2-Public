@@ -3,9 +3,6 @@
 pragma solidity >=0.7.6 <0.9.0;
 pragma abicoder v2;
 
-import {Test} from "forge-std/Test.sol";
-
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
 
@@ -22,12 +19,11 @@ import {EasySwapperV2} from "contracts/swappers/easySwapperV2/EasySwapperV2.sol"
 import {WithdrawalVault} from "contracts/swappers/easySwapperV2/WithdrawalVault.sol";
 import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
-import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
-import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
+import {PoolTestHelpers} from "test/integration/utils/foundry/PoolTestHelpers.t.sol";
 
-abstract contract BackboneSetup is Test, AssetTypes {
+abstract contract BackboneSetup is PoolTestHelpers, AssetTypes {
   address public owner = makeAddr("owner");
   address public dao = makeAddr("dao");
   address public manager = makeAddr("manager");
@@ -75,7 +71,7 @@ abstract contract BackboneSetup is Test, AssetTypes {
 
     assetHandlerProxy = AssetHandler(address(new TransparentUpgradeableProxy(assetHandler, proxyAdmin, "")));
     poolFactoryProxy = PoolFactory(address(new TransparentUpgradeableProxy(poolFactory, proxyAdmin, "")));
-    slippageAccumulator = new SlippageAccumulator(address(poolFactoryProxy), 21600, 5e4); // 6 hours, 5%
+    slippageAccumulator = new SlippageAccumulator(address(poolFactoryProxy), 86400, 10e4); // 24 hours, 10% (prod values)
     nftTrackerStorageProxy = DhedgeNftTrackerStorage(
       address(new TransparentUpgradeableProxy(nftTrackerStorage, proxyAdmin, ""))
     );
@@ -117,28 +113,6 @@ abstract contract BackboneSetup is Test, AssetTypes {
     vm.label(address(slippageAccumulator), "SlippageAccumulator");
     vm.label(address(easySwapperV2Proxy), "EasySwapperV2");
 
-    vm.stopPrank();
-  }
-
-  function _getEmptyPoolComplexAssetsData(
-    address _pool
-  ) internal view returns (IPoolLogic.ComplexAsset[] memory complexAssetsData) {
-    complexAssetsData = new IPoolLogic.ComplexAsset[](
-      IHasSupportedAsset(IPoolLogic(_pool).poolManagerLogic()).getSupportedAssets().length
-    );
-  }
-
-  function _makeDeposit(
-    PoolLogic _pool,
-    address _depositor,
-    address _token,
-    uint256 _amount
-  ) internal returns (uint256 liquidityMinted) {
-    deal(_token, _depositor, _amount);
-
-    vm.startPrank(_depositor);
-    IERC20(_token).approve(address(_pool), _amount);
-    liquidityMinted = _pool.deposit(_token, _amount);
     vm.stopPrank();
   }
 }

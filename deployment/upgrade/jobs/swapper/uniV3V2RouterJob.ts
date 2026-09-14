@@ -9,6 +9,8 @@ export const uniV3V2RouterJob: IJob<void> = async (
   _filenames: IFileNames,
   addresses: IAddresses,
 ) => {
+  if (!addresses.uniV3) return console.warn("uniV3 config not set for uniV3V2RouterJob: skipping.");
+
   const ethers = hre.ethers;
 
   console.log("Will deploy DhedgeUniV3V2Router");

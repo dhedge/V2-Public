@@ -9,6 +9,7 @@ import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
+import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 
 /// @notice Interface for ReferralManager (0.8.28 contract) to use in 0.7.6 tests
@@ -46,6 +47,15 @@ abstract contract ReferralSystemTestSetup is BackboneSetup {
 
   function setUp() public virtual override {
     super.setUp();
+
+    // Price USDC at exactly $1 so the referral-fee splits land on the round numbers these tests
+    // assert; the live feed is a few hundredths off, and this suite must not lean on a sibling
+    // setup mocking the feed for it.
+    vm.mockCall(
+      usdcData.aggregator,
+      abi.encodeWithSelector(IAggregatorV3Interface.latestRoundData.selector),
+      abi.encode(0, int256(1e8), 0, type(uint128).max, 0)
+    );
 
     vm.startPrank(owner);
 

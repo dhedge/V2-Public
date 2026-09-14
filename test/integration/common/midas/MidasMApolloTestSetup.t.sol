@@ -18,6 +18,9 @@ import {MidasRedemptionVaultContractGuard} from "contracts/guards/contractGuards
 import {PoolsWhitelist} from "contracts/utils/PoolsWhitelist.sol";
 import {MidasMTokenAssetGuard} from "contracts/guards/assetGuards/midas/MidasMTokenAssetGuard.sol";
 import {MidasPendingRedemptionAssetGuard} from "contracts/guards/assetGuards/midas/MidasPendingRedemptionAssetGuard.sol";
+import {IWithdrawalVault} from "contracts/swappers/easySwapperV2/interfaces/IWithdrawalVault.sol";
+import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
+import {IERC20 as IERC20Local} from "contracts/interfaces/IERC20.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 
 /// @notice Shared fork setup + test suite for the Midas mAPOLLO integration.
@@ -328,6 +331,15 @@ abstract contract MidasMApolloTestSetup is BackboneSetup {
     require(ok, "withdrawToken failed");
   }
 
+  function _trackedBalanceOf(
+    IWithdrawalVault.TrackedAsset[] memory _trackedAssets,
+    address _token
+  ) internal pure returns (uint256 balance) {
+    for (uint256 i; i < _trackedAssets.length; ++i) {
+      if (_trackedAssets[i].token == _token) return _trackedAssets[i].balance;
+    }
+  }
+
   function _mApolloBalance() internal view returns (uint256) {
     return IERC20(MAPOLLO).balanceOf(address(testPool));
   }
@@ -533,18 +545,19 @@ abstract contract MidasMApolloTestSetup is BackboneSetup {
     // Force the vault's simple (self-liquidity) instant-redeem branch.
     deal(usdcData.asset, REDEMPTION_VAULT, 1_000_000e6);
 
-    // Inflate ONLY dHEDGE's mAPOLLO valuation by 10% (mock our wrapper, not the Midas feed —
-    // Midas reads its own data feed and keeps executing at the real NAV).
+    // Inflate ONLY dHEDGE's mAPOLLO valuation by 25% (mock our wrapper, not the Midas feed —
+    // Midas reads its own data feed and keeps executing at the real NAV). 25% inflation => a 20%
+    // realized slippage (25/125), comfortably above the 10% cumulative cap.
     (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = (
       IAggregatorV3Interface(midasPriceAggregator).latestRoundData()
     );
     vm.mockCall(
       midasPriceAggregator,
       abi.encodeWithSelector(IAggregatorV3Interface.latestRoundData.selector),
-      abi.encode(roundId, (answer * 110) / 100, startedAt, updatedAt, answeredInRound)
+      abi.encode(roundId, (answer * 125) / 100, startedAt, updatedAt, answeredInRound)
     );
 
-    // Midas pays ~10% less than dHEDGE's inflated valuation of the mAPOLLO sold -> over the cap.
+    // Midas pays ~20% less than dHEDGE's inflated valuation of the mAPOLLO sold -> over the cap.
     bytes memory data = abi.encodeWithSelector(IMidasRedemptionVault.redeemInstant.selector, usdcData.asset, mBal, 0);
     vm.prank(manager);
     vm.expectRevert("slippage impact exceeded");
@@ -1205,5 +1218,119 @@ abstract contract MidasMApolloTestSetup is BackboneSetup {
     _managerRemoveAsset(MAPOLLO);
 
     assertFalse(fundManagerLogic.isSupportedAsset(MAPOLLO), "mAPOLLO removed");
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // EasySwapperV2 withdrawal (claim-only: the mToken cannot be swapped)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /// @notice Two-step EasySwapperV2 withdrawal: `initWithdrawal` pays the mAPOLLO leg in-kind into
+  ///         the WithdrawalVault, which tracks it; the no-swap `completeWithdrawal()` then claims
+  ///         every tracked leg to the depositor. (The swap-based variant is not applicable —
+  ///         mAPOLLO has no secondary-market liquidity for the swapper to unroll.)
+  function test_easyswapper_initWithdrawal_tracks_mapollo_and_claim_pays_in_kind() public {
+    _managerDepositInstant(BUY_AMOUNT, _minMTokenOut(BUY_AMOUNT));
+    uint256 free = _mApolloBalance();
+    uint256 usdcPool = _usdcBalance();
+
+    skip(testPool.getExitRemainingCooldown(manager) + 1);
+
+    uint256 shares = _balanceOfPool(manager) / 2;
+    uint256 portion = (shares * 1e18) / testPool.totalSupply();
+
+    vm.startPrank(manager);
+    IERC20(address(testPool)).approve(address(easySwapperV2Proxy), shares);
+    (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) = easySwapperV2Proxy.initWithdrawal(
+      address(testPool),
+      shares,
+      _getEmptyPoolComplexAssetsData(address(testPool))
+    );
+
+    // The vault holds and tracks both legs: the in-kind mAPOLLO and the USDC share.
+    uint256 expectedMToken = (free * portion) / 1e18;
+    assertEq(IERC20(MAPOLLO).balanceOf(vault), expectedMToken, "mAPOLLO portion in vault");
+    assertEq(_trackedBalanceOf(trackedAssets, MAPOLLO), expectedMToken, "mAPOLLO tracked");
+    assertEq(_trackedBalanceOf(trackedAssets, usdcData.asset), (usdcPool * portion) / 1e18, "USDC tracked");
+
+    uint256 mBefore = IERC20(MAPOLLO).balanceOf(manager);
+    uint256 usdcBefore = IERC20(usdcData.asset).balanceOf(manager);
+    easySwapperV2Proxy.completeWithdrawal();
+    vm.stopPrank();
+
+    assertEq(IERC20(MAPOLLO).balanceOf(manager) - mBefore, expectedMToken, "mAPOLLO claimed in-kind");
+    assertEq(IERC20(usdcData.asset).balanceOf(manager) - usdcBefore, (usdcPool * portion) / 1e18, "USDC claimed");
+    assertEq(IERC20(MAPOLLO).balanceOf(vault), 0, "vault emptied of mAPOLLO");
+  }
+
+  /// @notice While an async redemption is pending, the EasySwapperV2 withdrawal nets the full
+  ///         entitlement `portion * (free + pending)` in mAPOLLO — the pending leg (type 43) is
+  ///         paid out of the pool's free balance into the WithdrawalVault, tracked via the mToken's
+  ///         own entry (type 42), and claimed without a swap. The claim stays with the pool.
+  function test_easyswapper_withdrawal_while_pending_claims_fair_mtoken_share() public {
+    _managerDepositInstant(BUY_AMOUNT, _minMTokenOut(BUY_AMOUNT));
+    uint256 pendingAmt = _mApolloBalance() / 2;
+    _managerRedeemRequest(pendingAmt);
+    uint256 free = _mApolloBalance();
+
+    skip(testPool.getExitRemainingCooldown(manager) + 1);
+
+    uint256 shares = _balanceOfPool(manager) / 4;
+    uint256 portion = (shares * 1e18) / testPool.totalSupply();
+
+    vm.startPrank(manager);
+    IERC20(address(testPool)).approve(address(easySwapperV2Proxy), shares);
+    easySwapperV2Proxy.initWithdrawal(address(testPool), shares, _getEmptyPoolComplexAssetsData(address(testPool)));
+
+    uint256 mBefore = IERC20(MAPOLLO).balanceOf(manager);
+    easySwapperV2Proxy.completeWithdrawal();
+    vm.stopPrank();
+
+    assertApproxEqRel(
+      IERC20(MAPOLLO).balanceOf(manager) - mBefore,
+      ((free + pendingAmt) * portion) / 1e18,
+      1e12,
+      "fair mAPOLLO share claimed"
+    );
+    assertEq(pendingGuard.getBalance(address(testPool), REDEMPTION_VAULT), pendingAmt, "claim stays with the pool");
+  }
+
+  /// @notice Hard stop: the swap-based `completeWithdrawal` refuses to route the mToken through the
+  ///         swapper, even if a frontend supplies swap data that found a route through some thin
+  ///         pool. The mToken stays tracked and claimable via the no-swap `completeWithdrawal()`.
+  function test_revert_easyswapper_swap_completeWithdrawal_with_mapollo_src() public {
+    _managerDepositInstant(BUY_AMOUNT, _minMTokenOut(BUY_AMOUNT));
+
+    skip(testPool.getExitRemainingCooldown(manager) + 1);
+
+    uint256 shares = _balanceOfPool(manager) / 2;
+
+    vm.startPrank(manager);
+    IERC20(address(testPool)).approve(address(easySwapperV2Proxy), shares);
+    (, address vault) = easySwapperV2Proxy.initWithdrawal(
+      address(testPool),
+      shares,
+      _getEmptyPoolComplexAssetsData(address(testPool))
+    );
+
+    // Swap data listing the tracked mAPOLLO as a source token; router payload is irrelevant —
+    // the vault must reject the source before ever reaching the swapper.
+    IWithdrawalVault.MultiInSingleOutData memory swapData;
+    swapData.srcData = new ISwapper.SrcTokenSwapDetails[](1);
+    swapData.srcData[0] = ISwapper.SrcTokenSwapDetails({
+      token: IERC20Local(MAPOLLO),
+      amount: IERC20(MAPOLLO).balanceOf(vault),
+      aggregatorData: ISwapper.AggregatorData({routerKey: bytes32(0), swapData: ""})
+    });
+    swapData.destData = ISwapper.DestData({destToken: IERC20Local(usdcData.asset), minDestAmount: 0});
+
+    vm.expectRevert("src token not swappable");
+    easySwapperV2Proxy.completeWithdrawal(swapData, 0);
+
+    // The rejected mToken is still claimable in-kind.
+    uint256 mBefore = IERC20(MAPOLLO).balanceOf(manager);
+    easySwapperV2Proxy.completeWithdrawal();
+    vm.stopPrank();
+
+    assertGt(IERC20(MAPOLLO).balanceOf(manager) - mBefore, 0, "mAPOLLO still claimable in-kind");
   }
 }

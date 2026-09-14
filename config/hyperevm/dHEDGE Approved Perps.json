@@ -60,8 +60,18 @@
     "approved": true
   },
   {
+    "perpName": "APT",
+    "assetId": 27,
+    "approved": true
+  },
+  {
     "perpName": "AAVE",
     "assetId": 28,
+    "approved": true
+  },
+  {
+    "perpName": "WLD",
+    "assetId": 31,
     "approved": true
   },
   {
@@ -80,8 +90,28 @@
     "approved": true
   },
   {
+    "perpName": "DOT",
+    "assetId": 48,
+    "approved": true
+  },
+  {
     "perpName": "ADA",
     "assetId": 65,
+    "approved": true
+  },
+  {
+    "perpName": "NEAR",
+    "assetId": 74,
+    "approved": true
+  },
+  {
+    "perpName": "ONDO",
+    "assetId": 106,
+    "approved": true
+  },
+  {
+    "perpName": "TAO",
+    "assetId": 116,
     "approved": true
   },
   {
@@ -142,11 +172,6 @@
   {
     "perpName": "XMR",
     "assetId": 224,
-    "approved": true
-  },
-  {
-    "perpName": "DASH",
-    "assetId": 226,
     "approved": true
   },
   {

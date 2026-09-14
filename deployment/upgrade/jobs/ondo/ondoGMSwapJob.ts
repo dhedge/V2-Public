@@ -12,7 +12,7 @@ export const ondoGMSwapJob: IJob<void> = async (
   addresses: IAddresses,
 ) => {
   if (!addresses.ondo?.gmTokenManager) return console.warn("ondo.gmTokenManager not configured... skipping.");
-  if (!addresses.assets.usdc) return console.warn("assets.usdc not configured... skipping.");
+  if (!addresses.assets?.usdc) return console.warn("assets.usdc not configured... skipping.");
 
   const { gmTokenManager } = addresses.ondo;
   const { usdc } = addresses.assets;

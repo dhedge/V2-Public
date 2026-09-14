@@ -1,10 +1,8 @@
-import { ethereumChainData } from "../../config/chainData/ethereumData";
-import { hyperevmChainData } from "../../config/chainData/hyperevmData";
 import { IAddresses, IFileNames } from "../types";
 
 const protocolDaoAddress = "0x4A83129Ce9C8865EF3f91Fc87130dA25b64F9100";
 
-const TOROS_VAULTS = {
+const torosPools = {
   SP500BULL2X: "0xb360401bAeBE769aAEDF0212cb1ad6Fd8430A282",
   NVDABULL2X: "0xc722466CFc5bc7E7cc6e01A984621900376c5FfF",
   NVDABULL3X: "0x46F34e200Aa5a1a220B74E5d28665CC3CFCC739a",
@@ -17,8 +15,14 @@ const TOROS_VAULTS = {
   NDXBULL3X: "0xBDb2a2641d8E291437e244c08e4433A13796E8dE",
 };
 
-const assets = {
+export const assets = {
   usdc: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+};
+
+export const ondoHyperliquidMarketMaking = {
+  hyperApiWalletVault: "0x18E21a883458D40531d95A19FeE31e7EEa1EA490", // Hyperliquid <-> Ondo — https://chamberfi.com/vault/0x18E21a883458D40531d95A19FeE31e7EEa1EA490
+  hyperApiWalletVault2: "0x451F56E01e910A8DDFdc96dBF271182769Badd93", // Hyperliquid <-> Ondo 2 — https://chamberfi.com/vault/0x451F56E01e910A8DDFdc96dBF271182769Badd93
+  hyperApiWalletVault3: "0x6174b342b332E50c787e3AC957B695D9C79D48F1", // Hyperliquid <-> Ondo 3 — https://chamberfi.com/vault/0x6174b342b332E50c787e3AC957B695D9C79D48F1
 };
 
 export const hyperevmProdData: IAddresses = {
@@ -29,11 +33,10 @@ export const hyperevmProdData: IAddresses = {
   hyperliquid: {
     admin: protocolDaoAddress,
     maxSlippage: "30000000000000000", // 3% max slippage for all trades (0.03e18)
-    whitelistedVaults: [],
     apiWalletEnabledPools: [
-      hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault,
-      hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault2,
-      hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault3,
+      ondoHyperliquidMarketMaking.hyperApiWalletVault,
+      ondoHyperliquidMarketMaking.hyperApiWalletVault2,
+      ondoHyperliquidMarketMaking.hyperApiWalletVault3,
     ],
   },
 
@@ -47,16 +50,16 @@ export const hyperevmProdData: IAddresses = {
 
   easySwapperV2: {
     customCooldownDepositsWhitelist: [
-      TOROS_VAULTS.SP500BULL2X,
-      TOROS_VAULTS.NVDABULL2X,
-      TOROS_VAULTS.NVDABULL3X,
-      TOROS_VAULTS.SP500BULL3X,
-      TOROS_VAULTS.GOLDBULL3X,
-      TOROS_VAULTS.GOLDBULL2X,
-      TOROS_VAULTS.SLVBULL2X,
-      TOROS_VAULTS.SLVBULL3X,
-      TOROS_VAULTS.NDXBULL2X,
-      TOROS_VAULTS.NDXBULL3X,
+      torosPools.SP500BULL2X,
+      torosPools.NVDABULL2X,
+      torosPools.NVDABULL3X,
+      torosPools.SP500BULL3X,
+      torosPools.GOLDBULL3X,
+      torosPools.GOLDBULL2X,
+      torosPools.SLVBULL2X,
+      torosPools.SLVBULL3X,
+      torosPools.NDXBULL2X,
+      torosPools.NDXBULL3X,
     ],
   },
 
@@ -81,29 +84,6 @@ export const hyperevmProdData: IAddresses = {
   },
   across: {
     spokePool: "0x35E63eA3eb0fb7A3bc543C71FB66412e1F6B0E04", // Across SpokePool on HyperEVM
-    approvedDestinations: [
-      {
-        sourcePool: hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault,
-        sourceToken: hyperevmChainData.assets.usdc,
-        destinationChainId: 1, // Ethereum
-        destinationPool: ethereumChainData.ondoHyperliquidMarketMaking.ondoVault,
-        destinationToken: ethereumChainData.assets.usdc,
-      },
-      {
-        sourcePool: hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault2,
-        sourceToken: hyperevmChainData.assets.usdc,
-        destinationChainId: 1, // Ethereum
-        destinationPool: ethereumChainData.ondoHyperliquidMarketMaking.ondoVault2,
-        destinationToken: ethereumChainData.assets.usdc,
-      },
-      {
-        sourcePool: hyperevmChainData.ondoHyperliquidMarketMaking.hyperApiWalletVault3,
-        sourceToken: hyperevmChainData.assets.usdc,
-        destinationChainId: 1, // Ethereum
-        destinationPool: ethereumChainData.ondoHyperliquidMarketMaking.ondoVault3,
-        destinationToken: ethereumChainData.assets.usdc,
-      },
-    ],
   },
 } as const;
 

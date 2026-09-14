@@ -1055,19 +1055,11 @@ abstract contract DytmEasySwapperV2WithdrawalTestSetup is DytmDelegationCallTest
     // 4. Add PT as supported asset in the collateral vault
     address collateralPoolManager = PoolLogic(collateralAsset).poolManagerLogic();
     vm.prank(PoolManagerLogic(collateralPoolManager).manager());
-    PoolManagerLogic(collateralPoolManager).changeAssets(_singleSupportedAsset(pendlePT, false), new address[](0));
+    PoolManagerLogic(collateralPoolManager).changeAssets(_toSupportedAssets(pendlePT, false), new address[](0));
 
     // 5. Deal PT tokens into the collateral vault
     uint256 ptAmount = 1e18; // 1 PT token
     deal(pendlePT, collateralAsset, ptAmount);
-  }
-
-  function _singleSupportedAsset(
-    address _asset,
-    bool _isDeposit
-  ) internal pure returns (IHasSupportedAsset.Asset[] memory assets) {
-    assets = new IHasSupportedAsset.Asset[](1);
-    assets[0] = IHasSupportedAsset.Asset({asset: _asset, isDeposit: _isDeposit});
   }
 
   /// @dev Build the complex-assets withdraw payload for any DYTM pool position. `_buildPlanForPoolPosition`

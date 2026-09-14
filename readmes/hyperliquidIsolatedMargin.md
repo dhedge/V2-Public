@@ -4,8 +4,8 @@ Status: research / not implemented. Current integration supports cross-margin pe
 
 > **Update:** CoreWriter action 9 (register an API wallet / agent) is now whitelisted in
 > `HyperliquidCoreWriterContractGuard`, gated per-pool by the Factory Owner via the
-> `apiWalletEnabled` flag (`setApiWalletEnabled`, `onlyOwner`). The action also requires the pool to
-> be on `dHedgePoolsWhitelist`. The manager may register **any** agent address (no on-chain pinning).
+> `apiWalletEnabled` flag (`setApiWalletEnabled`, `onlyOwner`). The manager may register **any**
+> agent address (no on-chain pinning).
 >
 > This is intended for specialised **private** vaults where on-chain accounting accuracy is not
 > required: once the registered agent trades assets the valuation guards don't model, the pool's NAV

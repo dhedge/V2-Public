@@ -94,32 +94,6 @@
           "oracleAddress": "0x3727181ED49576bB5E00CC04C788E98C563Cc649"
         },
         {
-          "assetName": "Velodrome VARIABLE_WETH_USDC",
-          "assetAddress": "0x79c912FEF520be002c2B6e57EC4324e260f38E50",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x690783Db69FE92C8027cB010f02B124340a216a1"
-        },
-        {
-          "assetName": "Velodrome STABLE_USDC_DAI",
-          "assetAddress": "0x4F7ebc19844259386DBdDB7b2eB759eeFc6F8353",
-          "assetType": "15",
-          "oracleType": "VelodromeStableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x5b59A43b164089Efd6C62CD1716D30Ec25c55d1A"
-        },
-        {
           "assetName": "Velo Token",
           "assetAddress": "0x3c8B650257cFb5f272f799F5e2b4e65093a11a05",
           "assetType": "0",
@@ -131,176 +105,6 @@
             "pairTokenUsdAggregator": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
           },
           "oracleAddress": "0xC5E24F77F7da75Ef67610ae624f9edc0CCCC7816"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_OP_USDC",
-          "assetAddress": "0x47029bc8f5cbe3b464004e87ef9c9419a48018cd",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0xeBe7395D6D32feCc119249C0F9a453EC90d8163e"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_VELO_USDC",
-          "assetAddress": "0xe8537b6ff1039cb9ed0b71713f697ddbadbb717d",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard",
-            "extraContractGuard": "VelodromePairContractGuard"
-          },
-          "oracleAddress": "0x9882b5F45A427810F0212db128A27058EBA44381"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_USDC_SNX",
-          "assetAddress": "0x9056eb7ca982a5dd65a584189994e6a27318067d",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x2D7012Bf4e7f2Bb8f3E7383735407760ae65EEAA"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_WETH_OP",
-          "assetAddress": "0xcdd41009e74bd1ae4f7b2eecf892e4bc718b9302",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0xCD9EE1034d105F5a013805529CAf06D7117E92d4"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_VELO_OP",
-          "assetAddress": "0xffd74ef185989bff8752c818a53a47fc45388f08",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x7746333466c0d6c9099ff28590A9DEb3d52Bf0D0"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_WETH_SNX",
-          "assetAddress": "0xffb6c35960b23989037c8c391facebc8a17de970",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x9ed4e8C2B3256d1A896A6A6C771225B948191BeD"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_OP_DAI",
-          "assetAddress": "0x43c3f2d0aa0ebc433d654bb6ebf67f0c03f8d8d9",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x619c3902bd5285d961E37FF8Cd3f00306ae40708"
-        },
-        {
-          "assetName": "Velodrome STABLE_WSTETH_WETH",
-          "assetAddress": "0xBf205335De602ac38244F112d712ab04CB59A498",
-          "assetType": "15",
-          "oracleType": "VelodromeStableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x2a34D1FA6860E721E19B51Aa87fE62119b66DC6c"
-        },
-        {
-          "assetName": "Velodrome STABLE_USDC_LUSD",
-          "assetAddress": "0x207addb05c548f262219f6bfc6e11c02d0f7fdbe",
-          "assetType": "15",
-          "oracleType": "VelodromeStableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x46bb6DD6ff067cEe6FCa21aB607140b411E55e57"
-        },
-        {
-          "assetName": "Arrakis USDC-DAI",
-          "assetAddress": "0x87c7c885365700D157cd0f39a7803320fe86f0f5",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis WETH-DAI",
-          "assetAddress": "0x367f2dea1632ea767a5e968fefa4c0dd78dea853",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis WETH-USDC",
-          "assetAddress": "0xb8888ea29e2f70ad62a3b69b1a1342720612a00d",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Velodrome STABLE_USDC_alUSD",
-          "assetAddress": "0xe75a3f4bf99882ad9f8aebab2115873315425d00",
-          "assetType": "15",
-          "oracleType": "VelodromeStableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0xB26c905EBeE589bCD3365BA928a9d29C872AE4A3"
         },
         {
           "assetName": "Aave",
@@ -334,176 +138,6 @@
           "oracleAddress": "0xfF77c67a654D49eF81A4BD75AF69c7cc19e4C3D9"
         },
         {
-          "assetName": "Velodrome VARIABLE_OP_DHT",
-          "assetAddress": "0x827ecd158b76f63010e8f129b19fe64a85e97e95",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard",
-            "extraContractGuard": "VelodromePairContractGuard"
-          },
-          "oracleAddress": "0x0c48510396dA6d8661C3E18Fd73fB94b46a2DE08"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_WETH_rETH",
-          "assetAddress": "0x985612ff2c9409174fedcff23d4f4761af124f88",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x2387f224a48ADd4B7017febC12c493328b0F8fD7"
-        },
-        {
-          "assetName": "Velodrome STABLE_alETH_WETH",
-          "assetAddress": "0x6fd5bee1ddb4dbbb0b7368b080ab99b8ba765902",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0xe59C6bD081E370e776F7f4621eC57d8ad63131e5"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_WSTETH_USDC",
-          "assetAddress": "0x794299137282e5d3af56616624ab918d1b2becf3",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x66F50E06E1099aBA193B8e0f33751dC338694573"
-        },
-        {
-          "assetName": "Velodrome VARIABLE_OP_alUSD",
-          "assetAddress": "0x78fa29412998acedd7728b4cf5623ee5e2f8f589",
-          "assetType": "15",
-          "oracleType": "VelodromeVariableLPAggregator",
-          "specificOracleConfig": {
-            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
-          },
-          "specificContractGuardConfig": {
-            "contractGuard": "VelodromeGaugeContractGuard"
-          },
-          "oracleAddress": "0x81D0fAa774b3E70E7910cD4ceD7383bb4ED85215"
-        },
-        {
-          "assetName": "Arrakis wstETH-USDT",
-          "assetAddress": "0x62BdB9544A14DcD8804F7F2cc1479C82Fb36c2A6",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis wstETH-USDC",
-          "assetAddress": "0xdf50C6111f45132A1Db5Ec48Bdcd1E8E6c7ce65D",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis wstETH-WBTC",
-          "assetAddress": "0xE140E5deF72fdE807890d89EE4f987D316c25196",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis WETH-WBTC",
-          "assetAddress": "0x310b18dAa9d351062c6D2eC0F0411D327206b4C3",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis WETH-DAI (0.05% fee)",
-          "assetAddress": "0x57A2b0B2bB1E21FCb2DF358FC832ae3f9f535b48",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis WETH-USDC (RAKIS-33)",
-          "assetAddress": "0xD3A3FbaE792C4eD0aA909ec032d3f14c999b2402",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis USDC-USDT",
-          "assetAddress": "0x1B6a53991f257Ac9dD1D0C061c37E1BE36e0A8e6",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis wstETH-WETH",
-          "assetAddress": "0xe49d19C155a8658F5744Ed336F18B7c086979c34",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
           "assetName": "Wrapped Liquid Staked Ether Token",
           "assetAddress": "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb",
           "assetType": "4",
@@ -514,97 +148,6 @@
           "oracleAddress": "0x698B585CbC4407e2D54aa898B2600B53C68958f7"
         },
         {
-          "assetName": "Arrakis wstETH-WETH (0.01% fee)",
-          "assetAddress": "0xC36681303c7A41b045636aF915486b22214B6292",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis wstETH-WBTC (0.05% fee)",
-          "assetAddress": "0x7E232AEed14446d427579B4f77251552B065dF00",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis WETH-WBTC (0.05% fee)",
-          "assetAddress": "0x1535eC8C7477d38066326189f5b1C695c2846479",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis wstETH-USDC (0.05% fee)",
-          "assetAddress": "0x24C95f333755bbeDBaE14B461770c9ec3F6E9d0D",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis wstETH-USDT (0.05% fee)",
-          "assetAddress": "0xDedD02E7Da507Fe2aC09C509DA10B94483e80Aa5",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis WETH-USDC (0.01% fee)",
-          "assetAddress": "0x43667563725040fEBE9BF5164a38B7258105a210",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis USDC-DAI (0.01% fee)",
-          "assetAddress": "0x499B7CBd0f84318feE1edDeD7B5458f6F4500AB3",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
           "assetName": "Optimism",
           "assetAddress": "0x4200000000000000000000000000000000000042",
           "assetType": "4",
@@ -613,45 +156,6 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0x0D276FC14719f9292D5C1eA2198673d1f4269246"
-        },
-        {
-          "assetName": "Arrakis WETH/rETH (0.05% fee)",
-          "assetAddress": "0x8b24d44772A27030353bEe0f252844602AbbB0F1",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis wstETH/USDC (0.05% fee) 0x68F5",
-          "assetAddress": "0x68F51d2AEb485CA3A65A7Ff54e9266Dd5EA4C58B",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "Arrakis USDC/LUSD (0.05% fee)",
-          "assetAddress": "0x8D1C480Bca1439AE5D5A81a75D53f9Bf6eC513f1",
-          "assetType": "9",
-          "oracleType": "USDPriceAggregator",
-          "specificContractGuardConfig": {
-            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
-          },
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
         },
         {
           "assetName": "alETH",
@@ -1273,36 +777,6 @@
           "oracleAddress": "0xfaac8f807E7c3C1DF00fC61BFdB78e958525b10d"
         },
         {
-          "assetName": "Flat Money V2 Perp Market",
-          "assetAddress": "0x6D857e9D24a7566bB72a3FB0847A3E0e4E1c2879",
-          "assetType": "36",
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-          },
-          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
-        },
-        {
-          "assetName": "UNIT",
-          "assetAddress": "0x357CB23571EF7a3d6189b7FAcFC361eA71f7CAB5",
-          "assetType": "35",
-          "oracleType": "FlatMoneyUNITPriceAggregator",
-          "specificOracleConfig": {
-            "flatMoneyViewerAddress": "0x1F1A5f8c2d133b0c663cf85943B8E73ec143DB16"
-          },
-          "oracleAddress": "0x8e5a62e6A2b0D62dC2bde611f2EdB7B75464eaA6"
-        },
-        {
-          "assetName": "wBTC",
-          "assetAddress": "0x68f180fcce6836688e9084f035309e29bf0a2095",
-          "assetType": "22",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x718A5788b89454aAE3A028AE9c111A29Be6c2a6F"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0x718A5788b89454aAE3A028AE9c111A29Be6c2a6F"
-        },
-        {
           "assetName": "Velodrome Finance V2",
           "assetAddress": "0x9560e827af36c94d2ac33a39bce1fe78631088db",
           "assetType": "200",
@@ -1311,37 +785,36 @@
           },
           "oracleType": "ChainlinkAggregator",
           "oracleAddress": "0x0f2Ed59657e391746C1a097BDa98F2aBb94b1120"
+        },
+        {
+          "assetName": "wBTC",
+          "assetAddress": "0x68f180fcce6836688e9084f035309e29bf0a2095",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x718A5788b89454aAE3A028AE9c111A29Be6c2a6F"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x718A5788b89454aAE3A028AE9c111A29Be6c2a6F"
         }
       ],
       "ERC20Guard": "0x7389aF54F1a4A4f8DB681Af6710Be3F35E3a9E74",
-      "SynthetixERC20Guard": "0xF333Dcc032DD81dfC92495Acb8100BCf8b54385A",
       "SynthetixGuard": "0xEFEFCa1f7C5ac491d6fE720E6D6725255290D621",
       "Governance": "0xa9F912c1dB1b844fd96192Ac3B496E9d8F445bc9",
       "USDPriceAggregator": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7",
       "AssetHandlerProxy": "0xBEa170C49036d7917cdA7511B57cAfd41efEDC01",
       "AssetHandler": "0xe0cDf98E57F6B3AC7Fd33223f968e71429026741",
-      "PoolPerformanceProxy": "0x0896A33E351fb11f405d3E9c03f4D4Fc667894a8",
-      "PoolPerformance": "0x6DDFb6e2053E57c6F44B511E3f59F3F94936A9aA",
       "PoolManagerLogicProxy": "0x3621f9aAc18a42D2343270849611ea09aAea3e54",
       "PoolManagerLogic": "0x5Aac9E11d2DF3C24D1F2900b8698dec88244d960",
       "PoolLogicProxy": "0x809c11464878Db56Dfc4EA4dC8dE5BD1e1f8c1Cb",
       "PoolLogic": "0x50e8e2DB93b04827D7fDFeFb5037CC9485eDE388",
       "PoolFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
       "PoolFactory": "0xC25bf381B2580211eE48813cD7c2119D5B015b62",
-      "Oracles": [
-        {
-          "assetAddress": "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
-          "oracleAddress": "0x8624aeEcdE9D2F3a6F5d16097F705b2D81b052f2",
-          "oracleName": "susdUniV3TWAPAggregator"
-        }
-      ],
-      "UniswapV3AssetGuard": "0xA0736773645C2AFcD844cF6807E0F0F2A80885E7",
+      "UniswapV3AssetGuard": "0xFE712eB95870250E5D84B78ac5A75c05A986E3fA",
       "UniswapV3NonfungiblePositionGuard": "0x44d7aF6908447a1a0813FaB965d95AEf99BFB556",
       "UniswapV3RouterGuard": "0xcA05a7191C6bc68a91AcE114C89dB20485c5E579",
       "OneInchV4Guard": "0x8711fDA4252113F0D883e878C6A9DbAD76Cf7D4C",
       "LendingEnabledAssetGuard": "0xbD0663B0BBC79B8359Be0817DD156d61a15A51f6",
-      "SynthetixLendingEnabledAssetGuard": "0xEf4b78348eab4dfD776e1BFfe9C31Cbd76aD24d2",
-      "AaveLendingPoolAssetGuardV3": "0xBF85525368B1c6f67A5f17582620117bD4578aA1",
+      "AaveLendingPoolAssetGuardV3": "0xa7e2D9795b5f9d4fe5aeA804933E85A06D82fBb3",
       "AaveLendingPoolGuardV3": "0x19810194215869b649B606d03a218A2ab2cF7C61",
       "DhedgeUniV3V2Router": "0x645dc92aDF7632b433FAeCe370a74C378E7236f8",
       "DhedgeSuperSwapper": "0x64a9c356bc131eDF1430C24F47e9dC735Ed237Ef",
@@ -2625,6 +2098,522 @@
             "pairTokenUsdAggregator": "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"
           },
           "oracleAddress": "0xcD139d422824A79109890e95F7e9a389B5704Bfe"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_WETH_USDC",
+          "assetAddress": "0x79c912FEF520be002c2B6e57EC4324e260f38E50",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x690783Db69FE92C8027cB010f02B124340a216a1"
+        },
+        {
+          "assetName": "Velodrome STABLE_USDC_DAI",
+          "assetAddress": "0x4F7ebc19844259386DBdDB7b2eB759eeFc6F8353",
+          "assetType": "15",
+          "oracleType": "VelodromeStableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x5b59A43b164089Efd6C62CD1716D30Ec25c55d1A"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_OP_USDC",
+          "assetAddress": "0x47029bc8f5cbe3b464004e87ef9c9419a48018cd",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0xeBe7395D6D32feCc119249C0F9a453EC90d8163e"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_VELO_USDC",
+          "assetAddress": "0xe8537b6ff1039cb9ed0b71713f697ddbadbb717d",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard",
+            "extraContractGuard": "VelodromePairContractGuard"
+          },
+          "oracleAddress": "0x9882b5F45A427810F0212db128A27058EBA44381"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_USDC_SNX",
+          "assetAddress": "0x9056eb7ca982a5dd65a584189994e6a27318067d",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x2D7012Bf4e7f2Bb8f3E7383735407760ae65EEAA"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_WETH_OP",
+          "assetAddress": "0xcdd41009e74bd1ae4f7b2eecf892e4bc718b9302",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0xCD9EE1034d105F5a013805529CAf06D7117E92d4"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_VELO_OP",
+          "assetAddress": "0xffd74ef185989bff8752c818a53a47fc45388f08",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x7746333466c0d6c9099ff28590A9DEb3d52Bf0D0"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_WETH_SNX",
+          "assetAddress": "0xffb6c35960b23989037c8c391facebc8a17de970",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x9ed4e8C2B3256d1A896A6A6C771225B948191BeD"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_OP_DAI",
+          "assetAddress": "0x43c3f2d0aa0ebc433d654bb6ebf67f0c03f8d8d9",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x619c3902bd5285d961E37FF8Cd3f00306ae40708"
+        },
+        {
+          "assetName": "Velodrome STABLE_WSTETH_WETH",
+          "assetAddress": "0xBf205335De602ac38244F112d712ab04CB59A498",
+          "assetType": "15",
+          "oracleType": "VelodromeStableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x2a34D1FA6860E721E19B51Aa87fE62119b66DC6c"
+        },
+        {
+          "assetName": "Velodrome STABLE_USDC_LUSD",
+          "assetAddress": "0x207addb05c548f262219f6bfc6e11c02d0f7fdbe",
+          "assetType": "15",
+          "oracleType": "VelodromeStableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x46bb6DD6ff067cEe6FCa21aB607140b411E55e57"
+        },
+        {
+          "assetName": "Arrakis USDC-DAI",
+          "assetAddress": "0x87c7c885365700D157cd0f39a7803320fe86f0f5",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH-DAI",
+          "assetAddress": "0x367f2dea1632ea767a5e968fefa4c0dd78dea853",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH-USDC",
+          "assetAddress": "0xb8888ea29e2f70ad62a3b69b1a1342720612a00d",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Velodrome STABLE_USDC_alUSD",
+          "assetAddress": "0xe75a3f4bf99882ad9f8aebab2115873315425d00",
+          "assetType": "15",
+          "oracleType": "VelodromeStableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0xB26c905EBeE589bCD3365BA928a9d29C872AE4A3"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_OP_DHT",
+          "assetAddress": "0x827ecd158b76f63010e8f129b19fe64a85e97e95",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard",
+            "extraContractGuard": "VelodromePairContractGuard"
+          },
+          "oracleAddress": "0x0c48510396dA6d8661C3E18Fd73fB94b46a2DE08"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_WETH_rETH",
+          "assetAddress": "0x985612ff2c9409174fedcff23d4f4761af124f88",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x2387f224a48ADd4B7017febC12c493328b0F8fD7"
+        },
+        {
+          "assetName": "Velodrome STABLE_alETH_WETH",
+          "assetAddress": "0x6fd5bee1ddb4dbbb0b7368b080ab99b8ba765902",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0xe59C6bD081E370e776F7f4621eC57d8ad63131e5"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_WSTETH_USDC",
+          "assetAddress": "0x794299137282e5d3af56616624ab918d1b2becf3",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x66F50E06E1099aBA193B8e0f33751dC338694573"
+        },
+        {
+          "assetName": "Velodrome VARIABLE_OP_alUSD",
+          "assetAddress": "0x78fa29412998acedd7728b4cf5623ee5e2f8f589",
+          "assetType": "15",
+          "oracleType": "VelodromeVariableLPAggregator",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6"
+          },
+          "specificContractGuardConfig": {
+            "contractGuard": "VelodromeGaugeContractGuard"
+          },
+          "oracleAddress": "0x81D0fAa774b3E70E7910cD4ceD7383bb4ED85215"
+        },
+        {
+          "assetName": "Arrakis wstETH-USDT",
+          "assetAddress": "0x62BdB9544A14DcD8804F7F2cc1479C82Fb36c2A6",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH-USDC",
+          "assetAddress": "0xdf50C6111f45132A1Db5Ec48Bdcd1E8E6c7ce65D",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH-WBTC",
+          "assetAddress": "0xE140E5deF72fdE807890d89EE4f987D316c25196",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH-WBTC",
+          "assetAddress": "0x310b18dAa9d351062c6D2eC0F0411D327206b4C3",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH-DAI (0.05% fee)",
+          "assetAddress": "0x57A2b0B2bB1E21FCb2DF358FC832ae3f9f535b48",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH-USDC (RAKIS-33)",
+          "assetAddress": "0xD3A3FbaE792C4eD0aA909ec032d3f14c999b2402",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis USDC-USDT",
+          "assetAddress": "0x1B6a53991f257Ac9dD1D0C061c37E1BE36e0A8e6",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH-WETH",
+          "assetAddress": "0xe49d19C155a8658F5744Ed336F18B7c086979c34",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH-WETH (0.01% fee)",
+          "assetAddress": "0xC36681303c7A41b045636aF915486b22214B6292",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH-WBTC (0.05% fee)",
+          "assetAddress": "0x7E232AEed14446d427579B4f77251552B065dF00",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH-WBTC (0.05% fee)",
+          "assetAddress": "0x1535eC8C7477d38066326189f5b1C695c2846479",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH-USDC (0.05% fee)",
+          "assetAddress": "0x24C95f333755bbeDBaE14B461770c9ec3F6E9d0D",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH-USDT (0.05% fee)",
+          "assetAddress": "0xDedD02E7Da507Fe2aC09C509DA10B94483e80Aa5",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH-USDC (0.01% fee)",
+          "assetAddress": "0x43667563725040fEBE9BF5164a38B7258105a210",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis USDC-DAI (0.01% fee)",
+          "assetAddress": "0x499B7CBd0f84318feE1edDeD7B5458f6F4500AB3",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis WETH/rETH (0.05% fee)",
+          "assetAddress": "0x8b24d44772A27030353bEe0f252844602AbbB0F1",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis wstETH/USDC (0.05% fee) 0x68F5",
+          "assetAddress": "0x68F51d2AEb485CA3A65A7Ff54e9266Dd5EA4C58B",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Arrakis USDC/LUSD (0.05% fee)",
+          "assetAddress": "0x8D1C480Bca1439AE5D5A81a75D53f9Bf6eC513f1",
+          "assetType": "9",
+          "oracleType": "USDPriceAggregator",
+          "specificContractGuardConfig": {
+            "contractGuard": "ArrakisLiquidityGaugeV4ContractGuard"
+          },
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "Flat Money V2 Perp Market",
+          "assetAddress": "0x6D857e9D24a7566bB72a3FB0847A3E0e4E1c2879",
+          "assetType": "36",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+          },
+          "oracleAddress": "0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7"
+        },
+        {
+          "assetName": "UNIT",
+          "assetAddress": "0x357CB23571EF7a3d6189b7FAcFC361eA71f7CAB5",
+          "assetType": "35",
+          "oracleType": "FlatMoneyUNITPriceAggregator",
+          "specificOracleConfig": {
+            "flatMoneyViewerAddress": "0x1F1A5f8c2d133b0c663cf85943B8E73ec143DB16"
+          },
+          "oracleAddress": "0x8e5a62e6A2b0D62dC2bde611f2EdB7B75464eaA6"
         }
       ],
       "DhedgeEasySwapperProxy": "0x3988513793bCE39f0167064A9F7fC3617FaF35AB",
@@ -2638,7 +2627,7 @@
       "DhedgeStakingV2Proxy": "0xF165cA3d75120D817B7428EEF8C39ea5cb33b612",
       "DhedgeStakingV2": "0xa3D7Fb85D8A8713c2B0cAD1929d8fc79a6a2AC89",
       "SynthRedeemerContractGuard": "0x770351F796a448F88fF94638A462ecD1599b3636",
-      "SlippageAccumulator": "0xA300c220450132f1F239B95d855909365C932d25",
+      "SlippageAccumulator": "0xAB3C86B791f36E3F713E242397B44501e75a31d7",
       "ZeroExContractGuard": "0xc0F390Ff18A89D0787f0927306F594Ee264fCFB0",
       "VelodromeV2LPAssetGuard": "0x9E2704694B96FC79D9D933eB68Fc20DD6446079A",
       "VelodromeV2RouterGuard": "0xF9b12e42964F3899ddD485c517dd90572b801163",
@@ -2650,9 +2639,7 @@
       "PoolTokenSwapperProxy": "0xE2F9b946C4Dcc6EbD1e00A8791E1570E4e6D74D9",
       "PoolTokenSwapper": "0x700e62F15B404287C93Ff86Cd7C9df283e123471",
       "PoolTokenSwapperGuard": "0xE291032af1297eDEC0dF75cFaB93dCa7dCaC32Ea",
-      "SonneFinanceComptrollerGuard": "0xeb983280C9dEf6132d74b81DF32c17B10D981F6A",
-      "SonneFinanceCTokenGuard": "0xd05b087EF163F2d2625EB501f438b050f113160A",
-      "OneInchV6Guard": "0xF1b0Df27f7FF4186e3037d694694B9d8C1D865dc",
+      "OneInchV6Guard": "0x3d3d21cf0a9d5A6a20e676963fd7788c378865b6",
       "VelodromeCLAssetGuard": "0xBbe188a91Cae9FC2416573581C26bDB8Fd8e1b1d",
       "VelodromeNonfungiblePositionGuard": "0xEc9D3C5396D7Cfb102E979B4966432Fa6e04265c",
       "ByPassAssetGuard": "0x9b15bbd433A7bD817b688D79Bc725671323e4e1a",
@@ -2665,9 +2652,9 @@
       "WithdrawalVault": "0xd5a7176b84F4FD74f96fe65dc8D6caBC73Aa3CaF",
       "EasySwapperV2Proxy": "0x2Ed1bd7f66e47113672f3870308b5E867C5bb743",
       "EasySwapperV2": "0xC50730f2a069fd9300E8Ae17EFba48826Cee4FC8",
-      "EasySwapperV2ContractGuard": "0xA9E462A02dBB5C9f79376631b630C212DF87aB55",
+      "EasySwapperV2ContractGuard": "0x84E6c68C0a74566E7bAe2ED9159cD959CE3FFD63",
       "EasySwapperV2UnrolledAssetsGuard": "0x2b844c457e1699Cdc3c98C19BDBd0D14bf0a678d",
-      "CompoundV3CometAssetGuard": "0x5d8F5A3cBB98E7C76Ab95F9324ae57768b1be8c5",
+      "CompoundV3CometAssetGuard": "0x0d24f7CAA0899D979E4C1fE59A94A5a200F61159",
       "CompoundV3CometRewardsContractGuard": "0xd121a50879Cd3d065BAf17C271d147B596DAa30a",
       "CompoundV3CometContractGuard": "0x74c1810F3Cf4780bD1859d32Ff61672cE1204192",
       "OdosV2ContractGuard": "0xB10A6455d0741BF8Ff91E0d35bc49D94450BDB83",
@@ -2682,48 +2669,24 @@
       "AaveLendingPoolGuardV3L2Pool": "0x215038646332616617dBA219DdAF8c7e8Ca01627",
       "FlatMoneyCollateralAssetGuard": "0xfEC31677334ebF3fa43274085D373785bdeF4553",
       "PoolLogicLib": "0x844795b96A915226E28415bf9625e062B2a9cA16",
-      "KyberSwapRouterV2ContractGuard": "0xEB39819256408929B051f8F5440689A4DA97859E",
+      "KyberSwapRouterV2ContractGuard": "0x2C64d0c6C29551B1711319422Cce8b14aFfce907",
       "OdosV3ContractGuard": "0xA9150E8AE67E57b746C5a78Ec0Ca76e4A5376e59",
       "ValueManipulationCheck": "0xfC8d50AAdcC21E9042c1fCD346E8f90E00a64C85",
       "ReferralManagerProxy": "0x46E2bbD3618aA5b8e811Dad1B4d14088F9516497",
       "ReferralManager": "0xF4Ed766f0278E478c9D1F1fCce1F72cAA86275e8",
-      "EasyLimitBuyManager": "0xc8DA8A560b62e3ee9e230847537f8Dc7E81ec04F"
+      "EasyLimitBuyManager": "0xc8DA8A560b62e3ee9e230847537f8Dc7E81ec04F",
+      "WithdrawalGuardianProxy": "0x0906388Df21011c879233211D1ABD3854e60d354",
+      "WithdrawalGuardian": "0x321903121ff2e13A314cf008D43B0A3e3F061F01",
+      "SwapperProxy": "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+      "Swapper": "0x0d6C1F4BE2bb065D884C7eC0034Ad163D21f4B5c"
     },
     "network": {
       "name": "optimism",
       "chainId": 10,
       "ensAddress": null
     },
-    "lastUpdated": "Mon, 03 Aug 2026 08:37:54 GMT",
+    "lastUpdated": "Sun, 13 Sep 2026 13:20:10 GMT",
     "config": {
-      "easySwapperConfig": {
-        "customLockupAllowedPools": [
-          "0x1ec50880101022c11530a069690f5446d1464592",
-          "0x49bf093277bf4dde49c48c6aa55a3bda3eedef68",
-          "0xb2cfb909e8657c0ec44d3dd898c1053b87804755",
-          "0xb9243c495117343981ec9f8aa2abffee54396fc0",
-          "0x9573c7b691cdcebbfa9d655181f291799dfb7cf5",
-          "0xcacb5a722a36cff6baeb359e21c098a4acbffdfa",
-          "0x32ad28356ef70adc3ec051d8aacdeeaa10135296",
-          "0x83d1fa384ec44c2769a3562ede372484f26e141b",
-          "0x9fa29b1f55f57e7af577ea2bc8a8e4488aa150f1",
-          "0xe17a1b2038fa5d725a3cb077ad6c242062b4872b",
-          "0x32b1d1bfd4b3b0cb9ff2dcd9dac757aa64d4cb69",
-          "0xb03818de4992388260b62259361778cf98485dfe",
-          "0x7d3c9c6566375d7ad6e89169ca5c01b5edc15364",
-          "0xcc7d6ed524760539311ed0cdb41d0852b4eb77eb",
-          "0x11b55966527ff030ca9c7b1c548b4be5e7eaee6d",
-          "0xb52eac0899caf6291c62e9aec06668861138b13b",
-          "0xc6f2737e456aa7829934aa7eda2f9ade19672c74",
-          "0xafafb723b640b5ce1e20036ea74b4886e31fc4de"
-        ],
-        "feeByPassManagers": [
-          "0x813123a13d01d3f07d434673fdc89cbba523f14d",
-          "0x625c96542b19e48f2eeebad263738828651c6b19"
-        ],
-        "feeNumerator": 10,
-        "feeDenominator": 10000
-      },
       "easySwapperV2": {
         "customCooldownDepositsWhitelist": [
           "0xcacb5a722a36cff6baeb359e21c098a4acbffdfa",

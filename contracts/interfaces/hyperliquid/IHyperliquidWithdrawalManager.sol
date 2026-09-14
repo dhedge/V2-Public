@@ -17,9 +17,18 @@ interface IHyperliquidWithdrawalManager {
     // Spot pair IDs (10000+) supplied at announce. Stored so `bridge` can size the Core->EVM bridge
     // to also cover the Core spot value the spot guard(s) demand in USDC at settle.
     uint32[] spotAssetIds;
-    // USDC (6 decimals) this withdrawal reserved against the pool's shared Core free-USDC buffer
-    // when it skipped the reduce. Released at settle/cancel. Zero for withdrawals that reduced.
+    // USDC (6 decimals) this withdrawal reserved against the pool's shared Core free-USDC buffer:
+    // its expected bridge draw, on both paths (a reduce-path withdrawal's freed margin is earmarked
+    // for its own pending bridge). Released at settle/cancel.
     uint256 reservedBridge;
+    // True when the announce skipped the reduce (the bridge was funded by free Core cash). Appended
+    // for upgrade safety: pre-existing pending entries read false, and those all took the reduce path.
+    bool reduceSkipped;
+    // USDC (6 decimals) this withdrawal actually bridged Core->EVM, earmarked for its own settle so a
+    // concurrent announce cannot credit it as idle pool liquidity. Set at bridge, released at
+    // settle/cancel. Appended for upgrade safety: pre-existing entries read 0, which only makes the
+    // idle-USDC credit as generous as it was before.
+    uint256 bridgedUsdc;
   }
 
   event WithdrawalAnnounced(address indexed user, address indexed pool, uint256 amount);

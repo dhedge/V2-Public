@@ -1271,6 +1271,29 @@
           },
           "oracleType": "MidasPriceAggregator",
           "oracleAddress": "0x65E6859b3ae567d2E7ce15d2E2577f64e27abfc7"
+        },
+        {
+          "assetName": "sUSDS",
+          "assetAddress": "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD",
+          "assetType": "200",
+          "specificOracleConfig": {
+            "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+          },
+          "oracleType": "ERC4626PriceAggregator",
+          "oracleAddress": "0xbb86a8B7C617010BDe0D7913CaB3D322245120aC"
+        },
+        {
+          "assetName": "PT-sUSDS-26NOV2026",
+          "assetAddress": "0xdC169AbE56461A2E0c034Da431Ac2a3ebf596094",
+          "assetType": "37",
+          "specificOracleConfig": {
+            "syEquivalentYieldToken": "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD",
+            "pendleChainlinkOracleFactory": "0x6502cda86f9110f3655512237C9FF2B9CE247c69",
+            "pendleMarket": "0x9C560eBaF78e596cbcC27411d633a74D628dd7dC",
+            "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+          },
+          "oracleType": "PendlePTPriceAggregator",
+          "oracleAddress": "0xa2c26AE74F9bbef1CaEbc5F49e2b8E15aB1e1e0c"
         }
       ],
       "RemovedAssets": [
@@ -1426,30 +1449,30 @@
       "PoolFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d",
       "PoolFactory": "0x5ee204C28217e30b45784ECd9e9aFDE029334a5F",
       "ERC20Guard": "0x752be2a711beDb60A47E19776Cab33Da8fa67FEf",
-      "SlippageAccumulator": "0x1C6cC699FD73964F32c55Fe3208D47158Bfad8Cd",
-      "OneInchV6Guard": "0xde43a89147E4731d3CF89f090fDD450BeDaEFBF7",
+      "SlippageAccumulator": "0x4C466F01044Ec98d2CFbE57bEdadC7866c12d51a",
+      "OneInchV6Guard": "0xF2c9c18e1094665Db803133bAf789F82De65bD39",
       "LendingEnabledAssetGuard": "0x546347E7Fa6B9bA5c799435cFb736bbc7e37e457",
-      "PendleRouterV4ContractGuard": "0x8E56F552E28c4289081C83350A8840845AC8cF2E",
-      "PendlePTAssetGuard": "0x53B1EE61c899775a14934C9a95767D8FF38C57e0",
+      "PendleRouterV4ContractGuard": "0x24A52adee0f2A0e5c54f0210eb51e22C27d971B2",
+      "PendlePTAssetGuard": "0x36F1DEd7D9EFaFE50be1B7cd3F0bcAC7D574Da52",
       "WithdrawalVaultProxy": "0xe4701267F26B053960843F44f6fE09D2B4eC8dE2",
-      "WithdrawalVault": "0xE216646F79246e3C5eeD50308c0C61F0648A09a9",
+      "WithdrawalVault": "0x99b741598A8230ba758c8AAc31dA5F3018Fc6b7B",
       "EasySwapperV2Proxy": "0xbDd84294bC8299861A2121F749A25EFEb7168a32",
       "EasySwapperV2": "0x264650303833AFE6dE9914e84F1C9B2D5A4D0547",
       "AaveLendingPoolGuardV3": "0x346C65ac2EEfC0a6F84B1B1e96BE006e5e93005e",
       "DhedgeUniV3V2Router": "0xc49b0e838C2a83adaE7D82d82792082DD5cfAf8A",
       "DhedgeSuperSwapper": "0x0e2b20d47228729e8649aF41138d479b172F30b6",
-      "AaveLendingPoolAssetGuardV3": "0x3a4cd7FBc7C4D914034bedf1EF274271333dE4A2",
+      "AaveLendingPoolAssetGuardV3": "0x6AF0e2703E4E5d7B1A0e50Ce619BeA0549ae515f",
       "OdosV2ContractGuard": "0xfb227c573D4598d03370892038F44b5D8a9E9738",
-      "RewardAssetGuard": "0x8F20aD1AF4Abb703234aDF5805cC2A84f79a49ea",
+      "RewardAssetGuard": "0x2480901C518cD73786427E312E26ff878a77b8Ab",
       "PoolLogicLib": "0x5860e5C624711b0B0D9F2cE028bbAb0500495DB1",
       "PoolLimitOrderManagerProxy": "0x95B19De479bc693721cab39Da98FfECE062f5Ea4",
       "PoolLimitOrderManager": "0x214124C7Bc37cf0EDB86b8DbE8c08B8F0E93E20B",
-      "KyberSwapRouterV2ContractGuard": "0xB4490F03699A004C5Cf389735511d116bEFD9287",
+      "KyberSwapRouterV2ContractGuard": "0x2d2341A1B5D7a9C65AF1d452F9E34c6b918d0dE3",
       "OdosV3ContractGuard": "0x0903F481A5706fb0C56BDE53C983b490fC8fED25",
       "LiquifiRewardsContractGuard": "0xb82C8052b8976759562ba9c0b5202d438eAE01d2",
       "ClosedContractGuard": "0x963d07F22208DAD0C680787FCb8707fb5AAc7D55",
       "AngleDistributorContractGuard": "0xf9316d6cB9c1E0bF179D9684D35104ecFBCa58D2",
-      "EasySwapperV2ContractGuard": "0x4BeE3976f218bB8Fb069adBA4002112d8A12f720",
+      "EasySwapperV2ContractGuard": "0xa7a7fca2429b5c6E52387F4bcFdd18e850DB257b",
       "EasySwapperV2UnrolledAssetsGuard": "0x5778276efB064Dc8dD05120C24E86e89d4A3266a",
       "ValueManipulationCheck": "0x963270777574E0bd4de770E9C8D0F838Fc4CD208",
       "ReferralManagerProxy": "0xaB7B317Dd230fC79c783314c5199111c10bbc5c7",
@@ -1458,9 +1481,9 @@
       "OndoGMSwap": "0x34F44DB62De58Eb7dD4EB3865b3057DB43DF28eC",
       "OndoAttestationOracleProxy": "0xD6049430DDFa9bCd1F33064BF697313A1a93ace9",
       "OndoAttestationOracle": "0xd50678F2763dB502E9481F39315702AA7900198f",
-      "OndoGMSwapContractGuard": "0x47544F25D3110Fd82963abe7AdEe989cEC9f8cb9",
+      "OndoGMSwapContractGuard": "0x562D37A435bcc09a0c66f47A5fd9f82a5208Ca4F",
       "OndoGMTokenAssetGuard": "0xC9769f5B7E18bDae47D620A963b9bb7C43A50365",
-      "DytmWithdrawLib": "0xBbb3B4792A1785eE2548Ff16Ba0996C83C7F22f0",
+      "DytmWithdrawLib": "0x4f55cf376893289Bc830f44b56C351dC670c566A",
       "DhedgeNftTrackerStorageProxy": "0x36162b33EEfe7e1d72E6FBc9B4Fbf13d323f2336",
       "DhedgeNftTrackerStorage": "0x5e9d020292b2321D433555ffBA7ad568B222d5C8",
       "DytmWithdrawProcessor": "0x159d5cE26dBDCB1f2e34EC5C689f9411De0C85FE",
@@ -1468,17 +1491,19 @@
       "DytmOfficeContractGuard": "0x97a82a6c7998F11Ae3dac1e6D1F8CCc149869ADB",
       "ByPassAssetGuard": "0xb11BfD6E49993F420F4A169E17508d2678De4759",
       "AcrossContractGuard": "0x2630A03579460036Be61De1EA3B8ad73E40268f2",
-      "MidasRedemptionVaultContractGuard": "0xFbD62D34d340d7f6242F3a6ee980F4c91dD16E34",
-      "MidasDepositVaultContractGuard": "0x41734e6478F397671FFf037B6FEa06f3bbD94986",
+      "MidasRedemptionVaultContractGuard": "0xD71b7136dD2Ee8A00B94E97cbF8DF59627a044d9",
+      "MidasDepositVaultContractGuard": "0x3c7be94F99B2F2D9793B53cFDb29dc1B56c224e8",
       "MidasMTokenAssetGuard": "0xE50897A3C2885391bfFf9aE565008652Ed856E5b",
-      "MidasPendingRedemptionAssetGuard": "0x4525104f5e7b1C6fDcD46cCb8fb087ddbCc92ae4"
+      "MidasPendingRedemptionAssetGuard": "0x4525104f5e7b1C6fDcD46cCb8fb087ddbCc92ae4",
+      "SwapperProxy": "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+      "Swapper": "0xc463fC5887b5ab548D2d50478473484474e7C2C7"
     },
     "network": {
       "name": "homestead",
       "chainId": 1,
       "ensAddress": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
     },
-    "lastUpdated": "Mon, 03 Aug 2026 08:29:15 GMT",
+    "lastUpdated": "Sun, 13 Sep 2026 13:21:41 GMT",
     "config": {
       "easySwapperV2": {
         "customCooldownDepositsWhitelist": [

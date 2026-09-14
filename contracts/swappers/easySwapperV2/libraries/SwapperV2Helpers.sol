@@ -35,6 +35,17 @@ library SwapperV2Helpers {
     usdcAddress = OndoGMTokenAssetGuard(IHasGuardInfo(_poolFactory).getAssetGuard(_asset)).usdc();
   }
 
+  /// @dev Hyperliquid spot assets (assetType 40) are either a HyperCore system address
+  ///      (0x2000...0000 + tokenIndex, or 0x2222...2222 for HYPE) or a linked EVM ERC20 contract.
+  ///      System addresses are not ERC20 contracts, so the WithdrawalVault must never track them.
+  function isHyperliquidSystemAddress(address _asset) internal pure returns (bool) {
+    if (_asset == 0x2222222222222222222222222222222222222222) return true;
+
+    uint160 baseSystemAddress = uint160(0x2000000000000000000000000000000000000000);
+
+    return uint160(_asset) >= baseSystemAddress && uint160(_asset) < baseSystemAddress + 10_000;
+  }
+
   function getUnrolledAssets(address _asset, address _dHedgeVault) internal view returns (address[] memory assets) {
     IWithdrawalVault.TrackedAsset[] memory trackedAssets = IEasySwapperV2(_asset).getTrackedAssets(_dHedgeVault);
     uint256 assetsLength = trackedAssets.length;

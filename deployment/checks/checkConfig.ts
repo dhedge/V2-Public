@@ -7,7 +7,7 @@ import { checkAssets } from "./checkConfigAssets";
 import { checkBytecode } from "./checkConfigBytecode";
 
 task("checkConfig", "Check deployed contracts")
-  .addOptionalParam("environment", "staging or prod", undefined, types.string)
+  .addOptionalParam("environment", "polygon or ovm. defaults to the network name", undefined, types.string)
   .addOptionalParam("specific", "propose transactions", false, types.boolean)
   .addOptionalParam("v", "deployment version eg. 'v2.4.0'", "", types.string)
   .addOptionalParam("ownership", "check ownership", false, types.boolean)

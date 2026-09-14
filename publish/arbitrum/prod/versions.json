@@ -83,16 +83,6 @@
           "oracleAddress": "0xDB98056FecFff59D032aB628337A4887110df3dB"
         },
         {
-          "assetName": "MIM",
-          "assetAddress": "0xfea7a6a0b346362bf88a9e4a88416b77a57d6c2a",
-          "assetType": "0",
-          "specificOracleConfig": {
-            "chainlinkOracleAddress": "0x87121F6c9A9F6E90E59591E4Cf4804873f54A95b"
-          },
-          "oracleType": "ChainlinkAggregator",
-          "oracleAddress": "0x87121F6c9A9F6E90E59591E4Cf4804873f54A95b"
-        },
-        {
           "assetName": "SPELL",
           "assetAddress": "0x3e6648c5a70a150a88bce65f4ad4d506fe15d2af",
           "assetType": "0",
@@ -810,16 +800,6 @@
           "oracleAddress": "0x3d595BE079DF47aEef4D0C36Cb11521bF6B477FB"
         },
         {
-          "assetName": "GMX Market XAUT/USD [WBTC-USDC]",
-          "assetAddress": "0xeb28aD1a2e497F4Acc5D9b87e7B496623C93061E",
-          "assetType": "105",
-          "oracleType": "USDPriceAggregator",
-          "specificOracleConfig": {
-            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-          },
-          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-        },
-        {
           "assetName": "Toros SUIBULL3X",
           "assetAddress": "0xB6783Ac4a451e379Af99067A02c41f1819123EC0",
           "assetType": "0",
@@ -832,39 +812,6 @@
           "assetType": "0",
           "oracleType": "DHedgePoolAggregator",
           "oracleAddress": "0xd35dE7c4cc2630e543f9B9Cd612e6dB270ce56D4"
-        },
-        {
-          "assetName": "Toros GOLD1X",
-          "assetAddress": "0xF7E1069f3F31F9d729b3C10225cab91362958F25",
-          "assetType": "0",
-          "oracleType": "DHedgePoolAggregator",
-          "oracleAddress": "0x5f1bD701b4eF3508AF70d0A09b22099974f4750C"
-        },
-        {
-          "assetName": "Toros GOLDBULL2X",
-          "assetAddress": "0xc8E7E840Ca82804C14061A27AaCa1b97A5A592aB",
-          "assetType": "0",
-          "oracleType": "DHedgePoolAggregator",
-          "oracleAddress": "0xCb09FE1Fd055250cd6181f7d2eaCd83CB19dE442"
-        },
-        {
-          "assetName": "Toros GOLDBULL3X",
-          "assetAddress": "0x350f9d38284e1edB4746AB373c12998d3A66DC3F",
-          "assetType": "0",
-          "oracleType": "DHedgePoolAggregator",
-          "oracleAddress": "0x11e8D1E8553Fd979c18d37E68dd6BE87AcE460ac"
-        },
-        {
-          "assetName": "Virtual XAUT",
-          "assetAddress": "0x7624cccCc59361D583F28BEC40D37e7771d2ef5D",
-          "assetType": "38",
-          "specificOracleConfig": {
-            "maxAge": 1500,
-            "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
-            "priceId": "0x44465e17d2e9d390e70c999d5a11fda4f092847fcd2e3e5aa089d96c98a30e67"
-          },
-          "oracleType": "PythPriceAggregator",
-          "oracleAddress": "0x8426c1c576689D5a6FBeA18102Ec7de4E47753B6"
         },
         {
           "assetName": "Fluid USDC",
@@ -982,13 +929,6 @@
             "ethToUsdChainlinkOracleAddress": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
           },
           "oracleAddress": "0x478D8f26013184D7eEE8184dCB757E741a3C7EC1"
-        },
-        {
-          "assetName": "Toros GOLDBEAR1X",
-          "assetAddress": "0x4EF67f28aB2d3BA16F1D110fA7c084D62d7eF2Cc",
-          "assetType": "0",
-          "oracleType": "DHedgePoolAggregator",
-          "oracleAddress": "0x6Fba15c192bA72cd4d6Ba65fb94BB47b472E561a"
         },
         {
           "assetName": "Toros BTCP1X",
@@ -1173,15 +1113,75 @@
           "assetType": "0",
           "oracleType": "DHedgePoolAggregator",
           "oracleAddress": "0x10D0e5bAf61D5F6b80f4A71b8dbFA7F21E7dE3A7"
+        },
+        {
+          "assetName": "MIM",
+          "assetAddress": "0xfea7a6a0b346362bf88a9e4a88416b77a57d6c2a",
+          "assetType": "0",
+          "specificOracleConfig": {
+            "chainlinkOracleAddress": "0x87121F6c9A9F6E90E59591E4Cf4804873f54A95b"
+          },
+          "oracleType": "ChainlinkAggregator",
+          "oracleAddress": "0x87121F6c9A9F6E90E59591E4Cf4804873f54A95b"
+        },
+        {
+          "assetName": "GMX Market XAUT/USD [WBTC-USDC]",
+          "assetAddress": "0xeb28aD1a2e497F4Acc5D9b87e7B496623C93061E",
+          "assetType": "105",
+          "oracleType": "USDPriceAggregator",
+          "specificOracleConfig": {
+            "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+          },
+          "oracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+        },
+        {
+          "assetName": "Toros GOLD1X",
+          "assetAddress": "0xF7E1069f3F31F9d729b3C10225cab91362958F25",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x5f1bD701b4eF3508AF70d0A09b22099974f4750C"
+        },
+        {
+          "assetName": "Toros GOLDBULL2X",
+          "assetAddress": "0xc8E7E840Ca82804C14061A27AaCa1b97A5A592aB",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0xCb09FE1Fd055250cd6181f7d2eaCd83CB19dE442"
+        },
+        {
+          "assetName": "Toros GOLDBULL3X",
+          "assetAddress": "0x350f9d38284e1edB4746AB373c12998d3A66DC3F",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x11e8D1E8553Fd979c18d37E68dd6BE87AcE460ac"
+        },
+        {
+          "assetName": "Virtual XAUT",
+          "assetAddress": "0x7624cccCc59361D583F28BEC40D37e7771d2ef5D",
+          "assetType": "38",
+          "specificOracleConfig": {
+            "maxAge": 1500,
+            "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+            "priceId": "0x44465e17d2e9d390e70c999d5a11fda4f092847fcd2e3e5aa089d96c98a30e67"
+          },
+          "oracleType": "PythPriceAggregator",
+          "oracleAddress": "0x8426c1c576689D5a6FBeA18102Ec7de4E47753B6"
+        },
+        {
+          "assetName": "Toros GOLDBEAR1X",
+          "assetAddress": "0x4EF67f28aB2d3BA16F1D110fA7c084D62d7eF2Cc",
+          "assetType": "0",
+          "oracleType": "DHedgePoolAggregator",
+          "oracleAddress": "0x6Fba15c192bA72cd4d6Ba65fb94BB47b472E561a"
         }
       ],
       "USDPriceAggregator": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76",
       "AssetHandlerProxy": "0x1BaF125D53F65a708bCb5559c9a9fdD9D088eDe3",
-      "AssetHandler": "0x46c56Ca71F3FCd36d65AB3Ea642D9F777C966c03",
+      "AssetHandler": "0x68412d3cB8907c4c571Be5000E6e4A240e1f3c9F",
       "PoolLogicProxy": "0xBC1480Cb0dF8884d38cA6F2Af0bAD06A047B508d",
-      "PoolLogic": "0xD4c0620078B5E72Dc72b56E7E30151A1e4cE267e",
+      "PoolLogic": "0xE720B0F6488062feFc99735d123F026ca29B853e",
       "PoolManagerLogicProxy": "0x57d6F7ac271FF522B70385A21DF2D2bbb516C8d9",
-      "PoolManagerLogic": "0x934045473F37E37C1e113a66C105D0E62F0cd3C3",
+      "PoolManagerLogic": "0xFA5d5e16f837Ae9D2358ee10E32783C99a7a7106",
       "Governance": "0x0b844847558A5814CD0d5Ca539AdF62A5486c826",
       "ERC20Guard": "0x60427184a3C6Ff4382a0A189a6857ADbaE5CF0bb",
       "PoolFactoryProxy": "0xffFb5fB14606EB3a548C113026355020dDF27535",
@@ -1192,13 +1192,13 @@
       "DhedgeSuperSwapper": "0x4AF5FC6930599A1117600817CB7fAE428B15CAf6",
       "DhedgeEasySwapperProxy": "0x80b9411977C4fF8D618f2aC3f29F1e2D623C4d34",
       "DhedgeEasySwapper": "0x0843E589bf27911528bF02D7080fA87F40CBABDf",
-      "AaveLendingPoolAssetGuardV3": "0x671b73ee0487dAA40E39051302C361BaF615Aa08",
+      "AaveLendingPoolAssetGuardV3": "0x149fFF973859d5AAA3777998c9cb52723a7e8ef0",
       "LendingEnabledAssetGuard": "0xd0392103419ADA46070D7ea49a3BCd8D2256f219",
       "AaveLendingPoolGuardV3": "0x41fc87D21Aad871EdC65E7AE512b105c8D57Ac74",
       "EasySwapperGuard": "0x60b8a1972f0f43809fEA643cFd4Dce86528a0b59",
       "OneInchV5Guard": "0xc0B92A955C336Bdc85cA60F0DaA9bF5EDB13fb42",
       "UniswapV3RouterGuard": "0xC8FD438bb2C257e571A5FE966a278956F16282Cd",
-      "UniswapV3AssetGuard": "0xd735AfFe6BaccFa94461d97779d787EcD9f4120B",
+      "UniswapV3AssetGuard": "0x8938aAf7CCaE10981c64BE582bDe57b1f5Bb9DE9",
       "UniswapV3NonfungiblePositionGuard": "0xcB99D4ea44e2aE742ECAb5dCbe09222898Fc79EF",
       "BalancerV2Guard": "0x116157DF6afDFD191cdcb026378F87D2b66E4383",
       "BalancerV2GaugeContractGuard": "0x72232EBf4D5D447AA39685b197d393004807b955",
@@ -1207,11 +1207,11 @@
       "RamsesRouterContractGuard": "0xA782433758D3C2520c60De9c0ba91Ab4b8318aA4",
       "RamsesXRamContractGuard": "0xf9839a9AeB0b882997E29D45c3D26766ED1EcCfD",
       "RamsesGaugeContractGuard": "0x64608491f5A0082292867fC698254D25E0279286",
-      "SlippageAccumulator": "0x46B06b49b4811A9e8d3403E0716a74e856318e1D",
+      "SlippageAccumulator": "0xB441A9348D71e65709D63C59B06b5D934e465CF4",
       "DhedgeRamsesUniV2Router": "0x68B027DeC5237ffa1b0219d982792A9e9d977Ff3",
       "ClosedContractGuard": "0x60a30E15bF02Ee355fAf60cDB8B6c0C455697675",
       "AaveIncentivesControllerV3Guard": "0xD52d10651686E9E27160B7Ec85534f0Fb76173D9",
-      "OneInchV6Guard": "0x5e4bA5987CA60A5375E787057C4CF38F5C92B01a",
+      "OneInchV6Guard": "0x80Ab45cE2706aD6eFbd5238CD5C06B4F4DcA3018",
       "ZeroExContractGuard": "0xCEAB4dE8141CCA8c8eBEd72Ba46872f541c69064",
       "WeeklyWindowsHelper": "0xf32A69186D3AFFA31D498A7c2350FdF8b5532768",
       "SynthetixV3ContractGuard": "0xb1aeaecc3b5a0a0034dd16172c821152af2bfa12",
@@ -1225,21 +1225,20 @@
       "SynthetixV3AssetGuard": "0xF9FeEAD56eE6Cb4564CA8A57328Ff4Fda64DD4F2",
       "CompoundV3CometContractGuard": "0xc24cdb9Ff88894652D1d676d125d0671167FC10d",
       "CompoundV3CometRewardsContractGuard": "0x040A514dD5f3aB9FF9cE0f863cc9b7F4D4558641",
-      "CompoundV3CometAssetGuard": "0x81567c5E1A6D6683ecFBC54927150e7cc1Cf41C4",
+      "CompoundV3CometAssetGuard": "0x64aaBB56FEA7d9B9613416D07EF9B68430BDA850",
       "WithdrawalVaultProxy": "0xEB59FC6C0072b6B53B7F2BCef20c55F3b04668b5",
       "WithdrawalVault": "0x89c6A19d3a02175F1E66fc3F59220f8236C1cCAC",
       "EasySwapperV2Proxy": "0xA5679C4272A056Bb83f039961fae7D99C48529F5",
       "EasySwapperV2": "0x0504C6F1ca5D71c2c1595fc180B5184163B928fE",
-      "EasySwapperV2ContractGuard": "0xBD270CF66583E51Bdc78C42620Ac23DBe6b0D486",
+      "EasySwapperV2ContractGuard": "0x819BA45BBD79696FbE842C63bA6F23a5842086D5",
       "RamsesNonfungiblePositionGuard": "0x618E6593733e819a63BE20f4fdEB61dA4b0500c7",
       "RamsesCLAssetGuard": "0x030c7C2833d0cd321255ef13775EB9458B6CEbDC",
       "EasySwapperV2UnrolledAssetsGuard": "0xBF51D01e9aCe59205Be63B956C75cf1358835Fe8",
-      "GmxExchangeRouterContractGuard": "0xe22F402Cd923b3c08617D04A9e825c6E12dBa555",
-      "GmxPerpMarketAssetGuard": "0xC6457D639e4d9959d531b7c83621AfE27CDcB520",
-      "GmxClaimableCollateralTrackerLib": "0x37D093eaF6CdB17cfb3D387144256a91f92043c2",
-      "GmxHelperLib": "0x3Fd4007AEc15A93A9fb090F9Fa4627A43B8D6295",
-      "GmxAfterTxValidatorLib": "0x274fbAD1D33e66373883a93A9D39a935413A8CAE",
-      "GmxAfterExcutionLib": "0xde70a7674947BF736bC42aEF10130DFeAA40e91f",
+      "GmxExchangeRouterContractGuard": "0x61bF0eE3Cf8bc0632Eb9cCFF8dF58d62f9F5B464",
+      "GmxPerpMarketAssetGuard": "0x8E2c19f8e3D76588153E17A5B666bA2383F09138",
+      "GmxClaimableCollateralTrackerLib": "0x469B09478cEe6A8972D950B83612A41ADDF94FcC",
+      "GmxHelperLib": "0x4434E1606a33d28Ee4e935d3039789DE9D0B40a3",
+      "GmxAfterTxValidatorLib": "0xCC69d4300c6d195ca64689586edEA39382a4E625",
       "AcrossContractGuard": "0xAc8DC0420d3938FF8acDD2e550B5b7eE7ab7b1d8",
       "PancakeNonfungiblePositionGuard": "0xB3Bc8182db830050Ef5F1cD9b00721136eb826Db",
       "PancakeMasterChefV3Guard": "0xBfa7165b42Fe3a1F511fb467e5806513BC8edF02",
@@ -1255,13 +1254,13 @@
       "PoolLimitOrderManager": "0x0e56A9F9619b487459B7DbD4979ab40c45cfC7F3",
       "AaveLendingPoolGuardV3L2Pool": "0x2980ABA9120e27A8Ed75a0AA341bF3AfFD34E417",
       "FlatMoneyCollateralAssetGuard": "0xdC57aA97d00E95013ae016D7DFbEcfF482D8fF19",
-      "PoolLogicLib": "0x2ad4Af6840946Cd3008f8AbEE972FC8f4eBA916F",
+      "PoolLogicLib": "0x4910a7b7cc2725abA9B4E7f0B66A472800ba78A8",
       "VirtualTokenAssetGuard": "0x6b9e1831a6477dE06EA7838440697853a7550746",
       "FluidMerkleDistributorContractGuard": "0xFa104F4290c84954870755Ba24B8C7A608b56825",
-      "GmxEventUtils": "0x12606B0B1D36f1036FE2a3453c070569ae47b5E2",
-      "GmxAfterExecutionLib": "0x204DE34c130Dc670F233Ad02a71D36Ae20942649",
+      "GmxEventUtils": "0xDd68144039eCaeaE6eaF1Bf0272799CB785e59a2",
+      "GmxAfterExecutionLib": "0x9b7443B6166b1FD1C6B1AC8e4900dd46171B4163",
       "AngleDistributorContractGuard": "0x443dd00eA148c2434e3d84fC4e6FeAdE64478cBD",
-      "KyberSwapRouterV2ContractGuard": "0xD585DCc441e885458A18385c2aC4B30a9D001fF2",
+      "KyberSwapRouterV2ContractGuard": "0x092eB3D09cc37Bb0b59e4070866887f21768fE9c",
       "OdosV3ContractGuard": "0x8192C5F83217AfCd59b898cea0657191cDeEEa43",
       "PoolLimitOrderManagerGuard": "0x20F1f9F2c52f1820020c6641f35890ADd3670F1F",
       "FlatMoneyV2UNITAssetGuard": "0xB021783154442f94020F6A5A49cA378F4553Ad19",
@@ -1271,13 +1270,15 @@
       "FlatMoneyV2UNITOutsideWithdrawalAssetGuard": "0xeAC54516a4B2dEB704A467550f7f81452498B42C",
       "ByPassAssetGuard": "0x615E7825468A8DfF1217cC63E7BEB618dF5a642c",
       "PendlePTAssetGuard": "0x8155933aB6A9fd1daac699f8E2B27A80AA6C2903",
-      "PendleRouterV4ContractGuard": "0x8151887e2B44b71270268C7290F9272eb7078229",
+      "PendleRouterV4ContractGuard": "0x927199753082B4cD28f9e6a04DAedf5e51D78b70",
       "RewardAssetGuard": "0x61647D32Ef723089ec60A62d92A2Bc611Ac2713C",
       "DytmOfficeContractGuard": "0xb6c380514Dbfc6d34724a96c33A1dF2F1D399D07",
       "DytmWithdrawProcessor": "0xCf5f26D2Ad71DAe6e98564EED4bDb4F0Cd21f540",
       "DytmOfficeAssetGuard": "0x58d0391ADaAc5c557d331336FEcDd6255FF9fc0e",
       "EasyLimitBuyManager": "0x40F2978D87348250F085ACEbd680B387842a69eF",
-      "GmxPerpMarketAssetGuardLib": "0x8de6Eef9FDbBCD5DAec63049B5342a1fdcd3d6C8"
+      "GmxPerpMarketAssetGuardLib": "0xf24123055f1b178fF6694307056bDf1e09fd277f",
+      "SwapperProxy": "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+      "Swapper": "0x3114Cc4047De58804a64F7B15A30A9B2062F02ec"
     },
     "network": {
       "name": "arbitrum",
@@ -1285,21 +1286,8 @@
       "ensAddress": null,
       "_defaultProvider": null
     },
-    "lastUpdated": "Mon, 03 Aug 2026 08:33:12 GMT",
+    "lastUpdated": "Sun, 13 Sep 2026 13:20:46 GMT",
     "config": {
-      "easySwapperConfig": {
-        "customLockupAllowedPools": [
-          "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
-          "0xad38255febd566809ae387d5be66ecd287947cb9",
-          "0x696f6d66c2da2aa4a400a4317eec8da88f7a378c",
-          "0xe3254397f5d9c0b69917ebb49b49e103367b406f",
-          "0x40d30b13666c55b1f41ee11645b5ea3ea2ca31f8",
-          "0x27d8fdb0251b48d8edd1ad7bedf553cf99abe7b0"
-        ],
-        "feeByPassManagers": ["0xfbD2B4216f422DC1eEe1Cff4Fb64B726F099dEF5"],
-        "feeNumerator": 10,
-        "feeDenominator": 10000
-      },
       "easySwapperV2": {
         "customCooldownDepositsWhitelist": [
           "0x27d8fdb0251b48d8edd1ad7bedf553cf99abe7b0",
@@ -1344,10 +1332,6 @@
           "0xeE46dEE5594ADfe7aeB9B9c7aC33Baf214b8F075",
           "0xB6783Ac4a451e379Af99067A02c41f1819123EC0",
           "0xa2bD75D941634F2D2800cA9a20b20A17a2Fea17e",
-          "0xF7E1069f3F31F9d729b3C10225cab91362958F25",
-          "0xc8E7E840Ca82804C14061A27AaCa1b97A5A592aB",
-          "0x350f9d38284e1edB4746AB373c12998d3A66DC3F",
-          "0x4EF67f28aB2d3BA16F1D110fA7c084D62d7eF2Cc",
           "0x326e1c8b9cB088cbbEB5440Bd0EbAAC0d0607538",
           "0x11F0fd32F8b6dB76067d710582b4B4739ad49A75",
           "0x4ACa336C6A4eFfBd571Ab4c2621ee0ec4A594c46",

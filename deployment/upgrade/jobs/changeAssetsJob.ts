@@ -10,6 +10,13 @@ const ASSET_ADDRESSES_TO_REMOVE: string[] = [];
 // Asset to add as deposit if removing the only deposit asset(s) would leave a vault with none
 const REPLACEMENT_DEPOSIT_ASSET = "";
 
+// Estimated-gas budget per Safe proposal. Each proposal executes as one MultiSend, so what matters
+// is the chunk's total gas, not its action count: past 60-action chunks executing at 18M-21M gas
+// (e.g. Polygon 0xbca60e6d..., 0x379179f0..., 0x051822bc...) prove ~20M is a safe envelope, while
+// removal cost varies a lot per asset guard (Sushi/Arrakis ~0.3M each vs Aave V2 0.65M-1.55M each).
+// Chunks are therefore packed by summing a per-call eth_estimateGas up to this budget.
+const PROPOSAL_GAS_BUDGET = 20_000_000;
+
 export const changeAssetsJob: IJob<void> = async (
   config: IUpgradeConfig,
   hre: HardhatRuntimeEnvironment,
@@ -78,8 +85,44 @@ export const changeAssetsJob: IJob<void> = async (
     }
   }
 
-  if (config.execute && safeTransactionData.length !== 0) {
-    await proposeTransactions(safeTransactionData, "Change assets", config, addresses);
+  if (!safeTransactionData.length) return console.log("Nothing to remove");
+
+  // Pack proposals by estimated gas (estimated as the Safe, which passes the owner check).
+  const chunks: MetaTransactionData[][] = [];
+  let chunk: MetaTransactionData[] = [];
+  let chunkGas = 0;
+  for (const tx of safeTransactionData) {
+    let gas: number;
+    try {
+      gas = (
+        await ethers.provider.estimateGas({ from: addresses.protocolDaoAddress, to: tx.to, data: tx.data })
+      ).toNumber();
+    } catch (error) {
+      // E.g. "cannot remove non-empty asset" from a vault whose position is not exited yet but
+      // prices to a zero balance (an Aave vault with outstanding debt). Re-run after the exits.
+      console.warn(`Skipping ${tx.to}: changeAssets estimate reverted (${(error as Error).message.slice(0, 120)})`);
+      continue;
+    }
+    if (gas > PROPOSAL_GAS_BUDGET) throw new Error(`Single changeAssets to ${tx.to} estimates above the gas budget`);
+    if (chunkGas + gas > PROPOSAL_GAS_BUDGET) {
+      chunks.push(chunk);
+      chunk = [];
+      chunkGas = 0;
+    }
+    chunk.push(tx);
+    chunkGas += gas;
+  }
+  if (chunk.length) chunks.push(chunk);
+  if (!chunks.length) return console.log("Nothing to propose - every changeAssets estimate was skipped");
+  const packedCount = chunks.reduce((acc, c) => acc + c.length, 0);
+  console.log(`${packedCount} changeAssets call(s) packed into ${chunks.length} proposal(s)`);
+
+  if (config.execute) {
+    for (const [i, proposal] of chunks.entries()) {
+      const chunkInfo = `${i + 1}/${chunks.length}`;
+      console.log(`Proposing chunk ${chunkInfo} (${proposal.length} transaction(s))`);
+      await proposeTransactions(proposal, `Change assets ${chunkInfo}`, config, addresses);
+    }
   } else {
     console.log("Safe transaction data: ", safeTransactionData);
   }

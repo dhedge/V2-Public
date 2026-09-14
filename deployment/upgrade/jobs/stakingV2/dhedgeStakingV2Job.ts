@@ -25,12 +25,15 @@ export const dhedgeStakingV2Job: IJob<void> = async (
       console.warn("Please deploy DhedgeStakingV2NFTJson first");
       return;
     }
+    const dht = addresses.assets?.dht;
+    if (!dht) {
+      console.warn("assets.dht not configured for dhedgeStakingV2Job: skipping.");
+      return;
+    }
     if (config.execute) {
       console.log("Creating a new deployment of DhedgeV2Staking");
       const DhedgeStakingV2 = await ethers.getContractFactory("DhedgeStakingV2");
-      const dhedgeStakingV2Proxy = (await upgrades.deployProxy(DhedgeStakingV2, [
-        addresses.assets.dht,
-      ])) as DhedgeStakingV2;
+      const dhedgeStakingV2Proxy = (await upgrades.deployProxy(DhedgeStakingV2, [dht])) as DhedgeStakingV2;
       await dhedgeStakingV2Proxy.deployed();
 
       const dhedgeStakingV2Implementation = await getImplementationAddress(

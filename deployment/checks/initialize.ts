@@ -3,8 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import fs from "fs";
 
 import { IVersions } from "../types";
-import { getTag } from "../deploymentHelpers";
-import { polygonProdFileNames, polygonStagingFileNames } from "../polygon/deploymentData";
+import { polygonProdFileNames } from "../polygon/deploymentData";
 import { ovmProdFileNames } from "../ovm/deploymentData";
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
@@ -14,19 +13,19 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
   const { ethers, artifacts } = hre;
   console.log("Initializing contracts and variables..", environment);
 
-  const { versionsFileName, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName } =
+  const { versionsFileName, assetsFileName, assetGuardsFileName, contractGuardsFileName } =
     await getEnvironmentFiles(environment);
 
   const { proxyAdminOwner, proxyAdminAddress, protocolDao, protocolTreasury, balancerV2VaultAddress } =
     await getEnvironmentContracts(environment);
 
   const versions: IVersions = JSON.parse(fs.readFileSync(versionsFileName, "utf-8"));
-  let version;
   const signer = (await ethers.getSigners())[0];
-  if (!deployedVersion) {
-    version = await getTag();
-  } else {
-    version = deployedVersion;
+  // Defaults to the current (last) entry. Pass --v to inspect an older one, which
+  // only Polygon has - it is the sole chain deployed while releases were tagged.
+  const version = deployedVersion || Object.keys(versions).pop();
+  if (!version || !versions[version]) {
+    throw new Error(`Version "${version}" not found in ${versionsFileName}`);
   }
 
   const PoolFactoryProxy = await ethers.getContractFactory("PoolFactory");
@@ -90,7 +89,6 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
   return {
     assetsFileName,
     balancerV2Vault,
-    namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
     versions,
@@ -117,40 +115,29 @@ export const init = async (environment: string, deployedVersion = "", hre: Hardh
 };
 
 const getEnvironmentFiles = async (environment: string) => {
-  let versionsFileName, assetsFileName, namesFileName, assetGuardsFileName, contractGuardsFileName;
+  let versionsFileName, assetsFileName, assetGuardsFileName, contractGuardsFileName;
 
   switch (environment) {
     case "polygon":
       versionsFileName = polygonProdFileNames.versionsFileName;
       assetsFileName = polygonProdFileNames.assetsFileName;
-      namesFileName = polygonProdFileNames.governanceNamesFileName;
       assetGuardsFileName = polygonProdFileNames.assetGuardsFileName;
       contractGuardsFileName = polygonProdFileNames.contractGuardsFileName;
-      break;
-
-    case "staging":
-      versionsFileName = polygonStagingFileNames.versionsFileName;
-      assetsFileName = polygonStagingFileNames.assetsFileName;
-      namesFileName = polygonStagingFileNames.governanceNamesFileName;
-      assetGuardsFileName = polygonStagingFileNames.assetGuardsFileName;
-      contractGuardsFileName = polygonStagingFileNames.contractGuardsFileName;
       break;
 
     case "ovm":
       versionsFileName = "../../publish/ovm/prod/versions.json";
       assetsFileName = ovmProdFileNames.assetsFileName;
-      namesFileName = ovmProdFileNames.governanceNamesFileName;
       assetGuardsFileName = ovmProdFileNames.assetGuardsFileName;
       contractGuardsFileName = ovmProdFileNames.contractGuardsFileName;
       break;
 
     default:
-      throw "Invalid environment input. Should be 'prod' or 'staging'.";
+      throw "Invalid environment input. Should be 'polygon' or 'ovm'.";
   }
   return {
     versionsFileName,
     assetsFileName,
-    namesFileName,
     assetGuardsFileName,
     contractGuardsFileName,
   };
@@ -165,14 +152,6 @@ const getEnvironmentContracts = async (environment: string) => {
       proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
       protocolDao = proxyAdminOwner;
       protocolTreasury = "0x6f005cbceC52FFb28aF046Fd48CB8D6d19FD25E3";
-      balancerV2VaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
-      break;
-
-    case "staging":
-      proxyAdminOwner = "0xc715Aa67866A2FEF297B12Cb26E953481AeD2df4";
-      proxyAdminAddress = "0x0C0a10C9785a73018077dBC74B2A006695849252";
-      protocolDao = proxyAdminOwner;
-      protocolTreasury = "0x51150F973c2b0537642f5AE8911A49567598808f";
       balancerV2VaultAddress = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
       break;
 

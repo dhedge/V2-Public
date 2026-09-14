@@ -10,6 +10,15 @@ export const easySwapperV2ConfigurationJob: IJob<void> = async (
   _filenames: IFileNames,
   addresses: IAddresses,
 ) => {
+  if (!addresses.easySwapperV2) {
+    return console.warn("easySwapperV2 config not set for easySwapperV2ConfigurationJob: skipping.");
+  }
+
+  const easySwapperV2Proxy = versions[config.newTag].contracts.EasySwapperV2Proxy;
+  if (!easySwapperV2Proxy) {
+    return console.warn("EasySwapperV2Proxy not deployed: skipping.");
+  }
+
   console.log("Will update EasySwapperV2 configuration");
 
   const EasySwapperV2 = await hre.artifacts.readArtifact("EasySwapperV2");
@@ -40,7 +49,7 @@ export const easySwapperV2ConfigurationJob: IJob<void> = async (
 
   if (config.execute) {
     await proposeTx(
-      versions[config.newTag].contracts.EasySwapperV2Proxy,
+      easySwapperV2Proxy,
       setCustomCooldownWhitelistTxData,
       `EasySwapperV2 - Set new custom cooldown whitelist`,
       config,

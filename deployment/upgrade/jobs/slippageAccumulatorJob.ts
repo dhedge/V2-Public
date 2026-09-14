@@ -37,9 +37,13 @@ export const slippageAccumulatorJob: IJob<void> = async (
 
     versions[config.newTag].contracts.SlippageAccumulator = slippageAccumulator.address;
 
-    // NOTE: Whenever a new slippage accumulator is deployed, the following contract guards need to be redeployed (depends on the chain which ones):
+    // NOTE: Contract guards bind the accumulator address immutably in their constructor, so every guard
+    // inheriting SlippageAccumulatorUser that is live on this chain must be redeployed in the same run.
     console.log(
-      "Please re-deploy the following contract guards (if applicable):\n - EasySwapperV2ContractGuard\n - OneInchV6Guard\n - SkyPSM3ContractGuard\n - OdosV2ContractGuard\n - UniswapV3RouterGuard\n - PendleRouterV4ContractGuard\n",
+      "Re-deploy every contract guard inheriting SlippageAccumulatorUser that is live on this chain:\n" +
+        " - find inheritors: grep -rl SlippageAccumulatorUser contracts/guards/contractGuards\n" +
+        " - live on this chain: cross-check guard names against config/{chain}/dHEDGE Governance Contract Guards.csv\n" +
+        " - watch for chain-specific subclasses without their own upgrade job (e.g. PendleRouterV4PlasmaContractGuard)\n",
     );
   }
 };

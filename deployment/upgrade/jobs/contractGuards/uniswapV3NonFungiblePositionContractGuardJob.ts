@@ -12,7 +12,7 @@ export const uniswapV3NonFungiblePositionGuardJob: IJob<void> = async (
   filenames: IFileNames,
   addresses: IAddresses,
 ) => {
-  if (!addresses.uniV3.uniSwapV3NonfungiblePositionManagerAddress) {
+  if (!addresses.uniV3?.uniSwapV3NonfungiblePositionManagerAddress) {
     throw new Error("No config for uniSwapV3NonfungiblePositionManagerAddress");
   }
 

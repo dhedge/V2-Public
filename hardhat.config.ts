@@ -1,15 +1,12 @@
 import dotenv from "dotenv";
 import "@nomicfoundation/hardhat-foundry";
 import "@openzeppelin/hardhat-upgrades";
-import "@nomiclabs/hardhat-waffle";
 import "@nomicfoundation/hardhat-verify";
 import "@nomiclabs/hardhat-ethers";
-import "hardhat-gas-reporter";
 import "hardhat-abi-exporter";
-import "solidity-coverage";
 import "@typechain/hardhat";
-import "hardhat-contract-sizer";
 
+import { ChainId } from "./deployment/chainIds";
 import "./deployment/upgrade/upgrade";
 import "./deployment/checks/checkConfig";
 import "./deployment/compileOne";
@@ -20,70 +17,49 @@ import "./deployment/hyperevm/whitelistPerpAssets";
 
 dotenv.config();
 
-const getHardhatForkOverrides = () => {
-  switch (process.env.HARDHAT_FORK_CHAIN) {
-    case "arbitrum":
-      return {
-        // Hardhat has no configurable Arbitrum-style per-transaction cap,
-        // so approximate Arbitrum's 32m L2 execution cap with the local block limit.
-        hardfork: "cancun",
-        blockGasLimit: 32_000_000,
-      };
-    default:
-      return {};
-  }
-};
-
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 export default {
-  gasReporter: {
-    enabled: true,
-    currency: "ETH",
-    showTimeSpent: true,
-  },
   networks: {
-    hardhat: {
-      ...getHardhatForkOverrides(),
-    },
+    hardhat: {},
     localhost: {
-      chainId: 31337,
+      chainId: ChainId.hardhat,
       url: "http://127.0.0.1:8545",
       timeout: 0,
     },
     ethereum: {
-      chainId: 1,
+      chainId: ChainId.ethereum,
       url: process.env.ETHEREUM_URL_ALTERNATIVE || "https://eth-mainnet.g.alchemy.com/v2/",
       accounts: process.env.ETHEREUM_PRIVATE_KEY ? [process.env.ETHEREUM_PRIVATE_KEY] : [],
     },
     ovm: {
-      chainId: 10,
+      chainId: ChainId.optimism,
       url: process.env.OPTIMISM_URL || "https://opt-mainnet.g.alchemy.com/v2/",
       accounts: process.env.OVM_PRIVATE_KEY ? [process.env.OVM_PRIVATE_KEY] : [],
     },
     polygon: {
-      chainId: 137,
+      chainId: ChainId.polygon,
       url: process.env.POLYGON_URL || "https://polygon-mainnet.g.alchemy.com/v2/",
       accounts: process.env.POLYGON_PRIVATE_KEY ? [process.env.POLYGON_PRIVATE_KEY] : [],
     },
     arbitrum: {
-      chainId: 42161,
+      chainId: ChainId.arbitrum,
       url: process.env.ARBITRUM_URL || "https://arb-mainnet.g.alchemy.com/v2/",
       accounts: process.env.ARBITRUM_PRIVATE_KEY ? [process.env.ARBITRUM_PRIVATE_KEY] : [],
     },
     base: {
-      chainId: 8453,
+      chainId: ChainId.base,
       url: process.env.BASE_URL || "https://base-mainnet.g.alchemy.com/v2/",
       accounts: process.env.BASE_PRIVATE_KEY ? [process.env.BASE_PRIVATE_KEY] : [],
     },
     plasma: {
-      chainId: 9745,
+      chainId: ChainId.plasma,
       url: process.env.PLASMA_URL || "https://plasma-mainnet.g.alchemy.com/v2/",
       accounts: process.env.PLASMA_PRIVATE_KEY ? [process.env.PLASMA_PRIVATE_KEY] : [],
     },
     hyperevm: {
-      chainId: 999,
+      chainId: ChainId.hyperevm,
       url: process.env.HYPEREVM_URL || "https://hyperliquid-mainnet.g.alchemy.com/v2/",
       accounts: process.env.HYPEREVM_PRIVATE_KEY ? [process.env.HYPEREVM_PRIVATE_KEY] : [],
     },
@@ -126,10 +102,6 @@ export default {
       },
     },
   },
-  mocha: {
-    timeout: 0,
-    retries: 0,
-  },
   abiExporter: {
     path: "./abi",
     clear: true,
@@ -158,7 +130,7 @@ export default {
     customChains: [
       {
         network: "plasma",
-        chainId: 9745,
+        chainId: ChainId.plasma,
         urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan/api",
           browserURL: "https://plasmascan.to/",
@@ -166,7 +138,7 @@ export default {
       },
       {
         network: "hyperevm",
-        chainId: 999,
+        chainId: ChainId.hyperevm,
         urls: {
           apiURL: "https://api.etherscan.io/v2/api",
           browserURL: "https://hyperevmscan.io/",

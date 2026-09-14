@@ -106,16 +106,18 @@ contract HyperliquidSpotGuard is
     address poolFactory = IPoolLogic(poolLogic).factory();
 
     require(!isSystemAddress(to), "invalid transaction target");
-    require(_useContractGuard(poolFactory).dHedgePoolsWhitelist(poolLogic), "pool not whitelisted");
 
     bytes4 method = bytes4(data);
 
     // Allow transfers only to the system address of the token contract on HyperEVM.
     if (method == IERC20.transfer.selector) {
       (address receiver, ) = abi.decode(data[4:], (address, uint256));
-      address systemAddress = getSystemAddress(TOKEN_REGISTRY.getTokenIndex(to));
+      uint64 tokenIndex = getTokenIndex(to);
 
-      require(receiver == systemAddress, "invalid transfer receiver");
+      // Cross-check the registry-provided index against the tokenInfo precompile (ground truth),
+      // so a wrong or stale registry entry can't route a transfer to an unlinked system address.
+      require(tokenInfo(tokenIndex).evmContract == to, "evm contract mismatch");
+      require(receiver == getSystemAddress(tokenIndex), "invalid transfer receiver");
 
       return (uint16(TransactionType.HyperliquidSystemAddressTransfer), false);
     } else if (method == IERC20.approve.selector) {
@@ -173,6 +175,10 @@ contract HyperliquidSpotGuard is
       balance = getCoreBalance(pool, getTokenIndexFromSystemAddress(asset));
     } else {
       uint64 tokenIndex = getTokenIndex(asset);
+
+      // Cross-check the registry-provided index against the tokenInfo precompile (ground truth)
+      // so a wrong or stale registry entry can't misvalue the asset via another token's core balance.
+      require(tokenInfo(tokenIndex).evmContract == asset, "evm contract mismatch");
 
       // Check if the system address of the `asset` is mapped. If it is, we ignore the core balance
       // and only return the balance of the evmContract and any in-flight amount to HyperCore.

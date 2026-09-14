@@ -14,6 +14,19 @@ import {ICompoundV3Comet} from "../../interfaces/compound/ICompoundV3Comet.sol";
 contract CompoundV3CometAssetGuard is ERC20Guard {
   using SafeMath for uint256;
 
+  /// @notice Transaction guard for a Comet, deliberately authorising nothing
+  /// @dev A Comet reuses the ERC20 `approve(address,uint256)` selector to toggle account-manager
+  ///      permission instead of setting an allowance, so inheriting ERC20Guard's approve authorisation
+  ///      would let a manager grant a spender full rights over the pool's position, including
+  ///      `withdrawFrom` to an arbitrary recipient. `PoolLogicLib` falls back to the asset guard
+  ///      whenever `CompoundV3CometContractGuard` returns txType 0, which it does for `approve`.
+  /// @dev Nothing legitimate is lost: supply and withdraw are authorised by the contract guard, and
+  ///      supplying only needs an allowance on the base token, whose transaction targets the token
+  ///      rather than the Comet.
+  function txGuard(address, address, bytes calldata) external pure override returns (uint16 txType, bool) {
+    return (txType, false);
+  }
+
   /// @notice Creates transaction data for withdrawing tokens
   /// @return withdrawAsset withdrawal asset to pe processed by PoolLogic
   /// @return withdrawBalance are used to withdraw portion of asset balance to depositor

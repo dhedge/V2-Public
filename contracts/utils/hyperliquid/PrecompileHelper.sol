@@ -39,6 +39,12 @@ abstract contract PrecompileHelper {
   /// @param accountValue The total value of the account (margin + unrealised pnl + funding in USD with 6 decimals).
   /// @param marginUsed The total margin used by all positions (in USD with 6 decimals).
   /// @param ntlPos The notional size of all positions (in USD with 6 decimals).
+  /// @param rawUsd The account's raw USD balance: `accountValue` minus the SIGNED mark-priced
+  ///        notional of all positions — longs subtract their notional, shorts add theirs (in USD
+  ///        with 6 decimals). Equivalently the USD cash leg as if perps were margin purchases, so
+  ///        it is negative for a leveraged long (borrowed USD) and inflated by an open short; for
+  ///        a pure long it equals `accountValue - ntlPos`. Matches `totalRawUsd` in Hyperliquid's
+  ///        clearinghouseState API.
   struct AccountMarginSummary {
     int64 accountValue;
     uint64 marginUsed;
@@ -165,6 +171,12 @@ abstract contract PrecompileHelper {
   ///////////////////////////////////////////////
 
   /// @notice Fetches a perp position from the Position precompile.
+  /// @dev The precompile at `_POSITION_PRECOMPILE_ADDRESS` (0x800) takes `(address, uint16)` and rejects
+  ///      larger index values, so the index is cast to uint16 to match its ABI. An index above
+  ///      `type(uint16).max` therefore wraps and silently reads another perp's position instead of
+  ///      reverting. Core perps fit, and so do HIP-3 indices below 65_536; HIP-3 dex ids from 7 up
+  ///      (index = dexId * 10_000 + indexInDex, so >= 70_000) never do. Before approving such a dex,
+  ///      switch to the newer position precompile at 0x813, which takes `(address, uint32)`.
   /// @param user The user address.
   /// @param asset The perp asset index.
   /// @return pos The position information.
@@ -275,6 +287,7 @@ abstract contract PrecompileHelper {
     uint160 baseAddr = uint160(_BASE_SYSTEM_ADDRESS);
     uint160 addrInt = uint160(addr);
 
+    // [!WARNING] Token indices above 10,000 will be misclassified as regular EVM addresses; widen this bound if Hyperliquid's token count ever approaches it.
     if (addrInt >= baseAddr && addrInt < baseAddr + 10_000) {
       uint64 tokenIndex = uint64(addrInt - baseAddr);
 

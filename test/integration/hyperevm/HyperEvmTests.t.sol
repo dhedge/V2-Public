@@ -17,6 +17,8 @@ import {PrecompileHelper} from "contracts/utils/hyperliquid/PrecompileHelper.sol
 import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConfig.sol";
 import {IChangeAssets} from "test/integration/utils/foundry/CoreBackboneSetup.sol";
 import {FixedPointMathLib} from "contracts/utils/FixedPointMathLib.sol";
+import {IWithdrawalVault} from "contracts/swappers/easySwapperV2/interfaces/IWithdrawalVault.sol";
+import {IEasySwapperV2Mock} from "test/integration/common/limitOrders/IEasySwapperV2Mock.sol";
 
 /// @title HyperEVM Integration Tests
 /// @notice Tests for Hyperliquid integration on HyperEVM network
@@ -455,6 +457,186 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
     IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(hyperliquidTestPoolManagerLogic, coreWriter, txData);
   }
 
+  /// @notice A spot order on a pair that is NOT quoted in USDC is rejected, even for the manager and even
+  ///         though the pair's base token is a supported asset. A spot order swaps the pair's two tokens,
+  ///         so a sell is PAID IN the quote token; on a non-USDC pair that is a token no asset guard reads
+  ///         (`HyperliquidPositionGuard` values only the USDC Core spot balance), so `totalFundValue` would
+  ///         drop by the whole amount traded while the money still sits on Core.
+  /// @dev On mainnet 4 of the 5 configured spot assets have such a pair — XAUT0/USDT0 (10209),
+  ///      HYPE/USDT0 (10207), HYPE/USDH (10232), HYPE/USDE (10255), UBTC/USDH (10234), UETH/USDH (10235) —
+  ///      and none of USDT0/USDH/USDE is a dHEDGE asset. Guarded here in the CoreWriter guard rather than
+  ///      in a caller so both the manager path and the HyperliquidWithdrawalManager path are covered.
+  function test_revert_spot_order_on_non_usdc_quoted_pair() public {
+    // Same base token as the allowed XAUT0/USDC pair — only the quote token differs.
+    assertEq(
+      spotInfo(HyperEVMConfig.XAUT0_ALT_SPOT_INDEX).tokens[0],
+      HyperEVMConfig.XAUT0_TOKEN_INDEX,
+      "alt pair's base token is the supported XAUT0"
+    );
+    assertEq(
+      spotInfo(HyperEVMConfig.XAUT0_ALT_SPOT_INDEX).tokens[1],
+      HyperEVMConfig.USDT0_TOKEN_INDEX,
+      "alt pair is quoted in USDT0"
+    );
+    assertTrue(
+      IHasSupportedAsset(hyperliquidTestPoolManagerLogic).isSupportedAsset(HyperEVMConfig.XAUT0_SYSTEM_ADDRESS),
+      "base token IS supported, so the base-token check alone would pass"
+    );
+
+    // Priced 1% under the alt pair's own spot px, i.e. within the guard's slippage cap, so the only
+    // reason to reject is the quote token.
+    uint64 limitPx = uint64((normalizedSpotPx(HyperEVMConfig.XAUT0_ALT_SPOT_INDEX) * 99) / 100);
+    bytes memory sellForUsdt0 = abi.encodePacked(
+      uint8(1),
+      HLConstants.LIMIT_ORDER_ACTION,
+      abi.encode(
+        uint32(10_000 + HyperEVMConfig.XAUT0_ALT_SPOT_INDEX),
+        false,
+        limitPx,
+        uint64(1e8),
+        false,
+        HLConstants.LIMIT_ORDER_TIF_IOC,
+        uint128(1)
+      )
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("spot pair not USDC quoted");
+    IPoolLogic(hyperliquidTestPool).execTransaction(
+      coreWriter,
+      abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, sellForUsdt0)
+    );
+  }
+
+  /// @notice USDC cannot be removed from a vault that still holds the CoreWriter asset. USDC is the payout
+  ///         asset of every Hyperliquid asset guard (`OutsidePositionWithdrawalHelper` requires it to be
+  ///         enabled) and the denomination `HyperliquidPositionGuard` values the Core spot balance in, so
+  ///         removing it would make EVERY withdrawal revert with "withdrawal asset not enabled" and strand
+  ///         depositors until a manager re-added it.
+  /// @dev The inherited empty-balance check does not catch this: `getBalance` here is the EVM balance only
+  ///      (Core USDC is valued by the position guard), so with all USDC bridged to Core the balance reads 0
+  ///      and the removal would otherwise be allowed. The vault needs a second deposit asset first, since
+  ///      PoolManagerLogic independently requires at least one.
+  function test_revert_cannot_remove_usdc_while_coreWriter_supported() public {
+    // Bridge all USDC to Core so the EVM balance is 0 and the empty-balance check passes.
+    _bridgeUSDCToCore(_getPoolUSDCBalance(), _DEX_ID_CORE_SPOT);
+    CoreSimulatorLib.nextBlock();
+    assertEq(_getPoolUSDCBalance(), 0, "EVM USDC drained to Core");
+
+    // Give the vault a second deposit asset so "at least one deposit asset" is not what blocks removal.
+    // (WHYPE, not the CoreWriter asset — the position guard rejects that as a deposit asset.)
+    vm.prank(owner);
+    assetHandlerProxy.addAsset(
+      HyperEVMConfig.WHYPE_TOKEN_ADDRESS,
+      uint16(AssetTypeIncomplete.CHAINLINK),
+      HyperEVMConfig.USDC_USD_PRICE_FEED
+    );
+    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
+    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: HyperEVMConfig.WHYPE_TOKEN_ADDRESS, isDeposit: true});
+    address[] memory assetsToRemove = new address[](1);
+    assetsToRemove[0] = usdc;
+
+    assertTrue(
+      IHasSupportedAsset(hyperliquidTestPoolManagerLogic).isSupportedAsset(coreWriter),
+      "vault still holds the CoreWriter asset"
+    );
+
+    vm.prank(manager);
+    vm.expectRevert("USDC required for HL");
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(assetsToAdd, assetsToRemove);
+
+    assertTrue(IHasSupportedAsset(hyperliquidTestPoolManagerLogic).isSupportedAsset(usdc), "USDC still supported");
+  }
+
+  /// @notice The Hyperliquid position asset (the CoreWriter address, asset type 39) cannot be marked as a
+  ///         deposit asset. It stands in for the pool's HyperCore account rather than being a token anyone
+  ///         can transfer in, so depositing it is meaningless — yet `assetValue` prices it, so a deposit
+  ///         reaching the mint would credit real value for nothing.
+  /// @dev Mirrors `GmxPerpMarketAssetGuard` (the equivalent perps position guard) and
+  ///      `HyperliquidSpotGuard`, which both reject deposit assets with the same message. Until this check
+  ///      existed the flag was accepted and the deposit only failed later, incidentally, because CoreWriter
+  ///      implements no `transferFrom`.
+  function test_revert_cannot_add_coreWriter_as_deposit_asset() public {
+    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
+    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: coreWriter, isDeposit: true});
+
+    vm.prank(manager);
+    vm.expectRevert("deposit not supported");
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(assetsToAdd, new address[](0));
+
+    assertFalse(
+      IPoolManagerLogic(hyperliquidTestPoolManagerLogic).isDepositAsset(coreWriter),
+      "CoreWriter is not a deposit asset"
+    );
+  }
+
+  /// @notice The position asset remains addable as a normal (non-deposit) supported asset — the check is
+  ///         scoped to the deposit flag only, so the standard Hyperliquid vault setup is unaffected.
+  function test_canAddCoreWriter_asNonDepositAsset() public {
+    address[] memory removeCoreWriter = new address[](1);
+    removeCoreWriter[0] = coreWriter;
+    vm.prank(manager);
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(
+      new IHasSupportedAsset.Asset[](0),
+      removeCoreWriter
+    );
+    assertFalse(IHasSupportedAsset(hyperliquidTestPoolManagerLogic).isSupportedAsset(coreWriter), "removed");
+
+    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
+    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: coreWriter, isDeposit: false});
+    vm.prank(manager);
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(assetsToAdd, new address[](0));
+
+    assertTrue(IHasSupportedAsset(hyperliquidTestPoolManagerLogic).isSupportedAsset(coreWriter), "re-added");
+  }
+
+  /// @notice The invariant is scoped to Hyperliquid vaults: with the CoreWriter asset already gone, nothing
+  ///         needs USDC as a payout asset, so removing it is permitted as before.
+  function test_canRemoveUsdc_afterCoreWriterRemoved() public {
+    // Drop CoreWriter first (its value is 0 — nothing has been bridged in this test).
+    address[] memory removeCoreWriter = new address[](1);
+    removeCoreWriter[0] = coreWriter;
+    vm.prank(manager);
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(
+      new IHasSupportedAsset.Asset[](0),
+      removeCoreWriter
+    );
+
+    // Move the EVM USDC out so the inherited empty-balance check passes, then remove it. WHYPE stands in
+    // as the replacement deposit asset PoolManagerLogic requires.
+    vm.prank(owner);
+    assetHandlerProxy.addAsset(
+      HyperEVMConfig.WHYPE_TOKEN_ADDRESS,
+      uint16(AssetTypeIncomplete.CHAINLINK),
+      HyperEVMConfig.USDC_USD_PRICE_FEED
+    );
+    deal(usdc, hyperliquidTestPool, 0);
+
+    IHasSupportedAsset.Asset[] memory addWhype = new IHasSupportedAsset.Asset[](1);
+    addWhype[0] = IHasSupportedAsset.Asset({asset: HyperEVMConfig.WHYPE_TOKEN_ADDRESS, isDeposit: true});
+    address[] memory removeUsdc = new address[](1);
+    removeUsdc[0] = usdc;
+
+    vm.prank(manager);
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(addWhype, removeUsdc);
+
+    assertFalse(IHasSupportedAsset(hyperliquidTestPoolManagerLogic).isSupportedAsset(usdc), "USDC removable");
+  }
+
+  /// @dev Makes the vault report USDC as unsupported WITHOUT removing it. `HyperliquidERC20Guard` now
+  ///      blocks removing USDC while the CoreWriter asset is supported (USDC is the payout asset of every
+  ///      Hyperliquid guard), so this state is no longer reachable through `changeAssets` — see
+  ///      {test_revert_cannot_remove_usdc_while_coreWriter_supported}. The txGuard branches exercised
+  ///      below are kept as defence in depth, and this mock is how they stay covered. Exact-calldata
+  ///      match, so lookups for every other asset still hit the real PoolManagerLogic.
+  function _mockUsdcUnsupported() internal {
+    vm.mockCall(
+      hyperliquidTestPoolManagerLogic,
+      abi.encodeWithSelector(IHasSupportedAsset.isSupportedAsset.selector, usdc),
+      abi.encode(false)
+    );
+  }
+
   /// @notice Test that spot-send rejects USDC when EVM USDC is not a supported asset.
   /// @dev This validates the fix for the USDC bypass on action 6.
   function test_revert_spot_send_usdc_when_usdc_not_supported() public {
@@ -464,14 +646,7 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
 
     assertEq(_getPoolUSDCBalance(), 0, "Pool USDC should be 0 after full bridge");
 
-    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
-    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: coreWriter, isDeposit: true});
-
-    address[] memory assetsToRemove = new address[](1);
-    assetsToRemove[0] = usdc;
-
-    vm.prank(manager);
-    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(assetsToAdd, assetsToRemove);
+    _mockUsdcUnsupported();
 
     uint256 fundValueBefore = _getTotalFundValue();
     uint256 poolUsdcBefore = IERC20(usdc).balanceOf(hyperliquidTestPool);
@@ -504,14 +679,7 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
 
     assertEq(_getPoolUSDCBalance(), 0, "Pool USDC should be 0 after full bridge");
 
-    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
-    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: coreWriter, isDeposit: true});
-
-    address[] memory assetsToRemove = new address[](1);
-    assetsToRemove[0] = usdc;
-
-    vm.prank(manager);
-    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(assetsToAdd, assetsToRemove);
+    _mockUsdcUnsupported();
 
     bytes memory rawAction = abi.encodePacked(
       uint8(1),
@@ -530,6 +698,85 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
     vm.prank(hyperliquidTestPool);
     vm.expectRevert("unsupported asset");
     IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(hyperliquidTestPoolManagerLogic, coreWriter, txData);
+  }
+
+  /// @notice Test that send-asset L1 self-transfers reject non-USDC tokens.
+  /// @dev The simulator does not execute action 13, so this validates the affected txGuard branch directly.
+  function test_revert_send_asset_self_transfer_non_usdc() public {
+    bytes memory rawAction = abi.encodePacked(
+      uint8(1),
+      uint24(13),
+      abi.encode(
+        hyperliquidTestPool,
+        address(0),
+        _DEX_ID_CORE_SPOT,
+        _DEX_ID_CORE_PERP,
+        uint64(HyperEVMConfig.XAUT0_TOKEN_INDEX),
+        uint64(1e8)
+      )
+    );
+    bytes memory txData = abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, rawAction);
+
+    vm.prank(hyperliquidTestPool);
+    vm.expectRevert("only USDC self-transfers");
+    IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(hyperliquidTestPoolManagerLogic, coreWriter, txData);
+  }
+
+  /// @notice Test that send-asset rejects a destination dex that is approved but disabled.
+  function test_revert_send_asset_to_disabled_dex() public {
+    uint256 disabledDexId = 1;
+
+    IHyperliquidCoreWriterContractGuard.DexIdStatusSettings[]
+      memory settings = new IHyperliquidCoreWriterContractGuard.DexIdStatusSettings[](1);
+    settings[0] = IHyperliquidCoreWriterContractGuard.DexIdStatusSettings({
+      dexId: disabledDexId,
+      status: IHyperliquidCoreWriterContractGuard.DexStatus.DISABLED
+    });
+
+    vm.prank(owner);
+    hyperliquidCoreWriterContractGuard.setDexIdStatus(settings);
+
+    bytes memory rawAction = abi.encodePacked(
+      uint8(1),
+      uint24(13),
+      abi.encode(hyperliquidTestPool, address(0), _DEX_ID_CORE_PERP, disabledDexId, _USDC_TOKEN_INDEX, uint64(1_000e8))
+    );
+    bytes memory txData = abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, rawAction);
+
+    vm.prank(hyperliquidTestPool);
+    vm.expectRevert("invalid destination dex");
+    IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(hyperliquidTestPoolManagerLogic, coreWriter, txData);
+  }
+
+  /// @notice Test that a USDC send-asset self-transfer to the core perp dex passes the guard.
+  function test_send_asset_usdc_self_transfer_allowed() public {
+    bytes memory rawAction = abi.encodePacked(
+      uint8(1),
+      uint24(13),
+      abi.encode(
+        hyperliquidTestPool,
+        address(0),
+        _DEX_ID_CORE_SPOT,
+        _DEX_ID_CORE_PERP,
+        _USDC_TOKEN_INDEX,
+        uint64(1_000e8)
+      )
+    );
+    bytes memory txData = abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, rawAction);
+
+    vm.prank(hyperliquidTestPool);
+    (uint16 txType, bool isPublic) = IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(
+      hyperliquidTestPoolManagerLogic,
+      coreWriter,
+      txData
+    );
+
+    assertEq(
+      txType,
+      uint16(ITransactionTypes.TransactionType.HyperliquidSendAssetAction),
+      "should return send-asset tx type"
+    );
+    assertFalse(isPublic, "manager self-transfer should not be public");
   }
 
   /////////////////////////////////////////////
@@ -592,30 +839,6 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
     IPoolLogic(hyperliquidTestPool).execTransaction(coreWriter, txData);
   }
 
-  /// @notice Action 9 still requires the pool to be on the dHEDGE whitelist, even when api wallet is enabled.
-  function test_revert_add_api_wallet_when_pool_not_whitelisted() public {
-    _setApiWalletEnabled(true);
-
-    // Remove the pool from the whitelist.
-    IHyperliquidCoreWriterContractGuard.WhitelistSetting[]
-      memory whitelistSettings = new IHyperliquidCoreWriterContractGuard.WhitelistSetting[](1);
-    whitelistSettings[0] = IHyperliquidCoreWriterContractGuard.WhitelistSetting({
-      poolLogic: hyperliquidTestPool,
-      whitelisted: false
-    });
-    vm.prank(owner);
-    hyperliquidCoreWriterContractGuard.setDhedgePoolsWhitelist(whitelistSettings);
-
-    bytes memory txData = abi.encodeWithSelector(
-      ICoreWriter.sendRawAction.selector,
-      _addApiWalletAction(address(0xABCD), "agent")
-    );
-
-    vm.prank(hyperliquidTestPool);
-    vm.expectRevert("pool not whitelisted");
-    IGuard(address(hyperliquidCoreWriterContractGuard)).txGuard(hyperliquidTestPoolManagerLogic, coreWriter, txData);
-  }
-
   /// @notice Only the owner can toggle the per-pool API wallet flag.
   function test_revert_setApiWalletEnabled_non_owner() public {
     IHyperliquidCoreWriterContractGuard.ApiWalletSetting[]
@@ -630,6 +853,48 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
   /////////////////////////////////////////////
   //          Spot Asset Trading Tests       //
   /////////////////////////////////////////////
+
+  /// @notice Test that a spot token transfer to its own system address passes the spot guard.
+  function test_spot_transfer_to_system_address_allowed() public {
+    bytes memory txData = abi.encodeWithSelector(
+      IERC20.transfer.selector,
+      HyperEVMConfig.XAUT0_SYSTEM_ADDRESS,
+      uint256(1e8)
+    );
+
+    (uint16 txType, bool isPublic) = IGuard(hyperliquidSpotGuard).txGuard(
+      hyperliquidTestPoolManagerLogic,
+      xaut,
+      txData
+    );
+
+    assertEq(
+      txType,
+      uint16(ITransactionTypes.TransactionType.HyperliquidSystemAddressTransfer),
+      "should return system address transfer tx type"
+    );
+    assertFalse(isPublic, "system address transfer should not be public");
+  }
+
+  /// @notice Test that a spot token transfer is rejected when the registry index
+  ///         doesn't match the token's linked EVM contract per the tokenInfo precompile.
+  function test_revert_spot_transfer_when_registry_index_mismatch() public {
+    // Simulate a wrong/stale registry entry: registry returns the HYPE token index for `xaut`.
+    vm.mockCall(
+      address(TOKEN_REGISTRY),
+      abi.encodeWithSelector(TOKEN_REGISTRY.getTokenIndex.selector, xaut),
+      abi.encode(uint32(_MAINNET_HYPE_TOKEN_INDEX))
+    );
+
+    bytes memory txData = abi.encodeWithSelector(
+      IERC20.transfer.selector,
+      HyperEVMConfig.XAUT0_SYSTEM_ADDRESS,
+      uint256(1e8)
+    );
+
+    vm.expectRevert("evm contract mismatch");
+    IGuard(hyperliquidSpotGuard).txGuard(hyperliquidTestPoolManagerLogic, xaut, txData);
+  }
 
   /// @notice Test non-system spot withdrawals pay mixed assets: spot token (EVM leg) + USDC (Core leg)
   function test_spotAsset_nonSystem_withdraw_mixedPayout() public {
@@ -686,6 +951,98 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
     // 2) manager receives USDC for the Core-held leg.
     assertGt(IERC20(xaut).balanceOf(manager) - managerXautBefore, 0, "manager should receive XAUT in-kind");
     assertGt(IERC20(usdc).balanceOf(manager) - managerUsdcBefore, 0, "manager should receive USDC for core leg");
+  }
+
+  /// @notice Test that the EasySwapperV2 two-step withdrawal tracks the in-kind EVM leg of a
+  ///         non-system spot asset, so it can be claimed instead of being stranded in the vault.
+  function test_easySwapperV2_initWithdrawal_tracks_nonSystem_spot_token() public {
+    // Setup: make the EVM token address a supported type-40 spot asset and remove the system-address mapping.
+    vm.prank(owner);
+    assetHandlerProxy.addAsset(xaut, uint16(AssetTypeIncomplete.HYPERLIQUID_SPOT), xaut0PriceAggregator);
+
+    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
+    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: xaut, isDeposit: false});
+
+    address[] memory assetsToRemove = new address[](1);
+    assetsToRemove[0] = HyperEVMConfig.XAUT0_SYSTEM_ADDRESS;
+
+    vm.prank(manager);
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(assetsToAdd, assetsToRemove);
+
+    // Buy 1 XAUT0 on Core (Core leg, paid out as USDC on withdrawal).
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+
+    _bridgeUSDCToCore(_getPoolUSDCBalance() / 2, HLConstants.SPOT_DEX);
+    CoreSimulatorLib.nextBlock();
+
+    uint64 normalizedPrice = xaut0Price * 100;
+    uint64 limitPrice = normalizedPrice + ((normalizedPrice * 1) / 100);
+    _placeLimitOrder(
+      abi.encodePacked(
+        uint8(1),
+        HLConstants.LIMIT_ORDER_ACTION,
+        abi.encode(
+          10000 + uint32(HyperEVMConfig.XAUT0_SPOT_INDEX),
+          true,
+          limitPrice,
+          uint64(1e8),
+          false,
+          HLConstants.LIMIT_ORDER_TIF_IOC,
+          uint128(1)
+        )
+      )
+    );
+    CoreSimulatorLib.nextBlock();
+
+    // Seed EVM-side XAUT balance (EVM leg, paid out in-kind on withdrawal).
+    uint256 evmXautInPool = 1e8;
+    deal(xaut, hyperliquidTestPool, evmXautInPool);
+
+    // Deploy EasySwapperV2 with its WithdrawalVault logic (both 0.7.6, hence deployCode).
+    address easySwapper = deployCode("EasySwapperV2.sol");
+    vm.startPrank(owner);
+    IEasySwapperV2Mock(easySwapper).initialize(
+      deployCode("WithdrawalVault.sol"),
+      address(0), // unused (deprecated) parameter
+      HyperEVMConfig.WHYPE_TOKEN_ADDRESS,
+      makeAddr("swapper"), // only used by the swap completion path, not exercised here
+      3600
+    );
+    IEasySwapperV2Mock(easySwapper).setdHedgePoolFactory(address(poolFactoryProxy));
+    vm.stopPrank();
+
+    // Two-step withdrawal of half of manager's shares (portion = 0.5).
+    uint256 sharesToWithdraw = IPoolLogic(hyperliquidTestPool).balanceOf(manager) / 2;
+    uint256 supportedAssetsCount = IHasSupportedAsset(hyperliquidTestPoolManagerLogic).getSupportedAssets().length;
+
+    skip(5 minutes + 1);
+    vm.startPrank(manager);
+    IERC20(hyperliquidTestPool).approve(easySwapper, sharesToWithdraw);
+    (IWithdrawalVault.TrackedAsset[] memory trackedAssets, address vault) = IEasySwapperV2Mock(easySwapper)
+      .initWithdrawal(hyperliquidTestPool, sharesToWithdraw, new IPoolLogic.ComplexAsset[](supportedAssetsCount));
+
+    // The vault must track both payout legs: XAUT in-kind (EVM leg) and USDC (Core leg).
+    uint256 trackedXaut;
+    uint256 trackedUsdc;
+    for (uint256 i; i < trackedAssets.length; ++i) {
+      if (trackedAssets[i].token == xaut) trackedXaut = trackedAssets[i].balance;
+      if (trackedAssets[i].token == usdc) trackedUsdc = trackedAssets[i].balance;
+    }
+    assertEq(trackedXaut, evmXautInPool / 2, "vault should track XAUT EVM leg");
+    assertGt(trackedUsdc, 0, "vault should track USDC");
+
+    // Completing the withdrawal pays out both legs; nothing is stranded in the vault.
+    uint256 managerXautBefore = IERC20(xaut).balanceOf(manager);
+    uint256 managerUsdcBefore = IERC20(usdc).balanceOf(manager);
+
+    IEasySwapperV2Mock(easySwapper).completeWithdrawal();
+    vm.stopPrank();
+
+    assertEq(IERC20(xaut).balanceOf(manager) - managerXautBefore, evmXautInPool / 2, "manager should receive XAUT");
+    assertGt(IERC20(usdc).balanceOf(manager) - managerUsdcBefore, 0, "manager should receive USDC");
+    assertEq(IERC20(xaut).balanceOf(vault), 0, "no XAUT stranded in vault");
+    assertEq(IERC20(usdc).balanceOf(vault), 0, "no USDC stranded in vault");
   }
 
   /// @notice Test spot asset (XAUT0) integration: place IOC order, verify accounting, and withdrawal
@@ -838,6 +1195,162 @@ contract HyperEvmTests is HyperEVMSetup, PrecompileHelper {
       new IHasSupportedAsset.Asset[](0),
       assetsToRemove
     );
+  }
+
+  /// @notice The post-action settlement lock blocks spot-asset removal in the placement block AND the
+  ///         `SPOT_ACTION_LOCK_BLOCKS` (N) that follow (B through B+N), then permits it from B+N+1.
+  ///         Reproduces the original same-block-only gap: an IOC buy is enqueued, blocks pass with the
+  ///         order still unfilled (Core balance 0), and removal must STILL revert at B+N. One more block
+  ///         (B+N+1) clears the lock.
+  /// @dev Blocks are advanced manually (vm.roll) so the queued order stays unfilled; the lock is
+  ///      block-based, so removal is blocked through B+N and cleared at B+N+1.
+  function test_spotActionLock_blocksRemovalUntilSettlementWindowElapses() public {
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+
+    // Bridge USDC to core spot so the pool can place a spot buy.
+    uint256 poolUSDCBalance = _getPoolUSDCBalance();
+    _bridgeUSDCToCore(poolUSDCBalance / 2, HLConstants.SPOT_DEX);
+    CoreSimulatorLib.nextBlock();
+
+    uint64 normalizedPrice = xaut0Price * 100;
+    uint64 limitPrice = normalizedPrice + ((normalizedPrice * 1) / 100); // within the slippage bound
+    uint32 xaut0AssetId = 10000 + uint32(HyperEVMConfig.XAUT0_SPOT_INDEX);
+
+    // IOC buy — enqueued, not yet filled. Sets the settlement lock at the current timestamp.
+    bytes memory orderActionData = abi.encodePacked(
+      uint8(1),
+      HLConstants.LIMIT_ORDER_ACTION,
+      abi.encode(xaut0AssetId, true, limitPrice, uint64(1e8), false, HLConstants.LIMIT_ORDER_TIF_IOC, uint128(1))
+    );
+    _placeLimitOrder(orderActionData);
+
+    address[] memory assetsToRemove = new address[](1);
+    assetsToRemove[0] = HyperEVMConfig.XAUT0_SYSTEM_ADDRESS;
+
+    // Advance to B+N — the last block of the lock window; the order is still unfilled (balance 0).
+    uint256 lockBlocks = hyperliquidCoreWriterContractGuard.SPOT_ACTION_LOCK_BLOCKS();
+    vm.roll(block.number + lockBlocks);
+    assertEq(
+      PrecompileLib.spotBalance(hyperliquidTestPool, HyperEVMConfig.XAUT0_TOKEN_INDEX).total,
+      0,
+      "precondition: pending IOC buy has not filled yet"
+    );
+
+    // B+N is still covered: removal must be blocked even though blocks have passed.
+    vm.prank(manager);
+    vm.expectRevert("spot asset action performed");
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(
+      new IHasSupportedAsset.Asset[](0),
+      assetsToRemove
+    );
+
+    // At B+N+1 the lock clears (settlement would be reflected by now) and removal is permitted again.
+    vm.roll(block.number + 1);
+    vm.prank(manager);
+    IChangeAssets(address(hyperliquidTestPoolManagerLogic)).changeAssets(
+      new IHasSupportedAsset.Asset[](0),
+      assetsToRemove
+    );
+
+    assertFalse(
+      IHasSupportedAsset(hyperliquidTestPoolManagerLogic).isSupportedAsset(HyperEVMConfig.XAUT0_SYSTEM_ADDRESS),
+      "spot asset should be removable after the settlement window elapses"
+    );
+  }
+
+  /////////////////////////////////////////////
+  //        Time-In-Force Guard Tests        //
+  /////////////////////////////////////////////
+
+  /// @notice An ALO (post-only) spot buy is rejected by the guard, regardless of the reduce-only flag.
+  /// @dev Resting spot orders (ALO/GTC) must be sells, so every spot acquisition is an IOC that settles
+  ///      within the CoreWriter delay. A resting buy could otherwise sit on the book and fill after the
+  ///      post-action removal lock expired, delivering NAV-invisible tokens to a since-removed asset.
+  ///      The revert happens in the guard, before the order reaches Core.
+  function test_revert_aloSpotBuy() public {
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+
+    uint64 normalizedPrice = xaut0Price * 100;
+    uint64 limitPrice = normalizedPrice + ((normalizedPrice * 1) / 100); // within the slippage bound
+    uint32 xaut0AssetId = 10000 + uint32(HyperEVMConfig.XAUT0_SPOT_INDEX);
+
+    // ALO spot buy (isBuy = true), reduceOnly = false.
+    bytes memory orderActionData = abi.encodePacked(
+      uint8(1),
+      HLConstants.LIMIT_ORDER_ACTION,
+      abi.encode(xaut0AssetId, true, limitPrice, uint64(1e8), false, HLConstants.LIMIT_ORDER_TIF_ALO, uint128(1))
+    );
+
+    vm.expectRevert("resting spot order must be sell");
+    _placeLimitOrder(orderActionData);
+  }
+
+  /// @notice A GTC spot buy is rejected even when reduce-only is set.
+  /// @dev Proves the guard keys on the order side, not reduceOnly (which has no well-defined spot
+  ///      meaning), and that GTC is constrained identically to ALO. The revert happens in the guard.
+  function test_revert_reduceOnly_gtcSpotBuy() public {
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+
+    uint64 normalizedPrice = xaut0Price * 100;
+    uint64 limitPrice = normalizedPrice + ((normalizedPrice * 1) / 100); // within the slippage bound
+    uint32 xaut0AssetId = 10000 + uint32(HyperEVMConfig.XAUT0_SPOT_INDEX);
+
+    // GTC spot buy (isBuy = true), reduceOnly = true — still rejected because it's a buy.
+    bytes memory orderActionData = abi.encodePacked(
+      uint8(1),
+      HLConstants.LIMIT_ORDER_ACTION,
+      abi.encode(xaut0AssetId, true, limitPrice, uint64(1e8), true, HLConstants.LIMIT_ORDER_TIF_GTC, uint128(1))
+    );
+
+    vm.expectRevert("resting spot order must be sell");
+    _placeLimitOrder(orderActionData);
+  }
+
+  /// @notice An ALO (post-only) spot sell priced far from the oracle is rejected by the slippage bound.
+  /// @dev Uses a sell so it passes the resting-spot-order check and reaches the oracle-anchored slippage
+  ///      bound (reduceOnly is irrelevant — the guard keys on the order side). Guards against a manager
+  ///      resting a post-only order at an off-market price for a colluding counterparty. The revert
+  ///      happens in the guard, before Core.
+  function test_revert_aloOrder_offMarket_exceedsSlippage() public {
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+
+    uint64 normalizedPrice = xaut0Price * 100;
+    uint64 limitPrice = normalizedPrice / 10; // sell 90% below oracle
+    uint32 xaut0AssetId = 10000 + uint32(HyperEVMConfig.XAUT0_SPOT_INDEX);
+
+    // ALO spot sell (isBuy = false), reduceOnly = false — allowed past the resting check because it's a sell.
+    bytes memory orderActionData = abi.encodePacked(
+      uint8(1),
+      HLConstants.LIMIT_ORDER_ACTION,
+      abi.encode(xaut0AssetId, false, limitPrice, uint64(1e8), false, HLConstants.LIMIT_ORDER_TIF_ALO, uint128(1))
+    );
+
+    vm.expectRevert("Slippage exceeds limit");
+    _placeLimitOrder(orderActionData);
+  }
+
+  /// @notice An unrecognised time-in-force value is rejected instead of bypassing the price bound.
+  /// @dev INVALID (0) and any out-of-enum TIF must hit the explicit reject, not fall through unchecked.
+  function test_revert_unsupportedTif() public {
+    uint64 xaut0Price = 2800e6;
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), xaut0Price);
+
+    uint64 normalizedPrice = xaut0Price * 100;
+    uint64 limitPrice = normalizedPrice + ((normalizedPrice * 1) / 100);
+    uint32 xaut0AssetId = 10000 + uint32(HyperEVMConfig.XAUT0_SPOT_INDEX);
+
+    bytes memory orderActionData = abi.encodePacked(
+      uint8(1),
+      HLConstants.LIMIT_ORDER_ACTION,
+      abi.encode(xaut0AssetId, true, limitPrice, uint64(1e8), false, uint8(0), uint128(1)) // TIF = INVALID
+    );
+
+    vm.expectRevert("unsupported tif");
+    _placeLimitOrder(orderActionData);
   }
 
   /////////////////////////////////////////////

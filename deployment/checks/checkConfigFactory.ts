@@ -1,5 +1,5 @@
 import { InitType } from "./initialize";
-import { expect, assert } from "chai";
+import assert from "assert";
 
 export const checkFactory = async (initializeData: InitType) => {
   const { protocolTreasury, poolFactoryProxy, assetHandlerProxy, governance, poolFactory } = initializeData;
@@ -18,15 +18,15 @@ export const checkFactory = async (initializeData: InitType) => {
   }
 
   const protocolTreasurySetting = await poolFactoryProxy.daoAddress();
-  expect(protocolTreasurySetting).to.equal(protocolTreasury);
+  assert.strictEqual(protocolTreasurySetting, protocolTreasury);
   console.log("Protocol Treasury address:", protocolTreasury);
 
   const governanceSetting = await poolFactoryProxy.governanceAddress();
-  expect(governanceSetting).to.equal(governance.address);
+  assert.strictEqual(governanceSetting, governance.address);
   console.log("Governance address:", governance.address);
 
   const assetHandlerSetting = await poolFactoryProxy.getAssetHandler();
-  expect(assetHandlerSetting).to.equal(assetHandlerProxy.address);
+  assert.strictEqual(assetHandlerSetting, assetHandlerProxy.address);
   console.log("Asset Handler address:", assetHandlerProxy.address);
 
   console.log("Factory settings checks complete!");

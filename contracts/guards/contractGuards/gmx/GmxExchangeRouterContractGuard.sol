@@ -39,6 +39,7 @@ contract GmxExchangeRouterContractGuard is ITxTrackingGuard, ITransactionTypes, 
 
   bool public override isTxTrackingGuard = true;
 
+  // Whitelisted dHEDGE pools; trusted input set at deployment.
   mapping(address => GmxStructs.PoolSetting) private _dHedgePoolsWhitelist;
   mapping(address => GmxStructs.VirtualTokenOracleSetting) public virtualTokenOracleSettings; // virtualToken => tokenOracleSetting, for oracle price resolution
 
@@ -161,6 +162,13 @@ contract GmxExchangeRouterContractGuard is ITxTrackingGuard, ITransactionTypes, 
     } else if (method == IGmxExchangeRouter.cancelWithdrawal.selector) {
       txType = uint16(TransactionType.GmxCancelWithdrawal);
       require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(dataStore.wnt()), "unsupported wnt");
+    } else if (method == IGmxExchangeRouter.setSavedCallbackContract.selector) {
+      // Saved callback registration so keeper-created orders (liquidations, ADLs) can reach this guard.
+      (address market, address callbackContract) = abi.decode(params, (address, address));
+      require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(market), "unsupported market");
+      require(reader.getMarket(dataStore, market).marketToken == market, "invalid market");
+      require(callbackContract == address(this), "invalid callback contract");
+      txType = uint16(TransactionType.GmxSetSavedCallbackContract);
     }
     // IGmxExchangeRouter.updateOrder is for limit orders, not supported yet
     return (txType, false);

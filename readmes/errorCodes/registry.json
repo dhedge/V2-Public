@@ -6,7 +6,6 @@
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
-        "contracts/priceAggregators/UniV2LPAggregator.sol",
         "contracts/priceAggregators/VelodromeStableLPAggregator.sol"
       ],
       "curated": false
@@ -15,7 +14,6 @@
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
-        "contracts/priceAggregators/UniV2LPAggregator.sol",
         "contracts/priceAggregators/VelodromeStableLPAggregator.sol",
         "contracts/priceAggregators/VelodromeTWAPAggregator.sol",
         "contracts/priceAggregators/VelodromeV2TWAPAggregator.sol"
@@ -62,11 +60,11 @@
       ],
       "curated": false
     },
-    "aave not enabled": {
-      "description": "Aave is not enabled in the vault",
-      "action": "Add the Aave lending pool as a vault asset.",
+    "aave position underwater": {
+      "description": "The vault's Aave debt exceeds its collateral, which freezes vault pricing",
+      "action": "Wait until the Aave position is repaid or liquidated back above water, then try again.",
       "source": [
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol"
+        "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol"
       ],
       "curated": true
     },
@@ -77,6 +75,14 @@
         "contracts/guards/assetGuards/hyperliquid/HyperliquidPositionGuard.sol"
       ],
       "curated": false
+    },
+    "accounted token source": {
+      "description": "This token's value is already counted by another position.",
+      "action": "Exit the position via its protocol, then swap.",
+      "source": [
+        "contracts/utils/SlippageAccumulatorUser.sol"
+      ],
+      "curated": true
     },
     "adjusted margin is negative": {
       "description": "Margin adjustment exceeds available margin",
@@ -412,16 +418,16 @@
       "curated": false
     },
     "core user not activated": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Vault's HyperCore account is not activated",
+      "action": "Activate by transferring 1 USDC from EVM to Spot using the trade interface.",
       "source": [
         "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "CoreWriter not supported asset": {
-      "description": "CoreWriter not enabled in the vault",
-      "action": "Add the CoreWriter contract as a vault asset.",
+      "description": "Hyperliquid Perps Account asset not enabled in the vault",
+      "action": "Enable the Hyperliquid Perps Account asset in the vault.",
       "source": [
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
@@ -461,6 +467,7 @@
         "contracts/guards/assetGuards/dytm/DytmOfficeAssetGuard.sol",
         "contracts/guards/assetGuards/flatMoney/v2/FlatMoneyV2UNITOutsideWithdrawalAssetGuard.sol",
         "contracts/guards/assetGuards/gmx/GmxPerpMarketAssetGuard.sol",
+        "contracts/guards/assetGuards/hyperliquid/HyperliquidPositionGuard.sol",
         "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol",
         "contracts/guards/assetGuards/midas/MidasMTokenAssetGuard.sol",
         "contracts/guards/assetGuards/midas/MidasPendingRedemptionAssetGuard.sol",
@@ -859,10 +866,15 @@
       "action": "Add the reward token to the vault's assets.",
       "source": [
         "contracts/guards/contractGuards/AngleDistributorContractGuard.sol",
-        "contracts/guards/contractGuards/ArrakisLiquidityGaugeV4ContractGuard.sol",
-        "contracts/guards/contractGuards/ArrakisV1RouterStakingGuard.sol",
-        "contracts/guards/contractGuards/SushiMiniChefV2Guard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2GaugeContractGuard.sol"
+      ],
+      "curated": true
+    },
+    "eps skip market not zero": {
+      "description": "Pendle limit order sets epsSkipMarket, which could skip the market leg.",
+      "action": "Set epsSkipMarket to 0 so any remainder routes through the market.",
+      "source": [
+        "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol"
       ],
       "curated": true
     },
@@ -921,6 +933,14 @@
         "contracts/utils/BalancerLib.sol"
       ],
       "curated": false
+    },
+    "evm contract mismatch": {
+      "description": "Token registry index does not match the token's linked HyperEVM contract",
+      "action": "Check the Hyperliquid token registry entry for this token.",
+      "source": [
+        "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol"
+      ],
+      "curated": true
     },
     "exceed max available payout": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -1082,14 +1102,6 @@
       ],
       "curated": true
     },
-    "GTC reduce-only for spot": {
-      "description": "Spot GTC orders must be reduce-only",
-      "action": "Set the reduce-only flag or use an IOC order.",
-      "source": [
-        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
-      ],
-      "curated": true
-    },
     "gwav divergence too high": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
@@ -1163,14 +1175,6 @@
         "contracts/DynamicBonds.sol"
       ],
       "curated": false
-    },
-    "invalid aaveLendingPoolV3": {
-      "description": "Aave V3 lending pool cannot be zero",
-      "action": "Open a team support message.",
-      "source": [
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveMigrationHelperGuard.sol"
-      ],
-      "curated": true
     },
     "invalid account type": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -1259,6 +1263,7 @@
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
+        "contracts/guards/contractGuards/gmx/GmxExchangeRouterContractGuard.sol",
         "contracts/utils/gmx/GmxHelperLib.sol"
       ],
       "curated": false
@@ -1283,7 +1288,6 @@
       "description": "Rewards claimer must be the vault address",
       "action": "Set the claimer to the vault address.",
       "source": [
-        "contracts/guards/contractGuards/velodrome/VelodromeGaugeContractGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2GaugeContractGuard.sol"
       ],
       "curated": true
@@ -1597,6 +1601,14 @@
       ],
       "curated": false
     },
+    "invalid maker token": {
+      "description": "Pendle limit order fill uses the zero (native) maker token.",
+      "action": "Use a limit order whose maker token is an ERC20, not the native token.",
+      "source": [
+        "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol"
+      ],
+      "curated": true
+    },
     "Invalid manager": {
       "description": "Manager address cannot be zero",
       "action": "Provide a valid manager address.",
@@ -1620,6 +1632,7 @@
       "source": [
         "contracts/guards/assetGuards/pendle/PendlePTAssetGuard.sol",
         "contracts/guards/contractGuards/dytm/DytmOfficeContractGuard.sol",
+        "contracts/guards/contractGuards/gmx/GmxExchangeRouterContractGuard.sol",
         "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol",
         "contracts/utils/gmx/GmxHelperLib.sol"
       ],
@@ -1742,6 +1755,14 @@
       ],
       "curated": false
     },
+    "invalid order type": {
+      "description": "Pendle limit order fill has the wrong order type for the swap direction.",
+      "action": "Use fills whose order type matches the buy or sell direction.",
+      "source": [
+        "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol"
+      ],
+      "curated": true
+    },
     "invalid path": {
       "description": "Swap path is invalid",
       "action": "Rebuild the swap route and try again.",
@@ -1832,14 +1853,6 @@
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
         "contracts/utils/pyth/PythPriceLib.sol"
-      ],
-      "curated": false
-    },
-    "Invalid Pyth oracle expo": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
-      "source": [
-        "contracts/priceAggregators/PythPriceAggregator.sol"
       ],
       "curated": false
     },
@@ -2105,14 +2118,6 @@
       "action": "Open a team support message.",
       "source": [
         "contracts/guards/contractGuards/flatMoney/v2/FlatMoneyOptionsOrderExecutionGuard.sol"
-      ],
-      "curated": true
-    },
-    "invalid vault address": {
-      "description": "Vault address cannot be zero",
-      "action": "Open a team support message.",
-      "source": [
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveMigrationHelperGuard.sol"
       ],
       "curated": true
     },
@@ -2544,14 +2549,6 @@
       ],
       "curated": true
     },
-    "not borrow enabled": {
-      "description": "Asset is not borrowable on Aave",
-      "action": "Borrow an asset enabled for borrowing on Aave.",
-      "source": [
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol"
-      ],
-      "curated": true
-    },
     "not correct contract guard": {
       "description": "Caller is not the registered contract guard",
       "action": "If you believe this is a bug, open a team support message.",
@@ -2569,20 +2566,20 @@
       "curated": false
     },
     "not enough available balance_0": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Vault has no withdrawal asset balance",
+      "action": "Try again later.",
       "source": [
         "contracts/guards/assetGuards/OutsidePositionWithdrawalHelper.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "not enough available balance_1": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
+      "description": "Not enough withdrawal asset in the vault to cover the withdrawal",
+      "action": "Withdraw a smaller amount or try again later.",
       "source": [
         "contracts/guards/assetGuards/OutsidePositionWithdrawalHelper.sol"
       ],
-      "curated": false
+      "curated": true
     },
     "not enough reward token": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -2920,6 +2917,14 @@
       ],
       "curated": true
     },
+    "only USDC self-transfers": {
+      "description": "Only USDC can be moved between Hyperliquid dexes",
+      "action": "Transfer USDC, or bridge the token to HyperEVM instead.",
+      "source": [
+        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
+      ],
+      "curated": true
+    },
     "Only user can interact": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
@@ -2928,20 +2933,11 @@
       ],
       "curated": false
     },
-    "only variable rate": {
-      "description": "Only variable rate borrowing is allowed",
-      "action": "Use variable interest rate mode.",
-      "source": [
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol"
-      ],
-      "curated": true
-    },
     "only whitelisted vaults": {
       "description": "Vault not whitelisted for migration",
       "action": "Ask the protocol team to whitelist the vault.",
       "source": [
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveDebtTokenContractGuard.sol",
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveMigrationHelperGuard.sol"
+        "contracts/guards/contractGuards/aaveMigrationHelper/AaveDebtTokenContractGuard.sol"
       ],
       "curated": true
     },
@@ -3083,12 +3079,9 @@
       "action": "Ask the protocol team to whitelist the vault.",
       "source": [
         "contracts/guards/assetGuards/dytm/DytmOfficeAssetGuard.sol",
-        "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol",
         "contracts/guards/assetGuards/midas/MidasMTokenAssetGuard.sol",
         "contracts/guards/assetGuards/midas/MidasPendingRedemptionAssetGuard.sol",
         "contracts/guards/contractGuards/dytm/DytmOfficeContractGuard.sol",
-        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
-        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/guards/contractGuards/midas/MidasRedemptionVaultContractGuard.sol"
       ],
       "curated": true
@@ -3331,15 +3324,6 @@
       ],
       "curated": false
     },
-    "receiver is not pool": {
-      "description": "Receiver must be the vault address",
-      "action": "Set the receiver to the vault address.",
-      "source": [
-        "contracts/guards/contractGuards/ArrakisLiquidityGaugeV4ContractGuard.sol",
-        "contracts/guards/contractGuards/ArrakisV1RouterStakingGuard.sol"
-      ],
-      "curated": true
-    },
     "receiver not pool logic": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
@@ -3352,14 +3336,11 @@
       "description": "Recipient must be the vault address",
       "action": "Set the recipient to the vault address.",
       "source": [
-        "contracts/guards/contractGuards/AaveIncentivesControllerGuard.sol",
         "contracts/guards/contractGuards/AaveIncentivesControllerV3Guard.sol",
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol",
         "contracts/guards/contractGuards/AaveLendingPoolGuardV3.sol",
         "contracts/guards/contractGuards/AngleDistributorContractGuard.sol",
         "contracts/guards/contractGuards/LiquifiRewardsContractGuard.sol",
         "contracts/guards/contractGuards/OneInchV6Guard.sol",
-        "contracts/guards/contractGuards/SushiMiniChefV2Guard.sol",
         "contracts/guards/contractGuards/dytm/DytmOfficeContractGuard.sol",
         "contracts/guards/contractGuards/fluid/FluidMerkleDistributorContractGuard.sol",
         "contracts/guards/contractGuards/fluid/FluidTokenContractGuard.sol",
@@ -3370,7 +3351,6 @@
         "contracts/guards/contractGuards/pendle/PendleRouterV4PlasmaContractGuard.sol",
         "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeRouterGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2RouterGuard.sol"
       ],
       "curated": true
@@ -3398,6 +3378,14 @@
         "contracts/guards/assetGuards/ERC20Guard.sol"
       ],
       "curated": false
+    },
+    "resting spot order must be sell": {
+      "description": "Resting (GTC/ALO) spot orders can only be sells",
+      "action": "Use an IOC order to buy spot assets.",
+      "source": [
+        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
+      ],
+      "curated": true
     },
     "reward asset not enabled": {
       "description": "Reward asset not enabled in the vault",
@@ -3554,6 +3542,14 @@
       ],
       "curated": false
     },
+    "spot pair not USDC quoted": {
+      "description": "Spot pair is not quoted in USDC",
+      "action": "Trade this asset on its USDC-quoted Hyperliquid pair.",
+      "source": [
+        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
+      ],
+      "curated": true
+    },
     "sqrtPriceX96 must be 0": {
       "description": "sqrtPriceX96 must be zero when minting",
       "action": "Set sqrtPriceX96 to zero.",
@@ -3578,6 +3574,14 @@
         "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol"
       ],
       "curated": false
+    },
+    "src token not swappable": {
+      "description": "Midas mToken has no market liquidity and cannot be swapped",
+      "action": "Claim the asset without a swap to complete the withdrawal.",
+      "source": [
+        "contracts/swappers/easySwapperV2/WithdrawalVault.sol"
+      ],
+      "curated": true
     },
     "staking address is 0": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -3649,7 +3653,8 @@
       "description": "Swap output below the slippage threshold",
       "action": "Increase slippage tolerance or try again later.",
       "source": [
-        "contracts/guards/contractGuards/EasySwapperV2ContractGuard.sol"
+        "contracts/guards/contractGuards/EasySwapperV2ContractGuard.sol",
+        "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol"
       ],
       "curated": true
     },
@@ -3880,7 +3885,6 @@
       "description": "Asset not enabled in the vault",
       "action": "Add the asset to the vault's supported assets.",
       "source": [
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol",
         "contracts/guards/contractGuards/MaiVaultContractGuard.sol",
         "contracts/guards/contractGuards/dytm/DytmOfficeContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
@@ -3895,22 +3899,6 @@
       ],
       "curated": true
     },
-    "unsupported asset: token0": {
-      "description": "token0 not enabled in the vault",
-      "action": "Add token0 to the vault's supported assets.",
-      "source": [
-        "contracts/guards/contractGuards/ArrakisV1RouterStakingGuard.sol"
-      ],
-      "curated": true
-    },
-    "unsupported asset: token1": {
-      "description": "token1 not enabled in the vault",
-      "action": "Add token1 to the vault's supported assets.",
-      "source": [
-        "contracts/guards/contractGuards/ArrakisV1RouterStakingGuard.sol"
-      ],
-      "curated": true
-    },
     "unsupported asset: tokenA": {
       "description": "tokenA not enabled in the vault",
       "action": "Add tokenA to the vault's supported assets.",
@@ -3920,7 +3908,6 @@
         "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeCLGaugeContractGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeRouterGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2RouterGuard.sol"
       ],
       "curated": true
@@ -3934,7 +3921,6 @@
         "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeCLGaugeContractGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeRouterGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2RouterGuard.sol"
       ],
       "curated": true
@@ -3962,7 +3948,6 @@
         "contracts/guards/contractGuards/EasySwapperV2ContractGuard.sol",
         "contracts/guards/contractGuards/OneInchV6Guard.sol",
         "contracts/guards/contractGuards/PoolLimitOrderManagerGuard.sol",
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveMigrationHelperGuard.sol",
         "contracts/guards/contractGuards/flatMoney/shared/FlatMoneyBasisContractGuard.sol",
         "contracts/guards/contractGuards/fluid/FluidTokenContractGuard.sol",
         "contracts/guards/contractGuards/kyberSwap/KyberSwapRouterV2ContractGuard.sol",
@@ -3979,14 +3964,6 @@
       "action": "Enable the dex ID or place reduce-only orders.",
       "source": [
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
-      ],
-      "curated": true
-    },
-    "unsupported gauge token": {
-      "description": "Gauge token not enabled in the vault",
-      "action": "Add the gauge token to the vault's assets.",
-      "source": [
-        "contracts/guards/contractGuards/ArrakisV1RouterStakingGuard.sol"
       ],
       "curated": true
     },
@@ -4010,9 +3987,6 @@
       "description": "LP token not enabled in the vault",
       "action": "Add the LP token to the vault's assets.",
       "source": [
-        "contracts/guards/contractGuards/SushiMiniChefV2Guard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeGaugeContractGuard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeRouterGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2GaugeContractGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2RouterGuard.sol"
       ],
@@ -4022,6 +3996,7 @@
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
+        "contracts/guards/contractGuards/gmx/GmxExchangeRouterContractGuard.sol",
         "contracts/utils/gmx/GmxHelperLib.sol"
       ],
       "curated": false
@@ -4034,28 +4009,11 @@
       ],
       "curated": true
     },
-    "unsupported repay asset": {
-      "description": "Repay asset not enabled in the vault",
-      "action": "Add the repay asset to the vault's assets.",
-      "source": [
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol"
-      ],
-      "curated": true
-    },
     "unsupported reward asset": {
       "description": "Reward asset not enabled in the vault",
       "action": "Add the reward asset to the vault's assets.",
       "source": [
-        "contracts/guards/contractGuards/AaveIncentivesControllerGuard.sol",
         "contracts/guards/contractGuards/AaveIncentivesControllerV3Guard.sol"
-      ],
-      "curated": true
-    },
-    "unsupported reward token": {
-      "description": "Reward token not enabled in the vault",
-      "action": "Add the reward token to the vault's assets.",
-      "source": [
-        "contracts/guards/contractGuards/velodrome/VelodromeGaugeContractGuard.sol"
       ],
       "curated": true
     },
@@ -4108,6 +4066,14 @@
       ],
       "curated": true
     },
+    "unsupported tif": {
+      "description": "Order time-in-force is not supported",
+      "action": "Use a GTC, IOC or ALO order.",
+      "source": [
+        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
+      ],
+      "curated": true
+    },
     "unsupported token": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
@@ -4121,14 +4087,6 @@
       "action": "Use version 1 encoded actions.",
       "source": [
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
-      ],
-      "curated": true
-    },
-    "unsupported withdraw asset": {
-      "description": "Withdraw asset not enabled in the vault",
-      "action": "Add the withdraw asset to the vault's assets.",
-      "source": [
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol"
       ],
       "curated": true
     },
@@ -4158,12 +4116,11 @@
       ],
       "curated": true
     },
-    "user is not pool": {
-      "description": "User must be the vault address",
-      "action": "Use the vault address as the user.",
+    "USDC required for HL": {
+      "description": "USDC cannot be removed while the vault uses Hyperliquid",
+      "action": "Remove the Hyperliquid position asset first, then remove USDC.",
       "source": [
-        "contracts/guards/contractGuards/AaveLendingPoolGuardV2.sol",
-        "contracts/guards/contractGuards/ArrakisLiquidityGaugeV4ContractGuard.sol"
+        "contracts/guards/assetGuards/hyperliquid/HyperliquidERC20Guard.sol"
       ],
       "curated": true
     },
@@ -4251,15 +4208,6 @@
       ],
       "curated": false
     },
-    "0x074f14fb": {
-      "signature": "HyperliquidWithdrawalManager__ZeroAmount()",
-      "description": "Withdrawal amount cannot be zero",
-      "action": "Enter an amount greater than zero and try again.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0x079a2238": {
       "signature": "UnsupportedInputToken()",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4279,7 +4227,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -4296,20 +4243,11 @@
         "contracts/limitOrders/PoolLimitOrderManager.sol",
         "contracts/oracles/OndoAttestationOracle.sol",
         "contracts/swappers/OndoGMSwap.sol",
+        "contracts/swappers/swapper/Swapper.sol",
         "contracts/utils/callers/AuthorizedCallers.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/validators/TypedStructuredDataValidator.sol"
       ],
       "curated": false
-    },
-    "0x11ae6ffc": {
-      "signature": "HyperliquidWithdrawalManager__InvalidPool()",
-      "description": "Provided address is not a valid vault",
-      "action": "Use a registered vault address.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
     },
     "0x159c4a13": {
       "signature": "InvalidAttestationSignature()",
@@ -4356,15 +4294,6 @@
       ],
       "curated": false
     },
-    "0x1e0ed94c": {
-      "signature": "HyperliquidWithdrawalManager__UnsortedAssetIds()",
-      "description": "Asset ID list must be strictly ascending with no duplicates",
-      "action": "Sort asset IDs in ascending order and remove duplicates before retrying.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0x1e4ec46b": {
       "signature": "InvalidReceiver()",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4386,8 +4315,8 @@
         "contracts/limitOrders/PoolLimitOrderManager.sol",
         "contracts/oracles/OndoAttestationOracle.sol",
         "contracts/swappers/OndoGMSwap.sol",
+        "contracts/swappers/swapper/Swapper.sol",
         "contracts/utils/callers/AuthorizedCallers.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/validators/TypedStructuredDataValidator.sol"
       ],
       "curated": false
@@ -4410,6 +4339,16 @@
       ],
       "curated": false
     },
+    "0x212a0af1": {
+      "signature": "FailedToApproveParaswap(bytes)",
+      "description": "Could not read the Paraswap token transfer proxy",
+      "action": "Check the PARASWAP router address on this chain or use another aggregator.",
+      "source": [
+        "contracts/swappers/swapper/RouterProcessor.sol",
+        "contracts/swappers/swapper/Swapper.sol"
+      ],
+      "curated": true
+    },
     "0x23bfdd3b": {
       "signature": "FluidDexPricesAndExchangeRates((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4428,15 +4367,6 @@
       ],
       "curated": false
     },
-    "0x28df3702": {
-      "signature": "HyperliquidWithdrawalManager__WithdrawalAlreadyPending()",
-      "description": "A withdrawal is already pending for this user and vault",
-      "action": "Complete or cancel the existing withdrawal before starting a new one.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0x2c19b8b8": {
       "signature": "InsufficientOutput(uint256,uint256)",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4446,15 +4376,6 @@
       ],
       "curated": false
     },
-    "0x2c3348e9": {
-      "signature": "HyperliquidWithdrawalManager__NoSpotUsdcFreed()",
-      "description": "No spot USDC was available to bridge",
-      "action": "Retry after positions are reduced or spot USDC is available in Hyperliquid.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0x2cf5e894": {
       "signature": "InvalidProofConfig(string)",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4463,6 +4384,16 @@
         "contracts/oracles/OndoAttestationOracle.sol"
       ],
       "curated": false
+    },
+    "0x2e3f1f34": {
+      "signature": "EmptyPayload()",
+      "description": "Swap data for the aggregator router is empty",
+      "action": "Fetch fresh swap data from the aggregator and retry.",
+      "source": [
+        "contracts/swappers/swapper/RouterProcessor.sol",
+        "contracts/swappers/swapper/Swapper.sol"
+      ],
+      "curated": true
     },
     "0x321116dc": {
       "signature": "WithdrawalLocked()",
@@ -4481,15 +4412,6 @@
         "contracts/limitOrders/PoolLimitOrderManager.sol"
       ],
       "curated": false
-    },
-    "0x32a2b307": {
-      "signature": "HyperliquidWithdrawalManager__FullWithdrawalNotSupported()",
-      "description": "Full withdrawals are not supported in this flow",
-      "action": "Use a partial amount that is less than your full vault token balance.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
     },
     "0x36f9d9ce": {
       "signature": "NonZeroFeeAmount()",
@@ -4511,7 +4433,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -4544,12 +4465,13 @@
       ],
       "curated": true
     },
-    "0x3e44b35e": {
-      "signature": "HyperliquidWithdrawalManager__TooEarly()",
-      "description": "This step was called too early",
-      "action": "Wait at least one block, then call the next withdrawal step again.",
+    "0x4088d01d": {
+      "signature": "NativeTokenSentWithoutNativeSwap()",
+      "description": "Native token was sent but no native swap is included",
+      "action": "Do not send value unless the swap contains a NATIVE transfer method leg.",
       "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
+        "contracts/swappers/swapper/Swapper.sol",
+        "contracts/swappers/swapper/TokenTransferMethods.sol"
       ],
       "curated": true
     },
@@ -4561,15 +4483,6 @@
         "contracts/limitOrders/PoolLimitOrderManager.sol"
       ],
       "curated": false
-    },
-    "0x45e9b4c0": {
-      "signature": "HyperliquidWithdrawalManager__SpotAssetNotSupported(uint32)",
-      "description": "Spot asset is not supported by this vault",
-      "action": "Use supported spot asset IDs and ensure the asset is enabled in the vault.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
     },
     "0x46c82ad0": {
       "signature": "ZeroValue(string)",
@@ -4597,6 +4510,16 @@
         "contracts/limitOrders/EasyLimitBuyManager.sol"
       ],
       "curated": false
+    },
+    "0x48d9ecc1": {
+      "signature": "NotEnoughNativeTokenSent(uint256,uint256)",
+      "description": "Native token sent does not match the amount in the swap data",
+      "action": "Send exactly the source amount of the native leg as transaction value.",
+      "source": [
+        "contracts/swappers/swapper/Swapper.sol",
+        "contracts/swappers/swapper/TokenTransferMethods.sol"
+      ],
+      "curated": true
     },
     "0x49aec373": {
       "signature": "MaxOrdersReached(address)",
@@ -4647,7 +4570,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -4661,8 +4583,8 @@
         "contracts/limitOrders/EasyLimitBuyManager.sol",
         "contracts/limitOrders/PoolLimitOrderManager.sol",
         "contracts/swappers/OndoGMSwap.sol",
-        "contracts/utils/WithdrawalGuardian.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
+        "contracts/swappers/swapper/Swapper.sol",
+        "contracts/utils/WithdrawalGuardian.sol"
       ],
       "curated": false
     },
@@ -4674,6 +4596,16 @@
         "contracts/limitOrders/EasyLimitBuyManager.sol"
       ],
       "curated": false
+    },
+    "0x54971d46": {
+      "signature": "SwapFailed(address,(address,uint256,(bytes32,bytes)),bytes)",
+      "description": "The aggregator router rejected the swap",
+      "action": "Fetch fresh swap data from the aggregator and retry.",
+      "source": [
+        "contracts/swappers/swapper/RouterProcessor.sol",
+        "contracts/swappers/swapper/Swapper.sol"
+      ],
+      "curated": true
     },
     "0x55e97b0d": {
       "signature": "AmountMismatch()",
@@ -4704,11 +4636,20 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
       "curated": false
+    },
+    "0x5b7543dd": {
+      "signature": "UnsupportedTokenTransferMethod()",
+      "description": "Unknown source token transfer method",
+      "action": "Use ALLOWANCE, PERMIT2 or NATIVE as the transfer method.",
+      "source": [
+        "contracts/swappers/swapper/Swapper.sol",
+        "contracts/swappers/swapper/TokenTransferMethods.sol"
+      ],
+      "curated": true
     },
     "0x5d573791": {
       "signature": "QuoteExpirationTooFar()",
@@ -4718,6 +4659,16 @@
         "contracts/oracles/OndoAttestationOracle.sol"
       ],
       "curated": false
+    },
+    "0x629d4ddc": {
+      "signature": "InvalidNativeTokenTransferEncoding()",
+      "description": "Native swap must contain exactly one source entry for the wrapped native token",
+      "action": "Encode the native leg as a single wrapped native token source with the NATIVE transfer method.",
+      "source": [
+        "contracts/swappers/swapper/Swapper.sol",
+        "contracts/swappers/swapper/TokenTransferMethods.sol"
+      ],
+      "curated": true
     },
     "0x6405b937": {
       "signature": "ValueManipulationDetected(address,uint256,uint256)",
@@ -4747,15 +4698,6 @@
       ],
       "curated": false
     },
-    "0x6cbc3d90": {
-      "signature": "HyperliquidWithdrawalManager__NoPendingWithdrawal()",
-      "description": "No pending withdrawal found",
-      "action": "Start a withdrawal first, then retry this action.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0x6d7bfc38": {
       "signature": "ZeroHeartbeat()",
       "description": "Heartbeat cannot be zero",
@@ -4765,15 +4707,6 @@
       ],
       "curated": true
     },
-    "0x6dfcc650": {
-      "signature": "SafeCastOverflowedUintDowncast(uint8,uint256)",
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": false
-    },
     "0x6f79c78a": {
       "signature": "InvalidAsset(address)",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4782,6 +4715,16 @@
         "contracts/limitOrders/PoolLimitOrderManager.sol"
       ],
       "curated": false
+    },
+    "0x7403a906": {
+      "signature": "UnsupportedPermit2Method(uint8)",
+      "description": "Unknown Permit2 transfer type",
+      "action": "Use SINGLE_TRANSFER or BATCH_TRANSFER for the Permit2 method data.",
+      "source": [
+        "contracts/swappers/swapper/Swapper.sol",
+        "contracts/swappers/swapper/TokenTransferMethods.sol"
+      ],
+      "curated": true
     },
     "0x74892260": {
       "signature": "PrecompileHelper__SpotIndexNotFound(uint64)",
@@ -4793,18 +4736,18 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
       "curated": false
     },
-    "0x74d60416": {
-      "signature": "HyperliquidWithdrawalManager__TimeoutNotReached()",
-      "description": "Withdrawal timeout has not been reached",
-      "action": "Wait for the timeout window to pass before cancelling.",
+    "0x76c68c3b": {
+      "signature": "InvalidAggregator(bytes32)",
+      "description": "Router key is not whitelisted on the Swapper",
+      "action": "Use one of the supported router keys for this chain.",
       "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
+        "contracts/swappers/swapper/RouterProcessor.sol",
+        "contracts/swappers/swapper/Swapper.sol"
       ],
       "curated": true
     },
@@ -4844,6 +4787,15 @@
       ],
       "curated": false
     },
+    "0x81a815ef": {
+      "signature": "InsufficientAmountReceived(address,uint256,uint256)",
+      "description": "Swap returned less than the minimum destination amount",
+      "action": "Fetch fresh swap data or raise the slippage tolerance and retry.",
+      "source": [
+        "contracts/swappers/swapper/Swapper.sol"
+      ],
+      "curated": true
+    },
     "0x83c1010a": {
       "signature": "AssetMismatch()",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4863,7 +4815,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -4879,7 +4830,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -4913,15 +4863,6 @@
         "contracts/validators/odos/OdosLimitOrderValidator.sol"
       ],
       "curated": false
-    },
-    "0x940653b5": {
-      "signature": "HyperliquidWithdrawalManager__NothingToBridge()",
-      "description": "There is no Hyperliquid value to bridge for this withdrawal",
-      "action": "Check the requested amount and vault Hyperliquid balances, then try again.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
     },
     "0x95718daa": {
       "signature": "LimitOrderAlreadyExists(address,address)",
@@ -4968,15 +4909,6 @@
       ],
       "curated": false
     },
-    "0xa5e12146": {
-      "signature": "HyperliquidWithdrawalManager__NoPositionForAsset(uint32)",
-      "description": "No open perp position exists for the provided asset ID",
-      "action": "Remove invalid perp asset IDs and include only currently open positions.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0xa790f950": {
       "signature": "InvalidSettlementToken()",
       "description": "No curated description yet - raw error identifier shown.",
@@ -4996,7 +4928,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -5010,15 +4941,6 @@
         "contracts/limitOrders/EasyLimitBuyManager.sol"
       ],
       "curated": false
-    },
-    "0xaf4257d2": {
-      "signature": "HyperliquidWithdrawalManager__UnreducedPerpPosition()",
-      "description": "Provided perp asset IDs do not cover open perp exposure",
-      "action": "Include all open perp asset IDs for the vault and retry.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
     },
     "0xafa8331e": {
       "signature": "QuoteValueOutOfRange()",
@@ -5056,6 +4978,16 @@
       ],
       "curated": false
     },
+    "0xb735c41c": {
+      "signature": "AmountsAfterPermit2TransferMismatch(address,uint256,uint256)",
+      "description": "Permit2 transferred a different token amount than the swap specified",
+      "action": "Make the Permit2 signature cover exactly the source token amounts in the swap data.",
+      "source": [
+        "contracts/swappers/swapper/Swapper.sol",
+        "contracts/swappers/swapper/TokenTransferMethods.sol"
+      ],
+      "curated": true
+    },
     "0xb9384ebd": {
       "signature": "DomainChainMismatch()",
       "description": "No curated description yet - raw error identifier shown.",
@@ -5067,15 +4999,6 @@
       ],
       "curated": false
     },
-    "0xbdb9442c": {
-      "signature": "HyperliquidWithdrawalManager__PoolHasNoHLIntegration()",
-      "description": "Vault does not have Hyperliquid CoreWriter integration enabled",
-      "action": "Enable CoreWriter as a supported vault asset before using this withdrawal flow.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0xbeca91ac": {
       "signature": "PrecompileHelper__TokenInfoFetchFailed(uint64)",
       "description": "No curated description yet - raw error identifier shown.",
@@ -5086,7 +5009,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -5120,7 +5042,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -5156,15 +5077,6 @@
       ],
       "curated": false
     },
-    "0xc7b7766b": {
-      "signature": "HyperliquidWithdrawalManager__InvalidState(uint8,uint8)",
-      "description": "Withdrawal is in the wrong state for this step",
-      "action": "Follow the sequence announceAndReduce, then bridge, then settle.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0xca9235cf": {
       "signature": "OndoRedemptionsPaused()",
       "description": "No curated description yet - raw error identifier shown.",
@@ -5192,15 +5104,6 @@
       ],
       "curated": false
     },
-    "0xce0778e1": {
-      "signature": "HyperliquidWithdrawalManager__NoSpotBalanceForAsset(uint32)",
-      "description": "No spot balance exists for the provided asset ID",
-      "action": "Use spot asset IDs with a non-zero balance in the vault's Hyperliquid account.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
-    },
     "0xcf33bd0e": {
       "signature": "OrderNotFound(address,bytes32)",
       "description": "No curated description yet - raw error identifier shown.",
@@ -5218,15 +5121,6 @@
         "contracts/oracles/OndoAttestationOracle.sol"
       ],
       "curated": false
-    },
-    "0xd474fdce": {
-      "signature": "HyperliquidWithdrawalManager__NoBridgeNeeded()",
-      "description": "No bridge is needed because existing EVM USDC already covers this withdrawal",
-      "action": "Use the standard vault withdrawal directly instead of this Hyperliquid bridge flow.",
-      "source": [
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol"
-      ],
-      "curated": true
     },
     "0xd78bce0c": {
       "signature": "ECDSAInvalidSignatureS(bytes32)",
@@ -5247,8 +5141,8 @@
         "contracts/oracles/OndoAttestationOracle.sol",
         "contracts/referral/ReferralManager.sol",
         "contracts/swappers/OndoGMSwap.sol",
+        "contracts/swappers/swapper/Swapper.sol",
         "contracts/utils/WithdrawalGuardian.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/validators/TypedStructuredDataValidator.sol"
       ],
       "curated": false
@@ -5328,6 +5222,7 @@
         "contracts/priceAggregators/MidasPriceAggregator.sol",
         "contracts/priceAggregators/OndoAttestationAggregator.sol",
         "contracts/swappers/OndoGMSwap.sol",
+        "contracts/swappers/swapper/Swapper.sol",
         "contracts/utils/ValueManipulationCheck.sol",
         "contracts/utils/WithdrawalGuardian.sol",
         "contracts/utils/callers/AuthorizedCallers.sol",
@@ -5345,7 +5240,6 @@
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/utils/hyperliquid/InFlightTracker.sol",
         "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
@@ -5390,8 +5284,8 @@
         "contracts/oracles/OndoAttestationOracle.sol",
         "contracts/referral/ReferralManager.sol",
         "contracts/swappers/OndoGMSwap.sol",
+        "contracts/swappers/swapper/Swapper.sol",
         "contracts/utils/WithdrawalGuardian.sol",
-        "contracts/utils/hyperliquid/HyperliquidWithdrawalManager.sol",
         "contracts/validators/TypedStructuredDataValidator.sol"
       ],
       "curated": false

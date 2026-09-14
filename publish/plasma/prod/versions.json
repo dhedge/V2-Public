@@ -121,13 +121,15 @@
       "DhedgeSuperSwapper": "0x4a256E59C582f3d2cdF2F8566464F6851Af91563",
       "AaveLendingPoolAssetGuardV3": "0x65e9726CB8b5918F0b133464Dda845A6c1b70d0F",
       "KyberSwapRouterV2ContractGuard": "0xD990017853a0B2925ef234e8E41fa52f423E83F1",
-      "AngleDistributorContractGuard": "0x4E90fFD61498B4E5dd8bF6F1e6ab5236a182201F"
+      "AngleDistributorContractGuard": "0x4E90fFD61498B4E5dd8bF6F1e6ab5236a182201F",
+      "SwapperProxy": "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",
+      "Swapper": "0x4933b162b9F84182A098e2F06fdfD72068573B64"
     },
     "network": {
       "chainId": 9745,
       "name": "unknown"
     },
-    "lastUpdated": "Sun, 22 Mar 2026 17:03:53 GMT",
+    "lastUpdated": "Sun, 13 Sep 2026 13:23:33 GMT",
     "config": {}
   }
 }

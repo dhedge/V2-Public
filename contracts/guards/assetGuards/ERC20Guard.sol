@@ -64,7 +64,7 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
     address poolManagerLogic,
     address /* to */,
     bytes calldata data
-  ) external view override returns (uint16 txType, bool) {
+  ) external view virtual override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
 
     if (method == bytes4(keccak256("approve(address,uint256)"))) {

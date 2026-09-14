@@ -33,6 +33,7 @@ const upgradePoolLimitOrderManager = async (
   const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
 
   const proxy = versions[config.oldTag].contracts.PoolLimitOrderManagerProxy;
+  if (!proxy) return console.warn("PoolLimitOrderManagerProxy missing... skipping.");
 
   const PoolLimitOrderManager = await ethers.getContractFactory("PoolLimitOrderManager");
 
@@ -74,6 +75,7 @@ const deployPoolLimitOrderManager = async (
   if (!poolFactoryProxy) return console.warn("PoolFactoryProxy missing... skipping.");
 
   if (!easySwapperV2Proxy) return console.warn("EasySwapperV2Proxy missing... skipping.");
+  if (!addresses.poolLimitOrderManager) return console.warn("poolLimitOrderManager config missing... skipping.");
 
   const PoolLimitOrderManager = await ethers.getContractFactory("PoolLimitOrderManager");
   const initParams: Parameters<PoolLimitOrderManagerType["initialize"]> = [

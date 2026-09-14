@@ -16,7 +16,7 @@ export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
     return console.warn("Hyperliquid Perps configuration not found: skipping.");
   }
 
-  const { admin, whitelistedVaults, maxSlippage } = hyperliquidPerpsConfig;
+  const { admin, maxSlippage } = hyperliquidPerpsConfig;
 
   if (!admin) {
     return console.warn("Hyperliquid Perps admin not configured: skipping.");
@@ -95,22 +95,6 @@ export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
         );
       } catch (error) {
         console.error("May have failed to verify HyperliquidCoreWriterContractGuard:", error);
-      }
-
-      // Set whitelisted vaults if any
-      if (whitelistedVaults && whitelistedVaults.length > 0) {
-        const contractInterface = HyperliquidCoreWriterContractGuard.interface;
-        const setWhitelistTxData = contractInterface.encodeFunctionData("setDhedgePoolsWhitelist", [whitelistedVaults]);
-
-        await proposeTx(
-          proxyAddress,
-          setWhitelistTxData,
-          "Set whitelisted vaults for HyperliquidCoreWriterContractGuard",
-          config,
-          addresses,
-        );
-
-        console.log("Proposed whitelisted vaults update");
       }
 
       // Set contract guard in Governance

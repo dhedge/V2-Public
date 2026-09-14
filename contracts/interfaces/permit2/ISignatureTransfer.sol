@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 /// @title ISignatureTransfer
 /// @notice Interface for Permit2's SignatureTransfer functionality
-/// @dev Subset of Permit2 interface needed for limit buy orders
+/// @dev Subset of Permit2 interface needed for limit buy orders and the Swapper
 interface ISignatureTransfer {
   /// @notice Token and amount being transferred
   struct TokenPermissions {
@@ -19,11 +19,42 @@ interface ISignatureTransfer {
     uint256 deadline;
   }
 
+  /// @notice The permit data for a batch of token transfers
+  struct PermitBatchTransferFrom {
+    TokenPermissions[] permitted;
+    uint256 nonce;
+    uint256 deadline;
+  }
+
   /// @notice Details for signature-based transfer
   struct SignatureTransferDetails {
     address to;
     uint256 requestedAmount;
   }
+
+  /// @notice Transfers a token using a signed permit message
+  /// @param permit The permit data signed over by the owner
+  /// @param transferDetails Details of the transfer including recipient and amount
+  /// @param owner The owner of the tokens to transfer
+  /// @param signature The signature to verify
+  function permitTransferFrom(
+    PermitTransferFrom calldata permit,
+    SignatureTransferDetails calldata transferDetails,
+    address owner,
+    bytes calldata signature
+  ) external;
+
+  /// @notice Transfers multiple tokens using a signed permit message
+  /// @param permit The permit data signed over by the owner
+  /// @param transferDetails Details of each transfer including recipient and amount
+  /// @param owner The owner of the tokens to transfer
+  /// @param signature The signature to verify
+  function permitTransferFrom(
+    PermitBatchTransferFrom calldata permit,
+    SignatureTransferDetails[] calldata transferDetails,
+    address owner,
+    bytes calldata signature
+  ) external;
 
   /// @notice Transfers a token using a signed permit message
   /// @dev Includes extra data (witness) for additional validation

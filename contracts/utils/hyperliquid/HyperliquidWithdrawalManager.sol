@@ -17,6 +17,7 @@ pragma solidity 0.8.28;
 import {IERC20} from "@openzeppelin/v5/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/v5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SafeCast} from "@openzeppelin/v5/contracts/utils/math/SafeCast.sol";
+import {Math} from "@openzeppelin/v5/contracts/utils/math/Math.sol";
 import {OwnableUpgradeable} from "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {PrecompileHelper} from "./PrecompileHelper.sol";
@@ -36,7 +37,16 @@ import {IHyperliquidCoreWriterContractGuard} from "../../interfaces/hyperliquid/
 /// @notice Coordinates async user-driven withdrawals from pools with Hyperliquid perp positions.
 ///         Users lock pool tokens, the contract reduces positions proportionally, bridges USDC,
 ///         and settles the withdrawal.
+/// @notice For a moderately-levered vault with no resting orders on the assets being sold and no
+///         mid-flow interference, any-time proportional withdrawal works; outside that envelope it
+///         fails loudly (always cancellable) instead of stranding silently. The errors are:
+///         SpotBalanceOnHold → cancel spot orders; InsufficientCoreUsdc → deleverage / cancel perp
+///         orders / wait out drift; UnfundedReduceLeg → a reduce/sell order did not fill (thin book,
+///         gapping market, value in flight to Core), so retry once it does.
 /// @dev Relies on the CoreWriterContractGuard returning isPublic=true for withdrawal operations.
+///      [!WARNING] Not live: the guard still stores a `withdrawalManager` reference but its `txGuard` no
+///      longer reads it (the isPublic hooks were removed while this contract is unused), so
+///      `pool.execTransaction` rejects calls from here until the guard is extended again.
 contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableUpgradeable, PrecompileHelper {
   using SafeERC20 for IERC20;
   using SafeCast for uint256;
@@ -75,9 +85,27 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
   ///         omitted position falls short by its whole notional, far exceeding it.
   uint256 private constant _PERP_COVERAGE_TOLERANCE_BPS = 300; // 3%
 
+  /// @notice Headroom, in BPS of the whole bridge, allowed on top of the perp side's proportional
+  ///         share when a reduce-path bridge draws USDC out of perp equity. Covers the three ways
+  ///         the non-perp legs legitimately deliver slightly less than their own share: the bridge's
+  ///         own safety margin, the spot sells' fill slippage (bounded by `_ORDER_SLIPPAGE`), and the
+  ///         lot-grid flooring of each sell. A leg that did not fill at all falls short by its entire
+  ///         share, far exceeding it.
+  uint256 private constant _PERP_DRAW_HEADROOM_BPS = 300; // 3%
+
   /// @notice USDC left in the Core spot account to pay the spot->EVM bridge fee (~200k gas, in HYPE
   ///         or USDC). Without it CoreWriter silently drops the bridge while the EVM tx succeeds.
   uint256 private constant _BRIDGE_GAS_RESERVE = 1e5; // 0.1 USDC (6 decimals)
+
+  /// @notice Lowest valid HIP-3 perp asset id.
+  /// @dev HIP-3 ids encode `100_000 + dexId * 10_000 + perpIndex`, and dex 0 IS the core perp dex
+  ///      (`_DEX_ID_CORE_PERP`), whose perps are addressed by their plain index (`assetId < 10_000`).
+  ///      So 100_000..109_999 is not a HIP-3 range at all: every id in it is a second spelling of a
+  ///      core perp that is already reachable. Both `_requireStrictlyAscending` and
+  ///      `_requirePerpIdsCoverOpenNotional` assume asset id -> (dex, perp index) is one-to-one —
+  ///      accepting both spellings lets one position be named twice, double-counting its notional
+  ///      toward coverage while a co-resident perp is left un-reduced. Real HIP-3 dex ids start at 1.
+  uint32 private constant _MIN_HIP3_ASSET_ID = 110_000;
 
   /// @dev Transient storage slot used to signal the guard that this contract is the caller.
   bytes32 private constant _EXECUTING_SLOT = keccak256("HyperliquidWithdrawalManager.executing");
@@ -103,6 +131,10 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
   error HyperliquidWithdrawalManager__UnreducedPerpPosition();
   error HyperliquidWithdrawalManager__NoBridgeNeeded();
   error HyperliquidWithdrawalManager__UnsortedAssetIds();
+  error HyperliquidWithdrawalManager__InsufficientCoreUsdc();
+  error HyperliquidWithdrawalManager__SpotBalanceOnHold(uint32 asset);
+  error HyperliquidWithdrawalManager__DuplicateSpotBaseToken(uint64 baseTokenIndex);
+  error HyperliquidWithdrawalManager__UnfundedReduceLeg();
 
   /////////////////////////////////////////////
   //                  State                  //
@@ -120,10 +152,19 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
   /// @notice Total pending token amounts per pool (sum across all users).
   mapping(address pool => uint256) public totalPendingTokens;
 
-  /// @notice USDC (6 decimals) reserved against each pool's shared Core free-USDC buffer by pending
-  ///         withdrawals that skipped the reduce. A concurrent announce sees the buffer net of this,
-  ///         so two skips can't both draw the same free equity and over-drain the shared perp.
+  /// @notice USDC (6 decimals) reserved against each pool's shared Core free-USDC buffer by ALL
+  ///         pending withdrawals (their expected bridge draws). A concurrent announce sees the
+  ///         buffer net of this, so a skip can't draw free equity another pending withdrawal is
+  ///         about to bridge — neither a second skip's, nor margin a reduce-path withdrawal freed
+  ///         for its own pending bridge.
   mapping(address pool => uint256) public reservedBridgeUsdc;
+
+  /// @notice USDC (6 decimals) sitting in each pool on EVM that withdrawals have already bridged and
+  ///         not yet settled. It is pool property, but it is spoken for: each amount leaves with its
+  ///         own settle. `_getEffectiveBridgeAmount` nets it out so a later withdrawal does not
+  ///         mistake it for idle liquidity, size its own bridge too small (or skip it entirely) and
+  ///         then find the USDC gone at settle.
+  mapping(address pool => uint256) public bridgedUnsettledUsdc;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -173,6 +214,9 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     // the same stale pre-block position), stacking toward a full unwind from a small withdrawal.
     _requireStrictlyAscending(perpAssetIds);
     _requireStrictlyAscending(spotAssetIds);
+    // Ascending ids only make the IDS unique. One Core balance is reachable through every spot pair
+    // its token is the base of, so the sell must also be de-duped on the base token itself.
+    _requireDistinctSpotBaseTokens(spotAssetIds);
 
     uint256 portion = _getPortion(pool, tokenAmount);
 
@@ -182,7 +226,10 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     uint256 effectiveBridge = _getEffectiveBridgeAmount(pool, bridgeAmount, portion);
     if (effectiveBridge == 0) revert HyperliquidWithdrawalManager__NoBridgeNeeded();
 
-    // Record withdrawal state.
+    // Record withdrawal state. The expected bridge draw is reserved against the pool's shared Core
+    // free-USDC buffer on BOTH paths: a reduce-path withdrawal's freed margin is earmarked for its
+    // own pending bridge, and without the reservation a concurrent skip-path announce would see
+    // that freed margin as available and double-spend it. Released at settle/cancel.
     _pendingWithdrawals[msg.sender][pool] = PendingWithdrawal({
       amount: tokenAmount,
       announcedAt: block.timestamp,
@@ -190,8 +237,11 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
       bridgedBlock: 0,
       state: WithdrawalState.REDUCED,
       spotAssetIds: spotAssetIds,
-      reservedBridge: 0
+      reservedBridge: effectiveBridge,
+      reduceSkipped: false,
+      bridgedUsdc: 0
     });
+    reservedBridgeUsdc[pool] += effectiveBridge;
     totalPendingTokens[pool] += tokenAmount;
 
     // Transfer pool tokens from user to this contract.
@@ -199,11 +249,12 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     IERC20(pool).safeTransferFrom(msg.sender, address(this), tokenAmount);
 
     // Skip the reduce only when the pool's free Core USDC — perp/HIP-3 margin-free equity plus idle
-    // spot cash — net of what other pending skips already reserved, covers this bridge. Reserving it
-    // (below) means a concurrent announce sees the buffer already spoken for and is forced onto the
-    // reduce path instead of pulling the same shared perp margin a second time and over-draining it.
+    // spot cash — net of what other pending withdrawals already reserved, covers this bridge. The
+    // reservation makes a concurrent announce see the buffer already spoken for and forces it onto
+    // the reduce path instead of drawing the same Core USDC a second time. Note: this withdrawal's
+    // own reservation was just recorded above, so it is netted out here before the comparison.
     uint256 freeUsdc = _getFreeCoreUsdc(pool);
-    uint256 reserved = reservedBridgeUsdc[pool];
+    uint256 reserved = reservedBridgeUsdc[pool] - effectiveBridge;
     uint256 availableUsdc = freeUsdc > reserved ? freeUsdc - reserved : 0;
     if (availableUsdc < effectiveBridge) {
       // The bridge pulls perp margin (action 7) regardless of reducing, shrinking the shared
@@ -222,10 +273,8 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
       _reducePositions(pool, portion, perpAssetIds);
       _sellSpotPositions(pool, _spotSellPortion(portion), spotAssetIds);
     } else {
-      // Enough free buffer to bridge without reducing. Reserve this bridge against the shared buffer
-      // so a concurrent withdrawal can't skip against the same equity; released at settle/cancel.
-      reservedBridgeUsdc[pool] += effectiveBridge;
-      _pendingWithdrawals[msg.sender][pool].reservedBridge = effectiveBridge;
+      // Enough free buffer to bridge without reducing (already reserved above).
+      _pendingWithdrawals[msg.sender][pool].reduceSkipped = true;
     }
 
     emit WithdrawalAnnounced(msg.sender, pool, tokenAmount);
@@ -242,7 +291,21 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     }
     if (block.number <= withdrawal.announcedBlock) revert HyperliquidWithdrawalManager__TooEarly();
 
-    _bridgeUsdcToEvm(pool, withdrawal.amount, withdrawal.spotAssetIds);
+    uint256 sent = _bridgeUsdcToEvm(pool, withdrawal.amount, withdrawal.spotAssetIds, withdrawal.reduceSkipped);
+
+    // The Core draw this withdrawal reserved has now been queued, so hand the reservation over to the
+    // EVM side: the same money is about to land in the pool as idle-looking USDC that only this
+    // withdrawal's settle may spend. Keeping the Core reservation too would double-count it, making
+    // every later announce see less free Core USDC than there is and reduce when it need not.
+    uint256 reserved = withdrawal.reservedBridge;
+    if (reserved != 0) {
+      reservedBridgeUsdc[pool] -= reserved;
+      withdrawal.reservedBridge = 0;
+    }
+    if (sent != 0) {
+      withdrawal.bridgedUsdc = sent;
+      bridgedUnsettledUsdc[pool] += sent;
+    }
 
     withdrawal.state = WithdrawalState.BRIDGED;
     withdrawal.bridgedBlock = block.number;
@@ -263,10 +326,12 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
 
     uint256 amount = withdrawal.amount;
     uint256 reserved = withdrawal.reservedBridge;
+    uint256 bridged = withdrawal.bridgedUsdc;
 
     // Clean up state before external call.
     totalPendingTokens[pool] -= amount;
     if (reserved != 0) reservedBridgeUsdc[pool] -= reserved;
+    if (bridged != 0) bridgedUnsettledUsdc[pool] -= bridged;
     delete _pendingWithdrawals[msg.sender][pool];
 
     // Burns tokens from this contract, sends proportional assets to the user. Hyperliquid asset
@@ -291,10 +356,15 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
 
     uint256 amount = withdrawal.amount;
     uint256 reserved = withdrawal.reservedBridge;
+    // Cancelling in BRIDGED state leaves the bridged USDC in the pool, where it becomes genuinely
+    // idle liquidity (the Core->EVM move didn't change pool value), so the earmark is released here
+    // exactly as it is at settle.
+    uint256 bridged = withdrawal.bridgedUsdc;
 
     // Clean up state before external call.
     totalPendingTokens[pool] -= amount;
     if (reserved != 0) reservedBridgeUsdc[pool] -= reserved;
+    if (bridged != 0) bridgedUnsettledUsdc[pool] -= bridged;
     delete _pendingWithdrawals[msg.sender][pool];
 
     IERC20(pool).safeTransfer(msg.sender, amount);
@@ -354,9 +424,32 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
   /// @notice Reverts unless `ids` is strictly ascending, which also guarantees uniqueness.
   /// @dev De-dup guard for the reduce/sell arrays. Enforces uniqueness in O(n) with no extra
   ///      storage; the stored `spotAssetIds` are then also unique for `bridge`'s re-valuation.
+  ///      Unique IDS are not enough for spot: see `_requireDistinctSpotBaseTokens`.
   function _requireStrictlyAscending(uint32[] calldata ids) internal pure {
     for (uint256 i = 1; i < ids.length; ++i) {
       if (ids[i] <= ids[i - 1]) revert HyperliquidWithdrawalManager__UnsortedAssetIds();
+    }
+  }
+
+  /// @notice Reverts if two of the supplied spot pair ids resolve to the same base token.
+  /// @dev `_requireStrictlyAscending` makes the pair IDS unique, but a sell is sized off the BASE
+  ///      token's Core balance, and HyperCore lists one token against several quote assets (XAUT0 has
+  ///      2 pairs, HYPE has 4). Distinct ids sharing a base token therefore each queue a full
+  ///      `portion`-sized sell of the SAME balance — each sized off the same stale pre-block balance,
+  ///      so the position is sold down by a multiple of the withdrawer's share while the remaining
+  ///      holders keep their claim on it — and make `_getSpotCoreValue` count that balance once per id
+  ///      when sizing the bridge. De-dup on the base token, the resource the sell actually consumes.
+  ///      O(n^2) over a list that holds one entry per spot position in practice.
+  function _requireDistinctSpotBaseTokens(uint32[] calldata spotAssetIds) internal view {
+    uint64[] memory baseTokens = new uint64[](spotAssetIds.length);
+    for (uint256 i; i < spotAssetIds.length; ++i) {
+      baseTokens[i] = spotInfo(_getSpotIndex(spotAssetIds[i])).tokens[0];
+
+      for (uint256 j; j < i; ++j) {
+        if (baseTokens[j] == baseTokens[i]) {
+          revert HyperliquidWithdrawalManager__DuplicateSpotBaseToken(baseTokens[i]);
+        }
+      }
     }
   }
 
@@ -371,8 +464,7 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
   /// @param portion The raw withdrawal portion in WAD.
   /// @return sellPortion The buffered sell portion in WAD.
   function _spotSellPortion(uint256 portion) internal pure returns (uint256 sellPortion) {
-    sellPortion = portion + (portion * _BRIDGE_SAFETY_MARGIN_BPS) / _BPS_DENOMINATOR;
-    if (sellPortion >= 1e18) sellPortion = 1e18 - 1;
+    sellPortion = Math.min(portion + (portion * _BRIDGE_SAFETY_MARGIN_BPS) / _BPS_DENOMINATOR, 1e18 - 1);
   }
 
   /// @notice Reverts unless the supplied perp ids cover essentially all of the pool's open perp
@@ -474,20 +566,22 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
 
   /// @notice Returns the perp index for core/HIP-3 perp asset IDs.
   /// @dev Core perp assets use the index directly (< 10_000). HIP-3 perps encode the index as
-  ///      `assetId - 100_000`. Spot pair ids (10_000..99_999) are invalid here.
+  ///      `assetId - 100_000`. Spot pair ids (10_000..99_999) are invalid here, as is the
+  ///      100_000..109_999 alias range (see `_MIN_HIP3_ASSET_ID`).
   function _getPerpIndex(uint32 assetId) internal pure returns (uint32 perpIndex) {
     if (assetId < 10_000) return assetId;
-    if (assetId >= 100_000) return assetId - 100_000;
+    if (assetId >= _MIN_HIP3_ASSET_ID) return assetId - 100_000;
     revert HyperliquidWithdrawalManager__NoPositionForAsset(assetId);
   }
 
   /// @notice Returns the perp dex id an asset id trades on (core perp dex, or a HIP-3 dex).
   /// @dev Mirrors the guard's dex derivation: core perps (< 10_000) sit on `_DEX_ID_CORE_PERP`;
-  ///      HIP-3 perps (>= 100_000) encode the dex as `(assetId - 100_000) / 10_000`. Spot pair ids
-  ///      (10_000..99_999) are not perps and are rejected.
+  ///      HIP-3 perps (>= `_MIN_HIP3_ASSET_ID`) encode the dex as `(assetId - 100_000) / 10_000`.
+  ///      Must reject exactly what `_getPerpIndex` rejects, so the two stay one-to-one: spot pair ids
+  ///      (10_000..99_999) are not perps, and 100_000..109_999 aliases the core perp dex.
   function _getPerpDexId(uint32 assetId) internal pure returns (uint256 dexId) {
     if (assetId < 10_000) return _DEX_ID_CORE_PERP;
-    if (assetId >= 100_000) return (uint256(assetId) - 100_000) / 10_000;
+    if (assetId >= _MIN_HIP3_ASSET_ID) return (uint256(assetId) - 100_000) / 10_000;
     revert HyperliquidWithdrawalManager__NoPositionForAsset(assetId);
   }
 
@@ -533,8 +627,8 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     // 10^(_CORE_ORDER_DECIMALS - maxPriceDecimals + szDecimals) in the 8-dec order encoding.
     uint256 decimalTick = 10 ** (_CORE_ORDER_DECIMALS - maxPriceDecimals + szDecimals);
     // Bind by the stricter (larger) of the sig-fig step and the decimal-place cap.
-    if (decimalTick > tick) tick = decimalTick;
-    uint256 rounded = roundUp ? ((price8 + tick - 1) / tick) * tick : (price8 / tick) * tick;
+    tick = Math.max(tick, decimalTick);
+    uint256 rounded = roundUp ? Math.ceilDiv(price8, tick) * tick : (price8 / tick) * tick;
     return rounded.toUint64();
   }
 
@@ -565,17 +659,27 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     uint64 baseTokenIndex = spotInfo(spotIndex).tokens[0];
 
     // Get Core balance in the base token's weiDecimals.
-    uint64 balance = spotBalance(pool, baseTokenIndex).total;
-    if (balance == 0) revert HyperliquidWithdrawalManager__NoSpotBalanceForAsset(spotAssetId);
+    SpotBalance memory balance = spotBalance(pool, baseTokenIndex);
+    if (balance.total == 0) revert HyperliquidWithdrawalManager__NoSpotBalanceForAsset(spotAssetId);
 
     // CoreWriter order sizes are always 8 decimals: rescale the weiDecimals balance, take the
     // portion, then floor onto the lot grid (multiple of 10^(8 - szDecimals)).
     TokenInfo memory baseToken = tokenInfo(baseTokenIndex);
     uint64 sellSz = _roundSizeToLot(
-      _toOrderSize(balance, baseToken.weiDecimals).mulWadDown(portion),
+      _toOrderSize(balance.total, baseToken.weiDecimals).mulWadDown(portion),
       baseToken.szDecimals
     );
     if (sellSz == 0) return;
+
+    // The sell must fit the spendable balance: `hold` is committed to the manager's resting
+    // (reduce-only GTC) orders and HyperCore rejects an order exceeding `total - hold` outright —
+    // silently, post-block — freeing nothing and starving settle. Sizing stays on `total` (the
+    // spot guard's settle demand is total-based, so a smaller sell can't fund it anyway);
+    // spendability is only checked, failing the announce loudly instead.
+    uint256 spendable = balance.total > balance.hold ? balance.total - balance.hold : 0;
+    if (sellSz > _toOrderSize(spendable, baseToken.weiDecimals)) {
+      revert HyperliquidWithdrawalManager__SpotBalanceOnHold(spotAssetId);
+    }
 
     // Sell limit = spot price - slippage (pessimistic), floored onto the tick grid. Raw spotPx is on
     // grid, but subtracting slippage knocks it off, so re-round down (toward more slippage).
@@ -603,7 +707,14 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
   /// @dev For HIP-3 dexes, first consolidates USDC into core perp dex (action 13). Then transfers
   ///      only the deficit perp→spot (action 7, spot sells already landed in spot) and bridges
   ///      spot→EVM (action 6). CoreWriter processes actions in order; USDC lands on EVM next block.
-  function _bridgeUsdcToEvm(address pool, uint256 withdrawalAmount, uint32[] memory spotAssetIds) internal {
+  /// @return sendAmount USDC (6 decimals) queued to arrive on EVM, which the caller earmarks for this
+  ///         withdrawal's settle. Zero when idle EVM USDC already covers the withdrawal.
+  function _bridgeUsdcToEvm(
+    address pool,
+    uint256 withdrawalAmount,
+    uint32[] memory spotAssetIds,
+    bool reduceSkipped
+  ) internal returns (uint256 sendAmount) {
     uint256 portion = _getPortion(pool, withdrawalAmount);
     uint256 bridgeAmount = _computeBridgeAmount(pool, portion, spotAssetIds);
     // No Hyperliquid value to withdraw at all (pool holds nothing on Core for this portion).
@@ -611,36 +722,36 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
 
     // Credit EVM USDC already idle in the pool — only bridge the deficit from Core.
     uint256 effectiveBridge = _getEffectiveBridgeAmount(pool, bridgeAmount, portion);
-    if (effectiveBridge == 0) return;
+    if (effectiveBridge == 0) return sendAmount;
 
-    // Consolidate USDC from HIP-3 dexes into core perp dex (dex 0) via sendAsset (action 13).
-    // Proportional, matching the freed-and-bridged share; per-dex amount is capped by free margin.
-    _consolidateHip3Dexes(pool, portion);
-
-    // Read current Core spot USDC balance (includes proceeds from spot sells in announceAndReduce).
-    // spotBalance is in weiDecimals (8 dec for USDC). Convert to 6 dec for comparison.
-    uint256 spotUsdc6 = uint256(spotBalance(pool, _USDC_TOKEN_INDEX).total) / 1e2;
+    // Read current spendable Core spot USDC (includes proceeds from spot sells in
+    // announceAndReduce). All queued actions execute after the block, so every precompile read
+    // here sees the pre-block state.
+    uint256 spotUsdc6 = _spendableSpotUsdc6(pool);
 
     // Keep `_BRIDGE_GAS_RESERVE` USDC in spot to pay the bridge fee; sending the whole balance would
     // leave nothing for it and CoreWriter would silently drop the bridge.
-    uint256 sendAmount = effectiveBridge;
+    sendAmount = effectiveBridge;
     uint256 requiredSpot = effectiveBridge + _BRIDGE_GAS_RESERVE;
+    uint256 spotDeficit = requiredSpot > spotUsdc6 ? requiredSpot - spotUsdc6 : 0;
+
+    // Consolidate USDC from HIP-3 dexes into core perp dex (dex 0) via sendAsset (action 13).
+    uint256 totalConsolidated = _consolidateHip3Dexes(pool, portion, reduceSkipped, spotDeficit);
 
     if (spotUsdc6 < requiredSpot) {
-      if (_hasOpenPerpPosition(pool)) {
-        // Action 7: top up the deficit plus the reserve from perp margin; bridged amount unchanged.
-        uint64 perpToSpotAmount = (requiredSpot - spotUsdc6).toUint64();
-
-        bytes memory transferAction = abi.encodePacked(
-          uint8(1),
-          HyperliquidConstants.ACTION_USD_CLASS_TRANSFER,
-          abi.encode(perpToSpotAmount, false) // false = from perp to spot
+      uint256 perpEquity = _perpEquityTotal(pool);
+      if (perpEquity != 0) {
+        // Action 7: top up the deficit plus the reserve from perp equity; bridged amount unchanged.
+        _pullPerpUsdcToSpot(
+          pool,
+          spotDeficit,
+          totalConsolidated,
+          reduceSkipped,
+          _maxPerpDraw(perpEquity, portion, bridgeAmount)
         );
-        bytes memory transferTxData = abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, transferAction);
-        _execTransaction(pool, transferTxData);
       } else {
-        // Spot-only: no perp margin, so bridge the freed USDC minus the reserve. The buffered sell
-        // (`_spotSellPortion`) keeps the remainder above the settle demand.
+        // No perp equity anywhere (pure spot pool): bridge the freed USDC minus the reserve. The
+        // buffered sell (`_spotSellPortion`) keeps the remainder above the settle demand.
         sendAmount = spotUsdc6 > _BRIDGE_GAS_RESERVE ? spotUsdc6 - _BRIDGE_GAS_RESERVE : 0;
       }
     }
@@ -658,12 +769,88 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     _execTransaction(pool, spotSendTxData);
   }
 
+  /// @notice Queue the perp->spot class transfer (action 7) covering the spot deficit, verifying
+  ///         that dex 0 will be able to fund it.
+  /// @dev The class transfer draws from dex 0 only. At execution dex 0 holds its own margin plus
+  ///      what the consolidations deliver first (Core processes queued actions in order). The
+  ///      funding bound depends on the path: the reduce path may draw anything Core physically
+  ///      releases (transferable margin — the reduce already shrank the position in step); the
+  ///      skip path never reduced, so it may draw only equity above open notional — the same
+  ///      measure the announce licensed the skip against, re-read HERE because announce and bridge
+  ///      are separate transactions and free equity can drift away in between (a mark move against
+  ///      the position), while transferable margin would still happily hand over the position's
+  ///      collateral. On any shortfall Core would silently drop the pull — and then the spot
+  ///      send — "succeeding" on EVM while bridging nothing and stranding the withdrawal in
+  ///      BRIDGED. Fail loudly instead, so the caller can cancel or retry once margin is freed.
+  /// @dev The reduce path carries a SECOND, tighter bound. Transferable margin answers only "will
+  ///      Core release this", not "is this draw the withdrawal's own share": the deficit is whatever
+  ///      the spot account is still short, so a reduce or sell order that did not fill (thin book,
+  ///      gapping market, value still in flight to Core) shifts its share onto perp collateral. The
+  ///      position then keeps its full notional on a fraction of its margin and the withdrawal still
+  ///      settles — remaining holders silently absorb the higher leverage. `maxPerpDraw` caps the
+  ///      draw at the perp side's own proportional share so an under-delivered leg fails loudly and
+  ///      cancellably instead. The skip path is exempt: it never reduced anything and is already
+  ///      bounded by equity above open notional, which caps leverage at 1x by construction.
+  /// @param pool The pool address.
+  /// @param spotDeficit USDC (6 decimals) the spot account is short of the send plus gas reserve.
+  /// @param totalConsolidated USDC (6 decimals) queued to arrive on dex 0 via consolidation.
+  /// @param reduceSkipped True when the announce skipped the reduce (funded by free Core cash).
+  /// @param maxPerpDraw Max USDC (6 decimals) the reduce path may draw out of perp equity.
+  function _pullPerpUsdcToSpot(
+    address pool,
+    uint256 spotDeficit,
+    uint256 totalConsolidated,
+    bool reduceSkipped,
+    uint256 maxPerpDraw
+  ) internal {
+    AccountMarginSummary memory dex0 = accountMarginSummary(pool, _DEX_ID_CORE_PERP);
+    // Free equity <= transferable margin always, so the skip-path bound also implies Core will
+    // not drop the transfer.
+    uint256 dex0Available = reduceSkipped ? _dexFreeUsdc(dex0) : _dexTransferableUsdc(dex0);
+    if (dex0Available + totalConsolidated < spotDeficit) {
+      revert HyperliquidWithdrawalManager__InsufficientCoreUsdc();
+    }
+    if (!reduceSkipped && spotDeficit > maxPerpDraw) {
+      revert HyperliquidWithdrawalManager__UnfundedReduceLeg();
+    }
+
+    bytes memory transferAction = abi.encodePacked(
+      uint8(1),
+      HyperliquidConstants.ACTION_USD_CLASS_TRANSFER,
+      abi.encode(spotDeficit.toUint64(), false) // false = from perp to spot
+    );
+    _execTransaction(pool, abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, transferAction));
+  }
+
   /// @notice Move freed USDC from HIP-3 dexes (dex 1+) to core perp dex (dex 0) via sendAsset.
-  /// @dev No-op if the pool only uses core perp dex. Per-dex amount is the portion of accountValue,
-  ///      capped by margin-free equity since an underfilled reduce can leave margin locked.
+  /// @dev No-op if the pool only uses core perp dex. Two sizing modes, per announce path:
+  ///      - Reduce path: each dex's position was already shrunk by `portion`, so moving the same
+  ///        `portion` of its equity preserves the dex's leverage for remaining holders. Capped by
+  ///        transferable margin since an underfilled reduce can leave margin locked.
+  ///      - Skip path (`reduceSkipped`): positions are still at full size, so a proportional pull
+  ///        would only raise a leveraged dex's leverage. Instead, route just the spot shortfall —
+  ///        net of what dex 0's own free equity already provides for the class transfer — drawn
+  ///        strictly from equity above open notional (`_dexFreeUsdc`, the same measure the announce
+  ///        counted as free), so no position's collateral is ever touched on this path.
   /// @param pool The pool address.
   /// @param portion The withdrawal portion in WAD.
-  function _consolidateHip3Dexes(address pool, uint256 portion) internal {
+  /// @param reduceSkipped True when the announce skipped the reduce (funded by free Core cash).
+  /// @param spotDeficit USDC (6 decimals) the spot account is short of the send plus gas reserve.
+  /// @return totalConsolidated Total USDC (6 decimals) queued to arrive on the core perp dex.
+  function _consolidateHip3Dexes(
+    address pool,
+    uint256 portion,
+    bool reduceSkipped,
+    uint256 spotDeficit
+  ) internal returns (uint256 totalConsolidated) {
+    // On the skip path only the deficit is routed; dex 0's free equity covers the pull first.
+    uint256 remainingDeficit;
+    if (reduceSkipped) {
+      uint256 dex0Free = _dexFreeUsdc(accountMarginSummary(pool, _DEX_ID_CORE_PERP));
+      if (spotDeficit <= dex0Free) return 0;
+      remainingDeficit = spotDeficit - dex0Free;
+    }
+
     uint256[] memory dexIds = coreWriterGuard.getApprovedDexIds();
 
     for (uint256 i; i < dexIds.length; ++i) {
@@ -673,14 +860,21 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
       AccountMarginSummary memory summary = accountMarginSummary(pool, dexId);
       if (summary.accountValue <= 0) continue;
 
-      // Target share of this dex's equity to consolidate (6 decimals).
-      uint256 perDexValue = uint256(uint64(summary.accountValue));
-      uint256 perDexBridge = perDexValue.mulWadDown(portion);
-
-      // Cap by margin-free equity: sendAsset can only move collateral not tied up as margin.
-      uint256 freeUsdc = _dexFreeUsdc(summary);
-      if (perDexBridge > freeUsdc) perDexBridge = freeUsdc;
+      uint256 perDexBridge;
+      if (reduceSkipped) {
+        perDexBridge = Math.min(remainingDeficit, _dexFreeUsdc(summary));
+        remainingDeficit -= perDexBridge;
+      } else {
+        // Target share of this dex's equity to consolidate (6 decimals), capped by transferable
+        // margin: sendAsset can only move collateral not required by open positions. NOT
+        // `_dexFreeUsdc` (equity - ntlPos): that is zero for any account levered past 1x, which
+        // would skip consolidation entirely and leave the bridge's class transfer drawing from the
+        // (possibly unfunded) core perp dex, where it is silently dropped by HyperCore.
+        perDexBridge = uint256(uint64(summary.accountValue)).mulWadDown(portion);
+        perDexBridge = Math.min(perDexBridge, _dexTransferableUsdc(summary));
+      }
       if (perDexBridge == 0) continue;
+      totalConsolidated += perDexBridge;
 
       // sendAsset amount is in Core wei (8 decimals for USDC). Scale from 6 dec.
       uint64 amountCoreWei = (perDexBridge * 1e2).toUint64();
@@ -798,6 +992,10 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
   ///      pool to help pay the Hyperliquid position at settle, so we credit just that much against the
   ///      bridge. Crediting the full balance bridges too little whenever a reducible position is also
   ///      present, and settle reverts with "not enough available balance_1".
+  /// @dev Only USDC that is genuinely idle may be credited. `bridgedUnsettledUsdc` is netted out
+  ///      first: it sits in the pool but leaves with the settle of the withdrawal that bridged it, so
+  ///      crediting it sizes this bridge against liquidity that will not be there. When it covers the
+  ///      whole balance the credit is zero and this withdrawal simply bridges its own share.
   /// @param pool The pool address.
   /// @param bridgeAmount The full bridge amount (from `_computeBridgeAmount`).
   /// @param portion The withdrawal portion in WAD.
@@ -807,7 +1005,11 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
     uint256 bridgeAmount,
     uint256 portion
   ) internal view returns (uint256 effectiveBridge) {
-    uint256 usableEvmUsdc = IERC20(_USDC_ADDRESS).balanceOf(pool).mulWadDown(1e18 - portion);
+    uint256 poolUsdc = IERC20(_USDC_ADDRESS).balanceOf(pool);
+    uint256 earmarked = bridgedUnsettledUsdc[pool];
+    uint256 idleUsdc = poolUsdc > earmarked ? poolUsdc - earmarked : 0;
+
+    uint256 usableEvmUsdc = idleUsdc.mulWadDown(1e18 - portion);
     if (bridgeAmount > usableEvmUsdc) {
       effectiveBridge = bridgeAmount - usableEvmUsdc;
     }
@@ -830,32 +1032,85 @@ contract HyperliquidWithdrawalManager is IHyperliquidWithdrawalManager, OwnableU
       freeUsdc += _dexFreeUsdc(accountMarginSummary(pool, dexId));
     }
 
-    // USDC already sitting in the Core spot account (e.g., from previous spot sells).
-    // spotBalance is in weiDecimals (8 dec for USDC), convert to 6 dec.
-    freeUsdc += uint256(spotBalance(pool, _USDC_TOKEN_INDEX).total) / 1e2;
+    // Spendable USDC already sitting in the Core spot account (e.g., from previous spot sells).
+    freeUsdc += _spendableSpotUsdc6(pool);
+  }
+
+  /// @notice Spot USDC not committed to resting orders, in 6 decimals.
+  /// @dev `hold` on USDC is unreachable through the guard today (spot GTC orders must be
+  ///      reduce-only sells, which hold the base token, not USDC), so netting it is defensive.
+  function _spendableSpotUsdc6(address pool) internal view returns (uint256) {
+    SpotBalance memory balance = spotBalance(pool, _USDC_TOKEN_INDEX);
+    uint256 spendable = balance.total > balance.hold ? balance.total - balance.hold : 0;
+    // spotBalance is in weiDecimals (8 dec for USDC); convert to 6 dec.
+    return spendable / 1e2;
   }
 
   /// @notice Equity on a perp dex that isn't backing any open position notional.
   /// @dev `accountValue - ntlPos`. For a pure long this equals `rawUsd`; unlike `rawUsd` (which a
   ///      short inflates by adding its notional), this is symmetric, so an open short forces a
-  ///      proportional reduce just like a long instead of being mistaken for idle USDC.
+  ///      proportional reduce just like a long instead of being mistaken for idle USDC. Only used
+  ///      for the announce-time skip decision, where treating the full notional as locked errs
+  ///      toward the (safe) reduce path; for what sendAsset can actually move, see
+  ///      `_dexTransferableUsdc`.
   function _dexFreeUsdc(AccountMarginSummary memory summary) internal pure returns (uint256) {
     if (summary.accountValue <= 0) return 0;
     uint256 equity = uint256(uint64(summary.accountValue));
     return equity > summary.ntlPos ? equity - summary.ntlPos : 0;
   }
 
-  /// @notice Returns true if the pool has any open perp position across the approved perp dexes.
-  /// @dev A non-zero notional (`ntlPos`) on any non-spot dex indicates an open perp. Used at bridge
-  ///      time to decide whether to top up the spot account from perp margin before bridging.
+  /// @notice Equity on a perp dex that HyperCore allows moving out via sendAsset.
+  /// @dev `accountValue - max(marginUsed, ntlPos / 10)`: Core keeps the initial margin backing open
+  ///      positions, and transfers out of a perp account additionally require a buffer of 10% of
+  ///      open notional, so the stricter of the two is reserved. Requesting more would get the
+  ///      whole sendAsset silently dropped on Core, stranding the withdrawal, so this must never
+  ///      overestimate; unlike `_dexFreeUsdc` it must also not treat leveraged-but-healthy margin
+  ///      as locked, or a leveraged HIP-3 dex could never release its freed margin at bridge time.
+  function _dexTransferableUsdc(AccountMarginSummary memory summary) internal pure returns (uint256) {
+    if (summary.accountValue <= 0) return 0;
+    uint256 equity = uint256(uint64(summary.accountValue));
+    uint256 reserved = Math.max(summary.marginUsed, summary.ntlPos / 10);
+    return equity > reserved ? equity - reserved : 0;
+  }
+
+  /// @notice Total positive equity the pool holds across every approved perp dex (6 decimals).
+  /// @dev Equity, NOT open notional: closing a position leaves its margin in the perp wallet, so a
+  ///      pool can hold perp equity with zero notional everywhere (a manager that de-risked) — that
+  ///      equity still has to be moved to spot before it can bridge, and reading zero here would
+  ///      misread such a pool as spot-only and strand every withdrawal at settle. Zero therefore
+  ///      means genuinely spot-only, which gates the perp->spot class transfer at bridge time. The
+  ///      total also sizes `_maxPerpDraw`: it is the perp side's contribution to the pool's
+  ///      Hyperliquid value, so `portion` of it is the perp side's share of any bridge.
   /// @param pool The pool address.
-  function _hasOpenPerpPosition(address pool) internal view returns (bool) {
+  function _perpEquityTotal(address pool) internal view returns (uint256 total) {
     uint256[] memory dexIds = coreWriterGuard.getApprovedDexIds();
     for (uint256 i; i < dexIds.length; ++i) {
       if (dexIds[i] == _DEX_ID_CORE_SPOT) continue;
-      if (accountMarginSummary(pool, dexIds[i]).ntlPos > 0) return true;
+
+      int64 accountValue = accountMarginSummary(pool, dexIds[i]).accountValue;
+      if (accountValue > 0) total += uint256(uint64(accountValue));
     }
-    return false;
+  }
+
+  /// @notice Max USDC (6 decimals) a reduce-path bridge may draw out of the pool's perp equity.
+  /// @dev `portion` of the perp side's equity, carrying the same `_BRIDGE_SAFETY_MARGIN_BPS` the
+  ///      bridge amount itself carries, plus `_PERP_DRAW_HEADROOM_BPS` of the whole bridge for the
+  ///      non-perp legs' legitimate under-delivery and the gas reserve the deficit includes. Bounding
+  ///      the AGGREGATE draw (not each dex's) is deliberate: `_consolidateHip3Dexes` already caps
+  ///      every HIP-3 dex at its own proportional share, so only dex 0 can exceed its share, and only
+  ///      by what the other dexes' own shares could not cover. `bridgeAmount` is used gross of the
+  ///      idle-EVM-USDC credit so the headroom never tightens below what a nominal flow needs.
+  /// @param perpEquity Total positive perp equity across dexes (6 decimals).
+  /// @param portion The withdrawal portion in WAD.
+  /// @param bridgeAmount The full bridge amount (from `_computeBridgeAmount`).
+  function _maxPerpDraw(
+    uint256 perpEquity,
+    uint256 portion,
+    uint256 bridgeAmount
+  ) internal pure returns (uint256 maxDraw) {
+    maxDraw = perpEquity.mulWadUp(portion);
+    maxDraw += (maxDraw * _BRIDGE_SAFETY_MARGIN_BPS) / _BPS_DENOMINATOR;
+    maxDraw += (bridgeAmount * _PERP_DRAW_HEADROOM_BPS) / _BPS_DENOMINATOR + _BRIDGE_GAS_RESERVE;
   }
 
   /// @dev Wraps pool.execTransaction with transient flag so the guard returns isPublic=true.

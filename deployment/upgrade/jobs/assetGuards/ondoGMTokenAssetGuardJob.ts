@@ -14,7 +14,7 @@ export const ondoGMTokenAssetGuardJob: IJob<void> = async (
   if (!addresses.ondo?.ondoGMTokenAssetGuard) {
     return console.warn("ondo.ondoGMTokenAssetGuard config not set: skipping.");
   }
-  if (!addresses.assets.usdc) {
+  if (!addresses.assets?.usdc) {
     return console.warn("assets.usdc not configured: skipping.");
   }
 

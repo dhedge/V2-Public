@@ -30,7 +30,7 @@ export const dytmWithdrawProcessorJob: IJob<void> = async (
     return console.warn("dytm config not found for dytmWithdrawProcessorJob: skipping.");
   }
 
-  if (!addresses.assets.usdc) {
+  if (!addresses.assets?.usdc) {
     return console.warn("assets.usdc not configured for dytmWithdrawProcessorJob: skipping.");
   }
 

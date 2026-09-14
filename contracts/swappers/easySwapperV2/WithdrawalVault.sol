@@ -29,6 +29,10 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
   /// @dev Buffer value which estimates how many basic assets maximum can be unrolled out of single asset (eg. some LP token)
   uint256 internal constant ASSET_MULTIPLIER = 5;
 
+  /// @dev Midas mTokens are tracked in-kind by `_unrollAssets` and refused as swap sources by
+  ///      `swapToSingleAsset` — the two must agree on the type.
+  uint16 private constant ASSET_TYPE_MIDAS_MTOKEN = 42;
+
   /// @notice The address to which the vault belongs to
   address public override depositor;
   /// @notice Factory contract which spawned this vault
@@ -79,8 +83,16 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
     uint256 _expectedDestTokenAmount
   ) external override onlyCreator returns (uint256 balanceAfterSwaps) {
     ISwapper swapper = IEasySwapperV2(creator).swapper();
+    address poolFactory = IEasySwapperV2(creator).dHedgePoolFactory();
 
     for (uint256 i; i < _swapData.srcData.length; ++i) {
+      // Midas mTokens have no real secondary-market liquidity: any route the aggregator finds
+      // goes through some thin pool and burns the depositor's value, so refuse to swap them here.
+      // They stay tracked and can only be claimed in-kind via the no-swap `completeWithdrawal()`.
+      require(
+        IHasAssetInfo(poolFactory).getAssetType(address(_swapData.srcData[i].token)) != ASSET_TYPE_MIDAS_MTOKEN,
+        "src token not swappable"
+      );
       // Can only swap all tracked assets at one go
       require(
         _swapData.srcData[i].token.balanceOf(address(this)) == _swapData.srcData[i].amount,
@@ -168,6 +180,8 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       }
       // Aave positions (3 and 8) are withdrawn as regular ERC20s, which are guaranteed to be in `supportedAssets`.
       // Same for "Assets" which use outside liquidity for withdrawals, like Flat Money's Leverage and GMX. Underlying ERC20 is guaranteed to be in `supportedAssets`.
+      // Same for Midas pending redemption (43): its withdrawal leg is paid in the mToken, which is
+      // guaranteed to be in `supportedAssets` (type 42) and is tracked by its own entry.
       else if (
         assetType == 3 ||
         assetType == 8 ||
@@ -177,9 +191,17 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
         assetType == 105 ||
         assetType == 35 ||
         assetType == 39 ||
-        assetType == 40
+        assetType == 43
         // solhint-disable-next-line no-empty-blocks
       ) {}
+      // Hyperliquid spot: the HyperCore-held portion pays out USDC, tracked via USDC's own iteration.
+      // System addresses are not ERC20 contracts and must not be tracked, but a linked EVM token
+      // pays out its EVM-held portion in-kind, so the token itself must be tracked.
+      else if (assetType == 40) {
+        if (!SwapperV2Helpers.isHyperliquidSystemAddress(asset)) {
+          unrolledAssets = _arraify(asset);
+        }
+      }
       // Uniswap V3 - already unrolled, just need the assets
       else if (assetType == 7) {
         unrolledAssets = EasySwapperUniV3Helpers.getUnsupportedUniV3Assets(_dHedgeVault, asset);
@@ -219,6 +241,12 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       // Ondo GM Token — pool redeemed to USDC inside withdrawProcessing; track USDC.
       else if (assetType == 41) {
         unrolledAssets = _arraify(SwapperV2Helpers.ondoGMHelper(asset, poolFactory));
+      }
+      // Midas mToken (e.g. mAPOLLO) — withdrawn from the pool in-kind. mTokens have no
+      // secondary-market liquidity, so `swapToSingleAsset` cannot unroll them; tracked so the
+      // no-swap `completeWithdrawal()` claims the mToken as is.
+      else if (assetType == ASSET_TYPE_MIDAS_MTOKEN) {
+        unrolledAssets = _arraify(asset);
       }
       // Synthetix Perpetuals V2 - settled in sUSD
       else if (assetType == 102) {

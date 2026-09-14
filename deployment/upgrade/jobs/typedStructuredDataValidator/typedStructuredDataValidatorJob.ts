@@ -32,6 +32,7 @@ const upgradeTypedStructuredDataValidator = async (
   const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
 
   const proxy = versions[config.oldTag].contracts.TypedStructuredDataValidatorProxy;
+  if (!proxy) return console.warn("TypedStructuredDataValidatorProxy missing... skipping.");
 
   const TypedStructuredDataValidator = await ethers.getContractFactory("TypedStructuredDataValidator");
 

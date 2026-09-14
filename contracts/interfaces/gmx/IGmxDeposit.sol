@@ -33,6 +33,7 @@ interface IGmxDeposit {
   // @param initialLongTokenAmount the amount of long tokens to deposit
   // @param initialShortTokenAmount the amount of short tokens to deposit
   // @param minMarketTokens the minimum acceptable number of liquidity tokens
+  // @param uiFeeFactor the UI fee factor snapshotted when the deposit was created
   // sending funds back to the user in case the deposit gets cancelled
   // @param executionFee the execution fee for keepers
   // @param callbackGasLimit the gas limit for the callbackContract
@@ -41,6 +42,7 @@ interface IGmxDeposit {
     uint256 initialLongTokenAmount;
     uint256 initialShortTokenAmount;
     uint256 minMarketTokens;
+    uint256 uiFeeFactor;
     uint256 updatedAtTime;
     uint256 executionFee;
     uint256 callbackGasLimit;

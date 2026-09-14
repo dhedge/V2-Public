@@ -7,7 +7,7 @@ This directory contains tests that require Foundry's FFI (Foreign Function Inter
 To run FFI-dependent tests:
 
 ```bash
-pnpm test:forge:ffi
+pnpm test:ffi
 ```
 
 This command uses the dedicated `ffi-tests` profile in foundry.toml which enables FFI and sets necessary permissions.

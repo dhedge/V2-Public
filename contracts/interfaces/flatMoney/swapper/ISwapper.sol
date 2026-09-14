@@ -43,4 +43,7 @@ interface ISwapper {
   }
 
   function swap(InOutData calldata swapStruct) external payable;
+
+  /// @return router The whitelisted router for `routerKey`, or the zero address if none is set.
+  function getRouter(bytes32 routerKey) external view returns (address router);
 }

@@ -1151,5 +1151,26 @@
       "heartbeat": 432000
     },
     "oracleType": "MidasPriceAggregator"
+  },
+  {
+    "assetName": "sUSDS",
+    "assetAddress": "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD",
+    "assetType": "200",
+    "specificOracleConfig": {
+      "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+    },
+    "oracleType": "ERC4626PriceAggregator"
+  },
+  {
+    "assetName": "PT-sUSDS-26NOV2026",
+    "assetAddress": "0xdC169AbE56461A2E0c034Da431Ac2a3ebf596094",
+    "assetType": "37",
+    "specificOracleConfig": {
+      "syEquivalentYieldToken": "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD",
+      "pendleChainlinkOracleFactory": "0x6502cda86f9110f3655512237C9FF2B9CE247c69",
+      "pendleMarket": "0x9C560eBaF78e596cbcC27411d633a74D628dd7dC",
+      "dhedgeFactoryProxy": "0x96D33bCF84DdE326014248E2896F79bbb9c13D6d"
+    },
+    "oracleType": "PendlePTPriceAggregator"
   }
 ]

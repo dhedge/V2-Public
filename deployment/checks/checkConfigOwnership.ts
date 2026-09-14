@@ -1,5 +1,5 @@
 import { InitType } from "./initialize";
-import { expect } from "chai";
+import assert from "assert";
 
 export const checkOwnership = async (initializeData: InitType) => {
   const {
@@ -20,35 +20,35 @@ export const checkOwnership = async (initializeData: InitType) => {
   console.log("Protocol DAO address:", protocolDao);
   console.log("ProxyAdmin owner address:", proxyAdminOwner);
 
-  expect(await proxyAdmin.owner()).to.equal(proxyAdminOwner);
+  assert.strictEqual(await proxyAdmin.owner(), proxyAdminOwner);
   console.log("proxyAdmin owned by proxyAdminOwner");
 
-  expect(await poolFactoryProxy.owner()).to.equal(protocolDao);
+  assert.strictEqual(await poolFactoryProxy.owner(), protocolDao);
   console.log("poolFactoryProxy owned by pDAO");
 
-  expect(await governance.owner()).to.equal(protocolDao);
+  assert.strictEqual(await governance.owner(), protocolDao);
   console.log("governance owned by pDAO");
 
-  expect(await assetHandlerProxy.owner()).to.equal(protocolDao);
+  assert.strictEqual(await assetHandlerProxy.owner(), protocolDao);
   console.log("assetHandlerProxy owned by pDAO");
 
   if (sushiLPAssetGuard) {
-    expect(await sushiLPAssetGuard.owner()).to.equal(protocolDao);
+    assert.strictEqual(await sushiLPAssetGuard.owner(), protocolDao);
     console.log("sushiLPAssetGuard owned by pDAO");
   }
 
   if (quickLPAssetGuard) {
-    expect(await quickLPAssetGuard.owner()).to.equal(protocolDao);
+    assert.strictEqual(await quickLPAssetGuard.owner(), protocolDao);
     console.log("quickLPAssetGuard owned by pDAO");
   }
 
   if (openAssetGuard) {
-    expect(await openAssetGuard.owner()).to.equal(protocolDao);
+    assert.strictEqual(await openAssetGuard.owner(), protocolDao);
     console.log("openAssetGuard owned by pDAO");
   }
 
   if (balancerV2Guard) {
-    expect(await balancerV2Guard.owner()).to.equal(protocolDao);
+    assert.strictEqual(await balancerV2Guard.owner(), protocolDao);
     console.log("balancerV2Guard owned by pDAO");
   }
 

@@ -51,7 +51,7 @@ abstract contract CoreBackboneSetup is Test, AssetTypes {
     poolFactoryProxy = IPoolFactory(address(new TransparentUpgradeableProxy(poolFactory, proxyAdmin, "")));
 
     // Deploy SlippageAccumulator
-    slippageAccumulator = deployCode("SlippageAccumulator.sol", abi.encode(address(poolFactoryProxy), 21600, 5e4)); // 6 hours, 5%
+    slippageAccumulator = deployCode("SlippageAccumulator.sol", abi.encode(address(poolFactoryProxy), 86400, 10e4)); // 24 hours, 10% (prod values)
 
     // Initialize AssetHandler with no assets
     IAssetHandlerTest.Asset[] memory assets = new IAssetHandlerTest.Asset[](0);

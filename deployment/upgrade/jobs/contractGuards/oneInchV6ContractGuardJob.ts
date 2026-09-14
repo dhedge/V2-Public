@@ -13,6 +13,9 @@ export const oneInchV6ContractGuardJob: IJob<void> = async (
   if (!addresses.oneInchV6RouterAddress) {
     return console.warn("oneInchV6RouterAddress not configured for oneInchV6ContractGuardJob: skipping.");
   }
+  if (!addresses.uniV2 || !addresses.uniV3) {
+    return console.warn("uniV2/uniV3 factories not configured for oneInchV6ContractGuardJob: skipping.");
+  }
 
   const ethers = hre.ethers;
   const Governance = await hre.artifacts.readArtifact("Governance");

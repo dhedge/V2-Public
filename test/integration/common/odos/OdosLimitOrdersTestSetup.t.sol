@@ -14,6 +14,8 @@ import {ITypedStructuredDataValidatorMock} from "test/integration/common/odos/IT
 import {IOdosLimitOrderRouter} from "test/integration/common/odos/IOdosLimitOrderRouter.sol";
 import {OdosLimitOrderTypeHashLib} from "contracts/validators/odos/OdosLimitOrderTypeHashLib.sol";
 
+/// @dev Odos limit orders were superseded by CowSwap orders support. The concrete chain suites carry the
+///      `Skip` suffix so `no_match_contract = "Skip"` in foundry.toml excludes them from default runs.
 abstract contract OdosLimitOrdersTestSetup is BackboneSetup {
   // These match errors defined in OdosLimitOrderValidator and TypedStructuredDataValidator
   bytes4 internal constant UNSUPPORTED_INPUT_TOKEN_SELECTOR = bytes4(keccak256("UnsupportedInputToken()"));
@@ -44,8 +46,6 @@ abstract contract OdosLimitOrdersTestSetup is BackboneSetup {
   }
 
   function setUp() public virtual override {
-    vm.skip(true, "Skip odos limit order tests. Superseded by CowSwap orders support");
-
     super.setUp();
 
     vm.startPrank(owner);

@@ -145,6 +145,16 @@ contract AaveV3PTUSDeUnderlyingEqualsDebtTest is AaveV3TestSetup, EthereumSetup 
     vm.skip(true);
   }
 
+  // Skipped for the same reason: with no swap leg there is no aggregator call for an attacker to
+  // point back at itself, so there is no code injection to reject here.
+  function test_revert_withdrawSafe_code_injection_cannot_inflate_tvl_and_mint_fees() public override {
+    vm.skip(true);
+  }
+
+  function test_revert_withdrawSafe_code_injection_cannot_reenter_deposit() public override {
+    vm.skip(true);
+  }
+
   function _calcParams(uint256 _amountToWithdraw) internal returns (AaveLendingPoolAssetGuard.SwapDataParams memory) {
     vm.prank(address(this), address(0)); // tx.origin == 0 to satisfy `cannotExecute`
     return aaveLendingPoolAssetGuard.calculateSwapDataParams(address(aaveTestPool), _amountToWithdraw, 100);

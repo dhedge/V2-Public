@@ -120,15 +120,6 @@
     "oracleType": "ChainlinkAggregator"
   },
   {
-    "assetName": "MIM",
-    "assetAddress": "0xfea7a6a0b346362bf88a9e4a88416b77a57d6c2a",
-    "assetType": "0",
-    "specificOracleConfig": {
-      "chainlinkOracleAddress": "0x87121F6c9A9F6E90E59591E4Cf4804873f54A95b"
-    },
-    "oracleType": "ChainlinkAggregator"
-  },
-  {
     "assetName": "SPELL",
     "assetAddress": "0x3e6648c5a70a150a88bce65f4ad4d506fe15d2af",
     "assetType": "0",
@@ -787,26 +778,6 @@
     "oracleType": "DHedgePoolAggregator"
   },
   {
-    "assetName": "GMX Market XAUT/USD [WBTC-USDC]",
-    "assetAddress": "0xeb28aD1a2e497F4Acc5D9b87e7B496623C93061E",
-    "assetType": "105",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
-    }
-  },
-  {
-    "assetName": "Virtual XAUT",
-    "assetAddress": "0x7624cccCc59361D583F28BEC40D37e7771d2ef5D",
-    "assetType": "38",
-    "specificOracleConfig": {
-      "maxAge": 1500,
-      "pythOracleContract": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
-      "priceId": "0x44465e17d2e9d390e70c999d5a11fda4f092847fcd2e3e5aa089d96c98a30e67"
-    },
-    "oracleType": "PythPriceAggregator"
-  },
-  {
     "assetName": "Toros SUIBULL3X",
     "assetAddress": "0xB6783Ac4a451e379Af99067A02c41f1819123EC0",
     "assetType": "0",
@@ -815,24 +786,6 @@
   {
     "assetName": "Toros XRPBULL3X",
     "assetAddress": "0xa2bD75D941634F2D2800cA9a20b20A17a2Fea17e",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros GOLD1X",
-    "assetAddress": "0xF7E1069f3F31F9d729b3C10225cab91362958F25",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros GOLDBULL2X",
-    "assetAddress": "0xc8E7E840Ca82804C14061A27AaCa1b97A5A592aB",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros GOLDBULL3X",
-    "assetAddress": "0x350f9d38284e1edB4746AB373c12998d3A66DC3F",
     "assetType": "0",
     "oracleType": "DHedgePoolAggregator"
   },
@@ -869,12 +822,6 @@
   {
     "assetName": "Toros HYPEBULL3X",
     "assetAddress": "0x0219549D65ac79326bD7874f6c610CB5e1B76d33",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros GOLDBEAR1X",
-    "assetAddress": "0x4EF67f28aB2d3BA16F1D110fA7c084D62d7eF2Cc",
     "assetType": "0",
     "oracleType": "DHedgePoolAggregator"
   },

@@ -195,6 +195,50 @@ contract HyperEvmHIP3Tests is HyperEVMSetup, PrecompileHelper {
     assertEq(_getTotalFundValue(), poolValueBefore, "Pool value should be unchanged after placing order");
   }
 
+  /// @notice A GTC perp buy priced aggressively through the book crosses immediately like an IOC,
+  ///         so it must be bounded by the same oracle slippage check rather than bypassing it.
+  function test_revert_hip3_gtc_buy_above_slippage_bound() public {
+    // Setup: Approve TEST_DEX_ID and the HIP-3 asset
+    vm.startPrank(owner);
+
+    IHyperliquidCoreWriterContractGuard.DexIdStatusSettings[]
+      memory dexSettings = new IHyperliquidCoreWriterContractGuard.DexIdStatusSettings[](1);
+    dexSettings[0] = IHyperliquidCoreWriterContractGuard.DexIdStatusSettings({
+      dexId: TEST_DEX_ID,
+      status: IHyperliquidCoreWriterContractGuard.DexStatus.ENABLED
+    });
+    hyperliquidCoreWriterContractGuard.setDexIdStatus(dexSettings);
+
+    IHyperliquidCoreWriterContractGuard.ApprovedAssetSetting[]
+      memory assetSettings = new IHyperliquidCoreWriterContractGuard.ApprovedAssetSetting[](1);
+    assetSettings[0] = IHyperliquidCoreWriterContractGuard.ApprovedAssetSetting({
+      assetId: HIP3_ASSET_ID,
+      approved: true
+    });
+    hyperliquidCoreWriterContractGuard.setApprovedAssets(assetSettings);
+    vm.stopPrank();
+
+    vm.startPrank(manager);
+
+    // GTC (orderType 2) buy priced far above the oracle (~1000 USD, see the IOC tests above) so it
+    // would cross the book at a huge premium. Previously GTC skipped the slippage check entirely.
+    bytes memory limitOrderAction = _buildHIP3LimitOrder({
+      assetId: HIP3_ASSET_ID,
+      isBuy: true,
+      limitPx: 100000_0000_0000, // 100,000 USD, far beyond oracle + slippage
+      sz: 1_0000_0000,
+      reduceOnly: false,
+      orderType: 2 // GTC
+    });
+
+    bytes memory txData = abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, limitOrderAction);
+
+    vm.expectRevert("Slippage exceeds limit");
+    IPoolLogic(hyperliquidTestPool).execTransaction(coreWriter, txData);
+
+    vm.stopPrank();
+  }
+
   /////////////////////////////////////////////
   //       Pool Valuation Tests              //
   /////////////////////////////////////////////
@@ -310,13 +354,25 @@ contract HyperEvmHIP3Tests is HyperEVMSetup, PrecompileHelper {
   //         Helper Functions                //
   /////////////////////////////////////////////
 
-  /// @notice Helper to build a HIP-3 limit order action
+  /// @notice Helper to build a HIP-3 limit order action (IOC by default)
   function _buildHIP3LimitOrder(
     uint64 assetId,
     bool isBuy,
     uint64 limitPx,
     uint64 sz,
     bool reduceOnly
+  ) internal pure returns (bytes memory) {
+    return _buildHIP3LimitOrder(assetId, isBuy, limitPx, sz, reduceOnly, 3); // orderType: GTC = 2, IOC = 3
+  }
+
+  /// @notice Helper to build a HIP-3 limit order action with an explicit time-in-force
+  function _buildHIP3LimitOrder(
+    uint64 assetId,
+    bool isBuy,
+    uint64 limitPx,
+    uint64 sz,
+    bool reduceOnly,
+    uint8 orderType
   ) internal pure returns (bytes memory) {
     // Action ID 1 = Limit order
     // Version 1
@@ -333,7 +389,7 @@ contract HyperEvmHIP3Tests is HyperEVMSetup, PrecompileHelper {
       limitPx, // limitPx (uint64)
       sz, // sz (uint64)
       reduceOnly, // reduceOnly (bool)
-      uint8(3), // orderType: GTC = 2, IOC = 3
+      orderType, // orderType: GTC = 2, IOC = 3
       address(0) // builder (address) - null for no builder fee
     );
 

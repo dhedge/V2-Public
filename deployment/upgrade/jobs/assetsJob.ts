@@ -1,7 +1,8 @@
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { hasDuplicates, proposeTransactions, MetaTransactionData } from "../../deploymentHelpers";
-import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions, TDeployedAsset } from "../../types";
+import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../types";
+import { TDeployedAsset } from "./oracles/oracleTypes";
 import { configureContractGuard } from "./assetContractGuardHelpers";
 import { getOracle } from "./oracles/assetsJobHelpers";
 import { TAssetConfig } from "./oracles/oracleTypes";

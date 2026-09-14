@@ -6,6 +6,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {CompoundV3CometAssetGuard} from "contracts/guards/assetGuards/CompoundV3CometAssetGuard.sol";
 import {CompoundV3CometContractGuard} from "contracts/guards/contractGuards/compound/CompoundV3CometContractGuard.sol";
+// solhint-disable-next-line max-line-length
+import {CompoundV3CometRewardsContractGuard} from "contracts/guards/contractGuards/compound/CompoundV3CometRewardsContractGuard.sol";
+import {ICompoundV3CometRewards} from "contracts/interfaces/compound/ICompoundV3CometRewards.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {ICompoundV3Comet} from "contracts/interfaces/compound/ICompoundV3Comet.sol";
@@ -30,6 +33,10 @@ contract CompoundV3Test is ArbitrumSetup {
   CompoundV3CometContractGuard internal compContractGuard;
   CompoundV3CometAssetGuard internal compAssetGuard;
 
+  /// @dev Comet's rewards distributor on Arbitrum, per config/arbitrum governance guards.
+  ICompoundV3CometRewards internal constant cometRewards =
+    ICompoundV3CometRewards(0x88730d254A2f7e6AC8388c3198aFd694bA9f7fae);
+
   constructor() ArbitrumSetup(FORK_BLOCK_NUMBER) {
     USDCAddy = usdcData.asset;
     USDC = IERC20(usdcData.asset);
@@ -52,6 +59,10 @@ contract CompoundV3Test is ArbitrumSetup {
 
     // Set the Compound V3 contract guard in the governance contract.
     governance.setContractGuard({extContract: address(cUSDC), guardAddress: address(compContractGuard)});
+    governance.setContractGuard({
+      extContract: address(cometRewards),
+      guardAddress: address(new CompoundV3CometRewardsContractGuard())
+    });
 
     // Create a test dHEDGE fund with USDC enabled as deposit asset.
     IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](2);
@@ -88,6 +99,8 @@ contract CompoundV3Test is ArbitrumSetup {
 
     // Provide the fund with enough USDC to supply to Compound V3.
     deal(USDCAddy, address(fund), 1_000_000e6);
+
+    vm.stopPrank();
   }
 
   function test_comet_supply() public {
@@ -248,5 +261,126 @@ contract CompoundV3Test is ArbitrumSetup {
       deal(accounts[i], 100e18);
       deal(USDCAddy, accounts[i], 1_000_000e6);
     }
+  }
+
+  /* ========== REWARDS ========== */
+
+  /// @notice Claiming Comet rewards is guarded on three counts: the rewards must land in the vault,
+  /// the vault must actually hold the Comet position, and it must be able to price what it is paid.
+  function test_revert_claim_rewards_to_a_receiver_other_than_the_vault() public {
+    _supplyToComet();
+
+    vm.prank(manager);
+    vm.expectRevert("invalid receiver");
+    fund.execTransaction(address(cometRewards), _claimCalldata(address(cUSDC), manager));
+  }
+
+  function test_revert_claim_rewards_for_a_comet_the_vault_does_not_hold() public {
+    _supplyToComet();
+
+    // A Comet the vault does not support: nothing is owed to it and nothing should be claimable.
+    vm.prank(manager);
+    vm.expectRevert("Compound asset not enabled");
+    fund.execTransaction(address(cometRewards), _claimCalldata(makeAddr("someOtherComet"), address(fund)));
+  }
+
+  function test_revert_claim_rewards_when_the_reward_asset_is_not_enabled() public {
+    address rewardAsset = cometRewards.rewardConfig(address(cUSDC)).token;
+    _registerRewardAsset(rewardAsset);
+    _supplyToComet();
+
+    // Registered protocol-wide but not enabled on this vault, so it cannot be valued if received.
+    vm.prank(manager);
+    vm.expectRevert("reward asset not enabled");
+    fund.execTransaction(address(cometRewards), _claimCalldata(address(cUSDC), address(fund)));
+  }
+
+  function test_manager_can_claim_rewards_into_the_vault() public {
+    address rewardAsset = cometRewards.rewardConfig(address(cUSDC)).token;
+    _registerRewardAsset(rewardAsset);
+    _enableRewardAssetOnFund(rewardAsset);
+    _supplyToComet();
+
+    uint256 rewardBalanceBefore = IERC20(rewardAsset).balanceOf(address(fund));
+
+    vm.prank(manager);
+    fund.execTransaction(address(cometRewards), _claimCalldata(address(cUSDC), address(fund)));
+
+    // Rewards accrue to the vault, never to the manager. Assert the balance strictly grew: a claim
+    // that paid nothing, or paid somewhere else, must not pass as success.
+    assertGt(IERC20(rewardAsset).balanceOf(address(fund)), rewardBalanceBefore, "no rewards claimed");
+    assertEq(IERC20(rewardAsset).balanceOf(manager), 0);
+  }
+
+  function _supplyToComet() internal {
+    vm.prank(manager);
+    fund.execTransaction(USDCAddy, abi.encodeWithSelector(IERC20.approve.selector, address(cUSDC), 1_000_000e6));
+
+    vm.prank(manager);
+    fund.execTransaction(
+      address(cUSDC),
+      abi.encodeWithSelector(ICompoundV3Comet.supply.selector, USDCAddy, 1_000_000e6)
+    );
+
+    skip(1 days);
+  }
+
+  function _registerRewardAsset(address _rewardAsset) internal {
+    vm.prank(owner);
+    assetHandlerProxy.addAsset({
+      asset: _rewardAsset,
+      assetType: uint16(AssetTypeIncomplete.CHAINLINK),
+      aggregator: usdcData.aggregator // any working feed; these tests never assert its value
+    });
+  }
+
+  function _enableRewardAssetOnFund(address _rewardAsset) internal {
+    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
+    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: _rewardAsset, isDeposit: false});
+
+    vm.prank(manager);
+    fundManagerLogic.changeAssets(assetsToAdd, new address[](0));
+  }
+
+  function _claimCalldata(address _comet, address _receiver) internal pure returns (bytes memory data) {
+    data = abi.encodeWithSelector(ICompoundV3CometRewards.claim.selector, _comet, _receiver, true);
+  }
+
+  /* ========== GUARD VALIDATION ========== */
+
+  /// @notice The Comet guard only lets a vault move Comet's own base token, and only in and out of
+  /// a Comet position the vault actually supports.
+  function test_revert_supply_an_asset_that_is_not_the_comet_base_token() public {
+    vm.prank(manager);
+    vm.expectRevert("invalid Compound asset");
+    fund.execTransaction(
+      address(cUSDC),
+      abi.encodeWithSelector(ICompoundV3Comet.supply.selector, address(cUSDC), 1_000e6)
+    );
+  }
+
+  function test_revert_supply_when_the_comet_position_is_not_enabled() public {
+    // Drop the Comet position from the vault, keeping only the base token.
+    address[] memory assetsToRemove = new address[](1);
+    assetsToRemove[0] = address(cUSDC);
+
+    vm.prank(manager);
+    fundManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), assetsToRemove);
+
+    vm.prank(manager);
+    vm.expectRevert("Compound not enabled");
+    fund.execTransaction(address(cUSDC), abi.encodeWithSelector(ICompoundV3Comet.supply.selector, USDCAddy, 1_000e6));
+  }
+
+  function test_revert_withdraw_an_asset_the_vault_does_not_support() public {
+    _supplyToComet();
+
+    // The Comet share token is not a withdrawal asset - only the base token is.
+    vm.prank(manager);
+    vm.expectRevert("unsupported withdrawal asset");
+    fund.execTransaction(
+      address(cUSDC),
+      abi.encodeWithSelector(ICompoundV3Comet.withdraw.selector, makeAddr("notAVaultAsset"), 1_000e6)
+    );
   }
 }

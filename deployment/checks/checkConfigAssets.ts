@@ -1,10 +1,10 @@
 import axios from "axios";
-import { assert } from "chai";
+import assert from "assert";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import fs from "fs";
 
 import { InitType } from "./initialize";
-import { TDeployedAsset } from "../types";
+import { TDeployedAsset } from "../upgrade/jobs/oracles/oracleTypes";
 
 const approxEq = (v1: number, v2: number, diff = 0.01) => Math.abs(1 - v1 / v2) <= diff;
 

@@ -21,8 +21,10 @@ pragma experimental ABIEncoderV2;
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import {IAaveV3Pool} from "../../interfaces/aave/v3/IAaveV3Pool.sol";
+import {IAToken} from "../../interfaces/aave/v3/IAToken.sol";
 import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IAaveLendingPoolAssetGuard} from "../../interfaces/guards/IAaveLendingPoolAssetGuard.sol";
+import {IAccountedTokenAssetGuard} from "../../interfaces/guards/IAccountedTokenAssetGuard.sol";
 import {IComplexAssetGuard} from "../../interfaces/guards/IComplexAssetGuard.sol";
 import {ISwapDataConsumingGuard} from "../../interfaces/guards/ISwapDataConsumingGuard.sol";
 import {IUniswapV2RouterSwapOnly} from "../../interfaces/uniswapV2/IUniswapV2RouterSwapOnly.sol";
@@ -44,6 +46,7 @@ import {WithdrawalHelperLib} from "../../utils/WithdrawalHelperLib.sol";
 contract AaveLendingPoolAssetGuard is
   ClosedAssetGuard,
   IAaveLendingPoolAssetGuard,
+  IAccountedTokenAssetGuard,
   ISwapDataConsumingGuard,
   AutomationBase
 {
@@ -67,6 +70,10 @@ contract AaveLendingPoolAssetGuard is
   address private constant USDT_MAINNET = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
   uint256 private constant BPS_DENOMINATOR = 10_000;
+
+  /// @inheritdoc IAccountedTokenAssetGuard
+  // solhint-disable-next-line const-name-snakecase
+  bool public constant override isAccountedTokenAssetGuard = true;
 
   address public immutable override aaveLendingPool;
 
@@ -110,20 +117,40 @@ contract AaveLendingPoolAssetGuard is
 
   /// @notice Returns the pool position of Aave lending pool
   /// @dev Returns the balance priced in USD
+  ///      Reverts when the position carries bad debt, freezing deposits, withdrawals and trading.
+  ///      Reporting 0 instead would overstate totalFundValue by the whole shortfall and let deposits
+  ///      mint against it, and would silently void the withdrawer's dh26 slippage floor downstream
+  ///      (::withdrawProcessing prices it off this value, so 0 turns the check into a no-op).
+  ///      Recovery: ::removeAssetCheck reads _getBalance directly and PoolLogic.execTransaction does
+  ///      not price the vault, so the manager can still repay debt to restore the position.
   /// @param _pool The pool logic address
   /// @return balance The total balance of the pool
   function getBalance(address _pool, address) public view override returns (uint256 balance) {
     (uint256 totalCollateralInUsd, uint256 totalDebtInUsd) = _getBalance(_pool);
 
-    if (totalCollateralInUsd > totalDebtInUsd) {
-      balance = totalCollateralInUsd.sub(totalDebtInUsd);
-    }
+    require(totalCollateralInUsd >= totalDebtInUsd, "aave position underwater");
+
+    balance = totalCollateralInUsd.sub(totalDebtInUsd);
   }
 
   /// @notice Returns decimals of the Aave lending pool asset
   /// @return decimals The decimals of the asset
   function getDecimals(address) external pure override returns (uint256 decimals) {
     decimals = 18;
+  }
+
+  /// @inheritdoc IAccountedTokenAssetGuard
+  /// @dev Collateral is valued from aToken balances, so every aToken of this lending pool is claimed.
+  ///      `_token`'s underlying is only a lookup key; the answer is confirmed against `aaveLendingPool`,
+  ///      so a token cannot lie its way in or out.
+  function isAccountedToken(address, address, address _token) external view override returns (bool accounted) {
+    try IAToken(_token).UNDERLYING_ASSET_ADDRESS() returns (address underlying) {
+      accounted =
+        IAaveV3Pool(aaveLendingPool).getReserveAToken(underlying) == _token ||
+        IAaveV3Pool(aaveLendingPool).getReserveVariableDebtToken(underlying) == _token;
+    } catch {
+      accounted = false; // not an aToken/debt token: no `UNDERLYING_ASSET_ADDRESS`
+    }
   }
 
   /// @inheritdoc IComplexAssetGuard
@@ -435,6 +462,10 @@ contract AaveLendingPoolAssetGuard is
         if (borrowAsset.amount != 0) {
           // used to round the amount up instead of down. allows to repay rounded up debt amount downstream
           borrowAsset.amount = borrowAsset.amount.mul(_portion).divRoundingUp(1e18);
+          // Mirrors the skip in ::_calculateCollateralAssets: a portion that scales the debt away is
+          // not a debt to repay. Leaving `asset` unset routes the withdrawal down the no-debt branch
+          // instead of into a flashloan that borrows nothing and then has Aave reject repay(0).
+          if (borrowAsset.amount == 0) break;
           borrowAsset.asset = supportedAssets[i].asset;
           break;
         }

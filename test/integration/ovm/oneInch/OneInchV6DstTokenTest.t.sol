@@ -29,7 +29,7 @@ contract OneInchV6DstTokenTest is Test {
   address public managerAddress = 0xeFc4904b786A3836343A3A504A2A3cb303b77D64;
 
   IUniswapV2Router public uniRouter = IUniswapV2Router(OptimismConfig.UNISWAP_V2_ROUTER);
-  IUniswapV2Factory public uniFactory = IUniswapV2Factory(0x0c3c1c532F1e39EdF36BE9Fe0bE1410313E074Bf);
+  IUniswapV2Factory public uniFactory = IUniswapV2Factory(OptimismConfig.UNISWAP_V2_FACTORY);
 
   Governance public dHEDGEGovernance = Governance(0xa9F912c1dB1b844fd96192Ac3B496E9d8F445bc9);
   address public dHEDGEAdminOptimism = 0x90b1a66957914EbbE7a8df254c0c1E455972379C;

@@ -1,45 +1,66 @@
 # Testing
 
-There are two main types of tests contained in this folder. Unit & Integration.
+Tests are written in Solidity and run with [Foundry](https://book.getfoundry.sh/). There are two
+kinds: forkless unit tests and fork-based integration tests.
 
-## Unit Tests
+## Unit tests
 
-Unit tests should be written for all new logic. Generally unit tests take more mocking setup than integration tests, but they easier and faster to run locally. They also allow the setting up to specific testing edge cases.
+Forkless tests live in `test/unit/` and build on `test/unit/PoolUnitTestSetup.t.sol`, which deploys
+the whole dHEDGE core against locally minted tokens (`contracts/test/TestAssets.sol`) and
+`vm.mockCall`'d price feeds. No fork, no RPC, no external state — they are fast and are suited to
+core accounting and access-control rules that do not depend on any real protocol.
 
-Generally a single test should only try to assert a single behaviour. Test's should not depend on the state left by a previous test. We try to use nested describe, before, beforeEach blocks effectively.
+A single test should assert a single behaviour and must not depend on state left by another test;
+each test sets up exactly what it asserts.
 
-Unit tests run against a evm blockchain simulated by hardhat with not prior state.
+## Integration tests
 
+Where our contracts integrate with third-party protocols we test against a fork of a real chain
+(Polygon, Optimism, Arbitrum, Base, Ethereum, Plasma). These live under `test/integration/{chain}/`
+and build on `test/integration/utils/foundry/BackboneSetup.t.sol` plus a chain setup (e.g.
+`ArbitrumSetup`). The chain setup calls `vm.createSelectFork` with an RPC URL and a pinned block, so
+each suite forks itself — you do **not** need to start a separate node. Provider URLs come from your
+`.env` / `foundry.toml`. State is pinned at the fork block, so external updates
+(e.g. Chainlink rounds) are frozen unless a test advances them.
+
+Tests that need live off-chain data (aggregator swap quotes) live under `test/integration/ffi/{chainId}/`
+and run under a separate profile.
+
+## Running
+
+```bash
+# all tests except FFI
+pnpm test
+
+# FFI tests (needs the ffi-tests profile and network access)
+pnpm test:ffi
+
+# a single contract or test
+forge test --match-contract CoreTestArbitrum
+forge test --match-test test_can_supply_into_aave
 ```
-pnpm test:unit
-```
 
-## Integration Tests
+Use `forge build --skip test` to check production code compiles without building the test suite.
 
-In lots of cases our contracts integrate with other third party contracts. To ensure that they interact effectively we use integration tests. Integrations tests run against a fork of the real blockchain (i.e polygon, ethereum, ovm) and include the state from which point you fork.
+## Skipping and excluding tests
 
-You can read more about how this works here: https://hardhat.org/hardhat-network/guides/mainnet-forking.html
+Two mechanisms, with different visibility:
 
-Before running your integration tests you must first fork the chain you which to tests against, for instance to fork OVM you would run. You need provider credentials setup in your .env for this to work (see ../.env.md).
+- `vm.skip(...)` marks a test as skipped and forge reports it as such in every run. Use it for tests
+  that do not apply in some configurations (`vm.skip(shouldSkip)`), to opt out of inherited tests in an
+  override, or in `setUp` to skip a whole suite while keeping it visible.
+- A `Skip` suffix on the test contract name (e.g. `FlatMoneyV2PerpMarketDryRunOptimismSkip`) excludes
+  the contract from every default run via `no_match_contract = "Skip"` in `foundry.toml`. Use it for
+  on-demand harnesses such as deployment dry runs, and for suites that cannot pass until other work
+  lands. The filter itself produces no output, so record the reason in the contract's NatSpec.
 
-```
-pnpm fork:ovm
-```
+Running an excluded contract requires overriding the config exclusion explicitly:
 
-This process needs to start and run in the background while you run your integration tests. Do note that once your fork is started, no outside updates are included in your chain, for instance chainlink oracles won't we updated on your fork. You can also fork from a specific block in the past. Any state changes your make to your fork in tests are persisted until you stop the fork process.
-
-To run an individual integration test:
-
-```
-pnpm test:integr test/integration/ovm/SynthetixTest.ts
-```
-
-To run multiple
-
-```
-pnpm test:integr test/integration/ovm/*.ts
+```bash
+forge test --match-contract HyperliquidWithdrawalManagerTestsSkip --no-match-contract '^$'
 ```
 
 ## CI
 
-All tests unit and integration should be added to the requisite github workflow. Unit tests should execute on every commit and integration
+`test` runs on every push via `.github/workflows/basic-check.yml`. FFI tests are excluded from
+that gate (they depend on external quote APIs); run them locally or on demand.

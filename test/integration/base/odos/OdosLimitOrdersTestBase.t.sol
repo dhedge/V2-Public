@@ -7,7 +7,8 @@ import {OdosLimitOrdersTestSetup} from "test/integration/common/odos/OdosLimitOr
 import {BaseSetup} from "test/integration/utils/foundry/chains/BaseSetup.t.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
-contract OdosLimitOrdersTestBase is OdosLimitOrdersTestSetup, BaseSetup {
+/// @dev `Skip` suffix: excluded from default `forge test` runs, see `OdosLimitOrdersTestSetup`.
+contract OdosLimitOrdersTestBaseSkip is OdosLimitOrdersTestSetup, BaseSetup {
   uint256 public constant TEST_FORK_BLOCK_NUMBER = 39261342;
   address public constant ODOS_LIMIT_ORDER_ROUTER = 0xeDeAfdEf0901eF74Ee28c207BE8424D3B353D97A;
 

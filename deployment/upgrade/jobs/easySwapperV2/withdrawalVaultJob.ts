@@ -39,6 +39,9 @@ export const withdrawalVaultJob: IJob<void> = async (
     });
 
     if (proxy) {
+      const easySwapperV2Proxy = versions[config.oldTag].contracts.EasySwapperV2Proxy;
+      if (!easySwapperV2Proxy) return console.warn("EasySwapperV2Proxy missing... skipping.");
+
       console.log("Will upgrade WithdrawalVault");
 
       const newImplementation = await upgrades.prepareUpgrade(proxy, WithdrawalVault, {
@@ -59,13 +62,7 @@ export const withdrawalVaultJob: IJob<void> = async (
       const setLogicABI = new ethers.utils.Interface(EasySwapperV2.abi).encodeFunctionData("setLogic", [
         newImplementation,
       ]);
-      await proposeTx(
-        versions[config.oldTag].contracts.EasySwapperV2Proxy,
-        setLogicABI,
-        "Set logic for WithdrawalVault",
-        config,
-        addresses,
-      );
+      await proposeTx(easySwapperV2Proxy, setLogicABI, "Set logic for WithdrawalVault", config, addresses);
     } else {
       console.log("Will deploy WithdrawalVault");
 

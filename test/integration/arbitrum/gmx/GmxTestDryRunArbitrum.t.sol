@@ -29,7 +29,7 @@ contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer 
   }
 
   function getTorosVaults() internal pure returns (address[] memory torosVaults) {
-    torosVaults = new address[](49);
+    torosVaults = new address[](45);
 
     torosVaults[0] = ArbitrumConfig.ETHBULL3X;
     torosVaults[1] = ArbitrumConfig.ETHBULL2X;
@@ -74,12 +74,8 @@ contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer 
     torosVaults[40] = ArbitrumConfig.BTCBEAR2X;
     torosVaults[41] = ArbitrumConfig.SUIBULL3X;
     torosVaults[42] = ArbitrumConfig.XRPBULL3X;
-    torosVaults[43] = ArbitrumConfig.GOLDBULL3X;
-    torosVaults[44] = ArbitrumConfig.GOLDBULL2X;
-    torosVaults[45] = ArbitrumConfig.GOLD1X;
-    torosVaults[46] = ArbitrumConfig.GOLDBEAR1X;
-    torosVaults[47] = ArbitrumConfig.AAVEBEAR1X;
-    torosVaults[48] = ArbitrumConfig.AAVEBULL2X;
+    torosVaults[43] = ArbitrumConfig.AAVEBEAR1X;
+    torosVaults[44] = ArbitrumConfig.AAVEBULL2X;
 
     return torosVaults;
   }

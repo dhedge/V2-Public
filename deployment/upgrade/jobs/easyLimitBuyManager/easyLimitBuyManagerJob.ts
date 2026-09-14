@@ -25,7 +25,7 @@ export const easyLimitBuyManagerJob: IJob<void> = async (
   if (!poolFactoryProxy) return console.warn("PoolFactoryProxy missing... skipping.");
   if (!easySwapperV2Proxy) return console.warn("EasySwapperV2Proxy missing... skipping.");
 
-  const permit2Address = addresses.easyLimitBuyManager.permit2;
+  const permit2Address = addresses.easyLimitBuyManager?.permit2;
   if (!permit2Address) return console.warn("Permit2 address missing... skipping.");
 
   const [deployer] = await ethers.getSigners();

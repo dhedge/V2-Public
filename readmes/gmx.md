@@ -38,7 +38,7 @@ The general process for creating orders in the GMX UI is as follows:
 2. **`sendTokens`:** Transfers collateral to the `orderVault`. (no need for `OrderType.MarketDecrease`)
 3. **`createOrder`:** Uses the wrapped ETH and collateral amounts in the `orderVault` to create an order, which adjusts margin and position size.
 
-**Note:** These transactions must be executed together in a `multicall` via the [ExchangeRouter](https://arbiscan.io/address/0x69c527fc77291722b52649e45c838e41be8bf5d5). If not, the tokens sent to the `orderVault` may be accessible to other users creating orders.
+**Note:** These transactions must be executed together in a `multicall` via the [ExchangeRouter](https://arbiscan.io/address/0x7dE39FF2e232A2203196788d37e234cF8F1b83f1). If not, the tokens sent to the `orderVault` may be accessible to other users creating orders.
 in the **`createOrder`**, `initialCollateralDeltaAmount` and `executionFee` will be calculated and [recorded](https://github.com/gmx-io/gmx-synthetics/blob/main/contracts/order/OrderUtils.sol#L81) by the token amounts sent to the `orderVault`
 
 Once an order is created, it is recorded in the `dataStore`, and then keepers later execute it. For this integration, `sendTokens` is used to send WETH instead of calling `sendWnt`.
@@ -69,7 +69,7 @@ Hence in our integration,
 
 ### GmxExchangeRouterContractGuard
 
-This component facilitates the creation, adjustment, and closure of perpetual orders, as well as claiming fees. Supported operations via the [ExchangeRouter](https://arbiscan.io/address/0x69c527fc77291722b52649e45c838e41be8bf5d5) include:
+This component facilitates the creation, adjustment, and closure of perpetual orders, as well as claiming fees. Supported operations via the [ExchangeRouter](https://arbiscan.io/address/0x7dE39FF2e232A2203196788d37e234cF8F1b83f1) include:
 
 - `createOrder` (via `multicall`)
 - `claimFundingFees`

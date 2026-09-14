@@ -33,8 +33,6 @@ Provides contract guard for Pendle Router, which allows buying and selling PTs i
 
 Swaps are disabled, as we can always swap during deposit into vault while having underlying yield token set as deposit asset. This can be changed later if strictly necessary, but will make guard checks much more complicated and strict.
 
-Limit orders are disabled as well.
-
 Vaults can only buy PTs which are added to `AssetHandler` by dHEDGE DAO.
 
 To buy PT, vault needs to have it enabled. In order to sell PT, vault needs to have underlying yield token enabled.
@@ -55,7 +53,11 @@ This is why SY 1:1 wrap of yield token: [see SY Contract](https://basescan.org/a
 
 [PendleChainlinkOracleFactory on Base](https://basescan.org/address/0x2a73e899389caba2a2f648baba35e67f5c00efee).
 
+[PendleChainlinkOracleFactory on Ethereum](https://etherscan.io/address/0x6502cda86f9110f3655512237c9ff2b9ce247c69) (newer version; older markets used [0x2A73e899389cABa2a2f648BaBA35e67f5C00EFee](https://etherscan.io/address/0x2a73e899389caba2a2f648baba35e67f5c00efee)).
+
 Can check if already exists, if not - can create.
+
+The `PendlePTPriceAggregator` deploy job can resolve the oracle automatically: instead of `pendleChainlinkOracle`, pass `pendleChainlinkOracleFactory` + `pendleMarket` in the asset config and the job will `getOracle` or, if none exists, `createOracle` (PT_TO_SY, 1800s TWAP) before deploying the aggregator. Creation is permissionless and reverts inside Pendle's factory if the market's TWAP observation buffer is not ready (`getOracleState` on `PendlePYLpOracle` can be used to check beforehand).
 
 `baseOracleType` should use `0` in most of the cases (as per docs above). Will price in terms of SY token, which can be priced in terms of underlying yield token.
 
